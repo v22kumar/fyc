@@ -31,7 +31,7 @@ def test_otp_send_success(client, db):
     assert response.status_code == 200
     data = response.json()
     assert "verification_id" in data
-    assert data["message"] == "OTP sent successfully (Use '123456' for mock verification)"
+    assert data["message"] == "OTP sent successfully"
 
 def test_otp_verify_invalid_code(client, db):
     """Verifying with a wrong OTP must return 400."""

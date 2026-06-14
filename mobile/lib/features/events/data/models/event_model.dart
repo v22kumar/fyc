@@ -1,0 +1,29 @@
+import '../../domain/entities/event_entity.dart';
+
+class EventModel extends EventEntity {
+  const EventModel({
+    required super.id,
+    required super.titleTa,
+    required super.titleEn,
+    required super.descriptionTa,
+    required super.descriptionEn,
+    required super.eventStart,
+    required super.eventEnd,
+    super.bannerUrl,
+    super.geographyId,
+  });
+
+  factory EventModel.fromJson(Map<String, dynamic> json) {
+    return EventModel(
+      id: json['id'] as String,
+      titleTa: (json['title_ta'] as String?) ?? '',
+      titleEn: (json['title_en'] as String?) ?? '',
+      descriptionTa: (json['description_ta'] as String?) ?? '',
+      descriptionEn: (json['description_en'] as String?) ?? '',
+      eventStart: DateTime.parse(json['event_start'] as String),
+      eventEnd: DateTime.parse(json['event_end'] as String),
+      bannerUrl: json['banner_url'] as String?,
+      geographyId: json['geography_id'] as String?,
+    );
+  }
+}

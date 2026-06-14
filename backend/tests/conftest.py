@@ -1,3 +1,7 @@
+import os
+# Set before any app imports so pydantic-settings picks it up
+os.environ.setdefault("OTP_BYPASS_CODE", "123456")
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event

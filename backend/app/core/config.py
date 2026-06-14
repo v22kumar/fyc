@@ -10,9 +10,13 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "supersecretdevkeyforfycconnect2026jwtencryptionkeys"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "sqlite:///./fyc_connect.db"
-    
+
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
     FIRST_SUPERADMIN_PASSWORD: str = "supersecureadminpassword123"
+
+    # Set to a fixed value in tests/dev to skip random OTP generation.
+    # Leave unset in production so real random OTPs are generated.
+    OTP_BYPASS_CODE: str = ""
 
     # Load environment variables from backend/.env if it exists
     model_config = SettingsConfigDict(

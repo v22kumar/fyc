@@ -108,23 +108,33 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
   <div id="contact-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50">
     <div class="bg-white rounded-card shadow-2xl max-w-sm w-full p-6">
       <div class="text-center">
-        <div class="text-5xl mb-4">📱</div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2" data-ta="தொடர்பு விவரங்கள்" data-en="Contact Details">
-          தொடர்பு விவரங்கள்
+        <div class="text-5xl mb-3">🔒</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2" data-ta="உள்நுழைவு தேவை" data-en="Login Required">
+          உள்நுழைவு தேவை
         </h3>
-        <p class="text-sm text-gray-600 mb-6" data-ta="தானிகளின் தொலைபேசி மற்றும் WhatsApp தொடர்பு விவரங்களுக்கு FYC ஆப் பதிவிறக்கம் செய்யுங்கள் அல்லது உள்நுழைக." data-en="Download the FYC App or login to access donor phone and WhatsApp contact details.">
-          தானிகளின் தொலைபேசி மற்றும் WhatsApp தொடர்பு விவரங்களுக்கு FYC ஆப் பதிவிறக்கம் செய்யுங்கள் அல்லது உள்நுழைக.
+        <p class="text-sm text-gray-600 mb-2" data-ta="தொலைபேசி எண்கள் தனியுரிமை காரணங்களுக்காக மறைக்கப்பட்டுள்ளன. FYC கனெக்ட் ஆப் மூலம் நேரடியாக தொடர்பு கொள்ளலாம்." data-en="Phone numbers are hidden for privacy. Use the FYC Connect app to request contact directly — all requests are logged for accountability.">
+          தொலைபேசி எண்கள் தனியுரிமை காரணங்களுக்காக மறைக்கப்பட்டுள்ளன. FYC கனெக்ட் ஆப் மூலம் நேரடியாக தொடர்பு கொள்ளலாம்.
         </p>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 text-left">
+          <p class="text-xs text-amber-800 font-medium" data-ta="எப்படி செயல்படுகிறது:" data-en="How it works:">எப்படி செயல்படுகிறது:</p>
+          <ol class="text-xs text-amber-700 mt-1 space-y-1 list-decimal list-inside">
+            <li data-ta="ஆப் பதிவிறக்கம் செய்யுங்கள்" data-en="Download the FYC Connect app">Download the FYC Connect app</li>
+            <li data-ta="உங்கள் கணக்கில் உள்நுழையுங்கள்" data-en="Login with your phone number">Login with your phone number</li>
+            <li data-ta="தொடர்பு கோரவும் — நாட்டுப்பதிவு செய்யப்படும்" data-en="Request contact — it's audit-logged">Request contact — it's audit-logged</li>
+          </ol>
+        </div>
         <div class="flex flex-col gap-3">
           <a
-            href="#"
-            class="w-full py-3 bg-primary text-white rounded-card font-semibold text-sm hover:bg-primary-700 transition-colors"
-            data-ta="ஆப் பதிவிறக்கம் செய்க (விரைவில்)" data-en="Download App (Coming Soon)"
+            href="https://play.google.com/store"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-full py-3 bg-primary text-white rounded-card font-semibold text-sm hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
-            ஆப் பதிவிறக்கம் செய்க (விரைவில்)
+            <span>📱</span>
+            <span data-ta="Google Play இல் பதிவிறக்கம் செய்க" data-en="Get on Google Play">Get on Google Play</span>
           </a>
           <button
-            onclick="document.getElementById('contact-modal').classList.add('hidden'); document.getElementById('contact-modal').classList.remove('flex');"
+            id="close-contact-modal"
             class="w-full py-3 border border-gray-200 text-gray-700 rounded-card font-semibold text-sm hover:bg-gray-50 transition-colors"
             data-ta="மூடு" data-en="Close"
           >
@@ -244,12 +254,17 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     });
   });
 
+  function closeContactModal() {
+    const modal = document.getElementById('contact-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  document.getElementById('close-contact-modal').addEventListener('click', closeContactModal);
+
   // Close modal on backdrop click
   document.getElementById('contact-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      e.currentTarget.classList.add('hidden');
-      e.currentTarget.classList.remove('flex');
-    }
+    if (e.target === e.currentTarget) closeContactModal();
   });
 
   // Initial load
