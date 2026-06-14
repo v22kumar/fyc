@@ -1,0 +1,33 @@
+class ApiConstants {
+  ApiConstants._();
+
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000', // Android emulator → host localhost
+  );
+
+  static const String defaultOrgId = String.fromEnvironment(
+    'DEFAULT_ORG_ID',
+    defaultValue: '8f8b80b7-4b71-4770-b183-5c5f49e49a1d',
+  );
+
+  // Auth
+  static const String otpSend = '/api/v1/auth/otp/send';
+  static const String otpVerify = '/api/v1/auth/otp/verify';
+  static const String register = '/api/v1/auth/register';
+  static const String loginPassword = '/api/v1/auth/login/password';
+  static const String me = '/api/v1/auth/users/me';
+
+  // Blood donors
+  static const String bloodDonors = '/api/v1/blood-donors';
+  static const String registerDonor = '/api/v1/blood-donors/register';
+
+  // Issues
+  static const String issues = '/api/v1/issues';
+
+  // Events
+  static const String events = '/api/v1/events';
+
+  // Membership
+  static const String membershipMyCard = '/api/v1/membership/my-card';
+}

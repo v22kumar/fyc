@@ -1,0 +1,58 @@
+name: fyc_connect
+description: FYC Connect — Multi-tenant community service mobile app for Friends Youth Club Nagercoil
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Networking
+  dio: ^5.5.0
+
+  # Dependency injection
+  get_it: ^7.7.0
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # Local storage
+  shared_preferences: ^2.3.0
+
+  # Deep links (WhatsApp wa.me)
+  url_launcher: ^6.3.0
+
+  # Functional error handling
+  dartz: ^0.10.1
+
+  # QR display
+  qr_flutter: ^4.1.0
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
+    - assets/translations/
