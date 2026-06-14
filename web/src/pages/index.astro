@@ -1,0 +1,163 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const stats = [
+  { value: '1,500+', ta: 'நட்ட மரங்கள்',                     en: 'Trees Planted',      icon: '🌱' },
+  { value: '1,200+', ta: 'இரத்த தானம் பதிவாளர்கள்',           en: 'Blood Donors',       icon: '🩸' },
+  { value: '80+',    ta: 'நடத்திய நிகழ்வுகள்',                 en: 'Events Hosted',      icon: '🎉' },
+  { value: '5,000+', ta: 'பயன் பெற்றோர்',                     en: 'Lives Impacted',     icon: '❤️' },
+];
+
+const services = [
+  {
+    icon: '🩸',
+    href: '/blood-donors',
+    color: 'accent',
+    ta: { title: 'இரத்த தானம்', desc: 'உங்கள் பகுதியில் இரத்த தானம் பதிவாளர்களை தேடுங்கள். அவசர தேவையில் உதவுங்கள்.' },
+    en: { title: 'Blood Donation', desc: 'Find blood donors in your area. Help in emergencies by connecting with verified donors.' },
+  },
+  {
+    icon: '🚧',
+    href: '/submit-issue',
+    color: 'orange',
+    ta: { title: 'பிரச்னை தெரிவிக்க', desc: 'சாலை, விளக்கு, குடிநீர் பிரச்னைகளை தெரிவியுங்கள். நாங்கள் தீர்ப்போம்.' },
+    en: { title: 'Report Issues', desc: 'Report road, street light, and water supply issues. Our volunteers track resolution.' },
+  },
+  {
+    icon: '🎗️',
+    href: '/events',
+    color: 'blue',
+    ta: { title: 'சமூக நிகழ்வுகள்', desc: 'மரம் நடுவு, இரத்த முகாம், சுதந்திர தினம் — அனைத்து நிகழ்வுகளிலும் பங்கேற்கலாம்.' },
+    en: { title: 'Community Events', desc: 'Tree planting, blood camps, Independence Day — join all FYC community events.' },
+  },
+  {
+    icon: '🤝',
+    href: '/about',
+    color: 'green',
+    ta: { title: 'தன்னார்வ சேவை', desc: 'நம் குழுவில் இணைந்து சமூகத்திற்கு சேவை செய்யுங்கள். டிஜிட்டல் சான்றிதழ் பெறுங்கள்.' },
+    en: { title: 'Volunteer', desc: 'Join our team and serve the community. Earn verified digital certificates.' },
+  },
+];
+---
+
+<BaseLayout
+  title="FYC Connect - சமூக சேவையில் இணைவோம்"
+  description="பிரண்ட்ஸ் யூத் கிளப் - நாகர்கோவில். இரத்த தானம், சாலை பிரச்னைகள், சமூக நிகழ்வுகள் — அனைத்தும் ஒரே இடத்தில்."
+>
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-sm text-green-100 mb-6">
+        <span>🌱</span>
+        <span data-ta="பிரண்ட்ஸ் யூத் கிளப் - நாகர்கோவில்" data-en="Friends Youth Club - Nagercoil">
+          பிரண்ட்ஸ் யூத் கிளப் - நாகர்கோவில்
+        </span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
+        <span data-ta="சமூக சேவையில்" data-en="Serving Our">சமூக சேவையில்</span>
+        <br />
+        <span class="text-green-300" data-ta="இணைவோம்" data-en="Community Together">இணைவோம்</span>
+      </h1>
+      <p class="text-lg sm:text-xl text-green-100 mb-8 max-w-2xl mx-auto" data-ta="இரத்த தானம், சாலை பிரச்னைகள், சமூக நிகழ்வுகள் — அனைத்தும் ஒரே இடத்தில்" data-en="Blood donation, public issues, community events — all in one platform">
+        இரத்த தானம், சாலை பிரச்னைகள், சமூக நிகழ்வுகள் — அனைத்தும் ஒரே இடத்தில்
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href="/submit-issue"
+          class="inline-flex items-center justify-center gap-2 bg-white text-primary font-semibold px-8 py-3.5 rounded-card hover:bg-green-50 transition-colors shadow-lg"
+        >
+          <span>🚧</span>
+          <span data-ta="பிரச்னை தெரிவிக்க" data-en="Report an Issue">பிரச்னை தெரிவிக்க</span>
+        </a>
+        <a
+          href="/blood-donors"
+          class="inline-flex items-center justify-center gap-2 bg-accent text-white font-semibold px-8 py-3.5 rounded-card hover:bg-accent-700 transition-colors shadow-lg"
+        >
+          <span>🩸</span>
+          <span data-ta="இரத்த தானம் தேடுக" data-en="Search Blood Donors">இரத்த தானம் தேடுக</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="bg-white border-b border-gray-100 py-12 px-4">
+    <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+      {stats.map((stat) => (
+        <div class="text-center">
+          <div class="text-3xl mb-1">{stat.icon}</div>
+          <div class="text-3xl font-bold text-primary mb-1">{stat.value}</div>
+          <div class="text-sm text-gray-500" data-ta={stat.ta} data-en={stat.en}>{stat.ta}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="py-16 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-2" data-ta="நாங்கள் வழங்குவது" data-en="What We Do">
+        நாங்கள் வழங்குவது
+      </h2>
+      <p class="text-center text-gray-500 mb-10" data-ta="சமூக மேம்பாட்டுக்கான எங்கள் சேவைகள்" data-en="Our services for community development">
+        சமூக மேம்பாட்டுக்கான எங்கள் சேவைகள்
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {services.map((s) => (
+          <a
+            href={s.href}
+            class="group bg-white rounded-card shadow-sm hover:shadow-md border border-gray-100 p-6 transition-all hover:-translate-y-1"
+          >
+            <div class="text-4xl mb-4">{s.icon}</div>
+            <h3 class="font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors" data-ta={s.ta.title} data-en={s.en.title}>
+              {s.ta.title}
+            </h3>
+            <p class="text-sm text-gray-500 leading-relaxed" data-ta={s.ta.desc} data-en={s.en.desc}>
+              {s.ta.desc}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="bg-primary-900 text-white py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4" data-ta="எங்களை பற்றி" data-en="About FYC">
+        எங்களை பற்றி
+      </h2>
+      <p class="text-lg text-green-100 leading-relaxed max-w-2xl mx-auto mb-8" data-ta="பிரண்ட்ஸ் யூத் கிளப் (FYC) 2000 ஆம் ஆண்டு நாகர்கோவிலில் நிறுவப்பட்டது. 25 ஆண்டுகளாக சமூக சேவையில் ஈடுபட்டு வருகிறோம்." data-en="Friends Youth Club (FYC) was founded in Nagercoil in 2000. For 25 years, we have been committed to community service, environmental protection, and social welfare.">
+        பிரண்ட்ஸ் யூத் கிளப் (FYC) 2000 ஆம் ஆண்டு நாகர்கோவிலில் நிறுவப்பட்டது. 25 ஆண்டுகளாக சமூக சேவையில் ஈடுபட்டு வருகிறோம்.
+      </p>
+      <a
+        href="/about"
+        class="inline-flex items-center gap-2 bg-white text-primary font-semibold px-8 py-3 rounded-card hover:bg-green-50 transition-colors"
+      >
+        <span data-ta="மேலும் அறிக" data-en="Learn More">மேலும் அறிக</span>
+        <span>→</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Emergency CTA Banner -->
+  <section class="bg-accent py-10 px-4">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div>
+        <h2 class="text-xl font-bold text-white" data-ta="இரத்த அவசரநிலை?" data-en="Blood Emergency?">
+          இரத்த அவசரநிலை?
+        </h2>
+        <p class="text-red-100 text-sm mt-1" data-ta="உடனடியாக நாகர்கோவில் பகுதியில் தானம் செய்பவர்களை தேடுங்கள்" data-en="Immediately search for donors in the Nagercoil area">
+          உடனடியாக நாகர்கோவில் பகுதியில் தானம் செய்பவர்களை தேடுங்கள்
+        </p>
+      </div>
+      <a
+        href="/blood-donors"
+        class="inline-flex items-center gap-2 bg-white text-accent font-bold px-8 py-3 rounded-card hover:bg-red-50 transition-colors whitespace-nowrap shadow-lg"
+      >
+        <span>🩸</span>
+        <span data-ta="இப்போதே தேடுக" data-en="Search Now">இப்போதே தேடுக</span>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

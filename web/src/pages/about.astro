@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const milestones = [
+  { year: '1998', ta: 'நாகர்கோவிலில் FYC இயக்கம் தொடங்கியது', en: 'FYC movement started in Nagercoil' },
+  { year: '2000', ta: 'அதிகாரப்பூர்வ பதிவு பெறப்பட்டது', en: 'Officially registered as Friends Youth Club' },
+  { year: '2005', ta: '100வது சமூக நிகழ்வு கொண்டாடப்பட்டது', en: 'Celebrated 100th community event' },
+  { year: '2010', ta: '500+ இரத்த தானம் முகாம்கள் நடத்தப்பட்டன', en: '500+ blood donation camps organized' },
+  { year: '2015', ta: '1000+ மரங்கள் நடப்பட்டன', en: '1000+ trees planted across Nagercoil' },
+  { year: '2020', ta: 'COVID நேரத்தில் அவசர உதவி வழங்கப்பட்டது', en: 'Emergency relief provided during COVID-19' },
+  { year: '2026', ta: 'FYC Connect டிஜிட்டல் தளம் தொடங்கியது', en: 'FYC Connect digital platform launched' },
+];
+
+const values = [
+  { icon: '🤝', ta: 'சமூக ஒற்றுமை', en: 'Community Unity' },
+  { icon: '🔍', ta: 'வெளிப்படையான நிர்வாகம்', en: 'Transparent Administration' },
+  { icon: '🌿', ta: 'சுற்றுச்சூழல் அக்கறை', en: 'Environmental Responsibility' },
+  { icon: '💪', ta: 'இளைஞர் சக்தி', en: 'Youth Empowerment' },
+  { icon: '❤️', ta: 'மனித அன்பு', en: 'Human Compassion' },
+  { icon: '📚', ta: 'கல்வி உதவி', en: 'Educational Support' },
+];
+---
+
+<BaseLayout
+  title="எங்களை பற்றி - About FYC"
+  description="பிரண்ட்ஸ் யூத் கிளப் வரலாறு, நோக்கம் மற்றும் மதிப்புகள் - Friends Youth Club History, Mission and Values"
+>
+  <!-- Page Header -->
+  <section class="bg-gradient-to-br from-primary-900 to-primary-700 text-white py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="எங்களை பற்றி" data-en="About FYC">
+        எங்களை பற்றி
+      </h1>
+      <p class="text-green-100" data-ta="1998 முதல் சமூக சேவையில்" data-en="In community service since 1998">
+        1998 முதல் சமூக சேவையில்
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="py-16 px-4">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-4" data-ta="எங்கள் நோக்கம்" data-en="Our Mission">
+          எங்கள் நோக்கம்
+        </h2>
+        <p class="text-gray-600 leading-relaxed mb-4" data-ta="சமூக நலன், சுற்றுச்சூழல் பாதுகாப்பு, கல்வி உதவி மற்றும் ஆரோக்கிய சேவையில் தொடர்ந்து ஈடுபட்டு வருகிறோம். நாகர்கோவில் மற்றும் சுற்றுப்பகுதிகளில் உள்ள மக்களுக்கு சேவை செய்வதே எங்கள் முதன்மை நோக்கம்." data-en="We are committed to social welfare, environmental protection, educational support, and health services. Our primary mission is to serve the people of Nagercoil and surrounding areas.">
+          சமூக நலன், சுற்றுச்சூழல் பாதுகாப்பு, கல்வி உதவி மற்றும் ஆரோக்கிய சேவையில் தொடர்ந்து ஈடுபட்டு வருகிறோம். நாகர்கோவில் மற்றும் சுற்றுப்பகுதிகளில் உள்ள மக்களுக்கு சேவை செய்வதே எங்கள் முதன்மை நோக்கம்.
+        </p>
+        <p class="text-gray-600 leading-relaxed" data-ta="FYC Connect தளம் மூலம் குடிமக்கள், தொண்டர்கள் மற்றும் நிர்வாகிகளை இணைத்து, சமூக சேவையை மேலும் சுலபமாக்குகிறோம்." data-en="Through the FYC Connect platform, we connect citizens, volunteers, and administrators to make community service more accessible and transparent.">
+          FYC Connect தளம் மூலம் குடிமக்கள், தொண்டர்கள் மற்றும் நிர்வாகிகளை இணைத்து, சமூக சேவையை மேலும் சுலபமாக்குகிறோம்.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        {[
+          { value: '25+', ta: 'ஆண்டுகள்', en: 'Years' },
+          { value: '1500+', ta: 'மரங்கள்', en: 'Trees' },
+          { value: '80+', ta: 'நிகழ்வுகள்', en: 'Events' },
+          { value: '1200+', ta: 'தானிகள்', en: 'Donors' },
+        ].map((s) => (
+          <div class="bg-primary-50 rounded-card p-6 text-center border border-primary-100">
+            <div class="text-3xl font-bold text-primary">{s.value}</div>
+            <div class="text-sm text-gray-600 mt-1" data-ta={s.ta} data-en={s.en}>{s.ta}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="bg-gray-50 py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold text-center text-gray-900 mb-10" data-ta="வரலாற்று நிகழ்வுகள்" data-en="Our Journey">
+        வரலாற்று நிகழ்வுகள்
+      </h2>
+      <div class="relative">
+        <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-primary-200"></div>
+        <div class="space-y-8">
+          {milestones.map((m) => (
+            <div class="flex gap-6 items-start">
+              <div class="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0 relative z-10 shadow-md">
+                {m.year}
+              </div>
+              <div class="bg-white rounded-card shadow-sm border border-gray-100 p-4 flex-1 mt-2">
+                <p class="text-gray-700" data-ta={m.ta} data-en={m.en}>{m.ta}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="py-16 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold text-center text-gray-900 mb-10" data-ta="எங்கள் மதிப்புகள்" data-en="Our Values">
+        எங்கள் மதிப்புகள்
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+        {values.map((v) => (
+          <div class="bg-white rounded-card shadow-sm border border-gray-100 p-6 text-center hover:border-primary-300 transition-colors">
+            <div class="text-4xl mb-3">{v.icon}</div>
+            <div class="font-semibold text-gray-800" data-ta={v.ta} data-en={v.en}>{v.ta}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Join CTA -->
+  <section class="bg-primary py-12 px-4">
+    <div class="max-w-3xl mx-auto text-center text-white">
+      <h2 class="text-2xl font-bold mb-3" data-ta="நம்முடன் இணையுங்கள்" data-en="Join Us">
+        நம்முடன் இணையுங்கள்
+      </h2>
+      <p class="text-green-100 mb-6" data-ta="FYC App பதிவிறக்கி, தொண்டராக பதிவு செய்து சமூக சேவையில் பங்கேற்கலாம்." data-en="Download the FYC App, register as a volunteer, and be part of community service.">
+        FYC App பதிவிறக்கி, தொண்டராக பதிவு செய்து சமூக சேவையில் பங்கேற்கலாம்.
+      </p>
+      <a
+        href="/submit-issue"
+        class="inline-flex items-center gap-2 bg-white text-primary font-semibold px-8 py-3 rounded-card hover:bg-green-50 transition-colors"
+      >
+        <span data-ta="பிரச்னை தெரிவிக்க" data-en="Report an Issue">பிரச்னை தெரிவிக்க</span>
+        <span>→</span>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,80 @@
+---
+const links = [
+  { href: '/',             ta: 'முகப்பு',           en: 'Home' },
+  { href: '/about',        ta: 'எங்களை பற்றி',      en: 'About' },
+  { href: '/blood-donors', ta: 'இரத்த தானம்',       en: 'Blood Donation' },
+  { href: '/submit-issue', ta: 'பிரச்னை தெரிவிக்க',  en: 'Report Issue' },
+  { href: '/events',       ta: 'நிகழ்வுகள்',         en: 'Events' },
+];
+---
+
+<footer class="bg-primary-900 text-green-100 mt-16">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Brand -->
+      <div>
+        <div class="flex items-center gap-2 text-white font-bold text-xl mb-3">
+          <span class="text-2xl">🌱</span>
+          <span>FYC Connect</span>
+        </div>
+        <p class="text-sm text-green-200/80" data-ta="சமூக சேவையில் 25 ஆண்டுகள்" data-en="25 Years of Community Service">
+          சமூக சேவையில் 25 ஆண்டுகள்
+        </p>
+        <p class="text-sm text-green-200/60 mt-2">
+          Friends Youth Club, Nagercoil<br />
+          Tamil Nadu, India
+        </p>
+      </div>
+
+      <!-- Links -->
+      <div>
+        <h3 class="font-semibold text-white mb-3" data-ta="இணைப்புகள்" data-en="Quick Links">
+          இணைப்புகள்
+        </h3>
+        <ul class="space-y-2">
+          {links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class="text-sm text-green-200/70 hover:text-white transition-colors"
+                data-ta={link.ta}
+                data-en={link.en}
+              >
+                {link.ta}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h3 class="font-semibold text-white mb-3" data-ta="தொடர்பு" data-en="Contact">
+          தொடர்பு
+        </h3>
+        <ul class="space-y-2 text-sm text-green-200/70">
+          <li class="flex items-center gap-2">
+            <span>📧</span>
+            <a href="mailto:contact@fycconnect.org" class="hover:text-white transition-colors">
+              contact@fycconnect.org
+            </a>
+          </li>
+          <li class="flex items-center gap-2">
+            <span>📱</span>
+            <span data-ta="ஆப் விரைவில் வருகிறது" data-en="App coming soon">ஆப் விரைவில் வருகிறது</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span>📍</span>
+            <span>Nagercoil, Tamil Nadu 629001</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-white/10 mt-8 pt-6 text-center text-sm text-green-200/50">
+      <span data-ta="© 2026 அனைத்து உரிமைகளும் FYC Connect சொந்தம்" data-en="© 2026 All rights reserved by FYC Connect">
+        © 2026 அனைத்து உரிமைகளும் FYC Connect சொந்தம்
+      </span>
+    </div>
+  </div>
+</footer>

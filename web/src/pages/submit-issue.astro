@@ -1,0 +1,338 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const categories = [
+  { value: 'ROAD',         ta: 'சாலை',         en: 'Road' },
+  { value: 'WATER',        ta: 'குடிநீர்',       en: 'Water Supply' },
+  { value: 'STREET_LIGHT', ta: 'தெரு விளக்கு',   en: 'Street Light' },
+  { value: 'GARBAGE',      ta: 'குப்பை',         en: 'Garbage' },
+  { value: 'SAFETY',       ta: 'பாதுகாப்பு',     en: 'Safety' },
+  { value: 'OTHER',        ta: 'மற்றவை',         en: 'Other' },
+];
+
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+---
+
+<BaseLayout
+  title="பிரச்னை தெரிவிக்க - Report a Public Issue"
+  description="உங்கள் பகுதியில் உள்ள சாலை, விளக்கு, குடிநீர் பிரச்னைகளை ஆன்லைனில் தெரிவியுங்கள்."
+>
+  <!-- Page Header -->
+  <section class="bg-gradient-to-br from-primary-900 to-primary-700 text-white py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="text-5xl mb-4">🚧</div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="பிரச்னை தெரிவிக்க" data-en="Report a Public Issue">
+        பிரச்னை தெரிவிக்க
+      </h1>
+      <p class="text-green-100" data-ta="சாலை, விளக்கு, குடிநீர் பிரச்னைகளை தெரிவியுங்கள். தொண்டர்கள் விரைவில் ஆய்வு செய்வார்கள்." data-en="Report road, street light, water supply issues. Volunteers will inspect them soon.">
+        சாலை, விளக்கு, குடிநீர் பிரச்னைகளை தெரிவியுங்கள். தொண்டர்கள் விரைவில் ஆய்வு செய்வார்கள்.
+      </p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="bg-white border-b border-gray-100 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+        {[
+          { icon: '📝', step: '1', ta: 'தெரிவிக்கவும்', en: 'Submit your report' },
+          { icon: '🔍', step: '2', ta: 'தொண்டர் ஆய்வு', en: 'Volunteer inspects' },
+          { icon: '✅', step: '3', ta: 'தீர்வு கிடைக்கும்', en: 'Issue resolved' },
+        ].map((s) => (
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-primary-50 border-2 border-primary-200 flex items-center justify-center text-xl">
+              {s.icon}
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 font-medium" data-ta={`படி ${s.step}`} data-en={`Step ${s.step}`}>
+                படி {s.step}
+              </div>
+              <div class="text-sm font-semibold text-gray-800" data-ta={s.ta} data-en={s.en}>{s.ta}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Success message -->
+      <div id="success-msg" class="hidden bg-green-50 border border-green-200 rounded-card p-6 mb-6 text-center">
+        <div class="text-4xl mb-3">✅</div>
+        <h3 class="font-bold text-green-800 text-lg mb-2" data-ta="வெற்றிகரமாக தெரிவிக்கப்பட்டது!" data-en="Successfully Reported!">
+          வெற்றிகரமாக தெரிவிக்கப்பட்டது!
+        </h3>
+        <p class="text-green-700 text-sm" data-ta="உங்கள் பிரச்னை பதிவு செய்யப்பட்டது. தொண்டர்கள் விரைவில் ஆய்வு செய்வார்கள்." data-en="Your issue has been recorded. Volunteers will inspect it soon.">
+          உங்கள் பிரச்னை பதிவு செய்யப்பட்டது. தொண்டர்கள் விரைவில் ஆய்வு செய்வார்கள்.
+        </p>
+        <p id="issue-ref" class="mt-2 text-xs text-green-600 font-mono"></p>
+        <button
+          onclick="document.getElementById('issue-form').reset(); document.getElementById('success-msg').classList.add('hidden'); document.getElementById('issue-form-card').classList.remove('hidden');"
+          class="mt-4 px-6 py-2 bg-primary text-white rounded-card text-sm font-medium hover:bg-primary-700 transition-colors"
+          data-ta="மற்றொரு பிரச்னை தெரிவிக்க" data-en="Report Another Issue"
+        >
+          மற்றொரு பிரச்னை தெரிவிக்க
+        </button>
+      </div>
+
+      <!-- Error message -->
+      <div id="error-msg" class="hidden bg-red-50 border border-red-200 rounded-card p-4 mb-6">
+        <div class="flex items-center gap-2 text-red-800">
+          <span>⚠️</span>
+          <span id="error-text" class="text-sm font-medium" data-ta="தெரிவிப்பதில் பிழை. மீண்டும் முயற்சிக்கவும்." data-en="Failed to submit. Please try again.">
+            தெரிவிப்பதில் பிழை. மீண்டும் முயற்சிக்கவும்.
+          </span>
+        </div>
+      </div>
+
+      <!-- Form card -->
+      <div id="issue-form-card" class="bg-white rounded-card shadow-sm border border-gray-100 p-6 sm:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6" data-ta="பிரச்னை விவரங்கள்" data-en="Issue Details">
+          பிரச்னை விவரங்கள்
+        </h2>
+        <form id="issue-form" class="space-y-5" novalidate>
+          <!-- Category -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="பிரச்னை வகை" data-en="Issue Category">பிரச்னை வகை</span>
+              <span class="text-accent ml-1">*</span>
+            </label>
+            <select
+              id="category"
+              required
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-card text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white transition-colors"
+            >
+              <option value="" data-ta="தேர்ந்தெடுக்கவும்" data-en="Select category">தேர்ந்தெடுக்கவும்</option>
+              {categories.map((c) => (
+                <option value={c.value} data-ta={c.ta} data-en={c.en}>{c.ta}</option>
+              ))}
+            </select>
+          </div>
+
+          <!-- Description Tamil -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="தமிழில் விவரம்" data-en="Description in Tamil">தமிழில் விவரம்</span>
+              <span class="text-accent ml-1">*</span>
+            </label>
+            <textarea
+              id="desc-ta"
+              rows="3"
+              required
+              placeholder="சாலையில் பள்ளம் உள்ளது..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-card text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Description English -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="ஆங்கிலத்தில் விவரம்" data-en="Description in English">ஆங்கிலத்தில் விவரம்</span>
+              <span class="text-gray-400 text-xs ml-1" data-ta="(விருப்பம்)" data-en="(optional)">(விருப்பம்)</span>
+            </label>
+            <textarea
+              id="desc-en"
+              rows="3"
+              placeholder="There is a pothole on the road..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-card text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Photo URL -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="புகைப்பட சுட்டி (URL)" data-en="Photo URL">புகைப்பட சுட்டி (URL)</span>
+              <span class="text-accent ml-1">*</span>
+            </label>
+            <input
+              type="url"
+              id="photo-url"
+              required
+              placeholder="https://..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-card text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+            />
+            <p class="text-xs text-gray-400 mt-1" data-ta="புகைப்படத்தை Google Drive அல்லது Imgur-ல் பதிவேற்றி URL கொடுக்கவும்" data-en="Upload photo to Google Drive or Imgur and paste the URL">
+              புகைப்படத்தை Google Drive அல்லது Imgur-ல் பதிவேற்றி URL கொடுக்கவும்
+            </p>
+          </div>
+
+          <!-- Location -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span data-ta="இடம்" data-en="Location">இடம்</span>
+              <span class="text-accent ml-1">*</span>
+            </label>
+            <button
+              type="button"
+              id="geo-btn"
+              class="mb-3 flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary border border-primary-200 rounded-card text-sm font-medium hover:bg-primary-100 transition-colors"
+              onclick="autoDetectLocation()"
+            >
+              <span>📍</span>
+              <span data-ta="தானாக கண்டுபிடி" data-en="Auto-detect Location">தானாக கண்டுபிடி</span>
+            </button>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1" data-ta="அட்சாங்சம்" data-en="Latitude">அட்சாங்சம்</label>
+                <input
+                  type="number"
+                  id="latitude"
+                  required
+                  step="any"
+                  placeholder="8.1833"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1" data-ta="தீர்க்காங்சம்" data-en="Longitude">தீர்க்காங்சம்</label>
+                <input
+                  type="number"
+                  id="longitude"
+                  required
+                  step="any"
+                  placeholder="77.4119"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full py-3.5 bg-primary text-white font-bold rounded-card hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+          >
+            <span id="submit-label" data-ta="தெரிவிக்கவும்" data-en="Submit Report">தெரிவிக்கவும்</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Anonymous notice -->
+      <p class="text-center text-xs text-gray-400 mt-4" data-ta="பதிவு இல்லாமல் தெரிவிக்கலாம். அதிக தகவல்களுக்கு FYC App பதிவிறக்கம் செய்யுங்கள்." data-en="No registration required. Download the FYC App for more features.">
+        பதிவு இல்லாமல் தெரிவிக்கலாம். அதிக தகவல்களுக்கு FYC App பதிவிறக்கம் செய்யுங்கள்.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+  function getLang() {
+    return localStorage.getItem('fyc_lang') || 'ta';
+  }
+
+  function t(ta, en) {
+    return getLang() === 'ta' ? ta : en;
+  }
+
+  // Auto-detect GPS location
+  window.autoDetectLocation = function () {
+    const btn = document.getElementById('geo-btn');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></span> <span>${t('கண்டுபிடிக்கிறது...', 'Detecting...')}</span>`;
+
+    if (!navigator.geolocation) {
+      btn.innerHTML = originalContent;
+      btn.disabled = false;
+      alert(t('இந்த சாதனத்தில் GPS கிடைக்கவில்லை', 'Geolocation not available on this device'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+        document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+        btn.innerHTML = `<span>✅</span> <span>${t('இடம் கண்டுபிடிக்கப்பட்டது', 'Location detected')}</span>`;
+        btn.disabled = false;
+      },
+      () => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        alert(t('இடம் கண்டுபிடிக்க முடியவில்லை. கைமுறையாக நுழைக்கவும்.', 'Could not detect location. Please enter manually.'));
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  // Form submission
+  document.getElementById('issue-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorDiv = document.getElementById('error-msg');
+    const successDiv = document.getElementById('success-msg');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitLabel = document.getElementById('submit-label');
+
+    errorDiv.classList.add('hidden');
+
+    const category = document.getElementById('category').value;
+    const descTa = document.getElementById('desc-ta').value.trim();
+    const descEn = document.getElementById('desc-en').value.trim();
+    const photoUrl = document.getElementById('photo-url').value.trim();
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+
+    // Validation
+    if (!category || !descTa || !photoUrl || !lat || !lng) {
+      errorDiv.classList.remove('hidden');
+      document.getElementById('error-text').textContent = t(
+        'தயவுசெய்து அனைத்து கட்டாய புலங்களையும் நிரப்பவும்.',
+        'Please fill in all required fields.'
+      );
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitLabel.textContent = t('தெரிவிக்கிறது...', 'Submitting...');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/issues`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Organization-ID': DEFAULT_ORG_ID,
+        },
+        body: JSON.stringify({
+          category,
+          description_ta: descTa,
+          description_en: descEn || descTa,
+          photo_url: photoUrl,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || 'API error');
+      }
+
+      const issue = await response.json();
+      document.getElementById('issue-ref').textContent = `${t('பதிவு ID', 'Report ID')}: ${issue.id}`;
+      document.getElementById('issue-form-card').classList.add('hidden');
+      successDiv.classList.remove('hidden');
+    } catch (err) {
+      errorDiv.classList.remove('hidden');
+      document.getElementById('error-text').textContent = err.message || t('பிழை ஏற்பட்டது', 'An error occurred');
+    } finally {
+      submitBtn.disabled = false;
+      submitLabel.textContent = t('தெரிவிக்கவும்', 'Submit Report');
+    }
+  });
+
+  // Keep category option labels in sync with language
+  function syncCategoryOptions() {
+    const lang = getLang();
+    document.querySelectorAll('#category option[data-ta]').forEach((opt) => {
+      opt.textContent = lang === 'ta' ? opt.dataset.ta : opt.dataset.en;
+    });
+  }
+
+  // Observe lang changes
+  const observer = new MutationObserver(() => syncCategoryOptions());
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
+  syncCategoryOptions();
+</script>
