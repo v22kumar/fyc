@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+
+# Tests
+tests/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Dev artifacts
+uploads/
+*.db
+*.sqlite
+
+# Git
+.git/
+.gitignore

@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Build output
+dist/
+.astro/
+
+# Environment
+.env
+.env.*
+
+# Dev artifacts
+.DS_Store
+
+# Git
+.git/
+.gitignore

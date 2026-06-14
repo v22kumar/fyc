@@ -1,6 +1,9 @@
 import os
-# Set before any app imports so pydantic-settings picks it up
+# Set before any app imports so pydantic-settings picks them up.
+# These override any .env file present in the backend directory.
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ.setdefault("OTP_BYPASS_CODE", "123456")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 
 import pytest
 from fastapi.testclient import TestClient
