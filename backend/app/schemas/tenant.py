@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 from datetime import datetime
 
@@ -11,11 +11,9 @@ class OrganizationCreate(OrganizationBase):
     pass
 
 class OrganizationOut(OrganizationBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     is_active: bool
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
-        # Pydantic v2 support for model attributes conversion
