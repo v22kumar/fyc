@@ -1,0 +1,329 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ta">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} - FYC Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style is:global>
+      :root {
+        --color-primary: #064e3b; /* Forest Green */
+        --color-primary-light: #0f5132;
+        --color-secondary: #991b1b; /* Crimson Red */
+        --color-secondary-light: #b91c1c;
+        --color-bg-light: #f4f5f6;
+        --color-text-dark: #1f2937;
+        --color-text-muted: #4b5563;
+        --color-card-bg: #ffffff;
+        --radius-lg: 16px;
+        --radius-md: 8px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+        --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background-color: var(--color-bg-light);
+        color: var(--color-text-dark);
+        line-height: 1.6;
+      }
+
+      header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: var(--color-primary);
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        font-size: 1.25rem;
+      }
+
+      .logo-badge {
+        background: linear-gradient(135deg, #eab308, var(--color-primary));
+        color: #ffffff;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 800;
+      }
+
+      nav {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
+
+      nav a {
+        text-decoration: none;
+        color: var(--color-text-muted);
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+      }
+
+      nav a:hover, nav a.active {
+        color: var(--color-primary);
+      }
+
+      .lang-toggle {
+        background-color: var(--color-bg-light);
+        border: 1px solid #d1d5db;
+        border-radius: var(--radius-md);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .lang-toggle:hover {
+        background-color: #e5e7eb;
+      }
+
+      .lang-btn {
+        opacity: 0.5;
+      }
+
+      .lang-btn.active {
+        opacity: 1;
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        min-height: calc(100vh - 180px);
+      }
+
+      footer {
+        background-color: #111827;
+        color: #ffffff;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        margin-top: 4rem;
+      }
+
+      .footer-grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .footer-stats {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+
+      .footer-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #9ca3af;
+      }
+
+      .footer-stat-number {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      /* Card styling helper */
+      .card {
+        background-color: var(--color-card-bg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+        border: 1px solid #f3f4f6;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      /* Button helper */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.65rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        font-size: 0.9rem;
+      }
+
+      .btn-primary {
+        background-color: var(--color-primary);
+        color: #ffffff;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--color-primary-light);
+      }
+
+      .btn-secondary {
+        background-color: var(--color-secondary);
+        color: #ffffff;
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--color-secondary-light);
+      }
+
+      /* Grid helper */
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo-container">
+        <span class="logo-badge">FYC</span>
+        <span>FYC CONNECT</span>
+      </a>
+      <nav>
+        <a href="/" id="nav-home">முகப்பு / Home</a>
+        <a href="/donors" id="nav-donors">இரத்த தானம் / Blood Donors</a>
+        <a href="/issues" id="nav-issues">பொது பிரச்சனைகள் / Public Issues</a>
+        <a href="/directory" id="nav-directory">அரசு தொடர்புகள் / Directory</a>
+        <a href="/opportunities" id="nav-opps">வாய்ப்புகள் / Opportunities</a>
+        <button class="lang-toggle" id="lang-toggle-btn">
+          <span class="lang-btn active" id="lang-ta">தமிழ்</span>
+          <span>|</span>
+          <span class="lang-btn" id="lang-en">English</span>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <div class="footer-grid">
+        <p style="font-weight: 600; font-size: 1.1rem;">Friends Youth Club (FYC) - Established in 2000</p>
+        <p style="color: #9ca3af; font-size: 0.9rem;">Together, We Can Make a Difference. More than friends, a brotherhood.</p>
+        
+        <div class="footer-stats">
+          <div class="footer-stat-item">
+            <span>🎖️</span>
+            <span>25+ Years of Service (1998 - 2025)</span>
+          </div>
+          <div class="footer-stat-item">
+            <span>🌳</span>
+            <span class="footer-stat-number">1500+</span> Trees Planted
+          </div>
+          <div class="footer-stat-item">
+            <span>🩸</span>
+            <span class="footer-stat-number">1200+</span> Blood Donors
+          </div>
+          <div class="footer-stat-item">
+            <span>🤝</span>
+            <span class="footer-stat-number">5000+</span> Lives Impacted
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      // Simple client-side bilingual translation handler
+      const toggle = document.getElementById('lang-toggle-btn');
+      const btnTa = document.getElementById('lang-ta');
+      const btnEn = document.getElementById('lang-en');
+
+      let currentLang = localStorage.getItem('lang') || 'ta';
+      updateLangUI(currentLang);
+
+      toggle.addEventListener('click', () => {
+        currentLang = currentLang === 'ta' ? 'en' : 'ta';
+        localStorage.setItem('lang', currentLang);
+        updateLangUI(currentLang);
+        // Dispatch custom event to notify components
+        window.dispatchEvent(new CustomEvent('lang-change', { detail: currentLang }));
+      });
+
+      function updateLangUI(lang) {
+        document.documentElement.lang = lang;
+        if (lang === 'ta') {
+          btnTa.classList.add('active');
+          btnEn.classList.remove('active');
+        } else {
+          btnEn.classList.add('active');
+          btnTa.classList.remove('active');
+        }
+        
+        // Translate static navigation labels dynamically if they exist
+        const translations = {
+          ta: {
+            'nav-home': 'முகப்பு',
+            'nav-donors': 'இரத்த தானம்',
+            'nav-issues': 'பொது பிரச்சனைகள்',
+            'nav-directory': 'அரசு தொடர்புகள்',
+            'nav-opps': 'கல்வி/வேலைவாய்ப்புகள்'
+          },
+          en: {
+            'nav-home': 'Home',
+            'nav-donors': 'Blood Donors',
+            'nav-issues': 'Public Issues',
+            'nav-directory': 'Government Directory',
+            'nav-opps': 'Opportunity Hub'
+          }
+        };
+
+        const activeTrans = translations[lang];
+        for (const [id, label] of Object.entries(activeTrans)) {
+          const el = document.getElementById(id);
+          if (el) el.textContent = label;
+        }
+      }
+    </script>
+  </body>
+</html>
