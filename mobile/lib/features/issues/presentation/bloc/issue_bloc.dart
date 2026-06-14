@@ -23,6 +23,7 @@ class IssueBloc extends Bloc<IssueEvent, IssueState> {
       descriptionEn: event.descriptionEn,
       latitude: event.latitude,
       longitude: event.longitude,
+      photoUrl: event.photoUrl,
     );
     result.fold(
       (f) => emit(IssueFailure(f.message)),

@@ -47,7 +47,7 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     latitude = Column(Numeric(10, 8), nullable=False)
     longitude = Column(Numeric(11, 8), nullable=False)
     geography_id = Column(GUID(), ForeignKey("geographic_nodes.id", ondelete="SET NULL"), nullable=True)
-    photo_url = Column(Text, nullable=False)
+    photo_url = Column(Text, nullable=True)
     verification_photo_url = Column(Text, nullable=True)
     status = Column(SAEnum(IssueStatus, name="issue_status"), default=IssueStatus.NEW, nullable=False)
     assigned_volunteer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

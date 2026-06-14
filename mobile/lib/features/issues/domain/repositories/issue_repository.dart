@@ -9,5 +9,6 @@ abstract class IssueRepository {
     required String descriptionEn,
     required double latitude,
     required double longitude,
+    String? photoUrl,
   });
 }

@@ -12,6 +12,7 @@ class IssueSubmitRequested extends IssueEvent {
   final String descriptionEn;
   final double latitude;
   final double longitude;
+  final String? photoUrl;
 
   const IssueSubmitRequested({
     required this.category,
@@ -19,9 +20,10 @@ class IssueSubmitRequested extends IssueEvent {
     required this.descriptionEn,
     required this.latitude,
     required this.longitude,
+    this.photoUrl,
   });
 
   @override
   List<Object?> get props =>
-      [category, descriptionTa, descriptionEn, latitude, longitude];
+      [category, descriptionTa, descriptionEn, latitude, longitude, photoUrl];
 }

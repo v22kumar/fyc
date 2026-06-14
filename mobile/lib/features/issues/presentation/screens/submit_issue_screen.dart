@@ -1,11 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import '../bloc/issue_bloc.dart';
 import '../bloc/issue_event.dart';
 import '../bloc/issue_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../service_locator.dart';
 
 class SubmitIssueScreen extends StatefulWidget {
@@ -17,22 +21,48 @@ class SubmitIssueScreen extends StatefulWidget {
 
 class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
   static const _categories = [
-    ('ROAD', '🛣️', 'சாலை பிரச்சனை', 'Road Issue'),
-    ('WATER', '💧', 'தண்ணீர் பிரச்சனை', 'Water Issue'),
-    ('ELECTRICITY', '⚡', 'மின்சாரம்', 'Electricity'),
-    ('GARBAGE', '🗑️', 'குப்பை', 'Garbage'),
-    ('TREE', '🌳', 'மரம்', 'Tree'),
-    ('OTHER', '📋', 'மற்றவை', 'Other'),
+    ('ROAD',         '🛣️',  'சாலை பிரச்சனை',    'Road Issue'),
+    ('WATER',        '💧',  'தண்ணீர் பிரச்சனை',  'Water Issue'),
+    ('STREET_LIGHT', '💡',  'தெரு விளக்கு',       'Street Light'),
+    ('GARBAGE',      '🗑️', 'குப்பை',            'Garbage'),
+    ('SAFETY',       '🚨',  'பாதுகாப்பு',          'Safety'),
+    ('OTHER',        '📋',  'மற்றவை',            'Other'),
   ];
 
   String _selectedCategory = 'ROAD';
   final _descTaCtrl = TextEditingController();
   final _descEnCtrl = TextEditingController();
-  // Default coordinates — in production, use geolocator package
   double _lat = 8.1833;
   double _lng = 77.4119;
+  File? _photo;
+  String? _uploadedPhotoUrl;
+  bool _uploading = false;
 
   String get _lang => sl<LocalStorage>().getLang();
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+      maxWidth: 1280,
+    );
+    if (picked == null) return;
+    setState(() { _photo = File(picked.path); _uploading = true; });
+    try {
+      final client = sl<ApiClient>();
+      final form = FormData.fromMap({
+        'file': await MultipartFile.fromFile(picked.path, filename: 'issue.jpg'),
+      });
+      final resp = await client.dio.post('/api/v1/media/upload', data: form);
+      setState(() { _uploadedPhotoUrl = resp.data['url'] as String?; });
+    } catch (_) {
+      // Photo upload failed — submission will proceed without it
+      setState(() { _photo = null; });
+    } finally {
+      setState(() { _uploading = false; });
+    }
+  }
 
   @override
   void dispose() {
@@ -49,6 +79,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             descriptionEn: _descEnCtrl.text,
             latitude: _lat,
             longitude: _lng,
+            photoUrl: _uploadedPhotoUrl,
           ),
         );
   }
@@ -144,6 +175,17 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isTa ? 'புகைப்படம் (விரும்பினால்)' : 'Photo (optional)',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              _PhotoPicker(
+                photo: _photo,
+                uploading: _uploading,
+                onPick: _pickPhoto,
               ),
               const SizedBox(height: 16),
               _LocationRow(lat: _lat, lng: _lng),
@@ -261,6 +303,51 @@ class _CategoryGrid extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  final File? photo;
+  final bool uploading;
+  final VoidCallback onPick;
+
+  const _PhotoPicker({
+    required this.photo,
+    required this.uploading,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: uploading ? null : onPick,
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: photo != null ? AppColors.primary : Colors.grey[300]!,
+            style: photo != null ? BorderStyle.solid : BorderStyle.solid,
+          ),
+          color: Colors.grey[50],
+        ),
+        child: uploading
+            ? const Center(child: CircularProgressIndicator())
+            : photo != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.file(photo!, fit: BoxFit.cover, width: double.infinity),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.camera_alt, color: Colors.grey, size: 32),
+                      SizedBox(height: 6),
+                      Text('Tap to take photo', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    ],
+                  ),
+      ),
     );
   }
 }

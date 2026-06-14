@@ -13,6 +13,7 @@ class SubmitIssueUseCase {
     required String descriptionEn,
     required double latitude,
     required double longitude,
+    String? photoUrl,
   }) {
     if (descriptionTa.trim().isEmpty && descriptionEn.trim().isEmpty) {
       return Future.value(
@@ -25,6 +26,7 @@ class SubmitIssueUseCase {
       descriptionEn: descriptionEn.trim(),
       latitude: latitude,
       longitude: longitude,
+      photoUrl: photoUrl,
     );
   }
 }

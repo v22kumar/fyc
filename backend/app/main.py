@@ -11,8 +11,10 @@ from app.middleware.tenant import TenantMiddleware
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile
 from app.core.security import get_password_hash
+from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
+from app.routers import users as users_router, media as media_router
 
 # Import all models so Base.metadata sees them before create_all
 import app.models  # noqa: F401
@@ -103,6 +105,13 @@ app.include_router(blood_donors.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(membership.router, prefix="/api/v1")
+app.include_router(users_router.router, prefix="/api/v1")
+app.include_router(media_router.router, prefix="/api/v1")
+
+# Serve uploaded files (swap for S3 CDN URL in production)
+from pathlib import Path as FilePath
+FilePath("uploads").mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.get("/api/health", tags=["System"])

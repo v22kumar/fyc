@@ -15,6 +15,7 @@ class IssueRepositoryImpl implements IssueRepository {
     required String descriptionEn,
     required double latitude,
     required double longitude,
+    String? photoUrl,
   }) async {
     try {
       final issue = await _remote.submitIssue(
@@ -23,6 +24,7 @@ class IssueRepositoryImpl implements IssueRepository {
         descriptionEn: descriptionEn,
         latitude: latitude,
         longitude: longitude,
+        photoUrl: photoUrl,
       );
       return Right(issue);
     } on Failure catch (f) {

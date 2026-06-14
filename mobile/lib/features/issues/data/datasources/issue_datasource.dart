@@ -11,6 +11,7 @@ abstract class IssueDataSource {
     required String descriptionEn,
     required double latitude,
     required double longitude,
+    String? photoUrl,
   });
 }
 
@@ -25,17 +26,20 @@ class IssueDataSourceImpl implements IssueDataSource {
     required String descriptionEn,
     required double latitude,
     required double longitude,
+    String? photoUrl,
   }) async {
     try {
+      final body = <String, dynamic>{
+        'category': category,
+        'description_ta': descriptionTa,
+        'description_en': descriptionEn,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+      if (photoUrl != null) body['photo_url'] = photoUrl;
       final response = await _client.dio.post(
         ApiConstants.issues,
-        data: {
-          'category': category,
-          'description_ta': descriptionTa,
-          'description_en': descriptionEn,
-          'latitude': latitude,
-          'longitude': longitude,
-        },
+        data: body,
       );
       return IssueModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {

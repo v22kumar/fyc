@@ -11,7 +11,7 @@ class IssueCreate(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     geography_id: Optional[UUID] = None
-    photo_url: str = Field(..., description="URL of uploaded photo (presigned S3 or local path)")
+    photo_url: Optional[str] = None
 
 class IssueStatusUpdate(BaseModel):
     status: IssueStatus
@@ -28,7 +28,7 @@ class IssueOut(BaseModel):
     latitude: float
     longitude: float
     geography_id: Optional[UUID]
-    photo_url: str
+    photo_url: Optional[str]
     verification_photo_url: Optional[str]
     status: IssueStatus
     assigned_volunteer_id: Optional[UUID]
