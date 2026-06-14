@@ -100,6 +100,38 @@ abstract class AppLocalizations {
   String get bloodGroupRequired;
   String get contactPrivacyNote;
   String get updateAvailability;
+
+  // ── Events ────────────────────────────────────────────────
+  String get eventsUpcoming;
+  String get eventsPast;
+  String get eventsNoEvents;
+  String get eventsCheckIn;
+  String get eventsEnded;
+
+  // ── Issues ────────────────────────────────────────────────
+  String get issueReportTitle;
+  String get issueSubmittedTitle;
+  String get issueSelectCategory;
+  String get issueDescriptionTamil;
+  String get issueDescriptionEnglish;
+  String get issuePhotoOptional;
+  String get issueTapToPhoto;
+  String get issueSubmitBtn;
+
+  // ── Membership ────────────────────────────────────────────
+  String get membershipCardTitle;
+  String get membershipFlipHint;
+  String get membershipNoCard;
+  String get membershipContactAdmin;
+
+  // ── Common ────────────────────────────────────────────────
+  String get done;
+  String get scanQr;
+  String get goBack;
+  String get selectDate;
+  String get iAmAvailable;
+  String get notAvailableNow;
+  String get lastDonationDateOptional;
 }
 
 class _AppLocalizationsDelegate

@@ -7,6 +7,8 @@ import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
 
 class BloodDonationHubScreen extends StatefulWidget {
   const BloodDonationHubScreen({super.key});
@@ -16,6 +18,8 @@ class BloodDonationHubScreen extends StatefulWidget {
 }
 
 class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
+  String get _lang => sl<LocalStorage>().getLang();
+
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   String? _selectedGroup;
 
@@ -64,12 +68,15 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Blood Donation Hub'),
+        title: Text(_lang == 'ta' ? 'இரத்த தான மையம்' : 'Blood Donation Hub'),
         actions: [
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
             icon: const Icon(Icons.volunteer_activism, color: Colors.white),
-            label: const Text('Register', style: TextStyle(color: Colors.white)),
+            label: Text(
+              _lang == 'ta' ? 'பதிவு' : 'Register',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -288,14 +295,22 @@ class _DonorCard extends StatelessWidget {
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: onContact,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              child: const Text('Contact', style: TextStyle(fontSize: 12)),
+            Builder(
+              builder: (context) {
+                final lang = sl<LocalStorage>().getLang();
+                return ElevatedButton(
+                  onPressed: onContact,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: Text(
+                    lang == 'ta' ? 'தொடர்பு' : 'Contact',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -341,8 +356,9 @@ class _ContactDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = sl<LocalStorage>().getLang();
     return AlertDialog(
-      title: const Text('Request Contact'),
+      title: Text(lang == 'ta' ? 'தொடர்பு கோரிக்கை' : 'Request Contact'),
       content: Text(
         'Your contact request for this ${donor.bloodGroup} donor will be logged. '
         'Their phone number will be revealed.',
@@ -350,13 +366,13 @@ class _ContactDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(lang == 'ta' ? 'ரத்து' : 'Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
             onConfirm();
           },
-          child: const Text('Reveal Contact'),
+          child: Text(lang == 'ta' ? 'தொடர்பு காட்டு' : 'Reveal Contact'),
         ),
       ],
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/storage/local_storage.dart';
+import '../../../service_locator.dart';
 
 class ComingSoonScreen extends StatelessWidget {
   final String title;
@@ -18,6 +20,11 @@ class ComingSoonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = sl<LocalStorage>().getLang();
+    final subtitle = lang == 'ta'
+        ? (subtitleTa ?? subtitleEn ?? 'விரைவில் வருகிறது. தொடர்ந்து பின்தொடரவும்!')
+        : (subtitleEn ?? 'This feature is coming soon. Stay tuned!');
+
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: Center(
@@ -39,7 +46,7 @@ class ComingSoonScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                subtitleEn ?? 'This feature is coming soon. Stay tuned!',
+                subtitle,
                 style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
@@ -49,7 +56,7 @@ class ComingSoonScreen extends StatelessWidget {
               const SizedBox(height: 32),
               OutlinedButton(
                 onPressed: () => context.pop(),
-                child: const Text('Go Back'),
+                child: Text(lang == 'ta' ? 'திரும்பு' : 'Go Back'),
               ),
             ],
           ),

@@ -154,3 +154,37 @@ def test_verify_membership_card(client, db):
 def test_verify_nonexistent_card(client, db):
     res = client.get("/api/v1/membership/verify/FYC-9999-9999")
     assert res.status_code == 404
+
+
+def test_list_membership_cards_admin(client, db):
+    """Admin can list all cards scoped to their organization."""
+    org = _make_org(db)
+    admin = _make_user(db, org.id, "+919444444460", "ADMIN")
+    m1 = _make_user(db, org.id, "+919444444461", "CLUB_MEMBER")
+    m2 = _make_user(db, org.id, "+919444444462", "CLUB_MEMBER")
+
+    admin_token = _login(client, org.id, "+919444444460")
+    headers = {"Authorization": f"Bearer {admin_token}", "X-Organization-ID": str(org.id)}
+
+    client.post("/api/v1/membership/generate",
+                json={"user_id": str(m1.id), "expires_at": _future_date()}, headers=headers)
+    client.post("/api/v1/membership/generate",
+                json={"user_id": str(m2.id), "expires_at": _future_date()}, headers=headers)
+
+    res = client.get("/api/v1/membership/list", headers=headers)
+    assert res.status_code == 200
+    numbers = [c["membership_number"] for c in res.json()]
+    assert any("FYC-" in n for n in numbers)
+
+
+def test_list_membership_cards_non_admin_denied(client, db):
+    """Non-admin cannot access the membership list."""
+    org = _make_org(db)
+    member = _make_user(db, org.id, "+919444444463", "CLUB_MEMBER")
+    token = _login(client, org.id, "+919444444463")
+
+    res = client.get(
+        "/api/v1/membership/list",
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    )
+    assert res.status_code == 403

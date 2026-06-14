@@ -169,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: const TextStyle(color: AppColors.textSecondary)),
                         TextButton(
                           onPressed: () => context.go('/login'),
-                          child: const Text('உள்நுழை / Login'),
+                          child: Text(sl<LocalStorage>().getLang() == 'ta' ? 'உள்நுழைக' : 'Login'),
                         ),
                       ],
                     ),

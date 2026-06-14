@@ -107,7 +107,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                     onPressed: () => context
                         .read<EventBloc>()
                         .add(const EventFetchRequested()),
-                    child: const Text('Retry'),
+                    child: Text(_lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
                   ),
                 ],
               ),

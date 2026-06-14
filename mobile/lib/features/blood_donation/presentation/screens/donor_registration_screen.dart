@@ -5,6 +5,8 @@ import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
 
 class DonorRegistrationScreen extends StatefulWidget {
   const DonorRegistrationScreen({super.key});
@@ -15,6 +17,8 @@ class DonorRegistrationScreen extends StatefulWidget {
 }
 
 class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
+  String get _lang => sl<LocalStorage>().getLang();
+
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
   String? _selectedGroup;
@@ -34,7 +38,13 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
   void _submit() {
     if (_selectedGroup == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your blood group')),
+        SnackBar(
+          content: Text(
+            _lang == 'ta'
+                ? 'இரத்த வகை தேர்ந்தெடுக்கவும்'
+                : 'Please select your blood group',
+          ),
+        ),
       );
       return;
     }
@@ -49,14 +59,21 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = _lang;
     return Scaffold(
-      appBar: AppBar(title: const Text('Register as Donor')),
+      appBar: AppBar(
+        title: Text(lang == 'ta' ? 'தானியாக பதிவு' : 'Register as Donor'),
+      ),
       body: BlocListener<BloodDonorBloc, BloodDonorState>(
         listener: (context, state) {
           if (state is BloodDonorRegistered) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Registered successfully! Thank you.'),
+              SnackBar(
+                content: Text(
+                  lang == 'ta'
+                      ? 'வெற்றிகரமாக பதிவு செய்யப்பட்டீர்கள்!'
+                      : 'Registered successfully! Thank you.',
+                ),
                 backgroundColor: AppColors.primary,
               ),
             );
@@ -76,11 +93,11 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _InfoBanner(),
+              _InfoBanner(lang: lang),
               const SizedBox(height: 24),
-              const Text(
-                'Select Blood Group',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                lang == 'ta' ? 'இரத்த வகை தேர்ந்தெடுக்கவும்' : 'Select Blood Group',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
               _BloodGroupGrid(
@@ -89,23 +106,27 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                 onSelect: (g) => setState(() => _selectedGroup = g),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Availability',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                lang == 'ta' ? 'கிடைக்கும் நிலை' : 'Availability',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               _AvailabilityToggle(
                 value: _isAvailable,
+                lang: lang,
                 onChanged: (v) => setState(() => _isAvailable = v),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Last Donation Date (optional)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                lang == 'ta'
+                    ? 'கடைசி தான தேதி (விரும்பினால்)'
+                    : 'Last Donation Date (optional)',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               _DatePickerField(
                 date: _lastDonationDate,
+                lang: lang,
                 onTap: _pickDate,
               ),
               const SizedBox(height: 36),
@@ -121,9 +142,11 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                           ? const CircularProgressIndicator(
                               color: Colors.white,
                             )
-                          : const Text(
-                              'Register as Donor',
-                              style: TextStyle(fontSize: 16),
+                          : Text(
+                              lang == 'ta'
+                                  ? 'தானியாக பதிவு செய்க'
+                                  : 'Register as Donor',
+                              style: const TextStyle(fontSize: 16),
                             ),
                     ),
                   );
@@ -138,6 +161,10 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
 }
 
 class _InfoBanner extends StatelessWidget {
+  final String lang;
+
+  const _InfoBanner({required this.lang});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -148,14 +175,15 @@ class _InfoBanner extends StatelessWidget {
         border: Border.all(color: AppColors.primary.withOpacity(0.3)),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.info_outline, color: AppColors.primary),
-          SizedBox(width: 12),
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.primary),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Your phone number will only be shared when someone '
-              'explicitly requests your contact. All requests are logged.',
-              style: TextStyle(fontSize: 13),
+              lang == 'ta'
+                  ? 'உங்கள் தொலைபேசி எண் யாரேனும் கோரும்போது மட்டுமே பகிரப்படும். அனைத்து கோரிக்கைகளும் பதிவு செய்யப்படும்.'
+                  : 'Your phone number will only be shared when someone explicitly requests your contact. All requests are logged.',
+              style: const TextStyle(fontSize: 13),
             ),
           ),
         ],
@@ -217,9 +245,14 @@ class _BloodGroupGrid extends StatelessWidget {
 
 class _AvailabilityToggle extends StatelessWidget {
   final bool value;
+  final String lang;
   final void Function(bool) onChanged;
 
-  const _AvailabilityToggle({required this.value, required this.onChanged});
+  const _AvailabilityToggle({
+    required this.value,
+    required this.lang,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,8 +272,8 @@ class _AvailabilityToggle extends StatelessWidget {
           Expanded(
             child: Text(
               value
-                  ? 'I am available to donate'
-                  : 'I am not available right now',
+                  ? (lang == 'ta' ? 'தான செய்ய கிடைக்கிறேன்' : 'I am available to donate')
+                  : (lang == 'ta' ? 'தற்போது கிடைக்கவில்லை' : 'Not available right now'),
               style: const TextStyle(fontSize: 15),
             ),
           ),
@@ -257,9 +290,14 @@ class _AvailabilityToggle extends StatelessWidget {
 
 class _DatePickerField extends StatelessWidget {
   final DateTime? date;
+  final String lang;
   final VoidCallback onTap;
 
-  const _DatePickerField({required this.date, required this.onTap});
+  const _DatePickerField({
+    required this.date,
+    required this.lang,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +316,7 @@ class _DatePickerField extends StatelessWidget {
             Text(
               date != null
                   ? '${date!.day}/${date!.month}/${date!.year}'
-                  : 'Select date (optional)',
+                  : (lang == 'ta' ? 'தேதி தேர்வு (விரும்பினால்)' : 'Select date (optional)'),
               style: TextStyle(
                 fontSize: 15,
                 color: date != null ? Colors.black87 : Colors.grey,
