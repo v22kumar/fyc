@@ -74,6 +74,25 @@ export const api = {
       `/api/v1/users${role ? `?role=${role}` : ''}`,
     ),
 
+  // Membership
+  listMembershipCards: () =>
+    request<import('@/types').MembershipCard[]>('/api/v1/membership/list'),
+  generateMembershipCard: (
+    userId: string,
+    designationTa: string,
+    designationEn: string,
+    expiresAt: string,
+  ) =>
+    request<import('@/types').MembershipCard>('/api/v1/membership/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        designation_ta: designationTa,
+        designation_en: designationEn,
+        expires_at: expiresAt,
+      }),
+    }),
+
   // Media
   uploadMedia: async (file: File): Promise<{ url: string }> => {
     const token = getToken();

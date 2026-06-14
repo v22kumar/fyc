@@ -73,6 +73,17 @@ def get_my_card(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No membership card found")
     return card
 
+@router.get("/list", response_model=list[MembershipCardOut])
+def list_membership_cards(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """List all membership cards for the organization (Admin only)."""
+    cards = db.query(MembershipCard).join(User, User.id == MembershipCard.user_id).filter(
+        User.organization_id == current_user.organization_id
+    ).all()
+    return cards
+
 @router.get("/verify/{membership_number}", response_model=MembershipCardOut)
 def verify_card(membership_number: str, db: Session = Depends(get_db)):
     """

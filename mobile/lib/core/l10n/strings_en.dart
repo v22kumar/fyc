@@ -43,6 +43,7 @@ class StringsEn extends AppLocalizations {
   @override String get homeSubtitle => 'Welcome to FYC Connect';
   @override String get bloodDonation => 'Blood Donation';
   @override String get publicIssues => 'Public Issues';
+  @override String get membership => 'My Card';
   @override String get directory => 'Directory';
   @override String get opportunityHub => 'Opportunity Hub';
   @override String get events => 'Events';

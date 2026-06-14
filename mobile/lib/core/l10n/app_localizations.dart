@@ -65,6 +65,7 @@ abstract class AppLocalizations {
   String get homeSubtitle;
   String get bloodDonation;
   String get publicIssues;
+  String get membership;
   String get directory;
   String get opportunityHub;
   String get events;

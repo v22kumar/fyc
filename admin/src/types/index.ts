@@ -90,3 +90,15 @@ export const CATEGORY_LABELS: Record<IssueCategory, string> = {
   SAFETY:       'Safety',
   OTHER:        'Other',
 };
+
+export interface MembershipCard {
+  id: string;
+  user_id: string;
+  membership_number: string;
+  qr_code_payload: string;
+  status: string;
+  designation_ta: string;
+  designation_en: string;
+  issued_at: string | null;
+  expires_at: string;
+}

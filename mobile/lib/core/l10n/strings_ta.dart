@@ -43,6 +43,7 @@ class StringsTa extends AppLocalizations {
   @override String get homeSubtitle => 'FYC Connect-ல் உங்களை வரவேற்கிறோம்';
   @override String get bloodDonation => 'இரத்த தானம்';
   @override String get publicIssues => 'பிரச்னைகள்';
+  @override String get membership => 'என் அட்டை';
   @override String get directory => 'அகராதி';
   @override String get opportunityHub => 'வாய்ப்பு மையம்';
   @override String get events => 'நிகழ்வுகள்';

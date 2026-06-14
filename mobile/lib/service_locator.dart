@@ -34,6 +34,13 @@ import 'features/issues/domain/repositories/issue_repository.dart';
 import 'features/issues/domain/usecases/submit_issue_usecase.dart';
 import 'features/issues/presentation/bloc/issue_bloc.dart';
 
+// Membership
+import 'features/membership/data/datasources/membership_datasource.dart';
+import 'features/membership/data/repositories/membership_repository_impl.dart';
+import 'features/membership/domain/repositories/membership_repository.dart';
+import 'features/membership/domain/usecases/get_my_card_usecase.dart';
+import 'features/membership/presentation/bloc/membership_bloc.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initServiceLocator() async {
@@ -109,5 +116,17 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton(() => SubmitIssueUseCase(sl<IssueRepository>()));
   sl.registerFactory<IssueBloc>(
     () => IssueBloc(submitIssue: sl<SubmitIssueUseCase>()),
+  );
+
+  // ── Membership ────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<MembershipDataSource>(
+    () => MembershipDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<MembershipRepository>(
+    () => MembershipRepositoryImpl(sl<MembershipDataSource>()),
+  );
+  sl.registerLazySingleton(() => GetMyCardUseCase(sl<MembershipRepository>()));
+  sl.registerFactory<MembershipBloc>(
+    () => MembershipBloc(getMyCard: sl<GetMyCardUseCase>()),
   );
 }

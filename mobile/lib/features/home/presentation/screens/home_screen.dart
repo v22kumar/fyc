@@ -121,7 +121,13 @@ class _GreetingCard extends StatelessWidget {
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
           const SizedBox(height: 12),
-          const Text('🌱', style: TextStyle(fontSize: 36)),
+          Image.asset(
+            'assets/images/fyc_logo.png',
+            width: 48,
+            height: 48,
+            errorBuilder: (_, __, ___) =>
+                const Text('🌱', style: TextStyle(fontSize: 36)),
+          ),
         ],
       ),
     );
@@ -194,14 +200,14 @@ class _QuickAccessGrid extends StatelessWidget {
        color: AppColors.accent),
       (icon: '🚧', label: l.publicIssues, route: '/issues',
        color: AppColors.warning),
-      (icon: '📋', label: l.directory, route: '/directory',
-       color: const Color(0xFF1D4ED8)),
-      (icon: '📚', label: l.opportunityHub, route: '/opportunities',
-       color: const Color(0xFF7C3AED)),
-      (icon: '🎗️', label: l.events, route: '/events',
+      (icon: '🪪', label: l.membership, route: '/membership',
        color: AppColors.primary),
+      (icon: '🎗️', label: l.events, route: '/events',
+       color: const Color(0xFF7C3AED)),
       (icon: '📷', label: l.gallery, route: '/gallery',
        color: const Color(0xFFD97706)),
+      (icon: '📋', label: l.directory, route: '/directory',
+       color: const Color(0xFF1D4ED8)),
     ];
 
     return GridView.count(
