@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Database
+*.db
+*.sqlite
+
+# IDEs
+.vscode/
+.idea/
+.project
+.pydevproject
+
+# Node / Astro / Next
+node_modules/
+dist/
+.next/
+out/
+.astro/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# System
+.DS_Store
+Thumbs.db
