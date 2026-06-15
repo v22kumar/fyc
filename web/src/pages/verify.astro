@@ -1,0 +1,356 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+
+// Read ?lang= from the URL at build time (falls back to ta)
+const lang = Astro.url.searchParams.get('lang') ?? 'ta';
+---
+
+<BaseLayout
+  title="உறுப்பினர் சரிபார்ப்பு - Membership Verification"
+  description="FYC digital membership card verification. Verify any FYC membership number instantly."
+>
+  <!-- Page Header -->
+  <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-16 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <img src="/fyc_logo.png" alt="FYC Logo" class="h-16 w-auto mx-auto mb-5 drop-shadow-lg" />
+      <h1
+        class="text-3xl sm:text-4xl font-bold mb-3"
+        data-ta="உறுப்பினர் சரிபார்ப்பு"
+        data-en="Membership Verification"
+      >
+        உறுப்பினர் சரிபார்ப்பு
+      </h1>
+      <p
+        class="text-green-100"
+        data-ta="FYC உறுப்பினர் எண்ணை உள்ளிட்டு சரிபார்க்கவும்"
+        data-en="Enter a FYC membership number to verify its authenticity"
+      >
+        FYC உறுப்பினர் எண்ணை உள்ளிட்டு சரிபார்க்கவும்
+      </p>
+    </div>
+  </section>
+
+  <!-- Search Section -->
+  <section class="py-10 px-4 bg-white border-b border-gray-100 sticky top-16 z-40 shadow-sm">
+    <div class="max-w-xl mx-auto">
+      <form id="verify-form" class="flex gap-3">
+        <input
+          id="membership-input"
+          type="text"
+          placeholder="FYC-2024-0001"
+          autocomplete="off"
+          spellcheck="false"
+          class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-mono text-gray-800 focus:outline-none focus:border-[#064e3b] transition-colors placeholder-gray-400"
+        />
+        <button
+          type="submit"
+          id="verify-btn"
+          class="px-6 py-3 bg-[#064e3b] text-white text-sm font-semibold rounded-xl hover:bg-[#065f46] transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <span
+            id="btn-spinner"
+            class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></span>
+          <span data-ta="சரிபார்" data-en="Verify">சரிபார்</span>
+        </button>
+      </form>
+      <p
+        class="text-xs text-gray-400 mt-2 ml-1"
+        data-ta="எடுத்துக்காட்டு: FYC-2024-0001"
+        data-en="Example: FYC-2024-0001"
+      >
+        எடுத்துக்காட்டு: FYC-2024-0001
+      </p>
+    </div>
+  </section>
+
+  <!-- Result Section -->
+  <section class="py-12 px-4">
+    <div class="max-w-xl mx-auto">
+
+      <!-- Idle state -->
+      <div id="state-idle" class="text-center py-16">
+        <div class="text-6xl mb-4">🪪</div>
+        <p
+          class="text-gray-500"
+          data-ta="உறுப்பினர் எண்ணை உள்ளிட்டு சரிபார்க்கவும்"
+          data-en="Enter a membership number above to verify"
+        >
+          உறுப்பினர் எண்ணை உள்ளிட்டு சரிபார்க்கவும்
+        </p>
+      </div>
+
+      <!-- Error state -->
+      <div id="state-error" class="hidden">
+        <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center shadow-sm">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2
+            class="text-xl font-bold text-red-800 mb-2"
+            data-ta="சரிபார்ப்பு தோல்வி"
+            data-en="Verification Failed"
+          >
+            சரிபார்ப்பு தோல்வி
+          </h2>
+          <p id="error-message" class="text-red-700 text-sm"></p>
+          <p
+            class="text-xs text-red-500 mt-3"
+            data-ta="இந்த அட்டை செல்லுபடியாகாது அல்லது காலாவதியானது."
+            data-en="This card is invalid, expired, or does not exist."
+          >
+            இந்த அட்டை செல்லுபடியாகாது அல்லது காலாவதியானது.
+          </p>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="state-success" class="hidden">
+        <!-- Verified Card -->
+        <div class="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <!-- Green top bar -->
+          <div class="h-2 bg-gradient-to-r from-[#064e3b] to-[#10b981]"></div>
+
+          <div class="p-8">
+            <!-- Header row -->
+            <div class="flex items-center justify-between mb-6">
+              <img src="/fyc_logo.png" alt="FYC" class="h-12 w-auto" />
+              <!-- Verified badge -->
+              <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
+                <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span
+                  class="text-green-700 text-xs font-bold tracking-wide uppercase"
+                  data-ta="சரிபார்க்கப்பட்டது"
+                  data-en="VERIFIED"
+                >
+                  VERIFIED
+                </span>
+              </div>
+            </div>
+
+            <!-- Member name -->
+            <div class="mb-6">
+              <p
+                class="text-xs text-gray-400 uppercase tracking-widest mb-1 font-semibold"
+                data-ta="உறுப்பினர் பெயர்"
+                data-en="Member Name"
+              >
+                Member Name
+              </p>
+              <p id="card-name-en" class="text-xl font-bold text-gray-900"></p>
+              <p id="card-name-ta" class="text-sm text-gray-500 mt-0.5"></p>
+            </div>
+
+            <!-- Grid of details -->
+            <div class="grid grid-cols-2 gap-5 mb-6">
+              <div>
+                <p
+                  class="text-xs text-gray-400 uppercase tracking-widest mb-1 font-semibold"
+                  data-ta="உறுப்பினர் எண்"
+                  data-en="Membership No."
+                >
+                  Membership No.
+                </p>
+                <p id="card-number" class="text-sm font-mono font-bold text-[#064e3b]"></p>
+              </div>
+              <div>
+                <p
+                  class="text-xs text-gray-400 uppercase tracking-widest mb-1 font-semibold"
+                  data-ta="நிலை"
+                  data-en="Status"
+                >
+                  Status
+                </p>
+                <span id="card-status-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
+              </div>
+              <div>
+                <p
+                  class="text-xs text-gray-400 uppercase tracking-widest mb-1 font-semibold"
+                  data-ta="பதவி"
+                  data-en="Designation"
+                >
+                  Designation
+                </p>
+                <p id="card-designation-en" class="text-sm font-semibold text-gray-800"></p>
+                <p id="card-designation-ta" class="text-xs text-gray-500 mt-0.5"></p>
+              </div>
+              <div>
+                <p
+                  class="text-xs text-gray-400 uppercase tracking-widest mb-1 font-semibold"
+                  data-ta="செல்லுபடியாகும் வரை"
+                  data-en="Valid Until"
+                >
+                  Valid Until
+                </p>
+                <p id="card-expires" class="text-sm font-semibold text-gray-800"></p>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
+              <p class="text-xs text-gray-400">
+                Foresight Youth Connect &middot; Nagercoil
+              </p>
+              <p class="text-xs text-gray-300 font-mono" id="card-issued"></p>
+            </div>
+          </div>
+
+          <!-- Subtle watermark -->
+          <div class="absolute bottom-4 right-4 opacity-5 pointer-events-none select-none">
+            <svg viewBox="0 0 100 100" class="w-24 h-24 text-[#064e3b] fill-current">
+              <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="4" fill="none"/>
+              <text x="50" y="55" text-anchor="middle" font-size="22" font-weight="bold">FYC</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <p
+          class="text-xs text-center text-gray-400 mt-4"
+          data-ta="இந்த சரிபார்ப்பு நேரலையில் FYC அமைப்பிலிருந்து பெறப்படுகிறது."
+          data-en="This verification is fetched live from the FYC system."
+        >
+          This verification is fetched live from the FYC system.
+        </p>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID, lang }}>
+  // ── Language ──────────────────────────────────────────────────────────────
+  let currentLang = localStorage.getItem('fyc_lang') || lang || 'ta';
+
+  function applyLang(l) {
+    currentLang = l;
+    document.querySelectorAll('[data-ta][data-en]').forEach((el) => {
+      el.textContent = l === 'ta' ? el.dataset.ta : el.dataset.en;
+    });
+    // placeholder is separate
+    const input = document.getElementById('membership-input');
+    if (input) input.placeholder = 'FYC-2024-0001';
+  }
+
+  // ── State helpers ─────────────────────────────────────────────────────────
+  function showState(name) {
+    ['idle', 'error', 'success'].forEach((s) => {
+      document.getElementById(`state-${s}`).classList.add('hidden');
+    });
+    document.getElementById(`state-${name}`).classList.remove('hidden');
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('verify-btn');
+    const spinner = document.getElementById('btn-spinner');
+    btn.disabled = on;
+    spinner.classList.toggle('hidden', !on);
+  }
+
+  // ── Verify ────────────────────────────────────────────────────────────────
+  async function verify(number) {
+    if (!number.trim()) return;
+    setLoading(true);
+    showState('idle');
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/v1/membership/verify/${encodeURIComponent(number.trim())}`,
+        { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } }
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        document.getElementById('error-message').textContent =
+          body.detail || (currentLang === 'ta' ? 'உறுப்பினர் எண் கிடைக்கவில்லை' : 'Membership number not found');
+        showState('error');
+        return;
+      }
+
+      const card = await res.json();
+      renderCard(card);
+      showState('success');
+    } catch (e) {
+      document.getElementById('error-message').textContent =
+        currentLang === 'ta'
+          ? 'இணைப்பு பிழை. மீண்டும் முயற்சிக்கவும்.'
+          : 'Connection error. Please try again.';
+      showState('error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Render card fields ────────────────────────────────────────────────────
+  function renderCard(card) {
+    // Name — card itself doesn't carry name; show membership number prominently
+    document.getElementById('card-name-en').textContent = card.membership_number;
+    document.getElementById('card-name-ta').textContent = '';
+    document.getElementById('card-number').textContent = card.membership_number;
+
+    // Designation
+    document.getElementById('card-designation-en').textContent = card.designation_en || '—';
+    document.getElementById('card-designation-ta').textContent = card.designation_ta || '';
+
+    // Expires
+    const expiresDate = new Date(card.expires_at);
+    document.getElementById('card-expires').textContent = expiresDate.toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
+
+    // Issued
+    if (card.issued_at) {
+      const issuedDate = new Date(card.issued_at);
+      document.getElementById('card-issued').textContent =
+        'Issued ' + issuedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } else {
+      document.getElementById('card-issued').textContent = '';
+    }
+
+    // Status badge
+    const badge = document.getElementById('card-status-badge');
+    const statusStyles = {
+      ACTIVE:  ['bg-green-100',  'text-green-700'],
+      EXPIRED: ['bg-yellow-100', 'text-yellow-700'],
+      REVOKED: ['bg-red-100',    'text-red-700'],
+    };
+    const [bg, fg] = statusStyles[card.status] ?? ['bg-gray-100', 'text-gray-600'];
+    badge.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${bg} ${fg}`;
+    badge.textContent = card.status;
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  document.getElementById('verify-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = document.getElementById('membership-input').value;
+    verify(val);
+  });
+
+  // Auto-verify if ?number=FYC-... in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const prefill = urlParams.get('number');
+  if (prefill) {
+    document.getElementById('membership-input').value = prefill;
+    verify(prefill);
+  }
+
+  // Apply language on load
+  applyLang(currentLang);
+
+  // Listen to global lang switch events from BaseLayout
+  window.addEventListener('fyc-lang-change', (e) => applyLang(e.detail));
+</script>
+
+<style>
+  /* Ensure the membership number input is mono */
+  #membership-input {
+    letter-spacing: 0.05em;
+  }
+</style>

@@ -1,0 +1,80 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  lang?: 'ta' | 'en';
+}
+
+const {
+  title,
+  description = 'FYC Connect - Community Service Platform by Friends Youth Club, Nagercoil',
+  lang = 'ta',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang} class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#064e3b" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title} | FYC Connect</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900 font-sans antialiased">
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+
+    <!-- Global i18n script: reads localStorage lang preference and applies to page -->
+    <script>
+      type Lang = 'ta' | 'en';
+
+      function getLang(): Lang {
+        return (localStorage.getItem('fyc_lang') as Lang) || 'ta';
+      }
+
+      function applyLang(lang: Lang) {
+        document.documentElement.setAttribute('data-lang', lang);
+        // Update all translatable elements
+        document.querySelectorAll<HTMLElement>('[data-ta][data-en]').forEach((el) => {
+          el.textContent = lang === 'ta' ? (el.dataset.ta ?? '') : (el.dataset.en ?? '');
+        });
+        // Update placeholder attributes
+        document.querySelectorAll<HTMLInputElement>('[data-placeholder-ta][data-placeholder-en]').forEach((el) => {
+          el.placeholder = lang === 'ta' ? (el.dataset.placeholderTa ?? '') : (el.dataset.placeholderEn ?? '');
+        });
+        // Update lang toggle button text
+        const toggleBtn = document.getElementById('lang-toggle');
+        if (toggleBtn) {
+          toggleBtn.textContent = lang === 'ta' ? 'English' : 'தமிழ்';
+        }
+      }
+
+      // Toggle language and persist choice
+      window.toggleLang = function () {
+        const current = getLang();
+        const next: Lang = current === 'ta' ? 'en' : 'ta';
+        localStorage.setItem('fyc_lang', next);
+        applyLang(next);
+      };
+
+      // Apply on load
+      applyLang(getLang());
+    </script>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/usecases/send_otp_usecase.dart';
+import '../../domain/usecases/verify_otp_usecase.dart';
+import '../../domain/usecases/register_user_usecase.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/storage/local_storage.dart';
+import 'auth_event.dart';
+import 'auth_state.dart';
+
+class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final SendOtpUseCase _sendOtp;
+  final VerifyOtpUseCase _verifyOtp;
+  final RegisterUserUseCase _registerUser;
+  final AuthRepository _repository;
+  final LocalStorage _storage;
+
+  AuthBloc({
+    required SendOtpUseCase sendOtp,
+    required VerifyOtpUseCase verifyOtp,
+    required RegisterUserUseCase registerUser,
+    required AuthRepository repository,
+    required LocalStorage storage,
+  })  : _sendOtp = sendOtp,
+        _verifyOtp = verifyOtp,
+        _registerUser = registerUser,
+        _repository = repository,
+        _storage = storage,
+        super(const AuthInitial()) {
+    on<AuthCheckRequested>(_onCheckRequested);
+    on<AuthSendOtpRequested>(_onSendOtp);
+    on<AuthVerifyOtpRequested>(_onVerifyOtp);
+    on<AuthRegisterRequested>(_onRegister);
+    on<AuthLogoutRequested>(_onLogout);
+  }
+
+  Future<void> _onCheckRequested(
+    AuthCheckRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (!_storage.isLoggedIn) {
+      emit(const AuthUnauthenticated());
+      return;
+    }
+    emit(const AuthLoading());
+    final result = await _repository.getMe();
+    result.fold(
+      (f) => emit(const AuthUnauthenticated()),
+      (user) => emit(AuthAuthenticated(user)),
+    );
+  }
+
+  Future<void> _onSendOtp(
+    AuthSendOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await _sendOtp(
+      organizationId: event.organizationId,
+      phoneNumber: event.phoneNumber,
+    );
+    result.fold(
+      (f) => emit(AuthFailureState(f.message)),
+      (verificationId) => emit(AuthOtpSent(
+        verificationId: verificationId,
+        phoneNumber: event.phoneNumber,
+      )),
+    );
+  }
+
+  Future<void> _onVerifyOtp(
+    AuthVerifyOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await _verifyOtp(
+      verificationId: event.verificationId,
+      otpCode: event.otpCode,
+    );
+    result.fold(
+      (f) {
+        // 404 from API means user not registered
+        if (f.message.contains('register') || f.message.contains('not registered')) {
+          // We need orgId from current state context — caller passes it via event
+          emit(const AuthNeedsRegistration(
+            organizationId: '',
+            phoneNumber: '',
+          ));
+        } else {
+          emit(AuthFailureState(f.message));
+        }
+      },
+      (user) => emit(AuthAuthenticated(user)),
+    );
+  }
+
+  Future<void> _onRegister(
+    AuthRegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await _registerUser(
+      organizationId: event.organizationId,
+      phoneNumber: event.phoneNumber,
+      role: event.role,
+      fullNameTa: event.fullNameTa,
+      fullNameEn: event.fullNameEn,
+      preferredLanguage: event.preferredLanguage,
+    );
+    result.fold(
+      (f) => emit(AuthFailureState(f.message)),
+      (user) => emit(AuthAuthenticated(user)),
+    );
+  }
+
+  Future<void> _onLogout(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    await _repository.logout();
+    emit(const AuthUnauthenticated());
+  }
+}

@@ -1,0 +1,92 @@
+version: "3.9"
+
+# ── FYC Connect — Full-Stack Production Compose ───────────────────────────────
+# Usage:
+#   cp .env.example .env          # then edit .env
+#   docker compose build
+#   docker compose up -d
+#   docker compose exec api python scripts/init_db.py   # first run only
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fyc_connect}
+      POSTGRES_USER: ${POSTGRES_USER:-fyc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_db_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fyc} -d ${POSTGRES_DB:-fyc_connect}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fyc}:${POSTGRES_PASSWORD:-changeme_db_password}@db:5432/${POSTGRES_DB:-fyc_connect}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      OTP_BYPASS_CODE: ${OTP_BYPASS_CODE:-}
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/organizations/ -H 'X-Organization-ID: 00000000-0000-0000-0000-000000000000' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Astro Public Website ─────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        PUBLIC_API_BASE: ${PUBLIC_API_BASE:-https://api.fyc.org}
+        PUBLIC_DEFAULT_ORG_ID: ${PUBLIC_DEFAULT_ORG_ID:-8f8b80b7-4b71-4770-b183-5c5f49e49a1d}
+    restart: unless-stopped
+
+  # ── Next.js Admin Dashboard ──────────────────────────────────────────────────
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE: ${PUBLIC_API_BASE:-https://api.fyc.org}
+        NEXT_PUBLIC_DEFAULT_ORG_ID: ${PUBLIC_DEFAULT_ORG_ID:-8f8b80b7-4b71-4770-b183-5c5f49e49a1d}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+      - admin
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/fyc.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+
+volumes:
+  postgres_data:
+  uploads_data:

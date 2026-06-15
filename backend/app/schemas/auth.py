@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 from typing import Optional
 
@@ -23,14 +23,13 @@ class UserRegister(BaseModel):
     preferred_language: Optional[str] = "ta"
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     phone_number: str
     role: str
     is_verified: bool
     preferred_language: str
-
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
