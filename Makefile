@@ -2,7 +2,7 @@
 # Common operations for development and production deployment.
 # Usage: make <target>
 
-.PHONY: help dev prod build init-db logs backup restore test lint clean
+.PHONY: help dev prod build init-db seed-donors logs backup restore test lint clean
 
 # ── Default ───────────────────────────────────────────────────────────────────
 help:
@@ -12,7 +12,8 @@ help:
 	@echo "  make dev         Start backend + DB only (local dev)"
 	@echo "  make prod        Start full stack (all 5 services)"
 	@echo "  make build       Rebuild all Docker images"
-	@echo "  make init-db     Initialise DB and create first superadmin"
+	@echo "  make init-db     Initialise DB and create first superadmin
+  make seed-donors Seed initial 29 blood donor contacts"
 	@echo "  make logs        Tail all service logs"
 	@echo "  make backup      Dump PostgreSQL to ./backups/"
 	@echo "  make restore f=<file>  Restore from a backup file"
@@ -34,6 +35,9 @@ build:
 # ── Database ──────────────────────────────────────────────────────────────────
 init-db:
 	docker compose exec api python scripts/init_db.py
+
+seed-donors:
+	docker compose exec api python scripts/seed_donors.py
 
 backup:
 	@mkdir -p backups
