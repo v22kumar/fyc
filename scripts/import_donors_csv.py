@@ -18,21 +18,16 @@ import argparse
 from pathlib import Path
 
 # Allow running both inside and outside Docker
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-os.environ.setdefault("DATABASE_URL", "postgresql://fyc:fyc_pass@db:5432/fycdb")
-
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.models import Base
+from app.core.database import engine
+from app.models.tenant import Organization
 from app.models.user import User, UserProfile
 from app.models.blood_donor import BloodDonor
-from app.models.organisation import Organisation
 
-DATABASE_URL = os.environ["DATABASE_URL"]
 DEFAULT_ORG_ID = os.environ.get("DEFAULT_ORG_ID", "8f8b80b7-4b71-4770-b183-5c5f49e49a1d")
-
 VALID_BLOOD_GROUPS = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"}
 
 
@@ -57,8 +52,6 @@ def main():
         print("Run scrape_friends2support.py first.")
         sys.exit(1)
 
-    engine = create_engine(DATABASE_URL)
-
     with open(csv_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
@@ -67,11 +60,12 @@ def main():
         print("[DRY RUN] No database writes.")
 
     created = skipped = errors = 0
+    org_uuid = uuid.UUID(DEFAULT_ORG_ID)
 
     with Session(engine) as db:
-        org = db.get(Organisation, DEFAULT_ORG_ID)
+        org = db.query(Organization).filter(Organization.id == org_uuid).first()
         if not org and not args.dry_run:
-            print(f"Organisation {DEFAULT_ORG_ID} not found. Run migrations first.")
+            print(f"Organisation {DEFAULT_ORG_ID} not found. Run migrations/init_db first.")
             sys.exit(1)
 
         for i, row in enumerate(rows):
@@ -92,41 +86,39 @@ def main():
                 created += 1
                 continue
 
-            # Skip if phone already in DB
+            # Skip if phone already in DB under this org
             if phone:
-                existing = db.query(User).filter_by(phone=phone, organization_id=DEFAULT_ORG_ID).first()
+                existing = db.query(User).filter_by(phone_number=phone, organization_id=org_uuid).first()
                 if existing:
                     skipped += 1
                     continue
 
             try:
                 user_id = uuid.uuid4()
-                username = f"f2s_{user_id.hex[:8]}"
                 user = User(
                     id=user_id,
-                    organization_id=DEFAULT_ORG_ID,
-                    username=username,
-                    phone=phone,
+                    organization_id=org_uuid,
+                    phone_number=phone or f"+9100000{uuid.uuid4().hex[:5]}",
                     role="PUBLIC_CITIZEN",
-                    is_active=True,
+                    is_verified=True,
+                    preferred_language="ta",
                 )
                 db.add(user)
                 db.flush()
 
                 profile = UserProfile(
-                    id=uuid.uuid4(),
                     user_id=user_id,
-                    organization_id=DEFAULT_ORG_ID,
-                    full_name_en=name or username,
-                    full_name_ta=name or username,
-                    area=city,
+                    full_name_en=name or f"Citizen_{user_id.hex[:6]}",
+                    full_name_ta=name or f"Citizen_{user_id.hex[:6]}",
+                    address_line_en=city or None,
+                    address_line_ta=city or None,
                 )
                 db.add(profile)
 
                 donor = BloodDonor(
                     id=uuid.uuid4(),
                     user_id=user_id,
-                    organization_id=DEFAULT_ORG_ID,
+                    organization_id=org_uuid,
                     blood_group=blood_group,
                     is_available=available,
                     last_donation_date=None,
