@@ -58,6 +58,15 @@ class AuthRegisterRequested extends AuthEvent {
       [organizationId, phoneNumber, role, fullNameTa, fullNameEn, preferredLanguage];
 }
 
+class AuthGoogleSignInRequested extends AuthEvent {
+  final String organizationId;
+
+  const AuthGoogleSignInRequested({required this.organizationId});
+
+  @override
+  List<Object?> get props => [organizationId];
+}
+
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }

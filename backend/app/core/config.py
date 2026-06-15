@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "FYC Connect"
     SECRET_KEY: str = "supersecretdevkeyforfycconnect2026jwtencryptionkeys"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    DATABASE_URL: str = "sqlite:///./fyc_connect.db"
+    DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
 
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
     FIRST_SUPERADMIN_PASSWORD: str = "supersecureadminpassword123"
@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""  # Web/Android OAuth 2.0 client ID from Google Cloud Console
+
 
     # SMTP Email OTP
     SMTP_HOST: str = "smtp.gmail.com"

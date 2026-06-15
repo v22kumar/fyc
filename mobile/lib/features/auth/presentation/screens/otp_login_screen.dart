@@ -229,6 +229,40 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   ],
 
                   const SizedBox(height: 32),
+
+                  if (!_otpSent) ...[
+                    // Divider
+                    Row(children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('OR', style: TextStyle(color: AppColors.textSecondary)),
+                      ),
+                      const Expanded(child: Divider()),
+                    ]),
+                    const SizedBox(height: 16),
+
+                    // Google Sign-In button
+                    OutlinedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.read<AuthBloc>().add(
+                                AuthGoogleSignInRequested(organizationId: _orgId),
+                              ),
+                      icon: Image.network(
+                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                        height: 20,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 20),
+                      ),
+                      label: const Text('Continue with Google'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        side: const BorderSide(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Register link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
