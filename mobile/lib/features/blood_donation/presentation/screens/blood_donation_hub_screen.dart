@@ -307,15 +307,20 @@ class _DonorCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (donor.geographyId != null)
                     Text(
                       donor.geographyId!,
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Builder(
               builder: (context) {
                 final lang = sl<LocalStorage>().getLang();
@@ -325,6 +330,8 @@ class _DonorCard extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
                     lang == 'ta' ? 'தொடர்பு' : 'Contact',
