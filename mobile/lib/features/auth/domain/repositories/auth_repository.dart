@@ -28,6 +28,10 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<Either<Failure, UserEntity>> signInWithGoogle({
+    required String organizationId,
+  });
+
   Future<Either<Failure, UserEntity>> getMe();
 
   Future<void> logout();

@@ -11,8 +11,9 @@ class User(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "users"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    phone_number = Column(String(15), nullable=False)
+    phone_number = Column(String(15), nullable=True)   # nullable for Google-only accounts
     email = Column(String(100), nullable=True)
+    google_sub = Column(String(100), nullable=True)    # Google OAuth subject ID
     password_hash = Column(String(255), nullable=True)
     role = Column(String(30), nullable=False)  # 'PUBLIC_CITIZEN', 'VOLUNTEER', 'CLUB_MEMBER', 'EXECUTIVE_MEMBER', 'ADMIN', 'SUPER_ADMIN'
     is_verified = Column(Boolean(), default=False)

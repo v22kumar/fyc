@@ -30,6 +30,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSendOtpRequested>(_onSendOtp);
     on<AuthVerifyOtpRequested>(_onVerifyOtp);
     on<AuthRegisterRequested>(_onRegister);
+    on<AuthGoogleSignInRequested>(_onGoogleSignIn);
     on<AuthLogoutRequested>(_onLogout);
   }
 
@@ -105,6 +106,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       fullNameTa: event.fullNameTa,
       fullNameEn: event.fullNameEn,
       preferredLanguage: event.preferredLanguage,
+    );
+    result.fold(
+      (f) => emit(AuthFailureState(f.message)),
+      (user) => emit(AuthAuthenticated(user)),
+    );
+  }
+
+  Future<void> _onGoogleSignIn(
+    AuthGoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await _repository.signInWithGoogle(
+      organizationId: event.organizationId,
     );
     result.fold(
       (f) => emit(AuthFailureState(f.message)),

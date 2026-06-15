@@ -4,7 +4,8 @@ from typing import Optional
 
 class OTPRequest(BaseModel):
     organization_id: UUID
-    phone_number: str = Field(..., description="Phone number with country code")
+    phone_number: str = Field(..., description="Phone number with country code, e.g. +919876543210")
+    email: Optional[str] = Field(None, description="Optional email — OTP also sent here if provided")
 
 class OTPResponse(BaseModel):
     message: str

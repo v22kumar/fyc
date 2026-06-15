@@ -16,6 +16,7 @@ class ApiConstants {
   static const String otpVerify = '/api/v1/auth/otp/verify';
   static const String register = '/api/v1/auth/register';
   static const String loginPassword = '/api/v1/auth/login/password';
+  static const String googleSignIn = '/api/v1/auth/google';
   static const String me = '/api/v1/auth/users/me';
 
   // Blood donors

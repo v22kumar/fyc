@@ -1,27 +1,32 @@
 # fly.toml app configuration file for Fly.io deployment
 
-app = "fyc-connect-backend"
-primary_region = "bom"
+app = "fyc-backend"
+primary_region = "sin"
 
 [build]
   dockerfile = "Dockerfile"
 
 [env]
-  DATABASE_URL = "sqlite:////data/fyc_connect.db"
+  PORT = "8000"
+  DATABASE_URL = "sqlite:////app/data/fyc_connect.db"
 
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = "suspend"
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
   processes = ["app"]
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "256mb"
+  memory = "512mb"
   cpus = 1
 
 [mounts]
   source = "fyc_data"
-  destination = "/data"
+  destination = "/app/data"
+
+[[statics]]
+  guest_path = "/app/uploads"
+  url_prefix = "/uploads"
