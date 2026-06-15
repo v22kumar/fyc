@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # Leave unset in production so real random OTPs are generated.
     OTP_BYPASS_CODE: str = ""
 
+    # Firebase Cloud Messaging — set in production .env to enable push notifications
+    FCM_SERVER_KEY: str = ""
+
     # Load environment variables from backend/.env if it exists
     model_config = SettingsConfigDict(
         env_file=os.path.join(BASE_DIR, ".env"),
