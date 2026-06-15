@@ -32,3 +32,6 @@ yarn-error.log*
 # System
 .DS_Store
 Thumbs.db
+
+# Claude Code agent scratch space
+.claude/
