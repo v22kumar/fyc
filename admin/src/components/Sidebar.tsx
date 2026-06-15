@@ -9,6 +9,8 @@ const NAV = [
   { href: '/dashboard/events',  label: 'Events',     icon: '🎗️' },
   { href: '/dashboard/members',    label: 'Members',    icon: '👥' },
   { href: '/dashboard/membership', label: 'Membership', icon: '🪪' },
+  { href: '/dashboard/directory',  label: 'Directory',  icon: '📋' },
+  { href: '/dashboard/sports',     label: 'Sports Hub', icon: '🏆' },
 ];
 
 export default function Sidebar() {

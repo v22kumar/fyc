@@ -91,6 +91,79 @@ export const CATEGORY_LABELS: Record<IssueCategory, string> = {
   OTHER:        'Other',
 };
 
+export interface CommunityProfile {
+  id: string;
+  user_id: string;
+  category: string;
+  business_name_ta: string | null;
+  business_name_en: string | null;
+  description_ta: string | null;
+  description_en: string | null;
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  service_area: string | null;
+  years_experience: number | null;
+  is_available: boolean;
+  is_verified: boolean;
+  full_name_en: string | null;
+  full_name_ta: string | null;
+}
+
+export interface Tournament {
+  id: string;
+  name_ta: string;
+  name_en: string;
+  sport: string;
+  year: number;
+  format: string;
+  status: string;
+  description_ta: string | null;
+  description_en: string | null;
+}
+
+export interface Team {
+  id: string;
+  tournament_id: string;
+  name: string;
+  captain_name: string | null;
+  contact_phone: string | null;
+  wins: number;
+  losses: number;
+  draws: number;
+  points: number;
+  is_fyc_team: boolean;
+}
+
+export interface Fixture {
+  id: string;
+  tournament_id: string;
+  team_a_id: string;
+  team_b_id: string;
+  team_a_name: string | null;
+  team_b_name: string | null;
+  match_number: number | null;
+  scheduled_at: string | null;
+  venue: string | null;
+  status: string;
+  team_a_score: string | null;
+  team_b_score: string | null;
+  winner_id: string | null;
+  result_notes: string | null;
+}
+
+export interface ChallengeMatch {
+  id: string;
+  challenger_team_name: string;
+  challenger_captain: string;
+  challenger_phone: string;
+  sport: string;
+  proposed_date: string | null;
+  venue: string | null;
+  message: string | null;
+  status: string;
+  admin_response: string | null;
+}
+
 export interface MembershipCard {
   id: string;
   user_id: string;

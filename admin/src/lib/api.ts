@@ -93,6 +93,22 @@ export const api = {
       }),
     }),
 
+  // Community Directory
+  listCommunityProfiles: () => request('/api/v1/community?available_only=false'),
+  verifyCommunityProfile: (id: string) => request(`/api/v1/community/${id}/verify`, { method: 'PATCH', body: JSON.stringify({}) }),
+  deleteCommunityProfile: (id: string) => request(`/api/v1/community/${id}`, { method: 'DELETE' }),
+
+  // Sports Hub
+  listTournaments: () => request('/api/v1/sports/tournaments'),
+  createTournament: (data: object) => request('/api/v1/sports/tournaments', { method: 'POST', body: JSON.stringify(data) }),
+  listTeams: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`),
+  createTeam: (tournamentId: string, data: object) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`, { method: 'POST', body: JSON.stringify(data) }),
+  listFixtures: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/fixtures`),
+  submitFixtureResult: (tournamentId: string, fixtureId: string, data: object) =>
+    request(`/api/v1/sports/tournaments/${tournamentId}/fixtures/${fixtureId}/result`, { method: 'POST', body: JSON.stringify(data) }),
+  listChallenges: () => request('/api/v1/sports/challenges'),
+  respondChallenge: (id: string, data: object) => request(`/api/v1/sports/challenges/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
   // Media
   uploadMedia: async (file: File): Promise<{ url: string }> => {
     const token = getToken();

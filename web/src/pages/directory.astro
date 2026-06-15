@@ -1,0 +1,142 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+const ORG_ID   = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+---
+
+<BaseLayout
+  title="சமூக கடை - Community Directory"
+  description="Find carpenters, electricians, doctors, tutors and more in Nagercoil. FYC Community Skills Directory."
+>
+  <!-- Hero -->
+  <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-14 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="சமூக கடை" data-en="Community Directory">
+        சமூக கடை
+      </h1>
+      <p class="text-green-100" data-ta="தச்சன், மின்சாரி, மருத்துவர் — யாரையும் இங்கே கண்டுபிடிக்கலாம்" data-en="Find carpenters, electricians, doctors and more in Nagercoil">
+        தச்சன், மின்சாரி, மருத்துவர் — யாரையும் இங்கே கண்டுபிடிக்கலாம்
+      </p>
+    </div>
+  </section>
+
+  <!-- Filter Bar -->
+  <section class="bg-white border-b border-gray-100 py-4 px-4 sticky top-16 z-40 shadow-sm">
+    <div class="max-w-5xl mx-auto flex flex-wrap gap-3 items-center">
+      <select id="cat-filter" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#064e3b]">
+        <option value="">All Categories</option>
+        <option value="carpenter">Carpenter / தச்சன்</option>
+        <option value="electrician">Electrician / மின்சாரி</option>
+        <option value="plumber">Plumber / குழாய்</option>
+        <option value="mason">Mason / கொத்தனார்</option>
+        <option value="painter">Painter / வண்ணம்</option>
+        <option value="mechanic">Mechanic / மெக்கானிக்</option>
+        <option value="ac_technician">AC Technician</option>
+        <option value="mobile_repair">Mobile Repair</option>
+        <option value="tailor">Tailor / தையல்</option>
+        <option value="tutor">Tutor / ஆசிரியர்</option>
+        <option value="doctor">Doctor / மருத்துவர்</option>
+        <option value="nurse">Nurse / செவிலியர்</option>
+        <option value="lawyer">Lawyer / வழக்கறிஞர்</option>
+        <option value="accountant">Accountant</option>
+        <option value="photographer">Photographer</option>
+        <option value="driver">Driver / ஓட்டுனர்</option>
+        <option value="caterer">Caterer / சமையல்</option>
+        <option value="event_organizer">Event Organizer</option>
+        <option value="grocery">Grocery / மளிகை</option>
+        <option value="hardware">Hardware</option>
+        <option value="pharmacy">Pharmacy / மருந்தகம்</option>
+        <option value="other">Other</option>
+      </select>
+      <input id="area-filter" type="text" placeholder="Area / பகுதி..." class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#064e3b] w-40" />
+      <button id="search-btn" class="bg-[#064e3b] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#065f46] transition-colors">
+        <span data-ta="தேடு" data-en="Search">தேடு</span>
+      </button>
+      <a href="/directory/register" class="ml-auto bg-[#991b1b] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-red-800 transition-colors">
+        + <span data-ta="பதிவு செய்க" data-en="Register Your Skill">பதிவு செய்க</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="py-10 px-4">
+    <div class="max-w-5xl mx-auto">
+      <div id="loading" class="text-center text-gray-400 py-12">Loading...</div>
+      <div id="results" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      <div id="empty" class="hidden text-center text-gray-400 py-12">
+        <div class="text-4xl mb-3">🔍</div>
+        <div data-ta="எந்த பதிவும் இல்லை" data-en="No profiles found">எந்த பதிவும் இல்லை</div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, ORG_ID }}>
+const CATEGORY_LABELS = {
+  carpenter:'Carpenter / தச்சன்', electrician:'Electrician / மின்சாரி',
+  plumber:'Plumber', mason:'Mason / கொத்தனார்', painter:'Painter',
+  mechanic:'Mechanic', ac_technician:'AC Technician', mobile_repair:'Mobile Repair',
+  tailor:'Tailor', tutor:'Tutor', doctor:'Doctor / மருத்துவர்',
+  nurse:'Nurse', lawyer:'Lawyer', accountant:'Accountant',
+  photographer:'Photographer', driver:'Driver', caterer:'Caterer',
+  event_organizer:'Event Organizer', grocery:'Grocery / மளிகை',
+  hardware:'Hardware', pharmacy:'Pharmacy', printing:'Printing',
+  computer_service:'Computer Service', other:'Other',
+};
+
+let lang = localStorage.getItem('fyc-lang') || 'ta';
+
+async function fetchProfiles(category = '', area = '') {
+  let url = `${API_BASE}/api/v1/community?available_only=true`;
+  if (category) url += `&category=${category}`;
+  if (area) url += `&service_area=${encodeURIComponent(area)}`;
+  const res = await fetch(url, { headers: { 'X-Organization-ID': ORG_ID } });
+  return res.ok ? res.json() : [];
+}
+
+function renderCard(p) {
+  const name = lang === 'ta' ? (p.business_name_ta || p.full_name_ta || p.business_name_en || '—') : (p.business_name_en || p.full_name_en || '—');
+  const desc = lang === 'ta' ? (p.description_ta || p.description_en || '') : (p.description_en || p.description_ta || '');
+  return `
+    <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-start justify-between mb-2">
+        <div class="font-semibold text-gray-900 text-lg">${name}</div>
+        ${p.is_verified ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>' : ''}
+      </div>
+      <div class="flex items-center gap-2 mb-3 flex-wrap">
+        <span class="text-xs bg-[#064e3b]/10 text-[#064e3b] px-2 py-0.5 rounded-full font-medium">${CATEGORY_LABELS[p.category] || p.category}</span>
+        <span class="text-xs ${p.is_available ? 'text-green-600' : 'text-gray-400'}">${p.is_available ? '● Available' : '● Unavailable'}</span>
+      </div>
+      ${desc ? `<p class="text-sm text-gray-500 mb-3 line-clamp-2">${desc}</p>` : ''}
+      <div class="text-xs text-gray-400 space-y-0.5 mb-3">
+        ${p.service_area ? `<div>📍 ${p.service_area}</div>` : ''}
+        ${p.years_experience ? `<div>⏱ ${p.years_experience} years experience</div>` : ''}
+      </div>
+      <div class="flex gap-2 pt-3 border-t border-gray-100">
+        ${p.contact_phone ? `<a href="tel:${p.contact_phone}" class="flex-1 text-center text-sm bg-[#064e3b] text-white py-2 rounded-xl font-medium hover:bg-[#065f46] transition-colors">📞 Call</a>` : ''}
+        ${p.contact_whatsapp ? `<a href="https://wa.me/${p.contact_whatsapp.replace(/\D/g,'')}" target="_blank" class="flex-1 text-center text-sm bg-[#25D366] text-white py-2 rounded-xl font-medium">💬 WhatsApp</a>` : ''}
+      </div>
+    </div>`;
+}
+
+async function load() {
+  const cat = document.getElementById('cat-filter').value;
+  const area = document.getElementById('area-filter').value;
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('empty').classList.add('hidden');
+  const profiles = await fetchProfiles(cat, area);
+  document.getElementById('loading').classList.add('hidden');
+  if (profiles.length === 0) {
+    document.getElementById('empty').classList.remove('hidden');
+  } else {
+    const el = document.getElementById('results');
+    el.innerHTML = profiles.map(renderCard).join('');
+    el.classList.remove('hidden');
+  }
+}
+
+document.getElementById('search-btn').addEventListener('click', load);
+document.getElementById('cat-filter').addEventListener('change', load);
+load();
+</script>

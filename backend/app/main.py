@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import users as users_router, media as media_router
+from app.routers import community as community_router, sports as sports_router
 
 # Import all models so Base.metadata sees them before create_all
 import app.models  # noqa: F401
@@ -105,6 +106,8 @@ app.include_router(blood_donors.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(membership.router, prefix="/api/v1")
+app.include_router(community_router.router, prefix="/api/v1")
+app.include_router(sports_router.router, prefix="/api/v1")
 app.include_router(users_router.router, prefix="/api/v1")
 app.include_router(media_router.router, prefix="/api/v1")
 

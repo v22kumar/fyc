@@ -1,0 +1,118 @@
+from typing import Optional, List
+from uuid import UUID
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class TournamentCreate(BaseModel):
+    name_ta: str
+    name_en: str
+    sport: str
+    year: int
+    format: str = "LEAGUE"
+    description_ta: Optional[str] = None
+    description_en: Optional[str] = None
+
+
+class TournamentOut(BaseModel):
+    id: UUID
+    name_ta: str
+    name_en: str
+    sport: str
+    year: int
+    format: str
+    status: str
+    description_ta: Optional[str]
+    description_en: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class TeamCreate(BaseModel):
+    name: str
+    captain_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    is_fyc_team: bool = False
+
+
+class TeamOut(BaseModel):
+    id: UUID
+    tournament_id: UUID
+    name: str
+    captain_name: Optional[str]
+    contact_phone: Optional[str]
+    wins: int
+    losses: int
+    draws: int
+    points: int
+    is_fyc_team: bool
+
+    class Config:
+        from_attributes = True
+
+
+class FixtureCreate(BaseModel):
+    team_a_id: UUID
+    team_b_id: UUID
+    match_number: Optional[int] = None
+    scheduled_at: Optional[datetime] = None
+    venue: Optional[str] = None
+
+
+class FixtureResultUpdate(BaseModel):
+    team_a_score: Optional[str] = None
+    team_b_score: Optional[str] = None
+    winner_id: Optional[UUID] = None
+    result_notes: Optional[str] = None
+
+
+class FixtureOut(BaseModel):
+    id: UUID
+    tournament_id: UUID
+    team_a_id: UUID
+    team_b_id: UUID
+    team_a_name: Optional[str] = None
+    team_b_name: Optional[str] = None
+    match_number: Optional[int]
+    scheduled_at: Optional[datetime]
+    venue: Optional[str]
+    status: str
+    team_a_score: Optional[str]
+    team_b_score: Optional[str]
+    winner_id: Optional[UUID]
+    result_notes: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeCreate(BaseModel):
+    challenger_team_name: str
+    challenger_captain: str
+    challenger_phone: str
+    sport: str
+    proposed_date: Optional[datetime] = None
+    venue: Optional[str] = None
+    message: Optional[str] = None
+
+
+class ChallengeOut(BaseModel):
+    id: UUID
+    challenger_team_name: str
+    challenger_captain: str
+    challenger_phone: str
+    sport: str
+    proposed_date: Optional[datetime]
+    venue: Optional[str]
+    message: Optional[str]
+    status: str
+    admin_response: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeStatusUpdate(BaseModel):
+    status: str  # ACCEPTED, REJECTED, COMPLETED
+    admin_response: Optional[str] = None
