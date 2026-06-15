@@ -1,0 +1,243 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="அரசு தொடர்புகள் / Directory">
+  <div class="directory-container">
+    <div class="card header-card">
+      <span class="icon-header">📞</span>
+      <div>
+        <h1 id="page-title">அரசு & அவசர தொடர்புகள்</h1>
+        <p id="page-subtitle">முக்கியமான அரசு அலுவலகங்கள், மருத்துவமனைகள் மற்றும் அவசர உதவி எண்கள். / Government emergency and service contacts.</p>
+      </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box-card card">
+      <input type="text" id="directory-search" placeholder="தொடர்புகளைத் தேடுக... / Search contacts..." class="search-input" />
+    </div>
+
+    <!-- Directory Grid -->
+    <div class="grid-3" id="contacts-grid" style="margin-top: 2rem;">
+      <!-- Will be loaded dynamically -->
+    </div>
+  </div>
+
+  <style>
+    .directory-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header-card {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      color: #ffffff;
+      margin-bottom: 2rem;
+      padding: 2rem;
+    }
+
+    .header-card h1 {
+      font-size: 2.25rem;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .icon-header {
+      font-size: 3.5rem;
+    }
+
+    .search-box-card {
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--color-primary);
+    }
+
+    /* Contact Card */
+    .contact-card {
+      background-color: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .contact-type-badge {
+      align-self: flex-start;
+      background-color: #ecfdf5;
+      color: var(--color-primary);
+      border: 1px solid #a7f3d0;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .contact-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-text-dark);
+    }
+
+    .contact-phone {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .contact-phone:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+  <script is:inline>
+    // Mock static database of emergency contacts in Tamil Nadu (matching mockup)
+    const contactsData = [
+      {
+        id: "1",
+        title_ta: "மாவட்ட ஆட்சியர்",
+        title_en: "District Collector",
+        phone: "04652 252600",
+        type_ta: "அரசு அலுவலகம்",
+        type_en: "Government Office"
+      },
+      {
+        id: "2",
+        title_ta: "காவல் கட்டுப்பாட்டு அறை",
+        title_en: "Police Control Room",
+        phone: "100",
+        type_ta: "அவசர சேவை",
+        type_en: "Emergency Service"
+      },
+      {
+        id: "3",
+        title_ta: "அரசு பொது மருத்துவமனை",
+        title_en: "Government General Hospital",
+        phone: "04652 230400",
+        type_ta: "மருத்துவமனை",
+        type_en: "Hospital"
+      },
+      {
+        id: "4",
+        title_ta: "தீயணைப்பு & மீட்புப்பணி",
+        title_en: "Fire & Rescue Services",
+        phone: "101",
+        type_ta: "அவசர சேவை",
+        type_en: "Emergency Service"
+      },
+      {
+        id: "5",
+        title_ta: "பெண்கள் உதவி எண்",
+        title_en: "Women Helpline",
+        phone: "1091",
+        type_ta: "உதவி எண்",
+        type_en: "Helpline"
+      },
+      {
+        id: "6",
+        title_ta: "குழந்தைகள் உதவி எண்",
+        title_en: "Child Helpline",
+        phone: "1098",
+        type_ta: "உதவி எண்",
+        type_en: "Helpline"
+      }
+    ];
+
+    const grid = document.getElementById("contacts-grid");
+    const searchInput = document.getElementById("directory-search");
+
+    // Initialize list
+    renderContacts(contactsData);
+
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = contactsData.filter(c => 
+        c.title_ta.toLowerCase().includes(q) || 
+        c.title_en.toLowerCase().includes(q) ||
+        c.phone.includes(q)
+      );
+      renderContacts(filtered);
+    });
+
+    function renderContacts(contacts) {
+      const lang = localStorage.getItem("lang") || "ta";
+      
+      if (contacts.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--color-text-muted);">
+            ${lang === 'ta' ? 'தொடர்புகள் ஏதும் இல்லை.' : 'No contacts found.'}
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = "";
+      contacts.forEach(c => {
+        const title = lang === "ta" ? c.title_ta : c.title_en;
+        const type = lang === "ta" ? c.type_ta : c.type_en;
+        const cleanPhone = c.phone.replace(/\s+/g, "");
+
+        const card = document.createElement("div");
+        card.className = "contact-card";
+        card.innerHTML = `
+          <span class="contact-type-badge">${type}</span>
+          <h3 class="contact-title">${title}</h3>
+          <a href="tel:${cleanPhone}" class="contact-phone">
+            📞 ${c.phone}
+          </a>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Language Toggle Listener
+    window.addEventListener('lang-change', (e) => {
+      const lang = e.detail;
+      const translations = {
+        ta: {
+          'page-title': 'அரசு & அவசர தொடர்புகள்',
+          'page-subtitle': 'முக்கியமான அரசு அலுவலகங்கள், மருத்துவமனைகள் மற்றும் அவசர உதவி எண்கள். / Government emergency and service contacts.',
+          'directory-search': 'தொடர்புகளைத் தேடுக...'
+        },
+        en: {
+          'page-title': 'Government & Public Directory',
+          'page-subtitle': 'Directory of local public offices, hospitals, police departments, and services.',
+          'directory-search': 'Search contacts...'
+        }
+      };
+
+      const trans = translations[lang];
+      for (const [id, val] of Object.entries(trans)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      }
+      
+      // Update placeholder
+      searchInput.placeholder = lang === 'ta' ? 'தொடர்புகளைத் தேடுக...' : 'Search contacts...';
+
+      // Redraw list to switch titles/types
+      renderContacts(contactsData);
+    });
+  </script>
+</Layout>
