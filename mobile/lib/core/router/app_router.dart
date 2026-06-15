@@ -47,7 +47,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const RegisterScreen(),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return RegisterScreen(
+          organizationId: extra?['organizationId'] as String? ?? '',
+          phoneNumber: extra?['phoneNumber'] as String? ?? '',
+        );
+      },
     ),
     GoRoute(
       path: '/home',
