@@ -162,6 +162,10 @@ def main():
 
             phone = normalise_phone(phone_raw) if phone_raw else None
 
+            if not phone:
+                skipped += 1
+                continue
+
             if args.dry_run:
                 print(f"  [{i+1}] {name} | {blood_group} | {phone} | {state_name} -> {district_name} -> {city_name} | Gender: {gender}")
                 created += 1
