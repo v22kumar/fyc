@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -27,7 +29,7 @@ class HomeScreen extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              onPressed: () {},
+              onPressed: () => context.go('/announcements'),
               tooltip: 'Notifications',
             ),
             PopupMenuButton<String>(
@@ -195,19 +197,34 @@ class _QuickAccessGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ta = sl<LocalStorage>().getLang() == 'ta';
     final items = [
       (icon: '🩸', label: l.bloodDonation, route: '/blood-donation',
        color: AppColors.accent),
       (icon: '🚧', label: l.publicIssues, route: '/issues',
        color: AppColors.warning),
+      (icon: '🔎', label: ta ? 'புகார் நிலை' : 'Track Issues',
+       route: '/issues/track', color: const Color(0xFFB45309)),
       (icon: '🪪', label: l.membership, route: '/membership',
        color: AppColors.primary),
       (icon: '🎗️', label: l.events, route: '/events',
        color: const Color(0xFF7C3AED)),
+      (icon: '🏅', label: ta ? 'விளையாட்டு' : 'Sports',
+       route: '/sports', color: const Color(0xFF059669)),
+      (icon: '🌱', label: ta ? 'பசுமை FYC' : 'Green FYC',
+       route: '/green', color: const Color(0xFF16A34A)),
+      (icon: '📢', label: ta ? 'அறிவிப்புகள்' : 'Announcements',
+       route: '/announcements', color: const Color(0xFFDC2626)),
       (icon: '📷', label: l.gallery, route: '/gallery',
        color: const Color(0xFFD97706)),
       (icon: '📋', label: l.directory, route: '/directory',
        color: const Color(0xFF1D4ED8)),
+      (icon: '👥', label: ta ? 'சமூகம்' : 'Community',
+       route: '/community', color: const Color(0xFF0891B2)),
+      (icon: '🎓', label: ta ? 'சான்றிதழ்' : 'Certificate',
+       route: '/certificate', color: const Color(0xFF9333EA)),
+      (icon: 'ℹ️', label: ta ? 'எங்களைப் பற்றி' : 'About',
+       route: '/about', color: AppColors.textSecondary),
     ];
 
     return GridView.count(
