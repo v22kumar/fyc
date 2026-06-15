@@ -1,10 +1,15 @@
+# fly.toml app configuration file for Fly.io deployment
+
 app = "fyc-backend"
-primary_region = "sin"  # Singapore — closest to India
+primary_region = "sin"
 
 [build]
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "8000"
+  DATABASE_URL = "sqlite:////app/data/fyc_connect.db"
+  OTP_BYPASS_CODE = "123456"
 
 [http_service]
   internal_port = 8000
@@ -12,10 +17,11 @@ primary_region = "sin"  # Singapore — closest to India
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
+  processes = ["app"]
 
 [[vm]]
+  size = "shared-cpu-1x"
   memory = "512mb"
-  cpu_kind = "shared"
   cpus = 1
 
 [mounts]

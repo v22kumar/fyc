@@ -1,3 +1,4 @@
+import os
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -67,6 +68,20 @@ def _seed_database():
 
         # Always ensure default contacts are seeded (idempotent)
         seed_default_contacts(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
+
+        # Check if blood donors table is empty, and seed them if so
+        from sqlalchemy import text
+        donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
+        if donor_count == 0:
+            import subprocess
+            import sys
+            print("Seeding blood donors from CSV...")
+            csv_path = "scripts/friends2support_donors.csv"
+            script_path = "scripts/import_donors_csv.py"
+            if os.path.exists(csv_path) and os.path.exists(script_path):
+                subprocess.run([sys.executable, script_path, "--csv", csv_path])
+            else:
+                print("CSV or script not found, skipping blood donor seeding.")
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
