@@ -158,14 +158,47 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+                  if (!_otpSent) ...[
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: AppTheme.cardShadow,
+                            ),
+                            child: Image.asset(
+                              'assets/images/fyc_logo.png',
+                              width: 72,
+                              height: 72,
+                              errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 36)),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'FYC Connect',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
                   // Header
                   Text(
                     _isPasswordLogin
                         ? (sl<LocalStorage>().getLang() == 'ta' ? 'குழுவினர் உள்நுழைவு' : 'Official Login')
                         : (_otpSent ? l.enterOtp : l.enterPhoneNumber),
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
@@ -176,7 +209,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                       '${l.otpSentTo} $_phoneNumber',
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   if (_isPasswordLogin) ...[
                     Form(

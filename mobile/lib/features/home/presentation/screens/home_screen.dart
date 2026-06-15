@@ -26,7 +26,26 @@ class HomeScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: Text(l.appName),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Image.asset(
+                  'assets/images/fyc_logo.png',
+                  width: 26,
+                  height: 26,
+                  errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 14)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(l.appName),
+            ],
+          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
@@ -118,38 +137,66 @@ class _GreetingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
+          colors: [AppColors.primary, Color(0xFF0891B2)], // Cyan 700 to Cyan 600
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: AppTheme.cardShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            l.homeGreeting,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.homeGreeting,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Friends Youth Club – Nagercoil',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Active since 1998',
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Friends Youth Club – Nagercoil',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          Image.asset(
-            'assets/images/fyc_logo.png',
-            width: 48,
-            height: 48,
-            errorBuilder: (_, __, ___) =>
-                const Text('🌱', style: TextStyle(fontSize: 36)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Image.asset(
+              'assets/images/fyc_logo.png',
+              width: 52,
+              height: 52,
+              errorBuilder: (_, __, ___) =>
+                  const Text('🌱', style: TextStyle(fontSize: 36)),
+            ),
           ),
         ],
       ),
@@ -164,10 +211,10 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      ('1500+', '🌱', l.statsTreesPlanted),
-      ('1200+', '🩸', l.statsDonors),
-      ('80+',   '🎉', l.statsEvents),
-      ('5000+', '❤️', l.statsImpacted),
+      ('1500+', '🌱', l.statsTreesPlanted, AppColors.success),
+      ('1200+', '🩸', l.statsDonors, AppColors.accent),
+      ('80+',   '🎉', l.statsEvents, const Color(0xFF8B5CF6)), // Purple
+      ('5000+', '❤️', l.statsImpacted, const Color(0xFFF43F5E)), // Rose
     ];
 
     return Row(
@@ -177,28 +224,38 @@ class _StatsRow extends StatelessWidget {
             margin: EdgeInsets.only(
               right: s == stats.last ? 0 : 8,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-              border: Border.all(color: AppColors.border),
+              boxShadow: AppTheme.cardShadow,
             ),
             child: Column(
               children: [
-                Text(s.$2, style: const TextStyle(fontSize: 18)),
-                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: s.$4.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(s.$2, style: const TextStyle(fontSize: 16)),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   s.$1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: AppColors.primary,
+                    color: s.$4,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   s.$3,
                   style: const TextStyle(
-                      fontSize: 9, color: AppColors.textSecondary),
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -226,11 +283,11 @@ class _QuickAccessGrid extends StatelessWidget {
       (icon: '🪪', label: l.membership, route: '/membership',
        color: AppColors.primary),
       (icon: '🎗️', label: l.events, route: '/events',
-       color: const Color(0xFF7C3AED)),
+       color: const Color(0xFF8B5CF6)),
       (icon: '📷', label: l.gallery, route: '/gallery',
        color: const Color(0xFFD97706)),
       (icon: '📋', label: l.directory, route: '/directory',
-       color: const Color(0xFF1D4ED8)),
+       color: const Color(0xFF2563EB)),
     ];
 
     return GridView.count(
@@ -266,41 +323,47 @@ class _GridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: color,
+          splashColor: color.withOpacity(0.08),
+          highlightColor: color.withOpacity(0.03),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.07),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(icon, style: const TextStyle(fontSize: 26)),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -313,41 +376,70 @@ class _EmergencyBloodBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/blood-donation'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.accentLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          border: Border.all(color: AppColors.accentSurface),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE11D48), Color(0xFFBE123C)], // Rose 600 to Rose 700
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Row(
-          children: [
-            const Text('🩸', style: TextStyle(fontSize: 36)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'இரத்த அவசரநிலை?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.accent,
-                      fontSize: 14,
-                    ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE11D48).withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/blood-donation'),
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          splashColor: Colors.white.withOpacity(0.12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    shape: BoxShape.circle,
                   ),
-                  Text(
-                    l.searchDonors,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12),
+                  child: const Text('🩸', style: TextStyle(fontSize: 26)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'இரத்த அவசரநிலை?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l.searchDonors,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
+              ],
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.accent),
-          ],
+          ),
         ),
       ),
     );

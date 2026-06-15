@@ -48,36 +48,56 @@ class _SplashScreenState extends State<SplashScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.background,
         body: FadeTransition(
           opacity: _fadeIn,
-          child: const Center(
+          child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('🌱', style: TextStyle(fontSize: 72)),
-                SizedBox(height: 16),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/fyc_logo.png',
+                    width: 110,
+                    height: 110,
+                    errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 54)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
                   'FYC Connect',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
-                Text(
+                const SizedBox(height: 8),
+                const Text(
                   'சமூக சேவையில் இணைவோம்',
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 48),
-                CircularProgressIndicator(
-                  color: Colors.white54,
-                  strokeWidth: 2,
+                const SizedBox(height: 48),
+                const CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 2.5,
                 ),
               ],
             ),
