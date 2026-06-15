@@ -34,10 +34,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-card shadow-2xl p-8">
         <div className="text-center mb-8">
           <img
-            src="/fyc_logo.svg"
+            src="/fyc_logo.png"
             alt="FYC"
-            className="h-20 w-auto mx-auto mb-3"
-            style={{ filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.45))' }}
+            className="h-24 w-24 mx-auto mb-3 rounded-2xl object-cover object-center shadow-lg"
           />
           <h1 className="text-2xl font-bold text-primary-900">FYC Admin Portal</h1>
           <p className="text-sm text-gray-500 mt-1">Friends Youth Club — Nagercoil</p>

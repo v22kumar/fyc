@@ -24,10 +24,9 @@ export default function Sidebar() {
     <aside className="w-56 min-h-screen bg-primary-900 text-white flex flex-col">
       <div className="p-5 border-b border-primary-800 flex items-center gap-3">
         <img
-          src="/fyc_logo.svg"
+          src="/fyc_logo.png"
           alt="FYC"
-          className="h-10 w-auto flex-shrink-0"
-          style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.55))' }}
+          className="h-10 w-10 rounded-lg object-cover object-center flex-shrink-0"
         />
         <div>
           <div className="text-lg font-bold leading-tight">FYC Admin</div>
