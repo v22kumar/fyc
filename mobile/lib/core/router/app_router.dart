@@ -13,8 +13,6 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/common/screens/coming_soon_screen.dart';
-import '../../features/common/screens/directory_screen.dart';
-import '../../features/common/screens/gallery_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
