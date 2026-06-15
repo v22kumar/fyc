@@ -31,4 +31,28 @@ class ApiConstants {
 
   // Membership
   static const String membershipMyCard = '/api/v1/membership/my-card';
+
+  // Sports
+  static const String sportsTournaments = '/api/v1/sports/tournaments';
+  static const String sportsChallenges = '/api/v1/sports/challenges';
+
+  // Announcements
+  static const String announcements = '/api/v1/announcements';
+
+  // Directory
+  static const String directory = '/api/v1/directory';
+
+  // Gallery
+  static const String gallery = '/api/v1/gallery';
+
+  // Green FYC
+  static const String greenStats = '/api/v1/green/stats';
+  static const String greenDrives = '/api/v1/green/drives';
+  static const String greenTrees = '/api/v1/green/trees';
+
+  // Volunteers
+  static const String myCertificate = '/api/v1/volunteers/my-certificate';
+
+  // Community
+  static const String community = '/api/v1/community';
 }

@@ -21,6 +21,47 @@ import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
 import '../../features/issues/presentation/bloc/issue_bloc.dart';
 
+// Sports
+import '../../features/sports/presentation/bloc/sports_bloc.dart';
+import '../../features/sports/presentation/screens/sports_hub_screen.dart';
+import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
+import '../../features/sports/presentation/screens/challenge_form_screen.dart';
+
+// Green FYC
+import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
+import '../../features/green_fyc/presentation/screens/green_fyc_screen.dart';
+import '../../features/green_fyc/presentation/screens/tree_registration_screen.dart';
+
+// Directory
+import '../../features/directory/presentation/bloc/directory_bloc.dart';
+import '../../features/directory/presentation/screens/directory_screen.dart';
+
+// Announcements
+import '../../features/announcements/domain/entities/announcement_entity.dart';
+import '../../features/announcements/presentation/bloc/announcement_bloc.dart';
+import '../../features/announcements/presentation/screens/announcements_screen.dart';
+import '../../features/announcements/presentation/screens/announcement_detail_screen.dart';
+
+// Gallery
+import '../../features/gallery/domain/entities/photo_entity.dart';
+import '../../features/gallery/presentation/bloc/gallery_bloc.dart';
+import '../../features/gallery/presentation/screens/gallery_screen.dart';
+import '../../features/gallery/presentation/screens/photo_viewer_screen.dart';
+
+// Issue tracking
+import '../../features/issues/presentation/bloc/issue_list_bloc.dart';
+import '../../features/issues/presentation/screens/issues_track_screen.dart';
+
+// About
+import '../../features/about/presentation/screens/about_screen.dart';
+
+// Volunteer certificate
+import '../../features/volunteers/presentation/screens/certificate_screen.dart';
+
+// Community
+import '../../features/community/presentation/bloc/community_bloc.dart';
+import '../../features/community/presentation/screens/community_directory_screen.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
@@ -96,20 +137,104 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/gallery',
-      builder: (context, state) => const ComingSoonScreen(
-        title: 'Gallery',
-        emoji: '📷',
-        subtitleEn: 'Our photo gallery is being curated. Check back soon!',
-        subtitleTa: 'புகைப்பட தொகுப்பு விரைவில் வருகிறது.',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<GalleryBloc>(),
+        child: const GalleryScreen(),
       ),
+      routes: [
+        GoRoute(
+          path: 'photo',
+          builder: (context, state) =>
+              PhotoViewerScreen(photo: state.extra as PhotoEntity),
+        ),
+      ],
     ),
     GoRoute(
       path: '/directory',
-      builder: (context, state) => const ComingSoonScreen(
-        title: 'Member Directory',
-        emoji: '📋',
-        subtitleEn: 'The member directory will be available in the next update.',
-        subtitleTa: 'உறுப்பினர் அட்டவணை விரைவில் கிடைக்கும்.',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<DirectoryBloc>(),
+        child: const DirectoryScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/sports',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<SportsBloc>(),
+        child: const SportsHubScreen(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'tournament',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return BlocProvider(
+              create: (_) => sl<SportsBloc>(),
+              child: SportsTournamentDetailScreen(
+                tournamentId: extra?['tournamentId'] as String? ?? '',
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'challenge',
+          builder: (context, state) => BlocProvider(
+            create: (_) => sl<SportsBloc>(),
+            child: const ChallengeFormScreen(),
+          ),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/green',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<GreenBloc>(),
+        child: const GreenFycScreen(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'register',
+          builder: (context, state) => BlocProvider(
+            create: (_) => sl<GreenBloc>(),
+            child: const TreeRegistrationScreen(),
+          ),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/announcements',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<AnnouncementBloc>(),
+        child: const AnnouncementsScreen(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'detail',
+          builder: (context, state) => AnnouncementDetailScreen(
+            announcement: state.extra as AnnouncementEntity,
+          ),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/issues/track',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<IssueListBloc>(),
+        child: const IssuesTrackScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/about',
+      builder: (context, state) => const AboutScreen(),
+    ),
+    GoRoute(
+      path: '/certificate',
+      builder: (context, state) => const CertificateScreen(),
+    ),
+    GoRoute(
+      path: '/community',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<CommunityBloc>(),
+        child: const CommunityDirectoryScreen(),
       ),
     ),
     GoRoute(
