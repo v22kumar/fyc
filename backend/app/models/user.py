@@ -39,6 +39,7 @@ class UserProfile(Base):
     address_line_ta = Column(String(255), nullable=True)
     address_line_en = Column(String(255), nullable=True)
     geography_id = Column(GUID(), nullable=True)  # Links to geographic hierarchy node
+    gender = Column(String(20), nullable=True)  # 'MALE', 'FEMALE', or 'OTHER'
     profile_image_url = Column(String(255), nullable=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
