@@ -1,0 +1,402 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+const ORG_ID   = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+---
+
+<BaseLayout
+  title="திறன் பதிவு - Skill Registration"
+  description="Register your business or skill in the FYC Community Directory."
+>
+  <!-- Hero -->
+  <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-14 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="திறன் பதிவு" data-en="Skill Registration">
+        திறன் பதிவு
+      </h1>
+      <p class="text-green-100" data-ta="உங்கள் திறமை அல்லது தொழிலை சமூக கடை பட்டியலில் பதிவு செய்யுங்கள்" data-en="Register your skill or business in the community directory">
+        உங்கள் திறமை அல்லது தொழிலை சமூக கடை பட்டியலில் பதிவு செய்யுங்கள்
+      </p>
+    </div>
+  </section>
+
+  <section class="py-12 px-4 max-w-xl mx-auto">
+    <!-- STEP 1: Phone & Name Authentication -->
+    <div id="step-auth" class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <span>🔒</span>
+        <span data-ta="உறுதிப்படுத்தல்" data-en="Identity Verification">உறுதிப்படுத்தல்</span>
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="முழு பெயர்" data-en="Full Name">முழு பெயர்</label>
+          <input
+            id="auth-name"
+            type="text"
+            placeholder="John Doe"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b] transition-colors"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="தொலைபேசி எண்" data-en="Phone Number">தொலைபேசி எண்</label>
+          <input
+            id="auth-phone"
+            type="tel"
+            placeholder="+919876543210"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-[#064e3b] transition-colors"
+          />
+          <p class="text-xs text-gray-400 mt-1" data-ta="நாடு குறியீட்டுடன் உள்ளிடவும் (எ.கா. +91...)" data-en="Enter with country code (e.g. +91...)">நாடு குறியீட்டுடன் உள்ளிடவும் (எ.கா. +91...)</p>
+        </div>
+
+        <button
+          id="send-otp-btn"
+          class="w-full bg-[#064e3b] text-white py-3 rounded-xl font-semibold hover:bg-[#065f46] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          <span id="send-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <span data-ta="OTP அனுப்புக" data-en="Send OTP">OTP அனுப்புக</span>
+        </button>
+
+        <!-- OTP Input (hidden initially) -->
+        <div id="otp-section" class="hidden border-t border-gray-100 pt-6 mt-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="OTP குறியீடு" data-en="OTP Code">OTP குறியீடு</label>
+            <input
+              id="auth-otp"
+              type="text"
+              maxlength="6"
+              placeholder="123456"
+              class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-center tracking-widest font-mono focus:outline-none focus:border-[#064e3b] transition-colors"
+            />
+          </div>
+
+          <button
+            id="verify-otp-btn"
+            class="w-full bg-[#991b1b] text-white py-3 rounded-xl font-semibold hover:bg-red-800 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <span id="verify-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span data-ta="சரிபார் & தொடர்" data-en="Verify & Continue">சரிபார் & தொடர்</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="auth-error" class="hidden mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 text-center"></div>
+    </div>
+
+    <!-- STEP 2: Skill details form (hidden initially) -->
+    <div id="step-form" class="hidden bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <h2 class="text-xl font-bold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
+        <span>🛠️</span>
+        <span data-ta="திறன் விவரங்கள்" data-en="Skill Details">திறன் விவரங்கள்</span>
+      </h2>
+
+      <form id="skill-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="வகை" data-en="Category">வகை</label>
+          <select id="field-category" required class="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-[#064e3b] bg-white">
+            <option value="carpenter">Carpenter / தச்சன்</option>
+            <option value="electrician">Electrician / மின்சாரி</option>
+            <option value="plumber">Plumber / குழாய் பதிப்பாளர்</option>
+            <option value="mason">Mason / கொத்தனார்</option>
+            <option value="painter">Painter / வண்ணம் பூசுபவர்</option>
+            <option value="mechanic">Mechanic / மெக்கானிக்</option>
+            <option value="ac_technician">AC Technician</option>
+            <option value="mobile_repair">Mobile Repair</option>
+            <option value="tailor">Tailor / தையல்</option>
+            <option value="tutor">Tutor / ஆசிரியர்</option>
+            <option value="doctor">Doctor / மருத்துவர்</option>
+            <option value="nurse">Nurse / செவிலியர்</option>
+            <option value="lawyer">Lawyer / வழக்கறிஞர்</option>
+            <option value="accountant">Accountant</option>
+            <option value="photographer">Photographer</option>
+            <option value="driver">Driver / ஓட்டுனர்</option>
+            <option value="caterer">Caterer / சமையல்</option>
+            <option value="event_organizer">Event Organizer</option>
+            <option value="grocery">Grocery / மளிகை</option>
+            <option value="hardware">Hardware</option>
+            <option value="pharmacy">Pharmacy / மருந்தகம்</option>
+            <option value="other">Other / இதர</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="தொழில் பெயர் (தமிழ்)" data-en="Business Name (Tamil)">தொழில் பெயர் (தமிழ்)</label>
+            <input id="field-business-ta" type="text" placeholder="எ.கா. முரளி மரவேலைகள்" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="தொழில் பெயர் (ஆங்கிலம்)" data-en="Business Name (English)">Business Name (English)</label>
+            <input id="field-business-en" type="text" placeholder="e.g. Murali Wood Works" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b]" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="தொடர்பு தொலைபேசி" data-en="Contact Phone">தொடர்பு தொலைபேசி</label>
+            <input id="field-phone" type="tel" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-[#064e3b]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="வாட்ஸ்அப் எண்" data-en="WhatsApp Number">WhatsApp Number</label>
+            <input id="field-whatsapp" type="tel" placeholder="+91..." class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-[#064e3b]" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="விளக்கம் (தமிழ்)" data-en="Description (Tamil)">விளக்கம் (தமிழ்)</label>
+          <textarea id="field-desc-ta" rows="3" placeholder="உங்கள் சேவைகளைப் பற்றி சுருக்கமாக எழுதவும்..." class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b] resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="விளக்கம் (ஆங்கிலம்)" data-en="Description (English)">Description (English)</label>
+          <textarea id="field-desc-en" rows="3" placeholder="Briefly describe your services..." class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b] resize-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="சேவை பகுதி" data-en="Service Area">சேவை பகுதி</label>
+            <input id="field-area" type="text" placeholder="எ.கா. நாகர்கோவில்" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" data-ta="அனுபவ ஆண்டுகள்" data-en="Years of Experience">அனுபவ ஆண்டுகள்</label>
+            <input id="field-experience" type="number" min="0" placeholder="5" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#064e3b]" />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          id="submit-skill-btn"
+          class="w-full bg-[#064e3b] text-white py-3.5 rounded-xl font-semibold hover:bg-[#065f46] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          <span id="submit-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <span data-ta="பதிவு செய்" data-en="Submit Registration">பதிவு செய்</span>
+        </button>
+      </form>
+
+      <div id="form-error" class="hidden mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 text-center"></div>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div id="step-success" class="hidden bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm space-y-4">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+        <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900" data-ta="பதிவு வெற்றிகரமாக முடிந்தது!" data-en="Registration Submitted!">
+        பதிவு வெற்றிகரமாக முடிந்தது!
+      </h2>
+      <p class="text-sm text-gray-500" data-ta="உங்கள் திறன் சுயவிவரம் சமர்ப்பிக்கப்பட்டது. நிர்வாகியின் ஒப்புதலுக்குப் பிறகு பட்டியலில் காண்பிக்கப்படும்." data-en="Your skill profile has been submitted. It will appear in the directory after administrator verification.">
+        உங்கள் திறன் சுயவிவரம் சமர்ப்பிக்கப்பட்டது. நிர்வாகியின் ஒப்புதலுக்குப் பிறகு பட்டியலில் காண்பிக்கப்படும்.
+      </p>
+      <div class="pt-4">
+        <a href="/directory" class="inline-block bg-[#064e3b] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#065f46] transition-colors">
+          ← <span data-ta="பட்டியலுக்கு திரும்புக" data-en="Back to Directory">பட்டியலுக்கு திரும்புக</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, ORG_ID }}>
+  let verificationId = '';
+  let authToken = '';
+  let userPhone = '';
+
+  const errorEl = document.getElementById('auth-error');
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove('hidden');
+  }
+
+  function hideError() {
+    errorEl.classList.add('hidden');
+  }
+
+  // ── OTP Request ────────────────────────────────────────────────────────────
+  document.getElementById('send-otp-btn').addEventListener('click', async () => {
+    hideError();
+    const phone = document.getElementById('auth-phone').value.trim();
+    const name = document.getElementById('auth-name').value.trim();
+
+    if (!name) {
+      showError(localStorage.getItem('fyc_lang') === 'ta' ? 'பெயரை உள்ளிடவும்' : 'Please enter your name');
+      return;
+    }
+    if (!phone) {
+      showError(localStorage.getItem('fyc_lang') === 'ta' ? 'தொலைபேசி எண்ணை உள்ளிடவும்' : 'Please enter your phone number');
+      return;
+    }
+
+    const btn = document.getElementById('send-otp-btn');
+    const spinner = document.getElementById('send-spinner');
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_id: ORG_ID,
+          phone_number: phone
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to send OTP');
+      }
+
+      const data = await res.json();
+      verificationId = data.verification_id;
+      userPhone = phone;
+
+      // Show OTP enter code section
+      document.getElementById('otp-section').classList.remove('hidden');
+      document.getElementById('auth-phone').disabled = true;
+      document.getElementById('auth-name').disabled = true;
+    } catch (e) {
+      showError(e.message);
+      btn.disabled = false;
+    } finally {
+      spinner.classList.add('hidden');
+    }
+  });
+
+  // ── OTP Verification ───────────────────────────────────────────────────────
+  document.getElementById('verify-otp-btn').addEventListener('click', async () => {
+    hideError();
+    const code = document.getElementById('auth-otp').value.trim();
+
+    if (code.length !== 6) {
+      showError(localStorage.getItem('fyc_lang') === 'ta' ? '6-இலக்க OTP குறியீட்டை உள்ளிடவும்' : 'Please enter a 6-digit OTP code');
+      return;
+    }
+
+    const btn = document.getElementById('verify-otp-btn');
+    const spinner = document.getElementById('verify-spinner');
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    try {
+      // 1. Verify OTP
+      const res = await fetch(`${API_BASE}/api/v1/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verification_id: verificationId,
+          otp_code: code
+        })
+      });
+
+      if (res.status === 404) {
+        // User not registered — register them now
+        await registerNewUser();
+      } else if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'OTP verification failed');
+      } else {
+        const data = await res.json();
+        authToken = data.access_token;
+        proceedToForm();
+      }
+    } catch (e) {
+      showError(e.message);
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+    }
+  });
+
+  async function registerNewUser() {
+    const name = document.getElementById('auth-name').value.trim();
+    const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organization_id: ORG_ID,
+        phone_number: userPhone,
+        role: 'PUBLIC_CITIZEN',
+        full_name_ta: name,
+        full_name_en: name,
+        preferred_language: localStorage.getItem('fyc_lang') || 'ta'
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Registration failed');
+    }
+
+    const data = await res.json();
+    authToken = data.access_token;
+    proceedToForm();
+  }
+
+  function proceedToForm() {
+    document.getElementById('step-auth').classList.add('hidden');
+    document.getElementById('step-form').classList.remove('hidden');
+
+    // Pre-fill phone field
+    document.getElementById('field-phone').value = userPhone;
+  }
+
+  // ── Skill Form Submit ──────────────────────────────────────────────────────
+  document.getElementById('skill-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formError = document.getElementById('form-error');
+    formError.classList.add('hidden');
+
+    const cat = document.getElementById('field-category').value;
+    const busTa = document.getElementById('field-business-ta').value.trim() || null;
+    const busEn = document.getElementById('field-business-en').value.trim() || null;
+    const phone = document.getElementById('field-phone').value.trim() || null;
+    const whatsapp = document.getElementById('field-whatsapp').value.trim() || null;
+    const descTa = document.getElementById('field-desc-ta').value.trim() || null;
+    const descEn = document.getElementById('field-desc-en').value.trim() || null;
+    const area = document.getElementById('field-area').value.trim() || null;
+    const exp = document.getElementById('field-experience').value ? parseInt(document.getElementById('field-experience').value) : null;
+
+    const btn = document.getElementById('submit-skill-btn');
+    const spinner = document.getElementById('submit-spinner');
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/community/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Organization-ID': ORG_ID,
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          category: cat,
+          business_name_ta: busTa,
+          business_name_en: busEn,
+          description_ta: descTa,
+          description_en: descEn,
+          contact_phone: phone,
+          contact_whatsapp: whatsapp,
+          service_area: area,
+          years_experience: exp
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to submit skill profile');
+      }
+
+      document.getElementById('step-form').classList.add('hidden');
+      document.getElementById('step-success').classList.remove('hidden');
+    } catch (e) {
+      formError.textContent = e.message;
+      formError.classList.remove('hidden');
+      btn.disabled = false;
+    } finally {
+      spinner.classList.add('hidden');
+    }
+  });
+</script>
