@@ -29,6 +29,7 @@ jobs:
             flyctl apps create "$APP_NAME" --org personal || true
             flyctl volumes create fyc_data --region sin --size 1 --yes --config backend/fly.toml || true
           fi
-          flyctl deploy --config backend/fly.toml --working-dir backend --remote-only
+          cd backend
+          flyctl deploy --config fly.toml --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
