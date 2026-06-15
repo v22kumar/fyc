@@ -27,7 +27,7 @@ jobs:
             # Note: If the app name is already taken globally, edit backend/fly.toml to change 'app'
             APP_NAME=$(grep -E "^app\s*=" backend/fly.toml | cut -d'"' -f2)
             flyctl apps create "$APP_NAME" --org personal || true
-            flyctl volumes create fyc_data --region bom --size 1 --yes --config backend/fly.toml || true
+            flyctl volumes create fyc_data --region sin --size 1 --yes --config backend/fly.toml || true
           fi
           flyctl deploy --config backend/fly.toml --working-dir backend --remote-only
         env:
