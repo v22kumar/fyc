@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
+import '../../../../main.dart';
 
 class LanguageSelectScreen extends StatefulWidget {
   const LanguageSelectScreen({super.key});
@@ -16,6 +17,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
 
   Future<void> _proceed() async {
     await sl<LocalStorage>().saveLang(_selectedLang);
+    localeNotifier.value = Locale(_selectedLang);
     if (mounted) context.go('/login');
   }
 

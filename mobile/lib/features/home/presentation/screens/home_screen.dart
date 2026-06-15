@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
+import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -32,12 +35,32 @@ class HomeScreen extends StatelessWidget {
             ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
-              onSelected: (value) {
+              onSelected: (value) async {
                 if (value == 'logout') {
                   context.read<AuthBloc>().add(const AuthLogoutRequested());
+                } else if (value == 'lang') {
+                  final storage = sl<LocalStorage>();
+                  final currentLang = storage.getLang();
+                  final newLang = currentLang == 'ta' ? 'en' : 'ta';
+                  await storage.saveLang(newLang);
+                  localeNotifier.value = Locale(newLang);
                 }
               },
               itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'lang',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.language, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        sl<LocalStorage>().getLang() == 'ta'
+                            ? 'English-க்கு மாற்றவும்'
+                            : 'தமிழுக்கு மாற்றவும்',
+                      ),
+                    ],
+                  ),
+                ),
                 PopupMenuItem(
                   value: 'logout',
                   child: Row(
@@ -221,7 +244,7 @@ class _QuickAccessGrid extends StatelessWidget {
           icon: item.icon,
           label: item.label,
           color: item.color,
-          onTap: () => context.go(item.route),
+          onTap: () => context.push(item.route),
         );
       }).toList(),
     );
@@ -291,7 +314,7 @@ class _EmergencyBloodBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go('/blood-donation'),
+      onTap: () => context.push('/blood-donation'),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
