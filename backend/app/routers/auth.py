@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash
+from app.services.otp_sender import send_otp as deliver_otp
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin
@@ -45,8 +46,7 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
 
     otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id)
 
-    # In production replace this with your SMS provider (Twilio, AWS SNS, etc.)
-    print(f"[OTP] {payload.phone_number} → {otp_code}")
+    deliver_otp(payload.phone_number, otp_code, email=payload.email)
 
     return OTPResponse(
         message="OTP sent successfully",

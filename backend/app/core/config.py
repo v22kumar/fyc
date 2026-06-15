@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     # Firebase Cloud Messaging — set in production .env to enable push notifications
     FCM_SERVER_KEY: str = ""
 
+    # Twilio WhatsApp OTP
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+
+    # SMTP Email OTP
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""  # Gmail: use App Password, not account password
+    SMTP_FROM_EMAIL: str = "noreply@fycconnect.org"
+
     # Load environment variables from backend/.env if it exists
     model_config = SettingsConfigDict(
         env_file=os.path.join(BASE_DIR, ".env"),
