@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Numeric, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -35,6 +35,8 @@ class EventAttendance(Base):
     event_id = Column(GUID(), ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     checked_in_at = Column(DateTime(timezone=True), nullable=False)
+    checked_out_at = Column(DateTime(timezone=True), nullable=True)
+    hours_accrued = Column(Numeric(5, 2), nullable=True)
 
     event = relationship("Event", back_populates="attendances")
     user = relationship("User", foreign_keys=[user_id])

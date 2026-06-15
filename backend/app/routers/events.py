@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import List
 from uuid import UUID
 from datetime import datetime, timezone
@@ -6,8 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.event import Event, EventAttendance
-from app.models.user import User
-from app.schemas.event import EventCreate, EventOut, EventCheckinOut
+from app.models.user import User, VolunteerMetadata
+from app.schemas.event import EventCreate, EventOut, EventCheckinOut, EventCheckoutOut
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import get_current_tenant_id
 
@@ -102,3 +103,59 @@ def checkin_event(
         user_id=current_user.id,
         checked_in_at=now
     )
+
+
+@router.post("/{event_id}/checkout", response_model=EventCheckoutOut)
+def checkout_event(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Check out of an event, recording hours accrued since check-in."""
+    attendance = db.query(EventAttendance).filter(
+        EventAttendance.event_id == event_id,
+        EventAttendance.user_id == current_user.id
+    ).first()
+
+    if not attendance:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No check-in record found for this event"
+        )
+
+    if attendance.checked_out_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already checked out of this event"
+        )
+
+    now = datetime.now(timezone.utc)
+    checked_in = attendance.checked_in_at
+    # Ensure checked_in is timezone-aware for arithmetic
+    if checked_in.tzinfo is None:
+        checked_in = checked_in.replace(tzinfo=timezone.utc)
+
+    hours = round((now - checked_in).total_seconds() / 3600, 2)
+
+    attendance.checked_out_at = now
+    attendance.hours_accrued = Decimal(str(hours))
+
+    # Update or create VolunteerMetadata hours
+    volunteer_meta = db.query(VolunteerMetadata).filter(
+        VolunteerMetadata.user_id == current_user.id
+    ).first()
+    if volunteer_meta:
+        current_total = float(volunteer_meta.total_hours_accrued or 0)
+        volunteer_meta.total_hours_accrued = Decimal(str(round(current_total + hours, 2)))
+    else:
+        volunteer_meta = VolunteerMetadata(
+            user_id=current_user.id,
+            skills=[],
+            availability_status="AVAILABLE",
+            total_hours_accrued=Decimal(str(hours)),
+        )
+        db.add(volunteer_meta)
+
+    db.commit()
+
+    return EventCheckoutOut(checked_out_at=now, hours_accrued=hours)

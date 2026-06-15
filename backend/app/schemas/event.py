@@ -33,3 +33,7 @@ class EventCheckinOut(BaseModel):
     event_id: UUID
     user_id: UUID
     checked_in_at: datetime
+
+class EventCheckoutOut(BaseModel):
+    checked_out_at: datetime
+    hours_accrued: float

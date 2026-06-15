@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -146,6 +147,58 @@ def update_issue_status(
         target_id=issue_id,
         old_values={"status": old_status},
         new_values={"status": new_status.value if hasattr(new_status, 'value') else str(new_status)}
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(issue)
+    return issue
+
+
+class IssueAssignRequest(BaseModel):
+    volunteer_id: UUID
+
+
+@router.patch("/{issue_id}/assign", response_model=IssueOut)
+def assign_issue_volunteer(
+    issue_id: UUID,
+    payload: IssueAssignRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_executive)
+):
+    """
+    Assign a volunteer to an issue (Executive Member, Admin, Super Admin only).
+    Automatically transitions status from NEW -> ASSIGNED if currently NEW.
+    """
+    tenant_id = get_current_tenant_id()
+    issue = db.query(PublicIssue).filter(
+        PublicIssue.id == issue_id,
+        PublicIssue.organization_id == tenant_id
+    ).first()
+    if not issue:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
+
+    old_values = {
+        "assigned_volunteer_id": str(issue.assigned_volunteer_id) if issue.assigned_volunteer_id else None,
+        "status": issue.status.value if hasattr(issue.status, "value") else str(issue.status),
+    }
+
+    issue.assigned_volunteer_id = payload.volunteer_id
+
+    # Auto-transition NEW -> ASSIGNED
+    if issue.status == IssueStatus.NEW:
+        issue.status = IssueStatus.ASSIGNED
+
+    log = AuditLog(
+        organization_id=current_user.organization_id,
+        user_id=current_user.id,
+        action_type="ISSUE_ASSIGNED",
+        target_table="public_issues",
+        target_id=issue_id,
+        old_values=old_values,
+        new_values={
+            "assigned_volunteer_id": str(payload.volunteer_id),
+            "status": issue.status.value if hasattr(issue.status, "value") else str(issue.status),
+        },
     )
     db.add(log)
     db.commit()
