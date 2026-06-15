@@ -173,13 +173,13 @@ class _CardFront extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFF064e3b), Color(0xFF065f46), Color(0xFF047857)],
+          colors: [Color(0xFF0F5132), Color(0xFF198754), Color(0xFF105936)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF064e3b).withOpacity(0.6),
+            color: const Color(0xFF0F5132).withOpacity(0.6),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -446,11 +446,11 @@ class _CardBack extends StatelessWidget {
                     size: 130,
                     eyeStyle: const QrEyeStyle(
                       eyeShape: QrEyeShape.square,
-                      color: Color(0xFF064e3b),
+                      color: Color(0xFF0F5132),
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
                       dataModuleShape: QrDataModuleShape.square,
-                      color: Color(0xFF064e3b),
+                      color: Color(0xFF0F5132),
                     ),
                   ),
                 ),
@@ -514,13 +514,13 @@ class _StatusBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: isValid
-            ? const Color(0xFF064e3b).withOpacity(0.15)
-            : const Color(0xFF991b1b).withOpacity(0.15),
+            ? AppColors.primary.withOpacity(0.15)
+            : AppColors.accent.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isValid
-              ? const Color(0xFF064e3b).withOpacity(0.4)
-              : const Color(0xFF991b1b).withOpacity(0.4),
+              ? AppColors.primary.withOpacity(0.4)
+              : AppColors.accent.withOpacity(0.4),
         ),
       ),
       child: Row(
