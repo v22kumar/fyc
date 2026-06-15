@@ -1,0 +1,339 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import '../../domain/entities/drive_entity.dart';
+import '../bloc/green_bloc.dart';
+import '../bloc/green_event.dart';
+import '../bloc/green_state.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
+
+class TreeRegistrationScreen extends StatefulWidget {
+  const TreeRegistrationScreen({super.key});
+
+  @override
+  State<TreeRegistrationScreen> createState() => _TreeRegistrationScreenState();
+}
+
+class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
+  String get _lang => sl<LocalStorage>().getLang();
+
+  final _speciesTaCtrl = TextEditingController();
+  final _speciesEnCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
+  final _latCtrl = TextEditingController();
+  final _lonCtrl = TextEditingController();
+
+  DateTime _plantedDate = DateTime.now();
+  String? _selectedDriveId;
+  String? _pickedPhotoPath; // local path only; no upload endpoint wired.
+
+  @override
+  void initState() {
+    super.initState();
+    // Load drives so the user can optionally associate the tree with one.
+    context.read<GreenBloc>().add(const GreenFetchRequested());
+  }
+
+  @override
+  void dispose() {
+    _speciesTaCtrl.dispose();
+    _speciesEnCtrl.dispose();
+    _notesCtrl.dispose();
+    _latCtrl.dispose();
+    _lonCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _plantedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _plantedDate = picked);
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _pickedPhotoPath = image.path);
+    }
+    // TODO: no upload endpoint wired here — photo_url is left null on submit.
+  }
+
+  String? _trim(TextEditingController c) {
+    final v = c.text.trim();
+    return v.isEmpty ? null : v;
+  }
+
+  void _submit() {
+    context.read<GreenBloc>().add(
+          GreenTreeRegistered(
+            driveId: _selectedDriveId,
+            speciesTa: _trim(_speciesTaCtrl),
+            speciesEn: _trim(_speciesEnCtrl),
+            latitude: double.tryParse(_latCtrl.text.trim()),
+            longitude: double.tryParse(_lonCtrl.text.trim()),
+            plantedDate: _plantedDate,
+            photoUrl: null, // TODO: wire upload endpoint to set photo_url.
+            notes: _trim(_notesCtrl),
+          ),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = _lang;
+    final dateFmt = DateFormat('d MMM yyyy');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(lang == 'ta' ? 'மரம் பதிவு செய்க' : 'Register a Tree'),
+      ),
+      body: BlocConsumer<GreenBloc, GreenState>(
+        listener: (context, state) {
+          if (state is GreenTreeRegisteredSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  lang == 'ta'
+                      ? 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது! 🌳'
+                      : 'Tree registered successfully! 🌳',
+                ),
+                backgroundColor: AppColors.primary,
+              ),
+            );
+            context.pop();
+          }
+          if (state is GreenFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.accent,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          // Drives may have loaded via GreenLoaded; otherwise show none.
+          final drives =
+              state is GreenLoaded ? state.drives : const <DriveEntity>[];
+          final isSubmitting = state is GreenLoading;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Label(
+                  text: lang == 'ta'
+                      ? 'மரம் நடப்பட்ட தேதி'
+                      : 'Planted Date',
+                ),
+                const SizedBox(height: 8),
+                _DatePickerField(
+                  label: dateFmt.format(_plantedDate),
+                  onTap: _pickDate,
+                ),
+                const SizedBox(height: 20),
+                _Label(
+                  text: lang == 'ta'
+                      ? 'மர வகை (தமிழ்) — விரும்பினால்'
+                      : 'Species (Tamil) — optional',
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _speciesTaCtrl,
+                  decoration: InputDecoration(
+                    hintText: lang == 'ta' ? 'எ.கா. வேம்பு' : 'e.g. வேம்பு',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _Label(
+                  text: lang == 'ta'
+                      ? 'மர வகை (ஆங்கிலம்) — விரும்பினால்'
+                      : 'Species (English) — optional',
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _speciesEnCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Neem',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (drives.isNotEmpty) ...[
+                  _Label(
+                    text: lang == 'ta'
+                        ? 'இயக்கம் (விரும்பினால்)'
+                        : 'Drive (optional)',
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String?>(
+                    value: _selectedDriveId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    items: [
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text(
+                          lang == 'ta' ? 'எதுவும் இல்லை' : 'None',
+                        ),
+                      ),
+                      ...drives.map(
+                        (d) => DropdownMenuItem<String?>(
+                          value: d.id,
+                          child: Text(
+                            d.displayTitle(lang),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _selectedDriveId = v),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                _Label(
+                  text: lang == 'ta'
+                      ? 'இருப்பிடம் (விரும்பினால்)'
+                      : 'Location (optional)',
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _latCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: lang == 'ta' ? 'அட்சரேகை' : 'Latitude',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _lonCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: lang == 'ta' ? 'தீர்க்கரேகை' : 'Longitude',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _Label(
+                  text: lang == 'ta'
+                      ? 'குறிப்புகள் (விரும்பினால்)'
+                      : 'Notes (optional)',
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _notesCtrl,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: lang == 'ta'
+                        ? 'கூடுதல் விவரங்கள்'
+                        : 'Additional details',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _Label(
+                  text: lang == 'ta'
+                      ? 'புகைப்படம் (விரும்பினால்)'
+                      : 'Photo (optional)',
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _pickPhoto,
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: Text(
+                    _pickedPhotoPath != null
+                        ? (lang == 'ta'
+                            ? 'புகைப்படம் தேர்ந்தெடுக்கப்பட்டது'
+                            : 'Photo selected')
+                        : (lang == 'ta'
+                            ? 'புகைப்படம் தேர்வு செய்க'
+                            : 'Pick a photo'),
+                  ),
+                ),
+                const SizedBox(height: 36),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isSubmitting ? null : _submit,
+                    child: isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            lang == 'ta' ? 'மரம் பதிவு செய்க 🌳' : 'Register Tree 🌳',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  final String text;
+  const _Label({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+    );
+  }
+}
+
+class _DatePickerField extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _DatePickerField({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, color: Colors.grey),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 15, color: Colors.black87),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
