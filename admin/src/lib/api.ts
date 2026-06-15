@@ -13,7 +13,7 @@ function headers(extra?: Record<string, string>): HeadersInit {
   };
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: { ...headers(), ...(init?.headers ?? {}) },
