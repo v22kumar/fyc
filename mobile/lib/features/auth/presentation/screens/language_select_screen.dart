@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
+import '../../../../main.dart';
 
 class LanguageSelectScreen extends StatefulWidget {
   const LanguageSelectScreen({super.key});
@@ -16,6 +17,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
 
   Future<void> _proceed() async {
     await sl<LocalStorage>().saveLang(_selectedLang);
+    localeNotifier.value = Locale(_selectedLang);
     if (mounted) context.go('/login');
   }
 
@@ -29,7 +31,26 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('🌱', style: TextStyle(fontSize: 64)),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/fyc_logo.png',
+                  width: 80,
+                  height: 80,
+                  errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 40)),
+                ),
+              ),
               const SizedBox(height: 16),
               const Text(
                 'FYC Connect',
@@ -37,9 +58,10 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 36),
 
               // Language cards
               _LangCard(

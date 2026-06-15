@@ -182,18 +182,39 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
 class _EmergencyBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final lang = sl<LocalStorage>().getLang();
     return Container(
-      width: double.infinity,
-      color: AppColors.accent,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE11D48).withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ]
+      ),
       child: Row(
-        children: const [
-          Icon(Icons.bloodtype, color: Colors.white, size: 20),
-          SizedBox(width: 8),
+        children: [
+          const Icon(Icons.emergency_outlined, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Emergency? All donors below are currently available.',
-              style: TextStyle(color: Colors.white, fontSize: 13),
+              lang == 'ta'
+                  ? 'அவசர நிலை? கீழே உள்ள அனைத்து கொடையாளர்களும் தற்போது தயாராக உள்ளனர்.'
+                  : 'Emergency? All donors below are currently available.',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

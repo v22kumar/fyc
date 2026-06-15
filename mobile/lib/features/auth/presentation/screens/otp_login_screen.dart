@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../service_locator.dart';
 
 class OtpLoginScreen extends StatefulWidget {
   const OtpLoginScreen({super.key});
@@ -24,6 +27,13 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
   String _verificationId = '';
   String _phoneNumber = '';
 
+  // Password Login Fields
+  bool _isPasswordLogin = false;
+  bool _localLoading = false;
+  final _usernameCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _pwdFormKey = GlobalKey<FormState>();
+
   // OTP fields
   final List<TextEditingController> _otpCtrls =
       List.generate(6, (_) => TextEditingController());
@@ -32,6 +42,8 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
   @override
   void dispose() {
     _phoneCtrl.dispose();
+    _usernameCtrl.dispose();
+    _passwordCtrl.dispose();
     for (final c in _otpCtrls) c.dispose();
     for (final f in _otpFocus) f.dispose();
     super.dispose();
@@ -66,6 +78,34 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
           verificationId: _verificationId,
           otpCode: _otpCode,
         ));
+  }
+
+  Future<void> _submitPasswordLogin() async {
+    if (!_pwdFormKey.currentState!.validate()) return;
+    setState(() => _localLoading = true);
+
+    final repository = sl<AuthRepository>();
+    final result = await repository.loginWithPassword(
+      organizationId: _orgId,
+      username: _usernameCtrl.text.trim(),
+      password: _passwordCtrl.text.trim(),
+    );
+
+    result.fold(
+      (failure) {
+        setState(() => _localLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: AppColors.accent,
+          ),
+        );
+      },
+      (user) {
+        setState(() => _localLoading = false);
+        context.read<AuthBloc>().add(const AuthCheckRequested());
+      },
+    );
   }
 
   @override
@@ -118,12 +158,47 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+                  if (!_otpSent) ...[
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: AppTheme.cardShadow,
+                            ),
+                            child: Image.asset(
+                              'assets/images/fyc_logo.png',
+                              width: 72,
+                              height: 72,
+                              errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 36)),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'FYC Connect',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
                   // Header
                   Text(
-                    _otpSent ? l.enterOtp : l.enterPhoneNumber,
+                    _isPasswordLogin
+                        ? (sl<LocalStorage>().getLang() == 'ta' ? 'குழுவினர் உள்நுழைவு' : 'Official Login')
+                        : (_otpSent ? l.enterOtp : l.enterPhoneNumber),
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
@@ -134,9 +209,49 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                       '${l.otpSentTo} $_phoneNumber',
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  if (!_otpSent) ...[
+                  if (_isPasswordLogin) ...[
+                    Form(
+                      key: _pwdFormKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _usernameCtrl,
+                            decoration: InputDecoration(
+                              hintText: sl<LocalStorage>().getLang() == 'ta' ? 'பயனர் பெயர் அல்லது அலைபேசி எண்' : 'Username or Phone',
+                              prefixIcon: const Icon(Icons.person_outline),
+                              label: Text(sl<LocalStorage>().getLang() == 'ta' ? 'பயனர் பெயர்' : 'Username'),
+                            ),
+                            validator: (v) => v == null || v.trim().isEmpty ? (sl<LocalStorage>().getLang() == 'ta' ? 'பயனர் பெயரை உள்ளிடவும்' : 'Enter username') : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordCtrl,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: sl<LocalStorage>().getLang() == 'ta' ? 'கடவுச்சொல்லை உள்ளிடவும்' : 'Enter password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              label: Text(sl<LocalStorage>().getLang() == 'ta' ? 'கடவுச்சொல்' : 'Password'),
+                            ),
+                            validator: (v) => v == null || v.trim().isEmpty ? (sl<LocalStorage>().getLang() == 'ta' ? 'கடவுச்சொல்லை உள்ளிடவும்' : 'Enter password') : null,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: _localLoading ? null : _submitPasswordLogin,
+                            child: _localLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Text(sl<LocalStorage>().getLang() == 'ta' ? 'உள்நுழைக' : 'Login'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (!_otpSent) ...[
                     Form(
                       key: _formKey,
                       child: Column(
@@ -154,7 +269,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                             ],
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) {
-                                return l.enterPhoneNumber;
+                                  return l.enterPhoneNumber;
                               }
                               return null;
                             },
@@ -231,6 +346,33 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   const SizedBox(height: 32),
 
                   if (!_otpSent) ...[
+                    // Toggle button for Official vs Member login
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordLogin = !_isPasswordLogin;
+                          });
+                        },
+                        child: Text(
+                          _isPasswordLogin
+                              ? (sl<LocalStorage>().getLang() == 'ta'
+                                  ? 'உறுப்பினர் உள்நுழைவு (OTP)'
+                                  : 'Go back to OTP Login')
+                              : (sl<LocalStorage>().getLang() == 'ta'
+                                  ? 'குழுவினர் உள்நுழைவு (கடவுச்சொல்)'
+                                  : 'Club Official Login'),
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  if (!_otpSent && !_isPasswordLogin) ...[
                     // Divider
                     Row(children: [
                       const Expanded(child: Divider()),
@@ -261,23 +403,23 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                  ],
 
-                  // Register link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(l.noAccount,
-                          style: const TextStyle(color: AppColors.textSecondary)),
-                      TextButton(
-                        onPressed: () => context.go('/register', extra: {
-                          'organizationId': _orgId,
-                          'phoneNumber': _phoneCtrl.text.trim(),
-                        }),
-                        child: Text(l.register),
-                      ),
-                    ],
-                  ),
+                    // Register link
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(l.noAccount,
+                            style: const TextStyle(color: AppColors.textSecondary)),
+                        TextButton(
+                          onPressed: () => context.go('/register', extra: {
+                            'organizationId': _orgId,
+                            'phoneNumber': _phoneCtrl.text.trim(),
+                          }),
+                          child: Text(l.register),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             );

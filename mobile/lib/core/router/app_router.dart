@@ -13,6 +13,9 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/common/screens/coming_soon_screen.dart';
+import '../../features/common/screens/directory_screen.dart';
+import '../../features/common/screens/gallery_screen.dart';
+import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
@@ -88,7 +91,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const RegisterScreen(),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return RegisterScreen(
+          organizationId: extra?['organizationId'] as String? ?? '',
+          phoneNumber: extra?['phoneNumber'] as String? ?? '',
+        );
+      },
     ),
     GoRoute(
       path: '/home',
@@ -239,12 +248,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/opportunities',
-      builder: (context, state) => const ComingSoonScreen(
-        title: 'Opportunity Hub',
-        emoji: '📚',
-        subtitleEn: 'Volunteer opportunities and skill-building resources coming soon.',
-        subtitleTa: 'தன்னார்வ வாய்ப்புகள் விரைவில் வருகின்றன.',
-      ),
+      builder: (context, state) => const OpportunitiesScreen(),
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

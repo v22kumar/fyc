@@ -33,7 +33,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-primary-900 px-4">
       <div className="w-full max-w-md bg-white rounded-card shadow-2xl p-8">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🌿</div>
+          <img
+            src="/fyc_logo.png"
+            alt="FYC"
+            className="h-24 w-24 mx-auto mb-3 rounded-2xl object-cover object-center shadow-lg"
+          />
           <h1 className="text-2xl font-bold text-primary-900">FYC Admin Portal</h1>
           <p className="text-sm text-gray-500 mt-1">Friends Youth Club — Nagercoil</p>
         </div>

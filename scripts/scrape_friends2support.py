@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 """
 Scraper for Friends2Support blood donor database.
-Scrapes donors from Tamil Nadu (Nagercoil / Kanyakumari district).
+Scrapes donors from India -> Tamil Nadu -> Kanyakumari district -> all cities/taluks.
 Saves results to scripts/friends2support_donors.csv
 
 Usage:
   pip install requests beautifulsoup4 lxml
-  python scripts/scrape_friends2support.py
-
-The script searches for all blood groups across Tamil Nadu / Kanyakumari.
-Results are deduplicated by phone number before saving.
+  $env:PYTHONIOENCODING="utf-8"; python scripts/scrape_friends2support.py
 """
 
 import csv
 import time
 import re
 import sys
-import os
 from pathlib import Path
 
 try:
@@ -29,7 +25,6 @@ except ImportError:
 BASE_URL = "https://friends2support.org"
 SEARCH_URL = f"{BASE_URL}/inner/news/searchresult.aspx"
 
-# Browser-like headers to avoid 403
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -38,263 +33,369 @@ HEADERS = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
-    "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
     "Referer": f"{BASE_URL}/",
 }
 
 BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
-# Search locations — try city-level first, then district, then state
-LOCATIONS = [
-    "Nagercoil",
-    "Kanyakumari",
-    "Marthandam",
-    "Colachel",
-    "Kuzhithurai",
-]
+
+def parse_callback_options(response_text: str) -> dict[str, str]:
+    """
+    Parses ASP.NET callback response format:
+    'sValue|Text||Value|Text||Value|Text||'
+    Returns a dict mapping Text -> Value (e.g., 'Tamil Nadu' -> '24').
+    """
+    options = {}
+    if not response_text.startswith("s"):
+        return options
+    
+    clean_text = response_text[1:]
+    parts = clean_text.split("||")
+    for part in parts:
+        if not part.strip():
+            continue
+        subparts = part.split("|")
+        if len(subparts) >= 2:
+            val = subparts[0].strip()
+            name = subparts[1].strip()
+            if val and name:
+                options[name.lower()] = val
+    return options
 
 
-def get_viewstate(session: requests.Session, url: str, params: dict | None = None) -> dict:
-    """GET the page and extract ASP.NET form tokens."""
-    r = session.get(url, params=params, timeout=30)
-    r.raise_for_status()
-    soup = BeautifulSoup(r.text, "lxml")
-
-    tokens = {}
-    for field in ["__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION", "__EVENTTARGET", "__EVENTARGUMENT"]:
-        tag = soup.find("input", {"name": field})
-        if tag:
-            tokens[field] = tag.get("value", "")
-    return tokens, soup
+def get_viewstate(soup: BeautifulSoup) -> tuple[str, str]:
+    """Extract viewstate and generator tokens from BeautifulSoup."""
+    viewstate = soup.find("input", {"id": "__VIEWSTATE"})
+    generator = soup.find("input", {"id": "__VIEWSTATEGENERATOR"})
+    
+    val_vs = viewstate.get("value", "") if viewstate else ""
+    val_gen = generator.get("value", "") if generator else ""
+    return val_vs, val_gen
 
 
-def parse_donors(soup: BeautifulSoup) -> list[dict]:
-    """Parse donor rows from the results page."""
+def parse_donors_from_soup(soup: BeautifulSoup) -> list[dict]:
+    """Parse donor rows from the GridView table."""
     donors = []
-
-    # Friends2Support results are typically in a table or div grid
-    # Try table rows first
-    table = soup.find("table", id=re.compile(r"Grid|grid|Result|result|donor|Donor", re.I))
-    if not table:
-        # Fallback: find any table with donor-like content
-        tables = soup.find_all("table")
-        for t in tables:
-            text = t.get_text()
-            if any(bg in text for bg in ["A+", "B+", "O+", "AB+"]):
-                table = t
-                break
-
+    table = soup.find("table", id="dgBloodDonorResults")
     if not table:
         return donors
-
-    rows = table.find_all("tr")
-    for row in rows[1:]:  # skip header
-        cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+        
+    rows = table.find_all("tr", recursive=False)
+    if len(rows) <= 2:
+        return donors
+        
+    start_idx = 2
+    end_idx = len(rows)
+    
+    # Check if the last row is a pager row
+    last_row_cells = rows[-1].find_all("td", recursive=False)
+    if len(last_row_cells) == 1 and last_row_cells[0].get("colspan"):
+        end_idx = len(rows) - 1
+        
+    for idx in range(start_idx, end_idx):
+        cells = [td.get_text(strip=True) for td in rows[idx].find_all("td", recursive=False)]
         if len(cells) < 3:
             continue
-
-        # Try to identify columns by content heuristics
-        donor = {}
-        for cell in cells:
-            cell_clean = cell.strip()
-            if re.match(r"^(A|B|AB|O)[+-]$", cell_clean):
-                donor["blood_group"] = cell_clean
-            elif re.search(r"\d{10}", cell_clean):
-                phone = re.search(r"\d{10}", cell_clean)
-                if phone:
-                    donor["phone"] = phone.group()
-            elif cell_clean.lower() in ("yes", "available", "ready"):
-                donor["available"] = True
-            elif cell_clean.lower() in ("no", "not available", "unavailable"):
-                donor["available"] = False
-            elif not donor.get("name") and re.match(r"^[A-Za-z .']{3,60}$", cell_clean):
-                donor["name"] = cell_clean
-            elif not donor.get("city") and re.match(r"^[A-Za-z ]{3,50}$", cell_clean) and donor.get("name"):
-                donor["city"] = cell_clean
-
-        if donor.get("name") or donor.get("phone"):
-            donors.append(donor)
-
+        
+        name = cells[0]
+        avail_str = cells[1].lower()
+        mobile = cells[2]
+        
+        available = "unavailable" not in avail_str and "no" not in avail_str
+        
+        donors.append({
+            "name": name,
+            "available": available,
+            "phone": mobile,
+            "gender": None  # Gender not exposed in table, but mapped for schema
+        })
     return donors
 
 
-def get_total_pages(soup: BeautifulSoup) -> int:
-    """Try to find pagination and total pages."""
-    # Look for pager links like "1 2 3 ... 10"
-    pager = soup.find(id=re.compile(r"[Pp]ager|[Pp]ager|[Pp]age"))
-    if pager:
-        page_links = pager.find_all("a")
-        nums = []
-        for a in page_links:
-            try:
-                nums.append(int(a.get_text(strip=True)))
-            except ValueError:
-                pass
-        if nums:
-            return max(nums)
-
-    # Try looking for "Page X of Y" text
-    m = re.search(r"[Pp]age\s+\d+\s+of\s+(\d+)", soup.get_text())
-    if m:
-        return int(m.group(1))
-
-    return 1
+def parse_pager_links(table_soup: BeautifulSoup) -> dict:
+    """Extract page numbers and targets from pager row."""
+    links = {}
+    for a in table_soup.find_all("a", href=re.compile(r"__doPostBack")):
+        text = a.get_text(strip=True)
+        href = a.get("href", "")
+        m = re.search(r"__doPostBack\('([^']*)','([^']*)'\)", href)
+        if m:
+            target = m.group(1)
+            if text.isdigit():
+                links[int(text)] = target
+            elif text == "...":
+                links["next" if "ctl10" in target or "ctl34" in target or "ctl35" in target else "prev"] = target
+    return links
 
 
-def scrape_by_location_and_group(
+def scrape_all_pages(
     session: requests.Session,
-    location: str,
-    blood_group: str,
+    search_payload: dict,
+    generator_val: str,
 ) -> list[dict]:
-    """Search for donors in a location with a specific blood group."""
-    print(f"  Searching: {location} / {blood_group}", end=" ", flush=True)
-
+    """Iteratively scrape all pages of results for a query."""
+    donors = []
+    
     try:
-        tokens, soup = get_viewstate(session, SEARCH_URL)
-    except Exception as e:
-        print(f"[GET failed: {e}]")
-        return []
-
-    # Build form payload — field names based on typical Friends2Support form inspection
-    # Common field names discovered from the ASP.NET form
-    payload = {
-        **tokens,
-        "__EVENTTARGET": "",
-        "__EVENTARGUMENT": "",
-        # Try common field name patterns for blood group and city
-        "ctl00$ContentPlaceHolder1$ddlBloodGroup": blood_group,
-        "ctl00$ContentPlaceHolder1$txtCity": location,
-        "ctl00$ContentPlaceHolder1$txtState": "Tamil Nadu",
-        "ctl00$ContentPlaceHolder1$btnSearch": "Search",
-        # Alternate field names
-        "ddlBloodGroup": blood_group,
-        "txtCity": location,
-        "txtState": "Tamil Nadu",
-        "btnSearch": "Search",
-    }
-
-    try:
-        r = session.post(SEARCH_URL, data=payload, timeout=30)
+        r = session.post(SEARCH_URL, data=search_payload, timeout=30)
         r.raise_for_status()
     except Exception as e:
-        print(f"[POST failed: {e}]")
-        return []
+        print(f"[Search failed: {e}]")
+        return donors
 
     soup = BeautifulSoup(r.text, "lxml")
-    donors = parse_donors(soup)
-    total_pages = get_total_pages(soup)
-    print(f"→ page 1/{total_pages}, {len(donors)} donors")
-
-    # Handle pagination
-    for page in range(2, total_pages + 1):
-        time.sleep(1.5)
-        # ASP.NET paging often via __doPostBack with page event target
-        page_payload = {
-            **tokens,
-            "__EVENTTARGET": f"ctl00$ContentPlaceHolder1$GridView1",
-            "__EVENTARGUMENT": f"Page${page}",
-            "ctl00$ContentPlaceHolder1$ddlBloodGroup": blood_group,
-            "ctl00$ContentPlaceHolder1$txtCity": location,
-            "ctl00$ContentPlaceHolder1$txtState": "Tamil Nadu",
-        }
-        try:
-            r = session.post(SEARCH_URL, data=page_payload, timeout=30)
-            r.raise_for_status()
-            page_soup = BeautifulSoup(r.text, "lxml")
-            page_donors = parse_donors(page_soup)
-            print(f"    page {page}/{total_pages}: {len(page_donors)} donors")
+    if "No Records Found" in r.text:
+        return donors
+        
+    page_donors = parse_donors_from_soup(soup)
+    donors.extend(page_donors)
+    
+    # Get initial viewstate for pagination postbacks
+    viewstate, _ = get_viewstate(soup)
+    
+    table = soup.find("table", id="dgBloodDonorResults")
+    if not table:
+        return donors
+        
+    pager_links = parse_pager_links(table)
+    if not pager_links:
+        return donors  # Single page of results
+        
+    current_page = 1
+    scraped_pages = {1}
+    
+    while True:
+        next_page = current_page + 1
+        if next_page in pager_links:
+            target = pager_links[next_page]
+            
+            page_payload = {
+                "__VIEWSTATE": viewstate,
+                "__VIEWSTATEGENERATOR": generator_val,
+                "__EVENTTARGET": target,
+                "__EVENTARGUMENT": "",
+                "dpBloodGroup": search_payload["dpBloodGroup"],
+                "dpCountry": search_payload["dpCountry"],
+                "dpState": search_payload["dpState"],
+                "dpDistrict": search_payload["dpDistrict"],
+                "dpCity": search_payload["dpCity"],
+            }
+            
+            try:
+                time.sleep(1.2)
+                r_page = session.post(SEARCH_URL, data=page_payload, timeout=30)
+                r_page.raise_for_status()
+            except Exception as e:
+                print(f"      [Page {next_page} failed: {e}]")
+                break
+                
+            soup = BeautifulSoup(r_page.text, "lxml")
+            viewstate, _ = get_viewstate(soup)
+            
+            page_donors = parse_donors_from_soup(soup)
             donors.extend(page_donors)
-            # Refresh viewstate from this response for next page
-            for field in ["__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION"]:
-                tag = page_soup.find("input", {"name": field})
-                if tag:
-                    tokens[field] = tag.get("value", "")
-        except Exception as e:
-            print(f"    page {page} failed: {e}")
+            
+            scraped_pages.add(next_page)
+            current_page = next_page
+            
+            table = soup.find("table", id="dgBloodDonorResults")
+            if not table:
+                break
+            pager_links = parse_pager_links(table)
+            
+        elif "next" in pager_links:
+            target = pager_links["next"]
+            
+            page_payload = {
+                "__VIEWSTATE": viewstate,
+                "__VIEWSTATEGENERATOR": generator_val,
+                "__EVENTTARGET": target,
+                "__EVENTARGUMENT": "",
+                "dpBloodGroup": search_payload["dpBloodGroup"],
+                "dpCountry": search_payload["dpCountry"],
+                "dpState": search_payload["dpState"],
+                "dpDistrict": search_payload["dpDistrict"],
+                "dpCity": search_payload["dpCity"],
+            }
+            
+            try:
+                time.sleep(1.2)
+                r_page = session.post(SEARCH_URL, data=page_payload, timeout=30)
+                r_page.raise_for_status()
+            except Exception as e:
+                print(f"      [Next page set failed: {e}]")
+                break
+                
+            soup = BeautifulSoup(r_page.text, "lxml")
+            viewstate, _ = get_viewstate(soup)
+            
+            table = soup.find("table", id="dgBloodDonorResults")
+            if not table:
+                break
+            pager_links = parse_pager_links(table)
+            
+            pager_row = table.find_all("tr", recursive=False)[0]
+            active_span = pager_row.find("span")
+            if active_span and active_span.get_text(strip=True).isdigit():
+                loaded_page = int(active_span.get_text(strip=True))
+                if loaded_page not in scraped_pages:
+                    page_donors = parse_donors_from_soup(soup)
+                    donors.extend(page_donors)
+                    scraped_pages.add(loaded_page)
+                    current_page = loaded_page
+                else:
+                    break
+            else:
+                break
+        else:
             break
-
-    for d in donors:
-        d.setdefault("source_location", location)
-        d.setdefault("blood_group", blood_group)
-        d.setdefault("available", True)
-
+            
     return donors
 
 
 def deduplicate(donors: list[dict]) -> list[dict]:
     seen_phones = set()
-    seen_names = set()
     unique = []
     for d in donors:
         phone = d.get("phone", "").strip()
-        name = d.get("name", "").strip().lower()
-        key = phone if phone else name
-        if key and key not in seen_phones:
-            seen_phones.add(key)
-            unique.append(d)
-        elif not key:
-            # No phone or name — include anyway to not lose data
+        if phone:
+            if phone not in seen_phones:
+                seen_phones.add(phone)
+                unique.append(d)
+        else:
             unique.append(d)
     return unique
 
 
-def save_csv(donors: list[dict], path: str) -> None:
-    fields = ["name", "blood_group", "phone", "city", "available", "source_location"]
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(donors)
-    print(f"\nSaved {len(donors)} donors → {path}")
-
-
 def main():
     output_path = Path(__file__).parent / "friends2support_donors.csv"
-
     session = requests.Session()
     session.headers.update(HEADERS)
-
-    # Warm up session with homepage to get cookies
+    
     print("Connecting to Friends2Support...")
     try:
-        session.get(BASE_URL, timeout=20)
-        time.sleep(1)
+        r = session.get(SEARCH_URL, timeout=30)
+        r.raise_for_status()
     except Exception as e:
-        print(f"Warning: homepage fetch failed ({e}), continuing anyway...")
-
-    all_donors: list[dict] = []
-
-    for location in LOCATIONS:
-        for blood_group in BLOOD_GROUPS:
-            donors = scrape_by_location_and_group(session, location, blood_group)
-            all_donors.extend(donors)
-            time.sleep(2)  # polite delay between requests
-
-    print(f"\nTotal raw records: {len(all_donors)}")
-    unique = deduplicate(all_donors)
-    print(f"After deduplication: {len(unique)}")
-
-    if not unique:
-        print("\nNo donors found. The site's form field names may differ from expected.")
-        print("Try inspecting the live page HTML at:")
-        print(f"  {SEARCH_URL}")
-        print("Look for <input> and <select> name attributes in the search form,")
-        print("then update the payload field names in scrape_by_location_and_group().")
-        # Still save an empty CSV so the file exists
-        save_csv([], str(output_path))
-        return
-
-    save_csv(unique, str(output_path))
-
-    # Print summary
-    by_group: dict[str, int] = {}
-    for d in unique:
-        g = d.get("blood_group", "Unknown")
-        by_group[g] = by_group.get(g, 0) + 1
-    print("\nBreakdown by blood group:")
-    for g, count in sorted(by_group.items()):
-        print(f"  {g:4s}: {count}")
+        print(f"Critical error connecting to Friends2Support: {e}")
+        sys.exit(1)
+        
+    soup = BeautifulSoup(r.text, "lxml")
+    viewstate, generator = get_viewstate(soup)
+    
+    all_scraped_donors = []
+    
+    TARGETS = [
+        ("Tamil Nadu", "Kanyakumari"),
+        ("Kerala", "Thiruvananthapuram")
+    ]
+    
+    for state_name, district_name in TARGETS:
+        print(f"\n==================================================")
+        print(f"Resolving: {state_name} -> {district_name}")
+        print(f"==================================================")
+        
+        # 1. Resolve Country -> India (1|dpCountry)
+        print("Resolving Country dropdown...")
+        callback_payload = {
+            "__VIEWSTATE": viewstate,
+            "__VIEWSTATEGENERATOR": generator,
+            "__CALLBACKID": "__Page",
+            "__CALLBACKPARAM": "1|dpCountry"
+        }
+        try:
+            r_cb = session.post(SEARCH_URL, data=callback_payload, timeout=30)
+            states = parse_callback_options(r_cb.text)
+        except Exception as e:
+            print(f"Failed to resolve state list: {e}")
+            continue
+            
+        state_val = states.get(state_name.lower())
+        if not state_val:
+            print(f"Error: Could not resolve '{state_name}' state value.")
+            continue
+        print(f"Resolved State: '{state_name}' -> ID {state_val}")
+        
+        # 2. Resolve State -> ID|dpState
+        print("Resolving District dropdown...")
+        callback_payload["__CALLBACKPARAM"] = f"{state_val}|dpState"
+        try:
+            r_cb = session.post(SEARCH_URL, data=callback_payload, timeout=30)
+            districts = parse_callback_options(r_cb.text)
+        except Exception as e:
+            print(f"Failed to resolve district list: {e}")
+            continue
+            
+        district_val = districts.get(district_name.lower())
+        if not district_val:
+            print(f"Error: Could not resolve '{district_name}' district value.")
+            continue
+        print(f"Resolved District: '{district_name}' -> ID {district_val}")
+        
+        # 3. Resolve District -> ID|dpDistrict
+        print("Resolving City/Taluk dropdown...")
+        callback_payload["__CALLBACKPARAM"] = f"{district_val}|dpDistrict"
+        try:
+            r_cb = session.post(SEARCH_URL, data=callback_payload, timeout=30)
+            cities = parse_callback_options(r_cb.text)
+        except Exception as e:
+            print(f"Failed to resolve city list: {e}")
+            continue
+            
+        print(f"Resolved {len(cities)} cities/taluks in {district_name} district.")
+        
+        # We will loop through all cities and all blood groups
+        sorted_cities = sorted(cities.items())
+        
+        for city_name, city_id in sorted_cities:
+            # Skip the "ALL" placeholder option if it exists
+            if city_name == "all" or city_name == "select":
+                continue
+                
+            print(f"\nScraping city: {city_name.upper()} (ID: {city_id})...")
+            for bg in BLOOD_GROUPS:
+                print(f"  Blood Group: {bg}", end=" ", flush=True)
+                
+                search_payload = {
+                    "__VIEWSTATE": viewstate,
+                    "__VIEWSTATEGENERATOR": generator,
+                    "__EVENTTARGET": "",
+                    "__EVENTARGUMENT": "",
+                    "dpBloodGroup": bg,
+                    "dpCountry": "1|dpCountry",
+                    "dpState": f"{state_val}|dpState",
+                    "dpDistrict": f"{district_val}|dpDistrict",
+                    "dpCity": f"{city_id}",
+                    "btnSearchDonor": "Search"
+                }
+                
+                city_donors = scrape_all_pages(session, search_payload, generator)
+                print(f"-> {len(city_donors)} donors found")
+                
+                # Map location hierarchy fields for output CSV
+                for d in city_donors:
+                    d["blood_group"] = bg
+                    d["country"] = "INDIA"
+                    d["state"] = state_name
+                    d["district"] = district_name
+                    d["city"] = city_name.title()
+                    
+                all_scraped_donors.extend(city_donors)
+                time.sleep(1.5)  # Polite delay
+            
+    print(f"\nTotal raw records scraped: {len(all_scraped_donors)}")
+    unique_donors = deduplicate(all_scraped_donors)
+    print(f"After deduplication: {len(unique_donors)}")
+    
+    # Save to CSV
+    fields = ["name", "blood_group", "phone", "available", "country", "state", "district", "city", "gender"]
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(unique_donors)
+        
+    print(f"Saved {len(unique_donors)} donors → {output_path}")
 
 
 if __name__ == "__main__":

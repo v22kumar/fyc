@@ -9,6 +9,8 @@ const NAV = [
   { href: '/dashboard/events',  label: 'Events',     icon: '🎗️' },
   { href: '/dashboard/members',    label: 'Members',    icon: '👥' },
   { href: '/dashboard/membership', label: 'Membership', icon: '🪪' },
+  { href: '/dashboard/directory',  label: 'Directory',  icon: '📋' },
+  { href: '/dashboard/sports',     label: 'Sports Hub', icon: '🏆' },
 ];
 
 export default function Sidebar() {
@@ -22,9 +24,16 @@ export default function Sidebar() {
 
   return (
     <aside className="w-56 min-h-screen bg-primary-900 text-white flex flex-col">
-      <div className="p-5 border-b border-primary-800">
-        <div className="text-2xl font-bold">FYC Admin</div>
-        <div className="text-xs text-primary-100 mt-0.5">Nagercoil</div>
+      <div className="p-5 border-b border-primary-800 flex items-center gap-3">
+        <img
+          src="/fyc_logo.png"
+          alt="FYC"
+          className="h-10 w-10 rounded-lg object-cover object-center flex-shrink-0"
+        />
+        <div>
+          <div className="text-lg font-bold leading-tight">FYC Admin</div>
+          <div className="text-xs text-primary-100">Nagercoil</div>
+        </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

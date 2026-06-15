@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+const ORG_ID   = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+---
+
+<BaseLayout
+  title="விளையாட்டு மையம் - Sports Hub"
+  description="FYC Cricket, Kabaddi, Volleyball tournaments. View fixtures, standings and challenge FYC teams."
+>
+  <!-- Hero -->
+  <section class="bg-gradient-to-br from-[#064e3b] to-[#1a1a2e] text-white py-14 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="text-5xl mb-4">🏆</div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="விளையாட்டு மையம்" data-en="Sports Hub">
+        விளையாட்டு மையம்
+      </h1>
+      <p class="text-green-100" data-ta="கிரிக்கெட், கபடி, கைப்பந்து — FYC போட்டிகள்" data-en="Cricket, Kabaddi, Volleyball — FYC Tournaments">
+        கிரிக்கெட், கபடி, கைப்பந்து — FYC போட்டிகள்
+      </p>
+    </div>
+  </section>
+
+  <!-- Sport tabs -->
+  <section class="bg-white border-b border-gray-200 sticky top-16 z-40">
+    <div class="max-w-5xl mx-auto px-4 flex gap-1 overflow-x-auto py-2">
+      {['all','cricket','kabaddi','volleyball','football','other'].map(s => (
+        <button class="sport-tab flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-500 hover:bg-gray-100" data-sport={s}>
+          {s === 'all' ? '🏅 All' : s === 'cricket' ? '🏏 Cricket' : s === 'kabaddi' ? '🤼 Kabaddi' : s === 'volleyball' ? '🏐 Volleyball' : s === 'football' ? '⚽ Football' : '🎯 Other'}
+        </button>
+      ))}
+      <a href="#challenge" class="ml-auto flex-shrink-0 bg-[#991b1b] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-800 transition-colors">
+        ⚔️ <span data-ta="சவால்" data-en="Challenge Us">சவால்</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Tournaments & Fixtures -->
+  <section class="py-10 px-4">
+    <div class="max-w-5xl mx-auto">
+      <div id="t-loading" class="text-center text-gray-400 py-12">Loading tournaments...</div>
+      <div id="t-content" class="hidden space-y-8"></div>
+    </div>
+  </section>
+
+  <!-- Challenge Form -->
+  <section id="challenge" class="bg-[#064e3b] py-14 px-4">
+    <div class="max-w-xl mx-auto text-white">
+      <h2 class="text-2xl font-bold mb-2 text-center" data-ta="FYC-ஐ சவால் செய்யுங்கள்" data-en="Challenge FYC">FYC-ஐ சவால் செய்யுங்கள்</h2>
+      <p class="text-green-200 text-sm text-center mb-6" data-ta="உங்கள் அணி தகவல்களை கொடுங்கள்" data-en="Submit your team details for a match">உங்கள் அணி தகவல்களை கொடுங்கள்</p>
+      <form id="challenge-form" class="space-y-3">
+        <input name="challenger_team_name" placeholder="Team Name / அணி பெயர்" required class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-green-200 text-sm focus:outline-none focus:border-white" />
+        <input name="challenger_captain" placeholder="Captain Name / கேப்டன் பெயர்" required class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-green-200 text-sm focus:outline-none focus:border-white" />
+        <input name="challenger_phone" type="tel" placeholder="Phone Number / தொலைபேசி" required class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-green-200 text-sm focus:outline-none focus:border-white" />
+        <div class="grid grid-cols-2 gap-3">
+          <select name="sport" required class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white">
+            <option value="" class="text-gray-900">Sport / விளையாட்டு</option>
+            <option value="cricket" class="text-gray-900">🏏 Cricket</option>
+            <option value="kabaddi" class="text-gray-900">🤼 Kabaddi</option>
+            <option value="volleyball" class="text-gray-900">🏐 Volleyball</option>
+            <option value="football" class="text-gray-900">⚽ Football</option>
+            <option value="other" class="text-gray-900">Other</option>
+          </select>
+          <input name="proposed_date" type="date" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white" />
+        </div>
+        <input name="venue" placeholder="Preferred venue (optional)" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-green-200 text-sm focus:outline-none focus:border-white" />
+        <textarea name="message" rows="2" placeholder="Message / செய்தி (optional)" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-green-200 text-sm focus:outline-none focus:border-white resize-none"></textarea>
+        <button type="submit" class="w-full bg-[#991b1b] hover:bg-red-800 text-white font-bold py-3 rounded-xl transition-colors">
+          ⚔️ <span data-ta="சவால் அனுப்பு" data-en="Submit Challenge">சவால் அனுப்பு</span>
+        </button>
+        <div id="challenge-success" class="hidden text-center text-green-300 font-medium py-2">✅ Challenge submitted! We'll contact you soon.</div>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, ORG_ID }}>
+const SPORT_ICONS = { cricket:'🏏', kabaddi:'🤼', volleyball:'🏐', football:'⚽', carrom:'🎯', chess:'♟️', other:'🎯' };
+let currentSport = 'all';
+
+async function loadTournaments(sport = '') {
+  let url = `${API_BASE}/api/v1/sports/tournaments`;
+  if (sport && sport !== 'all') url += `?sport=${sport}`;
+  const res = await fetch(url, { headers: { 'X-Organization-ID': ORG_ID } });
+  return res.ok ? res.json() : [];
+}
+
+async function loadTeams(tid) {
+  const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tid}/teams`, { headers: { 'X-Organization-ID': ORG_ID } });
+  return res.ok ? res.json() : [];
+}
+
+async function loadFixtures(tid) {
+  const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tid}/fixtures`, { headers: { 'X-Organization-ID': ORG_ID } });
+  return res.ok ? res.json() : [];
+}
+
+function renderStandings(teams) {
+  if (!teams.length) return '<p class="text-sm text-gray-400">No teams registered yet.</p>';
+  return `<table class="w-full text-sm mb-4">
+    <thead><tr class="text-xs text-gray-500 border-b"><th class="text-left py-2">Team</th><th class="w-8">W</th><th class="w-8">L</th><th class="w-8">D</th><th class="w-10">Pts</th></tr></thead>
+    <tbody>${teams.map((t, i) => `
+      <tr class="border-b border-gray-50 hover:bg-gray-50">
+        <td class="py-2 font-medium text-gray-800">${i+1}. ${t.name}${t.is_fyc_team ? ' <span class="text-xs bg-[#064e3b]/10 text-[#064e3b] px-1.5 py-0.5 rounded-full">FYC</span>' : ''}</td>
+        <td class="text-center text-green-600 font-semibold">${t.wins}</td>
+        <td class="text-center text-red-500">${t.losses}</td>
+        <td class="text-center text-gray-400">${t.draws}</td>
+        <td class="text-center font-bold text-gray-900">${t.points}</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+function renderFixtures(fixtures) {
+  if (!fixtures.length) return '<p class="text-sm text-gray-400">No fixtures scheduled yet.</p>';
+  return fixtures.map(f => `
+    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+      <div class="flex-1">
+        <div class="font-medium text-gray-900 text-sm">${f.team_a_name || '?'} <span class="text-gray-400 mx-1">vs</span> ${f.team_b_name || '?'}</div>
+        ${f.scheduled_at ? `<div class="text-xs text-gray-400 mt-0.5">📅 ${new Date(f.scheduled_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>` : ''}
+        ${f.venue ? `<div class="text-xs text-gray-400">📍 ${f.venue}</div>` : ''}
+        ${f.status === 'COMPLETED' && f.team_a_score ? `<div class="text-xs font-medium text-gray-700 mt-1">${f.team_a_score} vs ${f.team_b_score}${f.result_notes ? ' — '+f.result_notes : ''}</div>` : ''}
+      </div>
+      <span class="ml-3 text-xs px-2 py-1 rounded-full flex-shrink-0 ${f.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : f.status === 'LIVE' ? 'bg-red-100 text-red-600 animate-pulse font-bold' : 'bg-blue-100 text-blue-700'}">${f.status}</span>
+    </div>`).join('');
+}
+
+async function renderTournaments() {
+  const el = document.getElementById('t-content');
+  const loading = document.getElementById('t-loading');
+  loading.classList.remove('hidden');
+  el.classList.add('hidden');
+  el.innerHTML = '';
+
+  const tournaments = await loadTournaments(currentSport);
+  loading.classList.add('hidden');
+
+  if (!tournaments.length) {
+    el.innerHTML = '<div class="text-center text-gray-400 py-8">No tournaments found.</div>';
+    el.classList.remove('hidden');
+    return;
+  }
+
+  for (const t of tournaments) {
+    const [teams, fixtures] = await Promise.all([loadTeams(t.id), loadFixtures(t.id)]);
+    const section = document.createElement('div');
+    section.className = 'bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden';
+    section.innerHTML = `
+      <div class="bg-gradient-to-r from-[#064e3b] to-[#065f46] px-6 py-4 text-white flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold">${SPORT_ICONS[t.sport]||'🏆'} ${t.name_en}</div>
+          <div class="text-sm text-green-200">${t.name_ta} · ${t.format} · ${t.year}</div>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full font-medium ${t.status==='ONGOING'?'bg-yellow-400 text-yellow-900':t.status==='COMPLETED'?'bg-white/20 text-white':'bg-blue-400 text-white'}">${t.status}</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        <div class="p-5">
+          <h4 class="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Standings</h4>
+          ${renderStandings(teams)}
+        </div>
+        <div class="p-5">
+          <h4 class="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Fixtures</h4>
+          ${renderFixtures(fixtures)}
+        </div>
+      </div>`;
+    el.appendChild(section);
+  }
+  el.classList.remove('hidden');
+}
+
+// Sport tab switching
+document.querySelectorAll('.sport-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sport-tab').forEach(b => b.classList.remove('bg-[#064e3b]','text-white'));
+    btn.classList.add('bg-[#064e3b]','text-white');
+    currentSport = btn.dataset.sport;
+    renderTournaments();
+  });
+});
+
+// Challenge form
+document.getElementById('challenge-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  if (data.proposed_date) data.proposed_date = new Date(data.proposed_date).toISOString();
+  else delete data.proposed_date;
+  const res = await fetch(`${API_BASE}/api/v1/sports/challenges`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json','X-Organization-ID':ORG_ID },
+    body: JSON.stringify(data),
+  });
+  if (res.ok) {
+    document.getElementById('challenge-success').classList.remove('hidden');
+    e.target.reset();
+  }
+});
+
+// Initial load with first tab active
+document.querySelector('[data-sport="all"]').classList.add('bg-[#064e3b]','text-white');
+renderTournaments();
+</script>

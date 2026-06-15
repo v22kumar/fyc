@@ -6,6 +6,12 @@ from app.models.geography import GeographicNode, GeoLevel
 from app.models.blood_donor import BloodDonor
 from app.models.issue import PublicIssue, IssueStatus, IssueCategory, VALID_TRANSITIONS
 from app.models.event import Event, EventAttendance
+from app.models.community import CommunityProfile
+from app.models.sports import Tournament, Team, Fixture, ChallengeMatch
+from app.models.directory import DirectoryContact, ContactCategory
+from app.models.announcement import Announcement, AnnouncementCategory
+from app.models.gallery import EventPhoto
+from app.models.green_fyc import PlantationDrive, TreeRegistration, TreeStatus
 
 __all__ = [
     "Base",
@@ -24,4 +30,17 @@ __all__ = [
     "VALID_TRANSITIONS",
     "Event",
     "EventAttendance",
+    "CommunityProfile",
+    "Tournament",
+    "Team",
+    "Fixture",
+    "ChallengeMatch",
+    "DirectoryContact",
+    "ContactCategory",
+    "Announcement",
+    "AnnouncementCategory",
+    "EventPhoto",
+    "PlantationDrive",
+    "TreeRegistration",
+    "TreeStatus",
 ]

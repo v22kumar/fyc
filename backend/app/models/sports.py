@@ -1,0 +1,85 @@
+import uuid
+from sqlalchemy import Column, String, Boolean, Integer, Text, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from app.core.database import Base
+from app.models.base import GUID, TimestampMixin, TenantModelMixin
+
+SPORT_TYPES = ["cricket", "kabaddi", "volleyball", "football", "carrom", "chess", "other"]
+TOURNAMENT_FORMATS = ["LEAGUE", "KNOCKOUT", "GROUP_STAGE"]
+TOURNAMENT_STATUSES = ["UPCOMING", "ONGOING", "COMPLETED"]
+FIXTURE_STATUSES = ["SCHEDULED", "LIVE", "COMPLETED", "CANCELLED"]
+CHALLENGE_STATUSES = ["OPEN", "ACCEPTED", "REJECTED", "COMPLETED"]
+
+
+class Tournament(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "tournaments"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name_ta = Column(String(200), nullable=False)
+    name_en = Column(String(200), nullable=False)
+    sport = Column(String(30), nullable=False)
+    year = Column(Integer, nullable=False)
+    format = Column(String(20), default="LEAGUE")
+    status = Column(String(20), default="UPCOMING")
+    description_ta = Column(Text, nullable=True)
+    description_en = Column(Text, nullable=True)
+    created_by_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    teams = relationship("Team", back_populates="tournament", cascade="all, delete-orphan")
+    fixtures = relationship("Fixture", back_populates="tournament", cascade="all, delete-orphan")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+
+
+class Team(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "teams"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+    captain_name = Column(String(100), nullable=True)
+    contact_phone = Column(String(15), nullable=True)
+    wins = Column(Integer, default=0)
+    losses = Column(Integer, default=0)
+    draws = Column(Integer, default=0)
+    points = Column(Integer, default=0)
+    is_fyc_team = Column(Boolean, default=False)
+
+    tournament = relationship("Tournament", back_populates="teams")
+
+
+class Fixture(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "fixtures"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    team_a_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    team_b_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    match_number = Column(Integer, nullable=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+    venue = Column(String(200), nullable=True)
+    status = Column(String(20), default="SCHEDULED")
+    # Result (filled after match)
+    team_a_score = Column(String(50), nullable=True)
+    team_b_score = Column(String(50), nullable=True)
+    winner_id = Column(GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    result_notes = Column(String(300), nullable=True)
+
+    tournament = relationship("Tournament", back_populates="fixtures")
+    team_a = relationship("Team", foreign_keys=[team_a_id])
+    team_b = relationship("Team", foreign_keys=[team_b_id])
+    winner = relationship("Team", foreign_keys=[winner_id])
+
+
+class ChallengeMatch(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "challenge_matches"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    challenger_team_name = Column(String(100), nullable=False)
+    challenger_captain = Column(String(100), nullable=False)
+    challenger_phone = Column(String(15), nullable=False)
+    sport = Column(String(30), nullable=False)
+    proposed_date = Column(DateTime(timezone=True), nullable=True)
+    venue = Column(String(200), nullable=True)
+    message = Column(Text, nullable=True)
+    status = Column(String(20), default="OPEN")
+    admin_response = Column(String(300), nullable=True)

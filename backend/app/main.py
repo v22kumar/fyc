@@ -1,3 +1,4 @@
+import os
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -15,6 +16,11 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import users as users_router, media as media_router
+from app.routers import community as community_router, sports as sports_router
+from app.routers import directory as directory_router, announcements as announcements_router
+from app.routers import gallery as gallery_router, green_fyc as green_router
+from app.routers import volunteers as volunteers_router
+from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
 import app.models  # noqa: F401
@@ -59,6 +65,23 @@ def _seed_database():
             db.add(profile)
             db.commit()
             print("Database seeded with default organization and superadmin credentials.")
+
+        # Always ensure default contacts are seeded (idempotent)
+        seed_default_contacts(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
+
+        # Check if blood donors table is empty, and seed them if so
+        from sqlalchemy import text
+        donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
+        if donor_count == 0:
+            import subprocess
+            import sys
+            print("Seeding blood donors from CSV...")
+            csv_path = "scripts/friends2support_donors.csv"
+            script_path = "scripts/import_donors_csv.py"
+            if os.path.exists(csv_path) and os.path.exists(script_path):
+                subprocess.run([sys.executable, script_path, "--csv", csv_path])
+            else:
+                print("CSV or script not found, skipping blood donor seeding.")
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
@@ -105,8 +128,15 @@ app.include_router(blood_donors.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(membership.router, prefix="/api/v1")
+app.include_router(community_router.router, prefix="/api/v1")
+app.include_router(sports_router.router, prefix="/api/v1")
 app.include_router(users_router.router, prefix="/api/v1")
 app.include_router(media_router.router, prefix="/api/v1")
+app.include_router(directory_router.router, prefix="/api/v1")
+app.include_router(announcements_router.router, prefix="/api/v1")
+app.include_router(gallery_router.router, prefix="/api/v1")
+app.include_router(green_router.router, prefix="/api/v1")
+app.include_router(volunteers_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
