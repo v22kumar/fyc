@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 from app.models import Base
 from app.models.user import User, UserProfile
 from app.models.blood_donor import BloodDonor
-from app.models.organisation import Organisation
+from app.models.tenant import Organization
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 DEFAULT_ORG_ID = os.environ.get("DEFAULT_ORG_ID", "8f8b80b7-4b71-4770-b183-5c5f49e49a1d")
@@ -69,7 +69,7 @@ def main():
     created = skipped = errors = 0
 
     with Session(engine) as db:
-        org = db.get(Organisation, DEFAULT_ORG_ID)
+        org = db.get(Organization, DEFAULT_ORG_ID)
         if not org and not args.dry_run:
             print(f"Organisation {DEFAULT_ORG_ID} not found. Run migrations first.")
             sys.exit(1)
@@ -87,6 +87,10 @@ def main():
 
             phone = normalise_phone(phone_raw) if phone_raw else None
 
+            if not phone:
+                skipped += 1
+                continue
+
             if args.dry_run:
                 print(f"  [{i+1}] {name} | {blood_group} | {phone} | {city}")
                 created += 1
@@ -94,32 +98,30 @@ def main():
 
             # Skip if phone already in DB
             if phone:
-                existing = db.query(User).filter_by(phone=phone, organization_id=DEFAULT_ORG_ID).first()
+                existing = db.query(User).filter_by(phone_number=phone, organization_id=DEFAULT_ORG_ID).first()
                 if existing:
                     skipped += 1
                     continue
 
             try:
                 user_id = uuid.uuid4()
-                username = f"f2s_{user_id.hex[:8]}"
+                display_name = name or f"f2s_{user_id.hex[:8]}"
                 user = User(
                     id=user_id,
                     organization_id=DEFAULT_ORG_ID,
-                    username=username,
-                    phone=phone,
+                    phone_number=phone,
                     role="PUBLIC_CITIZEN",
-                    is_active=True,
+                    is_verified=False,
                 )
                 db.add(user)
                 db.flush()
 
                 profile = UserProfile(
-                    id=uuid.uuid4(),
                     user_id=user_id,
-                    organization_id=DEFAULT_ORG_ID,
-                    full_name_en=name or username,
-                    full_name_ta=name or username,
-                    area=city,
+                    full_name_en=display_name,
+                    full_name_ta=display_name,
+                    address_line_en=city or "",
+                    address_line_ta=city or "",
                 )
                 db.add(profile)
 
