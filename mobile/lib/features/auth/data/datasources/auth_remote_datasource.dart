@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
@@ -10,6 +11,8 @@ abstract class AuthRemoteDataSource {
     required String organizationId,
     required String phoneNumber,
   });
+
+  Future<TokenModel> signInWithGoogle({required String organizationId});
 
   Future<TokenModel> verifyOtp({
     required String verificationId,
@@ -126,6 +129,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return UserModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioError(e);
+    }
+  }
+
+  @override
+  Future<TokenModel> signInWithGoogle({required String organizationId}) async {
+    final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+    try {
+      final account = await googleSignIn.signIn();
+      if (account == null) throw const AuthFailure('Google sign-in cancelled');
+
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) throw const AuthFailure('Could not get Google ID token');
+
+      final response = await _client.dio.post(
+        ApiConstants.googleSignIn,
+        data: {'organization_id': organizationId, 'id_token': idToken},
+      );
+      return TokenModel.fromJson(response.data as Map<String, dynamic>);
+    } on AuthFailure {
+      rethrow;
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    } catch (e) {
+      throw ServerFailure(e.toString());
     }
   }
 

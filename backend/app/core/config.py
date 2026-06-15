@@ -18,6 +18,24 @@ class Settings(BaseSettings):
     # Leave unset in production so real random OTPs are generated.
     OTP_BYPASS_CODE: str = ""
 
+    # Firebase Cloud Messaging — set in production .env to enable push notifications
+    FCM_SERVER_KEY: str = ""
+
+    # Twilio WhatsApp OTP
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""  # Web/Android OAuth 2.0 client ID from Google Cloud Console
+
+    # SMTP Email OTP
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""  # Gmail: use App Password, not account password
+    SMTP_FROM_EMAIL: str = "noreply@fycconnect.org"
+
     # Load environment variables from backend/.env if it exists
     model_config = SettingsConfigDict(
         env_file=os.path.join(BASE_DIR, ".env"),

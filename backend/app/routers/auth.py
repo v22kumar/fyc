@@ -172,6 +172,92 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
 
 
 from app.dependencies import get_current_user
+from pydantic import BaseModel as _BaseModel
+
+
+class GoogleAuthRequest(_BaseModel):
+    organization_id: uuid.UUID
+    id_token: str
+
+
+@router.post("/google", response_model=Token)
+def google_sign_in(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+    """
+    Authenticate via Google Sign-In. Flutter obtains an idToken via google_sign_in
+    package and sends it here. No OTP required. User is auto-created on first sign-in.
+    """
+    org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google Sign-In is not configured on this server. Set GOOGLE_CLIENT_ID in .env",
+        )
+
+    # Verify the Google ID token
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+        idinfo = google_id_token.verify_oauth2_token(
+            payload.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid Google token: {e}")
+
+    google_sub = idinfo["sub"]         # unique, stable Google user ID
+    email = idinfo.get("email", "")
+    name = idinfo.get("name", "")
+    given_name = idinfo.get("given_name", name)
+
+    # Find existing user by google_sub or email (within org)
+    user = db.query(User).filter(
+        User.organization_id == payload.organization_id,
+        User.google_sub == google_sub,
+    ).first()
+
+    if not user and email:
+        user = db.query(User).filter(
+            User.organization_id == payload.organization_id,
+            User.email == email,
+        ).first()
+        if user:
+            # Link existing email-based account to Google
+            user.google_sub = google_sub
+            db.commit()
+
+    if not user:
+        # Auto-create account on first Google sign-in
+        user = User(
+            organization_id=payload.organization_id,
+            email=email or None,
+            google_sub=google_sub,
+            role="PUBLIC_CITIZEN",
+            is_verified=True,
+            preferred_language="ta",
+        )
+        db.add(user)
+        db.flush()
+
+        profile = UserProfile(
+            user_id=user.id,
+            full_name_en=name or given_name or "FYC User",
+            full_name_ta=name or given_name or "FYC பயனர்",
+            last_login_at=datetime.now(timezone.utc),
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(user)
+
+    access_token = create_access_token(
+        subject=user.id,
+        role=user.role,
+        organization_id=str(user.organization_id),
+    )
+    return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
 
 
 @router.get("/users/me", response_model=UserOut)
