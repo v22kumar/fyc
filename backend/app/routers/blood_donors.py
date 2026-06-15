@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.models.blood_donor import BloodDonor
 from app.models.user import User, UserProfile
 from app.models.audit import AuditLog
+from app.models.geography import GeographicNode, GeoLevel
 from app.schemas.blood_donor import (
     BloodDonorRegister, BloodDonorAvailabilityUpdate,
     BloodDonorPublicOut, ContactRequestOut, VALID_BLOOD_GROUPS
@@ -18,16 +19,41 @@ router = APIRouter(prefix="/blood-donors", tags=["Blood Donors"])
 
 require_registered = RoleChecker(["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
+
+def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
+    """Return IDs of all taluks/wards/villages in the same district as geography_id."""
+    node = db.get(GeographicNode, geography_id)
+    if not node:
+        return [geography_id]
+
+    # Walk up to district level
+    current = node
+    while current and current.level != GeoLevel.DISTRICT:
+        if current.parent_id is None:
+            break
+        current = db.get(GeographicNode, current.parent_id)
+
+    if not current or current.level != GeoLevel.DISTRICT:
+        return [geography_id]
+
+    # Collect all descendant IDs under this district (one level deep = taluks)
+    taluks = db.query(GeographicNode).filter(GeographicNode.parent_id == current.id).all()
+    ids = [current.id] + [t.id for t in taluks]
+    return ids
+
+
 @router.get("", response_model=List[BloodDonorPublicOut])
 def search_donors(
     blood_group: Optional[str] = None,
     geography_id: Optional[UUID] = None,
+    nearby: bool = False,
     available_only: bool = True,
     db: Session = Depends(get_db)
 ):
     """
     Public search for blood donors. Names and locations are visible but contact
     details are not exposed here — use the /request-contact endpoint.
+    Pass nearby=true with geography_id to include all taluks in the same district.
     """
     tenant_id = get_current_tenant_id()
     query = db.query(BloodDonor)
@@ -36,7 +62,11 @@ def search_donors(
     if blood_group:
         query = query.filter(BloodDonor.blood_group == blood_group.upper())
     if geography_id:
-        query = query.filter(BloodDonor.geography_id == geography_id)
+        if nearby:
+            area_ids = _district_taluk_ids(db, geography_id)
+            query = query.filter(BloodDonor.geography_id.in_(area_ids))
+        else:
+            query = query.filter(BloodDonor.geography_id == geography_id)
     if available_only:
         query = query.filter(BloodDonor.is_available == True)
 
@@ -44,11 +74,14 @@ def search_donors(
     result = []
     for donor in donors:
         profile = db.query(UserProfile).filter(UserProfile.user_id == donor.user_id).first()
+        geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None
         result.append(BloodDonorPublicOut(
             id=donor.id,
             blood_group=donor.blood_group,
             is_available=donor.is_available,
             geography_id=donor.geography_id,
+            geography_name_en=geo.name_en if geo else None,
+            geography_name_ta=geo.name_ta if geo else None,
             full_name_en=profile.full_name_en if profile else None,
             full_name_ta=profile.full_name_ta if profile else None,
         ))
@@ -87,11 +120,14 @@ def register_donor(
     db.refresh(donor)
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None
     return BloodDonorPublicOut(
         id=donor.id,
         blood_group=donor.blood_group,
         is_available=donor.is_available,
         geography_id=donor.geography_id,
+        geography_name_en=geo.name_en if geo else None,
+        geography_name_ta=geo.name_ta if geo else None,
         full_name_en=profile.full_name_en if profile else None,
         full_name_ta=profile.full_name_ta if profile else None,
     )
@@ -116,11 +152,14 @@ def update_availability(
     db.refresh(donor)
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None
     return BloodDonorPublicOut(
         id=donor.id,
         blood_group=donor.blood_group,
         is_available=donor.is_available,
         geography_id=donor.geography_id,
+        geography_name_en=geo.name_en if geo else None,
+        geography_name_ta=geo.name_ta if geo else None,
         full_name_en=profile.full_name_en if profile else None,
         full_name_ta=profile.full_name_ta if profile else None,
     )

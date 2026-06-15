@@ -31,6 +31,8 @@ class BloodDonorPublicOut(BaseModel):
     blood_group: str
     is_available: bool
     geography_id: Optional[UUID]
+    geography_name_en: Optional[str] = None
+    geography_name_ta: Optional[str] = None
     full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
 
