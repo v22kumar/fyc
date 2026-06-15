@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 130" fill="none">
+  <defs>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="1.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDE68A"/>
+      <stop offset="100%" style="stop-color:#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#glow)">
+    <!-- Left wing highlight sweep -->
+    <path d="M60,54 C46,44 29,37 10,38 C22,46 39,52 52,59 Z" fill="#FDE68A" opacity="0.55"/>
+    <!-- Left wing main -->
+    <path d="M60,57 C47,49 32,43 14,43 C26,49 42,55 54,62 Z" fill="#FBBF24"/>
+
+    <!-- Right wing highlight sweep -->
+    <path d="M60,54 C74,44 91,37 110,38 C98,46 81,52 68,59 Z" fill="#FDE68A" opacity="0.55"/>
+    <!-- Right wing main -->
+    <path d="M60,57 C73,49 88,43 106,43 C94,49 78,55 66,62 Z" fill="#FBBF24"/>
+
+    <!-- Body -->
+    <path d="M60,43 C64,50 65,61 64,74 C62,78 58,78 56,74 C55,61 56,50 60,43 Z" fill="#FBBF24"/>
+
+    <!-- Head -->
+    <circle cx="60" cy="32" r="10" fill="#FBBF24"/>
+
+    <!-- Eye -->
+    <circle cx="64.5" cy="29.5" r="3" fill="#7C2D12"/>
+    <circle cx="65.3" cy="28.7" r="1.1" fill="white" opacity="0.9"/>
+
+    <!-- Beak -->
+    <path d="M65,34 L73,37 L65,39 Z" fill="#D97706"/>
+
+    <!-- Crown feathers – outer crimson pair -->
+    <path d="M55,23 Q49,11 53,5" stroke="#991b1b" stroke-width="3" stroke-linecap="round"/>
+    <path d="M65,23 Q71,11 67,5" stroke="#991b1b" stroke-width="3" stroke-linecap="round"/>
+    <!-- Crown feather – gold centre -->
+    <path d="M60,22 Q60,9 60,3" stroke="#FBBF24" stroke-width="3.2" stroke-linecap="round"/>
+    <!-- Crown feathers – amber inner pair -->
+    <path d="M57,22 Q54,14 56,9" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+    <path d="M63,22 Q66,14 64,9" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Tail feathers -->
+    <path d="M56,74 Q48,87 42,101" stroke="#991b1b" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M58,76 Q56,90 55,104" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M60,77 Q61,91 62,106" stroke="#FBBF24" stroke-width="3" stroke-linecap="round"/>
+    <path d="M62,76 Q64,90 65,104" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M64,74 Q72,87 78,101" stroke="#991b1b" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- FYC text — outside glow filter to stay crisp -->
+  <text x="60" y="124"
+        text-anchor="middle"
+        font-family="Georgia,'Times New Roman',serif"
+        font-weight="bold"
+        font-size="13"
+        letter-spacing="6"
+        fill="#FBBF24">FYC</text>
+</svg>

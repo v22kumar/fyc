@@ -22,9 +22,17 @@ export default function Sidebar() {
 
   return (
     <aside className="w-56 min-h-screen bg-primary-900 text-white flex flex-col">
-      <div className="p-5 border-b border-primary-800">
-        <div className="text-2xl font-bold">FYC Admin</div>
-        <div className="text-xs text-primary-100 mt-0.5">Nagercoil</div>
+      <div className="p-5 border-b border-primary-800 flex items-center gap-3">
+        <img
+          src="/fyc_logo.svg"
+          alt="FYC"
+          className="h-10 w-auto flex-shrink-0"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.55))' }}
+        />
+        <div>
+          <div className="text-lg font-bold leading-tight">FYC Admin</div>
+          <div className="text-xs text-primary-100">Nagercoil</div>
+        </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
