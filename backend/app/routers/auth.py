@@ -1,7 +1,7 @@
 import random
 import uuid
 from typing import Dict, Tuple
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -19,8 +19,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 limiter = Limiter(key_func=get_remote_address)
 
-# In-memory OTP store: verification_id → (phone, otp_code, org_id)
-otp_store: Dict[str, Tuple[str, str, uuid.UUID]] = {}
+OTP_TTL_MINUTES = 10
+
+# In-memory OTP store: verification_id → (phone, otp_code, org_id, expires_at)
+otp_store: Dict[str, Tuple[str, str, uuid.UUID, datetime]] = {}
 
 
 def _generate_otp() -> str:
@@ -43,8 +45,9 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
 
     verification_id = f"v_{uuid.uuid4().hex[:12]}"
     otp_code = _generate_otp()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
-    otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id)
+    otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
 
     deliver_otp(payload.phone_number, otp_code, email=payload.email)
 
@@ -66,7 +69,14 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
             detail="Invalid or expired verification ID",
         )
 
-    phone_number, otp_code, org_id = stored
+    phone_number, otp_code, org_id, expires_at = stored
+
+    if datetime.now(timezone.utc) > expires_at:
+        otp_store.pop(payload.verification_id, None)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP has expired. Please request a new one.",
+        )
 
     if payload.otp_code != otp_code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")

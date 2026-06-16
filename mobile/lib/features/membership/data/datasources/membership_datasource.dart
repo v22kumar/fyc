@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/membership_model.dart';
@@ -17,15 +18,10 @@ class MembershipDataSourceImpl implements MembershipDataSource {
       final response = await _client.dio.get('/api/v1/membership/my-card');
       return MembershipModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _map(e);
+      if (e.response?.statusCode == 404) {
+        throw const NotFoundFailure('No membership card found. Contact your administrator.');
+      }
+      throw mapDioException(e);
     }
-  }
-
-  Failure _map(DioException e) {
-    if (e.type == DioExceptionType.connectionError) return const NetworkFailure();
-    final detail = (e.response?.data as Map?)?['detail'] as String? ?? 'Error';
-    if (e.response?.statusCode == 401) return AuthFailure(detail);
-    if (e.response?.statusCode == 404) return ServerFailure('No membership card found. Contact your administrator.');
-    return ServerFailure(detail);
   }
 }

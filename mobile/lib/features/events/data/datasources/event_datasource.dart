@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/event_model.dart';
 
@@ -22,7 +22,7 @@ class EventDataSourceImpl implements EventDataSource {
           .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
   }
 
@@ -33,14 +33,7 @@ class EventDataSourceImpl implements EventDataSource {
           .post('${ApiConstants.events}/$eventId/checkin');
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
-  }
-
-  Failure _map(DioException e) {
-    if (e.type == DioExceptionType.connectionError) return const NetworkFailure();
-    final detail = (e.response?.data as Map?)?['detail'] as String? ?? 'Error';
-    if (e.response?.statusCode == 401) return AuthFailure(detail);
-    return ServerFailure(detail);
   }
 }

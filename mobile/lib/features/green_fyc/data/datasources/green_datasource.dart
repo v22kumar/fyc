@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/drive_model.dart';
 import '../models/green_stats_model.dart';
@@ -38,7 +38,7 @@ class GreenDataSourceImpl implements GreenDataSource {
       final response = await _client.dio.get(_stats);
       return GreenStatsModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
   }
 
@@ -51,7 +51,7 @@ class GreenDataSourceImpl implements GreenDataSource {
           .map((e) => DriveModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
   }
 
@@ -61,7 +61,7 @@ class GreenDataSourceImpl implements GreenDataSource {
       final response = await _client.dio.get('$_drives/$driveId');
       return DriveModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
   }
 
@@ -77,7 +77,7 @@ class GreenDataSourceImpl implements GreenDataSource {
           .map((e) => TreeModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
   }
 
@@ -109,14 +109,7 @@ class GreenDataSourceImpl implements GreenDataSource {
       final response = await _client.dio.post(_trees, data: body);
       return TreeModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _map(e);
+      throw mapDioException(e);
     }
-  }
-
-  Failure _map(DioException e) {
-    if (e.type == DioExceptionType.connectionError) return const NetworkFailure();
-    final detail = (e.response?.data as Map?)?['detail'] as String? ?? 'Error';
-    if (e.response?.statusCode == 401) return AuthFailure(detail);
-    return ServerFailure(detail);
   }
 }

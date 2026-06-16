@@ -13,7 +13,7 @@ from app.schemas.sports import (
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
 )
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/sports", tags=["Sports Hub"])
 
@@ -47,11 +47,9 @@ def list_tournaments(
     sport: Optional[str] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    tenant_id = get_current_tenant_id()
-    q = db.query(Tournament)
-    if tenant_id:
-        q = q.filter(Tournament.organization_id == tenant_id)
+    q = db.query(Tournament).filter(Tournament.organization_id == tenant_id)
     if sport:
         q = q.filter(Tournament.sport == sport.lower())
     if status:
@@ -65,10 +63,9 @@ def create_tournament(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
-    tenant_id = get_current_tenant_id()
     t = Tournament(
         id=uuid.uuid4(),
-        organization_id=tenant_id,
+        organization_id=current_user.organization_id,
         created_by_id=current_user.id,
         **payload.model_dump(),
     )
@@ -79,8 +76,15 @@ def create_tournament(
 
 
 @router.get("/tournaments/{tournament_id}", response_model=TournamentOut)
-def get_tournament(tournament_id: str, db: Session = Depends(get_db)):
-    t = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+def get_tournament(
+    tournament_id: str,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == tenant_id,
+    ).first()
     if not t:
         raise HTTPException(404, "Tournament not found")
     return t
@@ -93,7 +97,10 @@ def update_tournament_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
-    t = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == current_user.organization_id,
+    ).first()
     if not t:
         raise HTTPException(404, "Tournament not found")
     if new_status.upper() not in ["UPCOMING", "ONGOING", "COMPLETED"]:
@@ -105,8 +112,24 @@ def update_tournament_status(
 
 # ── Teams ─────────────────────────────────────────────────────────────────────
 
+def _get_tenant_tournament(db: Session, tournament_id: str, tenant_id: uuid.UUID) -> Tournament:
+    """Fetch a tournament, raising 404 if it doesn't exist or belongs to a different tenant."""
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == tenant_id,
+    ).first()
+    if not t:
+        raise HTTPException(404, "Tournament not found")
+    return t
+
+
 @router.get("/tournaments/{tournament_id}/teams", response_model=List[TeamOut])
-def list_teams(tournament_id: str, db: Session = Depends(get_db)):
+def list_teams(
+    tournament_id: str,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    _get_tenant_tournament(db, tournament_id, tenant_id)
     return db.query(Team).filter(Team.tournament_id == tournament_id).order_by(Team.points.desc(), Team.wins.desc()).all()
 
 
@@ -115,14 +138,12 @@ def register_team(
     tournament_id: str,
     payload: TeamCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    tenant_id = get_current_tenant_id()
-    t = db.query(Tournament).filter(Tournament.id == tournament_id).first()
-    if not t:
-        raise HTTPException(404, "Tournament not found")
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
     team = Team(
         id=uuid.uuid4(),
-        organization_id=tenant_id,
+        organization_id=current_user.organization_id,
         tournament_id=tournament_id,
         **payload.model_dump(),
     )
@@ -139,7 +160,9 @@ def list_fixtures(
     tournament_id: str,
     fixture_status: Optional[str] = None,
     db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
+    _get_tenant_tournament(db, tournament_id, tenant_id)
     q = db.query(Fixture).filter(Fixture.tournament_id == tournament_id)
     if fixture_status:
         q = q.filter(Fixture.status == fixture_status.upper())
@@ -154,13 +177,13 @@ def create_fixture(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
-    tenant_id = get_current_tenant_id()
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
     for team_id in [payload.team_a_id, payload.team_b_id]:
         if not db.query(Team).filter(Team.id == str(team_id), Team.tournament_id == tournament_id).first():
             raise HTTPException(400, f"Team {team_id} not found in this tournament")
     f = Fixture(
         id=uuid.uuid4(),
-        organization_id=tenant_id,
+        organization_id=current_user.organization_id,
         tournament_id=tournament_id,
         **payload.model_dump(),
     )
@@ -178,6 +201,7 @@ def submit_result(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
     f = db.query(Fixture).filter(Fixture.id == fixture_id, Fixture.tournament_id == tournament_id).first()
     if not f:
         raise HTTPException(404, "Fixture not found")
@@ -204,7 +228,12 @@ def submit_result(
 
 
 @router.get("/tournaments/{tournament_id}/standings", response_model=List[TeamOut])
-def get_standings(tournament_id: str, db: Session = Depends(get_db)):
+def get_standings(
+    tournament_id: str,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    _get_tenant_tournament(db, tournament_id, tenant_id)
     return db.query(Team).filter(Team.tournament_id == tournament_id).order_by(
         Team.points.desc(), Team.wins.desc(), Team.draws.desc()
     ).all()
@@ -217,11 +246,9 @@ def list_challenges(
     challenge_status: Optional[str] = None,
     sport: Optional[str] = None,
     db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    tenant_id = get_current_tenant_id()
-    q = db.query(ChallengeMatch)
-    if tenant_id:
-        q = q.filter(ChallengeMatch.organization_id == tenant_id)
+    q = db.query(ChallengeMatch).filter(ChallengeMatch.organization_id == tenant_id)
     if challenge_status:
         q = q.filter(ChallengeMatch.status == challenge_status.upper())
     if sport:
@@ -233,11 +260,12 @@ def list_challenges(
 def submit_challenge(
     payload: ChallengeCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    tenant_id = get_current_tenant_id()
+    """Submit a challenge match. Requires authentication (was previously fully open)."""
     c = ChallengeMatch(
         id=uuid.uuid4(),
-        organization_id=tenant_id,
+        organization_id=current_user.organization_id,
         **payload.model_dump(),
     )
     db.add(c)
@@ -253,7 +281,10 @@ def respond_to_challenge(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    c = db.query(ChallengeMatch).filter(ChallengeMatch.id == challenge_id).first()
+    c = db.query(ChallengeMatch).filter(
+        ChallengeMatch.id == challenge_id,
+        ChallengeMatch.organization_id == current_user.organization_id,
+    ).first()
     if not c:
         raise HTTPException(404, "Challenge not found")
     if payload.status.upper() not in ["ACCEPTED", "REJECTED", "COMPLETED", "OPEN"]:

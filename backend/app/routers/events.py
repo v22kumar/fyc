@@ -10,7 +10,7 @@ from app.models.event import Event, EventAttendance
 from app.models.user import User, VolunteerMetadata
 from app.schemas.event import EventCreate, EventOut, EventCheckinOut, EventCheckoutOut
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -48,18 +48,25 @@ def create_event(
     return event
 
 @router.get("", response_model=List[EventOut])
-def list_events(db: Session = Depends(get_db)):
+def list_events(
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
     """List all events for the current tenant (public)."""
-    tenant_id = get_current_tenant_id()
-    query = db.query(Event)
-    if tenant_id:
-        query = query.filter(Event.organization_id == tenant_id)
+    query = db.query(Event).filter(Event.organization_id == tenant_id)
     return query.order_by(Event.event_start.desc()).all()
 
 @router.get("/{event_id}", response_model=EventOut)
-def get_event(event_id: UUID, db: Session = Depends(get_db)):
-    """Get a single event by ID."""
-    event = db.query(Event).filter(Event.id == event_id).first()
+def get_event(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Get a single event by ID, scoped to current tenant."""
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == tenant_id,
+    ).first()
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
     return event

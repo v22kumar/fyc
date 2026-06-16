@@ -13,7 +13,7 @@ from app.schemas.blood_donor import (
     BloodDonorPublicOut, ContactRequestOut, VALID_BLOOD_GROUPS
 )
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/blood-donors", tags=["Blood Donors"])
 
@@ -48,17 +48,15 @@ def search_donors(
     geography_id: Optional[UUID] = None,
     nearby: bool = False,
     available_only: bool = True,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     Public search for blood donors. Names and locations are visible but contact
     details are not exposed here — use the /request-contact endpoint.
     Pass nearby=true with geography_id to include all taluks in the same district.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(BloodDonor)
-    if tenant_id:
-        query = query.filter(BloodDonor.organization_id == tenant_id)
+    query = db.query(BloodDonor).filter(BloodDonor.organization_id == tenant_id)
     if blood_group:
         query = query.filter(BloodDonor.blood_group == blood_group.upper())
     if geography_id:
@@ -174,7 +172,10 @@ def request_contact(
     Retrieve a donor's contact details (phone + WhatsApp link).
     Requires authentication. Every contact access is audit-logged.
     """
-    donor = db.query(BloodDonor).filter(BloodDonor.id == donor_id).first()
+    donor = db.query(BloodDonor).filter(
+        BloodDonor.id == donor_id,
+        BloodDonor.organization_id == current_user.organization_id,
+    ).first()
     if not donor:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Donor not found")
 

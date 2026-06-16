@@ -10,7 +10,6 @@ from app.dependencies import get_current_user, RoleChecker
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.tenant import Organization
 from app.schemas.auth import UserOut
-from app.middleware.tenant import get_current_tenant_id
 from app.services.certificates import generate_volunteer_certificate
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
@@ -37,13 +36,10 @@ class UserWithProfile(BaseModel):
 def list_users(
     role: Optional[str] = None,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """List users in the current tenant, optionally filtered by role (admin only)."""
-    tenant_id = get_current_tenant_id()
-    query = db.query(User)
-    if tenant_id:
-        query = query.filter(User.organization_id == tenant_id)
+    query = db.query(User).filter(User.organization_id == current_user.organization_id)
     if role:
         query = query.filter(User.role == role.upper())
 

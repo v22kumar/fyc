@@ -9,7 +9,7 @@ from app.models.geography import GeographicNode
 from app.models.user import User
 from app.schemas.directory import ContactCreate, ContactUpdate, ContactOut
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/directory", tags=["Directory"])
 
@@ -46,16 +46,17 @@ def _build_contact_out(contact: DirectoryContact, db: Session) -> ContactOut:
 def list_contacts(
     category: Optional[ContactCategory] = None,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     List all active directory contacts for the current tenant.
     Optionally filter by ?category=POLICE (public, no auth required).
     Results are ordered by category display_order then name.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(DirectoryContact).filter(DirectoryContact.is_active == True)
-    if tenant_id:
-        query = query.filter(DirectoryContact.organization_id == tenant_id)
+    query = db.query(DirectoryContact).filter(
+        DirectoryContact.is_active == True,
+        DirectoryContact.organization_id == tenant_id,
+    )
     if category:
         query = query.filter(DirectoryContact.category == category)
     contacts = query.order_by(
@@ -67,11 +68,16 @@ def list_contacts(
 
 
 @router.get("/{contact_id}", response_model=ContactOut)
-def get_contact(contact_id: UUID, db: Session = Depends(get_db)):
-    """Retrieve a single directory contact by ID (public)."""
+def get_contact(
+    contact_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Retrieve a single directory contact by ID, scoped to current tenant (public)."""
     contact = db.query(DirectoryContact).filter(
         DirectoryContact.id == contact_id,
         DirectoryContact.is_active == True,
+        DirectoryContact.organization_id == tenant_id,
     ).first()
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")

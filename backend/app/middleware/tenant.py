@@ -1,6 +1,7 @@
 import contextvars
 from typing import Optional
 from uuid import UUID
+from fastapi import HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -17,6 +18,20 @@ def get_current_tenant_id() -> Optional[UUID]:
 def set_current_tenant_id(tenant_id: Optional[UUID]) -> None:
     """Explicitly set the active tenant ID in the thread-safe context."""
     tenant_id_context.set(tenant_id)
+
+def require_tenant_id() -> UUID:
+    """
+    FastAPI dependency for public/anonymous endpoints that must always be
+    tenant-scoped. Raises 400 instead of silently falling back to an
+    unscoped, cross-tenant query when X-Organization-ID is missing/invalid.
+    """
+    tenant_id = tenant_id_context.get()
+    if not tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="X-Organization-ID header is required",
+        )
+    return tenant_id
 
 class TenantMiddleware(BaseHTTPMiddleware):
     """

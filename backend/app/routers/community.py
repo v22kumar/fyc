@@ -8,7 +8,7 @@ from app.models.community import CommunityProfile
 from app.models.user import User, UserProfile
 from app.schemas.community import CommunityProfileRegister, CommunityProfileUpdate, CommunityProfileOut
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/community", tags=["Community Directory"])
 
@@ -44,11 +44,9 @@ def search_directory(
     available_only: bool = True,
     verified_only: bool = False,
     db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    tenant_id = get_current_tenant_id()
-    q = db.query(CommunityProfile)
-    if tenant_id:
-        q = q.filter(CommunityProfile.organization_id == tenant_id)
+    q = db.query(CommunityProfile).filter(CommunityProfile.organization_id == tenant_id)
     if category:
         q = q.filter(CommunityProfile.category == category.lower())
     if service_area:
@@ -66,13 +64,12 @@ def register_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_member),
 ):
-    tenant_id = get_current_tenant_id()
     existing = db.query(CommunityProfile).filter(CommunityProfile.user_id == current_user.id).first()
     if existing:
         raise HTTPException(status_code=400, detail="You already have a community profile. Use PATCH /me to update it.")
     profile = CommunityProfile(
         id=uuid.uuid4(),
-        organization_id=tenant_id,
+        organization_id=current_user.organization_id,
         user_id=current_user.id,
         **payload.model_dump(exclude_none=False),
     )
@@ -110,8 +107,15 @@ def update_my_profile(
 
 
 @router.get("/{profile_id}", response_model=CommunityProfileOut)
-def get_profile(profile_id: str, db: Session = Depends(get_db)):
-    profile = db.query(CommunityProfile).filter(CommunityProfile.id == profile_id).first()
+def get_profile(
+    profile_id: str,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    profile = db.query(CommunityProfile).filter(
+        CommunityProfile.id == profile_id,
+        CommunityProfile.organization_id == tenant_id,
+    ).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found.")
     return _build_out(profile, db)
@@ -123,7 +127,10 @@ def verify_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    profile = db.query(CommunityProfile).filter(CommunityProfile.id == profile_id).first()
+    profile = db.query(CommunityProfile).filter(
+        CommunityProfile.id == profile_id,
+        CommunityProfile.organization_id == current_user.organization_id,
+    ).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found.")
     profile.is_verified = not profile.is_verified
@@ -138,7 +145,10 @@ def delete_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    profile = db.query(CommunityProfile).filter(CommunityProfile.id == profile_id).first()
+    profile = db.query(CommunityProfile).filter(
+        CommunityProfile.id == profile_id,
+        CommunityProfile.organization_id == current_user.organization_id,
+    ).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found.")
     db.delete(profile)

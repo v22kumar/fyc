@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/token_model.dart';
@@ -54,7 +55,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       return response.data['verification_id'] as String;
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     }
   }
 
@@ -70,7 +71,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       return TokenModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     }
   }
 
@@ -97,7 +98,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       return TokenModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     }
   }
 
@@ -118,7 +119,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       return TokenModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     }
   }
 
@@ -128,7 +129,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final response = await _client.dio.get(ApiConstants.me);
       return UserModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     }
   }
 
@@ -151,22 +152,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on AuthFailure {
       rethrow;
     } on DioException catch (e) {
-      throw _mapDioError(e);
+      throw mapDioException(e);
     } catch (e) {
       throw ServerFailure(e.toString());
     }
-  }
-
-  Failure _mapDioError(DioException e) {
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout) {
-      return const NetworkFailure();
-    }
-    final statusCode = e.response?.statusCode;
-    final detail = (e.response?.data as Map?)?['detail'] as String? ?? e.message ?? 'Unknown error';
-    if (statusCode == 401 || statusCode == 403) {
-      return AuthFailure(detail);
-    }
-    return ServerFailure(detail);
   }
 }

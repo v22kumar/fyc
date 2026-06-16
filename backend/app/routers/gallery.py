@@ -9,7 +9,7 @@ from app.models.event import Event
 from app.models.user import User
 from app.schemas.gallery import PhotoCreate, PhotoOut
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/gallery", tags=["Gallery"])
 
@@ -20,28 +20,30 @@ require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
 def list_photos(
     event_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     List photos across all events for the current tenant (public).
     Optionally filter by ?event_id=<uuid>.
     Results are returned newest first.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(EventPhoto)
-    if tenant_id:
-        query = query.filter(EventPhoto.organization_id == tenant_id)
+    query = db.query(EventPhoto).filter(EventPhoto.organization_id == tenant_id)
     if event_id:
         query = query.filter(EventPhoto.event_id == event_id)
     return query.order_by(EventPhoto.created_at.desc()).all()
 
 
 @router.get("/events/{event_id}", response_model=List[PhotoOut])
-def list_photos_for_event(event_id: UUID, db: Session = Depends(get_db)):
-    """List all photos belonging to a specific event (public)."""
-    tenant_id = get_current_tenant_id()
-    query = db.query(EventPhoto).filter(EventPhoto.event_id == event_id)
-    if tenant_id:
-        query = query.filter(EventPhoto.organization_id == tenant_id)
+def list_photos_for_event(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """List all photos belonging to a specific event (public), scoped to current tenant."""
+    query = db.query(EventPhoto).filter(
+        EventPhoto.event_id == event_id,
+        EventPhoto.organization_id == tenant_id,
+    )
     return query.order_by(EventPhoto.created_at.desc()).all()
 
 

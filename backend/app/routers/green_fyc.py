@@ -11,7 +11,7 @@ from app.schemas.green_fyc import (
     TreeCreate, TreeUpdate, TreeGrowthUpdate, TreeOut,
 )
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/green", tags=["Green FYC"])
 
@@ -55,15 +55,13 @@ def _drive_out(drive: PlantationDrive) -> DriveOut:
 def list_drives(
     active_only: bool = False,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     List all plantation drives, newest first.
     Pass ?active_only=true to return only active drives.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(PlantationDrive)
-    if tenant_id:
-        query = query.filter(PlantationDrive.organization_id == tenant_id)
+    query = db.query(PlantationDrive).filter(PlantationDrive.organization_id == tenant_id)
     if active_only:
         query = query.filter(PlantationDrive.is_active == True)
     drives = query.order_by(PlantationDrive.drive_date.desc()).all()
@@ -74,13 +72,14 @@ def list_drives(
 def get_drive(
     drive_id: UUID,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
-    """Retrieve a single plantation drive with its tree count."""
-    tenant_id = get_current_tenant_id()
-    drive = db.query(PlantationDrive).filter(PlantationDrive.id == drive_id).first()
+    """Retrieve a single plantation drive with its tree count, scoped to current tenant."""
+    drive = db.query(PlantationDrive).filter(
+        PlantationDrive.id == drive_id,
+        PlantationDrive.organization_id == tenant_id,
+    ).first()
     if not drive:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drive not found")
-    if tenant_id and drive.organization_id != tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drive not found")
     return _drive_out(drive)
 
@@ -146,15 +145,13 @@ def list_trees(
     drive_id: Optional[UUID] = None,
     status: Optional[TreeStatus] = None,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     List all registered trees.
     Optionally filter by ?drive_id= and/or ?status=.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(TreeRegistration)
-    if tenant_id:
-        query = query.filter(TreeRegistration.organization_id == tenant_id)
+    query = db.query(TreeRegistration).filter(TreeRegistration.organization_id == tenant_id)
     if drive_id is not None:
         query = query.filter(TreeRegistration.drive_id == drive_id)
     if status is not None:
@@ -164,18 +161,16 @@ def list_trees(
 
 
 @router.get("/stats", response_model=Dict[str, Any])
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
     """
     Public statistics: total trees planted, breakdown by status, and drive count.
     Returns: total_planted, growing, mature, dead, drives_count.
     """
-    tenant_id = get_current_tenant_id()
-
-    tree_query = db.query(TreeRegistration)
-    drive_query = db.query(PlantationDrive)
-    if tenant_id:
-        tree_query = tree_query.filter(TreeRegistration.organization_id == tenant_id)
-        drive_query = drive_query.filter(PlantationDrive.organization_id == tenant_id)
+    tree_query = db.query(TreeRegistration).filter(TreeRegistration.organization_id == tenant_id)
+    drive_query = db.query(PlantationDrive).filter(PlantationDrive.organization_id == tenant_id)
 
     all_trees = tree_query.all()
     drives_count = drive_query.count()

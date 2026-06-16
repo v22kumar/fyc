@@ -9,7 +9,7 @@ from app.models.announcement import Announcement, AnnouncementCategory
 from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate, AnnouncementUpdate, AnnouncementOut
 from app.dependencies import get_current_user, RoleChecker
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/announcements", tags=["Announcements"])
 
@@ -22,6 +22,7 @@ def list_announcements(
     category: Optional[AnnouncementCategory] = None,
     include_expired: bool = False,
     db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     List announcements for the current tenant (public, no auth required).
@@ -29,10 +30,7 @@ def list_announcements(
     Results are ordered pinned-first, then by newest created_at.
     Pass ?include_expired=true to see all records regardless of expiry.
     """
-    tenant_id = get_current_tenant_id()
-    query = db.query(Announcement)
-    if tenant_id:
-        query = query.filter(Announcement.organization_id == tenant_id)
+    query = db.query(Announcement).filter(Announcement.organization_id == tenant_id)
     if category:
         query = query.filter(Announcement.category == category)
     if not include_expired:
@@ -48,10 +46,15 @@ def list_announcements(
 
 
 @router.get("/{announcement_id}", response_model=AnnouncementOut)
-def get_announcement(announcement_id: UUID, db: Session = Depends(get_db)):
-    """Retrieve a single announcement by ID (public)."""
+def get_announcement(
+    announcement_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Retrieve a single announcement by ID, scoped to current tenant (public)."""
     announcement = db.query(Announcement).filter(
-        Announcement.id == announcement_id
+        Announcement.id == announcement_id,
+        Announcement.organization_id == tenant_id,
     ).first()
     if not announcement:
         raise HTTPException(

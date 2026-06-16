@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.audit import AuditLog
 from app.schemas.issue import IssueCreate, IssueStatusUpdate, IssueOut
 from app.dependencies import get_current_user, RoleChecker, get_current_token_payload
-from app.middleware.tenant import get_current_tenant_id
+from app.middleware.tenant import get_current_tenant_id, require_tenant_id
 
 router = APIRouter(prefix="/issues", tags=["Public Issues"])
 
@@ -69,13 +69,11 @@ def submit_issue(
 def list_issues(
     issue_status: Optional[IssueStatus] = None,
     category: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """List issues scoped to current tenant. Supports filtering by status and category."""
-    tenant_id = get_current_tenant_id()
-    query = db.query(PublicIssue)
-    if tenant_id:
-        query = query.filter(PublicIssue.organization_id == tenant_id)
+    query = db.query(PublicIssue).filter(PublicIssue.organization_id == tenant_id)
     if issue_status:
         query = query.filter(PublicIssue.status == issue_status)
     if category:
@@ -83,9 +81,16 @@ def list_issues(
     return query.order_by(PublicIssue.created_at.desc()).all()
 
 @router.get("/{issue_id}", response_model=IssueOut)
-def get_issue(issue_id: UUID, db: Session = Depends(get_db)):
-    """Get a single issue by ID."""
-    issue = db.query(PublicIssue).filter(PublicIssue.id == issue_id).first()
+def get_issue(
+    issue_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Get a single issue by ID, scoped to current tenant."""
+    issue = db.query(PublicIssue).filter(
+        PublicIssue.id == issue_id,
+        PublicIssue.organization_id == tenant_id,
+    ).first()
     if not issue:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
     return issue

@@ -102,9 +102,9 @@ def send_otp(phone: str, otp: str, email: str | None = None) -> dict:
     if email:
         results["email"] = _send_email_otp(email, otp)
 
-    # 3. Always log (dev fallback — visible in docker logs)
+    # 3. Always log (dev fallback — visible in docker logs). The OTP value itself
+    # is intentionally not logged; use OTP_BYPASS_CODE in dev/test instead.
     if not any(results.values()):
-        logger.warning(f"[OTP FALLBACK — configure Twilio/SMTP] {phone} → {otp}")
-        print(f"[OTP] {phone} → {otp}")
+        logger.warning(f"[OTP FALLBACK — configure Twilio/SMTP] delivery failed for {phone}")
 
     return results

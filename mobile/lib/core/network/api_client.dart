@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../constants/api_constants.dart';
 import '../storage/local_storage.dart';
 
@@ -16,11 +17,16 @@ class ApiClient {
           ),
         ) {
     _dio.interceptors.add(_AuthInterceptor(_localStorage));
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      logPrint: (o) => debugPrint(o.toString()),
-    ));
+    if (kDebugMode) {
+      // Debug builds only — never log headers (strips Authorization/JWT) or
+      // run in release/profile builds where logs may be captured by crash tools.
+      _dio.interceptors.add(LogInterceptor(
+        requestHeader: false,
+        responseHeader: false,
+        requestBody: true,
+        responseBody: true,
+      ));
+    }
   }
 
   Dio get dio => _dio;
@@ -45,10 +51,4 @@ class _AuthInterceptor extends Interceptor {
     options.headers['X-Organization-ID'] = orgId;
     handler.next(options);
   }
-}
-
-// Ignore: avoid_print is not available in non-flutter contexts
-void debugPrint(String message) {
-  // ignore: avoid_print
-  print(message);
 }
