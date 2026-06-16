@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +34,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
   final _descEnCtrl = TextEditingController();
   double _lat = 8.1833;
   double _lng = 77.4119;
-  File? _photo;
+  Uint8List? _photo;
   String? _uploadedPhotoUrl;
   bool _uploading = false;
 
@@ -48,11 +48,14 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
       maxWidth: 1280,
     );
     if (picked == null) return;
-    setState(() { _photo = File(picked.path); _uploading = true; });
+    // Read bytes so the same path works on web and native (dart:io File is
+    // unavailable on web).
+    final bytes = await picked.readAsBytes();
+    setState(() { _photo = bytes; _uploading = true; });
     try {
       final client = sl<ApiClient>();
       final form = FormData.fromMap({
-        'file': await MultipartFile.fromFile(picked.path, filename: 'issue.jpg'),
+        'file': MultipartFile.fromBytes(bytes, filename: 'issue.jpg'),
       });
       final resp = await client.dio.post('/api/v1/media/upload', data: form);
       setState(() { _uploadedPhotoUrl = resp.data['url'] as String?; });
@@ -308,7 +311,7 @@ class _CategoryGrid extends StatelessWidget {
 }
 
 class _PhotoPicker extends StatelessWidget {
-  final File? photo;
+  final Uint8List? photo;
   final bool uploading;
   final VoidCallback onPick;
 
@@ -337,7 +340,7 @@ class _PhotoPicker extends StatelessWidget {
             : photo != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(11),
-                    child: Image.file(photo!, fit: BoxFit.cover, width: double.infinity),
+                    child: Image.memory(photo!, fit: BoxFit.cover, width: double.infinity),
                   )
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
