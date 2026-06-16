@@ -9,6 +9,7 @@ import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -102,6 +103,10 @@ class HomeScreen extends StatelessWidget {
               // Greeting
               _GreetingCard(l: l),
               const SizedBox(height: 20),
+
+              // Daily Thirukkural (bilingual couplet of the day)
+              const DailyThirukkuralCard(),
+              const SizedBox(height: 24),
 
               // Stats
               _StatsRow(l: l),

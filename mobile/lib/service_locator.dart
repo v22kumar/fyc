@@ -99,6 +99,9 @@ import 'features/community/domain/repositories/community_repository.dart';
 import 'features/community/domain/usecases/fetch_profiles_usecase.dart';
 import 'features/community/presentation/bloc/community_bloc.dart';
 
+// Thirukkural (daily couplet)
+import 'features/thirukkural/data/datasources/thirukkural_datasource.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initServiceLocator() async {
@@ -299,5 +302,10 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton(() => FetchProfilesUseCase(sl<CommunityRepository>()));
   sl.registerFactory<CommunityBloc>(
     () => CommunityBloc(fetchProfiles: sl<FetchProfilesUseCase>()),
+  );
+
+  // Thirukkural (daily couplet)
+  sl.registerLazySingleton<ThirukkuralDataSource>(
+    () => ThirukkuralDataSourceImpl(sl<ApiClient>()),
   );
 }

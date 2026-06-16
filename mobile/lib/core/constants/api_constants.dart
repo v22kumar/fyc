@@ -55,4 +55,7 @@ class ApiConstants {
 
   // Community
   static const String community = '/api/v1/community';
+
+  // Thirukkural
+  static const String thirukkuralDaily = '/api/v1/thirukkural/daily';
 }
