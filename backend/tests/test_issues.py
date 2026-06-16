@@ -85,7 +85,10 @@ def test_get_issue_by_id(client, db):
     )
     issue_id = create_res.json()["id"]
 
-    res = client.get(f"/api/v1/issues/{issue_id}")
+    res = client.get(
+        f"/api/v1/issues/{issue_id}",
+        headers={"X-Organization-ID": str(org.id)},
+    )
     assert res.status_code == 200
     assert res.json()["id"] == issue_id
 
@@ -253,6 +256,9 @@ def test_issue_full_lifecycle(client, db):
     assert transition(vol_token, "RESOLVED", {"verification_photo_url": "https://s3/proof.jpg"}).status_code == 200
     assert transition(admin_token, "CLOSED").status_code == 200
 
-    final = client.get(f"/api/v1/issues/{issue_id}").json()
+    final = client.get(
+        f"/api/v1/issues/{issue_id}",
+        headers={"X-Organization-ID": str(org.id)},
+    ).json()
     assert final["status"] == "CLOSED"
     assert final["verification_photo_url"] == "https://s3/proof.jpg"

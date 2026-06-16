@@ -58,4 +58,7 @@ class ApiConstants {
 
   // Thirukkural
   static const String thirukkuralDaily = '/api/v1/thirukkural/daily';
+
+  // News
+  static const String newsTop = '/api/v1/news/top';
 }

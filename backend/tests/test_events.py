@@ -114,7 +114,11 @@ def test_list_events(client, db):
 
 
 def test_get_event_not_found(client, db):
-    res = client.get(f"/api/v1/events/{uuid.uuid4()}")
+    org = _make_org(db)
+    res = client.get(
+        f"/api/v1/events/{uuid.uuid4()}",
+        headers={"X-Organization-ID": str(org.id)},
+    )
     assert res.status_code == 404
 
 

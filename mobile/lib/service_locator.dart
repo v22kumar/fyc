@@ -102,6 +102,9 @@ import 'features/community/presentation/bloc/community_bloc.dart';
 // Thirukkural (daily couplet)
 import 'features/thirukkural/data/datasources/thirukkural_datasource.dart';
 
+// News (Tamil headlines)
+import 'features/news/data/datasources/news_datasource.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initServiceLocator() async {
@@ -307,5 +310,10 @@ Future<void> initServiceLocator() async {
   // Thirukkural (daily couplet)
   sl.registerLazySingleton<ThirukkuralDataSource>(
     () => ThirukkuralDataSourceImpl(sl<ApiClient>()),
+  );
+
+  // News (Tamil headlines)
+  sl.registerLazySingleton<NewsDataSource>(
+    () => NewsDataSourceImpl(sl<ApiClient>()),
   );
 }

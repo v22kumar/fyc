@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
+import '../../../news/presentation/widgets/daily_news_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,109 +28,117 @@ class HomeScreen extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Image.asset(
-                  'assets/images/fyc_logo.png',
-                  width: 26,
-                  height: 26,
-                  errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 14)),
-                ),
+        extendBody: true,
+        body: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            onRefresh: () async {},
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.paddingPage, 8, AppTheme.paddingPage, 120,
               ),
-              const SizedBox(width: 10),
-              Text(l.appName),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go('/announcements'),
-              tooltip: 'Notifications',
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (value) async {
-                if (value == 'logout') {
-                  context.read<AuthBloc>().add(const AuthLogoutRequested());
-                } else if (value == 'lang') {
-                  final storage = sl<LocalStorage>();
-                  final currentLang = storage.getLang();
-                  final newLang = currentLang == 'ta' ? 'en' : 'ta';
-                  await storage.saveLang(newLang);
-                  localeNotifier.value = Locale(newLang);
-                }
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'lang',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.language, size: 18, color: AppColors.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        sl<LocalStorage>().getLang() == 'ta'
-                            ? 'English-க்கு மாற்றவும்'
-                            : 'தமிழுக்கு மாற்றவும்',
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, size: 18, color: AppColors.accent),
-                      const SizedBox(width: 8),
-                      Text(l.logout),
-                    ],
-                  ),
-                ),
+              children: [
+                _HomeHeader(l: l),
+                const SizedBox(height: 18),
+
+                // Greeting
+                _GreetingCard(l: l),
+                const SizedBox(height: 20),
+
+                // Daily Thirukkural (bilingual couplet of the day)
+                const DailyThirukkuralCard(),
+                const SizedBox(height: 16),
+
+                // Daily Tamil news (Google News RSS, top 10)
+                const DailyNewsCard(),
+                const SizedBox(height: 24),
+
+                // Stats
+                _StatsRow(l: l),
               ],
             ),
-          ],
-        ),
-        body: RefreshIndicator(
-          onRefresh: () async {},
-          child: ListView(
-            padding: const EdgeInsets.all(AppTheme.paddingPage),
-            children: [
-              // Greeting
-              _GreetingCard(l: l),
-              const SizedBox(height: 20),
-
-              // Daily Thirukkural (bilingual couplet of the day)
-              const DailyThirukkuralCard(),
-              const SizedBox(height: 24),
-
-              // Stats
-              _StatsRow(l: l),
-              const SizedBox(height: 24),
-
-              // Quick Access Grid
-              Text(
-                l.homeSubtitle,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _QuickAccessGrid(l: l),
-              const SizedBox(height: 24),
-
-              // Emergency Blood CTA
-              _EmergencyBloodBanner(l: l),
-            ],
           ),
+        ),
+        bottomNavigationBar: const _FloatingDock(),
+      ),
+    );
+  }
+}
+
+class _HomeHeader extends StatelessWidget {
+  final AppLocalizations l;
+  const _HomeHeader({required this.l});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Image.asset(
+            'assets/images/fyc_logo.png',
+            width: 28,
+            height: 28,
+            errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            l.appName,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        _HeaderIconButton(
+          icon: Icons.notifications_outlined,
+          onTap: () => context.go('/announcements'),
+        ),
+        const SizedBox(width: 8),
+        _HeaderIconButton(
+          icon: Icons.translate_rounded,
+          onTap: () async {
+            final storage = sl<LocalStorage>();
+            final currentLang = storage.getLang();
+            final newLang = currentLang == 'ta' ? 'en' : 'ta';
+            await storage.saveLang(newLang);
+            localeNotifier.value = Locale(newLang);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _HeaderIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.textPrimary),
         ),
       ),
     );
@@ -274,112 +284,52 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _QuickAccessGrid extends StatelessWidget {
-  final AppLocalizations l;
-  const _QuickAccessGrid({required this.l});
+/// Floating "dock" bottom navigation. Deliberately not an edge-to-edge
+/// Material BottomNavigationBar — a frosted, rounded island that surfaces
+/// the most-used destinations, with everything else one tap away in
+/// [_MoreSheet].
+class _FloatingDock extends StatelessWidget {
+  const _FloatingDock();
 
   @override
   Widget build(BuildContext context) {
-    final ta = sl<LocalStorage>().getLang() == 'ta';
-    final items = [
-      (icon: '🩸', label: l.bloodDonation, route: '/blood-donation',
-       color: AppColors.accent),
-      (icon: '🚧', label: l.publicIssues, route: '/issues',
-       color: AppColors.warning),
-      (icon: '🔍', label: ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', route: '/issues/track',
-       color: const Color(0xFF14B8A6)),
-      (icon: '🪪', label: l.membership, route: '/membership',
-       color: AppColors.primary),
-      (icon: '🎗️', label: l.events, route: '/events',
-       color: const Color(0xFF8B5CF6)),
-      (icon: '🏆', label: ta ? 'விளையாட்டு' : 'Sports Hub', route: '/sports',
-       color: const Color(0xFF10B981)),
-      (icon: '🌱', label: ta ? 'பசுமை FYC' : 'Green FYC', route: '/green',
-       color: const Color(0xFF047857)),
-      (icon: '📢', label: ta ? 'அறிவிப்புகள்' : 'Announcements', route: '/announcements',
-       color: const Color(0xFFF59E0B)),
-      (icon: '📷', label: ta ? 'புகைப்படங்கள்' : 'Gallery', route: '/gallery',
-       color: const Color(0xFFD97706)),
-      (icon: '📋', label: l.directory, route: '/directory',
-       color: const Color(0xFF2563EB)),
-      (icon: '🤝', label: ta ? 'சமூகம்' : 'Community', route: '/community',
-       color: const Color(0xFFEC4899)),
-      (icon: '🎓', label: ta ? 'சான்றிதழ்' : 'Certificates', route: '/certificate',
-       color: const Color(0xFF6366F1)),
-      (icon: 'ℹ️', label: ta ? 'எங்களைப் பற்றி' : 'About', route: '/about',
-       color: AppColors.textSecondary),
-    ];
-
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      children: items.map((item) {
-        return _GridTile(
-          icon: item.icon,
-          label: item.label,
-          color: item.color,
-          onTap: () => context.push(item.route),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _GridTile extends StatelessWidget {
-  final String icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _GridTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          splashColor: color.withOpacity(0.08),
-          highlightColor: color.withOpacity(0.03),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.07),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(icon, style: const TextStyle(fontSize: 26)),
+                _DockItem(
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                  active: true,
+                  onTap: () {},
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                _DockItem(
+                  icon: Icons.bloodtype_rounded,
+                  label: 'Blood',
+                  onTap: () => context.push('/blood-donation'),
+                ),
+                _DockItem(
+                  icon: Icons.celebration_rounded,
+                  label: 'Events',
+                  onTap: () => context.push('/events'),
+                ),
+                _DockItem(
+                  icon: Icons.grid_view_rounded,
+                  label: 'More',
+                  onTap: () => _showMoreSheet(context),
                 ),
               ],
             ),
@@ -390,73 +340,217 @@ class _GridTile extends StatelessWidget {
   }
 }
 
-class _EmergencyBloodBanner extends StatelessWidget {
-  final AppLocalizations l;
-  const _EmergencyBloodBanner({required this.l});
+class _DockItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  const _DockItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? AppColors.primary : AppColors.textSecondary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showMoreSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => const _MoreSheet(),
+  );
+}
+
+class _MenuItem {
+  final String icon;
+  final String label;
+  final String route;
+  final Color color;
+  const _MenuItem(this.icon, this.label, this.route, this.color);
+}
+
+/// Bento-grid "More" menu — every destination that used to live in the
+/// flat quick-access grid, grouped by purpose so the dock stays minimal.
+class _MoreSheet extends StatelessWidget {
+  const _MoreSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final ta = sl<LocalStorage>().getLang() == 'ta';
+
+    final sections = <(String, List<_MenuItem>)>[
+      (
+        ta ? 'சேவைகள்' : 'Services',
+        [
+          _MenuItem('🚧', l.publicIssues, '/issues', AppColors.warning),
+          _MenuItem('🔍', ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track',
+              const Color(0xFF14B8A6)),
+          _MenuItem('🪪', l.membership, '/membership', AppColors.primary),
+          _MenuItem('📋', l.directory, '/directory', const Color(0xFF2563EB)),
+        ],
+      ),
+      (
+        ta ? 'சமூகம்' : 'Community',
+        [
+          _MenuItem('🏆', ta ? 'விளையாட்டு' : 'Sports Hub', '/sports', const Color(0xFF10B981)),
+          _MenuItem('🌱', ta ? 'பசுமை FYC' : 'Green FYC', '/green', const Color(0xFF047857)),
+          _MenuItem('📢', ta ? 'அறிவிப்புகள்' : 'Announcements', '/announcements',
+              const Color(0xFFF59E0B)),
+          _MenuItem('📷', ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery', const Color(0xFFD97706)),
+          _MenuItem('🤝', ta ? 'சமூகம்' : 'Community', '/community', const Color(0xFFEC4899)),
+        ],
+      ),
+      (
+        ta ? 'கணக்கு' : 'Account',
+        [
+          _MenuItem('🎓', ta ? 'சான்றிதழ்' : 'Certificates', '/certificate',
+              const Color(0xFF6366F1)),
+          _MenuItem('ℹ️', ta ? 'எங்களைப் பற்றி' : 'About', '/about', AppColors.textSecondary),
+        ],
+      ),
+    ];
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.78,
+      minChildSize: 0.4,
+      maxChildSize: 0.94,
+      expand: false,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            for (final section in sections) ...[
+              Text(
+                section.$1,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: section.$2.map((item) => _BentoTile(item: item)).toList(),
+              ),
+              const SizedBox(height: 24),
+            ],
+            const Divider(color: AppColors.border),
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.logout, color: AppColors.accent),
+              title: Text(
+                l.logout,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(const AuthLogoutRequested());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BentoTile extends StatelessWidget {
+  final _MenuItem item;
+  const _BentoTile({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE11D48), Color(0xFFBE123C)], // Rose 600 to Rose 700
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFE11D48).withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => context.push('/blood-donation'),
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          splashColor: Colors.white.withOpacity(0.12),
+          splashColor: item.color.withOpacity(0.08),
+          onTap: () {
+            Navigator.pop(context);
+            context.push(item.route);
+          },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
+                    color: item.color.withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: const Text('🩸', style: TextStyle(fontSize: 26)),
+                  child: Text(item.icon, style: const TextStyle(fontSize: 22)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'இரத்த அவசரநிலை?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 16,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        l.searchDonors,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 6),
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
               ],
             ),
           ),
