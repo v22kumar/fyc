@@ -1,6 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
+// Backend base URL — same convention as the other pages. Baked in at build
+// time (the PUBLIC_ prefix also exposes it to the client script below).
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+
 const stats = [
   { value: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', icon: '🌱', color: 'text-emerald-600 bg-emerald-50' },
   { value: '1,200+', ta: 'இரத்த தானம் பதிவாளர்கள்', en: 'Blood Donors', icon: '🩸', color: 'text-rose-600 bg-rose-50' },
@@ -189,6 +193,117 @@ const updates = [
       </div>
     </div>
   </section>
+
+  <!-- Daily Thirukkural + Today's Tamil News (live from backend) -->
+  <section class="py-12 bg-[#f8f9fa] px-4 border-b border-gray-100">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Daily Thirukkural -->
+      <div class="lg:col-span-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-xl">📜</span>
+          <h2 class="text-lg font-extrabold text-gray-900 tracking-tight" data-ta="இன்றைய திருக்குறள்" data-en="Daily Thirukkural">இன்றைய திருக்குறள்</h2>
+        </div>
+        <div id="kural-card" class="bg-gradient-to-br from-[#0c3f27] to-[#0F5132] text-white rounded-2xl p-6 shadow-md min-h-[220px] flex flex-col justify-center">
+          <div id="kural-loading" class="text-green-100/70 text-sm">ஏற்றுகிறது… / Loading…</div>
+          <div id="kural-content" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+              <span id="kural-paal" class="text-[10px] font-bold uppercase tracking-widest bg-white/15 px-2.5 py-1 rounded-full"></span>
+              <span id="kural-number" class="text-[10px] font-bold text-[#D4AF37]"></span>
+            </div>
+            <p id="kural-tamil" class="text-lg font-bold leading-relaxed whitespace-pre-line" style="font-family:'Noto Sans Tamil',sans-serif"></p>
+            <p id="kural-english" class="text-sm text-green-100/90 italic leading-relaxed"></p>
+            <p id="kural-meaning" class="text-xs text-green-100/70 leading-relaxed border-t border-white/10 pt-3" style="font-family:'Noto Sans Tamil',sans-serif"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Tamil News -->
+      <div class="lg:col-span-7">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📰</span>
+            <h2 class="text-lg font-extrabold text-gray-900 tracking-tight" data-ta="இன்றைய செய்திகள்" data-en="Today's News">இன்றைய செய்திகள்</h2>
+          </div>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News · Top 10</span>
+        </div>
+        <div id="news-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm divide-y divide-gray-100 min-h-[220px]">
+          <div id="news-loading" class="p-6 text-gray-400 text-sm">ஏற்றுகிறது… / Loading headlines…</div>
+          <div id="news-list" class="hidden"></div>
+          <div id="news-error" class="hidden p-6 text-gray-400 text-sm" data-ta="செய்திகளை இப்போது ஏற்ற முடியவில்லை." data-en="Could not load news right now.">செய்திகளை இப்போது ஏற்ற முடியவில்லை.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script define:vars={{ API_BASE }}>
+    const lang = () => localStorage.getItem('fyc_lang') || 'ta';
+
+    // ── Daily Thirukkural ────────────────────────────────────────────────
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/thirukkural/daily`);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const k = await res.json();
+        document.getElementById('kural-paal').textContent =
+          (k.paal_ta || '') + (k.paal_en ? ' · ' + k.paal_en : '');
+        document.getElementById('kural-number').textContent = 'குறள் ' + k.number;
+        document.getElementById('kural-tamil').textContent =
+          [k.line1, k.line2].filter(Boolean).join('\n');
+        document.getElementById('kural-english').textContent = k.english_couplet || '';
+        document.getElementById('kural-meaning').textContent = k.tamil_meaning || '';
+        document.getElementById('kural-loading').classList.add('hidden');
+        document.getElementById('kural-content').classList.remove('hidden');
+      } catch (e) {
+        document.getElementById('kural-loading').textContent =
+          lang() === 'ta' ? 'திருக்குறளை ஏற்ற முடியவில்லை.' : 'Could not load Thirukkural.';
+      }
+    })();
+
+    // ── Today's Tamil News ───────────────────────────────────────────────
+    (async () => {
+      const loading = document.getElementById('news-loading');
+      const list = document.getElementById('news-list');
+      const errBox = document.getElementById('news-error');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/news/top?limit=10`);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const items = await res.json();
+        if (!Array.isArray(items) || items.length === 0) throw new Error('empty');
+
+        const rel = (iso) => {
+          if (!iso) return '';
+          const diff = Date.now() - new Date(iso).getTime();
+          const m = Math.floor(diff / 60000);
+          if (m < 1) return 'now';
+          if (m < 60) return m + 'm';
+          const h = Math.floor(m / 60);
+          if (h < 24) return h + 'h';
+          return Math.floor(h / 24) + 'd';
+        };
+        const esc = (s) => (s || '').replace(/[&<>"]/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+        list.innerHTML = items.map((it) => `
+          <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer"
+             class="flex items-start gap-3 p-4 hover:bg-gray-50/80 transition-colors">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-gray-800 leading-snug line-clamp-2">${esc(it.title)}</p>
+              <div class="mt-1 flex items-center gap-2 text-[11px]">
+                <span class="font-bold text-[#0F5132]">${esc(it.source)}</span>
+                ${it.published_at ? `<span class="text-gray-400">· ${rel(it.published_at)}</span>` : ''}
+              </div>
+            </div>
+            <span class="text-gray-300 text-xs mt-0.5">↗</span>
+          </a>`).join('');
+
+        loading.classList.add('hidden');
+        list.classList.remove('hidden');
+      } catch (e) {
+        loading.classList.add('hidden');
+        errBox.classList.remove('hidden');
+      }
+    })();
+  </script>
 
   <!-- Modules Grid (Discord / Notion Style) -->
   <section class="py-16 bg-[#f8f9fa] px-4">

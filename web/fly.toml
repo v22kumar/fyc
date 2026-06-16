@@ -1,0 +1,23 @@
+# fly.toml — public Astro web frontend (static site served by nginx).
+
+app = "fyc-web"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    PUBLIC_API_BASE = "https://fyc-backend.fly.dev"
+    PUBLIC_DEFAULT_ORG_ID = "8f8b80b7-4b71-4770-b183-5c5f49e49a1d"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1
