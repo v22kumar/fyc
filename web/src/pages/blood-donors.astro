@@ -91,8 +91,8 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
           <p class="text-sm font-semibold text-amber-800" data-ta="தனியுரிமை கவசம்" data-en="Privacy Shield">
             தனியுரிமை கவசம்
           </p>
-          <p class="text-sm text-amber-700 mt-0.5" data-ta="தானிகளின் தொலைபேசி எண் பொது பட்டியலில் காட்டப்படவில்லை. தொடர்பு விவரங்களுக்கு FYC App பதிவிறக்கம் செய்யுங்கள்." data-en="Donor phone numbers are not shown publicly. Download the FYC App to request contact details.">
-            தானிகளின் தொலைபேசி எண் பொது பட்டியலில் காட்டப்படவில்லை. தொடர்பு விவரங்களுக்கு FYC App பதிவிறக்கம் செய்யுங்கள்.
+          <p class="text-sm text-amber-700 mt-0.5" data-ta="தானிகளின் தொலைபேசி எண் பொது பட்டியலில் காட்டப்படவில்லை. 'தொடர்பு கோரவும்' பொத்தானை அழுத்தி தொடர்பு விவரங்களைப் பெறுங்கள்." data-en="Donor phone numbers are not shown publicly. Click 'Request Contact' to reveal contact details.">
+            தானிகளின் தொலைபேசி எண் பொது பட்டியலில் காட்டப்படவில்லை. 'தொடர்பு கோரவும்' பொத்தானை அழுத்தி தொடர்பு விவரங்களைப் பெறுங்கள்.
           </p>
         </div>
       </div>
@@ -137,31 +137,26 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
   <!-- Contact Request Modal -->
   <div id="contact-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50">
     <div class="bg-white rounded-card shadow-2xl max-w-sm w-full p-6">
-      <div class="text-center">
-        <div class="text-5xl mb-3">🔒</div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2" data-ta="உள்நுழைவு தேவை" data-en="Login Required">
-          உள்நுழைவு தேவை
+      <div class="text-center" id="contact-modal-loading">
+        <div class="inline-block w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500" data-ta="தொடர்பு விவரங்கள் பெறப்படுகிறது..." data-en="Fetching contact details...">தொடர்பு விவரங்கள் பெறப்படுகிறது...</p>
+      </div>
+      <div class="text-center hidden" id="contact-modal-result">
+        <div class="text-5xl mb-3">🤝</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2" data-ta="தொடர்பு விவரங்கள்" data-en="Contact Details">
+          தொடர்பு விவரங்கள்
         </h3>
-        <p class="text-sm text-gray-600 mb-2" data-ta="தொலைபேசி எண்கள் தனியுரிமை காரணங்களுக்காக மறைக்கப்பட்டுள்ளன. FYC கனெக்ட் ஆப் மூலம் நேரடியாக தொடர்பு கொள்ளலாம்." data-en="Phone numbers are hidden for privacy. Use the FYC Connect app to request contact directly — all requests are logged for accountability.">
-          தொலைபேசி எண்கள் தனியுரிமை காரணங்களுக்காக மறைக்கப்பட்டுள்ளன. FYC கனெக்ட் ஆப் மூலம் நேரடியாக தொடர்பு கொள்ளலாம்.
-        </p>
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 text-left">
-          <p class="text-xs text-amber-800 font-medium" data-ta="எப்படி செயல்படுகிறது:" data-en="How it works:">எப்படி செயல்படுகிறது:</p>
-          <ol class="text-xs text-amber-700 mt-1 space-y-1 list-decimal list-inside">
-            <li data-ta="ஆப் பதிவிறக்கம் செய்யுங்கள்" data-en="Download the FYC Connect app">Download the FYC Connect app</li>
-            <li data-ta="உங்கள் கணக்கில் உள்நுழையுங்கள்" data-en="Login with your phone number">Login with your phone number</li>
-            <li data-ta="தொடர்பு கோரவும் — நாட்டுப்பதிவு செய்யப்படும்" data-en="Request contact — it's audit-logged">Request contact — it's audit-logged</li>
-          </ol>
-        </div>
+        <p class="text-2xl font-bold text-primary mb-5" id="contact-phone"></p>
         <div class="flex flex-col gap-3">
           <a
-            href="https://play.google.com/store"
+            id="contact-whatsapp-link"
+            href="#"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-full py-3 bg-primary text-white rounded-card font-semibold text-sm hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+            class="w-full py-3 bg-green-600 text-white rounded-card font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
           >
-            <span>📱</span>
-            <span data-ta="Google Play இல் பதிவிறக்கம் செய்க" data-en="Get on Google Play">Get on Google Play</span>
+            <span>💬</span>
+            <span data-ta="WhatsApp இல் தொடர்பு கொள்ளுங்கள்" data-en="Contact on WhatsApp">Contact on WhatsApp</span>
           </a>
           <button
             id="close-contact-modal"
@@ -171,6 +166,19 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
             மூடு
           </button>
         </div>
+      </div>
+      <div class="text-center hidden" id="contact-modal-error">
+        <div class="text-5xl mb-3">⚠️</div>
+        <p class="text-sm text-gray-600 mb-5" data-ta="தொடர்பு விவரங்களைப் பெற முடியவில்லை. மீண்டும் முயற்சிக்கவும்." data-en="Could not fetch contact details. Please try again.">
+          தொடர்பு விவரங்களைப் பெற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.
+        </p>
+        <button
+          id="close-contact-modal-error"
+          class="w-full py-3 border border-gray-200 text-gray-700 rounded-card font-semibold text-sm hover:bg-gray-50 transition-colors"
+          data-ta="மூடு" data-en="Close"
+        >
+          மூடு
+        </button>
       </div>
     </div>
   </div>
@@ -228,7 +236,7 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
           ${donor.blood_group}
         </span>
         <button
-          onclick="showContactModal()"
+          onclick="requestContact('${donor.id}')"
           class="w-full py-2.5 border-2 border-accent text-accent font-semibold text-sm rounded-card hover:bg-accent hover:text-white transition-all"
         >
           🤝 ${t('தொடர்பு கோரவும்', 'Request Contact')}
@@ -315,6 +323,35 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     modal.classList.add('flex');
   }
 
+  async function requestContact(donorId) {
+    const loading = document.getElementById('contact-modal-loading');
+    const result = document.getElementById('contact-modal-result');
+    const errorEl = document.getElementById('contact-modal-error');
+
+    loading.classList.remove('hidden');
+    result.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    showContactModal();
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/blood-donors/${donorId}/request-contact`, {
+        method: 'POST',
+        headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
+      });
+      if (!response.ok) throw new Error('API error');
+
+      const data = await response.json();
+      document.getElementById('contact-phone').textContent = data.phone_number;
+      document.getElementById('contact-whatsapp-link').href = data.whatsapp_link;
+
+      loading.classList.add('hidden');
+      result.classList.remove('hidden');
+    } catch (e) {
+      loading.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+    }
+  }
+
   // Filter button logic
   document.querySelectorAll('.blood-filter-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -367,6 +404,7 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     });
 
     document.getElementById('close-contact-modal').addEventListener('click', closeContactModal);
+    document.getElementById('close-contact-modal-error').addEventListener('click', closeContactModal);
 
     document.getElementById('contact-modal').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) closeContactModal();

@@ -12,12 +12,10 @@ from app.schemas.blood_donor import (
     BloodDonorRegister, BloodDonorAvailabilityUpdate,
     BloodDonorPublicOut, ContactRequestOut, VALID_BLOOD_GROUPS
 )
-from app.dependencies import get_current_user, RoleChecker
+from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/blood-donors", tags=["Blood Donors"])
-
-require_registered = RoleChecker(["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 
 def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
@@ -166,15 +164,16 @@ def update_availability(
 def request_contact(
     donor_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_registered)
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     Retrieve a donor's contact details (phone + WhatsApp link).
-    Requires authentication. Every contact access is audit-logged.
+    Public endpoint, tenant-scoped via X-Organization-ID. Every access is
+    still audit-logged (anonymously) so misuse can be traced.
     """
     donor = db.query(BloodDonor).filter(
         BloodDonor.id == donor_id,
-        BloodDonor.organization_id == current_user.organization_id,
+        BloodDonor.organization_id == tenant_id,
     ).first()
     if not donor:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Donor not found")
@@ -183,14 +182,15 @@ def request_contact(
     if not donor_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Donor user not found")
 
-    # Log this contact extraction to audit trail
+    # Log this contact extraction to audit trail (no authenticated user on
+    # the public site, so it's recorded anonymously rather than skipped).
     log = AuditLog(
-        organization_id=current_user.organization_id,
-        user_id=current_user.id,
+        organization_id=tenant_id,
+        user_id=None,
         action_type="CONTACT_EXTRACTION_DONOR",
         target_table="blood_donors",
         target_id=donor_id,
-        new_values={"accessed_by": str(current_user.id), "donor_id": str(donor_id)}
+        new_values={"accessed_by": "anonymous_public_site", "donor_id": str(donor_id)}
     )
     db.add(log)
     db.commit()
@@ -198,7 +198,7 @@ def request_contact(
     phone = donor_user.phone_number
     wa_number = phone.replace("+", "").replace(" ", "")
     return ContactRequestOut(
-        message="Contact details retrieved. Every access is logged for donor privacy.",
+        message="Contact details retrieved.",
         phone_number=phone,
         whatsapp_link=f"https://wa.me/{wa_number}"
     )

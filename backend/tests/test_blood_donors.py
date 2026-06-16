@@ -149,7 +149,7 @@ def test_request_contact_authenticated(client, db):
     assert "wa.me" in data["whatsapp_link"]
 
 
-def test_request_contact_unauthenticated_denied(client, db):
+def test_request_contact_public_no_auth_required(client, db):
     org = _make_org(db)
     token = _register(client, org.id, "+919111111119")
     reg_res = client.post(
@@ -163,4 +163,21 @@ def test_request_contact_unauthenticated_denied(client, db):
         f"/api/v1/blood-donors/{donor_id}/request-contact",
         headers={"X-Organization-ID": str(org.id)}
     )
-    assert res.status_code == 401
+    assert res.status_code == 200
+    data = res.json()
+    assert "phone_number" in data
+    assert "whatsapp_link" in data
+
+
+def test_request_contact_missing_tenant_header_rejected(client, db):
+    org = _make_org(db)
+    token = _register(client, org.id, "+919111111120")
+    reg_res = client.post(
+        "/api/v1/blood-donors/register",
+        json={"blood_group": "A+", "is_available": True},
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    )
+    donor_id = reg_res.json()["id"]
+
+    res = client.post(f"/api/v1/blood-donors/{donor_id}/request-contact")
+    assert res.status_code == 400
