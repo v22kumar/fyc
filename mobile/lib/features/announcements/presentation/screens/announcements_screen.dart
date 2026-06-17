@@ -9,6 +9,8 @@ import '../bloc/announcement_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../../core/widgets/scale_on_tap.dart';
 
 Color announcementCategoryColor(String category) {
   switch (category) {
@@ -53,7 +55,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       body: BlocBuilder<AnnouncementBloc, AnnouncementState>(
         builder: (context, state) {
           if (state is AnnouncementLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const ShimmerCardList();
           }
           if (state is AnnouncementLoaded) {
             if (state.announcements.isEmpty) {
@@ -125,11 +127,16 @@ class _AnnouncementCard extends StatelessWidget {
     final fmt = DateFormat('d MMM yyyy');
     final color = announcementCategoryColor(announcement.category);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        onTap: onTap,
+    return ScaleOnTap(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -164,23 +171,24 @@ class _AnnouncementCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 announcement.displayBody(lang),
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.schedule, size: 14, color: Colors.grey),
+                  const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     fmt.format(announcement.createdAt.toLocal()),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
                 ],
               ),

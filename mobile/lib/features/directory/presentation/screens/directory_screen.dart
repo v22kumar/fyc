@@ -8,6 +8,8 @@ import '../bloc/directory_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/widgets/scale_on_tap.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
 
 class DirectoryScreen extends StatefulWidget {
   const DirectoryScreen({super.key});
@@ -91,7 +93,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
               },
               builder: (context, state) {
                 if (state is DirectoryLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ShimmerCardList();
                 }
                 if (state is DirectoryLoaded) {
                   if (state.contacts.isEmpty) {
@@ -274,8 +276,14 @@ class _ContactCard extends StatelessWidget {
     final designation = contact.displayDesignation(lang);
     final geography = contact.displayGeography(lang);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -286,13 +294,14 @@ class _ContactCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             if (designation != null && designation.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 designation,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ],
             if (geography != null && geography.isNotEmpty) ...[
@@ -300,13 +309,13 @@ class _ContactCard extends StatelessWidget {
               Row(
                 children: [
                   const Icon(Icons.place_outlined,
-                      size: 14, color: Colors.grey),
+                      size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       geography,
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.grey),
+                          const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -315,11 +324,11 @@ class _ContactCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 14, color: Colors.grey),
+                const Icon(Icons.phone_outlined, size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   contact.phonePrimary,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -327,25 +336,31 @@ class _ContactCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onCall,
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: Text(lang == 'ta' ? 'அழைக்க' : 'Call'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 44),
+                  child: ScaleOnTap(
+                    onTap: onCall,
+                    child: OutlinedButton.icon(
+                      onPressed: onCall,
+                      icon: const Icon(Icons.phone, size: 16),
+                      label: Text(lang == 'ta' ? 'அழைக்க' : 'Call'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                      ),
                     ),
                   ),
                 ),
                 if (onWhatsApp != null) ...[
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onWhatsApp,
-                      icon: const Icon(Icons.chat, size: 16),
-                      label: const Text('WhatsApp'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        minimumSize: const Size(0, 44),
+                    child: ScaleOnTap(
+                      onTap: onWhatsApp,
+                      child: ElevatedButton.icon(
+                        onPressed: onWhatsApp,
+                        icon: const Icon(Icons.chat, size: 16),
+                        label: const Text('WhatsApp'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          minimumSize: const Size(0, 44),
+                        ),
                       ),
                     ),
                   ),

@@ -9,6 +9,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 
+import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../../core/widgets/scale_on_tap.dart';
+
 class EventsListScreen extends StatefulWidget {
   const EventsListScreen({super.key});
 
@@ -53,7 +56,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
         },
         builder: (context, state) {
           if (state is EventLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const ShimmerCardList();
           }
           if (state is EventLoaded) {
             if (state.events.isEmpty) {
@@ -157,8 +160,24 @@ class _EventCard extends StatelessWidget {
     final fmt = DateFormat('d MMM yyyy · h:mm a');
     final isPast = !event.isUpcoming && !event.isOngoing;
 
-    return Card(
+    Widget cardContent = Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: AppTheme.cardShadow,
+        border: Border(
+          left: BorderSide(
+            color: event.isOngoing
+                ? AppColors.success
+                : (event.isUpcoming ? AppColors.primary : AppColors.textSecondary),
+            width: 6,
+          ),
+          top: const BorderSide(color: AppColors.border, width: 1),
+          right: const BorderSide(color: AppColors.border, width: 1),
+          bottom: const BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -172,6 +191,7 @@ class _EventCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -180,7 +200,7 @@ class _EventCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: AppColors.success,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -196,18 +216,18 @@ class _EventCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               event.displayDescription(lang),
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule, size: 14, color: Colors.grey),
+                const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   fmt.format(event.eventStart.toLocal()),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -225,13 +245,21 @@ class _EventCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 lang == 'ta' ? 'நிகழ்வு முடிந்தது' : 'Event ended',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
             ],
           ],
         ),
       ),
     );
+
+    if (onCheckin != null) {
+      return ScaleOnTap(
+        onTap: onCheckin,
+        child: cardContent,
+      );
+    }
+    return cardContent;
   }
 }
 

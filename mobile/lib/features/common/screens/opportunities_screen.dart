@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../service_locator.dart';
+import '../../../core/widgets/scale_on_tap.dart';
 
 class OpportunitiesScreen extends StatefulWidget {
   const OpportunitiesScreen({super.key});
@@ -172,8 +173,24 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
                       final desc = isTa ? item['desc_ta']! : item['desc_en']!;
                       final type = item['type'] as String;
 
-                      return Card(
+                      return Container(
                         margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                          boxShadow: AppTheme.cardShadow,
+                          border: Border(
+                            left: BorderSide(
+                              color: type == 'VOLUNTEER'
+                                  ? AppColors.primary
+                                  : const Color(0xFF8B5CF6),
+                              width: 6,
+                            ),
+                            top: const BorderSide(color: AppColors.border, width: 1),
+                            right: const BorderSide(color: AppColors.border, width: 1),
+                            bottom: const BorderSide(color: AppColors.border, width: 1),
+                          ),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
@@ -269,18 +286,21 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
                                           side: const BorderSide(color: AppColors.success, width: 1.5),
                                         ),
                                       )
-                                    : ElevatedButton(
-                                        onPressed: () => _handleAction(id, title),
-                                        style: type == 'VOLUNTEER'
-                                            ? ElevatedButton.styleFrom(
-                                                backgroundColor: AppColors.primary,
-                                              )
-                                            : ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF8B5CF6),
-                                              ),
-                                        child: Text(
-                                          isTa ? item['btn_text_ta']! : item['btn_text_en']!,
-                                          style: const TextStyle(fontSize: 14),
+                                    : ScaleOnTap(
+                                        onTap: () => _handleAction(id, title),
+                                        child: ElevatedButton(
+                                          onPressed: () => _handleAction(id, title),
+                                          style: type == 'VOLUNTEER'
+                                              ? ElevatedButton.styleFrom(
+                                                  backgroundColor: AppColors.primary,
+                                                )
+                                              : ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF8B5CF6),
+                                                ),
+                                          child: Text(
+                                            isTa ? item['btn_text_ta']! : item['btn_text_en']!,
+                                            style: const TextStyle(fontSize: 14),
+                                          ),
                                         ),
                                       ),
                               ),

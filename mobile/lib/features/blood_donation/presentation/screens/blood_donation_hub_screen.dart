@@ -9,6 +9,8 @@ import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/widgets/scale_on_tap.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
 
 class BloodDonationHubScreen extends StatefulWidget {
   const BloodDonationHubScreen({super.key});
@@ -106,7 +108,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
               },
               builder: (context, state) {
                 if (state is BloodDonorLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ShimmerCardList();
                 }
                 if (state is BloodDonorSearchSuccess) {
                   if (state.donors.isEmpty) {
@@ -275,72 +277,85 @@ class _DonorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppColors.accent,
-              radius: 24,
-              child: Text(
-                donor.bloodGroup,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+    final lang = sl<LocalStorage>().getLang();
+    return ScaleOnTap(
+      onTap: onContact,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.accent.withOpacity(0.12),
+                radius: 24,
+                child: Text(
+                  donor.bloodGroup,
+                  style: const TextStyle(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (donor.fullNameTa?.isNotEmpty == true
-                            ? donor.fullNameTa!
-                            : donor.fullNameEn) ??
-                        '—',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (donor.geographyId != null)
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      donor.geographyId!,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      (donor.fullNameTa?.isNotEmpty == true
+                              ? donor.fullNameTa!
+                              : donor.fullNameEn) ??
+                          '—',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                ],
+                    if (donor.geographyId != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.place_outlined, size: 12, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              donor.geographyId!,
+                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Builder(
-              builder: (context) {
-                final lang = sl<LocalStorage>().getLang();
-                return ElevatedButton(
-                  onPressed: onContact,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  lang == 'ta' ? 'தொடர்பு' : 'Contact',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
-                  child: Text(
-                    lang == 'ta' ? 'தொடர்பு' : 'Contact',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                );
-              },
-            ),
-          ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
