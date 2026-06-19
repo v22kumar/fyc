@@ -20,6 +20,11 @@ _REQUEST_TIMEOUT = 10
 
 _GOLDAPI_URL = "https://www.goldapi.io/api/XAU/INR"
 
+# goldapi.io returns international spot price. Indian retail price includes:
+#   15% Basic Customs Duty + 3% GST = effective factor ~1.185
+# This brings the displayed price in line with IBJA/jeweler association rates.
+_INDIA_DUTY_FACTOR = 1.15 * 1.03  # ≈ 1.1845
+
 _cache: dict = {"data": None, "fetched_at": None}
 
 _STUB = {
@@ -41,16 +46,18 @@ def _fetch_from_api() -> dict:
 
     # goldapi.io returns price in troy ounces; gram price is in price_gram_24k field
     # Some tiers return price_gram_24k directly; fall back to calculation from price.
-    price_gram_24k = data.get("price_gram_24k")
-    if price_gram_24k is None:
+    spot_gram_24k = data.get("price_gram_24k")
+    if spot_gram_24k is None:
         # price field is per troy ounce (1 troy oz = 31.1035 grams)
         price_oz = data.get("price")
         if price_oz:
-            price_gram_24k = price_oz / 31.1035
+            spot_gram_24k = price_oz / 31.1035
         else:
-            price_gram_24k = None
+            spot_gram_24k = None
 
-    price_gram_22k = (price_gram_24k * (22 / 24)) if price_gram_24k is not None else None
+    # Apply India import duty + GST to convert international spot → Indian retail price
+    price_gram_24k = (spot_gram_24k * _INDIA_DUTY_FACTOR) if spot_gram_24k is not None else None
+    price_gram_22k = (spot_gram_24k * (22 / 24) * _INDIA_DUTY_FACTOR) if spot_gram_24k is not None else None
 
     return {
         "price_per_gram_24k": round(price_gram_24k, 2) if price_gram_24k is not None else None,
