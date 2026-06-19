@@ -217,26 +217,82 @@ const updates = [
         </div>
       </div>
 
-      <!-- Today's Tamil News -->
+      <!-- Today's News — tabbed: Tamil / India / Jobs -->
       <div class="lg:col-span-7">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
             <span class="text-xl">📰</span>
             <h2 class="text-lg font-extrabold text-gray-900 tracking-tight" data-ta="இன்றைய செய்திகள்" data-en="Today's News">இன்றைய செய்திகள்</h2>
           </div>
-          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News · Top 10</span>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News</span>
         </div>
-        <div id="news-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm divide-y divide-gray-100 min-h-[220px]">
-          <div id="news-loading" class="p-6 text-gray-400 text-sm">ஏற்றுகிறது… / Loading headlines…</div>
-          <div id="news-list" class="hidden"></div>
-          <div id="news-error" class="hidden p-6 text-gray-400 text-sm" data-ta="செய்திகளை இப்போது ஏற்ற முடியவில்லை." data-en="Could not load news right now.">செய்திகளை இப்போது ஏற்ற முடியவில்லை.</div>
+        <!-- Tab buttons -->
+        <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 w-fit">
+          <button onclick="switchNewsTab('tamil')" id="tab-tamil"
+            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-[#0F5132] shadow-sm">
+            தமிழ்
+          </button>
+          <button onclick="switchNewsTab('india')" id="tab-india"
+            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            India
+          </button>
+          <button onclick="switchNewsTab('jobs')" id="tab-jobs"
+            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            Jobs
+          </button>
+        </div>
+        <div class="bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden min-h-[220px]">
+          <div id="news-loading" class="p-6 text-gray-400 text-sm">Loading headlines…</div>
+          <div id="news-list" class="hidden divide-y divide-gray-100"></div>
+          <div id="news-error" class="hidden p-6 text-gray-400 text-sm">Could not load news right now.</div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- Weather + Gold Price live widgets -->
+  <section class="py-10 bg-white px-4 border-b border-gray-100">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Weather -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🌤</span>
+          <h2 class="text-base font-extrabold text-gray-900">Today's Weather · Nagercoil</h2>
+        </div>
+        <div id="weather-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-5 min-h-[130px] flex items-center">
+          <span class="text-gray-400 text-sm">Loading weather…</span>
+        </div>
+      </div>
+
+      <!-- Gold Price -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🪙</span>
+          <h2 class="text-base font-extrabold text-gray-900">Today's Gold Price · INR</h2>
+        </div>
+        <div id="gold-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-5 min-h-[130px] flex items-center">
+          <span class="text-gray-400 text-sm">Loading price…</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <script define:vars={{ API_BASE }}>
     const lang = () => localStorage.getItem('fyc_lang') || 'ta';
+    const esc = (s) => (s || '').replace(/[&<>"]/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const rel = (iso) => {
+      if (!iso) return '';
+      const diff = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'now';
+      if (m < 60) return m + 'm';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + 'h';
+      return Math.floor(h / 24) + 'd';
+    };
 
     // ── Daily Thirukkural ────────────────────────────────────────────────
     (async () => {
@@ -254,53 +310,151 @@ const updates = [
         document.getElementById('kural-loading').classList.add('hidden');
         document.getElementById('kural-content').classList.remove('hidden');
       } catch (e) {
-        document.getElementById('kural-loading').textContent =
-          lang() === 'ta' ? 'திருக்குறளை ஏற்ற முடியவில்லை.' : 'Could not load Thirukkural.';
+        document.getElementById('kural-loading').textContent = 'Could not load Thirukkural.';
       }
     })();
 
-    // ── Today's Tamil News ───────────────────────────────────────────────
-    (async () => {
+    // ── Tabbed News ──────────────────────────────────────────────────────
+    const NEWS_URLS = {
+      tamil: `${API_BASE}/api/v1/news/top?limit=10`,
+      india: `${API_BASE}/api/v1/news/india?limit=5`,
+      jobs:  `${API_BASE}/api/v1/news/jobs?limit=4`,
+    };
+    const newsCache = {};
+    let activeTab = 'tamil';
+
+    function renderNewsItems(items) {
+      return items.map((it) => `
+        <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer"
+           class="flex items-start gap-3 p-4 hover:bg-gray-50/80 transition-colors">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-800 leading-snug line-clamp-2">${esc(it.title)}</p>
+            <div class="mt-1 flex items-center gap-2 text-[11px]">
+              <span class="font-bold text-[#0F5132]">${esc(it.source)}</span>
+              ${it.published_at ? `<span class="text-gray-400">· ${rel(it.published_at)}</span>` : ''}
+            </div>
+          </div>
+          <span class="text-gray-300 text-xs mt-0.5">↗</span>
+        </a>`).join('');
+    }
+
+    async function loadNews(tab) {
       const loading = document.getElementById('news-loading');
       const list = document.getElementById('news-list');
       const errBox = document.getElementById('news-error');
+
+      if (newsCache[tab]) {
+        list.innerHTML = renderNewsItems(newsCache[tab]);
+        loading.classList.add('hidden');
+        errBox.classList.add('hidden');
+        list.classList.remove('hidden');
+        return;
+      }
+
+      loading.classList.remove('hidden');
+      list.classList.add('hidden');
+      errBox.classList.add('hidden');
+
       try {
-        const res = await fetch(`${API_BASE}/api/v1/news/top?limit=10`);
+        const res = await fetch(NEWS_URLS[tab]);
         if (!res.ok) throw new Error('http ' + res.status);
         const items = await res.json();
         if (!Array.isArray(items) || items.length === 0) throw new Error('empty');
-
-        const rel = (iso) => {
-          if (!iso) return '';
-          const diff = Date.now() - new Date(iso).getTime();
-          const m = Math.floor(diff / 60000);
-          if (m < 1) return 'now';
-          if (m < 60) return m + 'm';
-          const h = Math.floor(m / 60);
-          if (h < 24) return h + 'h';
-          return Math.floor(h / 24) + 'd';
-        };
-        const esc = (s) => (s || '').replace(/[&<>"]/g, (c) =>
-          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-        list.innerHTML = items.map((it) => `
-          <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer"
-             class="flex items-start gap-3 p-4 hover:bg-gray-50/80 transition-colors">
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-gray-800 leading-snug line-clamp-2">${esc(it.title)}</p>
-              <div class="mt-1 flex items-center gap-2 text-[11px]">
-                <span class="font-bold text-[#0F5132]">${esc(it.source)}</span>
-                ${it.published_at ? `<span class="text-gray-400">· ${rel(it.published_at)}</span>` : ''}
-              </div>
-            </div>
-            <span class="text-gray-300 text-xs mt-0.5">↗</span>
-          </a>`).join('');
-
+        newsCache[tab] = items;
+        list.innerHTML = renderNewsItems(items);
         loading.classList.add('hidden');
         list.classList.remove('hidden');
       } catch (e) {
         loading.classList.add('hidden');
         errBox.classList.remove('hidden');
+      }
+    }
+
+    window.switchNewsTab = function(tab) {
+      activeTab = tab;
+      ['tamil', 'india', 'jobs'].forEach((t) => {
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+          btn.classList.add('bg-white', 'text-[#0F5132]', 'shadow-sm');
+          btn.classList.remove('text-gray-500');
+        } else {
+          btn.classList.remove('bg-white', 'text-[#0F5132]', 'shadow-sm');
+          btn.classList.add('text-gray-500');
+        }
+      });
+      loadNews(tab);
+    };
+
+    loadNews('tamil');
+
+    // ── Weather ──────────────────────────────────────────────────────────
+    (async () => {
+      const card = document.getElementById('weather-card');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/utilities/weather?lat=8.1833&lon=77.4119`);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const w = await res.json();
+        if (w.temp == null) throw new Error('no data');
+        card.innerHTML = `
+          <div class="w-full">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-3xl font-extrabold text-[#0F5132]">${Math.round(w.temp)}°C</div>
+                <div class="text-sm font-semibold text-gray-700 mt-0.5">${esc(w.description.charAt(0).toUpperCase() + w.description.slice(1))}</div>
+                <div class="text-xs text-gray-400 mt-0.5">${esc(w.city || 'Nagercoil')} · Feels like ${Math.round(w.feels_like ?? w.temp)}°C</div>
+              </div>
+              <div class="flex flex-col items-end gap-1 text-xs text-gray-500">
+                <span>💧 ${w.humidity ?? '--'}% humidity</span>
+                <span>💨 ${w.wind_speed != null ? w.wind_speed.toFixed(1) + ' m/s' : '--'} wind</span>
+              </div>
+            </div>
+          </div>`;
+      } catch (e) {
+        card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>';
+      }
+    })();
+
+    // ── Gold Price ───────────────────────────────────────────────────────
+    (async () => {
+      const card = document.getElementById('gold-card');
+      const fmt = (n) => {
+        if (n == null) return '—';
+        const s = Math.round(n).toString();
+        if (s.length <= 3) return '₹' + s;
+        const last3 = s.slice(-3);
+        const rest = s.slice(0, -3);
+        let out = '';
+        for (let i = 0; i < rest.length; i++) {
+          if (i && (rest.length - i) % 2 === 0) out += ',';
+          out += rest[i];
+        }
+        return '₹' + out + ',' + last3;
+      };
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/utilities/gold-price`);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const g = await res.json();
+        if (g.price_per_gram_24k == null) throw new Error('no data');
+        card.innerHTML = `
+          <div class="w-full space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-9 h-9 rounded-lg bg-amber-500 text-white text-xs font-bold flex items-center justify-center">24K</span>
+                <span class="text-sm text-gray-500">Pure gold</span>
+              </div>
+              <span class="text-lg font-extrabold text-amber-500">${fmt(g.price_per_gram_24k)} <span class="text-xs font-medium text-gray-400">/g</span></span>
+            </div>
+            <div class="border-t border-gray-100"></div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 text-amber-600 text-xs font-bold flex items-center justify-center">22K</span>
+                <span class="text-sm text-gray-500">Jewellery</span>
+              </div>
+              <span class="text-lg font-extrabold text-gray-800">${fmt(g.price_per_gram_22k)} <span class="text-xs font-medium text-gray-400">/g</span></span>
+            </div>
+          </div>`;
+      } catch (e) {
+        card.innerHTML = '<span class="text-gray-400 text-sm">Gold price unavailable right now.</span>';
       }
     })();
   </script>
