@@ -84,15 +84,14 @@ def _seed_database():
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
         if donor_count == 0:
-            import subprocess
-            import sys
-            print("Seeding blood donors from CSV...")
-            csv_path = "scripts/friends2support_donors.csv"
-            script_path = "scripts/import_donors_csv.py"
-            if os.path.exists(csv_path) and os.path.exists(script_path):
-                subprocess.run([sys.executable, script_path, "--csv", csv_path])
-            else:
-                print("CSV or script not found, skipping blood donor seeding.")
+            print("Blood donors table is empty — seeding from friends2support CSV...")
+            try:
+                import sys as _sys
+                _sys.path.insert(0, ".")
+                from seeds.import_donors import main as _seed_donors
+                _seed_donors()
+            except Exception as _e:
+                print(f"Blood donor seeding failed: {_e}")
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
