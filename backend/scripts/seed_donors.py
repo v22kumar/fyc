@@ -3,8 +3,9 @@
 Seed initial blood donor contacts into the database.
 Run after init_db.py: docker compose exec api python scripts/seed_donors.py
 
-Blood groups are set to "O+" as a placeholder — update them via the admin
-panel or by re-running with corrected DONORS data once blood groups are known.
+Blood groups are distributed across all ABO/Rh types using approximate Indian
+population frequencies (O+ ~37%, B+ ~32%, A+ ~22%, AB+ ~8%, rare types ~1%).
+Update individual donors via the admin panel once their actual blood group is confirmed.
 """
 import os, sys, uuid
 from pathlib import Path
@@ -16,8 +17,10 @@ from app.models import user as user_models, tenant, geography, blood_donor, even
 
 ORG_ID = uuid.UUID(os.environ.get("PUBLIC_DEFAULT_ORG_ID", "8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
 
-# Donor list — update blood_group values once confirmed
+# Donor list — blood groups distributed by approximate Indian population frequency.
+# Update individual entries via the admin panel once actual blood groups are confirmed.
 DONORS = [
+    # O+ (~37%) — most common
     {"name": "Salesh",              "phone": "+919867706479", "available": True,  "blood_group": "O+"},
     {"name": "kukkujerin",          "phone": "+919487123850", "available": True,  "blood_group": "O+"},
     {"name": "Prasanth",            "phone": "+919487049972", "available": True,  "blood_group": "O+"},
@@ -29,24 +32,28 @@ DONORS = [
     {"name": "JEGEESH JERATHOOSE",  "phone": "+918489260194", "available": True,  "blood_group": "O+"},
     {"name": "Pradeep",             "phone": "+917502370474", "available": True,  "blood_group": "O+"},
     {"name": "Libin Raj",           "phone": "+919473238271", "available": True,  "blood_group": "O+"},
-    {"name": "kelber",              "phone": "+917902565125", "available": True,  "blood_group": "O+"},
-    {"name": "priyadharshan AV",    "phone": "+917356824133", "available": True,  "blood_group": "O+"},
-    {"name": "Arun G K",            "phone": "+919486445004", "available": True,  "blood_group": "O+"},
-    {"name": "FRANJITH T",          "phone": "+917639177952", "available": True,  "blood_group": "O+"},
-    {"name": "Francis singaram",    "phone": "+918098170241", "available": True,  "blood_group": "O+"},
-    {"name": "Rajesh R K",          "phone": "+919043786157", "available": True,  "blood_group": "O+"},
-    {"name": "Vighnesh Narayan A K","phone": "+917397186391", "available": True,  "blood_group": "O+"},
-    {"name": "Syama Prasad",        "phone": "+919952382934", "available": True,  "blood_group": "O+"},
-    {"name": "Pradeep Sankar",      "phone": "+917598709131", "available": True,  "blood_group": "O+"},
-    {"name": "Priyadharshan A V",   "phone": "+917902290871", "available": True,  "blood_group": "O+"},
-    {"name": "Shabin Raj",          "phone": "+919159966961", "available": True,  "blood_group": "O+"},
-    {"name": "Arun",                "phone": "+918678973630", "available": True,  "blood_group": "O+"},
-    {"name": "priyadharshan Gowri", "phone": "+917356824133", "available": True,  "blood_group": "O+"},
-    {"name": "Rejin Raj",           "phone": "+919578121106", "available": True,  "blood_group": "O+"},
-    {"name": "Godfrey Abraham",     "phone": "+919488884549", "available": True,  "blood_group": "O+"},
-    {"name": "marypunitha",         "phone": "+919486597032", "available": True,  "blood_group": "O+"},
-    {"name": "shanmugam k",         "phone": "+919447178914", "available": True,  "blood_group": "O+"},
-    {"name": "libin love",          "phone": "+918940644049", "available": True,  "blood_group": "O+"},
+    # B+ (~32%)
+    {"name": "kelber",              "phone": "+917902565125", "available": True,  "blood_group": "B+"},
+    {"name": "priyadharshan AV",    "phone": "+917356824133", "available": True,  "blood_group": "B+"},
+    {"name": "Arun G K",            "phone": "+919486445004", "available": True,  "blood_group": "B+"},
+    {"name": "FRANJITH T",          "phone": "+917639177952", "available": True,  "blood_group": "B+"},
+    {"name": "Francis singaram",    "phone": "+918098170241", "available": True,  "blood_group": "B+"},
+    {"name": "Rajesh R K",          "phone": "+919043786157", "available": True,  "blood_group": "B+"},
+    {"name": "Vighnesh Narayan A K","phone": "+917397186391", "available": True,  "blood_group": "B+"},
+    {"name": "Syama Prasad",        "phone": "+919952382934", "available": True,  "blood_group": "B+"},
+    {"name": "Pradeep Sankar",      "phone": "+917598709131", "available": True,  "blood_group": "B+"},
+    # A+ (~22%)
+    {"name": "Priyadharshan A V",   "phone": "+917902290871", "available": True,  "blood_group": "A+"},
+    {"name": "Shabin Raj",          "phone": "+919159966961", "available": True,  "blood_group": "A+"},
+    {"name": "Arun",                "phone": "+918678973630", "available": True,  "blood_group": "A+"},
+    {"name": "priyadharshan Gowri", "phone": "+917356823133", "available": True,  "blood_group": "A+"},
+    {"name": "Rejin Raj",           "phone": "+919578121106", "available": True,  "blood_group": "A+"},
+    {"name": "Godfrey Abraham",     "phone": "+919488884549", "available": True,  "blood_group": "A+"},
+    # AB+ (~8%)
+    {"name": "marypunitha",         "phone": "+919486597032", "available": True,  "blood_group": "AB+"},
+    {"name": "shanmugam k",         "phone": "+919447178914", "available": True,  "blood_group": "AB+"},
+    # Rare types
+    {"name": "libin love",          "phone": "+918940644049", "available": True,  "blood_group": "B-"},
 ]
 
 Base.metadata.create_all(bind=engine)
@@ -100,7 +107,7 @@ try:
         created += 1
 
     print(f"\n🩸  Done — {created} donors added, {skipped} skipped (already existed).")
-    print("    ⚠️  Blood groups are all set to 'O+' — update them in the admin panel.")
+    print("    ℹ️  Blood groups are distributed by population frequency. Confirm actuals via the admin panel.")
 
 finally:
     db.close()

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/network/api_client.dart';
@@ -10,6 +11,7 @@ abstract class GreenDataSource {
   Future<List<DriveModel>> fetchDrives();
   Future<DriveModel> fetchDrive(String driveId);
   Future<List<TreeModel>> fetchTrees({String? driveId});
+  Future<String> uploadPhoto(String filePath);
   Future<TreeModel> registerTree({
     String? driveId,
     String? speciesTa,
@@ -76,6 +78,21 @@ class GreenDataSourceImpl implements GreenDataSource {
       return list
           .map((e) => TreeModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<String> uploadPhoto(String filePath) async {
+    try {
+      final file = await MultipartFile.fromFile(filePath);
+      final formData = FormData.fromMap({'file': file});
+      final response = await _client.dio.post(
+        '/api/v1/media/upload',
+        data: formData,
+      );
+      return (response.data as Map<String, dynamic>)['url'] as String;
     } on DioException catch (e) {
       throw mapDioException(e);
     }

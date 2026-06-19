@@ -29,7 +29,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
 
   DateTime _plantedDate = DateTime.now();
   String? _selectedDriveId;
-  String? _pickedPhotoPath; // local path only; no upload endpoint wired.
+  String? _pickedPhotoPath;
 
   @override
   void initState() {
@@ -64,7 +64,6 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
     if (image != null) {
       setState(() => _pickedPhotoPath = image.path);
     }
-    // TODO: no upload endpoint wired here — photo_url is left null on submit.
   }
 
   String? _trim(TextEditingController c) {
@@ -81,7 +80,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
             latitude: double.tryParse(_latCtrl.text.trim()),
             longitude: double.tryParse(_lonCtrl.text.trim()),
             plantedDate: _plantedDate,
-            photoUrl: null, // TODO: wire upload endpoint to set photo_url.
+            photoFilePath: _pickedPhotoPath,
             notes: _trim(_notesCtrl),
           ),
         );

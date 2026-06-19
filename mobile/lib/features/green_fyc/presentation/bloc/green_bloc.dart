@@ -61,6 +61,18 @@ class GreenBloc extends Bloc<GreenEvent, GreenState> {
     Emitter<GreenState> emit,
   ) async {
     emit(const GreenLoading());
+
+    String? photoUrl;
+    if (event.photoFilePath != null) {
+      final uploadResult = await _repository.uploadPhoto(event.photoFilePath!);
+      final uploadFailure = uploadResult.fold((f) => f, (_) => null);
+      if (uploadFailure != null) {
+        emit(GreenFailure(uploadFailure.message));
+        return;
+      }
+      photoUrl = uploadResult.getOrElse(() => '');
+    }
+
     final result = await _registerTree(
       driveId: event.driveId,
       speciesTa: event.speciesTa,
@@ -68,7 +80,7 @@ class GreenBloc extends Bloc<GreenEvent, GreenState> {
       latitude: event.latitude,
       longitude: event.longitude,
       plantedDate: event.plantedDate,
-      photoUrl: event.photoUrl,
+      photoUrl: photoUrl,
       notes: event.notes,
     );
     result.fold(

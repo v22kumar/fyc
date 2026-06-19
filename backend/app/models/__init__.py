@@ -12,6 +12,7 @@ from app.models.directory import DirectoryContact, ContactCategory
 from app.models.announcement import Announcement, AnnouncementCategory
 from app.models.gallery import EventPhoto
 from app.models.green_fyc import PlantationDrive, TreeRegistration, TreeStatus
+from app.models.opportunity import Opportunity, OpportunityApplication, OpportunityType
 
 __all__ = [
     "Base",
@@ -43,4 +44,7 @@ __all__ = [
     "PlantationDrive",
     "TreeRegistration",
     "TreeStatus",
+    "Opportunity",
+    "OpportunityApplication",
+    "OpportunityType",
 ]

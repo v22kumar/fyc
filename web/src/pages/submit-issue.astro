@@ -10,8 +10,7 @@ const categories = [
   { value: 'OTHER',        ta: 'மற்றவை',         en: 'Other' },
 ];
 
-const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
-const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 ---
 
 <BaseLayout

@@ -22,6 +22,8 @@ from app.routers import gallery as gallery_router, green_fyc as green_router
 from app.routers import volunteers as volunteers_router
 from app.routers import thirukkural as thirukkural_router
 from app.routers import news as news_router
+from app.routers import opportunities as opportunities_router
+from app.routers import audit as audit_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -141,6 +143,8 @@ app.include_router(green_router.router, prefix="/api/v1")
 app.include_router(volunteers_router.router, prefix="/api/v1")
 app.include_router(thirukkural_router.router, prefix="/api/v1")
 app.include_router(news_router.router, prefix="/api/v1")
+app.include_router(opportunities_router.router, prefix="/api/v1")
+app.include_router(audit_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

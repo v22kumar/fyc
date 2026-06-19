@@ -9,6 +9,7 @@ abstract class GreenRepository {
   Future<Either<Failure, List<DriveEntity>>> fetchDrives();
   Future<Either<Failure, DriveEntity>> fetchDrive(String driveId);
   Future<Either<Failure, List<TreeEntity>>> fetchTrees({String? driveId});
+  Future<Either<Failure, String>> uploadPhoto(String filePath);
   Future<Either<Failure, TreeEntity>> registerTree({
     String? driveId,
     String? speciesTa,

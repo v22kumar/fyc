@@ -99,6 +99,14 @@ import 'features/community/domain/repositories/community_repository.dart';
 import 'features/community/domain/usecases/fetch_profiles_usecase.dart';
 import 'features/community/presentation/bloc/community_bloc.dart';
 
+// Opportunities
+import 'features/opportunities/data/datasources/opportunity_datasource.dart';
+import 'features/opportunities/data/repositories/opportunity_repository_impl.dart';
+import 'features/opportunities/domain/repositories/opportunity_repository.dart';
+import 'features/opportunities/domain/usecases/fetch_opportunities_usecase.dart';
+import 'features/opportunities/domain/usecases/apply_opportunity_usecase.dart';
+import 'features/opportunities/presentation/bloc/opportunity_bloc.dart';
+
 // Thirukkural (daily couplet)
 import 'features/thirukkural/data/datasources/thirukkural_datasource.dart';
 
@@ -305,6 +313,22 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton(() => FetchProfilesUseCase(sl<CommunityRepository>()));
   sl.registerFactory<CommunityBloc>(
     () => CommunityBloc(fetchProfiles: sl<FetchProfilesUseCase>()),
+  );
+
+  // ── Opportunities ─────────────────────────────────────────────────────────
+  sl.registerLazySingleton<OpportunityDataSource>(
+    () => OpportunityDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<OpportunityRepository>(
+    () => OpportunityRepositoryImpl(sl<OpportunityDataSource>()),
+  );
+  sl.registerLazySingleton(() => FetchOpportunitiesUseCase(sl<OpportunityRepository>()));
+  sl.registerLazySingleton(() => ApplyOpportunityUseCase(sl<OpportunityRepository>()));
+  sl.registerFactory<OpportunityBloc>(
+    () => OpportunityBloc(
+      fetchOpportunities: sl<FetchOpportunitiesUseCase>(),
+      applyOpportunity: sl<ApplyOpportunityUseCase>(),
+    ),
   );
 
   // Thirukkural (daily couplet)

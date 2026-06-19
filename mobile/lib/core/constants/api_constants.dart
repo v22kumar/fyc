@@ -53,6 +53,12 @@ class ApiConstants {
   // Volunteers
   static const String myCertificate = '/api/v1/volunteers/my-certificate';
 
+  // Opportunities
+  static const String opportunities = '/api/v1/opportunities';
+
+  // Media
+  static const String mediaUpload = '/api/v1/media/upload';
+
   // Community
   static const String community = '/api/v1/community';
 

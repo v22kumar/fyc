@@ -59,6 +59,18 @@ class GreenRepositoryImpl implements GreenRepository {
   }
 
   @override
+  Future<Either<Failure, String>> uploadPhoto(String filePath) async {
+    try {
+      final url = await _remote.uploadPhoto(filePath);
+      return Right(url);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, TreeEntity>> registerTree({
     String? driveId,
     String? speciesTa,

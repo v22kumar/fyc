@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 // Backend base URL — same convention as the other pages. Baked in at build
 // time (the PUBLIC_ prefix also exposes it to the client script below).
-const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 const stats = [
   { value: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', icon: '🌱', color: 'text-emerald-600 bg-emerald-50' },

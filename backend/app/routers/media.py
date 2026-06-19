@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 
 from app.dependencies import get_current_user
 from app.models.user import User
+from app.middleware.tenant import require_tenant_id
+from uuid import UUID
 
 router = APIRouter(prefix="/media", tags=["Media"])
 
@@ -17,9 +19,11 @@ MAX_SIZE_MB = 10
 async def upload_file(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
-    Upload a photo for an issue or event. Returns a URL that can be stored in photo_url.
+    Upload a photo. Files are isolated per organization.
+    Returns a URL that can be stored in photo_url fields.
     In production, swap the local write for an S3 PutObject call.
     """
     if file.content_type not in ALLOWED_TYPES:
@@ -38,8 +42,10 @@ async def upload_file(
     ext = Path(file.filename or "upload.jpg").suffix or ".jpg"
     filename = f"{uuid.uuid4().hex}{ext}"
 
-    UPLOAD_DIR.mkdir(exist_ok=True)
-    dest = UPLOAD_DIR / filename
+    # Isolate files per organization
+    org_dir = UPLOAD_DIR / str(current_user.organization_id)
+    org_dir.mkdir(parents=True, exist_ok=True)
+    dest = org_dir / filename
     dest.write_bytes(content)
 
-    return {"url": f"/uploads/{filename}", "filename": filename}
+    return {"url": f"/uploads/{current_user.organization_id}/{filename}", "filename": filename}

@@ -24,7 +24,7 @@ class GreenTreeRegistered extends GreenEvent {
   final double? latitude;
   final double? longitude;
   final DateTime plantedDate;
-  final String? photoUrl;
+  final String? photoFilePath; // local device path; BLoC uploads this before registering
   final String? notes;
 
   const GreenTreeRegistered({
@@ -34,11 +34,11 @@ class GreenTreeRegistered extends GreenEvent {
     this.latitude,
     this.longitude,
     required this.plantedDate,
-    this.photoUrl,
+    this.photoFilePath,
     this.notes,
   });
 
   @override
   List<Object?> get props =>
-      [driveId, speciesTa, speciesEn, latitude, longitude, plantedDate, notes];
+      [driveId, speciesTa, speciesEn, latitude, longitude, plantedDate, photoFilePath, notes];
 }
