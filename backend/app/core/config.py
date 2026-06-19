@@ -50,7 +50,8 @@ class Settings(BaseSettings):
     OPENWEATHER_API_KEY: str = ""
 
     # Metal / Gold price API (https://www.goldapi.io — free tier)
-    GOLD_API_KEY: str = ""
+    # TODO: move to Fly.io secret (flyctl secrets set GOLD_API_KEY=...) before public launch
+    GOLD_API_KEY: str = "goldapi-8d7e18a2d211857e02ecbe99945ab204-io"
 
 
     # SMTP Email OTP
