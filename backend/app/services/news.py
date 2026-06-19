@@ -16,7 +16,13 @@ import httpx
 logger = logging.getLogger(__name__)
 
 GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta"
-MAX_ITEMS = 10
+INDIA_NEWS_RSS_URL  = "https://news.google.com/rss?hl=en&gl=IN&ceid=IN:en"
+JOBS_NEWS_RSS_URL   = "https://news.google.com/rss/search?q=jobs+recruitment+india&hl=en&gl=IN&ceid=IN:en"
+
+MAX_ITEMS       = 10
+MAX_INDIA_ITEMS = 5
+MAX_JOBS_ITEMS  = 4
+
 _REQUEST_TIMEOUT = 10
 _CACHE_TTL = timedelta(minutes=30)
 _USER_AGENT = (
@@ -24,7 +30,9 @@ _USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 
-_cache: dict = {"items": [], "fetched_at": None}
+_cache:       dict = {"items": [], "fetched_at": None}
+_india_cache: dict = {"items": [], "fetched_at": None}
+_jobs_cache:  dict = {"items": [], "fetched_at": None}
 
 
 def _split_title_source(raw_title: str) -> tuple[str, str]:
@@ -76,9 +84,9 @@ def parse_rss(xml_text: str) -> list[dict]:
     return items
 
 
-def _fetch() -> list[dict]:
+def _fetch(url: str) -> list[dict]:
     response = httpx.get(
-        GOOGLE_NEWS_RSS_URL,
+        url,
         headers={"User-Agent": _USER_AGENT},
         timeout=_REQUEST_TIMEOUT,
         follow_redirects=True,
@@ -87,19 +95,28 @@ def _fetch() -> list[dict]:
     return parse_rss(response.text)
 
 
-def get_top_tamil_news(limit: int = MAX_ITEMS) -> list[dict]:
-    """
-    Return up to `limit` Tamil headlines, refreshing the in-process cache
-    when it goes stale. Falls back to the last successfully fetched batch
-    (even if stale) if the upstream feed is unreachable.
-    """
-    limit = min(limit, MAX_ITEMS)
+def _get_cached(cache: dict, url: str, limit: int) -> list[dict]:
     now = datetime.now(timezone.utc)
-    is_stale = _cache["fetched_at"] is None or now - _cache["fetched_at"] > _CACHE_TTL
+    is_stale = cache["fetched_at"] is None or now - cache["fetched_at"] > _CACHE_TTL
     if is_stale:
         try:
-            _cache["items"] = _fetch()
-            _cache["fetched_at"] = now
+            cache["items"] = _fetch(url)
+            cache["fetched_at"] = now
         except Exception as e:
-            logger.warning(f"Google News RSS fetch failed, serving cache: {e}")
-    return _cache["items"][:limit]
+            logger.warning(f"News RSS fetch failed ({url}), serving cache: {e}")
+    return cache["items"][:limit]
+
+
+def get_top_tamil_news(limit: int = MAX_ITEMS) -> list[dict]:
+    """Return up to `limit` Tamil headlines (Google News India, Tamil edition)."""
+    return _get_cached(_cache, GOOGLE_NEWS_RSS_URL, min(limit, MAX_ITEMS))
+
+
+def get_india_news(limit: int = MAX_INDIA_ITEMS) -> list[dict]:
+    """Return up to `limit` India headlines (Google News India, English edition)."""
+    return _get_cached(_india_cache, INDIA_NEWS_RSS_URL, min(limit, MAX_INDIA_ITEMS))
+
+
+def get_jobs_news(limit: int = MAX_JOBS_ITEMS) -> list[dict]:
+    """Return up to `limit` India jobs/recruitment headlines from Google News."""
+    return _get_cached(_jobs_cache, JOBS_NEWS_RSS_URL, min(limit, MAX_JOBS_ITEMS))

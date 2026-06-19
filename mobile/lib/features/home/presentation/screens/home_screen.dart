@@ -13,6 +13,8 @@ import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
 import '../../../news/presentation/widgets/daily_news_card.dart';
+import '../widgets/weather_card.dart';
+import '../widgets/gold_price_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -52,6 +54,12 @@ class HomeScreen extends StatelessWidget {
 
                 // Daily Tamil news (Google News RSS, top 10)
                 const DailyNewsCard(),
+                const SizedBox(height: 16),
+
+                // Weather + Gold price
+                const WeatherCard(),
+                const SizedBox(height: 16),
+                const GoldPriceCard(),
                 const SizedBox(height: 24),
 
                 // Stats

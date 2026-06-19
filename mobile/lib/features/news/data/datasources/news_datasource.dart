@@ -6,17 +6,18 @@ import '../models/news_item_model.dart';
 
 abstract class NewsDataSource {
   Future<List<NewsItemModel>> fetchTop({int limit = 10});
+  Future<List<NewsItemModel>> fetchIndia({int limit = 5});
+  Future<List<NewsItemModel>> fetchJobs({int limit = 4});
 }
 
 class NewsDataSourceImpl implements NewsDataSource {
   final ApiClient _client;
   NewsDataSourceImpl(this._client);
 
-  @override
-  Future<List<NewsItemModel>> fetchTop({int limit = 10}) async {
+  Future<List<NewsItemModel>> _fetchFrom(String url, int limit) async {
     try {
       final response = await _client.dio.get(
-        ApiConstants.newsTop,
+        url,
         queryParameters: {'limit': limit},
       );
       final list = response.data as List<dynamic>;
@@ -27,4 +28,16 @@ class NewsDataSourceImpl implements NewsDataSource {
       throw mapDioException(e);
     }
   }
+
+  @override
+  Future<List<NewsItemModel>> fetchTop({int limit = 10}) =>
+      _fetchFrom(ApiConstants.newsTop, limit);
+
+  @override
+  Future<List<NewsItemModel>> fetchIndia({int limit = 5}) =>
+      _fetchFrom(ApiConstants.newsIndia, limit);
+
+  @override
+  Future<List<NewsItemModel>> fetchJobs({int limit = 4}) =>
+      _fetchFrom(ApiConstants.newsJobs, limit);
 }

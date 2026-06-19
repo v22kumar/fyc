@@ -45,7 +45,7 @@ def test_parse_rss_skips_items_without_a_link():
 def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
     calls = {"n": 0}
 
-    def fake_fetch():
+    def fake_fetch(url):
         calls["n"] += 1
         return service.parse_rss(_SAMPLE_RSS)
 
@@ -64,7 +64,7 @@ def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
 
     # Force staleness, but make the upstream fetch fail — should serve the
     # last good cache instead of raising.
-    def failing_fetch():
+    def failing_fetch(url):
         raise RuntimeError("upstream unreachable")
 
     monkeypatch.setattr(service, "_fetch", failing_fetch)
@@ -74,7 +74,7 @@ def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
 
 
 def test_get_top_tamil_news_respects_limit_and_max(monkeypatch):
-    monkeypatch.setattr(service, "_fetch", lambda: service.parse_rss(_SAMPLE_RSS))
+    monkeypatch.setattr(service, "_fetch", lambda url: service.parse_rss(_SAMPLE_RSS))
     service._cache["items"] = []
     service._cache["fetched_at"] = None
 
@@ -83,7 +83,7 @@ def test_get_top_tamil_news_respects_limit_and_max(monkeypatch):
 
 
 def test_news_endpoint(client, monkeypatch):
-    monkeypatch.setattr(service, "_fetch", lambda: service.parse_rss(_SAMPLE_RSS))
+    monkeypatch.setattr(service, "_fetch", lambda url: service.parse_rss(_SAMPLE_RSS))
     service._cache["items"] = []
     service._cache["fetched_at"] = None
 

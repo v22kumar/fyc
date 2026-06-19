@@ -6,11 +6,9 @@ import '../../../../service_locator.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/models/news_item_model.dart';
 
-/// Minimal "Top 10 Tamil headlines" card for the home screen, sourced from
-/// Google News RSS. Each row opens the original article externally.
-///
-/// Non-critical: if the fetch fails (e.g. offline) the card renders nothing
-/// rather than showing an error, so it never disrupts the home screen.
+/// News card with three tabs: Tamil (10), India (5), Jobs (4).
+/// Sourced from Google News RSS via the backend proxy.
+/// Fails silently if offline — never disrupts the home screen.
 class DailyNewsCard extends StatefulWidget {
   const DailyNewsCard({super.key});
 
@@ -18,50 +16,33 @@ class DailyNewsCard extends StatefulWidget {
   State<DailyNewsCard> createState() => _DailyNewsCardState();
 }
 
-class _DailyNewsCardState extends State<DailyNewsCard> {
-  late Future<List<NewsItemModel>> _future;
+class _DailyNewsCardState extends State<DailyNewsCard>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  late Future<List<NewsItemModel>> _tamilFuture;
+  late Future<List<NewsItemModel>> _indiaFuture;
+  late Future<List<NewsItemModel>> _jobsFuture;
 
   @override
   void initState() {
     super.initState();
-    _future = sl<NewsDataSource>().fetchTop(limit: 10);
+    _tabController = TabController(length: 3, vsync: this);
+    final ds = sl<NewsDataSource>();
+    _tamilFuture = ds.fetchTop(limit: 10);
+    _indiaFuture = ds.fetchIndia(limit: 5);
+    _jobsFuture = ds.fetchJobs(limit: 4);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<NewsItemModel>>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _NewsSkeleton();
-        }
-        final items = snapshot.data;
-        if (items == null || items.isEmpty) {
-          return const SizedBox.shrink(); // fail silently
-        }
-        return _NewsContent(items: items);
-      },
-    );
-  }
-}
-
-class _NewsContent extends StatelessWidget {
-  final List<NewsItemModel> items;
-  const _NewsContent({required this.items});
-
-  String _relativeTime(DateTime? dt) {
-    if (dt == null) return '';
-    final diff = DateTime.now().toUtc().difference(dt.toUtc());
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -71,8 +52,9 @@ class _NewsContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(
               children: [
                 Container(
@@ -84,45 +66,99 @@ class _NewsContent extends StatelessWidget {
                   child: const Text('📰', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'இன்றைய செய்திகள்',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
                 const Text(
-                  'Top 10',
+                  'செய்திகள் · News',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
           ),
-          for (int i = 0; i < items.length; i++) ...[
-            _NewsRow(item: items[i], relativeTime: _relativeTime(items[i].publishedAt)),
-            if (i != items.length - 1)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Divider(height: 1, color: AppColors.border),
-              ),
-          ],
+          // Tabs
+          TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 2,
+            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            tabs: const [
+              Tab(text: 'தமிழ்'),
+              Tab(text: 'India'),
+              Tab(text: 'Jobs'),
+            ],
+          ),
+          // Content
+          SizedBox(
+            height: 340,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _NewsFeed(future: _tamilFuture),
+                _NewsFeed(future: _indiaFuture),
+                _NewsFeed(future: _jobsFuture),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+class _NewsFeed extends StatelessWidget {
+  final Future<List<NewsItemModel>> future;
+  const _NewsFeed({required this.future});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<NewsItemModel>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _NewsSkeleton();
+        }
+        final items = snapshot.data;
+        if (items == null || items.isEmpty) {
+          return const Center(
+            child: Text(
+              'No news available',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Divider(height: 1, color: AppColors.border),
+          ),
+          itemBuilder: (_, i) => _NewsRow(item: items[i]),
+        );
+      },
+    );
+  }
+}
+
 class _NewsRow extends StatelessWidget {
   final NewsItemModel item;
-  final String relativeTime;
-  const _NewsRow({required this.item, required this.relativeTime});
+  const _NewsRow({required this.item});
+
+  String _relativeTime(DateTime? dt) {
+    if (dt == null) return '';
+    final diff = DateTime.now().toUtc().difference(dt.toUtc());
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,22 +191,26 @@ class _NewsRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        item.source,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                      Flexible(
+                        child: Text(
+                          item.source,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (relativeTime.isNotEmpty) ...[
+                      if (_relativeTime(item.publishedAt).isNotEmpty) ...[
                         const Text(' • ',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                            style: TextStyle(
+                                fontSize: 11, color: AppColors.textSecondary)),
                         Text(
-                          relativeTime,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          _relativeTime(item.publishedAt),
+                          style: const TextStyle(
+                              fontSize: 11, color: AppColors.textSecondary),
                         ),
                       ],
                     ],
@@ -192,14 +232,8 @@ class _NewsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

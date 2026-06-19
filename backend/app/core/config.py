@@ -36,6 +36,22 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""  # Web/Android OAuth 2.0 client ID from Google Cloud Console
 
+    # Cloudinary — image hosting (replaces local disk uploads)
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
+    # Instagram Content Publishing API
+    # Set after creating a Business account and getting Meta App Review approval
+    INSTAGRAM_ACCOUNT_ID: str = ""    # numeric IG business account ID
+    INSTAGRAM_ACCESS_TOKEN: str = ""  # long-lived page access token
+
+    # OpenWeatherMap (free tier — https://openweathermap.org/api)
+    OPENWEATHER_API_KEY: str = ""
+
+    # Metal / Gold price API (https://www.goldapi.io — free tier)
+    GOLD_API_KEY: str = ""
+
 
     # SMTP Email OTP
     SMTP_HOST: str = "smtp.gmail.com"

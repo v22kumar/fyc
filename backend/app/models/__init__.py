@@ -13,6 +13,8 @@ from app.models.announcement import Announcement, AnnouncementCategory
 from app.models.gallery import EventPhoto
 from app.models.green_fyc import PlantationDrive, TreeRegistration, TreeStatus
 from app.models.opportunity import Opportunity, OpportunityApplication, OpportunityType
+from app.models.club_request import ClubMemberRequest
+from app.models.instagram_post import InstagramPost, InstagramPostStatus
 
 __all__ = [
     "Base",
@@ -47,4 +49,7 @@ __all__ = [
     "Opportunity",
     "OpportunityApplication",
     "OpportunityType",
+    "ClubMemberRequest",
+    "InstagramPost",
+    "InstagramPostStatus",
 ]

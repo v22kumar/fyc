@@ -13,6 +13,7 @@ from app.core.security import create_access_token, verify_password, get_password
 from app.services.otp_sender import send_otp as deliver_otp
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
+from app.models.club_request import ClubMemberRequest
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -121,10 +122,15 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
             detail="Phone number already registered under this organization",
         )
 
+    # CLUB_MEMBER registrations are held in a PENDING approval queue.
+    # The user account is created with PUBLIC_CITIZEN so they can use
+    # the app immediately; an admin must approve before the role upgrades.
+    effective_role = "PUBLIC_CITIZEN" if payload.role == "CLUB_MEMBER" else payload.role
+
     user = User(
         organization_id=payload.organization_id,
         phone_number=payload.phone_number,
-        role=payload.role,
+        role=effective_role,
         is_verified=True,
         preferred_language=payload.preferred_language,
     )
@@ -141,6 +147,13 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
 
     if payload.role == "VOLUNTEER":
         db.add(VolunteerMetadata(user_id=user.id, skills=[], total_hours_accrued=0.00))
+
+    if payload.role == "CLUB_MEMBER":
+        db.add(ClubMemberRequest(
+            organization_id=payload.organization_id,
+            user_id=user.id,
+            status="PENDING",
+        ))
 
     db.commit()
     db.refresh(user)

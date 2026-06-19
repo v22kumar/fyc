@@ -24,6 +24,9 @@ from app.routers import thirukkural as thirukkural_router
 from app.routers import news as news_router
 from app.routers import opportunities as opportunities_router
 from app.routers import audit as audit_router
+from app.routers import club_requests as club_requests_router
+from app.routers import utilities as utilities_router
+from app.routers import instagram as instagram_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -145,6 +148,9 @@ app.include_router(thirukkural_router.router, prefix="/api/v1")
 app.include_router(news_router.router, prefix="/api/v1")
 app.include_router(opportunities_router.router, prefix="/api/v1")
 app.include_router(audit_router.router, prefix="/api/v1")
+app.include_router(club_requests_router.router, prefix="/api/v1")
+app.include_router(utilities_router.router, prefix="/api/v1")
+app.include_router(instagram_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

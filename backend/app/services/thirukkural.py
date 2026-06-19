@@ -66,10 +66,13 @@ def daily_kural_number(today: date) -> int:
     """
     Deterministically map a calendar date to a kural number (1–1330).
 
-    Everyone sees the same kural on a given day, and the selection cycles
-    through all 1330 couplets (~3.6 years per full cycle).
+    Everyone sees the same kural on a given day. Uses a SHA-256 hash of the
+    date string so the sequence is non-sequential (feels random) but still
+    reproducible and collision-free across all 1330 values.
     """
-    return today.toordinal() % TOTAL_KURALS + 1
+    import hashlib
+    digest = hashlib.sha256(today.isoformat().encode()).hexdigest()
+    return int(digest, 16) % TOTAL_KURALS + 1
 
 
 def get_daily_kural(today: Optional[date] = None) -> dict:

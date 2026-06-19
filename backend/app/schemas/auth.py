@@ -18,7 +18,7 @@ class OTPVerify(BaseModel):
 class UserRegister(BaseModel):
     organization_id: UUID
     phone_number: str
-    role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER)$")
+    role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$")
     full_name_ta: str
     full_name_en: str
     preferred_language: Optional[str] = "ta"
