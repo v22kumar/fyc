@@ -7,8 +7,9 @@ import '../models/news_item_model.dart';
 abstract class NewsDataSource {
   Future<List<NewsItemModel>> fetchTop({int limit = 10});
   Future<List<NewsItemModel>> fetchIndia({int limit = 5});
-  Future<List<NewsItemModel>> fetchJobs({int limit = 4});
   Future<List<NewsItemModel>> fetchKanyakumari({int limit = 8});
+  Future<List<NewsItemModel>> fetchTnJobs({int limit = 8});
+  Future<List<NewsItemModel>> fetchCentralJobs({int limit = 8});
 }
 
 class NewsDataSourceImpl implements NewsDataSource {
@@ -39,10 +40,14 @@ class NewsDataSourceImpl implements NewsDataSource {
       _fetchFrom(ApiConstants.newsIndia, limit);
 
   @override
-  Future<List<NewsItemModel>> fetchJobs({int limit = 4}) =>
-      _fetchFrom(ApiConstants.newsJobs, limit);
-
-  @override
   Future<List<NewsItemModel>> fetchKanyakumari({int limit = 8}) =>
       _fetchFrom(ApiConstants.newsKanyakumari, limit);
+
+  @override
+  Future<List<NewsItemModel>> fetchTnJobs({int limit = 8}) =>
+      _fetchFrom(ApiConstants.newsTnJobs, limit);
+
+  @override
+  Future<List<NewsItemModel>> fetchCentralJobs({int limit = 8}) =>
+      _fetchFrom(ApiConstants.newsCentralJobs, limit);
 }

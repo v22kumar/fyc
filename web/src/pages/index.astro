@@ -198,7 +198,7 @@ const updates = [
         </div>
       </div>
 
-      <!-- Today's News — tabbed: Tamil / India / Jobs -->
+      <!-- Today's News — tabbed: Kanyakumari / Tamil / India / TN Jobs / Central -->
       <div class="lg:col-span-7">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
@@ -221,9 +221,13 @@ const updates = [
             class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
             India
           </button>
-          <button onclick="switchNewsTab('jobs')" id="tab-jobs"
+          <button onclick="switchNewsTab('tn-jobs')" id="tab-tn-jobs"
             class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            Jobs
+            TN Jobs
+          </button>
+          <button onclick="switchNewsTab('central-jobs')" id="tab-central-jobs"
+            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            Central
           </button>
         </div>
         <div class="bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden min-h-[220px]">
@@ -272,10 +276,11 @@ const updates = [
 
     // ── Tabbed News ──────────────────────────────────────────────────────
     const NEWS_URLS = {
-      kanyakumari: `${API_BASE}/api/v1/news/kanyakumari?limit=8`,
-      tamil: `${API_BASE}/api/v1/news/top?limit=10`,
-      india: `${API_BASE}/api/v1/news/india?limit=5`,
-      jobs:  `${API_BASE}/api/v1/news/jobs?limit=4`,
+      kanyakumari:  `${API_BASE}/api/v1/news/kanyakumari?limit=8`,
+      tamil:        `${API_BASE}/api/v1/news/top?limit=10`,
+      india:        `${API_BASE}/api/v1/news/india?limit=5`,
+      'tn-jobs':    `${API_BASE}/api/v1/news/tn-jobs?limit=8`,
+      'central-jobs': `${API_BASE}/api/v1/news/central-jobs?limit=8`,
     };
     const newsCache = {};
     let activeTab = 'tamil';
@@ -329,7 +334,7 @@ const updates = [
 
     window.switchNewsTab = function(tab) {
       activeTab = tab;
-      ['kanyakumari', 'tamil', 'india', 'jobs'].forEach((t) => {
+      ['kanyakumari', 'tamil', 'india', 'tn-jobs', 'central-jobs'].forEach((t) => {
         const btn = document.getElementById('tab-' + t);
         if (t === tab) {
           btn.classList.add('bg-white', 'text-[#0F5132]', 'shadow-sm');

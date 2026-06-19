@@ -6,9 +6,9 @@ import '../../../../service_locator.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/models/news_item_model.dart';
 
-/// News card with four tabs: Kanyakumari local (8), Tamil (10), India (5), Jobs (4).
+/// News card with five tabs: Kanyakumari local (8), Tamil (10), India (5),
+/// TN Govt Jobs (8), Central Govt Jobs (8).
 /// Sourced from Google News RSS via the backend proxy.
-/// Fails silently if offline — never disrupts the home screen.
 class DailyNewsCard extends StatefulWidget {
   const DailyNewsCard({super.key});
 
@@ -23,17 +23,19 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   late Future<List<NewsItemModel>> _kanyakumariFuture;
   late Future<List<NewsItemModel>> _tamilFuture;
   late Future<List<NewsItemModel>> _indiaFuture;
-  late Future<List<NewsItemModel>> _jobsFuture;
+  late Future<List<NewsItemModel>> _tnJobsFuture;
+  late Future<List<NewsItemModel>> _centralJobsFuture;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     final ds = sl<NewsDataSource>();
     _kanyakumariFuture = ds.fetchKanyakumari(limit: 8);
     _tamilFuture = ds.fetchTop(limit: 10);
     _indiaFuture = ds.fetchIndia(limit: 5);
-    _jobsFuture = ds.fetchJobs(limit: 4);
+    _tnJobsFuture = ds.fetchTnJobs(limit: 8);
+    _centralJobsFuture = ds.fetchCentralJobs(limit: 8);
   }
 
   @override
@@ -94,19 +96,21 @@ class _DailyNewsCardState extends State<DailyNewsCard>
               Tab(text: 'கன்னியாகுமரி'),
               Tab(text: 'தமிழ்'),
               Tab(text: 'India'),
-              Tab(text: 'Jobs'),
+              Tab(text: 'TN Jobs'),
+              Tab(text: 'Central'),
             ],
           ),
           // Content
           SizedBox(
-            height: 380,
+            height: 420,
             child: TabBarView(
               controller: _tabController,
               children: [
                 _NewsFeed(future: _kanyakumariFuture),
                 _NewsFeed(future: _tamilFuture),
                 _NewsFeed(future: _indiaFuture),
-                _NewsFeed(future: _jobsFuture),
+                _NewsFeed(future: _tnJobsFuture, jobMode: true),
+                _NewsFeed(future: _centralJobsFuture, jobMode: true),
               ],
             ),
           ),
@@ -118,7 +122,8 @@ class _DailyNewsCardState extends State<DailyNewsCard>
 
 class _NewsFeed extends StatelessWidget {
   final Future<List<NewsItemModel>> future;
-  const _NewsFeed({required this.future});
+  final bool jobMode;
+  const _NewsFeed({required this.future, this.jobMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +137,7 @@ class _NewsFeed extends StatelessWidget {
         if (items == null || items.isEmpty) {
           return const Center(
             child: Text(
-              'No news available',
+              'No notifications available',
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
           );
@@ -146,7 +151,7 @@ class _NewsFeed extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Divider(height: 1, color: AppColors.border),
           ),
-          itemBuilder: (_, i) => _NewsRow(item: items[i]),
+          itemBuilder: (_, i) => _NewsRow(item: items[i], jobMode: jobMode),
         );
       },
     );
@@ -155,7 +160,8 @@ class _NewsFeed extends StatelessWidget {
 
 class _NewsRow extends StatelessWidget {
   final NewsItemModel item;
-  const _NewsRow({required this.item});
+  final bool jobMode;
+  const _NewsRow({required this.item, this.jobMode = false});
 
   String _relativeTime(DateTime? dt) {
     if (dt == null) return '';
@@ -179,6 +185,24 @@ class _NewsRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (jobMode)
+              Container(
+                margin: const EdgeInsets.only(right: 10, top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'JOBS',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

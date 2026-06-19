@@ -68,8 +68,9 @@ class ApiConstants {
   // News
   static const String newsTop = '/api/v1/news/top';
   static const String newsIndia = '/api/v1/news/india';
-  static const String newsJobs = '/api/v1/news/jobs';
   static const String newsKanyakumari = '/api/v1/news/kanyakumari';
+  static const String newsTnJobs = '/api/v1/news/tn-jobs';
+  static const String newsCentralJobs = '/api/v1/news/central-jobs';
 
   // Utilities
   static const String weatherCurrent = '/api/v1/utilities/weather';

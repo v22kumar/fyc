@@ -18,10 +18,16 @@ def get_india_news(limit: int = Query(service.MAX_INDIA_ITEMS, ge=1, le=service.
     return service.get_india_news(limit=limit)
 
 
-@router.get("/jobs", response_model=list[NewsItemResponse])
-def get_jobs_news(limit: int = Query(service.MAX_JOBS_ITEMS, ge=1, le=service.MAX_JOBS_ITEMS)):
-    """India jobs and recruitment headlines — 4 items."""
-    return service.get_jobs_news(limit=limit)
+@router.get("/tn-jobs", response_model=list[NewsItemResponse])
+def get_tn_jobs_news(limit: int = Query(service.MAX_TN_JOBS_ITEMS, ge=1, le=service.MAX_TN_JOBS_ITEMS)):
+    """Tamil Nadu government job & recruitment notifications — 8 items."""
+    return service.get_tn_jobs_news(limit=limit)
+
+
+@router.get("/central-jobs", response_model=list[NewsItemResponse])
+def get_central_jobs_news(limit: int = Query(service.MAX_CENTRAL_JOBS_ITEMS, ge=1, le=service.MAX_CENTRAL_JOBS_ITEMS)):
+    """Central government job notifications — SSC, UPSC, Railway, IBPS — 8 items."""
+    return service.get_central_jobs_news(limit=limit)
 
 
 @router.get("/kanyakumari", response_model=list[NewsItemResponse])
