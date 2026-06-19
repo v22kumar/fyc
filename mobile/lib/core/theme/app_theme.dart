@@ -31,6 +31,28 @@ class AppTheme {
   static const double radiusBtn = 16.0;
   static const double paddingPage = 20.0;
 
+  // Premium Gradients
+  static const LinearGradient gradientPrimary = LinearGradient(
+    colors: [AppColors.primary, AppColors.primaryLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  static const LinearGradient primaryGradient = gradientPrimary;
+
+  static const LinearGradient gradientAccent = LinearGradient(
+    colors: [AppColors.accent, Color(0xFFFB7185)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  static const LinearGradient accentGradient = gradientAccent;
+
+  static const LinearGradient gradientSuccess = LinearGradient(
+    colors: [AppColors.success, Color(0xFF34D399)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  static const LinearGradient successGradient = gradientSuccess;
+
   static List<BoxShadow> get cardShadow => [
         // Soft, wide ambient shadow for depth
         BoxShadow(
@@ -46,67 +68,6 @@ class AppTheme {
         ),
       ];
 
-  static const LinearGradient gradientPrimary = LinearGradient(
-    colors: [AppColors.primary, AppColors.primaryLight],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient gradientAccent = LinearGradient(
-    colors: [AppColors.accent, Color(0xFFFB7185)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient gradientSuccess = LinearGradient(
-    colors: [AppColors.success, Color(0xFF34D399)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static TextTheme get textTheme => GoogleFonts.outfitTextTheme().copyWith(
-        displayLarge: GoogleFonts.outfit(
-          fontSize: 34,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.6,
-          color: AppColors.textPrimary,
-        ),
-        headlineMedium: GoogleFonts.outfit(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.4,
-          color: AppColors.textPrimary,
-        ),
-        titleLarge: GoogleFonts.outfit(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-        titleMedium: GoogleFonts.outfit(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-        bodyLarge: GoogleFonts.outfit(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          height: 1.5,
-          color: AppColors.textPrimary,
-        ),
-        bodyMedium: GoogleFonts.outfit(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w300,
-          height: 1.5,
-          color: AppColors.textSecondary,
-        ),
-        labelLarge: GoogleFonts.outfit(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.4,
-          color: AppColors.textPrimary,
-        ),
-      );
-
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -118,7 +79,48 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.background,
-        textTheme: textTheme,
+        textTheme: GoogleFonts.outfitTextTheme().copyWith(
+          displayLarge: GoogleFonts.outfit(
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.6,
+            color: AppColors.textPrimary,
+          ),
+          headlineMedium: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
+            color: AppColors.textPrimary,
+          ),
+          titleLarge: GoogleFonts.outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+          titleMedium: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+          bodyLarge: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            height: 1.5,
+            color: AppColors.textPrimary,
+          ),
+          bodyMedium: GoogleFonts.outfit(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w300,
+            height: 1.5,
+            color: AppColors.textSecondary,
+          ),
+          labelLarge: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+            color: AppColors.textPrimary,
+          ),
+        ),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
