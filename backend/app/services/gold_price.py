@@ -1,8 +1,10 @@
 """
-Gold price proxy — caches for 1 hour.
-Uses goldapi.io free tier (https://www.goldapi.io).
-If GOLD_API_KEY not set, returns stub.
-Falls back to cached value on error.
+Gold price proxy — caches for 12 hours.
+Uses goldapi.io (https://www.goldapi.io) — 100 req/month free plan.
+
+12-hour cache = max 2 fetches/day = ~60/month, safely within the 100/month limit.
+Falls back to cached value on error so stale data is shown rather than an error.
+Set GOLD_API_KEY in Fly.io secrets (flyctl secrets set GOLD_API_KEY=...).
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -13,7 +15,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_CACHE_TTL = timedelta(hours=1)
+_CACHE_TTL = timedelta(hours=12)  # 100 req/month plan → max ~60/month at 12h TTL
 _REQUEST_TIMEOUT = 10
 
 _GOLDAPI_URL = "https://www.goldapi.io/api/XAU/INR"
@@ -61,7 +63,8 @@ def _fetch_from_api() -> dict:
 def get_gold_price() -> dict:
     """Return current gold price per gram in INR (24K and 22K).
 
-    Caches the result for 1 hour. Returns a stub if GOLD_API_KEY is not set.
+    Caches the result for 12 hours (stays within 100 req/month plan).
+    Returns a stub if GOLD_API_KEY is not set.
     Falls back to the last cached value on transient API errors.
     """
     if not settings.GOLD_API_KEY:
