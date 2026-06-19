@@ -21,6 +21,9 @@ _REQUEST_TIMEOUT = 10
 # Keyed by (rounded_lat, rounded_lon) -> {"data": dict, "fetched_at": datetime}
 _cache: dict = {}
 
+# City name cache — coordinates rarely change city, no TTL needed
+_city_cache: dict = {}
+
 # WMO Weather Code → (description, icon_emoji)
 # Full table: https://open-meteo.com/en/docs#weathervariables
 _WMO_DESCRIPTIONS: dict[int, str] = {
@@ -51,6 +54,34 @@ _WMO_ICONS: dict[int, str] = {
 
 def _round_coords(lat: float, lon: float) -> tuple[float, float]:
     return (round(lat, 2), round(lon, 2))
+
+
+def _reverse_geocode(lat: float, lon: float) -> str:
+    """Return city/town name via Nominatim. Result cached per coordinate."""
+    key = _round_coords(lat, lon)
+    if key in _city_cache:
+        return _city_cache[key]
+    try:
+        resp = httpx.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lon, "format": "json", "zoom": 10},
+            headers={"User-Agent": "FYC-Connect/1.0 (noreply@fyc.app)"},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        addr = resp.json().get("address", {})
+        city = (
+            addr.get("city")
+            or addr.get("town")
+            or addr.get("village")
+            or addr.get("county")
+            or addr.get("state_district")
+            or ""
+        )
+    except Exception:
+        city = ""
+    _city_cache[key] = city
+    return city
 
 
 def _fetch_from_api(lat: float, lon: float) -> dict:
@@ -84,7 +115,7 @@ def _fetch_from_api(lat: float, lon: float) -> dict:
         "feels_like": current.get("apparent_temperature"),
         "description": _WMO_DESCRIPTIONS.get(code, "Unknown"),
         "icon": _WMO_ICONS.get(code, "01d"),
-        "city": "Nagercoil",  # set by the caller via lat/lon; no reverse-geocode needed
+        "city": _reverse_geocode(lat, lon),
         "humidity": current.get("relative_humidity_2m"),
         "wind_speed": round(wind_ms, 1) if wind_ms is not None else None,
     }
