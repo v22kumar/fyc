@@ -1,7 +1,10 @@
+import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+
+logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -27,6 +30,7 @@ from app.routers import audit as audit_router
 from app.routers import club_requests as club_requests_router
 from app.routers import utilities as utilities_router
 from app.routers import instagram as instagram_router
+from app.routers import broadcasts as broadcasts_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -100,7 +104,22 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _seed_database()
+
+    # Daily morning broadcast scheduler (6:00 AM IST = 00:30 UTC)
+    scheduler = None
+    if settings.MORNING_BROADCAST_ENABLED:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from app.services.whatsapp_broadcast import run_morning_broadcast
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
+                          id="morning_broadcast", replace_existing=True)
+        scheduler.start()
+        logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
+
     yield
+
+    if scheduler and scheduler.running:
+        scheduler.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -151,6 +170,7 @@ app.include_router(audit_router.router, prefix="/api/v1")
 app.include_router(club_requests_router.router, prefix="/api/v1")
 app.include_router(utilities_router.router, prefix="/api/v1")
 app.include_router(instagram_router.router, prefix="/api/v1")
+app.include_router(broadcasts_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

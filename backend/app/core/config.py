@@ -53,6 +53,20 @@ class Settings(BaseSettings):
     # TODO: move to Fly.io secret (flyctl secrets set GOLD_API_KEY=...) before public launch
     GOLD_API_KEY: str = "goldapi-8d7e18a2d211857e02ecbe99945ab204-io"
 
+    # ── Daily WhatsApp Morning Broadcast ────────────────────────────────────
+    # Set MORNING_BROADCAST_ENABLED=true in Fly.io env to activate (no redeploy needed)
+    MORNING_BROADCAST_ENABLED: bool = False
+
+    # Meta WhatsApp Cloud API — for posting to the FYC WhatsApp group
+    # 1. Create Meta Business App → WhatsApp → get phone number ID + permanent token
+    # 2. Add the Meta phone number to your WhatsApp group as admin
+    # 3. Get the group JID (ends in @g.us) from a webhook message event
+    META_WA_TOKEN: str = ""              # permanent page access token
+    META_WA_PHONE_NUMBER_ID: str = ""    # e.g. "123456789012345"
+    META_WA_GROUP_ID: str = ""           # e.g. "120363xxxxxxxxxx@g.us"
+
+    # Individual sends use the existing TWILIO_* vars above
+
 
     # SMTP Email OTP
     SMTP_HOST: str = "smtp.gmail.com"
