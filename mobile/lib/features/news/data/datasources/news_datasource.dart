@@ -8,6 +8,7 @@ abstract class NewsDataSource {
   Future<List<NewsItemModel>> fetchTop({int limit = 10});
   Future<List<NewsItemModel>> fetchIndia({int limit = 5});
   Future<List<NewsItemModel>> fetchJobs({int limit = 4});
+  Future<List<NewsItemModel>> fetchKanyakumari({int limit = 8});
 }
 
 class NewsDataSourceImpl implements NewsDataSource {
@@ -40,4 +41,8 @@ class NewsDataSourceImpl implements NewsDataSource {
   @override
   Future<List<NewsItemModel>> fetchJobs({int limit = 4}) =>
       _fetchFrom(ApiConstants.newsJobs, limit);
+
+  @override
+  Future<List<NewsItemModel>> fetchKanyakumari({int limit = 8}) =>
+      _fetchFrom(ApiConstants.newsKanyakumari, limit);
 }

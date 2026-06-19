@@ -227,17 +227,21 @@ const updates = [
           <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News</span>
         </div>
         <!-- Tab buttons -->
-        <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 w-fit">
+        <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 flex-wrap">
+          <button onclick="switchNewsTab('kanyakumari')" id="tab-kanyakumari"
+            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            கன்னியாகுமரி
+          </button>
           <button onclick="switchNewsTab('tamil')" id="tab-tamil"
-            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-[#0F5132] shadow-sm">
+            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-[#0F5132] shadow-sm">
             தமிழ்
           </button>
           <button onclick="switchNewsTab('india')" id="tab-india"
-            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
             India
           </button>
           <button onclick="switchNewsTab('jobs')" id="tab-jobs"
-            class="news-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
             Jobs
           </button>
         </div>
@@ -316,6 +320,7 @@ const updates = [
 
     // ── Tabbed News ──────────────────────────────────────────────────────
     const NEWS_URLS = {
+      kanyakumari: `${API_BASE}/api/v1/news/kanyakumari?limit=8`,
       tamil: `${API_BASE}/api/v1/news/top?limit=10`,
       india: `${API_BASE}/api/v1/news/india?limit=5`,
       jobs:  `${API_BASE}/api/v1/news/jobs?limit=4`,
@@ -372,7 +377,7 @@ const updates = [
 
     window.switchNewsTab = function(tab) {
       activeTab = tab;
-      ['tamil', 'india', 'jobs'].forEach((t) => {
+      ['kanyakumari', 'tamil', 'india', 'jobs'].forEach((t) => {
         const btn = document.getElementById('tab-' + t);
         if (t === tab) {
           btn.classList.add('bg-white', 'text-[#0F5132]', 'shadow-sm');
@@ -390,18 +395,15 @@ const updates = [
     // ── Weather ──────────────────────────────────────────────────────────
     (async () => {
       const card = document.getElementById('weather-card');
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/utilities/weather?lat=8.1833&lon=77.4119`);
-        if (!res.ok) throw new Error('http ' + res.status);
-        const w = await res.json();
-        if (w.temp == null) throw new Error('no data');
+      const renderWeather = (w, cityHint) => {
+        const city = w.city || cityHint || 'Nagercoil';
         card.innerHTML = `
           <div class="w-full">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-3xl font-extrabold text-[#0F5132]">${Math.round(w.temp)}°C</div>
                 <div class="text-sm font-semibold text-gray-700 mt-0.5">${esc(w.description.charAt(0).toUpperCase() + w.description.slice(1))}</div>
-                <div class="text-xs text-gray-400 mt-0.5">${esc(w.city || 'Nagercoil')} · Feels like ${Math.round(w.feels_like ?? w.temp)}°C</div>
+                <div class="text-xs text-gray-400 mt-0.5">${esc(city)} · Feels like ${Math.round(w.feels_like ?? w.temp)}°C</div>
               </div>
               <div class="flex flex-col items-end gap-1 text-xs text-gray-500">
                 <span>💧 ${w.humidity ?? '--'}% humidity</span>
@@ -409,6 +411,33 @@ const updates = [
               </div>
             </div>
           </div>`;
+      };
+      const fetchWeather = async (lat, lon, cityHint) => {
+        const res = await fetch(`${API_BASE}/api/v1/utilities/weather?lat=${lat}&lon=${lon}`);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const w = await res.json();
+        if (w.temp == null) throw new Error('no data');
+        renderWeather(w, cityHint);
+      };
+      try {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                await fetchWeather(pos.coords.latitude, pos.coords.longitude, '');
+              } catch (_) {
+                card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>';
+              }
+            },
+            async () => {
+              try { await fetchWeather(8.1833, 77.4119, 'Nagercoil'); }
+              catch (_) { card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>'; }
+            },
+            { timeout: 8000, maximumAge: 300000 }
+          );
+        } else {
+          await fetchWeather(8.1833, 77.4119, 'Nagercoil');
+        }
       } catch (e) {
         card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>';
       }

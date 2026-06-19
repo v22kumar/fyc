@@ -22,3 +22,9 @@ def get_india_news(limit: int = Query(service.MAX_INDIA_ITEMS, ge=1, le=service.
 def get_jobs_news(limit: int = Query(service.MAX_JOBS_ITEMS, ge=1, le=service.MAX_JOBS_ITEMS)):
     """India jobs and recruitment headlines — 4 items."""
     return service.get_jobs_news(limit=limit)
+
+
+@router.get("/kanyakumari", response_model=list[NewsItemResponse])
+def get_kanyakumari_news(limit: int = Query(service.MAX_KANYAKUMARI_ITEMS, ge=1, le=service.MAX_KANYAKUMARI_ITEMS)):
+    """Kanyakumari / Kanniyakumari local news in Tamil — 8 items."""
+    return service.get_kanyakumari_news(limit=limit)

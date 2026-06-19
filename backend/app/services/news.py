@@ -15,13 +15,15 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta"
-INDIA_NEWS_RSS_URL  = "https://news.google.com/rss?hl=en&gl=IN&ceid=IN:en"
-JOBS_NEWS_RSS_URL   = "https://news.google.com/rss/search?q=jobs+recruitment+india&hl=en&gl=IN&ceid=IN:en"
+GOOGLE_NEWS_RSS_URL      = "https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta"
+INDIA_NEWS_RSS_URL       = "https://news.google.com/rss?hl=en&gl=IN&ceid=IN:en"
+JOBS_NEWS_RSS_URL        = "https://news.google.com/rss/search?q=jobs+recruitment+india&hl=en&gl=IN&ceid=IN:en"
+KANYAKUMARI_NEWS_RSS_URL = "https://news.google.com/rss/search?q=kanyakumari+OR+kanniyakumari&hl=ta&gl=IN&ceid=IN:ta"
 
-MAX_ITEMS       = 10
-MAX_INDIA_ITEMS = 5
-MAX_JOBS_ITEMS  = 4
+MAX_ITEMS             = 10
+MAX_INDIA_ITEMS       = 5
+MAX_JOBS_ITEMS        = 4
+MAX_KANYAKUMARI_ITEMS = 8
 
 _REQUEST_TIMEOUT = 10
 _CACHE_TTL = timedelta(minutes=30)
@@ -30,9 +32,10 @@ _USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 
-_cache:       dict = {"items": [], "fetched_at": None}
-_india_cache: dict = {"items": [], "fetched_at": None}
-_jobs_cache:  dict = {"items": [], "fetched_at": None}
+_cache:            dict = {"items": [], "fetched_at": None}
+_india_cache:      dict = {"items": [], "fetched_at": None}
+_jobs_cache:       dict = {"items": [], "fetched_at": None}
+_kanyakumari_cache: dict = {"items": [], "fetched_at": None}
 
 
 def _split_title_source(raw_title: str) -> tuple[str, str]:
@@ -120,3 +123,8 @@ def get_india_news(limit: int = MAX_INDIA_ITEMS) -> list[dict]:
 def get_jobs_news(limit: int = MAX_JOBS_ITEMS) -> list[dict]:
     """Return up to `limit` India jobs/recruitment headlines from Google News."""
     return _get_cached(_jobs_cache, JOBS_NEWS_RSS_URL, min(limit, MAX_JOBS_ITEMS))
+
+
+def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]:
+    """Return up to `limit` Kanyakumari/Kanniyakumari local headlines (Tamil)."""
+    return _get_cached(_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL, min(limit, MAX_KANYAKUMARI_ITEMS))

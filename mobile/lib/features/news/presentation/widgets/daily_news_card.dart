@@ -6,7 +6,7 @@ import '../../../../service_locator.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/models/news_item_model.dart';
 
-/// News card with three tabs: Tamil (10), India (5), Jobs (4).
+/// News card with four tabs: Kanyakumari local (8), Tamil (10), India (5), Jobs (4).
 /// Sourced from Google News RSS via the backend proxy.
 /// Fails silently if offline — never disrupts the home screen.
 class DailyNewsCard extends StatefulWidget {
@@ -20,6 +20,7 @@ class _DailyNewsCardState extends State<DailyNewsCard>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  late Future<List<NewsItemModel>> _kanyakumariFuture;
   late Future<List<NewsItemModel>> _tamilFuture;
   late Future<List<NewsItemModel>> _indiaFuture;
   late Future<List<NewsItemModel>> _jobsFuture;
@@ -27,8 +28,9 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     final ds = sl<NewsDataSource>();
+    _kanyakumariFuture = ds.fetchKanyakumari(limit: 8);
     _tamilFuture = ds.fetchTop(limit: 10);
     _indiaFuture = ds.fetchIndia(limit: 5);
     _jobsFuture = ds.fetchJobs(limit: 4);
@@ -84,9 +86,12 @@ class _DailyNewsCardState extends State<DailyNewsCard>
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
             indicatorWeight: 2,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
             tabs: const [
+              Tab(text: 'கன்னியாகுமரி'),
               Tab(text: 'தமிழ்'),
               Tab(text: 'India'),
               Tab(text: 'Jobs'),
@@ -94,10 +99,11 @@ class _DailyNewsCardState extends State<DailyNewsCard>
           ),
           // Content
           SizedBox(
-            height: 340,
+            height: 380,
             child: TabBarView(
               controller: _tabController,
               children: [
+                _NewsFeed(future: _kanyakumariFuture),
                 _NewsFeed(future: _tamilFuture),
                 _NewsFeed(future: _indiaFuture),
                 _NewsFeed(future: _jobsFuture),
