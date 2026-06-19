@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/shimmer_box.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/models/news_item_model.dart';
@@ -192,18 +193,23 @@ class _NewsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
       ),
-      child: const Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2.2, color: AppColors.primary),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < 3; i++) ...[
+            ShimmerBox(height: 13, width: i.isEven ? 240 : 180),
+            const SizedBox(height: 8),
+            const ShimmerBox(height: 10, width: 100),
+            if (i != 2) const SizedBox(height: 16),
+          ],
+        ],
       ),
     );
   }

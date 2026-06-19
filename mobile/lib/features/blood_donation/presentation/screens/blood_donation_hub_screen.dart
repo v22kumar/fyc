@@ -8,6 +8,7 @@ import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/widgets/pressable.dart';
 import '../../../../service_locator.dart';
 
 class BloodDonationHubScreen extends StatefulWidget {
@@ -275,8 +276,14 @@ class _DonorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -324,18 +331,20 @@ class _DonorCard extends StatelessWidget {
             Builder(
               builder: (context) {
                 final lang = sl<LocalStorage>().getLang();
-                return ElevatedButton(
-                  onPressed: onContact,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    lang == 'ta' ? 'தொடர்பு' : 'Contact',
-                    style: const TextStyle(fontSize: 12),
+                return Pressable(
+                  child: ElevatedButton(
+                    onPressed: onContact,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      lang == 'ta' ? 'தொடர்பு' : 'Contact',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
                 );
               },

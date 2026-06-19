@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/shimmer_box.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/thirukkural_datasource.dart';
 import '../../data/models/thirukkural_model.dart';
@@ -197,21 +198,41 @@ class _ThirukkuralSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 180,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
       ),
-      child: const Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.2,
-            color: AppColors.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ShimmerBox(width: 34, height: 34, borderRadius: BorderRadius.circular(17)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShimmerBox(height: 13, width: 140),
+                    SizedBox(height: 6),
+                    ShimmerBox(height: 10, width: 100),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
+          const SizedBox(height: 18),
+          const ShimmerBox(height: 16),
+          const SizedBox(height: 8),
+          const ShimmerBox(height: 16, width: 220),
+          const SizedBox(height: 14),
+          const ShimmerBox(height: 12),
+          const SizedBox(height: 6),
+          const ShimmerBox(height: 12, width: 180),
+        ],
       ),
     );
   }

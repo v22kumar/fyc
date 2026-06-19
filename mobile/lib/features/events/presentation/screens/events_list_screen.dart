@@ -7,6 +7,7 @@ import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/widgets/pressable.dart';
 import '../../../../service_locator.dart';
 
 class EventsListScreen extends StatefulWidget {
@@ -157,8 +158,14 @@ class _EventCard extends StatelessWidget {
     final fmt = DateFormat('d MMM yyyy · h:mm a');
     final isPast = !event.isUpcoming && !event.isOngoing;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -215,10 +222,12 @@ class _EventCard extends StatelessWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onCheckin,
-                  icon: const Icon(Icons.qr_code_scanner, size: 16),
-                  label: Text(lang == 'ta' ? 'செக்-இன் செய்க' : 'Check In'),
+                child: Pressable(
+                  child: ElevatedButton.icon(
+                    onPressed: onCheckin,
+                    icon: const Icon(Icons.qr_code_scanner, size: 16),
+                    label: Text(lang == 'ta' ? 'செக்-இன் செய்க' : 'Check In'),
+                  ),
                 ),
               ),
             ] else if (isPast) ...[

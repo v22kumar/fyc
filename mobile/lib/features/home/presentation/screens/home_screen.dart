@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/widgets/pressable.dart';
 import '../../../../service_locator.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -355,23 +356,25 @@ class _DockItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? AppColors.primary : AppColors.textSecondary;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 22, color: color),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
-              ),
-            ],
+    return Pressable(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 22, color: color),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -511,21 +514,23 @@ class _BentoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return Pressable(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          splashColor: item.color.withOpacity(0.08),
-          onTap: () {
-            Navigator.pop(context);
-            context.push(item.route);
-          },
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+            splashColor: item.color.withOpacity(0.08),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(item.route);
+            },
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
@@ -554,6 +559,7 @@ class _BentoTile extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

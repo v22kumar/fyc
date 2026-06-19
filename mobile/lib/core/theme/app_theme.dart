@@ -32,12 +32,80 @@ class AppTheme {
   static const double paddingPage = 20.0;
 
   static List<BoxShadow> get cardShadow => [
+        // Soft, wide ambient shadow for depth
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.035),
+          color: const Color(0xFF0F172A).withOpacity(0.09),
           blurRadius: 24,
-          offset: const Offset(0, 8),
+          offset: const Offset(0, 10),
+        ),
+        // Tight contact shadow to keep the edge crisp
+        BoxShadow(
+          color: const Color(0xFF0F172A).withOpacity(0.04),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
         ),
       ];
+
+  static const LinearGradient gradientPrimary = LinearGradient(
+    colors: [AppColors.primary, AppColors.primaryLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient gradientAccent = LinearGradient(
+    colors: [AppColors.accent, Color(0xFFFB7185)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient gradientSuccess = LinearGradient(
+    colors: [AppColors.success, Color(0xFF34D399)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static TextTheme get textTheme => GoogleFonts.outfitTextTheme().copyWith(
+        displayLarge: GoogleFonts.outfit(
+          fontSize: 34,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.6,
+          color: AppColors.textPrimary,
+        ),
+        headlineMedium: GoogleFonts.outfit(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.4,
+          color: AppColors.textPrimary,
+        ),
+        titleLarge: GoogleFonts.outfit(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+        titleMedium: GoogleFonts.outfit(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+        bodyLarge: GoogleFonts.outfit(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.textPrimary,
+        ),
+        bodyMedium: GoogleFonts.outfit(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w300,
+          height: 1.5,
+          color: AppColors.textSecondary,
+        ),
+        labelLarge: GoogleFonts.outfit(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+          color: AppColors.textPrimary,
+        ),
+      );
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
@@ -50,7 +118,7 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.background,
-        textTheme: GoogleFonts.outfitTextTheme(),
+        textTheme: textTheme,
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
