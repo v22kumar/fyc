@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     INSTAGRAM_ACCOUNT_ID: str = ""    # numeric IG business account ID
     INSTAGRAM_ACCESS_TOKEN: str = ""  # long-lived page access token
 
-    # OpenWeatherMap (free tier — https://openweathermap.org/api)
+    # Weather via Open-Meteo (free, no key needed); this var kept for compat only
     OPENWEATHER_API_KEY: str = ""
 
     # Metal / Gold price API (https://www.goldapi.io — free tier)
