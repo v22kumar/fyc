@@ -103,17 +103,21 @@ def _seed_database():
         ))
         db.commit()
 
-        # Add new columns to existing DB if not present (idempotent)
+        # Add new columns to existing DB if not present (each in its own try so
+        # a race between workers on the first boot doesn't abort the rest)
         for migration in [
             ("user_profiles", "date_of_birth", "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE"),
             ("users", "fcm_token", "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)"),
         ]:
             table, col, sql = migration
-            cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
-            if col not in [c[1] for c in cols]:
-                db.execute(text(sql))
-                db.commit()
-                print(f"[migration] Added column {table}.{col}")
+            try:
+                cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
+                if col not in [c[1] for c in cols]:
+                    db.execute(text(sql))
+                    db.commit()
+                    print(f"[migration] Added column {table}.{col}")
+            except Exception:
+                db.rollback()  # column already added by the other worker — ignore
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
