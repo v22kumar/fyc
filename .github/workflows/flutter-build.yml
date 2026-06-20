@@ -54,11 +54,23 @@ jobs:
       # ── 5. Build ──────────────────────────────────────────────────────────────
       - name: Build release APK  (direct install / web download)
         working-directory: mobile
-        run: flutter build apk --release
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
+            --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
 
       - name: Build release AAB  (Google Play Store)
         working-directory: mobile
-        run: flutter build appbundle --release
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
+            --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
 
       # ── 6. Rename outputs with stable filenames ───────────────────────────────
       - name: Rename outputs
