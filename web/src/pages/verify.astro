@@ -11,6 +11,7 @@ const lang = Astro.url.searchParams.get('lang') ?? 'ta';
   title="உறுப்பினர் சரிபார்ப்பு - Membership Verification"
   description="FYC digital membership card verification. Verify any FYC membership number instantly."
 >
+  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
   <!-- Page Header -->
   <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-16 px-4">
     <div class="max-w-3xl mx-auto text-center">

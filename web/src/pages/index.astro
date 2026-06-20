@@ -1,648 +1,850 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-// Backend base URL — same convention as the other pages. Baked in at build
-// time (the PUBLIC_ prefix also exposes it to the client script below).
 import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
-const stats = [
-  { value: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', icon: '🌱', color: 'text-emerald-600 bg-emerald-50' },
-  { value: '1,200+', ta: 'இரத்த தானம் பதிவாளர்கள்', en: 'Blood Donors', icon: '🩸', color: 'text-rose-600 bg-rose-50' },
-  { value: '80+', ta: 'நடத்திய நிகழ்வுகள்', en: 'Events Hosted', icon: '🎉', color: 'text-amber-600 bg-amber-50' },
-  { value: '5,000+', ta: 'பயன் பெற்றோர்', en: 'Lives Impacted', icon: '❤️', color: 'text-blue-600 bg-blue-50' },
-];
-
 const modules = [
-  {
-    icon: '🩸',
-    href: '/blood-donors',
-    tag_ta: 'அவசியம்',
-    tag_en: 'Urgent',
+  { icon: '🩸', href: '/blood-donors', tag_ta: 'அவசியம்', tag_en: 'Urgent', tag_ml: 'അടിയന്തരം', tag_hi: 'जरूरी',
     color: 'from-red-50 to-rose-50 border-red-200/60',
     ta: { title: 'இரத்த தானம்', desc: 'அவசரகால தேவைகளுக்காக இரத்த கொடையாளர்களை உடனே தொடர்பு கொள்ளுங்கள்.' },
     en: { title: 'Blood Donation', desc: 'Find verified blood donors in Nagercoil. Connect securely in emergencies.' },
+    ml: { title: 'രക്തദാനം', desc: 'നഗർകോവിലിൽ സ്ഥിരീകരിച്ച രക്തദാതാക്കളെ കണ്ടെത്തൂ.' },
+    hi: { title: 'रक्तदान', desc: 'नागरकोइल में सत्यापित रक्तदाता खोजें। आपात स्थिति में जुड़ें।' },
   },
-  {
-    icon: '📅',
-    href: '/events',
-    tag_ta: 'நேரடி',
-    tag_en: 'Live',
+  { icon: '📅', href: '/events', tag_ta: 'நேரடி', tag_en: 'Live', tag_ml: 'തൽസമയം', tag_hi: 'लाइव',
     color: 'from-purple-50 to-violet-50 border-purple-200/60',
     ta: { title: 'நிகழ்வுகள்', desc: 'வரும் நிகழ்வுகள், விழாக்கள் மற்றும் சமூக கூட்டங்களில் கலந்துகொள்ளுங்கள்.' },
     en: { title: 'Events', desc: 'Upcoming community events, festivals, and meetings. Register and attend.' },
+    ml: { title: 'ഇവന്റുകൾ', desc: 'ആഗതമായ കമ്മ്യൂണിറ്റി ഇവന്റുകൾ, ഉത്സവങ്ങൾ.' },
+    hi: { title: 'कार्यक्रम', desc: 'आगामी सामुदायिक आयोजन, त्योहार और बैठकें।' },
   },
-  {
-    icon: '⚽',
-    href: '/sports',
-    tag_ta: 'புதியது',
-    tag_en: 'New',
+  { icon: '⚽', href: '/sports', tag_ta: 'புதியது', tag_en: 'New', tag_ml: 'പുതിയത്', tag_hi: 'नया',
     color: 'from-amber-50 to-orange-50 border-amber-200/60',
     ta: { title: 'விளையாட்டு அரங்கம்', desc: 'உள்ளூர் போட்டிகள், அணிகள், அட்டவணைகள் மற்றும் விளையாட்டு சவால்கள்.' },
     en: { title: 'Sports Arena', desc: 'Track local tournaments, teams, fixtures, and community sports challenges.' },
+    ml: { title: 'കായിക മേഖല', desc: 'പ്രാദേശിക ടൂർണമെന്റുകൾ, ടീമുകൾ, ഷെഡ്യൂളുകൾ.' },
+    hi: { title: 'खेल मैदान', desc: 'स्थानीय टूर्नामेंट, टीम, कार्यक्रम और खेल चुनौतियां।' },
   },
-  {
-    icon: '🚧',
-    href: '/submit-issue',
-    tag_ta: 'தீர்வு',
-    tag_en: 'Active',
+  { icon: '🚧', href: '/submit-issue', tag_ta: 'தீர்வு', tag_en: 'Active', tag_ml: 'സജീവം', tag_hi: 'सक्रिय',
     color: 'from-blue-50 to-indigo-50 border-blue-200/60',
     ta: { title: 'பிரச்னை தீர்வு', desc: 'குடிநீர், தெருவிளக்கு மற்றும் சாலைப் பிரச்னைகளைத் தெரிவித்து தீர்வு காணுங்கள்.' },
     en: { title: 'Report Issue', desc: 'Report civic complaints like water supply or street lights and track resolution.' },
+    ml: { title: 'പ്രശ്നം റിപ്പോർട്ട്', desc: 'ജലവിതരണം, തെരുവ് വിളക്ക് തുടങ്ങിയ പ്രശ്നങ്ങൾ റിപ്പോർട്ട് ചെയ്യൂ.' },
+    hi: { title: 'समस्या रिपोर्ट', desc: 'पानी की आपूर्ति, सड़क की रोशनी जैसी नागरिक शिकायतें दर्ज करें।' },
   },
-  {
-    icon: '🌱',
-    href: '/green',
-    tag_ta: 'சுற்றுச்சூழல்',
-    tag_en: 'Eco',
+  { icon: '🌱', href: '/green', tag_ta: 'சுற்றுச்சூழல்', tag_en: 'Eco', tag_ml: 'പരിസ്ഥിതി', tag_hi: 'पर्यावरण',
     color: 'from-green-50 to-emerald-50 border-green-200/60',
     ta: { title: 'பசுமை FYC', desc: 'மர நடும் பிரச்சாரங்கள், சுற்றுச்சூழல் செயல்பாடுகள் மற்றும் இயற்கை சேவை.' },
     en: { title: 'Green FYC', desc: 'Tree planting drives, eco initiatives, and environmental service activities.' },
+    ml: { title: 'ഗ്രീൻ FYC', desc: 'മരം നടൽ, പരിസ്ഥിതി സംരക്ഷണ പ്രവർത്തനങ്ങൾ.' },
+    hi: { title: 'हरित FYC', desc: 'वृक्षारोपण, पर्यावरण पहल और प्रकृति सेवा।' },
   },
-  {
-    icon: '🛍️',
-    href: '/directory',
-    tag_ta: 'புதியது',
-    tag_en: 'New',
+  { icon: '🛍️', href: '/directory', tag_ta: 'புதியது', tag_en: 'New', tag_ml: 'പുതിയത്', tag_hi: 'नया',
     color: 'from-emerald-50 to-teal-50 border-emerald-200/60',
     ta: { title: 'சமூக கடை', desc: 'தச்சர்கள், மின்சாரிகள், ஆசிரியர்கள் — உங்களைச் சுற்றியுள்ள திறமைகளைக் கண்டறியவும்.' },
     en: { title: 'Skills Directory', desc: 'Find local carpenters, electricians, tutors, and verified community profiles.' },
+    ml: { title: 'കഴിവ് ഡയറക്ടറി', desc: 'ആശാരിമാർ, ഇലക്ട്രീഷ്യൻ, അധ്യാപകർ — നിങ്ങളുടെ ചുറ്റുപാടിലുള്ള കഴിവുകൾ.' },
+    hi: { title: 'कौशल निर्देशिका', desc: 'स्थानीय बढ़ई, बिजली मिस्त्री, शिक्षक खोजें।' },
   },
-  {
-    icon: '🪪',
-    href: '/verify',
-    tag_ta: 'அதிகாரப்பூர்வம்',
-    tag_en: 'Official',
+  { icon: '🪪', href: '/verify', tag_ta: 'அதிகாரப்பூர்வம்', tag_en: 'Official', tag_ml: 'ഔദ്യോഗികം', tag_hi: 'आधिकारिक',
     color: 'from-slate-50 to-gray-50 border-slate-200/60',
     ta: { title: 'அட்டை சரிபார்', desc: 'FYC உறுப்பினர் அட்டையை QR மூலம் சரிபார்க்கவும்.' },
     en: { title: 'Verify Card', desc: 'Scan and verify FYC membership cards using QR code.' },
+    ml: { title: 'കാർഡ് സ്ഥിരീകരണം', desc: 'QR ഉപയോഗിച്ച് FYC അംഗ കാർഡ് സ്ഥിരീകരിക്കൂ.' },
+    hi: { title: 'कार्ड सत्यापन', desc: 'QR कोड से FYC सदस्यता कार्ड सत्यापित करें।' },
   },
-  {
-    icon: '💼',
-    href: '/opportunities',
-    tag_ta: 'வேலை',
-    tag_en: 'Jobs',
+  { icon: '💼', href: '/opportunities', tag_ta: 'வேலை', tag_en: 'Jobs', tag_ml: 'ജോലി', tag_hi: 'नौकरी',
     color: 'from-cyan-50 to-sky-50 border-cyan-200/60',
     ta: { title: 'வாய்ப்புகள்', desc: 'TN அரசு வேலைகள், மத்திய அரசு வேலைகள் மற்றும் சமூக வாய்ப்புகள்.' },
     en: { title: 'Opportunities', desc: 'TN & Central govt jobs, scholarships, and community opportunities.' },
+    ml: { title: 'അവസരങ്ങൾ', desc: 'TN & കേന്ദ്ര സർക്കാർ ജോലികൾ, സ്കോളർഷിപ്പ്.' },
+    hi: { title: 'अवसर', desc: 'TN और केंद्र सरकार की नौकरियां, छात्रवृत्ति।' },
   },
 ];
 
 const updates = [
-  {
-    avatar: '👨‍💼',
-    name: 'R. Prathap',
-    role: 'Club President',
-    time: '2 hours ago',
+  { avatar: '👨‍💼', name: 'R. Prathap', role: 'Club President', time: '2 hours ago',
     ta: 'நாகர்கோவில் கிரிக்கெட் கோப்பை 2026 போட்டிக்கான பதிவுகள் ஆரம்பம்! உங்கள் அணியை இப்போதே பதிவு செய்யுங்கள்.',
     en: 'Nagercoil Cricket Cup 2026 registrations are now open! Register your team today.',
-    tag: 'Sports Hub',
-  },
-  {
-    avatar: '👩‍⚕️',
-    name: 'Kavitha S.',
-    role: 'Volunteer Coordinator',
-    time: '5 hours ago',
+    ml: 'നഗർകോവിൽ ക്രിക്കറ്റ് കപ്പ് 2026 രജിസ്ട്രേഷൻ ആരംഭിച്ചു!',
+    hi: 'नागरकोइल क्रिकेट कप 2026 पंजीकरण शुरू हो गया है!',
+    tag: 'Sports Hub' },
+  { avatar: '👩‍⚕️', name: 'Kavitha S.', role: 'Volunteer Coordinator', time: '5 hours ago',
     ta: 'ஆசாத் நகர் பகுதியில் நட்ட மரக்கன்றுகளுக்கு நீர் ஊற்றும் பணி வெற்றிகரமாக முடிந்தது. தன்னார்வலர்களுக்கு நன்றி!',
     en: 'Watering drive for planted saplings in Azad Nagar completed successfully. Thanks to all volunteers!',
-    tag: 'Green FYC',
-  },
-  {
-    avatar: '🚧',
-    name: 'Triage System',
-    role: 'System Bot',
-    time: '1 day ago',
+    ml: 'അസദ് നഗറിലെ തൈകൾക്ക് വെള്ളം ഒഴിക്കൽ വിജയകരമായി പൂർത്തിയായി.',
+    hi: 'अज़ाद नगर में लगाए गए पौधों की सिंचाई सफलतापूर्वक पूरी हुई।',
+    tag: 'Green FYC' },
+  { avatar: '🚧', name: 'Triage System', role: 'System Bot', time: '1 day ago',
     ta: 'வார்டு 4-ல் பதிவான குடிநீர் குழாய் உடைப்பு பிரச்னை சரிசெய்யப்பட்டு "முடிந்தது" என மாற்றப்பட்டது.',
     en: 'Water pipeline leak reported in Ward 4 has been repaired and marked as RESOLVED.',
-    tag: 'Civic Triage',
-  },
+    ml: 'വാർഡ് 4-ൽ റിപ്പോർട്ട് ചെയ്ത ജലക്കുഴൽ ചോർച്ച നന്നാക്കി പരിഹരിച്ചു.',
+    hi: 'वार्ड 4 में रिपोर्ट की गई जल पाइप लीक की मरम्मत की गई।',
+    tag: 'Civic Triage' },
 ];
 ---
 
-<BaseLayout
-  title="FYC Connect — Unite &bull; Play &bull; Thrive"
-  description="Connect with Nagercoil's premium community service, sports tournaments, citizen issues triage, and verified blood donor network."
->
-  <!-- Modern Split Hero Section -->
-  <section class="relative bg-gradient-to-b from-[#f8f9fa] via-white to-[#f8f9fa] overflow-hidden py-16 lg:py-24 border-b border-gray-100">
-    <!-- Background grid decoration -->
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none"></div>
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#198754]/5 rounded-full blur-3xl pointer-events-none"></div>
+<BaseLayout title="FYC Connect — Unite · Play · Thrive">
 
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        <!-- Hero Text -->
-        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 bg-[#0F5132]/10 border border-[#0F5132]/20 rounded-full px-4 py-1.5 text-xs font-semibold text-[#0F5132]">
-            <span class="animate-pulse">🟢</span>
-            <span data-ta="பிரண்ட்ஸ் இளைஞர் மன்றத்தின் டிஜிட்டல் தளம்" data-en="Friends Youth Club Digital Hub">
-              Friends Youth Club Digital Hub
-            </span>
+  <style>
+    /* ── Auth-split: both views hidden until inline script decides ── */
+    #guest-view  { display: none; }
+    #auth-view   { display: none; }
+    html.is-guest #guest-view { display: block; }
+    html.is-auth  #auth-view  { display: block; }
+
+    /* ── Aurora blobs ── */
+    @keyframes aurora1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(40px,-30px) scale(1.08); }
+      66%      { transform: translate(-25px,20px) scale(0.95); }
+    }
+    @keyframes aurora2 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(-35px,25px) scale(1.05); }
+      66%      { transform: translate(20px,-15px) scale(1.1); }
+    }
+    @keyframes aurora3 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50%      { transform: translate(20px,30px) scale(1.06); }
+    }
+    .aurora-1 { animation: aurora1 12s ease-in-out infinite; }
+    .aurora-2 { animation: aurora2 16s ease-in-out infinite; }
+    .aurora-3 { animation: aurora3 10s ease-in-out infinite; }
+
+    /* ── Scroll-triggered reveals ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Scroll bounce indicator ── */
+    @keyframes scrollBounce {
+      0%,100% { transform: translateY(0); opacity:1; }
+      50%      { transform: translateY(6px); opacity:0.4; }
+    }
+    .scroll-dot { animation: scrollBounce 1.6s ease-in-out infinite; }
+
+    /* ── Locked preview blur ── */
+    .locked-grid { filter: blur(5px); pointer-events: none; user-select: none; }
+
+    /* ── Counter ── */
+    .stat-num { font-variant-numeric: tabular-nums; }
+
+    /* ── Module card hover ── */
+    .module-card:hover .module-icon { transform: scale(1.12) rotate(-3deg); }
+    .module-card:hover .module-arrow { transform: translateX(4px); }
+
+    /* ── Bento grid ── */
+    @media (min-width: 768px) {
+      .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: minmax(160px, auto);
+        gap: 1rem;
+      }
+      .bento-grid > *:nth-child(1) { grid-column: span 2; }
+      .bento-grid > *:nth-child(6) { grid-column: span 2; }
+    }
+  </style>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       GUEST VIEW
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="guest-view">
+
+    <!-- ── Hero: Aurora Dark ── -->
+    <section class="relative min-h-[100svh] bg-[#030c06] overflow-hidden flex flex-col items-center justify-center">
+
+      <!-- Aurora blobs -->
+      <div class="aurora-1 absolute top-[10%] left-[15%] w-[500px] h-[500px] rounded-full bg-[#0F5132] opacity-30 blur-[100px]"></div>
+      <div class="aurora-2 absolute bottom-[15%] right-[10%] w-[450px] h-[450px] rounded-full bg-[#064e3b] opacity-35 blur-[110px]"></div>
+      <div class="aurora-3 absolute top-[40%] right-[30%] w-[300px] h-[300px] rounded-full bg-[#D4AF37] opacity-10 blur-[80px]"></div>
+
+      <!-- Grid overlay -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff06_1px,transparent_1px),linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] bg-[size:44px_44px] pointer-events-none"></div>
+
+      <!-- Vignette -->
+      <div class="absolute inset-0 bg-radial-[ellipse_at_center] from-transparent to-[#030c06]/80 pointer-events-none"></div>
+
+      <!-- Content -->
+      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center py-24 space-y-8">
+
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2.5 bg-[#0F5132]/25 border border-[#198754]/35 backdrop-blur-md rounded-full px-5 py-2 text-xs font-bold text-green-300 uppercase tracking-widest reveal">
+          <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
+          <span
+            data-ta="நண்பர்கள் இளைஞர் மன்றம் · 2000 முதல்"
+            data-en="Friends Youth Club · Since 2000"
+            data-ml="ഫ്രണ്ട്സ് യൂത്ത് ക്ലബ് · 2000 മുതൽ"
+            data-hi="फ्रेंड्स यूथ क्लब · 2000 से">Friends Youth Club · Since 2000</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-black text-white leading-[1.05] tracking-tight reveal">
+          <span
+            data-ta="நாகர்கோவிலின்"
+            data-en="Let's Connect"
+            data-ml="ചേരാം"
+            data-hi="जुड़ें">Let's Connect</span><br />
+          <span class="inline-block bg-gradient-to-r from-[#4ade80] via-[#86efac] to-[#fbbf24] bg-clip-text text-transparent">
+            <span
+              data-ta="துடிப்பான சமூகத்தில்"
+              data-en="to Nagercoil's"
+              data-ml="നഗർകോവിലിന്റെ"
+              data-hi="नागरकोइल के">to Nagercoil's</span>
+          </span><br />
+          <span
+            data-ta="இணைவோம்!"
+            data-en="Vibrant Community"
+            data-ml="ജനകീയ സമൂഹം"
+            data-hi="जीवंत समुदाय">Vibrant Community</span>
+        </h1>
+
+        <!-- Subtext -->
+        <p class="text-base sm:text-lg text-green-100/65 max-w-2xl mx-auto leading-relaxed reveal"
+          data-ta="விளையாட்டு, இரத்த தானம், சமூக சேவை — 25 ஆண்டுகளாக ஒன்றிணைந்த நாகர்கோவில் சமூகம்."
+          data-en="Sports, blood donation, civic service — 25 years of united community in Kanyakumari."
+          data-ml="കായികം, രക്തദാനം, സേവനം — 25 വർഷത്തെ ഒന്നിച്ചുള്ള ജീവിതം."
+          data-hi="खेल, रक्तदान, नागरिक सेवा — नागरकोइल में 25 साल की एकजुट यात्रा।">
+          Sports, blood donation, civic service — 25 years of united community in Kanyakumari.
+        </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center pt-2 reveal">
+          <a href="/login" class="group inline-flex items-center justify-center gap-2.5 bg-[#D4AF37] text-gray-900 font-bold px-8 py-4 rounded-2xl text-sm hover:bg-amber-400 transition-all shadow-[0_0_40px_rgba(212,175,55,0.35)] hover:shadow-[0_0_60px_rgba(212,175,55,0.55)] active:scale-95">
+            <span
+              data-ta="உள்நுழை / சேரு"
+              data-en="Sign In / Join"
+              data-ml="സൈൻ ഇൻ / ചേരുക"
+              data-hi="साइन इन / जुड़ें">Sign In / Join</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </a>
+          <a href="#our-story" class="inline-flex items-center justify-center gap-2 bg-white/8 backdrop-blur-sm border border-white/15 text-white font-semibold px-8 py-4 rounded-2xl text-sm hover:bg-white/15 transition-all active:scale-95">
+            <span
+              data-ta="எங்களை பற்றி"
+              data-en="Learn More"
+              data-ml="കൂടുതൽ അറിയുക"
+              data-hi="और जानें">Learn More</span>
+            <span class="scroll-dot inline-block">↓</span>
+          </a>
+        </div>
+
+        <!-- Floating stat pills -->
+        <div class="flex flex-wrap justify-center gap-3 pt-4 reveal">
+          {[
+            { n:'1,500+', ta:'மரங்கள்', en:'Trees', ml:'മരങ്ങൾ', hi:'पेड़', c:'text-green-400' },
+            { n:'1,200+', ta:'இரத்த கொடையாளர்', en:'Blood Donors', ml:'രക്തദാതാ', hi:'रक्तदाता', c:'text-rose-400' },
+            { n:'80+', ta:'நிகழ்வுகள்', en:'Events', ml:'ഇവന്റ്', hi:'कार्यक्रम', c:'text-amber-400' },
+            { n:'5,000+', ta:'பயன் பெற்றோர்', en:'Lives Impacted', ml:'ഗുണഭോക്തൃ', hi:'लाभान्वित', c:'text-blue-400' },
+          ].map(s => (
+            <div class="flex items-center gap-2 bg-white/8 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2">
+              <span class={`text-sm font-black ${s.c}`}>{s.n}</span>
+              <span class="text-xs text-white/60" data-ta={s.ta} data-en={s.en} data-ml={s.ml} data-hi={s.hi}>{s.en}</span>
+            </div>
+          ))}
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="pt-6 flex justify-center opacity-40">
+          <div class="flex flex-col items-center gap-2 text-white/50 text-[10px] uppercase tracking-widest">
+            <div class="w-5 h-9 border-2 border-white/20 rounded-full flex justify-center pt-2">
+              <div class="scroll-dot w-1 h-2 bg-white/60 rounded-full"></div>
+            </div>
+            <span>scroll</span>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.15] tracking-tight">
-            <span data-ta="சமூகத்தை இணைப்போம்" data-en="Connecting Nagercoil's">Connecting Nagercoil's</span>
-            <br />
-            <span class="bg-gradient-to-r from-[#0F5132] to-[#198754] bg-clip-text text-transparent" data-ta="ஒன்றாக உயர்வோம்" data-en="Vibrant Community">Vibrant Community</span>
-          </h1>
-
-          <p class="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed" data-ta="விளையாட்டு போட்டிகள், சமூக சேவைகள், அவசர இரத்த தானம் மற்றும் பொதுப் பிரச்னைகளுக்கான தீர்வு தளம்." data-en="A modern platform designed to unite sports events, public directory services, emergency blood donations, and civic issue triage under one digital roof.">
-            விளையாட்டு போட்டிகள், சமூக சேவைகள், அவசர இரத்த தானம் மற்றும் பொதுப் பிரச்னைகளுக்கான தீர்வு தளம்.
-          </p>
-
-          <div id="hero-guest-cta" class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
-            <a
-              href="/login"
-              class="inline-flex items-center justify-center gap-2 bg-[#0F5132] text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-[#136b41] active:scale-95 transition-all shadow-md"
-            >
-              <span>👤</span>
-              <span data-ta="உள்நுழை / பதிவு செய்க" data-en="Login / Register">உள்நுழை / பதிவு செய்க</span>
-            </a>
-            <a
-              href="/blood-donors"
-              class="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold px-6 py-3.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
-            >
-              <span>🩸</span>
-              <span data-ta="இரத்த தானம் தேடு" data-en="Find Blood Donors">Find Blood Donors</span>
-            </a>
+    <!-- ── Animated Impact Stats ── -->
+    <section class="py-20 bg-white px-4 border-b border-gray-100">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-12 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-[#0F5132] mb-2">Community Impact</p>
+          <h2 class="text-3xl sm:text-4xl font-black text-gray-900"
+            data-ta="25 ஆண்டுகளின் சாதனைகள்"
+            data-en="25 Years of Impact"
+            data-ml="25 വർഷത്തെ നേട്ടങ്ങൾ"
+            data-hi="25 वर्षों की उपलब्धि">25 Years of Impact</h2>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div class="text-center reveal">
+            <div class="stat-num text-5xl lg:text-6xl font-black text-[#0F5132] counter" data-target="1500" data-suffix="+">0</div>
+            <div class="w-10 h-1 bg-[#0F5132]/20 rounded-full mx-auto my-2"></div>
+            <div class="text-sm text-gray-500 font-medium"
+              data-ta="நட்ட மரங்கள்" data-en="Trees Planted" data-ml="നട്ട മരങ്ങൾ" data-hi="लगाए पेड़">Trees Planted</div>
           </div>
+          <div class="text-center reveal">
+            <div class="stat-num text-5xl lg:text-6xl font-black text-rose-600 counter" data-target="1200" data-suffix="+">0</div>
+            <div class="w-10 h-1 bg-rose-200 rounded-full mx-auto my-2"></div>
+            <div class="text-sm text-gray-500 font-medium"
+              data-ta="இரத்த கொடையாளர்கள்" data-en="Blood Donors" data-ml="രക്തദാതാക്കൾ" data-hi="रक्तदाता">Blood Donors</div>
+          </div>
+          <div class="text-center reveal">
+            <div class="stat-num text-5xl lg:text-6xl font-black text-amber-600 counter" data-target="80" data-suffix="+">0</div>
+            <div class="w-10 h-1 bg-amber-200 rounded-full mx-auto my-2"></div>
+            <div class="text-sm text-gray-500 font-medium"
+              data-ta="நடத்திய நிகழ்வுகள்" data-en="Events Hosted" data-ml="ഇവന്റുകൾ" data-hi="आयोजन">Events Hosted</div>
+          </div>
+          <div class="text-center reveal">
+            <div class="stat-num text-5xl lg:text-6xl font-black text-blue-600 counter" data-target="5000" data-suffix="+">0</div>
+            <div class="w-10 h-1 bg-blue-200 rounded-full mx-auto my-2"></div>
+            <div class="text-sm text-gray-500 font-medium"
+              data-ta="பயன் பெற்றோர்" data-en="Lives Impacted" data-ml="ഗുണഭോക്താക്കൾ" data-hi="लाभान्वित जीवन">Lives Impacted</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-          <!-- Logged-in welcome (hidden until JS sets it) -->
-          <div id="hero-user-cta" class="hidden pt-2 space-y-3">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-[#0F5132] text-white flex items-center justify-center text-xl font-extrabold shadow-md" id="hero-avatar">V</div>
-              <div>
-                <div class="text-lg font-extrabold text-gray-900" id="hero-welcome-name">வரவேற்கிறோம்!</div>
-                <div id="hero-role-badge" class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#0F5132]/10 text-[#0F5132] border border-[#0F5132]/20 mt-0.5"></div>
+    <!-- ── Locked Features Preview ── -->
+    <section class="py-20 bg-[#f8f9fa] px-4 overflow-hidden">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10 reveal">
+          <div class="inline-flex items-center gap-2 bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-full mb-4">
+            <span>🔐</span>
+            <span
+              data-ta="உறுப்பினர்களுக்கு மட்டும்"
+              data-en="Members Only"
+              data-ml="അംഗങ്ങൾക്ക് മാത്രം"
+              data-hi="सदस्यों के लिए">Members Only</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-gray-900"
+            data-ta="உள்ளே என்ன இருக்கிறது?"
+            data-en="What's Waiting Inside"
+            data-ml="അകത്ത് കാത്തിരിക്കുന്നത്"
+            data-hi="अंदर क्या है?">What's Waiting Inside</h2>
+          <p class="text-gray-400 text-sm mt-2"
+            data-ta="உறுப்பினராக சேர்ந்து அனைத்து சேவைகளையும் அணுகுங்கள்"
+            data-en="Sign in to unlock all 8 community features"
+            data-ml="എല്ലാ 8 സേവനങ്ങളും അൺലോക്ക് ചെയ്യൂ"
+            data-hi="साइन इन करके सभी 8 सुविधाएं अनलॉक करें">Sign in to unlock all 8 community features</p>
+        </div>
+
+        <div class="relative">
+          <!-- Blurred locked grid -->
+          <div class="locked-grid grid grid-cols-2 md:grid-cols-4 gap-3">
+            {modules.map((m) => (
+              <div class={`bg-gradient-to-br ${m.color} border rounded-2xl p-5 flex flex-col gap-2`}>
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm">{m.icon}</div>
+                <div class="font-extrabold text-gray-900 text-sm">{m.en.title}</div>
+                <div class="text-xs text-gray-400 leading-relaxed">{m.en.desc}</div>
               </div>
-            </div>
-            <div id="hero-user-links" class="flex flex-wrap gap-2"></div>
+            ))}
+          </div>
+          <!-- Gradient overlay with CTA -->
+          <div class="absolute inset-0 bg-gradient-to-t from-[#f8f9fa] via-[#f8f9fa]/70 to-transparent flex flex-col items-center justify-end pb-10 gap-4">
+            <p class="text-gray-500 text-sm font-medium">🔒 8 features · Sign in to unlock</p>
+            <a href="/login" class="inline-flex items-center gap-2 bg-[#0F5132] text-white font-bold px-8 py-3.5 rounded-2xl text-sm hover:bg-[#136b41] transition-all shadow-lg hover:shadow-xl active:scale-95">
+              <span
+                data-ta="உள்நுழைந்து அணுகு"
+                data-en="Sign In to Access"
+                data-ml="ആക്സസ് ചെയ്യൂ"
+                data-hi="एक्सेस करने के लिए साइन इन करें">Sign In to Access</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </a>
           </div>
         </div>
+      </div>
+    </section>
 
-        <!-- Quick feature tiles -->
-        <div class="lg:col-span-5 grid grid-cols-2 gap-3">
-          <a href="/blood-donors" class="bg-red-50 border border-red-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
-            <span class="text-3xl">🩸</span>
-            <span class="text-sm font-bold text-gray-800" data-ta="இரத்த தானம்" data-en="Blood Donors">Blood Donors</span>
-            <span class="text-xs text-gray-400" data-ta="உடனடி உதவி" data-en="Emergency help">Emergency help</span>
+    <!-- ── Our Story ── -->
+    <section id="our-story" class="py-24 bg-white px-4">
+      <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div class="space-y-6 reveal">
+          <div class="inline-block bg-[#0F5132]/10 text-[#0F5132] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest">
+            <span data-ta="எங்கள் வரலாறு" data-en="Our Story" data-ml="ഞങ്ങളുടെ കഥ" data-hi="हमारी कहानी">Our Story</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-gray-900 leading-tight"
+            data-ta="2000-ல் தொடங்கிய ஒரு சமூக கனவு"
+            data-en="A Community Dream Since 2000"
+            data-ml="2000 മുതൽ ഒരു കൂട്ടായ്മ"
+            data-hi="2000 से एक सामुदायिक सपना">A Community Dream Since 2000</h2>
+          <p class="text-gray-600 leading-relaxed"
+            data-ta="நண்பர்கள் இளைஞர் மன்றம் (FYC) 2000-ல் நாகர்கோவிலில் தொடங்கப்பட்டது. மரங்கள் நடுதல், இரத்த கொடை, மற்றும் இளைஞர் விளையாட்டு போன்ற பணிகளை 25 ஆண்டுகளாக நடத்தி வருகிறோம்."
+            data-en="Friends Youth Club (FYC) was founded in 2000 in Nagercoil. For 25 years, our volunteers have driven grassroot change through tree planting, blood donation camps, sports tournaments, and civic triage — impacting over 5,000 lives."
+            data-ml="ഫ്രണ്ട്സ് യൂത്ത് ക്ലബ് 2000-ൽ നഗർകോവിലിൽ സ്ഥാപിതമായി. 25 വർഷമായി സന്നദ്ധപ്രവർത്തകർ മരം നടൽ, രക്തദാന ക്യാമ്പ്, കായിക മത്സരങ്ങൾ എന്നിവ നടത്തി 5,000-ലേറെ ജീവിതങ്ങൾ മാറ്റി."
+            data-hi="फ्रेंड्स यूथ क्लब की स्थापना 2000 में नागरकोइल में हुई। 25 साल से स्वयंसेवकों ने वृक्षारोपण, रक्तदान शिविर, खेल प्रतियोगिताएं आयोजित कर 5,000 से अधिक जीवन प्रभावित किए हैं।">
+            Friends Youth Club (FYC) was founded in 2000 in Nagercoil. For 25 years, our volunteers have driven grassroot change through tree planting, blood donation camps, sports tournaments, and civic triage — impacting over 5,000 lives.
+          </p>
+          <a href="/about" class="inline-flex items-center gap-2 text-[#0F5132] font-bold text-sm hover:underline">
+            <span data-ta="முழு வரலாறு வாசி" data-en="Read full history" data-ml="മുഴുവൻ ചരിത്രം" data-hi="पूरा इतिहास पढ़ें">Read full history</span>
+            <span>→</span>
           </a>
-          <a href="/events" class="bg-purple-50 border border-purple-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
-            <span class="text-3xl">📅</span>
-            <span class="text-sm font-bold text-gray-800" data-ta="நிகழ்வுகள்" data-en="Events">Events</span>
-            <span class="text-xs text-gray-400" data-ta="வரும் நிகழ்வுகள்" data-en="Community events">Community events</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 reveal">
+          {[
+            { icon: '🌱', n: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', c: 'bg-green-50 border-green-100' },
+            { icon: '🩸', n: '1,200+', ta: 'இரத்த கொடையாளர்', en: 'Blood Donors', c: 'bg-rose-50 border-rose-100' },
+            { icon: '⚽', n: '80+', ta: 'நிகழ்வுகள்', en: 'Events Hosted', c: 'bg-amber-50 border-amber-100' },
+            { icon: '❤️', n: '5,000+', ta: 'பயன் பெற்றோர்', en: 'Lives Impacted', c: 'bg-blue-50 border-blue-100' },
+          ].map(s => (
+            <div class={`${s.c} border rounded-2xl p-5 text-center`}>
+              <div class="text-3xl mb-2">{s.icon}</div>
+              <div class="text-2xl font-black text-gray-900">{s.n}</div>
+              <div class="text-xs text-gray-500 mt-1 font-medium" data-ta={s.ta} data-en={s.en}>{s.en}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Join CTA ── -->
+    <section class="py-24 bg-[#0c3f27] text-white px-4 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,#198754_0%,transparent_60%)] opacity-40"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,#D4AF37_0%,transparent_50%)] opacity-10"></div>
+      <div class="max-w-3xl mx-auto text-center relative z-10 space-y-6 reveal">
+        <div class="text-5xl">🤝</div>
+        <h2 class="text-3xl sm:text-4xl font-black"
+          data-ta="நாகர்கோவில் சமூகத்தின் ஒரு பகுதியாகுங்கள்"
+          data-en="Become Part of Nagercoil's Story"
+          data-ml="നഗർകോവിലിന്റെ കഥയുടെ ഭാഗമാകൂ"
+          data-hi="नागरकोइल की कहानी का हिस्सा बनें">Become Part of Nagercoil's Story</h2>
+        <p class="text-green-100/70 max-w-xl mx-auto leading-relaxed"
+          data-ta="இரத்த தானம் அல்லது விளையாட்டு அல்லது சமூக சேவை — நீங்கள் என்ன செய்ய விரும்பினாலும் FYC உங்களுக்காக காத்திருக்கிறது."
+          data-en="Whether you want to donate blood, join sports, report civic issues, or simply connect with neighbours — FYC is your digital home."
+          data-ml="രക്തദാനം, കായിക ഇനങ്ങൾ, പൗര വിഷയങ്ങൾ — FYC നിങ്ങളുടേതാണ്."
+          data-hi="रक्तदान, खेल, नागरिक मुद्दे — FYC आपका डिजिटल घर है।">
+          Whether you want to donate blood, join sports, report civic issues, or simply connect with neighbours — FYC is your digital home.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+          <a href="/login" class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-gray-900 font-black px-8 py-4 rounded-2xl text-sm hover:bg-amber-400 transition-all shadow-[0_0_30px_rgba(212,175,55,0.4)] active:scale-95">
+            <span
+              data-ta="உறுப்பினராக சேரு"
+              data-en="Join Community"
+              data-ml="ചേരുക"
+              data-hi="समुदाय में शामिल हों">Join Community</span>
+            <span>→</span>
           </a>
-          <a href="/sports" class="bg-amber-50 border border-amber-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
-            <span class="text-3xl">⚽</span>
-            <span class="text-sm font-bold text-gray-800" data-ta="விளையாட்டு" data-en="Sports">Sports</span>
-            <span class="text-xs text-gray-400" data-ta="போட்டிகள் & அட்டவணை" data-en="Tournaments">Tournaments</span>
-          </a>
-          <a href="/submit-issue" class="bg-blue-50 border border-blue-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
-            <span class="text-3xl">🚧</span>
-            <span class="text-sm font-bold text-gray-800" data-ta="பிரச்னை தெரிவி" data-en="Report Issue">Report Issue</span>
-            <span class="text-xs text-gray-400" data-ta="குடிமக்கள் குரல்" data-en="Civic triage">Civic triage</span>
+          <a href="#our-story" class="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-8 py-4 rounded-2xl text-sm hover:bg-white/20 transition-all active:scale-95">
+            <span
+              data-ta="மேலும் அறிக"
+              data-en="Learn More"
+              data-ml="കൂടുതൽ"
+              data-hi="और जानें">Learn More</span>
           </a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Modern Analytical Stats Grid -->
-  <section class="py-8 bg-white border-b border-gray-100">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <div class="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50/80 transition-colors">
-            <div class={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold ${stat.color} flex-shrink-0 shadow-sm`}>
-              {stat.icon}
-            </div>
-            <div>
-              <div class="text-2xl font-extrabold text-gray-900 tracking-tight">{stat.value}</div>
-              <div class="text-xs text-gray-500 font-medium" data-ta={stat.ta} data-en={stat.en}>{stat.ta}</div>
-            </div>
+  </div><!-- /guest-view -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       AUTH VIEW
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="auth-view">
+
+    <!-- Welcome hero -->
+    <section class="relative bg-gradient-to-br from-[#0c3f27] via-[#0F5132] to-[#136b41] text-white py-10 px-4 overflow-hidden">
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:30px_30px]"></div>
+      <div class="max-w-6xl mx-auto relative z-10">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37] text-gray-900 flex items-center justify-center text-2xl font-black shadow-lg flex-shrink-0" id="auth-avatar">V</div>
+          <div class="flex-1">
+            <div class="text-white/60 text-xs font-semibold uppercase tracking-widest mb-0.5"
+              data-ta="வரவேற்கிறோம்" data-en="Welcome back" data-ml="സ്വാഗതം" data-hi="स्वागत है">Welcome back</div>
+            <div class="text-xl font-extrabold" id="auth-welcome-name">—</div>
+            <div id="auth-role-badge" class="inline-flex items-center gap-1 mt-1 text-[10px] font-bold bg-white/15 border border-white/20 px-2.5 py-1 rounded-full"></div>
           </div>
-        ))}
+          <div id="auth-quick-links" class="flex flex-wrap gap-2 mt-2 sm:mt-0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile incomplete banner -->
+    <div id="profile-incomplete-banner" class="hidden bg-amber-50 border-b border-amber-200 py-3 px-4">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <p class="text-sm text-amber-800"
+          data-ta="உங்கள் சுயவிவரம் முழுமையடையவில்லை — பிறந்த நாள் வாழ்த்துகள் மற்றும் சமூக அங்கீகாரத்திற்கு நிரப்புங்கள்."
+          data-en="Your profile is incomplete — complete it for birthday wishes and community recognition."
+          data-ml="നിങ്ങളുടെ പ്രൊഫൈൽ അപൂർണ്ണമാണ് — ജന്മദിന ആശംസകൾക്ക് പൂർത്തിയാക്കൂ."
+          data-hi="आपकी प्रोफ़ाइल अधूरी है — जन्मदिन की शुभकामनाओं के लिए पूरी करें।">
+          Your profile is incomplete — complete it for birthday wishes and community recognition.
+        </p>
+        <a href="/complete-profile" class="shrink-0 text-xs font-bold text-amber-800 underline hover:text-amber-900"
+          data-ta="இப்போது நிரப்பு →" data-en="Complete now →" data-ml="ഇപ്പോൾ →" data-hi="अभी पूरा करें →">Complete now →</a>
       </div>
     </div>
-  </section>
 
-  <!-- Profile incomplete soft banner (shown instead of hard redirect) -->
-  <div id="profile-incomplete-banner" class="hidden bg-amber-50 border-b border-amber-200 py-3 px-4">
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <p class="text-sm text-amber-800">
-        <span data-ta="உங்கள் சுயவிவரம் முழுமையடையவில்லை — பிறந்த நாள் வாழ்த்துகள் மற்றும் சமூக அங்கீகாரத்திற்கு நிரப்புங்கள்." data-en="Your profile is incomplete — fill it in for birthday wishes and community recognition.">
-          Your profile is incomplete — fill it in for birthday wishes and community recognition.
-        </span>
-      </p>
-      <a href="/complete-profile" class="shrink-0 text-xs font-semibold text-amber-800 underline hover:text-amber-900" data-ta="இப்போது நிரப்பு →" data-en="Complete now →">Complete now →</a>
-    </div>
-  </div>
-
-  <!-- Birthday Banner — visible only when there are birthdays today -->
-  <section id="birthday-banner" class="hidden py-6 px-4 bg-gradient-to-r from-pink-50 to-amber-50 border-y border-pink-100">
-    <div class="max-w-6xl mx-auto">
-      <div class="flex items-center gap-3">
+    <!-- Birthday banner -->
+    <section id="birthday-banner" class="hidden py-5 px-4 bg-gradient-to-r from-pink-50 to-amber-50 border-y border-pink-100">
+      <div class="max-w-6xl mx-auto flex items-center gap-3">
         <span class="text-3xl">🎂</span>
         <div>
-          <h3 class="font-bold text-gray-900 text-base" data-ta="இன்றைய பிறந்த நாள் வாழ்த்துக்கள்!" data-en="Birthday Wishes Today!">பிறந்த நாள் வாழ்த்துக்கள்!</h3>
+          <h3 class="font-extrabold text-gray-900 text-sm"
+            data-ta="இன்றைய பிறந்த நாள் வாழ்த்துக்கள்!"
+            data-en="Birthday Wishes Today!"
+            data-ml="ജന്മദിന ആശംസകൾ!"
+            data-hi="जन्मदिन की शुभकामनाएं!">Birthday Wishes Today!</h3>
           <div id="birthday-names" class="text-sm text-gray-600 mt-0.5"></div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Daily Thirukkural + Today's Tamil News (live from backend) -->
-  <section class="py-12 bg-[#f8f9fa] px-4 border-b border-gray-100">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <!-- Daily Thirukkural -->
-      <div class="lg:col-span-5">
-        <div class="flex items-center gap-2 mb-4">
-          <span class="text-xl">📜</span>
-          <h2 class="text-lg font-extrabold text-gray-900 tracking-tight" data-ta="இன்றைய திருக்குறள்" data-en="Daily Thirukkural">இன்றைய திருக்குறள்</h2>
+    <!-- Modules bento grid -->
+    <section class="py-14 bg-[#f8f9fa] px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-xl font-extrabold text-gray-900"
+              data-ta="எல்லா சேவைகளும்" data-en="All Services" data-ml="എല്ലാ സേവനങ്ങൾ" data-hi="सभी सेवाएं">All Services</h2>
+            <p class="text-xs text-gray-400 mt-0.5"
+              data-ta="உங்கள் சமூக ஒரே இடத்தில்" data-en="Your community in one place" data-ml="നിങ്ങളുടെ കൂട്ടായ്മ" data-hi="आपका समुदाय एक जगह">Your community in one place</p>
+          </div>
         </div>
-        <div id="kural-card" class="bg-gradient-to-br from-[#0c3f27] to-[#0F5132] text-white rounded-2xl p-6 shadow-md min-h-[220px] flex flex-col justify-center">
-          <div id="kural-loading" class="text-green-100/70 text-sm">ஏற்றுகிறது… / Loading…</div>
-          <div id="kural-content" class="hidden space-y-4">
-            <div class="flex items-center justify-between">
-              <span id="kural-paal" class="text-[10px] font-bold uppercase tracking-widest bg-white/15 px-2.5 py-1 rounded-full"></span>
-              <span id="kural-number" class="text-[10px] font-bold text-[#D4AF37]"></span>
+
+        <div class="bento-grid grid grid-cols-2 gap-4">
+          {modules.map((m) => (
+            <a
+              href={m.href}
+              class={`module-card group flex flex-col bg-gradient-to-br ${m.color} border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden`}
+            >
+              <span class="absolute top-3.5 right-3.5 text-[9px] font-black uppercase tracking-widest bg-white/80 border border-gray-100 text-[#0F5132] px-2 py-0.5 rounded-full"
+                data-ta={m.tag_ta} data-en={m.tag_en} data-ml={m.tag_ml} data-hi={m.tag_hi}>{m.tag_en}</span>
+              <div class="module-icon w-11 h-11 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm mb-4 transition-transform duration-300">{m.icon}</div>
+              <h3 class="font-extrabold text-gray-900 text-base mb-1.5 group-hover:text-[#0F5132] transition-colors"
+                data-ta={m.ta.title} data-en={m.en.title} data-ml={m.ml.title} data-hi={m.hi.title}>{m.en.title}</h3>
+              <p class="text-xs text-gray-500 leading-relaxed flex-1"
+                data-ta={m.ta.desc} data-en={m.en.desc} data-ml={m.ml.desc} data-hi={m.hi.desc}>{m.en.desc}</p>
+              <div class="mt-3 flex items-center gap-1 text-xs font-bold text-[#0F5132]">
+                <span data-ta="செல்" data-en="Open" data-ml="തുറക്കൂ" data-hi="खोलें">Open</span>
+                <span class="module-arrow transition-transform duration-300">→</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Thirukkural + News -->
+    <section class="py-12 bg-white px-4 border-y border-gray-100">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- Daily Thirukkural -->
+        <div class="lg:col-span-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-xl">📜</span>
+            <h2 class="text-lg font-extrabold text-gray-900"
+              data-ta="இன்றைய திருக்குறள்" data-en="Daily Thirukkural" data-ml="ദൈനിക തിരുക്കുറൾ" data-hi="दैनिक तिरुक्कुरल">இன்றைய திருக்குறள்</h2>
+          </div>
+          <div id="kural-card" class="bg-gradient-to-br from-[#0c3f27] to-[#0F5132] text-white rounded-2xl p-6 shadow-md min-h-[220px] flex flex-col justify-center">
+            <div id="kural-loading" class="text-green-100/60 text-sm">Loading…</div>
+            <div id="kural-content" class="hidden space-y-4">
+              <div class="flex items-center justify-between">
+                <span id="kural-paal" class="text-[10px] font-bold uppercase tracking-widest bg-white/15 px-2.5 py-1 rounded-full"></span>
+                <span id="kural-number" class="text-[10px] font-bold text-[#D4AF37]"></span>
+              </div>
+              <p id="kural-tamil" class="text-lg font-bold leading-relaxed whitespace-pre-line" style="font-family:'Noto Sans Tamil',sans-serif"></p>
+              <p id="kural-english" class="text-sm text-green-100/85 italic leading-relaxed"></p>
+              <p id="kural-meaning" class="text-xs text-green-100/65 leading-relaxed border-t border-white/10 pt-3" style="font-family:'Noto Sans Tamil',sans-serif"></p>
             </div>
-            <p id="kural-tamil" class="text-lg font-bold leading-relaxed whitespace-pre-line" style="font-family:'Noto Sans Tamil',sans-serif"></p>
-            <p id="kural-english" class="text-sm text-green-100/90 italic leading-relaxed"></p>
-            <p id="kural-meaning" class="text-xs text-green-100/70 leading-relaxed border-t border-white/10 pt-3" style="font-family:'Noto Sans Tamil',sans-serif"></p>
+          </div>
+        </div>
+
+        <!-- News tabs -->
+        <div class="lg:col-span-7">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📰</span>
+              <h2 class="text-lg font-extrabold text-gray-900"
+                data-ta="இன்றைய செய்திகள்" data-en="Today's News" data-ml="ഇന്നത്തെ വാർത്തകൾ" data-hi="आज की खबरें">இன்றைய செய்திகள்</h2>
+            </div>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News</span>
+          </div>
+          <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 flex-wrap">
+            {[
+              { key: 'kanyakumari', label: 'கன்னியாகுமரி' },
+              { key: 'tamil', label: 'தமிழ்' },
+              { key: 'india', label: 'India' },
+              { key: 'tn-jobs', label: 'TN Jobs' },
+              { key: 'central-jobs', label: 'Central' },
+            ].map(t => (
+              <button onclick={`switchNewsTab('${t.key}')`} id={`tab-${t.key}`}
+                class={`news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${t.key === 'tamil' ? 'bg-white text-[#0F5132] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div class="bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden min-h-[220px]">
+            <div id="news-loading" class="p-6 text-gray-400 text-sm">Loading headlines…</div>
+            <div id="news-list" class="hidden divide-y divide-gray-100"></div>
+            <div id="news-error" class="hidden p-6 text-gray-400 text-sm">Could not load news right now.</div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Today's News — tabbed: Kanyakumari / Tamil / India / TN Jobs / Central -->
-      <div class="lg:col-span-7">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <span class="text-xl">📰</span>
-            <h2 class="text-lg font-extrabold text-gray-900 tracking-tight" data-ta="இன்றைய செய்திகள்" data-en="Today's News">இன்றைய செய்திகள்</h2>
+    <!-- Activity Feed + Sidebar -->
+    <section class="py-14 bg-[#f8f9fa] px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+          <!-- Feed -->
+          <div class="lg:col-span-8 space-y-5">
+            <h2 class="text-lg font-extrabold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
+              <span>📢</span>
+              <span data-ta="சமீபத்திய அறிவிப்புகள்" data-en="Recent Activity" data-ml="സമീപ പ്രവർത്തനം" data-hi="हाल की गतिविधि">Recent Activity</span>
+            </h2>
+            <div class="space-y-3">
+              {updates.map((up) => (
+                <div class="bg-white border border-gray-200/80 rounded-2xl p-5 hover:border-gray-300 transition-colors shadow-sm space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl border border-gray-200">{up.avatar}</div>
+                      <div>
+                        <div class="font-bold text-gray-900 text-sm">{up.name}</div>
+                        <div class="text-xs text-gray-400">{up.role}</div>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">{up.tag}</span>
+                      <div class="text-[10px] text-gray-400 mt-1">{up.time}</div>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed" data-ta={up.ta} data-en={up.en} data-ml={up.ml} data-hi={up.hi}>{up.en}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News</span>
-        </div>
-        <!-- Tab buttons -->
-        <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 flex-wrap">
-          <button onclick="switchNewsTab('kanyakumari')" id="tab-kanyakumari"
-            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            கன்னியாகுமரி
-          </button>
-          <button onclick="switchNewsTab('tamil')" id="tab-tamil"
-            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-[#0F5132] shadow-sm">
-            தமிழ்
-          </button>
-          <button onclick="switchNewsTab('india')" id="tab-india"
-            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            India
-          </button>
-          <button onclick="switchNewsTab('tn-jobs')" id="tab-tn-jobs"
-            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            TN Jobs
-          </button>
-          <button onclick="switchNewsTab('central-jobs')" id="tab-central-jobs"
-            class="news-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            Central
-          </button>
-        </div>
-        <div class="bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden min-h-[220px]">
-          <div id="news-loading" class="p-6 text-gray-400 text-sm">Loading headlines…</div>
-          <div id="news-list" class="hidden divide-y divide-gray-100"></div>
-          <div id="news-error" class="hidden p-6 text-gray-400 text-sm">Could not load news right now.</div>
+
+          <!-- Sidebar -->
+          <div class="lg:col-span-4 space-y-5">
+            <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-3 shadow-sm">
+              <h3 class="font-extrabold text-gray-900 flex items-center gap-2 text-sm">
+                <span>🤝</span>
+                <span data-ta="எங்களை பற்றி" data-en="About FYC" data-ml="FYC യെ കുറിച്ച്" data-hi="FYC के बारे में">About FYC</span>
+              </h3>
+              <p class="text-xs text-gray-500 leading-relaxed"
+                data-ta="நண்பர்கள் இளைஞர் மன்றம் 2000-ல் நாகர்கோவிலில் தொடங்கப்பட்டது. 25 ஆண்டுகளாக சமூக சேவைகள் செய்து வருகிறோம்."
+                data-en="Friends Youth Club (FYC) has been serving Nagercoil since 2000 — blood donation, tree planting, sports, and youth development for 25 years."
+                data-ml="ഫ്രണ്ട്സ് യൂത്ത് ക്ലബ് 2000 മുതൽ നഗർകോവിലിൽ സേവനം നടത്തുന്നു."
+                data-hi="फ्रेंड्स यूथ क्लब 2000 से नागरकोइल में सेवारत है।">
+                Friends Youth Club (FYC) has been serving Nagercoil since 2000 — blood donation, tree planting, sports, and youth development for 25 years.
+              </p>
+              <a href="/about" class="inline-flex items-center gap-1 text-xs font-bold text-[#0F5132] hover:underline">
+                <span data-ta="மேலும் வாசி" data-en="Read more" data-ml="കൂടുതൽ" data-hi="और पढ़ें">Read more</span><span>→</span>
+              </a>
+            </div>
+            <div class="bg-gradient-to-br from-[#991b1b] to-red-800 text-white rounded-2xl p-5 space-y-3 shadow-md">
+              <div class="flex items-center gap-2.5">
+                <span class="text-2xl">🩸</span>
+                <h3 class="font-extrabold text-sm"
+                  data-ta="இரத்த அவசரநிலை?" data-en="Need Blood Urgently?" data-ml="രക്തം അടിയന്തിരമായി?" data-hi="रक्त की जरूरत?">Need Blood Urgently?</h3>
+              </div>
+              <p class="text-xs text-red-100 leading-relaxed"
+                data-ta="நாகர்கோவில் பகுதியில் இரத்த கொடையாளர்களை உடனடியாகத் தேடுங்கள்."
+                data-en="Find verified blood donors in Nagercoil instantly for emergencies."
+                data-ml="നഗർകോവിലിൽ രക്തദാതാക്കളെ ഉടൻ കണ്ടെത്തൂ."
+                data-hi="नागरकोइल में तत्काल रक्तदाता खोजें।">
+                Find verified blood donors in Nagercoil instantly for emergencies.
+              </p>
+              <a href="/blood-donors" class="inline-block bg-white text-red-800 text-xs font-bold px-4 py-2 rounded-xl hover:bg-red-50 transition-colors"
+                data-ta="தானிகளை தேடு" data-en="Search Donors" data-ml="ദാതാക്കളെ തിരയൂ" data-hi="दाताओं को खोजें">Search Donors</a>
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
+    <!-- Membership CTA -->
+    <section class="py-14 bg-[#0c3f27] text-white px-4 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_800px_at_100%_200px,#198754,transparent)]"></div>
+      <div class="max-w-4xl mx-auto text-center relative z-10 space-y-5">
+        <div class="text-4xl">🪪</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold"
+          data-ta="FYC டிஜிட்டல் உறுப்பினர் அட்டை பெறுங்கள்"
+          data-en="Get Your Digital FYC Membership Card"
+          data-ml="FYC ഡിജിറ്റൽ അംഗ കാർഡ് നേടൂ"
+          data-hi="FYC डिजिटल सदस्यता कार्ड प्राप்பाएं">Get Your Digital FYC Membership Card</h2>
+        <p class="text-green-100/65 text-sm max-w-xl mx-auto"
+          data-ta="QR குறியீட்டுடன் கூடிய டிஜிட்டல் உறுப்பினர் அட்டையை பெறுங்கள்."
+          data-en="Apply for your verified digital membership card with QR verification payload."
+          data-ml="QR കോഡ് ഉള്ള ഡിജിറ്റൽ അംഗ കാർഡ് നേടൂ."
+          data-hi="QR सत्यापन के साथ डिजिटल सदस्यता कार्ड के लिए आवेदन करें।">
+          Apply for your verified digital membership card with QR verification payload.
+        </p>
+        <a href="/verify" class="inline-flex items-center gap-2 bg-[#D4AF37] text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-amber-400 transition-all shadow-lg active:scale-95">
+          <span>🔍</span>
+          <span data-ta="உறுப்பினர் அட்டை சரிபார்" data-en="Verify Membership Card" data-ml="കാർഡ് പരിശോധിക്കൂ" data-hi="सदस्यता कार्ड सत्यापित करें">Verify Membership Card</span>
+        </a>
+      </div>
+    </section>
+
+  </div><!-- /auth-view -->
+
+
+  <!-- ─── Shared scripts ───────────────────────────────────────────── -->
   <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
-    const lang = () => localStorage.getItem('fyc_lang') || 'ta';
-    const esc = (s) => (s || '').replace(/[&<>"]/g, (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    const rel = (iso) => {
-      if (!iso) return '';
-      const diff = Date.now() - new Date(iso).getTime();
-      const m = Math.floor(diff / 60000);
-      if (m < 1) return 'now';
-      if (m < 60) return m + 'm';
-      const h = Math.floor(m / 60);
-      if (h < 24) return h + 'h';
-      return Math.floor(h / 24) + 'd';
-    };
+    // ── Auth state → personalise welcome ─────────────────────────────
+    const _tok = localStorage.getItem('fyc_token');
+    const _usr = localStorage.getItem('fyc_user');
+    const _lang = localStorage.getItem('fyc_lang') || 'ta';
 
-    // ── Daily Thirukkural ────────────────────────────────────────────────
-    (async () => {
+    if (_tok && _usr) {
       try {
-        const res = await fetch(`${API_BASE}/api/v1/thirukkural/daily`);
-        if (!res.ok) throw new Error('http ' + res.status);
-        const k = await res.json();
-        document.getElementById('kural-paal').textContent =
-          (k.paal_ta || '') + (k.paal_en ? ' · ' + k.paal_en : '');
-        document.getElementById('kural-number').textContent = 'குறள் ' + k.number;
-        document.getElementById('kural-tamil').textContent =
-          [k.line1, k.line2].filter(Boolean).join('\n');
-        document.getElementById('kural-english').textContent = k.english_couplet || '';
-        document.getElementById('kural-meaning').textContent = k.tamil_meaning || '';
-        document.getElementById('kural-loading').classList.add('hidden');
-        document.getElementById('kural-content').classList.remove('hidden');
-      } catch (e) {
-        document.getElementById('kural-loading').textContent = 'Could not load Thirukkural.';
-      }
-    })();
-
-    // ── Tabbed News ──────────────────────────────────────────────────────
-    const NEWS_URLS = {
-      kanyakumari:  `${API_BASE}/api/v1/news/kanyakumari?limit=8`,
-      tamil:        `${API_BASE}/api/v1/news/top?limit=10`,
-      india:        `${API_BASE}/api/v1/news/india?limit=5`,
-      'tn-jobs':    `${API_BASE}/api/v1/news/tn-jobs?limit=8`,
-      'central-jobs': `${API_BASE}/api/v1/news/central-jobs?limit=8`,
-    };
-    const newsCache = {};
-    let activeTab = 'tamil';
-
-    function renderNewsItems(items) {
-      return items.map((it) => `
-        <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer"
-           class="flex items-start gap-3 p-4 hover:bg-gray-50/80 transition-colors">
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-800 leading-snug line-clamp-2">${esc(it.title)}</p>
-            <div class="mt-1 flex items-center gap-2 text-[11px]">
-              <span class="font-bold text-[#0F5132]">${esc(it.source)}</span>
-              ${it.published_at ? `<span class="text-gray-400">· ${rel(it.published_at)}</span>` : ''}
-            </div>
-          </div>
-          <span class="text-gray-300 text-xs mt-0.5">↗</span>
-        </a>`).join('');
-    }
-
-    async function loadNews(tab) {
-      const loading = document.getElementById('news-loading');
-      const list = document.getElementById('news-list');
-      const errBox = document.getElementById('news-error');
-
-      if (newsCache[tab]) {
-        list.innerHTML = renderNewsItems(newsCache[tab]);
-        loading.classList.add('hidden');
-        errBox.classList.add('hidden');
-        list.classList.remove('hidden');
-        return;
-      }
-
-      loading.classList.remove('hidden');
-      list.classList.add('hidden');
-      errBox.classList.add('hidden');
-
-      try {
-        const res = await fetch(NEWS_URLS[tab]);
-        if (!res.ok) throw new Error('http ' + res.status);
-        const items = await res.json();
-        if (!Array.isArray(items) || items.length === 0) throw new Error('empty');
-        newsCache[tab] = items;
-        list.innerHTML = renderNewsItems(items);
-        loading.classList.add('hidden');
-        list.classList.remove('hidden');
-      } catch (e) {
-        loading.classList.add('hidden');
-        errBox.classList.remove('hidden');
-      }
-    }
-
-    window.switchNewsTab = function(tab) {
-      activeTab = tab;
-      ['kanyakumari', 'tamil', 'india', 'tn-jobs', 'central-jobs'].forEach((t) => {
-        const btn = document.getElementById('tab-' + t);
-        if (t === tab) {
-          btn.classList.add('bg-white', 'text-[#0F5132]', 'shadow-sm');
-          btn.classList.remove('text-gray-500');
-        } else {
-          btn.classList.remove('bg-white', 'text-[#0F5132]', 'shadow-sm');
-          btn.classList.add('text-gray-500');
-        }
-      });
-      loadNews(tab);
-    };
-
-    loadNews('tamil');
-
-    // Birthday banner
-    fetch(`${API_BASE}/api/v1/users/birthdays/today`, {
-      headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
-    })
-    .then(r => r.json())
-    .then(birthdays => {
-      if (!birthdays || birthdays.length === 0) return;
-      const lang = localStorage.getItem('fyc_lang') || 'ta';
-      const names = birthdays.map(b => lang === 'ta' ? b.full_name_ta : b.full_name_en).join(', ');
-      const el = document.getElementById('birthday-names');
-      if (el) el.textContent = names;
-      document.getElementById('birthday-banner')?.classList.remove('hidden');
-    })
-    .catch(() => {});
-
-    // Personalise hero for logged-in vs. guest
-    const _fycUser = localStorage.getItem('fyc_user');
-    if (_fycUser) {
-      try {
-        const _u = JSON.parse(_fycUser);
-        const lang = localStorage.getItem('fyc_lang') || 'ta';
-        const name = lang === 'ta' ? (_u.full_name_ta || _u.full_name_en || '') : (_u.full_name_en || _u.full_name_ta || '');
+        const u = JSON.parse(_usr);
+        const name = _lang === 'ta' ? (u.full_name_ta || u.full_name_en || '') : (u.full_name_en || u.full_name_ta || '');
         const firstName = name.split(' ')[0] || 'நண்பர்';
-
-        // Show welcome, hide guest CTA
-        document.getElementById('hero-guest-cta')?.classList.add('hidden');
-        document.getElementById('hero-user-cta')?.classList.remove('hidden');
-
-        // Avatar initials
-        const avatarEl = document.getElementById('hero-avatar');
+        const avatarEl = document.getElementById('auth-avatar');
         if (avatarEl) avatarEl.textContent = firstName.charAt(0).toUpperCase();
-
-        // Welcome name
-        const nameEl = document.getElementById('hero-welcome-name');
-        if (nameEl) nameEl.textContent = lang === 'ta'
-          ? `வரவேற்கிறோம், ${firstName}!`
-          : `Welcome back, ${firstName}!`;
-
-        // Role badge
-        const roleBadge = document.getElementById('hero-role-badge');
+        const nameEl = document.getElementById('auth-welcome-name');
+        if (nameEl) nameEl.textContent = _lang === 'ta' ? `வணக்கம், ${firstName}!` : `Hello, ${firstName}!`;
         const roleLabels = {
-          PUBLIC_CITIZEN: { ta: 'பொது குடிமகன்', en: 'Public Citizen', icon: '👤' },
-          VOLUNTEER: { ta: 'தன்னார்வலர்', en: 'Volunteer', icon: '🤝' },
-          CLUB_MEMBER: { ta: 'கிளப் உறுப்பினர்', en: 'Club Member', icon: '⭐' },
+          PUBLIC_CITIZEN:   { ta: 'பொது குடிமகன்', en: 'Public Citizen', icon: '👤' },
+          VOLUNTEER:        { ta: 'தன்னார்வலர்', en: 'Volunteer', icon: '🤝' },
+          CLUB_MEMBER:      { ta: 'கிளப் உறுப்பினர்', en: 'Club Member', icon: '⭐' },
           EXECUTIVE_MEMBER: { ta: 'நிர்வாக உறுப்பினர்', en: 'Executive', icon: '🏅' },
-          ADMIN: { ta: 'நிர்வாகி', en: 'Admin', icon: '🔑' },
-          SUPER_ADMIN: { ta: 'சூப்பர் நிர்வாகி', en: 'Super Admin', icon: '👑' },
+          ADMIN:            { ta: 'நிர்வாகி', en: 'Admin', icon: '🔑' },
+          SUPER_ADMIN:      { ta: 'சூப்பர் நிர்வாகி', en: 'Super Admin', icon: '👑' },
         };
-        const rl = roleLabels[_u.role] || { ta: _u.role, en: _u.role, icon: '👤' };
-        if (roleBadge) roleBadge.textContent = `${rl.icon} ${lang === 'ta' ? rl.ta : rl.en}`;
-
-        // Role-specific quick links
-        const linksEl = document.getElementById('hero-user-links');
+        const rl = roleLabels[u.role] || { ta: u.role, en: u.role, icon: '👤' };
+        const badge = document.getElementById('auth-role-badge');
+        if (badge) badge.textContent = `${rl.icon} ${_lang === 'ta' ? rl.ta : rl.en}`;
         const links = [
           { href: '/events', icon: '📅', ta: 'நிகழ்வுகள்', en: 'Events' },
-          { href: '/blood-donors', icon: '🩸', ta: 'இரத்த தானம்', en: 'Blood Donors' },
-          { href: '/submit-issue', icon: '📢', ta: 'பிரச்சனை தெரிவி', en: 'Report Issue' },
+          { href: '/blood-donors', icon: '🩸', ta: 'இரத்த தானம்', en: 'Blood' },
+          { href: '/submit-issue', icon: '📢', ta: 'பிரச்னை', en: 'Report Issue' },
         ];
-        if (_u.role === 'VOLUNTEER') links.unshift({ href: '/users/volunteers/my-certificate', icon: '📜', ta: 'சான்றிதழ்', en: 'My Certificate' });
-        if (['ADMIN','SUPER_ADMIN','EXECUTIVE_MEMBER'].includes(_u.role)) links.unshift({ href: '/admin', icon: '⚙️', ta: 'நிர்வாக பலகை', en: 'Admin Panel' });
+        if (u.role === 'VOLUNTEER') links.unshift({ href: '/users/volunteers/my-certificate', icon: '📜', ta: 'சான்றிதழ்', en: 'Certificate' });
+        if (['ADMIN','SUPER_ADMIN','EXECUTIVE_MEMBER'].includes(u.role)) links.unshift({ href: '/admin', icon: '⚙️', ta: 'நிர்வாகம்', en: 'Admin' });
+        const linksEl = document.getElementById('auth-quick-links');
         if (linksEl) linksEl.innerHTML = links.map(l =>
-          `<a href="${l.href}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-            <span>${l.icon}</span><span data-ta="${l.ta}" data-en="${l.en}">${lang === 'ta' ? l.ta : l.en}</span>
+          `<a href="${l.href}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white/15 border border-white/20 rounded-xl text-xs font-semibold text-white hover:bg-white/25 transition-colors">
+            <span>${l.icon}</span><span>${_lang === 'ta' ? l.ta : l.en}</span>
           </a>`
         ).join('');
-
-        // Profile incomplete → soft banner, no redirect
-        if (_u.is_profile_complete === false) {
+        if (u.is_profile_complete === false) {
           document.getElementById('profile-incomplete-banner')?.classList.remove('hidden');
         }
       } catch (_) {}
     }
 
+    // ── Birthdays ────────────────────────────────────────────────────
+    if (_tok) {
+      fetch(`${API_BASE}/api/v1/users/birthdays/today`, {
+        headers: { 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': 'Bearer ' + _tok }
+      }).then(r => r.json()).then(b => {
+        if (!b || !b.length) return;
+        const names = b.map(x => _lang === 'ta' ? x.full_name_ta : x.full_name_en).join(', ');
+        const el = document.getElementById('birthday-names');
+        if (el) el.textContent = names;
+        document.getElementById('birthday-banner')?.classList.remove('hidden');
+      }).catch(() => {});
+    }
+
+    // ── Thirukkural ─────────────────────────────────────────────────
+    if (_tok) {
+      (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/thirukkural/daily`);
+          if (!res.ok) throw new Error();
+          const k = await res.json();
+          document.getElementById('kural-paal').textContent = (k.paal_ta || '') + (k.paal_en ? ' · ' + k.paal_en : '');
+          document.getElementById('kural-number').textContent = 'குறள் ' + k.number;
+          document.getElementById('kural-tamil').textContent = [k.line1, k.line2].filter(Boolean).join('\n');
+          document.getElementById('kural-english').textContent = k.english_couplet || '';
+          document.getElementById('kural-meaning').textContent = k.tamil_meaning || '';
+          document.getElementById('kural-loading').classList.add('hidden');
+          document.getElementById('kural-content').classList.remove('hidden');
+        } catch (_) {
+          document.getElementById('kural-loading').textContent = 'Could not load Thirukkural.';
+        }
+      })();
+    }
+
+    // ── Tabbed News ──────────────────────────────────────────────────
+    const NEWS_URLS = {
+      kanyakumari:    `${API_BASE}/api/v1/news/kanyakumari?limit=8`,
+      tamil:          `${API_BASE}/api/v1/news/top?limit=10`,
+      india:          `${API_BASE}/api/v1/news/india?limit=5`,
+      'tn-jobs':      `${API_BASE}/api/v1/news/tn-jobs?limit=8`,
+      'central-jobs': `${API_BASE}/api/v1/news/central-jobs?limit=8`,
+    };
+    const newsCache = {};
+    const esc = s => (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const rel = iso => {
+      if (!iso) return '';
+      const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+      if (m < 1) return 'now'; if (m < 60) return m + 'm';
+      const h = Math.floor(m / 60);
+      return h < 24 ? h + 'h' : Math.floor(h / 24) + 'd';
+    };
+
+    async function loadNews(tab) {
+      const loading = document.getElementById('news-loading');
+      const list = document.getElementById('news-list');
+      const errBox = document.getElementById('news-error');
+      if (newsCache[tab]) {
+        list.innerHTML = newsCache[tab];
+        loading.classList.add('hidden'); errBox.classList.add('hidden'); list.classList.remove('hidden'); return;
+      }
+      loading.classList.remove('hidden'); list.classList.add('hidden'); errBox.classList.add('hidden');
+      try {
+        const res = await fetch(NEWS_URLS[tab]);
+        if (!res.ok) throw new Error();
+        const items = await res.json();
+        if (!Array.isArray(items) || !items.length) throw new Error();
+        newsCache[tab] = items.map(it => `
+          <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer"
+             class="flex items-start gap-3 p-4 hover:bg-gray-50/80 transition-colors">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-gray-800 leading-snug line-clamp-2">${esc(it.title)}</p>
+              <div class="mt-1 flex items-center gap-2 text-[11px]">
+                <span class="font-bold text-[#0F5132]">${esc(it.source)}</span>
+                ${it.published_at ? `<span class="text-gray-400">· ${rel(it.published_at)}</span>` : ''}
+              </div>
+            </div>
+            <span class="text-gray-300 text-xs mt-0.5">↗</span>
+          </a>`).join('');
+        list.innerHTML = newsCache[tab];
+        loading.classList.add('hidden'); list.classList.remove('hidden');
+      } catch (_) { loading.classList.add('hidden'); errBox.classList.remove('hidden'); }
+    }
+
+    window.switchNewsTab = function(tab) {
+      ['kanyakumari','tamil','india','tn-jobs','central-jobs'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (!btn) return;
+        if (t === tab) { btn.classList.add('bg-white','text-[#0F5132]','shadow-sm'); btn.classList.remove('text-gray-500'); }
+        else { btn.classList.remove('bg-white','text-[#0F5132]','shadow-sm'); btn.classList.add('text-gray-500'); }
+      });
+      loadNews(tab);
+    };
+
+    if (_tok) loadNews('tamil');
+
+    // ── Scroll reveal ────────────────────────────────────────────────
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); revealObserver.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── Counter animation ────────────────────────────────────────────
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseInt(el.dataset.target, 10);
+        const suffix = el.dataset.suffix || '';
+        const duration = 1800;
+        const start = Date.now();
+        const tick = () => {
+          const p = Math.min((Date.now() - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.floor(eased * target).toLocaleString() + (p >= 1 ? suffix : '');
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        counterObserver.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.counter').forEach(el => counterObserver.observe(el));
   </script>
 
-  <!-- Modules Grid (Discord / Notion Style) -->
-  <section class="py-16 bg-[#f8f9fa] px-4">
-    <div class="max-w-6xl mx-auto px-2">
-      <div class="text-center max-w-2xl mx-auto mb-12 space-y-2">
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-ta="எல்லா சேவைகளும் ஒரே இடத்தில்" data-en="All Services in One Place">
-          All Services in One Place
-        </h2>
-        <p class="text-sm text-gray-500 leading-relaxed" data-ta="இரத்த தானம், விளையாட்டு, நிகழ்வுகள், பிரச்னைகள், பசுமை FYC — அனைத்தும் இங்கே." data-en="Blood donors, sports, events, civic issues, green drives, jobs — everything the community needs.">
-          Blood donors, sports, events, civic issues, green drives, jobs — everything the community needs.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {modules.map((m) => (
-          <a
-            href={m.href}
-            class={`group flex flex-col bg-gradient-to-br ${m.color} border rounded-2xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden`}
-          >
-            <!-- Module indicator tag -->
-            <span class="absolute top-4 right-4 text-[9px] font-extrabold uppercase tracking-widest bg-white/80 border border-gray-100 text-[#0F5132] px-2 py-0.5 rounded-full shadow-sm" data-ta={m.tag_ta} data-en={m.tag_en}>
-              {m.tag_ta}
-            </span>
-
-            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm mb-5 group-hover:scale-110 transition-transform">
-              {m.icon}
-            </div>
-
-            <h3 class="font-extrabold text-gray-900 text-lg mb-2 group-hover:text-[#0F5132] transition-colors" data-ta={m.ta.title} data-en={m.en.title}>
-              {m.ta.title}
-            </h3>
-            <p class="text-sm text-gray-500 leading-relaxed flex-1" data-ta={m.ta.desc} data-en={m.en.desc}>
-              {m.ta.desc}
-            </p>
-
-            <div class="mt-4 flex items-center gap-1.5 text-xs font-bold text-[#0F5132]">
-              <span data-ta="இப்போதே செல்" data-en="Get Started">Get Started</span>
-              <span class="group-hover:translate-x-1 transition-transform">→</span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Community Activity Feed & Updates (LinkedIn / Discord inspired) -->
-  <section class="py-16 bg-white px-4 border-t border-gray-100">
-    <div class="max-w-6xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <!-- Feed updates -->
-        <div class="lg:col-span-8 space-y-6">
-          <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
-            <span>📢</span>
-            <span data-ta="சமீபத்திய அறிவிப்புகள்" data-en="Recent Activity Feed">Recent Activity Feed</span>
-          </h2>
-
-          <div class="space-y-4">
-            {updates.map((up) => (
-              <div class="bg-white border border-gray-200/80 rounded-xl p-5 hover:border-gray-300 transition-colors shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl">
-                      {up.avatar}
-                    </div>
-                    <div>
-                      <div class="font-bold text-gray-900 text-sm">{up.name}</div>
-                      <div class="text-xs text-gray-500 font-medium">{up.role}</div>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">{up.tag}</span>
-                    <div class="text-[10px] text-gray-400 mt-1 font-medium">{up.time}</div>
-                  </div>
-                </div>
-                <p class="text-sm text-gray-700 leading-relaxed font-medium" data-ta={up.ta} data-en={up.en}>
-                  {up.ta}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <!-- Sidebar / Notion Info block -->
-        <div class="lg:col-span-4 space-y-6">
-          <div class="bg-[#f8f9fa] border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
-            <h3 class="font-bold text-gray-900 flex items-center gap-2" data-ta="எங்களை பற்றி" data-en="Who are We?">
-              <span>🤝</span>
-              <span>Who are We?</span>
-            </h3>
-            <p class="text-xs text-gray-600 leading-relaxed" data-ta="நண்பர்கள் இளைஞர் மன்றம் (Friends Youth Club) நாகர்கோவிலில் 2000-ல் தொடங்கப்பட்ட ஒரு சமூக சேவை அமைப்பாகும். மரங்கள் நடுதல், இரத்த கொடை, மற்றும் இளைஞர் விளையாட்டு போன்ற பணிகளை 25 ஆண்டுகளாக செய்து வருகிறோம்." data-en="Friends Youth Club (FYC) was established in 2000 in Nagercoil. For 25 years, our members and volunteers have driven grassroot initiatives in environmental sapling plantation, emergency blood donations, and youth tournament events.">
-              Friends Youth Club (FYC) was established in 2000 in Nagercoil. For 25 years, our members and volunteers have driven grassroot initiatives in environmental sapling plantation, emergency blood donations, and youth tournament events.
-            </p>
-            <div class="pt-2">
-              <a href="/about" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#0F5132] hover:underline">
-                <span data-ta="எங்கள் வரலாறு வாசி" data-en="Read our history">Read our history</span>
-                <span>→</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Quick Emergency call to action -->
-          <div class="bg-gradient-to-br from-[#991b1b] to-red-800 text-white rounded-2xl p-5 space-y-3 shadow-md">
-            <div class="flex items-center gap-2.5">
-              <span class="text-2xl">🩸</span>
-              <h3 class="font-bold" data-ta="இரத்த அவசரநிலை?" data-en="Need Blood urgently?">Need Blood urgently?</h3>
-            </div>
-            <p class="text-xs text-red-100 leading-relaxed" data-ta="நாகர்கோவில் பகுதியில் அவசர தேவைகளுக்காக உடனடியாக இரத்த கொடையாளர்களைத் தேடி தொடர்பு கொள்ளுங்கள்." data-en="Search verified donors in Nagercoil instantly. Access masked listings for emergencies.">
-              Search verified donors in Nagercoil instantly. Access masked listings for emergencies.
-            </p>
-            <div class="pt-2">
-              <a
-                href="/blood-donors"
-                class="inline-block bg-white text-[#991b1b] text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors shadow-sm"
-                data-ta="தானிகளை தேடு"
-                data-en="Search Donors Now"
-              >
-                Search Donors Now
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Verified Digital ID card invite -->
-  <section class="py-16 bg-[#0c3f27] text-white px-4 relative overflow-hidden">
-    <div class="absolute inset-0 bg-[#0F5132]/20 bg-[radial-gradient(circle_800px_at_100%_200px,#198754,transparent)]"></div>
-    <div class="max-w-4xl mx-auto text-center relative z-10 space-y-6">
-      <div class="text-4xl">🪪</div>
-      <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" data-ta="FYC டிஜிட்டல் உறுப்பினர் அட்டை பெறுங்கள்" data-en="Get Your Digital FYC Membership ID">
-        Get Your Digital FYC Membership ID
-      </h2>
-      <p class="text-sm text-green-100 max-w-xl mx-auto leading-relaxed" data-ta="மன்றத்தின் அங்கீகரிக்கப்பட்ட உறுப்பினராகி டிஜிட்டல் அட்டையைப் பெறுங்கள். உங்கள் பங்களிப்புகளைச் சரிபார்க்க QR குறியீடு இணைக்கப்பட்டுள்ளது." data-en="Apply through your volunteer coordinator or local admin to receive a verified glassmorphic digital membership card, equipped with a secure QR verification payload.">
-        Apply through your volunteer coordinator or local admin to receive a verified glassmorphic digital membership card, equipped with a secure QR verification payload.
-      </p>
-      <div class="pt-2">
-        <a
-          href="/verify"
-          class="inline-flex items-center gap-2 bg-[#D4AF37] text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-amber-400 hover:text-black transition-all shadow-lg active:scale-95"
-        >
-          <span>🔍</span>
-          <span data-ta="உறுப்பினர் அட்டை சரிபார்" data-en="Verify Membership Card">Verify Membership Card</span>
-        </a>
-      </div>
-    </div>
-  </section>
 </BaseLayout>

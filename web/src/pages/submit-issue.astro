@@ -17,6 +17,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   title="பிரச்னை தெரிவிக்க - Report a Public Issue"
   description="உங்கள் பகுதியில் உள்ள சாலை, விளக்கு, குடிநீர் பிரச்னைகளை ஆன்லைனில் தெரிவியுங்கள்."
 >
+  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
   <!-- Page Header -->
   <section class="bg-gradient-to-br from-primary-900 to-primary-700 text-white py-16 px-4">
     <div class="max-w-4xl mx-auto text-center">

@@ -6,123 +6,157 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
 ---
 
 <BaseLayout
-  title="உள்நுழைக - Login"
+  title="உள்நுழைக - Sign In"
   description="Sign in to FYC Connect with your Google account or phone number."
 >
-  <section class="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-gradient-to-br from-[#f8f9fa] via-white to-[#f0fdf4]">
-    <div class="w-full max-w-sm">
-      <!-- Card -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-        <!-- Logo -->
+  <!-- Redirect if already logged in -->
+  <script is:inline>
+    if (localStorage.getItem('fyc_token')) {
+      var next = new URLSearchParams(location.search).get('next') || '/';
+      location.replace(next);
+    }
+  </script>
+
+  <section class="min-h-[100svh] flex items-center justify-center px-4 py-16 bg-gradient-to-br from-[#030c06] via-[#0c3f27] to-[#0F5132] relative overflow-hidden">
+
+    <!-- Aurora blobs -->
+    <div class="absolute top-0 left-[20%] w-[400px] h-[400px] rounded-full bg-[#198754] opacity-20 blur-[100px] pointer-events-none"></div>
+    <div class="absolute bottom-0 right-[10%] w-[350px] h-[350px] rounded-full bg-[#D4AF37] opacity-10 blur-[90px] pointer-events-none"></div>
+
+    <div class="w-full max-w-sm relative z-10">
+
+      <!-- Glass card -->
+      <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
+
+        <!-- Logo + branding -->
         <div class="text-center mb-8">
-          <img src="/fyc_logo.png" alt="FYC" class="h-16 w-16 rounded-2xl mx-auto mb-3 shadow-sm border border-white/10" />
-          <h1 class="text-xl font-extrabold text-gray-900" data-ta="FYC Connect இல் உள்நுழைக" data-en="Sign in to FYC Connect">
-            FYC Connect இல் உள்நுழைக
-          </h1>
-          <p class="text-sm text-gray-500 mt-1" data-ta="நாகர்கோவில் சமூக இணைப்பு தளம்" data-en="Nagercoil Community Platform">
-            நாகர்கோவில் சமூக இணைப்பு தளம்
-          </p>
+          <div class="relative inline-block">
+            <img src="/fyc_logo.png" alt="FYC" class="h-16 w-16 rounded-2xl mx-auto mb-3 shadow-md border border-gray-100" />
+            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+              <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <h1 class="text-xl font-extrabold text-gray-900"
+            data-ta="FYC Connect இல் உள்நுழைக"
+            data-en="Sign in to FYC Connect"
+            data-ml="FYC Connect-ൽ സൈൻ ഇൻ"
+            data-hi="FYC Connect में साइन इन">Sign in to FYC Connect</h1>
+          <p class="text-xs text-gray-400 mt-1"
+            data-ta="நாகர்கோவில் சமூக இணைப்பு தளம்"
+            data-en="Nagercoil Community Platform"
+            data-ml="നഗർകോവിൽ കമ്മ്യൂണിറ്റി"
+            data-hi="नागरकोइल समुदाय">Nagercoil Community Platform</p>
         </div>
 
-        <!-- Alerts -->
-        <div id="login-error" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3"></div>
-        <div id="login-success" class="hidden mb-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3"></div>
+        <!-- Alert boxes -->
+        <div id="login-error" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-4 py-3"></div>
+        <div id="login-success" class="hidden mb-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-2xl px-4 py-3"></div>
 
         <!-- Google Sign-In -->
         {GOOGLE_CLIENT_ID ? (
-          <div class="mb-6">
-            <div id="google-signin-btn" class="flex justify-center"></div>
-            <p class="text-center text-xs text-gray-400 mt-3" data-ta="Google கணக்கு மூலம் உடனடியாக உள்நுழைக" data-en="Sign in instantly with your Google account">
-              Sign in instantly with your Google account
-            </p>
+          <div class="mb-5">
+            <div id="google-signin-btn" class="flex justify-center [&>div]:w-full [&>div>div]:w-full [&_iframe]:!w-full"></div>
+            <p class="text-center text-[11px] text-gray-400 mt-2.5"
+              data-ta="Google கணக்கு மூலம் உடனடியாக உள்நுழைக"
+              data-en="One-click sign in with Google"
+              data-ml="Google ഉപയോഗിച്ച് ഒറ്റ ക്ലിക്കിൽ"
+              data-hi="Google से एक क्लिक में साइन इन">One-click sign in with Google</p>
           </div>
 
-          <div class="relative mb-6">
+          <div class="relative mb-5">
             <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
             <div class="relative flex justify-center">
-              <span class="px-3 bg-white text-xs text-gray-400 font-medium" data-ta="அல்லது" data-en="or">அல்லது</span>
+              <span class="px-3 bg-white text-xs text-gray-400 font-medium"
+                data-ta="அல்லது" data-en="or" data-ml="അല്ലെങ്കിൽ" data-hi="या">or</span>
             </div>
           </div>
         ) : (
-          <div class="mb-4 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-xl px-4 py-3">
-            Google Sign-In is not configured yet. Use phone/OTP login below or contact the admin to enable it.
+          <div class="mb-4 bg-blue-50 border border-blue-100 text-blue-700 text-xs rounded-2xl px-4 py-3 flex items-start gap-2">
+            <span class="text-base">ℹ️</span>
+            <span>Google Sign-In is not configured. Use phone/OTP login below.</span>
           </div>
         )}
 
-        <!-- Phone / OTP login -->
+        <!-- OTP login flow -->
         <div id="otp-section">
-          <!-- Step 1: phone -->
+
+          <!-- Step 1: Phone number -->
           <div id="step-phone">
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5" data-ta="தொலைபேசி எண்" data-en="Phone number">
-              தொலைபேசி எண்
-            </label>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider"
+              data-ta="தொலைபேசி எண்" data-en="Phone Number" data-ml="ഫോൺ നമ്പർ" data-hi="फ़ोन नंबर">Phone Number</label>
             <div class="flex gap-2">
-              <span class="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-medium">+91</span>
+              <div class="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-bold flex-shrink-0">+91</div>
               <input
                 id="phone-input"
                 type="tel"
                 inputmode="numeric"
                 maxlength="10"
                 placeholder="98765 43210"
-                class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 focus:border-[#0F5132]"
+                class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all"
               />
             </div>
             <button
               id="send-otp-btn"
               onclick="sendOtp()"
-              class="mt-3 w-full py-2.5 bg-[#0F5132] text-white font-semibold rounded-xl text-sm hover:bg-[#136b41] active:scale-95 transition-all"
+              class="mt-3 w-full py-3 bg-[#0F5132] text-white font-bold rounded-xl text-sm hover:bg-[#136b41] active:scale-[0.98] transition-all shadow-sm"
             >
-              <span data-ta="OTP அனுப்பு" data-en="Send OTP">OTP அனுப்பு</span>
+              <span data-ta="OTP அனுப்பு" data-en="Send OTP" data-ml="OTP അയക്കൂ" data-hi="OTP भेजें">Send OTP</span>
             </button>
           </div>
 
-          <!-- Step 2: OTP -->
+          <!-- Step 2: OTP input -->
           <div id="step-otp" class="hidden">
-            <p class="text-sm text-gray-600 mb-3">
-              <span data-ta="OTP அனுப்பப்பட்டது:" data-en="OTP sent to:">OTP sent to:</span>
-              <strong id="otp-phone-display" class="text-gray-900"></strong>
-            </p>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5" data-ta="6-இலக்க OTP" data-en="6-digit OTP">6-இலக்க OTP</label>
+            <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-2 text-xs text-green-700">
+              <span>✅</span>
+              <span data-ta="OTP அனுப்பப்பட்டது:" data-en="OTP sent to:" data-ml="OTP അയച്ചു:" data-hi="OTP भेजा गया:">OTP sent to:</span>
+              <strong id="otp-phone-display" class="font-bold"></strong>
+            </div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider"
+              data-ta="6-இலக்க OTP" data-en="6-Digit Code" data-ml="6-അക്ക കോഡ്" data-hi="6-अंक कोड">6-Digit Code</label>
             <input
               id="otp-input"
               type="text"
               inputmode="numeric"
               maxlength="6"
-              placeholder="------"
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-center tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 focus:border-[#0F5132]"
+              placeholder="• • • • • •"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all"
             />
             <button
               id="verify-otp-btn"
               onclick="verifyOtp()"
-              class="mt-3 w-full py-2.5 bg-[#0F5132] text-white font-semibold rounded-xl text-sm hover:bg-[#136b41] active:scale-95 transition-all"
+              class="mt-3 w-full py-3 bg-[#0F5132] text-white font-bold rounded-xl text-sm hover:bg-[#136b41] active:scale-[0.98] transition-all shadow-sm"
             >
-              <span data-ta="உள்நுழை" data-en="Sign in">உள்நுழை</span>
+              <span data-ta="சரிபார்த்து உள்நுழை" data-en="Verify & Sign In" data-ml="സ്ഥിരീകരിക്കൂ" data-hi="सत्यापित करें">Verify &amp; Sign In</span>
             </button>
-            <button onclick="resetToPhone()" class="mt-2 w-full text-xs text-gray-400 hover:text-gray-600 py-1">
-              <span data-ta="மீண்டும் தொலைபேசி எண் மாற்று" data-en="Change phone number">Change phone number</span>
+            <button onclick="resetToPhone()" class="mt-2 w-full text-xs text-gray-400 hover:text-gray-600 py-1.5 transition-colors">
+              <span data-ta="← வேறு எண்" data-en="← Change number" data-ml="← നമ്പർ മാറ്റൂ" data-hi="← नंबर बदलें">← Change number</span>
             </button>
           </div>
 
           <!-- Step 3: Register (new user) -->
           <div id="step-register" class="hidden">
-            <div class="bg-blue-50 border border-blue-200 text-blue-700 text-xs rounded-xl px-4 py-3 mb-4">
-              <span data-ta="புதிய பயனர் — உங்கள் விவரங்களை பதிவு செய்யுங்கள்" data-en="New user — please register to continue">New user — please register to continue</span>
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-xs text-blue-700 flex items-center gap-2">
+              <span>👋</span>
+              <span data-ta="புதிய பயனர் — உங்கள் விவரங்களை பதிவு செய்யுங்கள்" data-en="New here! Please register to continue" data-ml="പുതിയ ഉപയോക്താവ് — രജിസ്റ്റർ ചെയ്യൂ" data-hi="नया उपयोगकर्ता — पंजीकरण करें">New here! Please register to continue</span>
             </div>
             <div class="space-y-3">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1" data-ta="பெயர் (தமிழில்)" data-en="Name (Tamil)">பெயர் (தமிழில்)</label>
+                <label class="block text-xs font-bold text-gray-600 mb-1.5"
+                  data-ta="பெயர் (தமிழில்)" data-en="Name in Tamil" data-ml="പേര് (തമിഴ്)" data-hi="नाम (तमिल में)">Name in Tamil</label>
                 <input id="reg-name-ta" type="text" placeholder="உதா: வருண் குமார்"
-                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 focus:border-[#0F5132]" />
+                  class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1" data-ta="பெயர் (ஆங்கிலத்தில்)" data-en="Name (English)">Name (English)</label>
+                <label class="block text-xs font-bold text-gray-600 mb-1.5"
+                  data-ta="பெயர் (ஆங்கிலத்தில்)" data-en="Name in English" data-ml="പേര് (ഇംഗ്ലീഷ്)" data-hi="नाम (अंग्रेजी में)">Name in English</label>
                 <input id="reg-name-en" type="text" placeholder="e.g. Varun Kumar"
-                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 focus:border-[#0F5132]" />
+                  class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1" data-ta="உறுப்பினர் வகை" data-en="Member type">Member type</label>
+                <label class="block text-xs font-bold text-gray-600 mb-1.5"
+                  data-ta="உறுப்பினர் வகை" data-en="Member type" data-ml="അംഗ തരം" data-hi="सदस्य प्रकार">Member type</label>
                 <select id="reg-role"
-                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/30 focus:border-[#0F5132] bg-white">
+                  class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all">
                   <option value="PUBLIC_CITIZEN">பொது குடிமகன் / Public Citizen</option>
                   <option value="VOLUNTEER">தன்னார்வலர் / Volunteer</option>
                   <option value="CLUB_MEMBER">கிளப் உறுப்பினர் / Club Member</option>
@@ -132,30 +166,35 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
             <button
               id="register-btn"
               onclick="registerUser()"
-              class="mt-4 w-full py-2.5 bg-[#0F5132] text-white font-semibold rounded-xl text-sm hover:bg-[#136b41] active:scale-95 transition-all"
+              class="mt-4 w-full py-3 bg-[#0F5132] text-white font-bold rounded-xl text-sm hover:bg-[#136b41] active:scale-[0.98] transition-all shadow-sm"
             >
-              <span data-ta="பதிவு செய்க" data-en="Register">பதிவு செய்க</span>
+              <span data-ta="பதிவு செய்க" data-en="Create Account" data-ml="അക്കൗണ്ട് ഉണ്ടാക്കൂ" data-hi="खाता बनाएं">Create Account</span>
             </button>
-            <button onclick="resetToPhone()" class="mt-2 w-full text-xs text-gray-400 hover:text-gray-600 py-1">
-              <span data-ta="மீண்டும் தொலைபேசி எண் மாற்று" data-en="Change phone number">Change phone number</span>
+            <button onclick="resetToPhone()" class="mt-2 w-full text-xs text-gray-400 hover:text-gray-600 py-1.5 transition-colors">
+              <span data-ta="← மீண்டும்" data-en="← Back" data-ml="← തിരികെ" data-hi="← वापस">← Back</span>
             </button>
           </div>
         </div>
 
-        <!-- Loading overlay -->
+        <!-- Loading spinner -->
         <div id="login-loading" class="hidden mt-4 text-center">
           <div class="inline-block w-6 h-6 border-2 border-[#0F5132] border-t-transparent rounded-full animate-spin"></div>
         </div>
 
         <p class="mt-6 text-center text-[11px] text-gray-400 leading-relaxed">
-          <span data-ta="உள்நுழைவதன் மூலம் நீங்கள் எங்கள் விதிமுறைகளை ஒப்புக்கொள்கிறீர்கள்" data-en="By signing in you agree to our terms of service">
+          <span
+            data-ta="உள்நுழைவதன் மூலம் நீங்கள் எங்கள் விதிமுறைகளை ஒப்புக்கொள்கிறீர்கள்"
+            data-en="By signing in you agree to our terms of service"
+            data-ml="സൈൻ ഇൻ ചെയ്യുന്നതിലൂടെ നിങ്ങൾ ഞങ്ങളുടെ നിബന്ധനകൾ അംഗീകരിക്കുന്നു"
+            data-hi="साइन इन करने से आप हमारी सेवा शर्तों से सहमत हैं">
             By signing in you agree to our terms of service
           </span>
         </p>
       </div>
 
-      <p class="text-center text-xs text-gray-400 mt-4">
-        <a href="/" class="hover:text-gray-600 transition-colors" data-ta="← முகப்பு பக்கம்" data-en="← Back to home">← Back to home</a>
+      <p class="text-center text-xs text-white/50 mt-5">
+        <a href="/" class="hover:text-white/80 transition-colors"
+          data-ta="← முகப்பு பக்கம்" data-en="← Back to home" data-ml="← ഹോം" data-hi="← होम">← Back to home</a>
       </p>
     </div>
   </section>
@@ -166,7 +205,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
 )}
 
 <script define:vars={{ API_BASE, DEFAULT_ORG_ID, GOOGLE_CLIENT_ID }}>
-  // ── Utilities ─────────────────────────────────────────────────────────────
+  // ── Utilities ──────────────────────────────────────────────────────────
   function showError(msg) {
     const el = document.getElementById('login-error');
     el.textContent = msg;
@@ -181,29 +220,29 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   }
   function setLoading(on) {
     document.getElementById('login-loading').classList.toggle('hidden', !on);
-    ['send-otp-btn', 'verify-otp-btn'].forEach(id => {
+    ['send-otp-btn', 'verify-otp-btn', 'register-btn'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) btn.disabled = on;
     });
   }
-
-  // Store JWT + user and redirect
   function onAuthSuccess(data) {
     localStorage.setItem('fyc_token', data.access_token);
     localStorage.setItem('fyc_user', JSON.stringify(data.user ?? {}));
-    showSuccess('ஆம்! உள்நுழைவு வெற்றிகரமாக முடிந்தது. / Signed in successfully!');
+    showSuccess('✅ Signed in successfully!');
     setTimeout(() => {
-      const next = new URLSearchParams(window.location.search).get('next') || '/';
-      window.location.href = next;
-    }, 800);
+      const next = new URLSearchParams(location.search).get('next') || '/';
+      location.href = next;
+    }, 700);
   }
 
-  // ── Google Sign-In ─────────────────────────────────────────────────────────
+  // ── Google Sign-In (standard button for login page) ────────────────────
   if (GOOGLE_CLIENT_ID) {
     window.addEventListener('load', () => {
       if (typeof google === 'undefined') return;
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
+        auto_select: false,
+        cancel_on_tap_outside: true,
         callback: async (resp) => {
           setLoading(true);
           try {
@@ -224,17 +263,20 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
       });
       google.accounts.id.renderButton(
         document.getElementById('google-signin-btn'),
-        { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
+        { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 300, logo_alignment: 'left' }
       );
+      // Also prompt One Tap on login page
+      google.accounts.id.prompt();
     });
   }
 
-  // ── OTP flow ───────────────────────────────────────────────────────────────
+  // ── OTP flow ───────────────────────────────────────────────────────────
   let _verificationId = '';
+  let _phoneForRegister = '';
 
   window.sendOtp = async function () {
     const raw = document.getElementById('phone-input').value.trim().replace(/\s/g, '');
-    if (!/^\d{10}$/.test(raw)) { showError('10-digit phone number required.'); return; }
+    if (!/^\d{10}$/.test(raw)) { showError('Enter a valid 10-digit mobile number.'); return; }
     const phone = '+91' + raw;
     setLoading(true);
     try {
@@ -246,7 +288,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to send OTP');
       _verificationId = data.verification_id;
-      document.getElementById('otp-phone-display').textContent = ' ' + phone;
+      document.getElementById('otp-phone-display').textContent = phone;
       document.getElementById('step-phone').classList.add('hidden');
       document.getElementById('step-otp').classList.remove('hidden');
       document.getElementById('otp-input').focus();
@@ -257,8 +299,6 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
       setLoading(false);
     }
   };
-
-  let _phoneForRegister = '';
 
   window.verifyOtp = async function () {
     const otp = document.getElementById('otp-input').value.trim();
@@ -272,7 +312,6 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
       });
       const data = await res.json();
       if (res.status === 404 && data.detail?.toLowerCase().includes('register')) {
-        // New user — show registration form
         _phoneForRegister = document.getElementById('otp-phone-display').textContent.trim();
         document.getElementById('step-otp').classList.add('hidden');
         document.getElementById('step-register').classList.remove('hidden');
@@ -322,18 +361,11 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   window.resetToPhone = function () {
     _verificationId = '';
     _phoneForRegister = '';
-    document.getElementById('step-otp').classList.add('hidden');
-    document.getElementById('step-register').classList.add('hidden');
+    ['step-otp', 'step-register'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById('step-phone').classList.remove('hidden');
     document.getElementById('login-error').classList.add('hidden');
     document.getElementById('otp-input').value = '';
   };
-
-  // Redirect if already logged in
-  if (localStorage.getItem('fyc_token')) {
-    const next = new URLSearchParams(window.location.search).get('next') || '/';
-    window.location.replace(next);
-  }
 
   // Enter key shortcuts
   document.getElementById('phone-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') window.sendOtp(); });

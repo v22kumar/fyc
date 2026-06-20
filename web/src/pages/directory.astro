@@ -8,6 +8,7 @@ const ORG_ID = DEFAULT_ORG_ID;
   title="சமூக கடை - Community Directory"
   description="Find carpenters, electricians, doctors, tutors and more in Nagercoil. FYC Community Skills Directory."
 >
+  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
   <!-- Hero -->
   <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-14 px-4">
     <div class="max-w-3xl mx-auto text-center">

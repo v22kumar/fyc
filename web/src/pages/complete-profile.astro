@@ -7,6 +7,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   title="உங்கள் சுயவிவரத்தை நிரப்புங்கள் — Complete Your Profile"
   description="FYC Connect — உங்கள் சுயவிவரத்தை முழுமையாக நிரப்பி சமூகத்துடன் இணையுங்கள்."
 >
+  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
   <!-- Header -->
   <section class="bg-gradient-to-br from-[#0c3f27] to-[#0F5132] text-white py-14 px-4">
     <div class="max-w-2xl mx-auto text-center">

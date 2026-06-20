@@ -5,18 +5,16 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title: string;
   description?: string;
-  lang?: 'ta' | 'en';
 }
 
-const {
-  title,
-  description = 'FYC Connect - Community Service Platform by Friends Youth Club, Nagercoil',
-  lang = 'ta',
-} = Astro.props;
+const { title, description = 'FYC Connect - Community Service Platform by Friends Youth Club, Nagercoil' } = Astro.props;
+const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://fyc-backend.fly.dev';
+const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
 ---
 
 <!doctype html>
-<html lang={lang} class="scroll-smooth">
+<html lang="ta" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,27 +24,120 @@ const {
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#064e3b" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet" />
     <title>{title} | FYC Connect</title>
   </head>
-  <body class="bg-gray-50 text-gray-900 font-sans antialiased">
+  <body class="bg-gray-50 text-gray-900 antialiased" style="font-family:'Inter',sans-serif">
+
+    <!-- CRITICAL INLINE: runs before paint — sets auth class + lang on <html> -->
+    <script is:inline>
+      (function () {
+        try {
+          var isAuth = !!localStorage.getItem('fyc_token');
+          document.documentElement.classList.add(isAuth ? 'is-auth' : 'is-guest');
+          var lang = localStorage.getItem('fyc_lang') || 'ta';
+          document.documentElement.setAttribute('data-lang', lang);
+        } catch (_) {
+          document.documentElement.classList.add('is-guest');
+        }
+      })();
+    </script>
+
     <Header />
-    <main>
-      <slot />
-    </main>
+    <main><slot /></main>
     <Footer />
 
-    <!-- Header weather + gold strip -->
+    <!-- Google One Tap SDK -->
+    {GOOGLE_CLIENT_ID && <script src="https://accounts.google.com/gsi/client" async></script>}
+
+    <!-- Google One Tap: auto-prompts for guests not on login page -->
+    <script define:vars={{ GOOGLE_CLIENT_ID, API_BASE, DEFAULT_ORG_ID }}>
+      if (GOOGLE_CLIENT_ID && !localStorage.getItem('fyc_token') && !window.location.pathname.startsWith('/login')) {
+        window.addEventListener('load', function () {
+          if (typeof google === 'undefined') return;
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            auto_select: true,
+            cancel_on_tap_outside: true,
+            context: 'signin',
+            callback: async function (resp) {
+              try {
+                var res = await fetch(API_BASE + '/api/v1/auth/google', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ organization_id: DEFAULT_ORG_ID, id_token: resp.credential }),
+                });
+                var data = await res.json();
+                if (res.ok) {
+                  localStorage.setItem('fyc_token', data.access_token);
+                  localStorage.setItem('fyc_user', JSON.stringify(data.user || {}));
+                  window.location.reload();
+                }
+              } catch (_) {}
+            },
+          });
+          google.accounts.id.prompt();
+        });
+      }
+    </script>
+
+    <!-- i18n engine: 4 languages (ta/en/ml/hi) -->
+    <script>
+      const LANG_META = {
+        ta: { label: 'தமிழ்',   flag: 'TA' },
+        en: { label: 'English',  flag: 'EN' },
+        ml: { label: 'മലയാളം', flag: 'ML' },
+        hi: { label: 'हिन्दी',   flag: 'HI' },
+      } as const;
+      type Lang = keyof typeof LANG_META;
+      const LANG_ORDER: Lang[] = ['ta', 'en', 'ml', 'hi'];
+
+      function getLang(): Lang { return (localStorage.getItem('fyc_lang') as Lang) || 'ta'; }
+
+      function applyLang(lang: Lang) {
+        document.documentElement.setAttribute('data-lang', lang);
+        document.querySelectorAll<HTMLElement>('[data-ta]').forEach((el) => {
+          const val = (el.dataset as any)[lang] || el.dataset.en || el.dataset.ta || '';
+          if (val) el.textContent = val;
+        });
+        document.querySelectorAll<HTMLInputElement>('[data-placeholder-ta]').forEach((el) => {
+          const key = 'placeholder' + lang.charAt(0).toUpperCase() + lang.slice(1);
+          el.placeholder = (el.dataset as any)[key] || el.dataset.placeholderEn || el.dataset.placeholderTa || '';
+        });
+        const meta = LANG_META[lang];
+        document.querySelectorAll('.lang-flag').forEach(el => { el.textContent = meta.flag; });
+        document.querySelectorAll('.lang-label').forEach(el => { el.textContent = meta.label; });
+      }
+
+      (window as any).setLang = function (lang: Lang) {
+        localStorage.setItem('fyc_lang', lang);
+        applyLang(lang);
+        document.getElementById('lang-dropdown')?.classList.add('hidden');
+      };
+
+      (window as any).toggleLangPicker = function () {
+        document.getElementById('lang-dropdown')?.classList.toggle('hidden');
+      };
+
+      // Close dropdown on outside click
+      document.addEventListener('click', (e) => {
+        const picker = document.getElementById('lang-picker');
+        if (picker && !picker.contains(e.target as Node)) {
+          document.getElementById('lang-dropdown')?.classList.add('hidden');
+        }
+      });
+
+      applyLang(getLang());
+    </script>
+
+    <!-- Header weather + gold price -->
     <script>
       (function () {
         const API = 'https://fyc-backend.fly.dev';
         const wEl = document.getElementById('hdr-weather');
         const gEl = document.getElementById('hdr-gold');
-        const fmt = (n) => {
+        const fmt = (n: number | null) => {
           if (n == null) return '—';
           const s = Math.round(n).toString();
           if (s.length <= 3) return '₹' + s;
@@ -59,125 +150,67 @@ const {
           }
           return '₹' + out + ',' + last3;
         };
-
-        const fetchWeather = (lat, lon) => {
-          fetch(API + '/api/v1/utilities/weather?lat=' + lat + '&lon=' + lon)
-            .then((r) => r.json())
-            .then((w) => {
-              if (w.temp == null) return;
-              const city = w.city || 'Nagercoil';
-              if (wEl) wEl.textContent = '🌤 ' + Math.round(w.temp) + '°C · ' + city;
-            })
-            .catch(() => {});
+        fetch(API + '/api/v1/utilities/gold-price').then(r => r.json()).then(g => {
+          if (gEl && g.price_per_gram_22k != null) gEl.textContent = '🪙 22K ' + fmt(g.price_per_gram_22k) + '/g';
+        }).catch(() => {});
+        const fw = (lat: number, lon: number) => {
+          fetch(API + '/api/v1/utilities/weather?lat=' + lat + '&lon=' + lon).then(r => r.json()).then(w => {
+            if (w.temp == null) return;
+            if (wEl) wEl.textContent = '🌤 ' + Math.round(w.temp) + '°C · ' + (w.city || 'Nagercoil');
+          }).catch(() => {});
         };
-
-        fetch(API + '/api/v1/utilities/gold-price')
-          .then((r) => r.json())
-          .then((g) => {
-            if (gEl && g.price_per_gram_22k != null)
-              gEl.textContent = '🪙 22K ' + fmt(g.price_per_gram_22k) + '/g';
-          })
-          .catch(() => {});
-
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (p) => fetchWeather(p.coords.latitude, p.coords.longitude),
-            () => fetchWeather(8.1833, 77.4119),
-            { timeout: 8000, maximumAge: 300000 }
-          );
-        } else {
-          fetchWeather(8.1833, 77.4119);
-        }
+        navigator.geolocation
+          ? navigator.geolocation.getCurrentPosition(p => fw(p.coords.latitude, p.coords.longitude), () => fw(8.1833, 77.4119), { timeout: 8000, maximumAge: 300000 })
+          : fw(8.1833, 77.4119);
       })();
     </script>
 
-    <!-- Auth state: show Login or user avatar in header -->
+    <!-- Header auth state -->
     <script>
       (function () {
         const token = localStorage.getItem('fyc_token');
         const userStr = localStorage.getItem('fyc_user');
-
-        const loginBtns = [
-          document.getElementById('hdr-login-btn'),
-          document.getElementById('hdr-login-btn-mobile'),
-        ];
-        const userMenus = [
-          document.getElementById('hdr-user-menu'),
-          document.getElementById('hdr-user-menu-mobile'),
-        ];
-        const avatars = [
-          document.getElementById('hdr-user-avatar'),
-          document.getElementById('hdr-user-avatar-mobile'),
-        ];
-        const nameEl = document.getElementById('hdr-user-name');
-
         if (token && userStr) {
           try {
             const user = JSON.parse(userStr);
             const initial = (user.full_name_en || user.email || 'U')[0].toUpperCase();
-            loginBtns.forEach(el => el?.classList.add('hidden'));
-            userMenus.forEach(el => el?.classList.remove('hidden'));
-            avatars.forEach(el => { if (el) el.textContent = initial; });
+            ['hdr-login-btn', 'hdr-login-btn-mobile'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+            ['hdr-user-menu', 'hdr-user-menu-mobile'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
+            ['hdr-user-avatar', 'hdr-user-avatar-mobile'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = initial; });
+            const nameEl = document.getElementById('hdr-user-name');
             if (nameEl) nameEl.textContent = user.full_name_en || user.email || 'FYC User';
           } catch (_) {}
         }
-
-        window.toggleUserMenu = function () {
-          document.getElementById('hdr-user-dropdown')?.classList.toggle('hidden');
-        };
-
-        window.signOut = function () {
+        (window as any).toggleUserMenu = () => document.getElementById('hdr-user-dropdown')?.classList.toggle('hidden');
+        (window as any).signOut = () => {
           localStorage.removeItem('fyc_token');
           localStorage.removeItem('fyc_user');
-          window.location.reload();
+          window.location.href = '/';
         };
-
-        // Close dropdown on outside click
         document.addEventListener('click', (e) => {
-          const dropdown = document.getElementById('hdr-user-dropdown');
-          const avatar = document.getElementById('hdr-user-avatar');
-          if (dropdown && !dropdown.contains(e.target) && e.target !== avatar) {
-            dropdown.classList.add('hidden');
+          const dd = document.getElementById('hdr-user-dropdown');
+          if (dd && !dd.contains(e.target as Element) && e.target !== document.getElementById('hdr-user-avatar')) {
+            dd.classList.add('hidden');
           }
         });
       })();
     </script>
 
-    <!-- Global i18n script: reads localStorage lang preference and applies to page -->
+    <!-- Protected link interceptor for guests -->
     <script>
-      type Lang = 'ta' | 'en';
-
-      function getLang(): Lang {
-        return (localStorage.getItem('fyc_lang') as Lang) || 'ta';
-      }
-
-      function applyLang(lang: Lang) {
-        document.documentElement.setAttribute('data-lang', lang);
-        // Update all translatable elements
-        document.querySelectorAll<HTMLElement>('[data-ta][data-en]').forEach((el) => {
-          el.textContent = lang === 'ta' ? (el.dataset.ta ?? '') : (el.dataset.en ?? '');
+      (function () {
+        const PROTECTED = ['/blood-donors', '/events', '/sports', '/submit-issue', '/directory', '/verify', '/green', '/opportunities', '/complete-profile', '/admin', '/users'];
+        if (localStorage.getItem('fyc_token')) return;
+        document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
+          const href = a.getAttribute('href') || '';
+          if (PROTECTED.some(p => href === p || href.startsWith(p + '/'))) {
+            a.addEventListener('click', (e) => {
+              e.preventDefault();
+              window.location.href = '/login?next=' + encodeURIComponent(href);
+            });
+          }
         });
-        // Update placeholder attributes
-        document.querySelectorAll<HTMLInputElement>('[data-placeholder-ta][data-placeholder-en]').forEach((el) => {
-          el.placeholder = lang === 'ta' ? (el.dataset.placeholderTa ?? '') : (el.dataset.placeholderEn ?? '');
-        });
-        // Update lang toggle button text
-        const toggleBtn = document.getElementById('lang-toggle');
-        if (toggleBtn) {
-          toggleBtn.textContent = lang === 'ta' ? 'English' : 'தமிழ்';
-        }
-      }
-
-      // Toggle language and persist choice
-      window.toggleLang = function () {
-        const current = getLang();
-        const next: Lang = current === 'ta' ? 'en' : 'ta';
-        localStorage.setItem('fyc_lang', next);
-        applyLang(next);
-      };
-
-      // Apply on load
-      applyLang(getLang());
+      })();
     </script>
   </body>
 </html>
