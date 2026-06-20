@@ -72,6 +72,10 @@ class ApiConstants {
   static const String newsTnJobs = '/api/v1/news/tn-jobs';
   static const String newsCentralJobs = '/api/v1/news/central-jobs';
 
+  // User profile
+  static const String fcmToken = '/api/v1/users/me/fcm-token';
+  static const String myProfile = '/api/v1/users/me/profile';
+
   // Utilities
   static const String weatherCurrent = '/api/v1/utilities/weather';
   static const String goldPrice = '/api/v1/utilities/gold-price';
