@@ -102,6 +102,18 @@ def _seed_database():
             "CREATE INDEX IF NOT EXISTS ix_bd_geography ON blood_donors (geography_id)"
         ))
         db.commit()
+
+        # Add new columns to existing DB if not present (idempotent)
+        for migration in [
+            ("user_profiles", "date_of_birth", "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE"),
+            ("users", "fcm_token", "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)"),
+        ]:
+            table, col, sql = migration
+            cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
+            if col not in [c[1] for c in cols]:
+                db.execute(text(sql))
+                db.commit()
+                print(f"[migration] Added column {table}.{col}")
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
@@ -124,20 +136,23 @@ async def lifespan(app: FastAPI):
     except Exception as _e:
         logger.warning(f"[startup] Cache pre-warm failed: {_e}")
 
-    # Daily morning broadcast scheduler (6:00 AM IST = 00:30 UTC)
-    scheduler = None
+    # Schedulers — birthday always on; morning broadcast requires MORNING_BROADCAST_ENABLED
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from app.services.birthdays import run_birthday_notifications
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
+                      id="birthday_notifications", replace_existing=True)
     if settings.MORNING_BROADCAST_ENABLED:
-        from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from app.services.whatsapp_broadcast import run_morning_broadcast
-        scheduler = AsyncIOScheduler()
         scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
                           id="morning_broadcast", replace_existing=True)
-        scheduler.start()
         logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
+    scheduler.start()
+    logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
 
     yield
 
-    if scheduler and scheduler.running:
+    if scheduler.running:
         scheduler.shutdown(wait=False)
 
 

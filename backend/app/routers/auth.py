@@ -14,7 +14,7 @@ from app.services.otp_sender import send_otp as deliver_otp
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
-from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin
+from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin, _build_user_out
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -101,7 +101,8 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
         organization_id=str(user.organization_id),
     )
 
-    return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/register", response_model=Token)
@@ -164,7 +165,8 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
         organization_id=str(user.organization_id),
     )
 
-    return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/login/password", response_model=Token)
@@ -191,7 +193,8 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
         organization_id=str(user.organization_id),
     )
 
-    return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
 
 
 from app.dependencies import get_current_user
@@ -290,10 +293,12 @@ def google_sign_in(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
         role=user.role,
         organization_id=str(user.organization_id),
     )
-    return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.get("/users/me", response_model=UserOut)
-def get_me(current_user: User = Depends(get_current_user)):
-    """Return the currently authenticated user."""
-    return current_user
+def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return the currently authenticated user with profile."""
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    return _build_user_out(current_user, profile)

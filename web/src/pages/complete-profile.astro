@@ -1,0 +1,266 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE } from '../lib/config';
+---
+
+<BaseLayout
+  title="உங்கள் சுயவிவரத்தை நிரப்புங்கள் — Complete Your Profile"
+  description="FYC Connect — உங்கள் சுயவிவரத்தை முழுமையாக நிரப்பி சமூகத்துடன் இணையுங்கள்."
+>
+  <!-- Header -->
+  <section class="bg-gradient-to-br from-[#0c3f27] to-[#0F5132] text-white py-14 px-4">
+    <div class="max-w-2xl mx-auto text-center">
+      <div class="text-5xl mb-4">✏️</div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight" data-ta="சுயவிவரம் நிரப்புங்கள்" data-en="Complete Your Profile">
+        சுயவிவரம் நிரப்புங்கள்
+      </h1>
+      <p class="text-green-100 text-sm leading-relaxed" data-ta="உங்கள் பெயர், பிறந்த நாள் மற்றும் பாலினம் சேர்க்கவும். இது ஒரு முறை மட்டுமே தேவை." data-en="Add your name, date of birth and gender. This is needed only once.">
+        உங்கள் பெயர், பிறந்த நாள் மற்றும் பாலினம் சேர்க்கவும். இது ஒரு முறை மட்டுமே தேவை.
+      </p>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="py-12 px-4">
+    <div class="max-w-xl mx-auto">
+      <!-- Success message (hidden by default) -->
+      <div id="success-msg" class="hidden bg-green-50 border border-green-200 rounded-2xl p-6 mb-6 text-center">
+        <div class="text-4xl mb-3">✅</div>
+        <h3 class="font-bold text-green-800 text-lg mb-2" data-ta="சுயவிவரம் புதுப்பிக்கப்பட்டது!" data-en="Profile Updated!">
+          சுயவிவரம் புதுப்பிக்கப்பட்டது!
+        </h3>
+        <p class="text-green-700 text-sm" data-ta="இப்போது முகப்பு பக்கத்திற்கு அழைத்துச் செல்கிறோம்..." data-en="Redirecting to the home page...">
+          இப்போது முகப்பு பக்கத்திற்கு அழைத்துச் செல்கிறோம்...
+        </p>
+      </div>
+
+      <!-- Error message -->
+      <div id="error-msg" class="hidden bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 text-sm text-red-700"></div>
+
+      <!-- Profile form card -->
+      <div id="profile-form-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-6 sm:p-8">
+        <form id="profile-form" class="space-y-5" novalidate>
+
+          <!-- Tamil name -->
+          <div>
+            <label for="full_name_ta" class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="முழு பெயர் (தமிழ்)" data-en="Full Name (Tamil)">முழு பெயர் (தமிழ்)</span>
+              <span class="text-red-500 ml-0.5">*</span>
+            </label>
+            <input
+              type="text"
+              id="full_name_ta"
+              name="full_name_ta"
+              autocomplete="name"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#198754]/40 focus:border-[#198754] transition-all"
+              data-placeholder-ta="உ.ம். அருண் குமார்"
+              data-placeholder-en="e.g. Arun Kumar (in Tamil)"
+              placeholder="உ.ம். அருண் குமார்"
+            />
+          </div>
+
+          <!-- English name -->
+          <div>
+            <label for="full_name_en" class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="முழு பெயர் (ஆங்கிலம்)" data-en="Full Name (English)">முழு பெயர் (ஆங்கிலம்)</span>
+              <span class="text-red-500 ml-0.5">*</span>
+            </label>
+            <input
+              type="text"
+              id="full_name_en"
+              name="full_name_en"
+              autocomplete="name"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#198754]/40 focus:border-[#198754] transition-all"
+              data-placeholder-ta="உ.ம். Arun Kumar"
+              data-placeholder-en="e.g. Arun Kumar"
+              placeholder="e.g. Arun Kumar"
+            />
+          </div>
+
+          <!-- Date of birth -->
+          <div>
+            <label for="date_of_birth" class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="பிறந்த நாள்" data-en="Date of Birth">பிறந்த நாள்</span>
+              <span class="text-red-500 ml-0.5">*</span>
+            </label>
+            <input
+              type="date"
+              id="date_of_birth"
+              name="date_of_birth"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#198754]/40 focus:border-[#198754] transition-all"
+            />
+          </div>
+
+          <!-- Gender -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span data-ta="பாலினம்" data-en="Gender">பாலினம்</span>
+              <span class="text-red-500 ml-0.5">*</span>
+            </label>
+            <div class="flex flex-wrap gap-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="gender" value="MALE" class="accent-[#198754] w-4 h-4" />
+                <span class="text-sm text-gray-700" data-ta="ஆண்" data-en="Male">ஆண்</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="gender" value="FEMALE" class="accent-[#198754] w-4 h-4" />
+                <span class="text-sm text-gray-700" data-ta="பெண்" data-en="Female">பெண்</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="gender" value="OTHER" class="accent-[#198754] w-4 h-4" />
+                <span class="text-sm text-gray-700" data-ta="மற்றவை" data-en="Other">மற்றவை</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Phone (optional, only shown when no phone set) -->
+          <div id="phone-field" class="hidden">
+            <label for="phone_number" class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <span data-ta="கைபேசி எண் (விரும்பினால்)" data-en="Phone Number (optional)">கைபேசி எண் (விரும்பினால்)</span>
+            </label>
+            <input
+              type="tel"
+              id="phone_number"
+              name="phone_number"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#198754]/40 focus:border-[#198754] transition-all"
+              data-placeholder-ta="உ.ம். +919876543210"
+              data-placeholder-en="e.g. +919876543210"
+              placeholder="+919876543210"
+            />
+          </div>
+
+          <!-- Submit button -->
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full bg-[#0F5132] text-white font-bold py-3.5 rounded-xl hover:bg-[#136b41] active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 mt-2"
+          >
+            <span id="submit-icon">✓</span>
+            <span id="submit-text" data-ta="சேமி & தொடர்" data-en="Save & Continue">சேமி & தொடர்</span>
+          </button>
+
+          <p class="text-xs text-center text-gray-400 mt-3" data-ta="இந்தத் தகவல்கள் பிறந்த நாள் வாழ்த்துகளுக்கும் சமூக அங்கீகாரத்திற்கும் பயன்படும்." data-en="This information will be used for birthday wishes and community recognition.">
+            இந்தத் தகவல்கள் பிறந்த நாள் வாழ்த்துகளுக்கும் சமூக அங்கீகாரத்திற்கும் பயன்படும்.
+          </p>
+        </form>
+      </div>
+
+      <!-- Skip link -->
+      <div class="text-center mt-4">
+        <a href="/" class="text-xs text-gray-400 hover:text-gray-600 underline" data-ta="இப்போது வேண்டாம், பிறகு நிரப்புவேன்" data-en="Skip for now, I'll complete it later">
+          இப்போது வேண்டாம், பிறகு நிரப்புவேன்
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script define:vars={{ API_BASE }}>
+    // Redirect to login if not authenticated
+    const token = localStorage.getItem('fyc_token');
+    if (!token) {
+      window.location.replace('/login');
+    }
+
+    // Pre-fill from stored user data
+    const userStr = localStorage.getItem('fyc_user');
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.full_name_ta) document.getElementById('full_name_ta').value = u.full_name_ta;
+        if (u.full_name_en) document.getElementById('full_name_en').value = u.full_name_en;
+        if (u.date_of_birth) document.getElementById('date_of_birth').value = u.date_of_birth;
+        if (u.gender) {
+          const radio = document.querySelector(`input[name="gender"][value="${u.gender}"]`);
+          if (radio) radio.checked = true;
+        }
+        // Show phone field if user has no phone (Google-only accounts)
+        if (!u.phone_number) {
+          document.getElementById('phone-field')?.classList.remove('hidden');
+        }
+      } catch (_) {}
+    }
+
+    const form = document.getElementById('profile-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitIcon = document.getElementById('submit-icon');
+    const errorMsg = document.getElementById('error-msg');
+    const successMsg = document.getElementById('success-msg');
+    const formCard = document.getElementById('profile-form-card');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.classList.add('hidden');
+
+      const full_name_ta = document.getElementById('full_name_ta').value.trim();
+      const full_name_en = document.getElementById('full_name_en').value.trim();
+      const date_of_birth = document.getElementById('date_of_birth').value;
+      const genderRadio = document.querySelector('input[name="gender"]:checked');
+      const gender = genderRadio ? genderRadio.value : null;
+      const phone_number = document.getElementById('phone_number').value.trim() || null;
+
+      // Validation
+      if (!full_name_ta || !full_name_en) {
+        errorMsg.textContent = 'தமிழ் மற்றும் ஆங்கிலத்தில் பெயர் தேவை. / Name in both Tamil and English is required.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (!date_of_birth) {
+        errorMsg.textContent = 'பிறந்த நாள் தேவை. / Date of birth is required.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (!gender) {
+        errorMsg.textContent = 'பாலினம் தேர்ந்தெடுக்கவும். / Please select your gender.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      // Loading state
+      submitBtn.disabled = true;
+      submitIcon.textContent = '⏳';
+      submitText.textContent = 'சேமிக்கிறது… / Saving…';
+
+      const payload = { full_name_ta, full_name_en, date_of_birth, gender };
+      if (phone_number) payload.phone_number = phone_number;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/users/me/profile`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+
+        const updatedUser = await res.json();
+
+        // Update localStorage with fresh user data
+        localStorage.setItem('fyc_user', JSON.stringify(updatedUser));
+
+        // Show success
+        formCard.classList.add('hidden');
+        successMsg.classList.remove('hidden');
+
+        // Redirect to home after short delay
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 1500);
+
+      } catch (err) {
+        errorMsg.textContent = err.message || 'ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும். / Something went wrong. Please try again.';
+        errorMsg.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitIcon.textContent = '✓';
+        const lang = localStorage.getItem('fyc_lang') || 'ta';
+        submitText.textContent = lang === 'ta' ? 'சேமி & தொடர்' : 'Save & Continue';
+      }
+    });
+  </script>
+</BaseLayout>

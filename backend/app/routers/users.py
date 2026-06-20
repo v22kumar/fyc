@@ -1,17 +1,20 @@
 import datetime
+from datetime import date
 from io import BytesIO
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 
 from app.core.database import get_db
 from app.dependencies import get_current_user, RoleChecker
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.tenant import Organization
-from app.schemas.auth import UserOut
+from app.schemas.auth import UserOut, _build_user_out
 from app.services.certificates import generate_volunteer_certificate
-from pydantic import BaseModel, ConfigDict
+from app.middleware.tenant import require_tenant_id
+from pydantic import BaseModel, BaseModel as _BaseModel, ConfigDict
 from uuid import UUID
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -24,7 +27,7 @@ class UserWithProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    phone_number: str
+    phone_number: Optional[str] = None
     role: str
     is_verified: bool
     preferred_language: str
@@ -39,27 +42,27 @@ def list_users(
     current_user: User = Depends(require_admin),
 ):
     """List users in the current tenant, optionally filtered by role (admin only)."""
-    query = db.query(User).filter(User.organization_id == current_user.organization_id)
+    query = (
+        db.query(User, UserProfile)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .filter(User.organization_id == current_user.organization_id)
+    )
     if role:
         query = query.filter(User.role == role.upper())
 
-    users = query.order_by(User.role).all()
-
-    result = []
-    for user in users:
-        profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-        result.append(
-            UserWithProfile(
-                id=user.id,
-                phone_number=user.phone_number,
-                role=user.role,
-                is_verified=user.is_verified,
-                preferred_language=user.preferred_language,
-                full_name_ta=profile.full_name_ta if profile else None,
-                full_name_en=profile.full_name_en if profile else None,
-            )
+    rows = query.order_by(User.role).all()
+    return [
+        UserWithProfile(
+            id=user.id,
+            phone_number=user.phone_number or "",
+            role=user.role,
+            is_verified=user.is_verified,
+            preferred_language=user.preferred_language,
+            full_name_ta=profile.full_name_ta if profile else None,
+            full_name_en=profile.full_name_en if profile else None,
         )
-    return result
+        for user, profile in rows
+    ]
 
 
 @router.get("/volunteers/my-certificate")
@@ -109,3 +112,128 @@ def get_my_volunteer_certificate(
             "Content-Disposition": f'attachment; filename="certificate_{cert_id}.pdf"'
         },
     )
+
+
+class ProfileUpdate(_BaseModel):
+    full_name_ta: Optional[str] = None
+    full_name_en: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None          # MALE / FEMALE / OTHER
+    phone_number: Optional[str] = None    # Only for Google-only users who want to add phone
+
+
+@router.patch("/me/profile", response_model=UserOut)
+def update_my_profile(
+    payload: ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the authenticated user's profile (name, DOB, gender, phone)."""
+    # Phone deduplication: if adding a phone, ensure it's not taken by another user
+    if payload.phone_number and payload.phone_number != current_user.phone_number:
+        clash = db.query(User).filter(
+            User.organization_id == current_user.organization_id,
+            User.phone_number == payload.phone_number,
+            User.id != current_user.id,
+        ).first()
+        if clash:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This phone number is already registered under another account.",
+            )
+        current_user.phone_number = payload.phone_number
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    if payload.full_name_ta is not None:
+        profile.full_name_ta = payload.full_name_ta
+    if payload.full_name_en is not None:
+        profile.full_name_en = payload.full_name_en
+    if payload.date_of_birth is not None:
+        profile.date_of_birth = payload.date_of_birth
+    if payload.gender is not None:
+        if payload.gender not in ("MALE", "FEMALE", "OTHER"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="gender must be MALE, FEMALE, or OTHER")
+        profile.gender = payload.gender
+
+    db.commit()
+    db.refresh(current_user)
+    db.refresh(profile)
+    return _build_user_out(current_user, profile)
+
+
+class FcmTokenPayload(_BaseModel):
+    token: str
+
+
+@router.post("/me/fcm-token", status_code=status.HTTP_204_NO_CONTENT)
+def register_fcm_token(
+    payload: FcmTokenPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Store the device FCM push token for the authenticated user."""
+    current_user.fcm_token = payload.token
+    db.commit()
+
+
+class BirthdayOut(_BaseModel):
+    full_name_en: str
+    full_name_ta: str
+
+
+@router.get("/birthdays/today", response_model=list[BirthdayOut])
+def todays_birthdays(
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Return names of org members whose birthday is today (month + day match)."""
+    today = date.today()
+    rows = (
+        db.query(UserProfile)
+        .join(User, User.id == UserProfile.user_id)
+        .filter(
+            User.organization_id == tenant_id,
+            UserProfile.date_of_birth.isnot(None),
+            extract("month", UserProfile.date_of_birth) == today.month,
+            extract("day", UserProfile.date_of_birth) == today.day,
+        )
+        .all()
+    )
+    return [BirthdayOut(full_name_en=p.full_name_en, full_name_ta=p.full_name_ta) for p in rows]
+
+
+PROMOTABLE_ROLES = ["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN"]
+
+
+class PromotePayload(_BaseModel):
+    role: str
+
+
+@router.post("/{user_id}/promote")
+def promote_user(
+    user_id: UUID,
+    payload: PromotePayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Admin: directly set a user's role (for promotions and demotions)."""
+    if payload.role not in PROMOTABLE_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid role. Must be one of: {', '.join(PROMOTABLE_ROLES)}",
+        )
+    target = db.query(User).filter(
+        User.id == user_id,
+        User.organization_id == current_user.organization_id,
+    ).first()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if target.id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot promote yourself")
+
+    target.role = payload.role
+    db.commit()
+    return {"ok": True, "user_id": str(user_id), "new_role": payload.role}

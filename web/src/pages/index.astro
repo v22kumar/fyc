@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 // Backend base URL — same convention as the other pages. Baked in at build
 // time (the PUBLIC_ prefix also exposes it to the client script below).
-import { API_BASE } from '../lib/config';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
 const stats = [
   { value: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', icon: '🌱', color: 'text-emerald-600 bg-emerald-50' },
@@ -177,6 +177,19 @@ const updates = [
     </div>
   </section>
 
+  <!-- Birthday Banner — visible only when there are birthdays today -->
+  <section id="birthday-banner" class="hidden py-6 px-4 bg-gradient-to-r from-pink-50 to-amber-50 border-y border-pink-100">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">🎂</span>
+        <div>
+          <h3 class="font-bold text-gray-900 text-base" data-ta="இன்றைய பிறந்த நாள் வாழ்த்துக்கள்!" data-en="Birthday Wishes Today!">பிறந்த நாள் வாழ்த்துக்கள்!</h3>
+          <div id="birthday-names" class="text-sm text-gray-600 mt-0.5"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Daily Thirukkural + Today's Tamil News (live from backend) -->
   <section class="py-12 bg-[#f8f9fa] px-4 border-b border-gray-100">
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -241,7 +254,7 @@ const updates = [
     </div>
   </section>
 
-  <script define:vars={{ API_BASE }}>
+  <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
     const lang = () => localStorage.getItem('fyc_lang') || 'ta';
     const esc = (s) => (s || '').replace(/[&<>"]/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -350,6 +363,32 @@ const updates = [
     };
 
     loadNews('tamil');
+
+    // Birthday banner
+    fetch(`${API_BASE}/api/v1/users/birthdays/today`, {
+      headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
+    })
+    .then(r => r.json())
+    .then(birthdays => {
+      if (!birthdays || birthdays.length === 0) return;
+      const lang = localStorage.getItem('fyc_lang') || 'ta';
+      const names = birthdays.map(b => lang === 'ta' ? b.full_name_ta : b.full_name_en).join(', ');
+      const el = document.getElementById('birthday-names');
+      if (el) el.textContent = names;
+      document.getElementById('birthday-banner')?.classList.remove('hidden');
+    })
+    .catch(() => {});
+
+    // Redirect to profile completion if needed
+    const _fycUser = localStorage.getItem('fyc_user');
+    if (_fycUser) {
+      try {
+        const _u = JSON.parse(_fycUser);
+        if (_u.is_profile_complete === false) {
+          window.location.replace('/complete-profile');
+        }
+      } catch (_) {}
+    }
 
   </script>
 
