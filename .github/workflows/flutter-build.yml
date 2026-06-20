@@ -1,0 +1,138 @@
+name: Flutter Build & Release APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-build.yml'
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+permissions:
+  contents: write   # required to create / update GitHub Releases
+
+jobs:
+  build:
+    name: Build Android APK + AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Source ────────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── 2. Flutter SDK ───────────────────────────────────────────────────────
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      # ── 3. Release signing (skipped if secrets not configured) ───────────────
+      # Set these in GitHub → Settings → Secrets → Actions:
+      #   KEYSTORE_BASE64   — base64 of fyc-release.jks
+      #                       generate: keytool -genkey ... then: base64 -w0 fyc-release.jks
+      #   KEY_STORE_PASSWORD — keystore password
+      #   KEY_PASSWORD       — key password (same as above unless separate)
+      - name: Setup release signing
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        working-directory: mobile/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > fyc-release.jks
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=fyc\nstoreFile=../fyc-release.jks\n' \
+            "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
+          echo "Release signing configured ✓"
+
+      # ── 4. Dependencies ───────────────────────────────────────────────────────
+      - name: Flutter pub get
+        working-directory: mobile
+        run: flutter pub get
+
+      # ── 5. Build ──────────────────────────────────────────────────────────────
+      - name: Build release APK  (direct install / web download)
+        working-directory: mobile
+        run: flutter build apk --release
+
+      - name: Build release AAB  (Google Play Store)
+        working-directory: mobile
+        run: flutter build appbundle --release
+
+      # ── 6. Rename outputs with stable filenames ───────────────────────────────
+      - name: Rename outputs
+        run: |
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk \
+             mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+          cp mobile/build/app/outputs/bundle/release/app-release.aab \
+             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
+
+      # ── 7. Artifacts (kept 30 days — useful for debugging) ───────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fyc-connect-apk-${{ github.sha }}
+          path: mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact (Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: fyc-connect-aab-${{ github.sha }}
+          path: mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
+          retention-days: 30
+
+      # ── 8. Publish APK + AAB to rolling GitHub Release ───────────────────────
+      # This creates or updates the "app-latest" release on every successful build.
+      # The APK download URL is always stable:
+      #   https://github.com/v22kumar/fyc/releases/download/app-latest/fyc-connect-latest.apk
+      - name: Publish to GitHub Release (app-latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-latest
+          name: "FYC Connect — Latest Android Build"
+          body: |
+            🤖 **Auto-built from `main`**
+
+            | Field | Value |
+            |---|---|
+            | Commit | `${{ github.sha }}` |
+            | Built at | ${{ github.run_started_at }} |
+            | Workflow | [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+
+            **Direct install (Android):** download `fyc-connect-latest.apk` below.
+            **Play Store upload:** download `fyc-connect-latest.aab` below.
+          prerelease: true
+          make_latest: false
+          files: |
+            mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+            mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
+
+      # ── 9. Wire up backend download URL (runs once; idempotent) ──────────────
+      # If FLY_API_TOKEN is set in GitHub Secrets, this sets APP_APK_URL on the
+      # backend so the web's "Download App" button starts working immediately.
+      # The URL points to the stable "app-latest" release above and never changes,
+      # so subsequent builds don't trigger a backend redeploy.
+      - name: Setup flyctl
+        if: ${{ secrets.FLY_API_TOKEN != '' }}
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Set APP_APK_URL on backend (first build only)
+        if: ${{ secrets.FLY_API_TOKEN != '' }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/app-latest/fyc-connect-latest.apk"
+
+          # Check if already set to this exact value to avoid unnecessary redeploys
+          CURRENT=$(flyctl secrets list --app fyc-backend --json 2>/dev/null \
+            | python3 -c "import sys,json; s=json.load(sys.stdin); print(next((x['Name'] for x in s if x['Name']=='APP_APK_URL'),''))" 2>/dev/null || echo "")
+
+          if [ -z "$CURRENT" ]; then
+            echo "Setting APP_APK_URL on fyc-backend..."
+            flyctl secrets set APP_APK_URL="$APK_URL" --app fyc-backend
+            echo "APP_APK_URL set ✓  — backend redeploying with download link active"
+          else
+            echo "APP_APK_URL already configured — no backend redeploy needed ✓"
+          fi
