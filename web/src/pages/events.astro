@@ -8,11 +8,22 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   title="நிகழ்வுகள் - Community Events"
   description="FYC நடத்தும் சமூக நிகழ்வுகள் - மரம் நடுவு, இரத்த முகாம், சுதந்திர தினம். Upcoming FYC community events."
 >
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
   <!-- Page Header -->
-  <section class="bg-gradient-to-br from-primary-900 to-primary-700 text-white py-16 px-4">
-    <div class="max-w-4xl mx-auto text-center">
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(139,92,246,0.45);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(22,163,74,0.38);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.08);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
       <div class="text-5xl mb-4">🎗️</div>
-      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="நிகழ்வுகள்" data-en="Community Events">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="நிகழ்வுகள்" data-en="Community Events" data-ml="സമൂഹ ഇവൻ്റുകൾ" data-hi="सामुदायिक कार्यक्रम">
         நிகழ்வுகள்
       </h1>
       <p class="text-green-100" data-ta="வரவிருக்கும் FYC சமூக நிகழ்வுகள்" data-en="Upcoming FYC community events">
@@ -81,6 +92,23 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
+</style>
 
 <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
   function getLang() {
