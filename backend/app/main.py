@@ -92,6 +92,16 @@ def _seed_database():
                 _seed_donors()
             except Exception as _e:
                 print(f"Blood donor seeding failed: {_e}")
+
+        # Ensure performance indexes exist (idempotent — IF NOT EXISTS)
+        db.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_bd_org_bg_avail "
+            "ON blood_donors (organization_id, blood_group, is_available)"
+        ))
+        db.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_bd_geography ON blood_donors (geography_id)"
+        ))
+        db.commit()
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
@@ -103,6 +113,16 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _seed_database()
+
+    # Pre-warm external API caches so cold-start users see instant results
+    try:
+        from app.services.weather import get_weather
+        from app.services.gold_price import get_gold_price
+        get_weather(8.1833, 77.4119)   # Nagercoil default coords
+        get_gold_price()
+        logger.info("[startup] Weather and gold price caches pre-warmed")
+    except Exception as _e:
+        logger.warning(f"[startup] Cache pre-warm failed: {_e}")
 
     # Daily morning broadcast scheduler (6:00 AM IST = 00:30 UTC)
     scheduler = None

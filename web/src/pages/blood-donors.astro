@@ -126,9 +126,23 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         </p>
       </div>
 
+      <!-- Donor count badge -->
+      <div id="donors-count" class="hidden mb-4 text-sm text-gray-500 font-medium"></div>
+
       <!-- Donors grid -->
       <div id="donors-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Populated by JS -->
+      </div>
+
+      <!-- Load more -->
+      <div id="load-more-wrap" class="hidden text-center mt-8">
+        <button
+          id="load-more-btn"
+          onclick="loadMore()"
+          class="px-8 py-3 bg-white border-2 border-accent text-accent font-semibold rounded-xl hover:bg-accent hover:text-white transition-all text-sm"
+        >
+          <span data-ta="மேலும் காட்டு" data-en="Load more donors">Load more donors</span>
+        </button>
       </div>
     </div>
   </section>
@@ -184,9 +198,12 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 </BaseLayout>
 
 <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+  const PAGE_SIZE = 100;
   let currentFilter = '';
   let selectedGeographyId = '';
   let includeNearby = false;
+  let currentOffset = 0;
+  let totalDonors = 0;
 
   const bloodGroupColors = {
     'A+': 'bg-red-100 text-red-800', 'A-': 'bg-red-50 text-red-700',
@@ -244,48 +261,95 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     `;
   }
 
+  function buildUrl(bloodGroup, geographyId, nearby, offset) {
+    let url = `${API_BASE}/api/v1/blood-donors?available_only=true&limit=${PAGE_SIZE}&offset=${offset}`;
+    if (bloodGroup) url += `&blood_group=${encodeURIComponent(bloodGroup)}`;
+    if (geographyId) {
+      url += `&geography_id=${encodeURIComponent(geographyId)}`;
+      if (nearby) url += `&nearby=true`;
+    }
+    return url;
+  }
+
+  function updateCountBadge(showing, total) {
+    const el = document.getElementById('donors-count');
+    if (!el) return;
+    const lang = getLang();
+    if (total === 0) { el.classList.add('hidden'); return; }
+    el.textContent = lang === 'ta'
+      ? `${showing} / ${total} இரத்த தானிகள்`
+      : `Showing ${showing} of ${total} donors`;
+    el.classList.remove('hidden');
+  }
+
+  function updateLoadMore(showing, total) {
+    const wrap = document.getElementById('load-more-wrap');
+    if (!wrap) return;
+    if (showing < total) {
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+    }
+  }
+
   async function loadDonors(bloodGroup = '', geographyId = '', nearby = false) {
     const grid = document.getElementById('donors-grid');
     const loading = document.getElementById('donors-loading');
     const error = document.getElementById('donors-error');
     const empty = document.getElementById('donors-empty');
+    const countEl = document.getElementById('donors-count');
 
-    // Reset states
+    currentOffset = 0;
+    grid.innerHTML = '';
     grid.classList.add('hidden');
     loading.classList.remove('hidden');
     error.classList.add('hidden');
     empty.classList.add('hidden');
+    if (countEl) countEl.classList.add('hidden');
+    document.getElementById('load-more-wrap')?.classList.add('hidden');
 
     try {
-      let url = `${API_BASE}/api/v1/blood-donors?available_only=true`;
-      if (bloodGroup) url += `&blood_group=${encodeURIComponent(bloodGroup)}`;
-      if (geographyId) {
-        url += `&geography_id=${encodeURIComponent(geographyId)}`;
-        if (nearby) {
-          url += `&nearby=true`;
-        }
-      }
-
-      const response = await fetch(url, {
+      const response = await fetch(buildUrl(bloodGroup, geographyId, nearby, 0), {
         headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
       });
-
       if (!response.ok) throw new Error('API error');
 
+      totalDonors = parseInt(response.headers.get('X-Total-Count') || '0', 10);
       const donors = await response.json();
-      loading.classList.add('hidden');
+      currentOffset = donors.length;
 
-      if (donors.length === 0) {
-        empty.classList.remove('hidden');
-        return;
-      }
+      loading.classList.add('hidden');
+      if (donors.length === 0) { empty.classList.remove('hidden'); return; }
 
       grid.innerHTML = donors.map(createDonorCard).join('');
       grid.classList.remove('hidden');
+      updateCountBadge(currentOffset, totalDonors);
+      updateLoadMore(currentOffset, totalDonors);
     } catch (e) {
       loading.classList.add('hidden');
       error.classList.remove('hidden');
     }
+  }
+
+  async function loadMore() {
+    const btn = document.getElementById('load-more-btn');
+    const grid = document.getElementById('donors-grid');
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch(
+        buildUrl(currentFilter, selectedGeographyId, includeNearby, currentOffset),
+        { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } }
+      );
+      if (!response.ok) throw new Error('API error');
+
+      const donors = await response.json();
+      currentOffset += donors.length;
+      grid.insertAdjacentHTML('beforeend', donors.map(createDonorCard).join(''));
+      updateCountBadge(currentOffset, totalDonors);
+      updateLoadMore(currentOffset, totalDonors);
+    } catch (_) {}
+    if (btn) btn.disabled = false;
   }
 
   // Fetch geography nodes for dropdown selection
@@ -409,12 +473,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       if (e.target === e.currentTarget) closeContactModal();
     });
 
-    // Intercept language toggle to reload cards
+    // Intercept language toggle to reload cards with current filters
     const originalToggleLang = window.toggleLang;
     window.toggleLang = function () {
-      if (typeof originalToggleLang === 'function') {
-        originalToggleLang();
-      }
+      if (typeof originalToggleLang === 'function') originalToggleLang();
       loadDonors(currentFilter, selectedGeographyId, includeNearby);
     };
 

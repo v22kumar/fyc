@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -24,7 +25,6 @@ def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
     if not node:
         return [geography_id]
 
-    # Walk up to district level
     current = node
     while current and current.level != GeoLevel.DISTRICT:
         if current.parent_id is None:
@@ -34,10 +34,8 @@ def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
     if not current or current.level != GeoLevel.DISTRICT:
         return [geography_id]
 
-    # Collect all descendant IDs under this district (one level deep = taluks)
     taluks = db.query(GeographicNode).filter(GeographicNode.parent_id == current.id).all()
-    ids = [current.id] + [t.id for t in taluks]
-    return ids
+    return [current.id] + [t.id for t in taluks]
 
 
 @router.get("", response_model=List[BloodDonorPublicOut])
@@ -46,32 +44,49 @@ def search_donors(
     geography_id: Optional[UUID] = None,
     nearby: bool = False,
     available_only: bool = True,
+    limit: int = 100,
+    offset: int = 0,
+    response: Response = None,
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
 ):
     """
     Public search for blood donors. Names and locations are visible but contact
     details are not exposed here — use the /request-contact endpoint.
+    Paginated: default limit=100. X-Total-Count header carries full match count.
     Pass nearby=true with geography_id to include all taluks in the same district.
     """
-    query = db.query(BloodDonor).filter(BloodDonor.organization_id == tenant_id)
+    filters = [BloodDonor.organization_id == tenant_id]
     if blood_group:
-        query = query.filter(BloodDonor.blood_group == blood_group.upper())
+        filters.append(BloodDonor.blood_group == blood_group.upper())
     if geography_id:
         if nearby:
             area_ids = _district_taluk_ids(db, geography_id)
-            query = query.filter(BloodDonor.geography_id.in_(area_ids))
+            filters.append(BloodDonor.geography_id.in_(area_ids))
         else:
-            query = query.filter(BloodDonor.geography_id == geography_id)
+            filters.append(BloodDonor.geography_id == geography_id)
     if available_only:
-        query = query.filter(BloodDonor.is_available == True)
+        filters.append(BloodDonor.is_available == True)
 
-    donors = query.all()
-    result = []
-    for donor in donors:
-        profile = db.query(UserProfile).filter(UserProfile.user_id == donor.user_id).first()
-        geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None
-        result.append(BloodDonorPublicOut(
+    total = db.query(func.count(BloodDonor.id)).filter(*filters).scalar() or 0
+
+    # Single JOIN query — eliminates the previous N+1 (profile + geo per donor)
+    rows = (
+        db.query(BloodDonor, UserProfile, GeographicNode)
+        .outerjoin(UserProfile, UserProfile.user_id == BloodDonor.user_id)
+        .outerjoin(GeographicNode, GeographicNode.id == BloodDonor.geography_id)
+        .filter(*filters)
+        .order_by(BloodDonor.blood_group, BloodDonor.id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    if response is not None:
+        response.headers["X-Total-Count"] = str(total)
+
+    return [
+        BloodDonorPublicOut(
             id=donor.id,
             blood_group=donor.blood_group,
             is_available=donor.is_available,
@@ -80,8 +95,9 @@ def search_donors(
             geography_name_ta=geo.name_ta if geo else None,
             full_name_en=profile.full_name_en if profile else None,
             full_name_ta=profile.full_name_ta if profile else None,
-        ))
-    return result
+        )
+        for donor, profile, geo in rows
+    ]
 
 @router.post("/register", response_model=BloodDonorPublicOut, status_code=status.HTTP_201_CREATED)
 def register_donor(

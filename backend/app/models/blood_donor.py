@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Date, ForeignKey
+from sqlalchemy import Column, String, Boolean, Date, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -20,3 +20,8 @@ class BloodDonor(Base, TimestampMixin, TenantModelMixin):
 
     user = relationship("User", foreign_keys=[user_id])
     geography = relationship("GeographicNode", foreign_keys=[geography_id])
+
+    __table_args__ = (
+        Index("ix_bd_org_bg_avail", "organization_id", "blood_group", "is_available"),
+        Index("ix_bd_geography", "geography_id"),
+    )
