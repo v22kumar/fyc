@@ -79,4 +79,9 @@ class ApiConstants {
   // Utilities
   static const String weatherCurrent = '/api/v1/utilities/weather';
   static const String goldPrice = '/api/v1/utilities/gold-price';
+
+  // Chess
+  static const String chessGames = '/api/v1/chess/games';
+  static const String chessMyGames = '/api/v1/chess/games/my';
+  static const String chessMyStats = '/api/v1/chess/players/me/stats';
 }

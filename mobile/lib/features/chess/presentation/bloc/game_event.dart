@@ -44,3 +44,11 @@ class FlipBoard extends GameEvent {
 class NewGame extends GameEvent {
   const NewGame();
 }
+
+// Fired internally after game ends — fire-and-forget backend sync
+class _SubmitGameToBackend extends GameEvent {
+  final Map<String, dynamic> payload;
+  const _SubmitGameToBackend(this.payload);
+  @override
+  List<Object?> get props => [];
+}

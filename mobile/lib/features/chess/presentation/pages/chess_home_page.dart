@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../data/datasources/chess_remote_datasource.dart';
+import '../../data/models/chess_game_model.dart';
 import '../bloc/game_bloc.dart';
 import '../bloc/game_event.dart';
 
@@ -123,7 +125,24 @@ class ChessHomePage extends StatelessWidget {
                       comingSoon: true,
                     ),
                     const Spacer(),
-                    // Stats teaser — Sprint 2 will fill real numbers
+
+                    // History button
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/chess/history'),
+                      icon: const Icon(Icons.history_rounded, size: 18),
+                      label: const Text('Game History'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.border),
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Stats row (live from backend)
                     _StatsBanner(),
                   ],
                 ),
@@ -266,21 +285,38 @@ class _ModeCard extends StatelessWidget {
   }
 }
 
-class _StatsBanner extends StatelessWidget {
+class _StatsBanner extends StatefulWidget {
+  @override
+  State<_StatsBanner> createState() => _StatsBannerState();
+}
+
+class _StatsBannerState extends State<_StatsBanner> {
+  ChessStatsModel? _stats;
+
+  @override
+  void initState() {
+    super.initState();
+    sl<ChessRemoteDataSource>()
+        .myStats()
+        .then((s) { if (mounted) setState(() => _stats = s); })
+        .catchError((_) {}); // ignore if offline
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = _stats;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: AppTheme.gradientPrimary,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(value: '—', label: 'Rating'),
-          _StatItem(value: '—', label: 'Games'),
-          _StatItem(value: '—', label: 'W/L'),
+          _StatItem(value: s != null ? s.ratingDisplay : '—', label: 'Rating'),
+          _StatItem(value: s != null ? '${s.gamesPlayed}' : '—', label: 'Games'),
+          _StatItem(value: s != null ? s.winRateDisplay : '—', label: 'Win %'),
         ],
       ),
     );

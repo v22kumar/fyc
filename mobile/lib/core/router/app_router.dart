@@ -28,9 +28,11 @@ import '../../features/sports/presentation/screens/sports_tournament_detail_scre
 import '../../features/sports/presentation/screens/challenge_form_screen.dart';
 
 // Chess
+import '../../features/chess/data/datasources/chess_remote_datasource.dart';
 import '../../features/chess/presentation/bloc/game_bloc.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
+import '../../features/chess/presentation/pages/game_history_page.dart';
 
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
@@ -257,7 +259,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/chess',
       builder: (context, state) => BlocProvider(
-        create: (_) => GameBloc(),
+        create: (_) => GameBloc(remote: sl<ChessRemoteDataSource>()),
         child: const ChessHomePage(),
       ),
       routes: [
@@ -266,13 +268,17 @@ final appRouter = GoRouter(
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>? ?? {};
             return BlocProvider(
-              create: (_) => GameBloc(),
+              create: (_) => GameBloc(remote: sl<ChessRemoteDataSource>()),
               child: LocalGamePage(
                 whiteName: extra['white'] as String? ?? 'White',
                 blackName: extra['black'] as String? ?? 'Black',
               ),
             );
           },
+        ),
+        GoRoute(
+          path: 'history',
+          builder: (context, state) => const GameHistoryPage(),
         ),
       ],
     ),

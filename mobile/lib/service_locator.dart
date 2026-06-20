@@ -113,6 +113,9 @@ import 'features/thirukkural/data/datasources/thirukkural_datasource.dart';
 // News (Tamil headlines)
 import 'features/news/data/datasources/news_datasource.dart';
 
+// Chess
+import 'features/chess/data/datasources/chess_remote_datasource.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initServiceLocator() async {
@@ -339,5 +342,10 @@ Future<void> initServiceLocator() async {
   // News (Tamil headlines)
   sl.registerLazySingleton<NewsDataSource>(
     () => NewsDataSourceImpl(sl<ApiClient>()),
+  );
+
+  // Chess
+  sl.registerLazySingleton<ChessRemoteDataSource>(
+    () => ChessRemoteDataSourceImpl(sl<ApiClient>()),
   );
 }
