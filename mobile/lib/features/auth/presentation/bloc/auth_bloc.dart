@@ -137,10 +137,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   /// Fire-and-forget: register device FCM token with backend after login.
   void _registerFcmToken() {
-    FirebaseMessaging.instance.getToken().then((token) {
+    FirebaseMessaging.instance.getToken().then((token) async {
       if (token == null) return;
       final client = sl<ApiClient>();
-      client.dio.post(ApiConstants.fcmToken, data: {'token': token}).catchError((_) => null);
+      try {
+        await client.dio.post(ApiConstants.fcmToken, data: {'token': token});
+      } catch (_) {}
     }).catchError((_) {});
   }
 
