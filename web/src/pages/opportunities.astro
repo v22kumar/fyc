@@ -1,0 +1,171 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+const ORG_ID = DEFAULT_ORG_ID;
+---
+
+<BaseLayout
+  title="வாய்ப்புகள் - Opportunities"
+  description="FYC community opportunities — jobs, internships, volunteer roles in Nagercoil area."
+>
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
+  <!-- Aurora Hero -->
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(217,119,6,0.50);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(15,81,50,0.40);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.09);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
+      <div class="text-5xl mb-4">💼</div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3"
+        data-ta="வாய்ப்புகள்" data-en="Opportunities"
+        data-ml="അവസരങ്ങൾ" data-hi="अवसर">
+        வாய்ப்புகள்
+      </h1>
+      <p class="text-amber-100"
+        data-ta="வேலை, பயிற்சி, தன்னார்வ வாய்ப்புகள் — FYC வழியாக"
+        data-en="Jobs, internships, volunteer roles — through FYC community"
+        data-ml="ജോലി, ഇൻ്റേൺഷിപ്പ്, സന്നദ്ധ ജോലി — FYC ൽ"
+        data-hi="नौकरी, इंटर्नशिप, स्वयंसेवक — FYC के माध्यम से">
+        வேலை, பயிற்சி, தன்னார்வ வாய்ப்புகள் — FYC வழியாக
+      </p>
+    </div>
+  </section>
+
+  <!-- Filter Bar -->
+  <section class="bg-white border-b border-gray-100 py-4 px-4 sticky top-16 z-40 shadow-sm">
+    <div class="max-w-5xl mx-auto flex flex-wrap gap-3 items-center">
+      <select id="type-filter" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d97706]">
+        <option value="">All Types</option>
+        <option value="job">💼 Job</option>
+        <option value="internship">🎓 Internship</option>
+        <option value="volunteer">🤝 Volunteer</option>
+        <option value="freelance">💻 Freelance</option>
+      </select>
+      <select id="cat-filter" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#d97706]">
+        <option value="">All Categories</option>
+        <option value="tech">Technology</option>
+        <option value="education">Education</option>
+        <option value="health">Healthcare</option>
+        <option value="social">Social Work</option>
+        <option value="trade">Trade/Skill</option>
+        <option value="other">Other</option>
+      </select>
+      <button id="search-btn" class="bg-[#d97706] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b45309] transition-colors">
+        <span data-ta="தேடு" data-en="Search">தேடு</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Listings -->
+  <section class="py-10 px-4">
+    <div class="max-w-5xl mx-auto">
+      <div id="opp-loading" class="text-center text-gray-400 py-12">
+        <div class="inline-block w-8 h-8 border-4 border-[#d97706] border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p data-ta="வாய்ப்புகள் ஏற்றுகிறது..." data-en="Loading opportunities...">வாய்ப்புகள் ஏற்றுகிறது...</p>
+      </div>
+      <div id="opp-grid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+      <div id="opp-empty" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">📋</div>
+        <p class="text-gray-500 font-medium" data-ta="தற்போது வாய்ப்புகள் இல்லை" data-en="No opportunities posted yet">தற்போது வாய்ப்புகள் இல்லை</p>
+        <p class="text-sm text-gray-400 mt-2" data-ta="விரைவில் புதிய வாய்ப்புகள் சேர்க்கப்படும்" data-en="New opportunities will be added soon">விரைவில் புதிய வாய்ப்புகள் சேர்க்கப்படும்</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
+</style>
+
+<script define:vars={{ API_BASE, ORG_ID }}>
+const token = localStorage.getItem('fyc_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'X-Organization-ID': ORG_ID };
+
+const TYPE_BADGE = {
+  job: 'bg-blue-100 text-blue-700',
+  internship: 'bg-purple-100 text-purple-700',
+  volunteer: 'bg-green-100 text-green-700',
+  freelance: 'bg-amber-100 text-amber-700',
+};
+const TYPE_ICON = { job:'💼', internship:'🎓', volunteer:'🤝', freelance:'💻' };
+
+function renderCard(o) {
+  const badge = TYPE_BADGE[o.type] || 'bg-gray-100 text-gray-700';
+  const icon = TYPE_ICON[o.type] || '📋';
+  return `
+    <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex-1">
+          <div class="font-bold text-gray-900 text-lg mb-1">${o.title_en || o.title_ta || 'Opportunity'}</div>
+          ${o.organization ? `<div class="text-sm text-gray-500">🏢 ${o.organization}</div>` : ''}
+          ${o.location ? `<div class="text-sm text-gray-500">📍 ${o.location}</div>` : ''}
+        </div>
+        <span class="ml-3 text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${badge}">${icon} ${o.type || 'other'}</span>
+      </div>
+      ${o.description_en ? `<p class="text-sm text-gray-600 mb-3 line-clamp-3">${o.description_en}</p>` : ''}
+      <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div class="text-xs text-gray-400">
+          ${o.deadline ? `⏰ Deadline: ${new Date(o.deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}` : ''}
+          ${o.stipend ? `<span class="ml-3">💰 ${o.stipend}</span>` : ''}
+        </div>
+        ${o.contact_email || o.contact_phone ? `
+          <a href="${o.contact_email ? 'mailto:'+o.contact_email : 'tel:'+o.contact_phone}"
+            class="text-xs bg-[#d97706] text-white px-4 py-1.5 rounded-lg font-semibold hover:bg-[#b45309] transition-colors">
+            ${o.contact_email ? '✉️ Apply' : '📞 Call'}
+          </a>` : ''}
+      </div>
+    </div>`;
+}
+
+async function load() {
+  const type = document.getElementById('type-filter').value;
+  const cat = document.getElementById('cat-filter').value;
+  document.getElementById('opp-loading').classList.remove('hidden');
+  document.getElementById('opp-grid').classList.add('hidden');
+  document.getElementById('opp-empty').classList.add('hidden');
+  try {
+    let url = `${API_BASE}/api/v1/opportunities?active_only=true`;
+    if (type) url += `&type=${type}`;
+    if (cat) url += `&category=${cat}`;
+    const res = await fetch(url, { headers });
+    document.getElementById('opp-loading').classList.add('hidden');
+    if (!res.ok) throw new Error();
+    const opps = await res.json();
+    if (!opps.length) {
+      document.getElementById('opp-empty').classList.remove('hidden');
+      return;
+    }
+    const grid = document.getElementById('opp-grid');
+    grid.innerHTML = opps.map(renderCard).join('');
+    grid.classList.remove('hidden');
+  } catch {
+    document.getElementById('opp-loading').classList.add('hidden');
+    document.getElementById('opp-empty').classList.remove('hidden');
+  }
+}
+
+document.getElementById('search-btn').addEventListener('click', load);
+document.getElementById('type-filter').addEventListener('change', load);
+document.getElementById('cat-filter').addEventListener('change', load);
+load();
+</script>
