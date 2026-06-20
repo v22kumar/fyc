@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash
-from app.services.otp_sender import send_otp as deliver_otp
+from app.services.otp_sender import send_otp as deliver_otp, send_verify_otp, check_verify_otp
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
@@ -22,8 +22,9 @@ limiter = Limiter(key_func=get_remote_address)
 
 OTP_TTL_MINUTES = 10
 
-# In-memory OTP store: verification_id → (phone, otp_code, org_id, expires_at)
-otp_store: Dict[str, Tuple[str, str, uuid.UUID, datetime]] = {}
+# In-memory OTP store: verification_id → (phone, otp_code_or_None, org_id, expires_at)
+# otp_code is None when Twilio Verify is used (Twilio manages the code server-side)
+otp_store: Dict[str, Tuple[str, str | None, uuid.UUID, datetime]] = {}
 
 
 def _generate_otp() -> str:
@@ -45,12 +46,16 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
     verification_id = f"v_{uuid.uuid4().hex[:12]}"
-    otp_code = _generate_otp()
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
-    otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
-
-    deliver_otp(payload.phone_number, otp_code, email=payload.email)
+    if settings.TWILIO_VERIFY_SID:
+        # Twilio Verify manages the OTP — we only track phone+org
+        send_verify_otp(payload.phone_number)
+        otp_store[verification_id] = (payload.phone_number, None, payload.organization_id, expires_at)
+    else:
+        otp_code = _generate_otp()
+        otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
+        deliver_otp(payload.phone_number, otp_code, email=payload.email)
 
     return OTPResponse(
         message="OTP sent successfully",
@@ -79,7 +84,11 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
             detail="OTP has expired. Please request a new one.",
         )
 
-    if payload.otp_code != otp_code:
+    if otp_code is None:
+        # Twilio Verify flow — delegate check to Twilio
+        if not check_verify_otp(phone_number, payload.otp_code):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
+    elif payload.otp_code != otp_code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
 
     user = db.query(User).filter(

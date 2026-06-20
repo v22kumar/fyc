@@ -1,11 +1,14 @@
 """
-OTP delivery service — tries channels in order: WhatsApp → Email → log.
+OTP delivery service — tries channels in order: Twilio Verify (SMS) → WhatsApp → Email → log.
 Configure via .env:
 
-  # Twilio WhatsApp (recommended for India)
+  # Twilio Verify SMS (recommended — no opt-in needed, managed OTP)
   TWILIO_ACCOUNT_SID=ACxxxx
   TWILIO_AUTH_TOKEN=xxxx
-  TWILIO_WHATSAPP_FROM=whatsapp:+14155238886   # Twilio sandbox or your approved number
+  TWILIO_VERIFY_SID=VAxxxx   # get from Twilio Console → Verify → Services
+
+  # Twilio WhatsApp (fallback if TWILIO_VERIFY_SID not set)
+  TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 
   # Email (Gmail app password or any SMTP)
   SMTP_HOST=smtp.gmail.com
@@ -23,6 +26,39 @@ from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def send_verify_otp(phone: str) -> bool:
+    """Send OTP via Twilio Verify (SMS). Returns True if sent."""
+    if not (settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_VERIFY_SID):
+        return False
+    try:
+        from twilio.rest import Client
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        client.verify.v2.services(settings.TWILIO_VERIFY_SID).verifications.create(
+            to=phone, channel="sms"
+        )
+        logger.info(f"Twilio Verify SMS sent to {phone}")
+        return True
+    except Exception as e:
+        logger.warning(f"Twilio Verify failed for {phone}: {e}")
+        return False
+
+
+def check_verify_otp(phone: str, code: str) -> bool:
+    """Check OTP via Twilio Verify. Returns True if approved."""
+    if not (settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_VERIFY_SID):
+        return False
+    try:
+        from twilio.rest import Client
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        result = client.verify.v2.services(settings.TWILIO_VERIFY_SID).verification_checks.create(
+            to=phone, code=code
+        )
+        return result.status == "approved"
+    except Exception as e:
+        logger.warning(f"Twilio Verify check failed for {phone}: {e}")
+        return False
 
 
 def _send_whatsapp_otp(phone: str, otp: str) -> bool:

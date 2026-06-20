@@ -28,9 +28,12 @@ class Settings(BaseSettings):
     # Firebase Cloud Messaging — set in production .env to enable push notifications
     FCM_SERVER_KEY: str = ""
 
-    # Twilio WhatsApp OTP
+    # Twilio — OTP delivery
+    # Verify (SMS, recommended): set TWILIO_VERIFY_SID to use Twilio Verify service
+    # WhatsApp (sandbox/fallback): set TWILIO_WHATSAPP_FROM
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_VERIFY_SID: str = ""              # e.g. VA2b65749ba818b322b7e071963388cd06
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
 
     # Google OAuth — create two separate OAuth 2.0 client IDs in Google Cloud Console:
