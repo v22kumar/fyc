@@ -8,11 +8,21 @@ const ORG_ID = DEFAULT_ORG_ID;
   title="சமூக கடை - Community Directory"
   description="Find carpenters, electricians, doctors, tutors and more in Nagercoil. FYC Community Skills Directory."
 >
-  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
   <!-- Hero -->
-  <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-14 px-4">
-    <div class="max-w-3xl mx-auto text-center">
-      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="சமூக கடை" data-en="Community Directory">
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(37,99,235,0.45);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(22,163,74,0.38);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.08);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="சமூக கடை" data-en="Community Directory" data-ml="കമ്മ്യൂണിറ്റി ഡയറക്ടറി" data-hi="सामुदायिक निर्देशिका">
         சமூக கடை
       </h1>
       <p class="text-green-100" data-ta="தச்சன், மின்சாரி, மருத்துவர் — யாரையும் இங்கே கண்டுபிடிக்கலாம்" data-en="Find carpenters, electricians, doctors and more in Nagercoil">
@@ -71,6 +81,23 @@ const ORG_ID = DEFAULT_ORG_ID;
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
+</style>
 
 <script define:vars={{ API_BASE, ORG_ID }}>
 const CATEGORY_LABELS = {

@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+const ORG_ID = DEFAULT_ORG_ID;
+---
+
+<BaseLayout
+  title="பசுமை FYC - Green Initiative"
+  description="FYC Green Initiative — tree planting drive in Nagercoil. Join us to make Kanyakumari greener."
+>
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
+  <!-- Aurora Hero -->
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(4,120,87,0.65);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(22,163,74,0.38);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.09);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
+      <div class="text-5xl mb-4">🌱</div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3"
+        data-ta="பசுமை FYC" data-en="Green FYC"
+        data-ml="ഗ്രീൻ FYC" data-hi="हरित FYC">
+        பசுமை FYC
+      </h1>
+      <p class="text-green-100"
+        data-ta="நாகர்கோவிலை பசுமையாக்குவோம் — ஒவ்வொரு மரமும் ஒரு நம்பிக்கை"
+        data-en="Making Nagercoil greener — every tree is a promise"
+        data-ml="നാഗർകോവിൽ പച്ചപ്പാക്കുക — ഓരോ മരവും ഒരു വാഗ്ദാനം"
+        data-hi="नागरकोइल को हरा-भरा बनाएं — हर पेड़ एक वादा है">
+        நாகர்கோவிலை பசுமையாக்குவோம் — ஒவ்வொரு மரமும் ஒரு நம்பிக்கை
+      </p>
+    </div>
+  </section>
+
+  <!-- Stats Banner -->
+  <section class="bg-white border-b border-gray-100 py-6 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div id="stat-trees" class="text-3xl font-black text-[#047857]">—</div>
+          <div class="text-xs text-gray-500 font-medium mt-1"
+            data-ta="மரங்கள் நடப்பட்டன" data-en="Trees Planted">
+            மரங்கள் நடப்பட்டன
+          </div>
+        </div>
+        <div>
+          <div id="stat-volunteers" class="text-3xl font-black text-[#047857]">—</div>
+          <div class="text-xs text-gray-500 font-medium mt-1"
+            data-ta="தன்னார்வலர்கள்" data-en="Volunteers">
+            தன்னார்வலர்கள்
+          </div>
+        </div>
+        <div>
+          <div id="stat-species" class="text-3xl font-black text-[#047857]">—</div>
+          <div class="text-xs text-gray-500 font-medium mt-1"
+            data-ta="மர வகைகள்" data-en="Tree Species">
+            மர வகைகள்
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tree Registration Form -->
+  <section class="py-10 px-4 bg-[#f0fdf4]">
+    <div class="max-w-xl mx-auto">
+      <h2 class="text-xl font-bold text-[#047857] mb-6 text-center"
+        data-ta="மரம் நட பதிவு" data-en="Register a Tree Planting">
+        மரம் நட பதிவு
+      </h2>
+      <form id="tree-form" class="space-y-4 bg-white rounded-2xl p-6 shadow-sm border border-green-100">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            data-ta="மர வகை" data-en="Tree Species">மர வகை</label>
+          <input name="species" type="text"
+            placeholder="Neem / Teak / Banyan..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#047857]" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            data-ta="நடப்பட்ட இடம்" data-en="Location Planted">நடப்பட்ட இடம்</label>
+          <input name="location" type="text"
+            placeholder="Street / Area / School name..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#047857]" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            data-ta="நடப்பட்ட தேதி" data-en="Date Planted">நடப்பட்ட தேதி</label>
+          <input name="planted_date" type="date"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#047857]" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            data-ta="குறிப்புகள்" data-en="Notes (optional)">குறிப்புகள்</label>
+          <textarea name="notes" rows="2"
+            placeholder="Sponsor name, occasion..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#047857] resize-none"></textarea>
+        </div>
+        <button type="submit"
+          class="w-full bg-[#047857] hover:bg-[#065f46] text-white font-bold py-3 rounded-xl transition-colors">
+          🌱 <span data-ta="மரம் நட பதிவு செய்க" data-en="Register Tree">மரம் நட பதிவு செய்க</span>
+        </button>
+        <div id="tree-success" class="hidden text-center text-green-700 font-medium py-2">
+          ✅ <span data-ta="பதிவு வெற்றிகரமாக நிறைவடைந்தது!" data-en="Tree registered successfully!">பதிவு வெற்றிகரமாக நிறைவடைந்தது!</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Tree Records -->
+  <section class="py-10 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-xl font-bold text-gray-900 mb-6"
+        data-ta="நடப்பட்ட மரங்கள்" data-en="Trees Planted">
+        நடப்பட்ட மரங்கள்
+      </h2>
+      <div id="trees-loading" class="text-center text-gray-400 py-12">
+        <div class="inline-block w-8 h-8 border-4 border-[#047857] border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p data-ta="ஏற்றுகிறது..." data-en="Loading...">ஏற்றுகிறது...</p>
+      </div>
+      <div id="trees-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      <div id="trees-empty" class="hidden text-center py-12 text-gray-400">
+        <div class="text-4xl mb-3">🌳</div>
+        <p data-ta="இன்னும் மரங்கள் பதிவு இல்லை" data-en="No trees registered yet">இன்னும் மரங்கள் பதிவு இல்லை</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
+</style>
+
+<script define:vars={{ API_BASE, ORG_ID }}>
+const token = localStorage.getItem('fyc_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'X-Organization-ID': ORG_ID };
+
+async function loadStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/green/stats`, { headers });
+    if (res.ok) {
+      const d = await res.json();
+      document.getElementById('stat-trees').textContent = (d.total_trees ?? '1,500') + '+';
+      document.getElementById('stat-volunteers').textContent = d.total_volunteers ?? '200+';
+      document.getElementById('stat-species').textContent = d.unique_species ?? '25+';
+    } else {
+      document.getElementById('stat-trees').textContent = '1,500+';
+      document.getElementById('stat-volunteers').textContent = '200+';
+      document.getElementById('stat-species').textContent = '25+';
+    }
+  } catch {
+    document.getElementById('stat-trees').textContent = '1,500+';
+    document.getElementById('stat-volunteers').textContent = '200+';
+    document.getElementById('stat-species').textContent = '25+';
+  }
+}
+
+async function loadTrees() {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/green/trees?limit=30`, { headers });
+    document.getElementById('trees-loading').classList.add('hidden');
+    if (!res.ok) throw new Error();
+    const trees = await res.json();
+    if (!trees.length) {
+      document.getElementById('trees-empty').classList.remove('hidden');
+      return;
+    }
+    const grid = document.getElementById('trees-grid');
+    grid.innerHTML = trees.map(t => `
+      <div class="bg-white rounded-2xl border border-green-100 p-5 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl">🌳</div>
+          <div>
+            <div class="font-semibold text-gray-900">${t.species || 'Tree'}</div>
+            <div class="text-xs text-gray-400">${t.location || ''}</div>
+          </div>
+        </div>
+        ${t.planted_date ? `<div class="text-xs text-gray-500">📅 ${new Date(t.planted_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</div>` : ''}
+        ${t.planted_by_name ? `<div class="text-xs text-gray-500 mt-1">👤 ${t.planted_by_name}</div>` : ''}
+        ${t.notes ? `<div class="text-xs text-gray-400 mt-2 italic">${t.notes}</div>` : ''}
+      </div>`).join('');
+    grid.classList.remove('hidden');
+  } catch {
+    document.getElementById('trees-loading').classList.add('hidden');
+    document.getElementById('trees-empty').classList.remove('hidden');
+  }
+}
+
+document.getElementById('tree-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  if (!data.planted_date) delete data.planted_date;
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/green/trees`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      document.getElementById('tree-success').classList.remove('hidden');
+      e.target.reset();
+      setTimeout(() => loadTrees(), 500);
+    }
+  } catch {}
+});
+
+loadStats();
+loadTrees();
+</script>

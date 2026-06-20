@@ -11,15 +11,27 @@ const lang = Astro.url.searchParams.get('lang') ?? 'ta';
   title="உறுப்பினர் சரிபார்ப்பு - Membership Verification"
   description="FYC digital membership card verification. Verify any FYC membership number instantly."
 >
-  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
   <!-- Page Header -->
-  <section class="bg-gradient-to-br from-[#064e3b] to-[#065f46] text-white py-16 px-4">
-    <div class="max-w-3xl mx-auto text-center">
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(15,81,50,0.60);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(22,163,74,0.35);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.07);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
       <img src="/fyc_logo.png" alt="FYC Logo" class="h-36 w-36 mx-auto mb-5 rounded-2xl object-cover object-center" />
       <h1
         class="text-3xl sm:text-4xl font-bold mb-3"
         data-ta="உறுப்பினர் சரிபார்ப்பு"
         data-en="Membership Verification"
+        data-ml="അംഗത്വ പരിശോധന"
+        data-hi="सदस्यता सत्यापन"
       >
         உறுப்பினர் சரிபார்ப்பு
       </h1>
@@ -224,6 +236,23 @@ const lang = Astro.url.searchParams.get('lang') ?? 'ta';
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
+</style>
 
 <script define:vars={{ API_BASE, DEFAULT_ORG_ID, lang }}>
   // ── Language ──────────────────────────────────────────────────────────────

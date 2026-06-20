@@ -4,22 +4,30 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
-  // Modern Premium Slate-Teal/Rose Palette
-  static const Color primary = Color(0xFF0E7490);       // Cyan/Teal 700 - Vibrant Tech Teal
-  static const Color primaryLight = Color(0xFF06B6D4);  // Cyan 500
-  static const Color primarySurface = Color(0xFFECFEFF); // Cyan 50
-  
-  static const Color accent = Color(0xFFF43F5E);        // Rose 500 - Heart/Life Rose for Blood Donation
+  // FYC Brand — Forest Green
+  static const Color primary = Color(0xFF0F5132);       // FYC Forest Green
+  static const Color primaryLight = Color(0xFF16A34A);  // Green 600
+  static const Color primarySurface = Color(0xFFF0FDF4); // Green 50
+
+  static const Color accent = Color(0xFFF43F5E);        // Rose 500 - Blood Donation
   static const Color accentLight = Color(0xFFFFF1F2);   // Rose 50
   static const Color accentSurface = Color(0xFFFFE4E6); // Rose 100
 
-  static const Color background = Color(0xFFF8FAFC);    // Slate 50 - Very clean off-white
+  // Gold accent
+  static const Color gold = Color(0xFFD4AF37);
+  static const Color goldLight = Color(0xFFFBF3C7);
+
+  // Aurora dark surfaces
+  static const Color darkBg = Color(0xFF030C06);        // Very dark green — aurora background
+  static const Color darkSurface = Color(0xFF0C3F27);   // Dark emerald surface
+
+  static const Color background = Color(0xFFF8FAFC);    // Slate 50
   static const Color surface = Color(0xFFFFFFFF);
-  
-  static const Color textPrimary = Color(0xFF0F172A);    // Slate 900 - Soft rich dark navy
-  static const Color textSecondary = Color(0xFF64748B);  // Slate 500 - Soft slate grey
-  static const Color border = Color(0xFFE2E8F0);         // Slate 200 - Very subtle divider
-  
+
+  static const Color textPrimary = Color(0xFF0F172A);    // Slate 900
+  static const Color textSecondary = Color(0xFF64748B);  // Slate 500
+  static const Color border = Color(0xFFE2E8F0);         // Slate 200
+
   static const Color success = Color(0xFF10B981);       // Emerald 500
   static const Color warning = Color(0xFFF59E0B);       // Amber 500
 }
@@ -31,7 +39,7 @@ class AppTheme {
   static const double radiusBtn = 16.0;
   static const double paddingPage = 20.0;
 
-  // Premium Gradients
+  // Brand Gradients
   static const LinearGradient gradientPrimary = LinearGradient(
     colors: [AppColors.primary, AppColors.primaryLight],
     begin: Alignment.topLeft,
@@ -53,18 +61,30 @@ class AppTheme {
   );
   static const LinearGradient successGradient = gradientSuccess;
 
+  static const LinearGradient gradientAurora = LinearGradient(
+    colors: [AppColors.darkBg, AppColors.darkSurface, AppColors.primary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static List<BoxShadow> get cardShadow => [
-        // Soft, wide ambient shadow for depth
         BoxShadow(
           color: const Color(0xFF0F172A).withOpacity(0.09),
           blurRadius: 24,
           offset: const Offset(0, 10),
         ),
-        // Tight contact shadow to keep the edge crisp
         BoxShadow(
           color: const Color(0xFF0F172A).withOpacity(0.04),
           blurRadius: 4,
           offset: const Offset(0, 1),
+        ),
+      ];
+
+  static List<BoxShadow> get glowShadow => [
+        BoxShadow(
+          color: AppColors.primary.withOpacity(0.35),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
         ),
       ];
 
@@ -167,7 +187,7 @@ class AppTheme {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFFF1F5F9), // Slate 100 background
+          fillColor: const Color(0xFFF1F5F9),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide.none,

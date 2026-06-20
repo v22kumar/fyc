@@ -10,15 +10,31 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   title="இரத்த தானம் தேடுக - Blood Donor Search"
   description="நாகர்கோவில் பகுதியில் உள்ள இரத்த தான பதிவாளர்களை தேடுங்கள். Search blood donors in Nagercoil area."
 >
-  <script is:inline>if(!localStorage.getItem('fyc_token')){window.location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));}</script>
+  <script is:inline>
+    if (!localStorage.getItem('fyc_token')) {
+      window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  </script>
+
   <!-- Page Header -->
-  <section class="bg-gradient-to-br from-accent-800 to-accent-600 text-white py-16 px-4">
-    <div class="max-w-4xl mx-auto text-center">
+  <section class="relative overflow-hidden text-white" style="min-height:200px;background:#030C06;">
+    <div class="aurora-bg absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="aurora-blob-1" style="position:absolute;left:-60px;top:-60px;width:300px;height:300px;border-radius:50%;background:rgba(239,68,68,0.50);"></div>
+      <div class="aurora-blob-2" style="position:absolute;right:-40px;top:20px;width:260px;height:260px;border-radius:50%;background:rgba(15,81,50,0.40);"></div>
+      <div class="aurora-blob-3" style="position:absolute;left:40%;bottom:-30px;width:180px;height:180px;border-radius:50%;background:rgba(212,175,55,0.08);"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-16 px-4">
       <div class="text-5xl mb-4">🩸</div>
-      <h1 class="text-3xl sm:text-4xl font-bold mb-3" data-ta="இரத்த தானம் தேடுக" data-en="Search Blood Donors">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-3"
+        data-ta="இரத்த தானம் தேடுக" data-en="Search Blood Donors"
+        data-ml="രക്തദാതാക്കളെ കണ്ടെത്തുക" data-hi="रक्तदाता खोजें">
         இரத்த தானம் தேடுக
       </h1>
-      <p class="text-red-100" data-ta="நாகர்கோவில் பகுதியில் உள்ள பதிவாளர்களை தேடுங்கள்" data-en="Find verified donors in the Nagercoil area">
+      <p class="text-red-100"
+        data-ta="நாகர்கோவில் பகுதியில் உள்ள பதிவாளர்களை தேடுங்கள்"
+        data-en="Find verified donors in the Nagercoil area"
+        data-ml="നാഗർകോവിൽ മേഖലയിൽ സ്ഥിരീകരിച്ച ദാതാക്കളെ കണ്ടെത്തുക"
+        data-hi="नागरकोइल क्षेत्र में सत्यापित दाता खोजें">
         நாகர்கோவில் பகுதியில் உள்ள பதிவாளர்களை தேடுங்கள்
       </p>
     </div>
@@ -492,5 +508,19 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     color: white;
     border-color: #991b1b;
   }
+  @keyframes auroraFloat1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.06); }
+    66% { transform: translate(-15px,15px) scale(0.96); }
+  }
+  @keyframes auroraFloat2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40% { transform: translate(-25px,20px) scale(1.04); }
+    70% { transform: translate(20px,-10px) scale(0.98); }
+  }
+  .aurora-bg { filter: blur(65px); }
+  .aurora-blob-1 { animation: auroraFloat1 12s ease-in-out infinite; }
+  .aurora-blob-2 { animation: auroraFloat2 10s ease-in-out infinite; }
+  .aurora-blob-3 { animation: auroraFloat1 14s ease-in-out infinite reverse; }
 </style>
 
