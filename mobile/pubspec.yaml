@@ -63,6 +63,11 @@ dependencies:
 
   google_fonts: ^6.2.0
 
+  # Chess
+  squares: ^5.0.0       # board widget, drag/drop, piece images, animations
+  bishop: ^5.0.0        # chess rules, move validation, FEN/PGN
+  stockfish_chess_engine: ^3.0.0  # native Stockfish AI via platform channel
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

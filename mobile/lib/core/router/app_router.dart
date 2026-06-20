@@ -27,6 +27,11 @@ import '../../features/sports/presentation/screens/sports_hub_screen.dart';
 import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
 import '../../features/sports/presentation/screens/challenge_form_screen.dart';
 
+// Chess
+import '../../features/chess/presentation/bloc/game_bloc.dart';
+import '../../features/chess/presentation/pages/chess_home_page.dart';
+import '../../features/chess/presentation/pages/local_game_page.dart';
+
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
 import '../../features/green_fyc/presentation/screens/green_fyc_screen.dart';
@@ -246,6 +251,30 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/opportunities',
       builder: (context, state) => const OpportunitiesScreen(),
+    ),
+
+    // Chess
+    GoRoute(
+      path: '/chess',
+      builder: (context, state) => BlocProvider(
+        create: (_) => GameBloc(),
+        child: const ChessHomePage(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'local',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (_) => GameBloc(),
+              child: LocalGamePage(
+                whiteName: extra['white'] as String? ?? 'White',
+                blackName: extra['black'] as String? ?? 'Black',
+              ),
+            );
+          },
+        ),
+      ],
     ),
   ],
   errorBuilder: (context, state) => Scaffold(
