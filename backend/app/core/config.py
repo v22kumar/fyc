@@ -73,6 +73,11 @@ class Settings(BaseSettings):
 
     # Individual sends use the existing TWILIO_* vars above
 
+    # ── App Download ──────────────────────────────────────────────────────────
+    # URL served by GET /api/v1/app/download  (302 redirect).
+    # Set to wherever the APK lives, e.g.:
+    #   flyctl secrets set APP_APK_URL=https://fyc-backend.fly.dev/uploads/fyc-connect-latest.apk
+    APP_APK_URL: str = ""
 
     # SMTP Email OTP
     SMTP_HOST: str = "smtp.gmail.com"
