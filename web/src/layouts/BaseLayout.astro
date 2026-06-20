@@ -91,6 +91,58 @@ const {
       })();
     </script>
 
+    <!-- Auth state: show Login or user avatar in header -->
+    <script>
+      (function () {
+        const token = localStorage.getItem('fyc_token');
+        const userStr = localStorage.getItem('fyc_user');
+
+        const loginBtns = [
+          document.getElementById('hdr-login-btn'),
+          document.getElementById('hdr-login-btn-mobile'),
+        ];
+        const userMenus = [
+          document.getElementById('hdr-user-menu'),
+          document.getElementById('hdr-user-menu-mobile'),
+        ];
+        const avatars = [
+          document.getElementById('hdr-user-avatar'),
+          document.getElementById('hdr-user-avatar-mobile'),
+        ];
+        const nameEl = document.getElementById('hdr-user-name');
+
+        if (token && userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            const initial = (user.full_name_en || user.email || 'U')[0].toUpperCase();
+            loginBtns.forEach(el => el?.classList.add('hidden'));
+            userMenus.forEach(el => el?.classList.remove('hidden'));
+            avatars.forEach(el => { if (el) el.textContent = initial; });
+            if (nameEl) nameEl.textContent = user.full_name_en || user.email || 'FYC User';
+          } catch (_) {}
+        }
+
+        window.toggleUserMenu = function () {
+          document.getElementById('hdr-user-dropdown')?.classList.toggle('hidden');
+        };
+
+        window.signOut = function () {
+          localStorage.removeItem('fyc_token');
+          localStorage.removeItem('fyc_user');
+          window.location.reload();
+        };
+
+        // Close dropdown on outside click
+        document.addEventListener('click', (e) => {
+          const dropdown = document.getElementById('hdr-user-dropdown');
+          const avatar = document.getElementById('hdr-user-avatar');
+          if (dropdown && !dropdown.contains(e.target) && e.target !== avatar) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      })();
+    </script>
+
     <!-- Global i18n script: reads localStorage lang preference and applies to page -->
     <script>
       type Lang = 'ta' | 'en';

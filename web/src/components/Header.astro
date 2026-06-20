@@ -42,6 +42,22 @@ const navLinks = [
         >
           English
         </button>
+        <!-- Auth: hidden until JS resolves state -->
+        <a id="hdr-login-btn" href="/login"
+          class="ml-1 px-2.5 py-1.5 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-all"
+          data-ta="உள்நுழை" data-en="Login">உள்நுழை</a>
+        <div id="hdr-user-menu" class="hidden ml-1 relative">
+          <button onclick="toggleUserMenu()"
+            class="w-8 h-8 rounded-full bg-[#D4AF37] text-[#0F5132] text-xs font-extrabold flex items-center justify-center hover:opacity-90 transition-opacity"
+            id="hdr-user-avatar">U</button>
+          <div id="hdr-user-dropdown"
+            class="hidden absolute right-0 top-10 bg-white shadow-lg rounded-xl border border-gray-100 py-1 w-40 z-50">
+            <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-50" id="hdr-user-name"></div>
+            <button onclick="signOut()"
+              class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+              data-ta="வெளியேறு" data-en="Sign out">Sign out</button>
+          </div>
+        </div>
       </nav>
 
       <!-- Mobile menu button -->
@@ -53,6 +69,15 @@ const navLinks = [
         >
           English
         </button>
+        <!-- Mobile auth button -->
+        <a id="hdr-login-btn-mobile" href="/login"
+          class="px-2.5 py-1 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors"
+          data-ta="உள்நுழை" data-en="Login">உள்நுழை</a>
+        <div id="hdr-user-menu-mobile" class="hidden">
+          <button onclick="toggleUserMenu()"
+            class="w-8 h-8 rounded-full bg-[#D4AF37] text-[#0F5132] text-xs font-extrabold flex items-center justify-center"
+            id="hdr-user-avatar-mobile">U</button>
+        </div>
         <button
           id="mobile-menu-btn"
           class="text-white p-2 rounded-lg hover:bg-white/10 transition-colors"

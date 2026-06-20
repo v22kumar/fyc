@@ -213,21 +213,31 @@ def google_sign_in(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    if not settings.GOOGLE_CLIENT_ID:
+    # Accept tokens from either the Android client ID or the Web client ID
+    valid_client_ids = [
+        cid for cid in [settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID] if cid
+    ]
+    if not valid_client_ids:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Google Sign-In is not configured on this server. Set GOOGLE_CLIENT_ID in .env",
+            detail="Google Sign-In is not configured. Set GOOGLE_CLIENT_ID or GOOGLE_WEB_CLIENT_ID.",
         )
 
-    # Verify the Google ID token
     try:
         from google.oauth2 import id_token as google_id_token
         from google.auth.transport import requests as google_requests
-        idinfo = google_id_token.verify_oauth2_token(
-            payload.id_token,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
+        idinfo = None
+        last_err: Exception = ValueError("no client IDs configured")
+        for cid in valid_client_ids:
+            try:
+                idinfo = google_id_token.verify_oauth2_token(
+                    payload.id_token, google_requests.Request(), cid
+                )
+                break
+            except ValueError as e:
+                last_err = e
+        if idinfo is None:
+            raise last_err
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid Google token: {e}")
 

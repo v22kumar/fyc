@@ -33,8 +33,11 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
 
-    # Google OAuth
-    GOOGLE_CLIENT_ID: str = ""  # Web/Android OAuth 2.0 client ID from Google Cloud Console
+    # Google OAuth — create two separate OAuth 2.0 client IDs in Google Cloud Console:
+    #   Android type → used by the Flutter mobile app
+    #   Web application type → used by the Astro web app (set authorized JS origin to fly.dev domain)
+    GOOGLE_CLIENT_ID: str = ""      # Android / Flutter client ID
+    GOOGLE_WEB_CLIENT_ID: str = ""  # Web browser client ID
 
     # Cloudinary — image hosting (replaces local disk uploads)
     CLOUDINARY_CLOUD_NAME: str = ""
