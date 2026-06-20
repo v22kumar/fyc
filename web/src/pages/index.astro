@@ -131,26 +131,28 @@ const updates = [
           </div>
         </div>
 
-        <!-- Live Weather + Gold Price -->
-        <div class="lg:col-span-5 space-y-3">
-          <div>
-            <div class="flex items-center gap-1.5 mb-2">
-              <span class="text-base">🌤</span>
-              <span class="text-sm font-bold text-gray-700">Today's Weather</span>
-            </div>
-            <div id="weather-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 min-h-[100px] flex items-center">
-              <span class="text-gray-400 text-sm">Loading weather…</span>
-            </div>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5 mb-2">
-              <span class="text-base">🪙</span>
-              <span class="text-sm font-bold text-gray-700">Today's Gold Price · INR</span>
-            </div>
-            <div id="gold-card" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 min-h-[100px] flex items-center">
-              <span class="text-gray-400 text-sm">Loading price…</span>
-            </div>
-          </div>
+        <!-- Quick stats / feature highlights -->
+        <div class="lg:col-span-5 grid grid-cols-2 gap-3">
+          <a href="/blood-donors" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+            <span class="text-3xl">🩸</span>
+            <span class="text-sm font-bold text-gray-800" data-ta="இரத்த தானம்" data-en="Blood Donors">Blood Donors</span>
+            <span class="text-xs text-gray-400" data-ta="உடனடி உதவி" data-en="Emergency help network">Emergency help network</span>
+          </a>
+          <a href="/events" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+            <span class="text-3xl">📅</span>
+            <span class="text-sm font-bold text-gray-800" data-ta="நிகழ்வுகள்" data-en="Events">Events</span>
+            <span class="text-xs text-gray-400" data-ta="வரும் நிகழ்வுகள்" data-en="Upcoming community events">Upcoming community events</span>
+          </a>
+          <a href="/sports" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+            <span class="text-3xl">⚽</span>
+            <span class="text-sm font-bold text-gray-800" data-ta="விளையாட்டு" data-en="Sports">Sports</span>
+            <span class="text-xs text-gray-400" data-ta="போட்டிகள் & அட்டவணை" data-en="Tournaments & fixtures">Tournaments & fixtures</span>
+          </a>
+          <a href="/directory" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+            <span class="text-3xl">🛍️</span>
+            <span class="text-sm font-bold text-gray-800" data-ta="சமூக கடை" data-en="Directory">Directory</span>
+            <span class="text-xs text-gray-400" data-ta="உள்ளூர் திறமைகள்" data-en="Local skills & services">Local skills & services</span>
+          </a>
         </div>
       </div>
     </div>
@@ -349,100 +351,6 @@ const updates = [
 
     loadNews('tamil');
 
-    // ── Weather ──────────────────────────────────────────────────────────
-    (async () => {
-      const card = document.getElementById('weather-card');
-      const renderWeather = (w, cityHint) => {
-        const city = w.city || cityHint || 'Nagercoil';
-        card.innerHTML = `
-          <div class="w-full">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-3xl font-extrabold text-[#0F5132]">${Math.round(w.temp)}°C</div>
-                <div class="text-sm font-semibold text-gray-700 mt-0.5">${esc(w.description.charAt(0).toUpperCase() + w.description.slice(1))}</div>
-                <div class="text-xs text-gray-400 mt-0.5">${esc(city)} · Feels like ${Math.round(w.feels_like ?? w.temp)}°C</div>
-              </div>
-              <div class="flex flex-col items-end gap-1 text-xs text-gray-500">
-                <span>💧 ${w.humidity ?? '--'}% humidity</span>
-                <span>💨 ${w.wind_speed != null ? w.wind_speed.toFixed(1) + ' m/s' : '--'} wind</span>
-              </div>
-            </div>
-          </div>`;
-      };
-      const fetchWeather = async (lat, lon, cityHint) => {
-        const res = await fetch(`${API_BASE}/api/v1/utilities/weather?lat=${lat}&lon=${lon}`);
-        if (!res.ok) throw new Error('http ' + res.status);
-        const w = await res.json();
-        if (w.temp == null) throw new Error('no data');
-        renderWeather(w, cityHint);
-      };
-      try {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-              try {
-                await fetchWeather(pos.coords.latitude, pos.coords.longitude, '');
-              } catch (_) {
-                card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>';
-              }
-            },
-            async () => {
-              try { await fetchWeather(8.1833, 77.4119, 'Nagercoil'); }
-              catch (_) { card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>'; }
-            },
-            { timeout: 8000, maximumAge: 300000 }
-          );
-        } else {
-          await fetchWeather(8.1833, 77.4119, 'Nagercoil');
-        }
-      } catch (e) {
-        card.innerHTML = '<span class="text-gray-400 text-sm">Weather unavailable right now.</span>';
-      }
-    })();
-
-    // ── Gold Price ───────────────────────────────────────────────────────
-    (async () => {
-      const card = document.getElementById('gold-card');
-      const fmt = (n) => {
-        if (n == null) return '—';
-        const s = Math.round(n).toString();
-        if (s.length <= 3) return '₹' + s;
-        const last3 = s.slice(-3);
-        const rest = s.slice(0, -3);
-        let out = '';
-        for (let i = 0; i < rest.length; i++) {
-          if (i && (rest.length - i) % 2 === 0) out += ',';
-          out += rest[i];
-        }
-        return '₹' + out + ',' + last3;
-      };
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/utilities/gold-price`);
-        if (!res.ok) throw new Error('http ' + res.status);
-        const g = await res.json();
-        if (g.price_per_gram_24k == null) throw new Error('no data');
-        card.innerHTML = `
-          <div class="w-full space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg bg-amber-500 text-white text-xs font-bold flex items-center justify-center">24K</span>
-                <span class="text-sm text-gray-500">Pure gold</span>
-              </div>
-              <span class="text-lg font-extrabold text-amber-500">${fmt(g.price_per_gram_24k)} <span class="text-xs font-medium text-gray-400">/g</span></span>
-            </div>
-            <div class="border-t border-gray-100"></div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 text-amber-600 text-xs font-bold flex items-center justify-center">22K</span>
-                <span class="text-sm text-gray-500">Jewellery</span>
-              </div>
-              <span class="text-lg font-extrabold text-gray-800">${fmt(g.price_per_gram_22k)} <span class="text-xs font-medium text-gray-400">/g</span></span>
-            </div>
-          </div>`;
-      } catch (e) {
-        card.innerHTML = '<span class="text-gray-400 text-sm">Gold price unavailable right now.</span>';
-      }
-    })();
   </script>
 
   <!-- Modules Grid (Discord / Notion Style) -->

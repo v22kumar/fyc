@@ -40,6 +40,57 @@ const {
     </main>
     <Footer />
 
+    <!-- Header weather + gold strip -->
+    <script>
+      (function () {
+        const API = 'https://fyc-backend.fly.dev';
+        const wEl = document.getElementById('hdr-weather');
+        const gEl = document.getElementById('hdr-gold');
+        const fmt = (n) => {
+          if (n == null) return '—';
+          const s = Math.round(n).toString();
+          if (s.length <= 3) return '₹' + s;
+          const last3 = s.slice(-3);
+          const rest = s.slice(0, -3);
+          let out = '';
+          for (let i = 0; i < rest.length; i++) {
+            if (i && (rest.length - i) % 2 === 0) out += ',';
+            out += rest[i];
+          }
+          return '₹' + out + ',' + last3;
+        };
+
+        const fetchWeather = (lat, lon) => {
+          fetch(API + '/api/v1/utilities/weather?lat=' + lat + '&lon=' + lon)
+            .then((r) => r.json())
+            .then((w) => {
+              if (w.temp == null) return;
+              const city = w.city || 'Nagercoil';
+              if (wEl) wEl.textContent = '🌤 ' + Math.round(w.temp) + '°C · ' + city;
+            })
+            .catch(() => {});
+        };
+
+        fetch(API + '/api/v1/utilities/gold-price')
+          .then((r) => r.json())
+          .then((g) => {
+            if (gEl && g.price_per_gram_22k != null)
+              gEl.textContent = '🪙 22K ' + fmt(g.price_per_gram_22k) + '/g';
+          })
+          .catch(() => {});
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (p) => fetchWeather(p.coords.latitude, p.coords.longitude),
+            () => fetchWeather(8.1833, 77.4119),
+            { timeout: 8000, maximumAge: 300000 }
+          );
+        } else {
+          fetchWeather(8.1833, 77.4119);
+        }
+      })();
+    </script>
+
     <!-- Global i18n script: reads localStorage lang preference and applies to page -->
     <script>
       type Lang = 'ta' | 'en';

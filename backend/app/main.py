@@ -80,11 +80,11 @@ def _seed_database():
         # Always ensure default contacts are seeded (idempotent)
         seed_default_contacts(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
 
-        # Check if blood donors table is empty, and seed them if so
+        # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
-        if donor_count == 0:
-            print("Blood donors table is empty — seeding from friends2support CSV...")
+        if donor_count < 1000:
+            print(f"Blood donors count is {donor_count} — seeding from friends2support CSV...")
             try:
                 import sys as _sys
                 _sys.path.insert(0, ".")
