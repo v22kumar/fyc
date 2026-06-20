@@ -2,39 +2,46 @@
 import { API_BASE } from '../lib/config';
 
 const navLinks = [
-  { href: '/',              ta: 'முகப்பு',          en: 'Home' },
-  { href: '/about',         ta: 'எங்களை பற்றி',     en: 'About' },
-  { href: '/blood-donors',  ta: 'இரத்த தானம்',      en: 'Blood Donation' },
-  { href: '/submit-issue',  ta: 'பிரச்னை தெரிவிக்க', en: 'Report Issue' },
-  { href: '/events',        ta: 'நிகழ்வுகள்',        en: 'Events' },
-  { href: '/verify',        ta: 'அட்டை சரிபார்',     en: 'Verify Card' },
-  { href: '/directory',     ta: 'சமூக கடை',           en: 'Directory' },
-  { href: '/sports',        ta: 'விளையாட்டு',          en: 'Sports' },
+  { href: '/',             ta: 'முகப்பு',           en: 'Home',          ml: 'ഹോം',       hi: 'होम',       protected: false, icon: '🏠' },
+  { href: '/about',        ta: 'எங்களை பற்றி',      en: 'About',         ml: 'ഞങ്ങളെ കുറിച്ച്', hi: 'हमारे बारे में', protected: false, icon: 'ℹ️' },
+  { href: '/blood-donors', ta: 'இரத்த தானம்',       en: 'Blood Donors',  ml: 'രക്തദാനം',  hi: 'रक्तदान',   protected: true,  icon: '🩸' },
+  { href: '/events',       ta: 'நிகழ்வுகள்',         en: 'Events',        ml: 'ഇവന്റുകൾ', hi: 'कार्यक्रम', protected: true,  icon: '📅' },
+  { href: '/sports',       ta: 'விளையாட்டு',          en: 'Sports',        ml: 'കായികം',   hi: 'खेल',       protected: true,  icon: '⚽' },
+  { href: '/submit-issue', ta: 'பிரச்னை தெரிவிக்க', en: 'Report Issue',  ml: 'പരാതി',     hi: 'शिकायत',    protected: true,  icon: '🚧' },
+  { href: '/directory',    ta: 'சமூக கடை',           en: 'Directory',     ml: 'ഡയറക്ടറി', hi: 'निर्देशिका', protected: true,  icon: '🛍️' },
+  { href: '/verify',       ta: 'அட்டை சரிபார்',     en: 'Verify Card',   ml: 'കാർഡ് പരിശോധന', hi: 'कार्ड सत्यापन', protected: true,  icon: '🪪' },
+];
+
+const langOptions = [
+  { code: 'ta', flag: 'TA', label: 'தமிழ்' },
+  { code: 'en', flag: 'EN', label: 'English' },
+  { code: 'ml', flag: 'ML', label: 'മലയാളം' },
+  { code: 'hi', flag: 'HI', label: 'हिन्दी' },
 ];
 
 const apkUrl = `${API_BASE}/api/v1/app/download`;
 ---
 
-<header class="bg-[#0F5132] border-b border-[#198754]/20 sticky top-0 z-50 shadow-md">
+<header class="sticky top-0 z-50 bg-[#0F5132]/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-[#0c3f27]/20">
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6">
-    <div class="flex items-center justify-between h-[70px]">
+    <div class="flex items-center justify-between h-[68px]">
+
       <!-- Logo -->
-      <a href="/" class="flex items-center gap-3 text-white font-bold tracking-tight">
-        <img src="/fyc_logo.png" alt="FYC" class="h-12 w-12 rounded-xl object-cover object-center flex-shrink-0 border border-white/10 shadow-sm" />
+      <a href="/" class="flex items-center gap-3 text-white font-bold tracking-tight flex-shrink-0 group">
+        <img src="/fyc_logo.png" alt="FYC" class="h-11 w-11 rounded-xl object-cover flex-shrink-0 border border-white/15 shadow-sm group-hover:scale-105 transition-transform" />
         <div class="flex flex-col justify-center">
-          <span class="text-lg leading-none font-extrabold tracking-tight">FYC Connect</span>
-          <span class="text-[9px] text-[#D4AF37] font-semibold uppercase tracking-[0.12em] mt-1">Unite &bull; Play &bull; Thrive</span>
+          <span class="text-lg leading-none font-black">FYC Connect</span>
+          <span class="text-[8.5px] text-[#D4AF37] font-bold uppercase tracking-[0.15em] mt-1">Unite &bull; Play &bull; Thrive</span>
         </div>
       </a>
 
       <!-- Desktop nav -->
-      <nav class="hidden md:flex items-center gap-1">
+      <nav class="hidden lg:flex items-center gap-0.5">
         {navLinks.map((link) => (
           <a
             href={link.href}
-            class="px-2.5 py-1.5 rounded-lg text-green-100 hover:text-white hover:bg-white/10 text-xs font-semibold transition-all"
-            data-ta={link.ta}
-            data-en={link.en}
+            class="nav-link px-2.5 py-1.5 rounded-lg text-green-100/90 hover:text-white hover:bg-white/10 text-xs font-semibold transition-all"
+            data-ta={link.ta} data-en={link.en} data-ml={link.ml} data-hi={link.hi}
           >
             {link.ta}
           </a>
@@ -55,40 +62,72 @@ const apkUrl = `${API_BASE}/api/v1/app/download`;
         </button>
         <!-- Auth: hidden until JS resolves state -->
         <a id="hdr-login-btn" href="/login"
-          class="ml-1 px-2.5 py-1.5 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-all"
-          data-ta="உள்நுழை" data-en="Login">உள்நுழை</a>
-        <div id="hdr-user-menu" class="hidden ml-1 relative">
-          <button onclick="toggleUserMenu()"
-            class="w-8 h-8 rounded-full bg-[#D4AF37] text-[#0F5132] text-xs font-extrabold flex items-center justify-center hover:opacity-90 transition-opacity"
+          class="ml-1.5 px-4 py-1.5 rounded-lg bg-[#D4AF37] text-[#0c3f27] text-xs font-bold hover:bg-amber-400 transition-all shadow-sm"
+          data-ta="உள்நுழை" data-en="Login" data-ml="ലോഗിൻ" data-hi="लॉगिन">உள்நுழை</a>
+        <div id="hdr-user-menu" class="hidden ml-1.5 relative">
+          <button onclick="toggleUserMenu('hdr-user-dropdown')"
+            class="w-9 h-9 rounded-full bg-[#D4AF37] text-[#0F5132] text-sm font-black flex items-center justify-center hover:ring-2 hover:ring-white/40 transition-all shadow-sm"
             id="hdr-user-avatar">U</button>
           <div id="hdr-user-dropdown"
-            class="hidden absolute right-0 top-10 bg-white shadow-lg rounded-xl border border-gray-100 py-1 w-40 z-50">
-            <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-50" id="hdr-user-name"></div>
+            class="user-dropdown-menu hidden absolute right-0 top-12 bg-white shadow-2xl rounded-2xl border border-gray-100 py-2 w-48 z-50">
+            <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-100 font-medium truncate" id="hdr-user-name"></div>
+            <a href="/" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+               data-ta="முகப்பு" data-en="Home" data-ml="ഹോം" data-hi="होम">Home</a>
+            <a href="/complete-profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+               data-ta="என் சுயவிவரம்" data-en="My Profile" data-ml="പ്രൊഫൈൽ" data-hi="प्रोफ़ाइल">My Profile</a>
             <button onclick="signOut()"
-              class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-              data-ta="வெளியேறு" data-en="Sign out">Sign out</button>
+              class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold border-t border-gray-100 mt-1"
+              data-ta="வெளியேறு" data-en="Sign out" data-ml="സൈൻ ഔട്ട്" data-hi="साइन आउट">Sign out</button>
           </div>
         </div>
       </nav>
 
-      <!-- Mobile menu button -->
-      <div class="flex md:hidden items-center gap-2">
-        <button
-          id="lang-toggle"
-          onclick="toggleLang()"
-          class="px-2.5 py-1 rounded-lg border border-[#D4AF37] text-[#D4AF37] text-xs font-semibold hover:bg-white/10 transition-colors"
-        >
-          English
-        </button>
-        <!-- Mobile auth button -->
-        <a id="hdr-login-btn-mobile" href="/login"
-          class="px-2.5 py-1 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors"
-          data-ta="உள்நுழை" data-en="Login">உள்நுழை</a>
-        <div id="hdr-user-menu-mobile" class="hidden">
-          <button onclick="toggleUserMenu()"
-            class="w-8 h-8 rounded-full bg-[#D4AF37] text-[#0F5132] text-xs font-extrabold flex items-center justify-center"
-            id="hdr-user-avatar-mobile">U</button>
+      <!-- Mobile controls -->
+      <div class="flex lg:hidden items-center gap-2">
+
+        <!-- Mobile language picker (self-contained dropdown) -->
+        <div class="lang-picker-wrap relative">
+          <button
+            onclick="toggleLangPicker('lang-dropdown-mobile')"
+            class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/70 text-[#D4AF37] text-[11px] font-bold hover:bg-[#D4AF37]/10 transition-all"
+          >
+            <span class="lang-flag">TA</span>
+            <span class="text-[7px] opacity-60">▼</span>
+          </button>
+          <div id="lang-dropdown-mobile" class="lang-dropdown-menu hidden absolute right-0 top-11 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-1.5 min-w-[150px] overflow-hidden">
+            {langOptions.map((l) => (
+              <button onclick={`setLang('${l.code}')`} class="lang-opt w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-[#0F5132]/5 transition-colors flex items-center gap-3" data-lang-code={l.code}>
+                <span class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[9px] font-black text-gray-500">{l.flag}</span>
+                {l.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <!-- Mobile login (guest) -->
+        <a id="hdr-login-btn-mobile" href="/login"
+          class="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0c3f27] text-xs font-bold hover:bg-amber-400 transition-all"
+          data-ta="உள்நுழை" data-en="Login" data-ml="ലോഗിൻ" data-hi="लॉगिन">உள்நுழை</a>
+
+        <!-- Mobile avatar (auth, self-contained dropdown) -->
+        <div id="hdr-user-menu-mobile" class="hidden relative">
+          <button onclick="toggleUserMenu('hdr-user-dropdown-mobile')"
+            class="w-9 h-9 rounded-full bg-[#D4AF37] text-[#0F5132] text-sm font-black flex items-center justify-center shadow-sm"
+            id="hdr-user-avatar-mobile">U</button>
+          <div id="hdr-user-dropdown-mobile"
+            class="user-dropdown-menu hidden absolute right-0 top-12 bg-white shadow-2xl rounded-2xl border border-gray-100 py-2 w-48 z-50">
+            <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-100 font-medium truncate" id="hdr-user-name-mobile"></div>
+            <a href="/" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+               data-ta="முகப்பு" data-en="Home" data-ml="ഹോം" data-hi="होम">Home</a>
+            <a href="/complete-profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+               data-ta="என் சுயவிவரம்" data-en="My Profile" data-ml="പ്രൊഫൈൽ" data-hi="प्रोफ़ाइल">My Profile</a>
+            <button onclick="signOut()"
+              class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold border-t border-gray-100 mt-1"
+              data-ta="வெளியேறு" data-en="Sign out" data-ml="സൈൻ ഔട്ട്" data-hi="साइन आउट">Sign out</button>
+          </div>
+        </div>
+
+        <!-- Hamburger -->
         <button
           id="mobile-menu-btn"
           class="text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -126,12 +165,12 @@ const apkUrl = `${API_BASE}/api/v1/app/download`;
     </div>
   </div>
 
-  <!-- Info strip: live weather + gold price -->
-  <div class="border-t border-white/10 bg-[#0b3d24]/60">
+  <!-- Info strip: weather + gold -->
+  <div class="border-t border-white/10 bg-[#0b3d24]/70">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center gap-3 text-[11px] text-green-100/75 overflow-hidden">
-      <span id="hdr-weather" class="flex items-center gap-1 shrink-0">🌤 —</span>
+      <span id="hdr-weather" class="shrink-0">🌤 —</span>
       <span class="text-white/20 shrink-0">|</span>
-      <span id="hdr-gold" class="flex items-center gap-1 shrink-0">🪙 —</span>
+      <span id="hdr-gold" class="shrink-0">🪙 —</span>
     </div>
   </div>
 </header>

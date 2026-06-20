@@ -1,9 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
 import '../../domain/usecases/register_user_usecase.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../service_locator.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -79,18 +83,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) {
-        // 404 from API means user not registered
         if (f.message.contains('register') || f.message.contains('not registered')) {
-          // We need orgId from current state context — caller passes it via event
-          emit(const AuthNeedsRegistration(
-            organizationId: '',
-            phoneNumber: '',
-          ));
+          emit(const AuthNeedsRegistration(organizationId: '', phoneNumber: ''));
         } else {
           emit(AuthFailureState(f.message));
         }
       },
-      (user) => emit(AuthAuthenticated(user)),
+      (user) {
+        emit(AuthAuthenticated(user));
+        _registerFcmToken();
+      },
     );
   }
 
@@ -109,7 +111,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
-      (user) => emit(AuthAuthenticated(user)),
+      (user) {
+        emit(AuthAuthenticated(user));
+        _registerFcmToken();
+      },
     );
   }
 
@@ -123,8 +128,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
-      (user) => emit(AuthAuthenticated(user)),
+      (user) {
+        emit(AuthAuthenticated(user));
+        _registerFcmToken();
+      },
     );
+  }
+
+  /// Fire-and-forget: register device FCM token with backend after login.
+  void _registerFcmToken() {
+    FirebaseMessaging.instance.getToken().then((token) async {
+      if (token == null) return;
+      final client = sl<ApiClient>();
+      try {
+        await client.dio.post(ApiConstants.fcmToken, data: {'token': token});
+      } catch (_) {}
+    }).catchError((_) {});
   }
 
   Future<void> _onLogout(
