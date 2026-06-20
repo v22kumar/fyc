@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,8 +17,30 @@ import '../../../news/presentation/widgets/daily_news_card.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  late AnimationController _aurora;
+
+  @override
+  void initState() {
+    super.initState();
+    _aurora = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _aurora.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,45 +48,48 @@ class HomeScreen extends StatelessWidget {
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthUnauthenticated) {
-          context.go('/login');
-        }
+        if (state is AuthUnauthenticated) context.go('/login');
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.darkBg,
         extendBody: true,
         body: SafeArea(
           bottom: false,
           child: RefreshIndicator(
+            color: AppColors.primaryLight,
+            backgroundColor: AppColors.darkSurface,
             onRefresh: () async {},
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppTheme.paddingPage, 8, AppTheme.paddingPage, 120,
-              ),
+              padding: EdgeInsets.zero,
               children: [
-                _HomeHeader(l: l),
-                const SizedBox(height: 18),
+                // Dark aurora hero (full-bleed)
+                _AuroraHero(l: l, aurora: _aurora),
 
-                // Greeting
-                _GreetingCard(l: l),
-                const SizedBox(height: 20),
-
-                // Daily Thirukkural (bilingual couplet of the day)
-                const DailyThirukkuralCard(),
-                const SizedBox(height: 16),
-
-                // Daily Tamil news (Google News RSS, top 10)
-                const DailyNewsCard(),
-                const SizedBox(height: 16),
-
-                // Weather + Gold price
-                const WeatherCard(),
-                const SizedBox(height: 16),
-                const GoldPriceCard(),
-                const SizedBox(height: 24),
-
-                // Stats
-                _StatsRow(l: l),
+                // Light content card rising from dark
+                Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ModuleGrid(l: l),
+                      const SizedBox(height: 20),
+                      _StatsRow(l: l),
+                      const SizedBox(height: 20),
+                      const DailyThirukkuralCard(),
+                      const SizedBox(height: 16),
+                      const DailyNewsCard(),
+                      const SizedBox(height: 16),
+                      const WeatherCard(),
+                      const SizedBox(height: 16),
+                      const GoldPriceCard(),
+                      const SizedBox(height: 120),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -74,159 +100,368 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _HomeHeader extends StatelessWidget {
+// ── Aurora Hero ──────────────────────────────────────────────────────────────
+
+class _AuroraHero extends StatelessWidget {
   final AppLocalizations l;
-  const _HomeHeader({required this.l});
+  final AnimationController aurora;
+  const _AuroraHero({required this.l, required this.aurora});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: Image.asset(
-            'assets/images/fyc_logo.png',
-            width: 28,
-            height: 28,
-            errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 16)),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            l.appName,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              letterSpacing: 0.2,
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        String firstName = 'Friend';
+        if (state is AuthAuthenticated) {
+          final fullName = state.user.fullNameEn ?? state.user.fullNameTa ?? '';
+          final parts = fullName.trim().split(' ');
+          if (parts.isNotEmpty && parts.first.isNotEmpty) firstName = parts.first;
+        }
+
+        final hour = DateTime.now().hour;
+        final greetingTa = hour < 12
+            ? 'காலை வணக்கம்'
+            : hour < 17
+                ? 'மதிய வணக்கம்'
+                : 'மாலை வணக்கம்';
+        final greetingEn = hour < 12
+            ? 'Good Morning'
+            : hour < 17
+                ? 'Good Afternoon'
+                : 'Good Evening';
+
+        return SizedBox(
+          height: 230,
+          child: ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Dark base
+                Container(color: AppColors.darkBg),
+
+                // Animated aurora blobs
+                AnimatedBuilder(
+                  animation: aurora,
+                  builder: (_, __) {
+                    final t = aurora.value * 2 * math.pi;
+                    return Stack(
+                      children: [
+                        Positioned(
+                          left: -50.0 + 70 * math.sin(t * 0.65),
+                          top: -60.0 + 50 * math.cos(t * 0.45),
+                          child: _Blob(
+                            size: 240,
+                            color: const Color(0xFF0F5132).withOpacity(0.60),
+                          ),
+                        ),
+                        Positioned(
+                          right: -30.0 + 60 * math.sin(t * 0.4 + 1.5),
+                          top: 10.0 + 45 * math.cos(t * 0.55 + 0.8),
+                          child: _Blob(
+                            size: 200,
+                            color: const Color(0xFF16A34A).withOpacity(0.38),
+                          ),
+                        ),
+                        Positioned(
+                          left: 90.0 + 80 * math.sin(t * 0.28 + 2.2),
+                          top: 90.0 + 35 * math.cos(t * 0.75 + 1.1),
+                          child: _Blob(
+                            size: 160,
+                            color: const Color(0xFFD4AF37).withOpacity(0.10),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+
+                // Blur layer — blurs blobs into smooth aurora
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 55, sigmaY: 55),
+                  child: Container(color: Colors.transparent),
+                ),
+
+                // Vignette — subtle bottom fade to blend into content
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppColors.darkBg.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top nav row
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.25),
+                              ),
+                            ),
+                            child: Image.asset(
+                              'assets/images/fyc_logo.png',
+                              width: 26,
+                              height: 26,
+                              errorBuilder: (_, __, ___) =>
+                                  const Text('🌱', style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              l.appName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          _DarkIconBtn(
+                            icon: Icons.notifications_outlined,
+                            onTap: () => context.go('/announcements'),
+                          ),
+                          const SizedBox(width: 8),
+                          _DarkIconBtn(
+                            icon: Icons.translate_rounded,
+                            onTap: () async {
+                              final storage = sl<LocalStorage>();
+                              final cur = storage.getLang();
+                              final next = cur == 'ta' ? 'en' : 'ta';
+                              await storage.saveLang(next);
+                              localeNotifier.value = Locale(next);
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const Spacer(),
+
+                      // Greeting
+                      Text(
+                        greetingTa,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.65),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '$greetingEn, $firstName! 👋',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: Colors.white.withOpacity(0.18)),
+                        ),
+                        child: const Text(
+                          '🌱 Friends Youth Club · Nagercoil · Since 1998',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _Blob extends StatelessWidget {
+  final double size;
+  final Color color;
+  const _Blob({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+    );
+  }
+}
+
+class _DarkIconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _DarkIconBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.10),
+          border: Border.all(color: Colors.white.withOpacity(0.20)),
         ),
-        _HeaderIconButton(
-          icon: Icons.notifications_outlined,
-          onTap: () => context.go('/announcements'),
+        child: Icon(icon, size: 18, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// ── 8-Module Bento Grid ──────────────────────────────────────────────────────
+
+class _Module {
+  final String emoji, label, route;
+  final Color color;
+  const _Module(this.emoji, this.label, this.route, this.color);
+}
+
+class _ModuleGrid extends StatelessWidget {
+  final AppLocalizations l;
+  const _ModuleGrid({required this.l});
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = sl<LocalStorage>().getLang() == 'ta';
+    final modules = [
+      _Module('🩸', ta ? 'இரத்த தானம்' : 'Blood Donors',
+          '/blood-donation', const Color(0xFFEF4444)),
+      _Module('🎉', ta ? 'நிகழ்வுகள்' : 'Events',
+          '/events', const Color(0xFF8B5CF6)),
+      _Module('🏆', ta ? 'விளையாட்டு' : 'Sports Hub',
+          '/sports', const Color(0xFF10B981)),
+      _Module('🚧', ta ? 'புகார்' : 'Report Issue',
+          '/issues', AppColors.warning),
+      _Module('🌱', ta ? 'பசுமை FYC' : 'Green FYC',
+          '/green', const Color(0xFF047857)),
+      _Module('📋', ta ? 'அகவடை' : 'Directory',
+          '/directory', const Color(0xFF2563EB)),
+      _Module('🪪', ta ? 'அட்டை சரி' : 'Verify Card',
+          '/membership', AppColors.primary),
+      _Module('💼', ta ? 'வாய்ப்புகள்' : 'Opportunities',
+          '/opportunities', const Color(0xFFD97706)),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          ta ? 'சேவைகள்' : 'Services',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
         ),
-        const SizedBox(width: 8),
-        _HeaderIconButton(
-          icon: Icons.translate_rounded,
-          onTap: () async {
-            final storage = sl<LocalStorage>();
-            final currentLang = storage.getLang();
-            final newLang = currentLang == 'ta' ? 'en' : 'ta';
-            await storage.saveLang(newLang);
-            localeNotifier.value = Locale(newLang);
-          },
+        const SizedBox(height: 12),
+        GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.82,
+          children: modules.map((m) => _ModuleTile(m: m)).toList(),
         ),
       ],
     );
   }
 }
 
-class _HeaderIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _HeaderIconButton({required this.icon, required this.onTap});
+class _ModuleTile extends StatelessWidget {
+  final _Module m;
+  const _ModuleTile({required this.m});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Icon(icon, size: 18, color: AppColors.textPrimary),
+    return Pressable(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: AppColors.border),
         ),
-      ),
-    );
-  }
-}
-
-class _GreetingCard extends StatelessWidget {
-  final AppLocalizations l;
-  const _GreetingCard({required this.l});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF0891B2)], // Cyan 700 to Cyan 600
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          splashColor: m.color.withOpacity(0.08),
+          onTap: () => context.push(m.route),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  l.homeGreeting,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: m.color.withOpacity(0.10),
+                    shape: BoxShape.circle,
                   ),
+                  child: Text(m.emoji, style: const TextStyle(fontSize: 18)),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Friends Youth Club – Nagercoil',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                Text(
+                  m.label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Active since 1998',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/images/fyc_logo.png',
-              width: 52,
-              height: 52,
-              errorBuilder: (_, __, ___) =>
-                  const Text('🌱', style: TextStyle(fontSize: 36)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
+
+// ── Stats Row ────────────────────────────────────────────────────────────────
 
 class _StatsRow extends StatelessWidget {
   final AppLocalizations l;
@@ -237,17 +472,16 @@ class _StatsRow extends StatelessWidget {
     final stats = [
       ('1500+', '🌱', l.statsTreesPlanted, AppColors.success),
       ('1200+', '🩸', l.statsDonors, AppColors.accent),
-      ('80+',   '🎉', l.statsEvents, const Color(0xFF8B5CF6)), // Purple
-      ('5000+', '❤️', l.statsImpacted, const Color(0xFFF43F5E)), // Rose
+      ('80+',   '🎉', l.statsEvents, const Color(0xFF8B5CF6)),
+      ('5000+', '❤️', l.statsImpacted, const Color(0xFFF43F5E)),
     ];
 
     return Row(
       children: stats.map((s) {
+        final isLast = s == stats.last;
         return Expanded(
           child: Container(
-            margin: EdgeInsets.only(
-              right: s == stats.last ? 0 : 8,
-            ),
+            margin: EdgeInsets.only(right: isLast ? 0 : 8),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
             decoration: BoxDecoration(
               color: AppColors.surface,
@@ -277,9 +511,10 @@ class _StatsRow extends StatelessWidget {
                 Text(
                   s.$3,
                   style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -293,10 +528,8 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-/// Floating "dock" bottom navigation. Deliberately not an edge-to-edge
-/// Material BottomNavigationBar — a frosted, rounded island that surfaces
-/// the most-used destinations, with everything else one tap away in
-/// [_MoreSheet].
+// ── Floating Dock ─────────────────────────────────────────────────────────────
+
 class _FloatingDock extends StatelessWidget {
   const _FloatingDock();
 
@@ -365,13 +598,24 @@ class _DockItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? AppColors.primary : AppColors.textSecondary;
     return Pressable(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            padding: EdgeInsets.symmetric(
+              horizontal: active ? 14 : 8,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: active
+                  ? AppColors.primary.withOpacity(0.10)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -379,7 +623,11 @@ class _DockItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   label,
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
                 ),
               ],
             ),
@@ -407,8 +655,6 @@ class _MenuItem {
   const _MenuItem(this.icon, this.label, this.route, this.color);
 }
 
-/// Bento-grid "More" menu — every destination that used to live in the
-/// flat quick-access grid, grouped by purpose so the dock stays minimal.
 class _MoreSheet extends StatelessWidget {
   const _MoreSheet();
 
@@ -422,8 +668,8 @@ class _MoreSheet extends StatelessWidget {
         ta ? 'சேவைகள்' : 'Services',
         [
           _MenuItem('🚧', l.publicIssues, '/issues', AppColors.warning),
-          _MenuItem('🔍', ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track',
-              const Color(0xFF14B8A6)),
+          _MenuItem('🔍', ta ? 'புகார் கண்காணிப்பு' : 'Track Issues',
+              '/issues/track', const Color(0xFF14B8A6)),
           _MenuItem('🪪', l.membership, '/membership', AppColors.primary),
           _MenuItem('📋', l.directory, '/directory', const Color(0xFF2563EB)),
         ],
@@ -431,12 +677,16 @@ class _MoreSheet extends StatelessWidget {
       (
         ta ? 'சமூகம்' : 'Community',
         [
-          _MenuItem('🏆', ta ? 'விளையாட்டு' : 'Sports Hub', '/sports', const Color(0xFF10B981)),
-          _MenuItem('🌱', ta ? 'பசுமை FYC' : 'Green FYC', '/green', const Color(0xFF047857)),
-          _MenuItem('📢', ta ? 'அறிவிப்புகள்' : 'Announcements', '/announcements',
-              const Color(0xFFF59E0B)),
-          _MenuItem('📷', ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery', const Color(0xFFD97706)),
-          _MenuItem('🤝', ta ? 'சமூகம்' : 'Community', '/community', const Color(0xFFEC4899)),
+          _MenuItem('🏆', ta ? 'விளையாட்டு' : 'Sports Hub', '/sports',
+              const Color(0xFF10B981)),
+          _MenuItem('🌱', ta ? 'பசுமை FYC' : 'Green FYC', '/green',
+              const Color(0xFF047857)),
+          _MenuItem('📢', ta ? 'அறிவிப்புகள்' : 'Announcements',
+              '/announcements', const Color(0xFFF59E0B)),
+          _MenuItem('📷', ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery',
+              const Color(0xFFD97706)),
+          _MenuItem('🤝', ta ? 'சமூகம்' : 'Community', '/community',
+              const Color(0xFFEC4899)),
         ],
       ),
       (
@@ -444,7 +694,8 @@ class _MoreSheet extends StatelessWidget {
         [
           _MenuItem('🎓', ta ? 'சான்றிதழ்' : 'Certificates', '/certificate',
               const Color(0xFF6366F1)),
-          _MenuItem('ℹ️', ta ? 'எங்களைப் பற்றி' : 'About', '/about', AppColors.textSecondary),
+          _MenuItem('ℹ️', ta ? 'எங்களைப் பற்றி' : 'About', '/about',
+              AppColors.textSecondary),
         ],
       ),
     ];
@@ -491,7 +742,9 @@ class _MoreSheet extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                children: section.$2.map((item) => _BentoTile(item: item)).toList(),
+                children: section.$2
+                    .map((item) => _BentoTile(item: item))
+                    .toList(),
               ),
               const SizedBox(height: 24),
             ],
@@ -502,7 +755,10 @@ class _MoreSheet extends StatelessWidget {
               leading: const Icon(Icons.logout, color: AppColors.accent),
               title: Text(
                 l.logout,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -539,35 +795,36 @@ class _BentoTile extends StatelessWidget {
               Navigator.pop(context);
               context.push(item.route);
             },
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: item.color.withOpacity(0.08),
-                    shape: BoxShape.circle,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: item.color.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        Text(item.icon, style: const TextStyle(fontSize: 22)),
                   ),
-                  child: Text(item.icon, style: const TextStyle(fontSize: 22)),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  item.label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                  const SizedBox(height: 6),
+                  Text(
+                    item.label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );
