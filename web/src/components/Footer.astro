@@ -1,4 +1,6 @@
 ---
+import { API_BASE } from '../lib/config';
+
 const links = [
   { href: '/',             ta: 'முகப்பு',           en: 'Home' },
   { href: '/about',        ta: 'எங்களை பற்றி',      en: 'About' },
@@ -61,7 +63,7 @@ const links = [
           </li>
           <li class="flex items-center gap-2">
             <span>📱</span>
-            <span data-ta="ஆப் விரைவில் வருகிறது" data-en="App coming soon">ஆப் விரைவில் வருகிறது</span>
+            <a href={`${API_BASE}/api/v1/app/download`} class="hover:text-[#D4AF37] transition-colors" data-ta="Android ஆப் பதிவிறக்கம்" data-en="Download Android App">Download Android App</a>
           </li>
           <li class="flex items-center gap-2">
             <span>📍</span>

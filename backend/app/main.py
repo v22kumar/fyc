@@ -31,6 +31,7 @@ from app.routers import club_requests as club_requests_router
 from app.routers import utilities as utilities_router
 from app.routers import instagram as instagram_router
 from app.routers import broadcasts as broadcasts_router
+from app.routers import app_meta as app_meta_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -47,7 +48,7 @@ def _seed_database():
             org = Organization(
                 id=default_org_id,
                 slug="fyc-nagercoil",
-                name_ta="பிரண்ட்ஸ் யூத் கிளப் (நாகர்கோவில்)",
+                name_ta="பிரண்ட்ஸ் யூத் கிள்ளு (நாகர்கோவில்)",
                 name_en="Friends Youth Club (Nagercoil)"
             )
             db.add(org)
@@ -103,21 +104,17 @@ def _seed_database():
         ))
         db.commit()
 
-        # Add new columns to existing DB if not present (each in its own try so
-        # a race between workers on the first boot doesn't abort the rest)
+        # Add new columns to existing DB if not present (idempotent)
         for migration in [
             ("user_profiles", "date_of_birth", "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE"),
             ("users", "fcm_token", "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)"),
         ]:
             table, col, sql = migration
-            try:
-                cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
-                if col not in [c[1] for c in cols]:
-                    db.execute(text(sql))
-                    db.commit()
-                    print(f"[migration] Added column {table}.{col}")
-            except Exception:
-                db.rollback()  # column already added by the other worker — ignore
+            cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
+            if col not in [c[1] for c in cols]:
+                db.execute(text(sql))
+                db.commit()
+                print(f"[migration] Added column {table}.{col}")
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
@@ -209,6 +206,7 @@ app.include_router(club_requests_router.router, prefix="/api/v1")
 app.include_router(utilities_router.router, prefix="/api/v1")
 app.include_router(instagram_router.router, prefix="/api/v1")
 app.include_router(broadcasts_router.router, prefix="/api/v1")
+app.include_router(app_meta_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
