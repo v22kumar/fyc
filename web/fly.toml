@@ -8,7 +8,7 @@ primary_region = "sin"
   [build.args]
     PUBLIC_API_BASE = "https://fyc-backend.fly.dev"
     PUBLIC_DEFAULT_ORG_ID = "8f8b80b7-4b71-4770-b183-5c5f49e49a1d"
-    PUBLIC_GOOGLE_CLIENT_ID = ""
+    PUBLIC_GOOGLE_CLIENT_ID = "717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com"
 
 [http_service]
   internal_port = 80
