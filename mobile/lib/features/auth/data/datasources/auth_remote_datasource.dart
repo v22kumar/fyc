@@ -135,7 +135,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<TokenModel> signInWithGoogle({required String organizationId}) async {
-    final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+    final googleSignIn = GoogleSignIn(
+      serverClientId: ApiConstants.googleWebClientId,
+      scopes: ['email', 'profile'],
+    );
     try {
       final account = await googleSignIn.signIn();
       if (account == null) throw const AuthFailure('Google sign-in cancelled');
