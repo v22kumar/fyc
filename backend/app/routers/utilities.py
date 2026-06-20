@@ -1,8 +1,10 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
+from app.core.config import settings
 from app.services import weather as weather_service
 from app.services import gold_price as gold_price_service
 
@@ -50,3 +52,30 @@ def get_gold_price(response: Response = None):
     if response is not None:
         response.headers["Cache-Control"] = "public, max-age=43200, stale-while-revalidate=86400"
     return gold_price_service.get_gold_price()
+
+
+@router.get("/app/download", tags=["App"])
+def download_app():
+    """302 redirect to the latest FYC Connect Android APK.
+
+    Set APP_APK_URL env var to the APK's public URL, e.g.:
+        flyctl secrets set APP_APK_URL=https://fyc-backend.fly.dev/uploads/fyc-connect-latest.apk
+    """
+    if not settings.APP_APK_URL:
+        raise HTTPException(
+            status_code=404,
+            detail="App download not yet available. Admin must set APP_APK_URL.",
+        )
+    return RedirectResponse(url=settings.APP_APK_URL, status_code=302)
+
+
+@router.get("/app/info", tags=["App"])
+def app_info():
+    """Returns basic metadata about the Android app download."""
+    return {
+        "name": "FYC Connect",
+        "platform": "Android",
+        "package": "com.friendsyouthclub.fycconnect",
+        "available": bool(settings.APP_APK_URL),
+        "download_url": settings.APP_APK_URL or None,
+    }
