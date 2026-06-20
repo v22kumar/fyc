@@ -440,16 +440,25 @@ const updates = [
   <div id="auth-view">
 
     <!-- Welcome hero -->
-    <section class="relative bg-gradient-to-br from-[#0c3f27] via-[#0F5132] to-[#136b41] text-white py-10 px-4 overflow-hidden">
-      <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:30px_30px]"></div>
+    <section class="relative bg-[#0c3f27] text-white py-12 px-4 overflow-hidden">
+      <!-- Aurora mesh -->
+      <div class="absolute -top-20 left-[10%] w-72 h-72 rounded-full bg-[#198754] opacity-40 blur-[90px] pointer-events-none"></div>
+      <div class="absolute -bottom-24 right-[5%] w-80 h-80 rounded-full bg-[#0F5132] opacity-50 blur-[100px] pointer-events-none"></div>
+      <div class="absolute top-1/2 right-[35%] w-40 h-40 rounded-full bg-[#D4AF37] opacity-[0.07] blur-[60px] pointer-events-none"></div>
+      <!-- Grid -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"></div>
+
       <div class="max-w-6xl mx-auto relative z-10">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-[#D4AF37] text-gray-900 flex items-center justify-center text-2xl font-black shadow-lg flex-shrink-0" id="auth-avatar">V</div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div class="relative flex-shrink-0">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-500 text-[#0c3f27] flex items-center justify-center text-2xl font-black shadow-[0_8px_30px_rgba(212,175,55,0.35)]" id="auth-avatar">V</div>
+            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-[3px] border-[#0c3f27]"></div>
+          </div>
           <div class="flex-1">
-            <div class="text-white/60 text-xs font-semibold uppercase tracking-widest mb-0.5"
+            <div class="text-[#D4AF37] text-[11px] font-bold uppercase tracking-[0.2em] mb-1"
               data-ta="வரவேற்கிறோம்" data-en="Welcome back" data-ml="സ്വാഗതം" data-hi="स्वागत है">Welcome back</div>
-            <div class="text-xl font-extrabold" id="auth-welcome-name">—</div>
-            <div id="auth-role-badge" class="inline-flex items-center gap-1 mt-1 text-[10px] font-bold bg-white/15 border border-white/20 px-2.5 py-1 rounded-full"></div>
+            <div class="text-2xl sm:text-3xl font-black tracking-tight" id="auth-welcome-name">—</div>
+            <div id="auth-role-badge" class="inline-flex items-center gap-1 mt-2 text-[11px] font-bold bg-white/10 backdrop-blur-sm border border-white/15 px-3 py-1 rounded-full"></div>
           </div>
           <div id="auth-quick-links" class="flex flex-wrap gap-2 mt-2 sm:mt-0"></div>
         </div>

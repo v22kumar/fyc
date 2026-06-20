@@ -108,24 +108,37 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
         const meta = LANG_META[lang];
         document.querySelectorAll('.lang-flag').forEach(el => { el.textContent = meta.flag; });
         document.querySelectorAll('.lang-label').forEach(el => { el.textContent = meta.label; });
+        // Highlight the active language option
+        document.querySelectorAll<HTMLElement>('.lang-opt').forEach((el) => {
+          const active = el.dataset.langCode === lang;
+          el.classList.toggle('bg-[#0F5132]/10', active);
+          el.classList.toggle('font-black', active);
+        });
+      }
+
+      function closeAllLangDropdowns() {
+        document.querySelectorAll('.lang-dropdown-menu').forEach(d => d.classList.add('hidden'));
       }
 
       (window as any).setLang = function (lang: Lang) {
         localStorage.setItem('fyc_lang', lang);
         applyLang(lang);
-        document.getElementById('lang-dropdown')?.classList.add('hidden');
+        closeAllLangDropdowns();
       };
 
-      (window as any).toggleLangPicker = function () {
-        document.getElementById('lang-dropdown')?.classList.toggle('hidden');
+      (window as any).toggleLangPicker = function (id: string) {
+        const target = document.getElementById(id || 'lang-dropdown-desktop');
+        const wasHidden = target?.classList.contains('hidden');
+        closeAllLangDropdowns();
+        // Also close any open user dropdowns
+        document.querySelectorAll('.user-dropdown-menu').forEach(d => d.classList.add('hidden'));
+        if (wasHidden) target?.classList.remove('hidden');
       };
 
-      // Close dropdown on outside click
+      // Close dropdowns on outside click
       document.addEventListener('click', (e) => {
-        const picker = document.getElementById('lang-picker');
-        if (picker && !picker.contains(e.target as Node)) {
-          document.getElementById('lang-dropdown')?.classList.add('hidden');
-        }
+        const t = e.target as Element;
+        if (!t.closest('.lang-picker-wrap')) closeAllLangDropdowns();
       });
 
       applyLang(getLang());
@@ -174,23 +187,32 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
           try {
             const user = JSON.parse(userStr);
             const initial = (user.full_name_en || user.email || 'U')[0].toUpperCase();
+            const displayName = user.full_name_en || user.email || 'FYC User';
             ['hdr-login-btn', 'hdr-login-btn-mobile'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
             ['hdr-user-menu', 'hdr-user-menu-mobile'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
             ['hdr-user-avatar', 'hdr-user-avatar-mobile'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = initial; });
-            const nameEl = document.getElementById('hdr-user-name');
-            if (nameEl) nameEl.textContent = user.full_name_en || user.email || 'FYC User';
+            ['hdr-user-name', 'hdr-user-name-mobile'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = displayName; });
           } catch (_) {}
         }
-        (window as any).toggleUserMenu = () => document.getElementById('hdr-user-dropdown')?.classList.toggle('hidden');
+        function closeAllUserDropdowns() {
+          document.querySelectorAll('.user-dropdown-menu').forEach(d => d.classList.add('hidden'));
+        }
+        (window as any).toggleUserMenu = function (id: string) {
+          const target = document.getElementById(id || 'hdr-user-dropdown');
+          const wasHidden = target?.classList.contains('hidden');
+          closeAllUserDropdowns();
+          if (wasHidden) target?.classList.remove('hidden');
+        };
         (window as any).signOut = () => {
           localStorage.removeItem('fyc_token');
           localStorage.removeItem('fyc_user');
           window.location.href = '/';
         };
+        // Close user dropdowns on outside click (avatar buttons live inside their wrappers)
         document.addEventListener('click', (e) => {
-          const dd = document.getElementById('hdr-user-dropdown');
-          if (dd && !dd.contains(e.target as Element) && e.target !== document.getElementById('hdr-user-avatar')) {
-            dd.classList.add('hidden');
+          const t = e.target as Element;
+          if (!t.closest('#hdr-user-menu') && !t.closest('#hdr-user-menu-mobile')) {
+            closeAllUserDropdowns();
           }
         });
       })();
