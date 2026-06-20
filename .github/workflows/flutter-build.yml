@@ -27,20 +27,24 @@ jobs:
           flutter-version: 'stable'
           cache: true
 
-      # ── 3. Release signing (skipped if secrets not configured) ───────────────
-      # Set these in GitHub → Settings → Secrets → Actions:
+      # ── 3. Release signing ───────────────────────────────────────────────────
+      # Skipped automatically if KEYSTORE_BASE64 secret is not configured.
+      # Add these in GitHub → Settings → Secrets → Actions:
       #   KEYSTORE_BASE64   — base64 of fyc-release.jks
       #                       generate: keytool -genkey ... then: base64 -w0 fyc-release.jks
       #   KEY_STORE_PASSWORD — keystore password
-      #   KEY_PASSWORD       — key password (same as above unless separate)
+      #   KEY_PASSWORD       — key password
       - name: Setup release signing
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         working-directory: mobile/android
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::notice::KEYSTORE_BASE64 not set — build will use debug signing"
+            exit 0
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > fyc-release.jks
           printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=fyc\nstoreFile=../fyc-release.jks\n' \
             "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
@@ -52,6 +56,10 @@ jobs:
         run: flutter pub get
 
       # ── 5. Build ──────────────────────────────────────────────────────────────
+      # API_BASE_URL baked in at compile time so the APK hits production.
+      # GOOGLE_SERVER_CLIENT_ID = Web OAuth client ID from Firebase Console
+      #   → needed so GoogleSignIn returns a valid idToken for backend verification.
+      #   Add as GitHub Secret: GOOGLE_SERVER_CLIENT_ID
       - name: Build release APK  (direct install / web download)
         working-directory: mobile
         env:
@@ -96,8 +104,8 @@ jobs:
           retention-days: 30
 
       # ── 8. Publish APK + AAB to rolling GitHub Release ───────────────────────
-      # This creates or updates the "app-latest" release on every successful build.
-      # The APK download URL is always stable:
+      # Creates or updates the "app-latest" release on every successful build.
+      # Stable download URL (never changes):
       #   https://github.com/v22kumar/fyc/releases/download/app-latest/fyc-connect-latest.apk
       - name: Publish to GitHub Release (app-latest)
         uses: softprops/action-gh-release@v2
@@ -121,23 +129,26 @@ jobs:
             mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
-      # ── 9. Wire up backend download URL (runs once; idempotent) ──────────────
-      # If FLY_API_TOKEN is set in GitHub Secrets, this sets APP_APK_URL on the
-      # backend so the web's "Download App" button starts working immediately.
-      # The URL points to the stable "app-latest" release above and never changes,
-      # so subsequent builds don't trigger a backend redeploy.
+      # ── 9. Wire up backend download URL (idempotent) ─────────────────────────
+      # Sets APP_APK_URL on fyc-backend so the web "Download App" button works.
+      # Skipped automatically if FLY_API_TOKEN secret is not configured.
+      # The GitHub Release URL is stable, so this only triggers a backend
+      # redeploy the very first time (when APP_APK_URL is not yet set).
       - name: Setup flyctl
-        if: ${{ secrets.FLY_API_TOKEN != '' }}
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Set APP_APK_URL on backend (first build only)
-        if: ${{ secrets.FLY_API_TOKEN != '' }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::notice::FLY_API_TOKEN not set — skipping backend URL update"
+            exit 0
+          fi
+
           APK_URL="https://github.com/${{ github.repository }}/releases/download/app-latest/fyc-connect-latest.apk"
 
-          # Check if already set to this exact value to avoid unnecessary redeploys
+          # Only set if not already configured (avoids unnecessary backend redeploy)
           CURRENT=$(flyctl secrets list --app fyc-backend --json 2>/dev/null \
             | python3 -c "import sys,json; s=json.load(sys.stdin); print(next((x['Name'] for x in s if x['Name']=='APP_APK_URL'),''))" 2>/dev/null || echo "")
 
