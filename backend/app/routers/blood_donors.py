@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.cache import TTLCache
 from app.core.database import get_db
 from app.models.blood_donor import BloodDonor
 from app.models.user import User, UserProfile
@@ -17,6 +18,12 @@ from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/blood-donors", tags=["Blood Donors"])
+
+# 5-minute search result cache — keyed by all query params + tenant.
+# Invalidated on any write (register / availability update).
+# maxsize=256: covers 256 unique filter combinations before LRU eviction.
+_search_cache = TTLCache(ttl_seconds=300, maxsize=256)
+_DONORS_CC = "public, max-age=300, stale-while-revalidate=600"
 
 
 def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
@@ -55,7 +62,20 @@ def search_donors(
     details are not exposed here — use the /request-contact endpoint.
     Paginated: default limit=100. X-Total-Count header carries full match count.
     Pass nearby=true with geography_id to include all taluks in the same district.
+    Results cached 5 minutes; cache flushed on any donor register / availability update.
     """
+    cache_key = (
+        str(tenant_id), blood_group or "", str(geography_id), nearby,
+        available_only, limit, offset,
+    )
+    hit, cached = _search_cache.get(cache_key)
+    if hit:
+        result, total = cached
+        if response is not None:
+            response.headers["X-Total-Count"] = str(total)
+            response.headers["Cache-Control"] = _DONORS_CC
+        return result
+
     filters = [BloodDonor.organization_id == tenant_id]
     if blood_group:
         filters.append(BloodDonor.blood_group == blood_group.upper())
@@ -70,7 +90,6 @@ def search_donors(
 
     total = db.query(func.count(BloodDonor.id)).filter(*filters).scalar() or 0
 
-    # Single JOIN query — eliminates the previous N+1 (profile + geo per donor)
     rows = (
         db.query(BloodDonor, UserProfile, GeographicNode)
         .outerjoin(UserProfile, UserProfile.user_id == BloodDonor.user_id)
@@ -82,10 +101,7 @@ def search_donors(
         .all()
     )
 
-    if response is not None:
-        response.headers["X-Total-Count"] = str(total)
-
-    return [
+    result = [
         BloodDonorPublicOut(
             id=donor.id,
             blood_group=donor.blood_group,
@@ -98,6 +114,12 @@ def search_donors(
         )
         for donor, profile, geo in rows
     ]
+
+    _search_cache.set(cache_key, (result, total))
+    if response is not None:
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["Cache-Control"] = _DONORS_CC
+    return result
 
 @router.post("/register", response_model=BloodDonorPublicOut, status_code=status.HTTP_201_CREATED)
 def register_donor(
@@ -130,6 +152,7 @@ def register_donor(
     db.add(donor)
     db.commit()
     db.refresh(donor)
+    _search_cache.invalidate()  # new donor must appear in search results immediately
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
     geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None
@@ -162,6 +185,7 @@ def update_availability(
     donor.is_available = payload.is_available
     db.commit()
     db.refresh(donor)
+    _search_cache.invalidate()  # availability change must reflect in search results immediately
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
     geo = db.get(GeographicNode, donor.geography_id) if donor.geography_id else None

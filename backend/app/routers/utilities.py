@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel
 
 from app.services import weather as weather_service
@@ -34,18 +34,19 @@ class GoldPriceResponse(BaseModel):
 def get_weather(
     lat: float = Query(..., description="Latitude of the location"),
     lon: float = Query(..., description="Longitude of the location"),
+    response: Response = None,
 ):
-    """Current weather for the given coordinates (30-minute cache per location).
-
-    Returns a placeholder response when OPENWEATHER_API_KEY is not configured.
-    """
+    """Current weather for the given coordinates (30-minute server cache per location)."""
+    # Instruct browsers/CDNs to cache for 30 min; serve stale up to 1hr while revalidating
+    if response is not None:
+        response.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=3600"
     return weather_service.get_weather(lat=lat, lon=lon)
 
 
 @router.get("/gold-price", response_model=GoldPriceResponse)
-def get_gold_price():
-    """Current gold price per gram in INR — 24K and 22K (1-hour cache).
-
-    Returns a placeholder response when GOLD_API_KEY is not configured.
-    """
+def get_gold_price(response: Response = None):
+    """Current gold price per gram in INR — 24K and 22K (12-hour server cache)."""
+    # 12hr cache matches the server-side TTL; serve stale up to 24hr while revalidating
+    if response is not None:
+        response.headers["Cache-Control"] = "public, max-age=43200, stale-while-revalidate=86400"
     return gold_price_service.get_gold_price()

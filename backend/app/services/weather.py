@@ -21,8 +21,9 @@ _REQUEST_TIMEOUT = 10
 # Keyed by (rounded_lat, rounded_lon) -> {"data": dict, "fetched_at": datetime}
 _cache: dict = {}
 
-# City name cache — coordinates rarely change city, no TTL needed
+# City name cache — no TTL needed (cities don't move), but bounded to prevent unbounded growth
 _city_cache: dict = {}
+_CITY_CACHE_MAX = 500
 
 # WMO Weather Code → (description, icon_emoji)
 # Full table: https://open-meteo.com/en/docs#weathervariables
@@ -80,6 +81,8 @@ def _reverse_geocode(lat: float, lon: float) -> str:
         )
     except Exception:
         city = ""
+    if len(_city_cache) >= _CITY_CACHE_MAX:
+        _city_cache.pop(next(iter(_city_cache)))
     _city_cache[key] = city
     return city
 
