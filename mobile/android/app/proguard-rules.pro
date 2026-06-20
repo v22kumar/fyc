@@ -19,3 +19,7 @@
 # OkHttp (used by Dio internally)
 -dontwarn okhttp3.**
 -keep class okhttp3.** { *; }
+
+# Flutter Play Store Split compatibility (deferred components) fallback
+-dontwarn com.google.android.play.core.**
+
