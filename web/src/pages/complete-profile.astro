@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { API_BASE } from '../lib/config';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 ---
 
 <BaseLayout
@@ -154,7 +154,7 @@ import { API_BASE } from '../lib/config';
     </div>
   </section>
 
-  <script define:vars={{ API_BASE }}>
+  <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
     // Redirect to login if not authenticated
     const token = localStorage.getItem('fyc_token');
     if (!token) {
@@ -230,6 +230,7 @@ import { API_BASE } from '../lib/config';
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
+            'X-Organization-ID': DEFAULT_ORG_ID,
           },
           body: JSON.stringify(payload),
         });
