@@ -14,6 +14,24 @@ const stats = [
 
 const modules = [
   {
+    icon: '🩸',
+    href: '/blood-donors',
+    tag_ta: 'அவசியம்',
+    tag_en: 'Urgent',
+    color: 'from-red-50 to-rose-50 border-red-200/60',
+    ta: { title: 'இரத்த தானம்', desc: 'அவசரகால தேவைகளுக்காக இரத்த கொடையாளர்களை உடனே தொடர்பு கொள்ளுங்கள்.' },
+    en: { title: 'Blood Donation', desc: 'Find verified blood donors in Nagercoil. Connect securely in emergencies.' },
+  },
+  {
+    icon: '📅',
+    href: '/events',
+    tag_ta: 'நேரடி',
+    tag_en: 'Live',
+    color: 'from-purple-50 to-violet-50 border-purple-200/60',
+    ta: { title: 'நிகழ்வுகள்', desc: 'வரும் நிகழ்வுகள், விழாக்கள் மற்றும் சமூக கூட்டங்களில் கலந்துகொள்ளுங்கள்.' },
+    en: { title: 'Events', desc: 'Upcoming community events, festivals, and meetings. Register and attend.' },
+  },
+  {
     icon: '⚽',
     href: '/sports',
     tag_ta: 'புதியது',
@@ -21,6 +39,24 @@ const modules = [
     color: 'from-amber-50 to-orange-50 border-amber-200/60',
     ta: { title: 'விளையாட்டு அரங்கம்', desc: 'உள்ளூர் போட்டிகள், அணிகள், அட்டவணைகள் மற்றும் விளையாட்டு சவால்கள்.' },
     en: { title: 'Sports Arena', desc: 'Track local tournaments, teams, fixtures, and community sports challenges.' },
+  },
+  {
+    icon: '🚧',
+    href: '/submit-issue',
+    tag_ta: 'தீர்வு',
+    tag_en: 'Active',
+    color: 'from-blue-50 to-indigo-50 border-blue-200/60',
+    ta: { title: 'பிரச்னை தீர்வு', desc: 'குடிநீர், தெருவிளக்கு மற்றும் சாலைப் பிரச்னைகளைத் தெரிவித்து தீர்வு காணுங்கள்.' },
+    en: { title: 'Report Issue', desc: 'Report civic complaints like water supply or street lights and track resolution.' },
+  },
+  {
+    icon: '🌱',
+    href: '/green',
+    tag_ta: 'சுற்றுச்சூழல்',
+    tag_en: 'Eco',
+    color: 'from-green-50 to-emerald-50 border-green-200/60',
+    ta: { title: 'பசுமை FYC', desc: 'மர நடும் பிரச்சாரங்கள், சுற்றுச்சூழல் செயல்பாடுகள் மற்றும் இயற்கை சேவை.' },
+    en: { title: 'Green FYC', desc: 'Tree planting drives, eco initiatives, and environmental service activities.' },
   },
   {
     icon: '🛍️',
@@ -32,22 +68,22 @@ const modules = [
     en: { title: 'Skills Directory', desc: 'Find local carpenters, electricians, tutors, and verified community profiles.' },
   },
   {
-    icon: '🩸',
-    href: '/blood-donors',
-    tag_ta: 'அவசியம்',
-    tag_en: 'Urgent',
-    color: 'from-red-50 to-rose-50 border-red-200/60',
-    ta: { title: 'இரத்த தானம்', desc: 'அவசரகால தேவைகளுக்காக இரத்த கொடையாளர்களை உடனே தொடர்பு கொள்ளுங்கள்.' },
-    en: { title: 'Blood Donation', desc: 'Find verified blood donors in Nagercoil. Connect securely in emergencies.' },
+    icon: '🪪',
+    href: '/verify',
+    tag_ta: 'அதிகாரப்பூர்வம்',
+    tag_en: 'Official',
+    color: 'from-slate-50 to-gray-50 border-slate-200/60',
+    ta: { title: 'அட்டை சரிபார்', desc: 'FYC உறுப்பினர் அட்டையை QR மூலம் சரிபார்க்கவும்.' },
+    en: { title: 'Verify Card', desc: 'Scan and verify FYC membership cards using QR code.' },
   },
   {
-    icon: '🚧',
-    href: '/submit-issue',
-    tag_ta: 'தீர்வு',
-    tag_en: 'Active',
-    color: 'from-blue-50 to-indigo-50 border-blue-200/60',
-    ta: { title: 'பிரச்னை தீர்வு', desc: 'குடிநீர், தெருவிளக்கு மற்றும் சாலைப் பிரச்னைகளைத் தெரிவித்து தீர்வு காணுங்கள்.' },
-    en: { title: 'Citizen Triage', desc: 'Report civic complaints like water supply or street lights and track resolution.' },
+    icon: '💼',
+    href: '/opportunities',
+    tag_ta: 'வேலை',
+    tag_en: 'Jobs',
+    color: 'from-cyan-50 to-sky-50 border-cyan-200/60',
+    ta: { title: 'வாய்ப்புகள்', desc: 'TN அரசு வேலைகள், மத்திய அரசு வேலைகள் மற்றும் சமூக வாய்ப்புகள்.' },
+    en: { title: 'Opportunities', desc: 'TN & Central govt jobs, scholarships, and community opportunities.' },
   },
 ];
 
@@ -143,27 +179,27 @@ const updates = [
           </div>
         </div>
 
-        <!-- Quick stats / feature highlights -->
+        <!-- Quick feature tiles -->
         <div class="lg:col-span-5 grid grid-cols-2 gap-3">
-          <a href="/blood-donors" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+          <a href="/blood-donors" class="bg-red-50 border border-red-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
             <span class="text-3xl">🩸</span>
             <span class="text-sm font-bold text-gray-800" data-ta="இரத்த தானம்" data-en="Blood Donors">Blood Donors</span>
-            <span class="text-xs text-gray-400" data-ta="உடனடி உதவி" data-en="Emergency help network">Emergency help network</span>
+            <span class="text-xs text-gray-400" data-ta="உடனடி உதவி" data-en="Emergency help">Emergency help</span>
           </a>
-          <a href="/events" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+          <a href="/events" class="bg-purple-50 border border-purple-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
             <span class="text-3xl">📅</span>
             <span class="text-sm font-bold text-gray-800" data-ta="நிகழ்வுகள்" data-en="Events">Events</span>
-            <span class="text-xs text-gray-400" data-ta="வரும் நிகழ்வுகள்" data-en="Upcoming community events">Upcoming community events</span>
+            <span class="text-xs text-gray-400" data-ta="வரும் நிகழ்வுகள்" data-en="Community events">Community events</span>
           </a>
-          <a href="/sports" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+          <a href="/sports" class="bg-amber-50 border border-amber-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
             <span class="text-3xl">⚽</span>
             <span class="text-sm font-bold text-gray-800" data-ta="விளையாட்டு" data-en="Sports">Sports</span>
-            <span class="text-xs text-gray-400" data-ta="போட்டிகள் & அட்டவணை" data-en="Tournaments & fixtures">Tournaments & fixtures</span>
+            <span class="text-xs text-gray-400" data-ta="போட்டிகள் & அட்டவணை" data-en="Tournaments">Tournaments</span>
           </a>
-          <a href="/directory" class="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
-            <span class="text-3xl">🛍️</span>
-            <span class="text-sm font-bold text-gray-800" data-ta="சமூக கடை" data-en="Directory">Directory</span>
-            <span class="text-xs text-gray-400" data-ta="உள்ளூர் திறமைகள்" data-en="Local skills & services">Local skills & services</span>
+          <a href="/submit-issue" class="bg-blue-50 border border-blue-100 rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow">
+            <span class="text-3xl">🚧</span>
+            <span class="text-sm font-bold text-gray-800" data-ta="பிரச்னை தெரிவி" data-en="Report Issue">Report Issue</span>
+            <span class="text-xs text-gray-400" data-ta="குடிமக்கள் குரல்" data-en="Civic triage">Civic triage</span>
           </a>
         </div>
       </div>
@@ -467,11 +503,11 @@ const updates = [
   <section class="py-16 bg-[#f8f9fa] px-4">
     <div class="max-w-6xl mx-auto px-2">
       <div class="text-center max-w-2xl mx-auto mb-12 space-y-2">
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-ta="எங்கள் முதன்மை செயல்பாடுகள்" data-en="Community Service Hub">
-          Community Service Hub
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-ta="எல்லா சேவைகளும் ஒரே இடத்தில்" data-en="All Services in One Place">
+          All Services in One Place
         </h2>
-        <p class="text-sm text-gray-500 leading-relaxed" data-ta="சமூக மேம்பாடு மற்றும் ஒன்றிணைப்பிற்கான டிஜிட்டல் கருவிகள்" data-en="Access our dedicated digital modules for sports networking, skill sharing, civic transparency, and medical support.">
-          Access our dedicated digital modules for sports networking, skill sharing, civic transparency, and medical support.
+        <p class="text-sm text-gray-500 leading-relaxed" data-ta="இரத்த தானம், விளையாட்டு, நிகழ்வுகள், பிரச்னைகள், பசுமை FYC — அனைத்தும் இங்கே." data-en="Blood donors, sports, events, civic issues, green drives, jobs — everything the community needs.">
+          Blood donors, sports, events, civic issues, green drives, jobs — everything the community needs.
         </p>
       </div>
 
