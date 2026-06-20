@@ -17,17 +17,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Source ─────────────────────────────────────────────────────────────
+      # ── 1. Source ────────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
-      # ── 2. Flutter SDK ─────────────────────────────────────────────────────
+      # ── 2. Flutter SDK ───────────────────────────────────────────────────────
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
           cache: true
 
-      # ── 3. Release signing (skipped if secrets not configured) ─────────────
+      # ── 3. Release signing (skipped if secrets not configured) ───────────────
       # Set these in GitHub → Settings → Secrets → Actions:
       #   KEYSTORE_BASE64   — base64 of fyc-release.jks
       #                       generate: keytool -genkey ... then: base64 -w0 fyc-release.jks
@@ -46,21 +46,37 @@ jobs:
             "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
           echo "Release signing configured ✓"
 
-      # ── 4. Dependencies ────────────────────────────────────────────────────
+      # ── 4. Dependencies ───────────────────────────────────────────────────────
       - name: Flutter pub get
         working-directory: mobile
         run: flutter pub get
 
-      # ── 5. Build ──────────────────────────────────────────────────────────
+      # ── 5. Build ──────────────────────────────────────────────────────────────
+      # API_BASE_URL baked in at compile time so the APK hits production.
+      # GOOGLE_SERVER_CLIENT_ID = Web OAuth client ID from Firebase Console
+      #   → needed so GoogleSignIn returns a valid idToken for backend verification.
+      #   Add as GitHub Secret: GOOGLE_SERVER_CLIENT_ID
       - name: Build release APK  (direct install / web download)
         working-directory: mobile
-        run: flutter build apk --release
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
+            --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
 
       - name: Build release AAB  (Google Play Store)
         working-directory: mobile
-        run: flutter build appbundle --release
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
+            --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
 
-      # ── 6. Rename outputs with stable filenames ──────────────────────────
+      # ── 6. Rename outputs with stable filenames ───────────────────────────────
       - name: Rename outputs
         run: |
           cp mobile/build/app/outputs/flutter-apk/app-release.apk \
@@ -68,7 +84,7 @@ jobs:
           cp mobile/build/app/outputs/bundle/release/app-release.aab \
              mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
-      # ── 7. Artifacts (kept 30 days — useful for debugging) ─────────────────
+      # ── 7. Artifacts (kept 30 days — useful for debugging) ───────────────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -83,7 +99,7 @@ jobs:
           path: mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
           retention-days: 30
 
-      # ── 8. Publish APK + AAB to rolling GitHub Release ────────────────────
+      # ── 8. Publish APK + AAB to rolling GitHub Release ───────────────────────
       # This creates or updates the "app-latest" release on every successful build.
       # The APK download URL is always stable:
       #   https://github.com/v22kumar/fyc/releases/download/app-latest/fyc-connect-latest.apk
@@ -96,7 +112,7 @@ jobs:
             🤖 **Auto-built from `main`**
 
             | Field | Value |
-            |---|—--|
+            |---|---|
             | Commit | `${{ github.sha }}` |
             | Built at | ${{ github.run_started_at }} |
             | Workflow | [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
@@ -109,7 +125,7 @@ jobs:
             mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
-      # ── 9. Wire up backend download URL (runs once; idempotent) ────────────
+      # ── 9. Wire up backend download URL (runs once; idempotent) ──────────────
       # If FLY_API_TOKEN is set in GitHub Secrets, this sets APP_APK_URL on the
       # backend so the web's "Download App" button starts working immediately.
       # The URL points to the stable "app-latest" release above and never changes,

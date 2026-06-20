@@ -135,9 +135,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<TokenModel> signInWithGoogle({required String organizationId}) async {
+    // serverClientId is the Web OAuth client ID from Firebase Console.
+    // Passed at build time via --dart-define=GOOGLE_SERVER_CLIENT_ID=...
+    // Without it, auth.idToken is null and backend verification fails.
+    const _serverClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
     final googleSignIn = GoogleSignIn(
-      serverClientId: ApiConstants.googleWebClientId,
       scopes: ['email', 'profile'],
+      serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
     );
     try {
       final account = await googleSignIn.signIn();
