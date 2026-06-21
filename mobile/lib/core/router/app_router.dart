@@ -42,6 +42,7 @@ import '../../features/chess/presentation/pages/challenge_page.dart';
 import '../../features/chess/presentation/pages/online_game_page.dart';
 import '../../features/chess/presentation/pages/spectator_page.dart';
 import '../../features/chess/presentation/pages/ai_game_page.dart';
+import '../../features/chess/presentation/pages/replay_page.dart';
 
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
@@ -336,6 +337,13 @@ final appRouter = GoRouter(
                 playerIsWhite: extra['playerIsWhite'] as bool? ?? true,
               ),
             );
+          },
+        ),
+        GoRoute(
+          path: 'replay/:gameId',
+          builder: (context, state) {
+            final gameId = state.pathParameters['gameId']!;
+            return ReplayPage(gameId: gameId);
           },
         ),
       ],

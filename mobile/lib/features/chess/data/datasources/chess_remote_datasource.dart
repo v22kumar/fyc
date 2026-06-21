@@ -8,6 +8,7 @@ abstract class ChessRemoteDataSource {
   Future<ChessGameModel> submitGame(Map<String, dynamic> payload);
   Future<List<ChessGameModel>> myGames({int limit = 30});
   Future<ChessStatsModel> myStats();
+  Future<ChessGameDetailModel> getGame(String gameId);
   Future<List<ChessMemberModel>> members();
   Future<ChessChallengeModel> sendChallenge({
     required String challengedId,
@@ -56,6 +57,18 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
     try {
       final response = await _client.dio.get(ApiConstants.chessMyStats);
       return ChessStatsModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<ChessGameDetailModel> getGame(String gameId) async {
+    try {
+      final response =
+          await _client.dio.get('${ApiConstants.chessGames}/$gameId');
+      return ChessGameDetailModel.fromJson(
+          response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

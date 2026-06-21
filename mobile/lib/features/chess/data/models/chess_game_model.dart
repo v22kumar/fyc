@@ -222,6 +222,114 @@ class LiveGameModel {
   }
 }
 
+// ── Game detail (with full move list) ────────────────────────────────────────
+
+class ChessMoveModel {
+  final int ply;
+  final String uci;
+  final String san;
+  final String? fenAfter;
+
+  const ChessMoveModel({
+    required this.ply,
+    required this.uci,
+    required this.san,
+    this.fenAfter,
+  });
+
+  factory ChessMoveModel.fromJson(Map<String, dynamic> json) {
+    return ChessMoveModel(
+      ply: json['ply'] as int? ?? 0,
+      uci: json['uci'] as String? ?? '',
+      san: json['san'] as String? ?? '',
+      fenAfter: json['fen_after'] as String?,
+    );
+  }
+}
+
+class ChessGameDetailModel extends ChessGameModel {
+  final List<ChessMoveModel> moves;
+
+  const ChessGameDetailModel({
+    required super.id,
+    required super.mode,
+    required super.timeControl,
+    super.whiteId,
+    super.blackId,
+    super.whiteName,
+    super.blackName,
+    super.result,
+    super.drawReason,
+    required super.totalMoves,
+    super.whiteRatingBefore,
+    super.whiteRatingAfter,
+    super.createdAt,
+    super.endedAt,
+    required this.moves,
+  });
+
+  factory ChessGameDetailModel.fromJson(Map<String, dynamic> json) {
+    final base = ChessGameModel.fromJson(json);
+    final movesRaw = json['moves'] as List? ?? [];
+    return ChessGameDetailModel(
+      id: base.id,
+      mode: base.mode,
+      timeControl: base.timeControl,
+      whiteId: base.whiteId,
+      blackId: base.blackId,
+      whiteName: base.whiteName,
+      blackName: base.blackName,
+      result: base.result,
+      drawReason: base.drawReason,
+      totalMoves: base.totalMoves,
+      whiteRatingBefore: base.whiteRatingBefore,
+      whiteRatingAfter: base.whiteRatingAfter,
+      createdAt: base.createdAt,
+      endedAt: base.endedAt,
+      moves: movesRaw
+          .map((m) => ChessMoveModel.fromJson(m as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  String get pgn {
+    final white = whiteName ?? 'White';
+    final black = blackName ?? 'Black';
+    final date = _pgnDate();
+    final resultStr = result == 'white_wins'
+        ? '1-0'
+        : result == 'black_wins'
+            ? '0-1'
+            : '1/2-1/2';
+
+    final header = '[Event "FYC Chess"]\n'
+        '[Site "fyc-web.fly.dev"]\n'
+        '[Date "$date"]\n'
+        '[White "$white"]\n'
+        '[Black "$black"]\n'
+        '[Result "$resultStr"]\n\n';
+
+    final buffer = StringBuffer();
+    for (var i = 0; i < moves.length; i++) {
+      if (i % 2 == 0) buffer.write('${i ~/ 2 + 1}. ');
+      buffer.write('${moves[i].san} ');
+    }
+    buffer.write(resultStr);
+
+    return header + buffer.toString();
+  }
+
+  String _pgnDate() {
+    if (createdAt == null) return '????.??.??';
+    try {
+      final dt = DateTime.parse(createdAt!).toLocal();
+      return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '????.??.??';
+    }
+  }
+}
+
 class ChallengeAcceptResult {
   final String gameId;
   final String color; // "white" | "black"

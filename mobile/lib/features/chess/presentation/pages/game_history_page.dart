@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
 import '../../data/models/chess_game_model.dart';
@@ -262,7 +263,7 @@ class _GameTile extends StatelessWidget {
               ),
             ),
 
-            // Meta
+            // Meta + replay
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -274,6 +275,27 @@ class _GameTile extends StatelessWidget {
                   '${game.totalMoves} moves',
                   style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 11),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: () => context.push('/chess/replay/${game.id}'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3)),
+                    ),
+                    child: const Text(
+                      'Replay',
+                      style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
                 ),
               ],
             ),
