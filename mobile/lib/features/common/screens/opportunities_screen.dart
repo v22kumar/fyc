@@ -126,7 +126,9 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
               ? _samples
               : _samples.where((s) => s['type'] == _selectedTab).toList();
 
-          return Column(
+          return RefreshIndicator(
+            onRefresh: () async => context.read<OpportunityBloc>().add(const OpportunityFetchRequested()),
+            child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -182,6 +184,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 ),
               ),
             ],
+            ),
           );
         },
       ),

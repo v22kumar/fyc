@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'strings_en.dart';
 import 'strings_ta.dart';
+import 'strings_hi.dart';
+import 'strings_ml.dart';
 
 abstract class AppLocalizations {
   static AppLocalizations of(BuildContext context) {
@@ -17,6 +19,8 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = [
     Locale('ta'),
     Locale('en'),
+    Locale('hi'),
+    Locale('ml'),
   ];
 
   // ── Generic ──────────────────────────────────────────────
@@ -140,13 +144,21 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      ['ta', 'en'].contains(locale.languageCode);
+      ['ta', 'en', 'hi', 'ml'].contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) async {
-    return locale.languageCode == 'ta'
-        ? StringsTa()
-        : StringsEn();
+    switch (locale.languageCode) {
+      case 'ta':
+        return StringsTa();
+      case 'hi':
+        return StringsHi();
+      case 'ml':
+        return StringsMl();
+      case 'en':
+      default:
+        return StringsEn();
+    }
   }
 
   @override

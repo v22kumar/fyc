@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -257,17 +258,57 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                       : 'Photo (optional)',
                 ),
                 const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: _pickPhoto,
-                  icon: const Icon(Icons.photo_camera_outlined),
-                  label: Text(
-                    _pickedPhotoPath != null
-                        ? (lang == 'ta'
-                            ? 'புகைப்படம் தேர்ந்தெடுக்கப்பட்டது'
-                            : 'Photo selected')
-                        : (lang == 'ta'
-                            ? 'புகைப்படம் தேர்வு செய்க'
-                            : 'Pick a photo'),
+                GestureDetector(
+                  onTap: _pickPhoto,
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFCBD5E1),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: _pickedPhotoPath != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Image.file(
+                              File(_pickedPhotoPath!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.add_photo_alternate_outlined,
+                                size: 40,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                lang == 'ta'
+                                    ? 'புகைப்படம் சேர்க்க தட்டவும்'
+                                    : 'Tap to add photo',
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                lang == 'ta'
+                                    ? 'விரும்பினால் — நடவு உறுதிப்படுத்த உதவுகிறது'
+                                    : 'Optional — helps verify the planting',
+                                style: const TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
                 const SizedBox(height: 36),

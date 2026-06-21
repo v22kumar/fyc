@@ -114,15 +114,21 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 }
                 if (state is BloodDonorSearchSuccess) {
                   if (state.donors.isEmpty) {
-                    return _EmptyDonors(group: _selectedGroup);
+                    return RefreshIndicator(
+                      onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup)),
+                      child: ListView(children: [_EmptyDonors(group: _selectedGroup)]),
+                    );
                   }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.donors.length,
-                    itemBuilder: (context, i) => _DonorCard(
-                      donor: state.donors[i],
-                      onContact: () =>
-                          _requestContact(context, state.donors[i]),
+                  return RefreshIndicator(
+                    onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup)),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.donors.length,
+                      itemBuilder: (context, i) => _DonorCard(
+                        donor: state.donors[i],
+                        onContact: () =>
+                            _requestContact(context, state.donors[i]),
+                      ),
                     ),
                   );
                 }

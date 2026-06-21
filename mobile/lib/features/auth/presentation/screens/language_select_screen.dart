@@ -7,11 +7,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../../../main.dart';
 
+// (code, letter, bgColor, letterColor, title, subtitle)
 const _kLangs = [
-  ('ta', '🌱', 'தமிழ்', 'Tamil'),
-  ('en', '🇬🇧', 'English', 'ஆங்கிலம்'),
-  ('ml', '🌴', 'മലയാളം', 'Malayalam'),
-  ('hi', '🇮🇳', 'हिन्दी', 'Hindi'),
+  ('ta', 'அ', Color(0xFFDCFCE7), Color(0xFF0F5132), 'தமிழ்', 'Tamil'),
+  ('en', 'A',  Color(0xFFDBEAFE), Color(0xFF2563EB), 'English', 'English'),
+  ('hi', 'अ',  Color(0xFFFEE2E2), Color(0xFFDC2626), 'हिन्दी', 'Hindi'),
+  ('ml', 'അ',  Color(0xFFEDE9FE), Color(0xFF7C3AED), 'മലയാളം', 'Malayalam'),
 ];
 
 class LanguageSelectScreen extends StatefulWidget {
@@ -158,9 +159,11 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                     // Language cards
                     for (final lang in _kLangs) ...[
                       _LangCard(
-                        emoji: lang.$2,
-                        title: lang.$3,
-                        subtitle: lang.$4,
+                        letter: lang.$2,
+                        bgColor: lang.$3,
+                        letterColor: lang.$4,
+                        title: lang.$5,
+                        subtitle: lang.$6,
                         isSelected: _selectedLang == lang.$1,
                         onTap: () => setState(() => _selectedLang = lang.$1),
                       ),
@@ -211,14 +214,18 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
 }
 
 class _LangCard extends StatelessWidget {
-  final String emoji;
+  final String letter;
+  final Color bgColor;
+  final Color letterColor;
   final String title;
   final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _LangCard({
-    required this.emoji,
+    required this.letter,
+    required this.bgColor,
+    required this.letterColor,
     required this.title,
     required this.subtitle,
     required this.isSelected,
@@ -255,7 +262,23 @@ class _LangCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 26)),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: bgColor,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                letter,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: letterColor,
+                ),
+              ),
+            ),
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
