@@ -303,10 +303,10 @@ class _DonorCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          boxShadow: AppTheme.cardShadow,
-          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: context.isDark ? null : AppTheme.cardShadow,
+          border: Border.all(color: context.cBorder, width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -337,10 +337,10 @@ class _DonorCard extends StatelessWidget {
                                     ? donor.fullNameTa!
                                     : donor.fullNameEn) ??
                                 '—',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: AppColors.textPrimary,
+                              color: context.cText,
                             ),
                           ),
                         ),
@@ -357,12 +357,12 @@ class _DonorCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.place_outlined, size: 12, color: AppColors.textSecondary),
+                          Icon(Icons.place_outlined, size: 12, color: context.cTextSecondary),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               donor.geographyId!,
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              style: TextStyle(color: context.cTextSecondary, fontSize: 12),
                             ),
                           ),
                         ],
@@ -412,7 +412,7 @@ class _EmptyDonors extends StatelessWidget {
             group != null
                 ? (lang == 'ta' ? 'இப்போது $group கொடையாளர்கள் இல்லை' : 'No donors found')
                 : (lang == 'ta' ? 'கொடையாளர்கள் இல்லை' : 'No donors found'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.cText),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -421,7 +421,7 @@ class _EmptyDonors extends StatelessWidget {
               lang == 'ta'
                   ? 'வேறு இரத்த வகையை முயற்சிக்கவும் அல்லது உங்கள் பகுதியில் முதல் கொடையாளராக பதிவு செய்யுங்கள்'
                   : 'Try a different blood group or be the first to register as a donor in your area',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ),

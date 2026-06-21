@@ -102,7 +102,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: context.cTextSecondary),
                   const SizedBox(height: 12),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -133,10 +133,10 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: AppColors.textSecondary,
+          color: context.cTextSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -163,19 +163,19 @@ class _EventCard extends StatelessWidget {
     Widget cardContent = Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
         border: Border(
           left: BorderSide(
             color: event.isOngoing
                 ? AppColors.success
-                : (event.isUpcoming ? AppColors.primary : AppColors.textSecondary),
+                : (event.isUpcoming ? AppColors.primary : context.cTextSecondary),
             width: 6,
           ),
-          top: const BorderSide(color: AppColors.border, width: 1),
-          right: const BorderSide(color: AppColors.border, width: 1),
-          bottom: const BorderSide(color: AppColors.border, width: 1),
+          top: BorderSide(color: context.cBorder, width: 1),
+          right: BorderSide(color: context.cBorder, width: 1),
+          bottom: BorderSide(color: context.cBorder, width: 1),
         ),
       ),
       child: Padding(
@@ -188,10 +188,10 @@ class _EventCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     event.displayTitle(lang),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: context.cText,
                     ),
                   ),
                 ),
@@ -216,18 +216,18 @@ class _EventCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               event.displayDescription(lang),
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
+                Icon(Icons.schedule, size: 14, color: context.cTextSecondary),
                 const SizedBox(width: 4),
                 Text(
                   fmt.format(event.eventStart.toLocal()),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                 ),
               ],
             ),
@@ -245,7 +245,7 @@ class _EventCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 lang == 'ta' ? 'நிகழ்வு முடிந்தது' : 'Event ended',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: TextStyle(color: context.cTextSecondary, fontSize: 12),
               ),
             ],
           ],
@@ -277,7 +277,7 @@ class _EmptyEvents extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             lang == 'ta' ? 'நிகழ்வுகள் இல்லை' : 'No events yet',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],
       ),

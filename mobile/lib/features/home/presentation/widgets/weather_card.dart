@@ -159,10 +159,10 @@ class _WeatherContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,16 +182,16 @@ class _WeatherContent extends StatelessWidget {
                   children: [
                     Text(
                       data.city.isNotEmpty ? data.city : _defaultCity,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary),
+                          color: context.cText),
                     ),
-                    const Text('Current Weather',
+                    Text('Current Weather',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary)),
+                            color: context.cTextSecondary)),
                   ],
                 ),
               ),
@@ -221,15 +221,15 @@ class _WeatherContent extends StatelessWidget {
                     children: [
                       if (desc.isNotEmpty)
                         Text(desc,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary)),
+                                color: context.cText)),
                       if (feelsStr.isNotEmpty)
                         Text(feelsStr,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary)),
+                                color: context.cTextSecondary)),
                     ],
                   ),
                 ),
@@ -272,17 +272,17 @@ class _StatChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
+        Icon(icon, size: 14, color: context.cTextSecondary),
         const SizedBox(width: 4),
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+                color: context.cText)),
         const SizedBox(width: 3),
         Text(hint,
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.textSecondary)),
+            style: TextStyle(
+                fontSize: 11, color: context.cTextSecondary)),
       ],
     );
   }
@@ -298,10 +298,10 @@ class _WeatherError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Row(
         children: [
@@ -312,8 +312,8 @@ class _WeatherError extends StatelessWidget {
             child: const Text('🌤', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(width: 12),
-          const Text('Weather unavailable',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+          Text('Weather unavailable',
+              style: TextStyle(fontSize: 14, color: context.cTextSecondary)),
         ],
       ),
     );
@@ -328,10 +328,10 @@ class _WeatherSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

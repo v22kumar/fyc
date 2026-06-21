@@ -48,10 +48,10 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,12 +70,12 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                   child: const Text('📰', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'செய்திகள் · News',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.cText,
                   ),
                 ),
               ],
@@ -85,7 +85,7 @@ class _DailyNewsCardState extends State<DailyNewsCard>
           TabBar(
             controller: _tabController,
             labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
+            unselectedLabelColor: context.cTextSecondary,
             indicatorColor: AppColors.primary,
             indicatorWeight: 2,
             isScrollable: true,
@@ -135,10 +135,10 @@ class _NewsFeed extends StatelessWidget {
         }
         final items = snapshot.data;
         if (items == null || items.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'No notifications available',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: context.cTextSecondary),
             ),
           );
         }
@@ -147,9 +147,9 @@ class _NewsFeed extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           itemCount: items.length,
-          separatorBuilder: (_, __) => const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Divider(height: 1, color: AppColors.border),
+          separatorBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Divider(height: 1, color: context.cBorder),
           ),
           itemBuilder: (_, i) => _NewsRow(item: items[i], jobMode: jobMode),
         );
@@ -209,11 +209,11 @@ class _NewsRow extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                       height: 1.4,
-                      color: AppColors.textPrimary,
+                      color: context.cText,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -234,13 +234,13 @@ class _NewsRow extends StatelessWidget {
                         ),
                       ),
                       if (_relativeTime(item.publishedAt).isNotEmpty) ...[
-                        const Text(' • ',
+                        Text(' • ',
                             style: TextStyle(
-                                fontSize: 11, color: AppColors.textSecondary)),
+                                fontSize: 11, color: context.cTextSecondary)),
                         Text(
                           _relativeTime(item.publishedAt),
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.textSecondary),
+                          style: TextStyle(
+                              fontSize: 11, color: context.cTextSecondary),
                         ),
                       ],
                     ],
@@ -249,7 +249,7 @@ class _NewsRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.north_east, size: 14, color: AppColors.textSecondary),
+            Icon(Icons.north_east, size: 14, color: context.cTextSecondary),
           ],
         ),
       ),

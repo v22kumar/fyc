@@ -192,9 +192,9 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: context.cTextSecondary,
             ),
           ),
         ],
@@ -213,10 +213,10 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: AppColors.textSecondary,
+          color: context.cTextSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -273,13 +273,13 @@ class _DriveCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today,
-                        size: 14, color: Colors.grey),
+                    Icon(Icons.calendar_today,
+                        size: 14, color: context.cTextSecondary),
                     const SizedBox(width: 4),
                     Text(
                       fmt.format(drive.driveDate.toLocal()),
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.grey),
+                          TextStyle(fontSize: 12, color: context.cTextSecondary),
                     ),
                   ],
                 ),
@@ -287,14 +287,14 @@ class _DriveCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: Colors.grey),
+                      Icon(Icons.location_on_outlined,
+                          size: 14, color: context.cTextSecondary),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           location,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 12, color: context.cTextSecondary),
                         ),
                       ),
                     ],
@@ -306,7 +306,7 @@ class _DriveCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: drive.progress,
                     minHeight: 8,
-                    backgroundColor: AppColors.border,
+                    backgroundColor: context.cBorder,
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       AppColors.primaryLight,
                     ),
@@ -317,9 +317,9 @@ class _DriveCard extends StatelessWidget {
                   lang == 'ta'
                       ? '${drive.treeCount} / ${drive.targetCount} மரங்கள்'
                       : '${drive.treeCount} / ${drive.targetCount} trees',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: context.cTextSecondary,
                   ),
                 ),
               ],
@@ -349,7 +349,7 @@ class _EmptyDrives extends StatelessWidget {
               lang == 'ta'
                   ? 'மரம் நடும் இயக்கங்கள் இல்லை'
                   : 'No plantation drives yet',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: context.cTextSecondary),
             ),
           ],
         ),
