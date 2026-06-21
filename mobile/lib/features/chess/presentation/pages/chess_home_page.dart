@@ -287,7 +287,7 @@ class _ChessHomePageState extends State<ChessHomePage>
       );
     }
 
-    final rating = _stats?.rating ?? 0;
+    final rating = _stats?.glickoRating.round() ?? 0;
     final hasRating = rating > 0;
 
     if (!hasRating) {
