@@ -112,10 +112,24 @@ jobs:
           path: mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
           retention-days: 30
 
-      # ── 8. Publish APKs + AAB to rolling GitHub Release ─────────────────────
+      # ── 8. Delete stale fat APK from release (if present from old builds) ───────
+      - name: Remove old fat APK from release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ASSET_ID=$(gh api repos/${{ github.repository }}/releases/tags/app-latest \
+            --jq '.assets[] | select(.name=="fyc-connect-latest.apk") | .id' 2>/dev/null || echo "")
+          if [ -n "$ASSET_ID" ]; then
+            gh api --method DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID
+            echo "Deleted stale fyc-connect-latest.apk from release ✓"
+          else
+            echo "No stale fat APK found — nothing to clean up"
+          fi
+
+      # ── 9. Publish APKs + AAB to rolling GitHub Release ─────────────────────
       # Creates or updates the "app-latest" release on every successful build.
       # Pick the APK that matches your phone:
-      #   fyc-connect-arm64.apk  — most modern Android phones (2017+)
+      #   fyc-connect-arm64.apk  — most modern Android phones (2017+)  ← USE THIS
       #   fyc-connect-arm32.apk  — older/budget 32-bit Android phones
       #   fyc-connect-x86_64.apk — Android emulators
       - name: Publish to GitHub Release (app-latest)
@@ -132,14 +146,17 @@ jobs:
             | Built at | ${{ github.run_started_at }} |
             | Workflow | [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
 
-            **Pick the APK for your device:**
-            | File | Device |
-            |---|---|
-            | `fyc-connect-arm64.apk` | ✅ Most modern Android phones (2017+) |
-            | `fyc-connect-arm32.apk` | Older / budget 32-bit phones |
-            | `fyc-connect-x86_64.apk` | Android emulator (PC/laptop) |
+            ## ⬇️ Download for your device
 
-            **Play Store upload:** download `fyc-connect-latest.aab` below.
+            | File | Size | Device |
+            |---|---|---|
+            | **`fyc-connect-arm64.apk`** | ~40 MB | ✅ **Pixel 6a / most phones (2017+)** — download this |
+            | `fyc-connect-arm32.apk` | ~36 MB | Older / budget 32-bit phones |
+            | `fyc-connect-x86_64.apk` | ~43 MB | Android emulator only |
+
+            > **First install?** Uninstall any previous FYC Connect, then install the arm64 APK.
+
+            **Play Store upload:** use `fyc-connect-latest.aab` below.
           prerelease: true
           make_latest: false
           files: |
