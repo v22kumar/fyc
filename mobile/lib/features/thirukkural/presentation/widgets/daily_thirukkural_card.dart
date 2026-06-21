@@ -52,10 +52,10 @@ class _ThirukkuralContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +72,7 @@ class _ThirukkuralContent extends StatelessWidget {
                 child: const Text('📜', style: TextStyle(fontSize: 18)),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -81,7 +81,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.cText,
                       ),
                     ),
                     Text(
@@ -89,7 +89,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: context.cTextSecondary,
                       ),
                     ),
                   ],
@@ -136,36 +136,36 @@ class _ThirukkuralContent extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             kural.tamilMeaning,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               height: 1.5,
-              color: AppColors.textSecondary,
+              color: context.cTextSecondary,
             ),
           ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: context.cBorder),
           ),
 
           // English couplet
           Text(
             kural.englishCouplet,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               fontStyle: FontStyle.italic,
               height: 1.45,
-              color: AppColors.textPrimary,
+              color: context.cText,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             kural.englishMeaning,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               height: 1.5,
-              color: AppColors.textSecondary,
+              color: context.cTextSecondary,
             ),
           ),
 
@@ -173,15 +173,15 @@ class _ThirukkuralContent extends StatelessWidget {
           // Section (paal) footer
           Row(
             children: [
-              const Icon(Icons.menu_book_outlined,
-                  size: 14, color: AppColors.textSecondary),
+              Icon(Icons.menu_book_outlined,
+                  size: 14, color: context.cTextSecondary),
               const SizedBox(width: 6),
               Text(
                 '${kural.paalTa}  •  ${kural.paalEn}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: context.cTextSecondary,
                 ),
               ),
             ],
@@ -200,10 +200,10 @@ class _ThirukkuralSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

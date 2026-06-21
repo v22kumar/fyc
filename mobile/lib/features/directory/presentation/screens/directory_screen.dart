@@ -115,8 +115,8 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.grey),
+                        Icon(Icons.error_outline,
+                            size: 48, color: context.cTextSecondary),
                         const SizedBox(height: 12),
                         Text(state.message),
                         const SizedBox(height: 16),
@@ -247,10 +247,10 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: AppColors.textSecondary,
+          color: context.cTextSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -279,10 +279,10 @@ class _ContactCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        boxShadow: AppTheme.cardShadow,
-        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -291,31 +291,31 @@ class _ContactCard extends StatelessWidget {
           children: [
             Text(
               contact.displayName(lang),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: context.cText,
               ),
             ),
             if (designation != null && designation.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 designation,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               ),
             ],
             if (geography != null && geography.isNotEmpty) ...[
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.place_outlined,
-                      size: 14, color: AppColors.textSecondary),
+                  Icon(Icons.place_outlined,
+                      size: 14, color: context.cTextSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       geography,
                       style:
-                          const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          TextStyle(fontSize: 12, color: context.cTextSecondary),
                     ),
                   ),
                 ],
@@ -324,11 +324,11 @@ class _ContactCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 14, color: AppColors.textSecondary),
+                Icon(Icons.phone_outlined, size: 14, color: context.cTextSecondary),
                 const SizedBox(width: 4),
                 Text(
                   contact.phonePrimary,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                 ),
               ],
             ),
@@ -388,7 +388,7 @@ class _EmptyContacts extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             lang == 'ta' ? 'தொடர்புகள் இல்லை' : 'No contacts found',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],
       ),

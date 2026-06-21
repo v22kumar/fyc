@@ -152,10 +152,10 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           isTa ? 'மாதிரி வாய்ப்புகள்' : 'Sample Opportunities',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
+                            color: context.cTextSecondary,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -168,10 +168,10 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                           padding: const EdgeInsets.only(top: 8, bottom: 12),
                           child: Text(
                             isTa ? 'கிடைக்கும் வாய்ப்புகள்' : 'Available Opportunities',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
+                              color: context.cTextSecondary,
                               letterSpacing: 0.3,
                             ),
                           ),
@@ -214,7 +214,7 @@ class _PremiumEmptyState extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             isTa ? 'வாய்ப்புகள் இல்லை' : 'No Opportunities Yet',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.cText),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -258,10 +258,10 @@ class _SampleOpportunityCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -295,7 +295,7 @@ class _SampleOpportunityCard extends StatelessWidget {
                       ),
                       child: Text(
                         isTa ? 'மாதிரி' : 'Sample',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.cTextSecondary),
                       ),
                     ),
                   ],
@@ -310,22 +310,22 @@ class _SampleOpportunityCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               data['title'] ?? '',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.cText),
             ),
             const SizedBox(height: 4),
             Text(
               '${data['org'] ?? ''} • ${data['category'] ?? ''}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 12, color: context.cTextSecondary, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                Icon(Icons.location_on_outlined, size: 14, color: context.cTextSecondary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     data['location'] ?? '',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                   ),
                 ),
               ],
@@ -333,7 +333,7 @@ class _SampleOpportunityCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               data['desc'] ?? '',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(fontSize: 13, color: context.cTextSecondary, height: 1.4),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -374,10 +374,10 @@ class _OpportunityCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -410,22 +410,22 @@ class _OpportunityCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               opp.displayTitle(isTa ? 'ta' : 'en'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.cText),
             ),
             const SizedBox(height: 4),
             Text(
               '${opp.displayOrganizer(isTa ? 'ta' : 'en')} • ${opp.displayCategory(isTa ? 'ta' : 'en')}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 12, color: context.cTextSecondary, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                Icon(Icons.location_on_outlined, size: 14, color: context.cTextSecondary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     opp.displayLocation(isTa ? 'ta' : 'en'),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                   ),
                 ),
               ],
@@ -433,7 +433,7 @@ class _OpportunityCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               opp.displayDescription(isTa ? 'ta' : 'en'),
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(fontSize: 13, color: context.cTextSecondary, height: 1.4),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -475,15 +475,15 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : context.cSurface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: 1.5),
-          boxShadow: isSelected ? AppTheme.cardShadow : null,
+          border: Border.all(color: isSelected ? AppColors.primary : context.cBorder, width: 1.5),
+          boxShadow: isSelected && !context.isDark ? AppTheme.cardShadow : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
+            color: isSelected ? Colors.white : context.cText,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

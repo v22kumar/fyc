@@ -89,7 +89,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: context.cTextSecondary),
                   const SizedBox(height: 12),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -132,10 +132,10 @@ class _AnnouncementCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          boxShadow: AppTheme.cardShadow,
-          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: context.isDark ? null : AppTheme.cardShadow,
+          border: Border.all(color: context.cBorder, width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -168,27 +168,27 @@ class _AnnouncementCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 announcement.displayTitle(lang),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.cText,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 announcement.displayBody(lang),
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.cTextSecondary, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
+                  Icon(Icons.schedule, size: 14, color: context.cTextSecondary),
                   const SizedBox(width: 4),
                   Text(
                     fmt.format(announcement.createdAt.toLocal()),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                   ),
                 ],
               ),
@@ -214,7 +214,7 @@ class _EmptyAnnouncements extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             lang == 'ta' ? 'அறிவிப்புகள் இல்லை' : 'No announcements yet',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],
       ),

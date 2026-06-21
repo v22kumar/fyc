@@ -124,10 +124,10 @@ class _GoldContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +144,7 @@ class _GoldContent extends StatelessWidget {
                 child: const Text('🪙', style: TextStyle(fontSize: 18)),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -153,7 +153,7 @@ class _GoldContent extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.cText,
                       ),
                     ),
                     Text(
@@ -161,7 +161,7 @@ class _GoldContent extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: context.cTextSecondary,
                       ),
                     ),
                   ],
@@ -196,9 +196,9 @@ class _GoldContent extends StatelessWidget {
             price: _formatPrice(data.price24k),
             isHighlight: true,
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Divider(height: 1, color: context.cBorder),
           ),
           _PriceRow(
             karat: '22K',
@@ -250,9 +250,9 @@ class _PriceRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: context.cTextSecondary,
             ),
           ),
         ),
@@ -261,7 +261,7 @@ class _PriceRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: isHighlight ? _goldColor : AppColors.textPrimary,
+            color: isHighlight ? _goldColor : context.cText,
           ),
         ),
       ],
@@ -279,10 +279,10 @@ class _GoldError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Row(
         children: [
@@ -295,11 +295,11 @@ class _GoldError extends StatelessWidget {
             child: const Text('🪙', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(width: 12),
-          const Text(
+          Text(
             'Gold price unavailable',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: context.cTextSecondary,
             ),
           ),
         ],
@@ -318,10 +318,10 @@ class _GoldSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: context.cBorder),
+        boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

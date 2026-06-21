@@ -117,8 +117,8 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.grey),
+                        Icon(Icons.error_outline,
+                            size: 48, color: context.cTextSecondary),
                         const SizedBox(height: 12),
                         Text(state.message),
                         const SizedBox(height: 16),
@@ -158,7 +158,7 @@ class _SportTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surface,
+      color: context.cSurface,
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -173,11 +173,11 @@ class _SportTabs extends StatelessWidget {
                 onSelected: (_) => onSelect(f.value),
                 label: Text('${f.emoji} ${lang == 'ta' ? f.labelTa : f.labelEn}'),
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected ? Colors.white : context.cText,
                   fontWeight: FontWeight.w500,
                 ),
                 selectedColor: AppColors.primary,
-                backgroundColor: AppColors.background,
+                backgroundColor: context.cBackground,
               ),
             );
           }).toList(),
@@ -286,7 +286,7 @@ class _TournamentCard extends StatelessWidget {
                     Text(
                       '${tournament.sport} · ${tournament.year}',
                       style:
-                          TextStyle(color: Colors.grey[600], fontSize: 13),
+                          TextStyle(color: context.cTextSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -347,7 +347,7 @@ class _EmptyTournaments extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             lang == 'ta' ? 'போட்டிகள் இல்லை' : 'No tournaments yet',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],
       ),
