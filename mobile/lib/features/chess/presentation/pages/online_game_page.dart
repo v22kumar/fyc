@@ -1,3 +1,4 @@
+import 'package:bishop/bishop.dart' as bishop;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
@@ -7,54 +8,10 @@ import '../bloc/online_game_event.dart';
 import '../bloc/online_game_state.dart';
 import '../widgets/player_info_bar.dart';
 import '../widgets/move_history_panel.dart';
-import '../widgets/game_result_sheet.dart';
-import '../../domain/entities/chess_game.dart';
 
-class OnlineGamePage extends StatefulWidget {
+class OnlineGamePage extends StatelessWidget {
   final String gameId;
-  final String token;
-  final String myColor;
-  final String opponentName;
-
-  const OnlineGamePage({
-    super.key,
-    required this.gameId,
-    required this.token,
-    required this.myColor,
-    required this.opponentName,
-  });
-
-  @override
-  State<OnlineGamePage> createState() => _OnlineGamePageState();
-}
-
-class _OnlineGamePageState extends State<OnlineGamePage> {
-  bool _resultShown = false;
-
-  @override
-  void initState() {
-    super.initState();
-    context.read<OnlineGameBloc>().add(ConnectToGame(
-      gameId: widget.gameId,
-      token: widget.token,
-      myColor: widget.myColor,
-    ));
-  }
-
-  void _showResult(OnlineGameOver state) {
-    if (_resultShown) return;
-    _resultShown = true;
-    // Reuse GameResultSheet by constructing a GameOver compatible state
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _OnlineResultSheet(
-        state: state,
-        onClose: () => Navigator.pop(context),
-      ),
-    );
-  }
+  const OnlineGamePage({super.key, required this.gameId});
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +21,20 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(
-          'vs ${widget.opponentName}',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        title: BlocBuilder<OnlineGameBloc, OnlineGameState>(
+          builder: (context, state) {
+            if (state is OnlineGameInProgress) {
+              final opp = state.myColor == 'white'
+                  ? state.blackName
+                  : state.whiteName;
+              return Text(
+                'vs $opp',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              );
+            }
+            return const Text('Online Game',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
+          },
         ),
         actions: [
           BlocBuilder<OnlineGameBloc, OnlineGameState>(
@@ -83,9 +51,9 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
                     icon: const Icon(Icons.more_vert, color: Colors.white70),
                     onSelected: (v) {
                       if (v == 'resign') _confirmResign(context);
-                      if (v == 'draw') context
-                          .read<OnlineGameBloc>()
-                          .add(const SendOfferDraw());
+                      if (v == 'draw') {
+                        context.read<OnlineGameBloc>().add(const SendOfferDraw());
+                      }
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(value: 'draw', child: Text('Offer Draw')),
@@ -103,7 +71,7 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
       ),
       body: BlocConsumer<OnlineGameBloc, OnlineGameState>(
         listener: (context, state) {
-          if (state is OnlineGameOver) _showResult(state);
+          if (state is OnlineGameOver) _showResult(context, state);
         },
         builder: (context, state) {
           if (state is OnlineGameConnecting) return _buildConnecting();
@@ -115,6 +83,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
       ),
     );
   }
+
+  // ── States ─────────────────────────────────────────────────────────────────
 
   Widget _buildConnecting() {
     return const Center(
@@ -139,9 +109,9 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
           const SizedBox(height: 20),
           const CircularProgressIndicator(color: AppColors.primaryLight),
           const SizedBox(height: 16),
-          Text(
-            'Waiting for ${widget.opponentName}…',
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          const Text(
+            'Waiting for opponent…',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
@@ -157,29 +127,56 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
     final isWhite = state.myColor == 'white';
     final myName = isWhite ? state.whiteName : state.blackName;
     final oppName = isWhite ? state.blackName : state.whiteName;
-    final myCaptured = isWhite ? _capturedByWhite(state) : _capturedByBlack(state);
-    final oppCaptured = isWhite ? _capturedByBlack(state) : _capturedByWhite(state);
+    final myCaptured = isWhite
+        ? _capturedByWhite(state)
+        : _capturedByBlack(state);
+    final oppCaptured = isWhite
+        ? _capturedByBlack(state)
+        : _capturedByWhite(state);
+
+    // Which player is on top vs bottom depends on orientation (can be flipped)
+    final myIsBottom = state.orientation == Squares.white
+        ? state.myColor == 'white'
+        : state.myColor == 'black';
+    final topIsMe = !myIsBottom;
+    final topTimeMs = topIsMe
+        ? (isWhite ? state.whiteTimeMs : state.blackTimeMs)
+        : (isWhite ? state.blackTimeMs : state.whiteTimeMs);
+    final bottomTimeMs = myIsBottom
+        ? (isWhite ? state.whiteTimeMs : state.blackTimeMs)
+        : (isWhite ? state.blackTimeMs : state.whiteTimeMs);
 
     return SafeArea(
       child: Stack(
         children: [
           Column(
             children: [
-              // Opponent info (top)
+              // Opponent info + clock (top)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                child: PlayerInfoBar(
-                  name: oppName,
-                  captured: oppCaptured,
-                  isActive: !state.isMyTurn,
-                  isTop: true,
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: PlayerInfoBar(
+                        name: topIsMe ? myName : oppName,
+                        captured: topIsMe ? myCaptured : oppCaptured,
+                        isActive: topIsMe ? state.isMyTurn : !state.isMyTurn,
+                        isTop: true,
+                      ),
+                    ),
+                    if (state.isTimed)
+                      _ChessClock(
+                        ms: topTimeMs ?? 0,
+                        isActive: topIsMe ? state.isMyTurn : !state.isMyTurn,
+                      ),
+                  ],
                 ),
               ),
 
               // Board
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Center(
                     child: AspectRatio(
                       aspectRatio: 1,
@@ -211,17 +208,28 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
 
               // Move history
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: MoveHistoryPanel(moveSans: state.moveSans),
               ),
 
-              // My info (bottom)
+              // My info + clock (bottom)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: PlayerInfoBar(
-                  name: myName,
-                  captured: myCaptured,
-                  isActive: state.isMyTurn,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: PlayerInfoBar(
+                        name: myIsBottom ? myName : oppName,
+                        captured: myIsBottom ? myCaptured : oppCaptured,
+                        isActive: myIsBottom ? state.isMyTurn : !state.isMyTurn,
+                      ),
+                    ),
+                    if (state.isTimed)
+                      _ChessClock(
+                        ms: bottomTimeMs ?? 0,
+                        isActive: myIsBottom ? state.isMyTurn : !state.isMyTurn,
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -234,7 +242,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
               left: 16,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppColors.warning,
                   borderRadius: BorderRadius.circular(12),
@@ -246,7 +255,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
                     Expanded(
                       child: Text(
                         'Opponent disconnected — waiting 60s',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -257,7 +267,7 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
           // Draw offered banner
           if (state.drawOffered)
             Positioned(
-              bottom: 120,
+              bottom: 100,
               left: 16,
               right: 16,
               child: Container(
@@ -272,7 +282,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
                   children: [
                     const Text(
                       'Opponent offers a draw',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -334,7 +345,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
                   minimumSize: const Size(200, 52),
                 ),
                 child: const Text('Back to Chess',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -343,24 +355,21 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
     );
   }
 
-  List<String> _capturedByWhite(OnlineGameInProgress s) {
-    final counts = s.engine.capturedPieceCounts(bishop.Squares.black);
-    return _expandCounts(counts);
-  }
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-  List<String> _capturedByBlack(OnlineGameInProgress s) {
-    final counts = s.engine.capturedPieceCounts(bishop.Squares.white);
-    return _expandCounts(counts);
-  }
-
-  List<String> _expandCounts(Map<int, int> counts) {
-    const symbols = {1: '♟', 2: '♞', 3: '♝', 4: '♜', 5: '♛'};
-    final result = <String>[];
-    for (final entry in counts.entries) {
-      final sym = symbols[entry.key & 7];
-      if (sym != null) result.addAll(List.filled(entry.value, sym));
-    }
-    return result;
+  void _showResult(BuildContext context, OnlineGameOver state) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _OnlineResultSheet(
+          state: state,
+          onClose: () => Navigator.of(context).pop(),
+        ),
+      );
+    });
   }
 
   void _confirmResign(BuildContext context) {
@@ -371,7 +380,8 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
         content: const Text('You will forfeit this game.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -384,12 +394,69 @@ class _OnlineGamePageState extends State<OnlineGamePage> {
       ),
     );
   }
+
+  List<String> _capturedByWhite(OnlineGameInProgress s) =>
+      _expandCounts(s.engine.capturedPieceCounts(bishop.Squares.black));
+
+  List<String> _capturedByBlack(OnlineGameInProgress s) =>
+      _expandCounts(s.engine.capturedPieceCounts(bishop.Squares.white));
+
+  List<String> _expandCounts(Map<int, int> counts) {
+    const symbols = {1: '♟', 2: '♞', 3: '♝', 4: '♜', 5: '♛'};
+    final result = <String>[];
+    for (final entry in counts.entries) {
+      final sym = symbols[entry.key & 7];
+      if (sym != null) result.addAll(List.filled(entry.value, sym));
+    }
+    return result;
+  }
 }
 
-// ── Needed import for bishop Squares constant ─────────────────────────────────
-import 'package:bishop/bishop.dart' as bishop;
+// ── Chess clock widget ────────────────────────────────────────────────────────
 
-// ── Simple result sheet for online game ──────────────────────────────────────
+class _ChessClock extends StatelessWidget {
+  final int ms;
+  final bool isActive;
+
+  const _ChessClock({required this.ms, required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSecs = (ms / 1000).ceil();
+    final mins = totalSecs ~/ 60;
+    final secs = totalSecs % 60;
+    final label = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+
+    final isLow = ms < 30000; // <30 seconds
+    final bg = isActive
+        ? (isLow ? Colors.red.shade700 : AppColors.primary)
+        : AppColors.darkSurface;
+    final fg = isActive ? Colors.white : Colors.white38;
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: isActive && isLow
+            ? Border.all(color: Colors.red.shade300, width: 1.5)
+            : null,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+          fontSize: 16,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Result sheet ───────────────────────────────────────────────────────────────
 
 class _OnlineResultSheet extends StatelessWidget {
   final OnlineGameOver state;
@@ -409,7 +476,8 @@ class _OnlineResultSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
@@ -423,6 +491,11 @@ class _OnlineResultSheet extends StatelessWidget {
                 fontWeight: FontWeight.w800,
                 color: AppColors.primary),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${state.moveSans.length} moves',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 24),
           SizedBox(

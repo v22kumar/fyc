@@ -517,14 +517,19 @@ async def game_websocket(
         if game.status == "waiting":
             game.status = "in_progress"
             db.commit()
-        await session.broadcast({
+        session.start_clock()
+        start_msg: dict = {
             "type": "game_start",
             "white_name": white_name,
             "black_name": black_name,
             "time_control": game.time_control,
             "fen": session.board.fen(),
             "turn": "white",
-        })
+        }
+        clock = session.clock_snapshot()
+        if clock:
+            start_msg["clock"] = clock
+        await session.broadcast(start_msg)
     else:
         await session.send_to(uid, {"type": "waiting", "color": session.get_color(uid)})
 
@@ -545,6 +550,8 @@ async def game_websocket(
                     continue
 
                 uci = msg.get("uci", "")
+                # Deduct time before applying move (measures thinking time)
+                session.deduct_time(uid)
                 move = session.apply_move(uci)
                 if move is None:
                     await session.send_to(uid, {"type": "error", "message": f"Illegal move: {uci}"})
@@ -568,14 +575,18 @@ async def game_websocket(
                 ))
                 db.commit()
 
-                await session.broadcast({
+                move_msg: dict = {
                     "type": "move",
                     "uci": uci,
                     "san": san,
                     "fen": fen,
                     "ply": ply,
                     "turn": turn,
-                })
+                }
+                clock = session.clock_snapshot()
+                if clock:
+                    move_msg["clock"] = clock
+                await session.broadcast(move_msg)
 
                 over = session.game_over_result()
                 if over:
@@ -589,6 +600,29 @@ async def game_websocket(
                     await session.broadcast({"type": "game_over", **over})
                     ws_manager.remove(str(gid))
                     break
+
+            elif msg_type == "flag":
+                # Client claims opponent/self has run out of time
+                color = session.get_color(uid)
+                if color and session.is_flagged(color):
+                    # Our own flag: we lose
+                    result = "black_wins" if color == "white" else "white_wins"
+                    game.result = result
+                    game.status = "ended"
+                    game.total_moves = len(session.san_list)
+                    game.ended_at = datetime.now(timezone.utc)
+                    _update_stats(db, game, game.organization_id)
+                    db.commit()
+                    await session.broadcast({
+                        "type": "game_over",
+                        "result": result,
+                        "reason": "time",
+                    })
+                    ws_manager.remove(str(gid))
+                    break
+                else:
+                    # Spurious flag claim — ignore
+                    pass
 
             elif msg_type == "resign":
                 color = session.get_color(uid)

@@ -12,6 +12,7 @@ in Redis or recompute from DB moves on reconnect.
 import asyncio
 import json
 import logging
+import time
 from typing import Dict, Optional
 
 import chess
@@ -19,7 +20,17 @@ from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
-DISCONNECT_GRACE_SECONDS = 60  # seconds before forfeit on disconnect
+DISCONNECT_GRACE_SECONDS = 60
+
+
+def _initial_time_ms(time_control: str) -> Optional[int]:
+    """Return starting milliseconds for each player, or None if untimed."""
+    return {
+        "blitz_5_0": 5 * 60 * 1000,
+        "blitz_3_0": 3 * 60 * 1000,
+        "rapid_10_0": 10 * 60 * 1000,
+        "bullet_1_0": 1 * 60 * 1000,
+    }.get(time_control)
 
 
 class GameSession:
@@ -40,12 +51,19 @@ class GameSession:
         self.time_control = time_control
 
         self.board = chess.Board()
-        self.connections: Dict[str, WebSocket] = {}  # user_id -> WebSocket
+        self.connections: Dict[str, WebSocket] = {}
         self.san_list: list[str] = []
+        self.uci_list: list[str] = []
         self.fen_list: list[str] = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]
 
         self.draw_offered_by: Optional[str] = None
         self._disconnect_tasks: Dict[str, asyncio.Task] = {}
+
+        # Clock state (None = untimed)
+        _ms = _initial_time_ms(time_control)
+        self.white_time_ms: Optional[int] = _ms
+        self.black_time_ms: Optional[int] = _ms
+        self._last_move_at: Optional[float] = None  # monotonic timestamp
 
     # ── Identity ──────────────────────────────────────────────────────────────
 
@@ -94,6 +112,43 @@ class GameSession:
             except Exception:
                 pass
 
+    # ── Clock ─────────────────────────────────────────────────────────────────
+
+    def clock_snapshot(self) -> Optional[dict]:
+        """Current clock times as sent to clients. None if untimed."""
+        if self.white_time_ms is None:
+            return None
+        return {"white": self.white_time_ms, "black": self.black_time_ms}
+
+    def deduct_time(self, user_id: str) -> None:
+        """Deduct elapsed time from the player who just moved. Call before updating last_move_at."""
+        if self.white_time_ms is None or self._last_move_at is None:
+            # First move or untimed — just record the timestamp
+            self._last_move_at = time.monotonic()
+            return
+
+        elapsed_ms = int((time.monotonic() - self._last_move_at) * 1000)
+        color = self.get_color(user_id)
+        if color == "white":
+            self.white_time_ms = max(0, self.white_time_ms - elapsed_ms)
+        elif color == "black" and self.black_time_ms is not None:
+            self.black_time_ms = max(0, self.black_time_ms - elapsed_ms)
+
+        self._last_move_at = time.monotonic()
+
+    def is_flagged(self, color: str) -> bool:
+        """True if the given color has run out of time."""
+        if self.white_time_ms is None:
+            return False
+        if color == "white":
+            return self.white_time_ms == 0
+        return self.black_time_ms == 0
+
+    def start_clock(self) -> None:
+        """Call when both players are connected and game starts."""
+        if self.white_time_ms is not None:
+            self._last_move_at = time.monotonic()
+
     # ── Move handling ─────────────────────────────────────────────────────────
 
     def apply_move(self, uci: str) -> Optional[chess.Move]:
@@ -107,11 +162,11 @@ class GameSession:
         san = self.board.san(move)
         self.board.push(move)
         self.san_list.append(san)
+        self.uci_list.append(uci)
         self.fen_list.append(self.board.fen())
         return move
 
     def game_over_result(self) -> Optional[dict]:
-        """Return result dict if game is over, else None."""
         if self.board.is_checkmate():
             winner = "black" if self.board.turn else "white"
             return {"result": f"{winner}_wins", "reason": "checkmate"}
@@ -128,7 +183,7 @@ class GameSession:
     def state_snapshot(self, for_user_id: str) -> dict:
         """Full state for reconnect sync."""
         color = self.get_color(for_user_id)
-        return {
+        snap: dict = {
             "type": "state",
             "color": color,
             "white_name": self.white_name,
@@ -136,12 +191,16 @@ class GameSession:
             "fen": self.board.fen(),
             "ply": len(self.san_list),
             "moves": [
-                {"ply": i + 1, "san": s}
+                {"ply": i + 1, "san": s, "uci": self.uci_list[i]}
                 for i, s in enumerate(self.san_list)
             ],
             "turn": "white" if self.board.turn else "black",
             "time_control": self.time_control,
         }
+        clock = self.clock_snapshot()
+        if clock:
+            snap["clock"] = clock
+        return snap
 
     # ── Disconnect grace timer ─────────────────────────────────────────────────
 

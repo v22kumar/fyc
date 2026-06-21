@@ -10,6 +10,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   ChessWsClient? _wsClient;
   StreamSubscription? _wsSub;
   String _myColor = 'white';
+  Timer? _clockTimer;
 
   OnlineGameBloc() : super(const OnlineGameConnecting()) {
     on<ConnectToGame>(_onConnect);
@@ -19,11 +20,14 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     on<SendAcceptDraw>(_onAcceptDraw);
     on<SendDeclineDraw>(_onDeclineDraw);
     on<FlipOnlineBoard>(_onFlip);
+    on<SendFlag>(_onSendFlag);
+    on<_ClockTick>(_onClockTick);
     on<_ServerMessage>(_onServerMsg);
   }
 
   @override
   Future<void> close() {
+    _clockTimer?.cancel();
     _wsSub?.cancel();
     _wsClient?.dispose();
     return super.close();
@@ -40,6 +44,52 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       (msg) => add(_ServerMessage(msg)),
     );
     _wsClient!.connect();
+  }
+
+  // ── Clock ──────────────────────────────────────────────────────────────────
+
+  void _startClockTimer() {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!isClosed) add(const _ClockTick());
+    });
+  }
+
+  void _stopClockTimer() {
+    _clockTimer?.cancel();
+    _clockTimer = null;
+  }
+
+  void _onClockTick(_ClockTick event, Emitter<OnlineGameState> emit) {
+    final s = state;
+    if (s is! OnlineGameInProgress || !s.isTimed) return;
+
+    final isWhite = s.myColor == 'white';
+    final activeWhite = s.isMyTurn == isWhite;
+
+    int newWhite = s.whiteTimeMs ?? 0;
+    int newBlack = s.blackTimeMs ?? 0;
+
+    if (activeWhite) {
+      newWhite = (newWhite - 1000).clamp(0, 999999999);
+    } else {
+      newBlack = (newBlack - 1000).clamp(0, 999999999);
+    }
+
+    emit(s.copyWith(whiteTimeMs: newWhite, blackTimeMs: newBlack));
+
+    // Auto-flag when our clock hits 0
+    if (s.isMyTurn) {
+      final myTime = isWhite ? newWhite : newBlack;
+      if (myTime == 0) {
+        _stopClockTimer();
+        add(const SendFlag());
+      }
+    }
+  }
+
+  void _onSendFlag(SendFlag event, Emitter<OnlineGameState> emit) {
+    _wsClient?.send({'type': 'flag'});
   }
 
   // ── Server messages ────────────────────────────────────────────────────────
@@ -60,6 +110,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
         _handleServerMove(msg, emit);
 
       case 'game_over':
+        _stopClockTimer();
         final s = state;
         final wn = s is OnlineGameInProgress ? s.whiteName : 'White';
         final bn = s is OnlineGameInProgress ? s.blackName : 'Black';
@@ -97,10 +148,11 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
         }
 
       case 'error':
-        // Server rejected our move — clear the in-flight flag
         final s = state;
         if (s is OnlineGameInProgress) {
           emit(s.copyWith(moveInFlight: false));
+          // Restart clock if it was stopped optimistically
+          if (s.isTimed && s.isMyTurn) _startClockTimer();
         }
     }
   }
@@ -108,14 +160,18 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   void _handleStateOrStart(Map<String, dynamic> msg, Emitter<OnlineGameState> emit) {
     final whiteName = msg['white_name'] as String? ?? 'White';
     final blackName = msg['black_name'] as String? ?? 'Black';
-    final fen = msg['fen'] as String?;
     final rawMoves = msg['moves'] as List?;
     final moveSans = rawMoves?.map((m) => m['san'] as String? ?? '').toList() ?? <String>[];
     final serverTurn = msg['turn'] as String? ?? 'white';
     final isMyTurn = serverTurn == _myColor;
     final orientation = _myColor == 'white' ? Squares.white : Squares.black;
+    final tc = msg['time_control'] as String? ?? 'untimed';
 
-    // Rebuild bishop.Game from move list (safe regardless of bishop FEN API)
+    final clockRaw = msg['clock'] as Map<String, dynamic>?;
+    final int? whiteMs = clockRaw != null ? (clockRaw['white'] as num?)?.toInt() : null;
+    final int? blackMs = clockRaw != null ? (clockRaw['black'] as num?)?.toInt() : null;
+
+    // Rebuild bishop.Game from move list
     final engine = bishop.Game(variant: bishop.Variant.standard());
     if (rawMoves != null) {
       for (final m in rawMoves) {
@@ -133,7 +189,17 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       blackName: blackName,
       moveSans: List<String>.from(moveSans),
       isMyTurn: isMyTurn,
+      timeControl: tc,
+      whiteTimeMs: whiteMs,
+      blackTimeMs: blackMs,
     ));
+
+    // Start clock if timed and it's my turn
+    if (tc != 'untimed' && whiteMs != null && isMyTurn) {
+      _startClockTimer();
+    } else {
+      _stopClockTimer();
+    }
   }
 
   void _handleServerMove(Map<String, dynamic> msg, Emitter<OnlineGameState> emit) {
@@ -143,6 +209,11 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     final uci = msg['uci'] as String?;
     final san = msg['san'] as String? ?? '';
     final serverTurn = msg['turn'] as String? ?? 'white';
+
+    // Update clock from server (authoritative)
+    final clockRaw = msg['clock'] as Map<String, dynamic>?;
+    final int? newWhiteMs = clockRaw != null ? (clockRaw['white'] as num?)?.toInt() : null;
+    final int? newBlackMs = clockRaw != null ? (clockRaw['black'] as num?)?.toInt() : null;
 
     if (uci != null) _applyUci(s.engine, uci);
 
@@ -154,7 +225,18 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       moveSans: newSans,
       isMyTurn: isMyTurn,
       moveInFlight: false,
+      whiteTimeMs: newWhiteMs ?? s.whiteTimeMs,
+      blackTimeMs: newBlackMs ?? s.blackTimeMs,
     ));
+
+    // Manage clock timer
+    if (s.isTimed) {
+      if (isMyTurn) {
+        _startClockTimer();
+      } else {
+        _stopClockTimer();
+      }
+    }
   }
 
   // ── Outgoing moves ─────────────────────────────────────────────────────────
@@ -163,14 +245,14 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     final s = state;
     if (s is! OnlineGameInProgress || !s.isMyTurn || s.moveInFlight) return;
 
-    // Convert squares.Move to UCI string
+    _stopClockTimer(); // pause local countdown while waiting for echo
     final uci = _moveToUci(event.move);
     _wsClient?.send({'type': 'move', 'uci': uci});
-    // Optimistic: disable board while waiting for server echo
     emit(s.copyWith(moveInFlight: true, isMyTurn: false));
   }
 
   void _onResign(SendResign event, Emitter<OnlineGameState> emit) {
+    _stopClockTimer();
     _wsClient?.send({'type': 'resign'});
   }
 
@@ -179,6 +261,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   }
 
   void _onAcceptDraw(SendAcceptDraw event, Emitter<OnlineGameState> emit) {
+    _stopClockTimer();
     _wsClient?.send({'type': 'accept_draw'});
   }
 
@@ -213,14 +296,12 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   }
 
   String _moveToUci(Move move) {
-    // squares.Move stores from/to as square indices (0-based, a1=0)
     String sq(int s) {
-      final file = String.fromCharCode(97 + (s % 8)); // a-h
-      final rank = (s ~/ 8 + 1).toString();           // 1-8
+      final file = String.fromCharCode(97 + (s % 8));
+      final rank = (s ~/ 8 + 1).toString();
       return '$file$rank';
     }
     final base = '${sq(move.from)}${sq(move.to)}';
-    // Promotion piece (if any): squares uses piece type int
     if (move.promo != null && move.promo! > 0) {
       const promoChars = {1: 'q', 2: 'n', 3: 'b', 4: 'r'};
       final p = promoChars[move.promo! & 7] ?? 'q';

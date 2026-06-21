@@ -294,7 +294,7 @@ final appRouter = GoRouter(
             final extra = state.extra as Map<String, dynamic>? ?? {};
             final gameId = state.pathParameters['gameId']!;
             final token = extra['token'] as String? ?? '';
-            final myColor = extra['myColor'] as String? ?? 'white';
+            final myColor = (extra['color'] ?? extra['myColor']) as String? ?? 'white';
             return BlocProvider(
               create: (_) => OnlineGameBloc()
                 ..add(ConnectToGame(

@@ -48,6 +48,15 @@ class FlipOnlineBoard extends OnlineGameEvent {
   const FlipOnlineBoard();
 }
 
+class SendFlag extends OnlineGameEvent {
+  const SendFlag();
+}
+
+// Internal — fired every second when a timed game is in progress
+class _ClockTick extends OnlineGameEvent {
+  const _ClockTick();
+}
+
 // Server-push (translated from WS messages by bloc)
 class _ServerMessage extends OnlineGameEvent {
   final Map<String, dynamic> msg;
