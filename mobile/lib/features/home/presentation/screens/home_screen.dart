@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const _BeAHeroCard(),
                       const SizedBox(height: 22),
                       _QuickServices(),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 10),
                       const _AnnouncementsBar(),
                       const SizedBox(height: 22),
                       _ImpactStats(l: l),
@@ -202,12 +202,7 @@ class _Header extends StatelessWidget {
                           _CircleBtn(
                             icon: Icons.translate_rounded,
                             tooltip: 'Change Language',
-                            onTap: () async {
-                              final storage = sl<LocalStorage>();
-                              final next = storage.getLang() == 'ta' ? 'en' : 'ta';
-                              await storage.saveLang(next);
-                              localeNotifier.value = Locale(next);
-                            },
+                            onTap: () => _showLanguagePicker(context),
                           ),
                           const SizedBox(width: 8),
                           _CircleBtn(
@@ -237,9 +232,7 @@ class _Header extends StatelessWidget {
                       const SizedBox(height: 16),
                       // Search bar
                       GestureDetector(
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Search coming soon')),
-                        ),
+                        onTap: () => _showSearchSheet(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                           decoration: BoxDecoration(
@@ -869,6 +862,283 @@ class _NavItem extends StatelessWidget {
             Icon(icon, size: 22, color: color),
             const SizedBox(height: 2),
             Text(label, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Language Picker ──────────────────────────────────────────────────────────
+
+void _showLanguagePicker(BuildContext context) {
+  const langs = [
+    ('ta', 'அ', 'தமிழ்', 'Tamil', Color(0xFF0F5132)),
+    ('en', 'A', 'English', 'English', Color(0xFF2563EB)),
+    ('hi', 'अ', 'हिन्दी', 'Hindi', Color(0xFFDC2626)),
+    ('ml', 'അ', 'മലയാളം', 'Malayalam', Color(0xFF7C3AED)),
+  ];
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) {
+      final storage = sl<LocalStorage>();
+      String current = storage.getLang();
+      return StatefulBuilder(builder: (ctx, setSt) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.cBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4,
+                    decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
+              ),
+              const SizedBox(height: 18),
+              Text('Language', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
+              const SizedBox(height: 14),
+              ...langs.map((lang) {
+                final selected = current == lang.$1;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: GestureDetector(
+                    onTap: () async {
+                      await storage.saveLang(lang.$1);
+                      localeNotifier.value = Locale(lang.$1);
+                      setSt(() => current = lang.$1);
+                      await Future.delayed(const Duration(milliseconds: 200));
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: selected ? lang.$5.withOpacity(0.10) : context.cSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: selected ? lang.$5.withOpacity(0.60) : context.cBorder,
+                          width: selected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: lang.$5.withOpacity(0.14),
+                            child: Text(lang.$2,
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: lang.$5)),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(lang.$3,
+                                    style: TextStyle(
+                                        fontSize: 15, fontWeight: FontWeight.w700,
+                                        color: selected ? lang.$5 : context.cText)),
+                                Text(lang.$4,
+                                    style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                              ],
+                            ),
+                          ),
+                          if (selected)
+                            Icon(Icons.check_circle_rounded, color: lang.$5, size: 22),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      });
+    },
+  );
+}
+
+// ── Search Sheet ─────────────────────────────────────────────────────────────
+
+class _SearchEntry {
+  final String title, subtitle, route;
+  final IconData icon;
+  final Color color;
+  const _SearchEntry(this.title, this.subtitle, this.route, this.icon, this.color);
+}
+
+const _allSearchEntries = [
+  _SearchEntry('Blood Donors', 'Find donors by blood group', '/blood-donation', Icons.water_drop, Color(0xFFEF4444)),
+  _SearchEntry('Register as Donor', 'Donate blood, save lives', '/blood-donation/register', Icons.favorite, Color(0xFFEF4444)),
+  _SearchEntry('Events', 'Upcoming community events', '/events', Icons.event, Color(0xFF8B5CF6)),
+  _SearchEntry('Chess', 'Play, challenge & spectate', '/chess', Icons.sports_esports, Color(0xFF0F172A)),
+  _SearchEntry('Sports Hub', 'Tournaments & challenges', '/sports', Icons.emoji_events, Color(0xFFF97316)),
+  _SearchEntry('Report Issue', 'Report a civic problem', '/issues', Icons.campaign, Color(0xFFEAB308)),
+  _SearchEntry('Track Issues', 'Check submitted reports', '/issues/track', Icons.search, Color(0xFF14B8A6)),
+  _SearchEntry('Green FYC', 'Tree plantation drives', '/green', Icons.eco, Color(0xFF16A34A)),
+  _SearchEntry('Register Tree', 'Log a tree you planted', '/green/register', Icons.park, Color(0xFF16A34A)),
+  _SearchEntry('Directory', 'Emergency contacts', '/directory', Icons.contacts, Color(0xFF2563EB)),
+  _SearchEntry('Membership Card', 'Your FYC digital card', '/membership', Icons.verified_user, Color(0xFF14B8A6)),
+  _SearchEntry('Announcements', 'Latest club updates', '/announcements', Icons.notifications, Color(0xFFF59E0B)),
+  _SearchEntry('Gallery', 'Event photos', '/gallery', Icons.photo_library, Color(0xFFD97706)),
+  _SearchEntry('Community', 'Member directory', '/community', Icons.people, Color(0xFFEC4899)),
+  _SearchEntry('Opportunities', 'Jobs, volunteer & skills', '/opportunities', Icons.work, Color(0xFFD97706)),
+  _SearchEntry('Certificate', 'Volunteer certificates', '/certificate', Icons.school, Color(0xFF6366F1)),
+  _SearchEntry('Settings', 'App preferences', '/settings', Icons.settings, Color(0xFF475569)),
+  _SearchEntry('About FYC', 'Our story since 1998', '/about', Icons.info, Color(0xFF475569)),
+];
+
+void _showSearchSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => _SearchSheet(),
+  );
+}
+
+class _SearchSheet extends StatefulWidget {
+  @override
+  State<_SearchSheet> createState() => _SearchSheetState();
+}
+
+class _SearchSheetState extends State<_SearchSheet> {
+  final _ctrl = TextEditingController();
+  List<_SearchEntry> _results = _allSearchEntries;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(_filter);
+  }
+
+  void _filter() {
+    final q = _ctrl.text.toLowerCase().trim();
+    setState(() {
+      _results = q.isEmpty
+          ? _allSearchEntries
+          : _allSearchEntries.where((e) =>
+              e.title.toLowerCase().contains(q) ||
+              e.subtitle.toLowerCase().contains(q)).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.92,
+      maxChildSize: 0.96,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (_, scrollCtrl) => Container(
+        decoration: BoxDecoration(
+          color: context.cBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.cSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.cBorder),
+                ),
+                child: TextField(
+                  controller: _ctrl,
+                  autofocus: true,
+                  style: TextStyle(color: context.cText, fontSize: 15),
+                  decoration: InputDecoration(
+                    hintText: 'Search services, events, and more...',
+                    hintStyle: TextStyle(color: context.cTextSecondary, fontSize: 14),
+                    prefixIcon: Icon(Icons.search, color: context.cTextSecondary, size: 20),
+                    suffixIcon: _ctrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: context.cTextSecondary, size: 18),
+                            onPressed: () { _ctrl.clear(); setState(() => _results = _allSearchEntries); })
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_ctrl.text.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.apps_rounded, size: 14, color: context.cTextSecondary),
+                    const SizedBox(width: 6),
+                    Text('All Services', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary, letterSpacing: 0.3)),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: _results.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: context.cTextSecondary),
+                          const SizedBox(height: 12),
+                          Text('No results for "${_ctrl.text}"',
+                              style: TextStyle(color: context.cTextSecondary, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('Try blood group, event name, or service',
+                              style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      itemCount: _results.length,
+                      separatorBuilder: (_, __) => Divider(height: 1, color: context.cBorder, indent: 60),
+                      itemBuilder: (_, i) {
+                        final e = _results[i];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          leading: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: e.color.withOpacity(context.isDark ? 0.20 : 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(e.icon, color: e.color, size: 20),
+                          ),
+                          title: Text(e.title,
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: context.cText)),
+                          subtitle: Text(e.subtitle,
+                              style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: context.cTextSecondary),
+                          onTap: () {
+                            final router = GoRouter.of(context);
+                            Navigator.pop(context);
+                            router.push(e.route);
+                          },
+                        );
+                      },
+                    ),
+            ),
           ],
         ),
       ),

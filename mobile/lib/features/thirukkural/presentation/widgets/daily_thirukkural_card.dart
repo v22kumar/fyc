@@ -1,15 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/shimmer_box.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/thirukkural_datasource.dart';
 import '../../data/models/thirukkural_model.dart';
 
-/// "Thirukkural of the day" card shown on the home screen. Displays the same
-/// couplet for everyone on a given date, in both Tamil and English.
-///
-/// Non-critical: if the fetch fails (e.g. offline) the card renders nothing
-/// rather than showing an error, so it never disrupts the home screen.
 class DailyThirukkuralCard extends StatefulWidget {
   const DailyThirukkuralCard({super.key});
 
@@ -34,9 +28,7 @@ class _DailyThirukkuralCardState extends State<DailyThirukkuralCard> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _ThirukkuralSkeleton();
         }
-        if (!snapshot.hasData) {
-          return const SizedBox.shrink(); // fail silently
-        }
+        if (!snapshot.hasData) return const SizedBox.shrink();
         return _ThirukkuralContent(kural: snapshot.data!);
       },
     );
@@ -49,144 +41,254 @@ class _ThirukkuralContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.cSurface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: context.cBorder),
-        boxShadow: context.isDark ? null : AppTheme.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
-                  shape: BoxShape.circle,
-                ),
-                child: const Text('📜', style: TextStyle(fontSize: 18)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D3D26), Color(0xFF145C36), Color(0xFF1A7A47)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Decorative background pattern
+            Positioned(
+              right: -20,
+              top: -20,
+              child: CustomPaint(
+                size: const Size(160, 160),
+                painter: _KuralBgPainter(),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'இன்றைய திருக்குறள்',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: context.cText,
-                      ),
-                    ),
-                    Text(
-                      'Thirukkural of the Day',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: context.cTextSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            Positioned(
+              left: -30,
+              bottom: -30,
+              child: CustomPaint(
+                size: const Size(120, 120),
+                painter: _KuralBgPainter(opacity: 0.06),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '#${kural.number}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+            ),
+            // Large decorative quote mark
+            Positioned(
+              left: 12,
+              top: 12,
+              child: Text('"',
+                  style: TextStyle(
+                    fontSize: 90,
+                    height: 0.9,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white.withOpacity(0.07),
+                    fontFamily: 'serif',
+                  )),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text('📜', style: TextStyle(fontSize: 18)),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'இன்றைய திருக்குறள்',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            Text(
+                              'Thirukkural of the Day',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white60,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withOpacity(0.30)),
+                        ),
+                        child: Text(
+                          'குறள் #${kural.number}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+
+                  const SizedBox(height: 18),
+
+                  // Tamil couplet — the star of the show
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          kural.line1,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            height: 1.6,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        Text(
+                          kural.line2,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            height: 1.6,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Tamil meaning
+                  Text(
+                    kural.tamilMeaning,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.55,
+                      color: Colors.white.withOpacity(0.80),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+                  Divider(height: 1, color: Colors.white.withOpacity(0.15)),
+                  const SizedBox(height: 14),
+
+                  // English couplet
+                  Text(
+                    '"${kural.englishCouplet}"',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                      height: 1.5,
+                      color: Colors.white.withOpacity(0.90),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    kural.englishMeaning,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                      color: Colors.white.withOpacity(0.65),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Footer
+                  Row(
+                    children: [
+                      Icon(Icons.menu_book_outlined, size: 13, color: Colors.white.withOpacity(0.55)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${kural.paalTa}  •  ${kural.paalEn}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withOpacity(0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-          // Tamil couplet
-          Text(
-            kural.line1,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.5,
-              color: AppColors.primary,
-            ),
-          ),
-          Text(
-            kural.line2,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.5,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            kural.tamilMeaning,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: context.cTextSecondary,
-            ),
-          ),
+class _KuralBgPainter extends CustomPainter {
+  final double opacity;
+  const _KuralBgPainter({this.opacity = 0.09});
 
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1, color: context.cBorder),
-          ),
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(opacity)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final cx = size.width / 2, cy = size.height / 2;
+    for (int i = 0; i < 5; i++) {
+      canvas.drawCircle(Offset(cx, cy), (i + 1) * size.width / 6, paint);
+    }
+    // Decorative dots
+    final dotPaint = Paint()..color = Colors.white.withOpacity(opacity * 1.5);
+    for (int i = 0; i < 8; i++) {
+      final angle = i * math.pi / 4;
+      canvas.drawCircle(
+        Offset(cx + math.cos(angle) * size.width * 0.42,
+               cy + math.sin(angle) * size.height * 0.42),
+        2.5, dotPaint,
+      );
+    }
+  }
 
-          // English couplet
-          Text(
-            kural.englishCouplet,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              fontStyle: FontStyle.italic,
-              height: 1.45,
-              color: context.cText,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            kural.englishMeaning,
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.5,
-              color: context.cTextSecondary,
-            ),
-          ),
+  @override
+  bool shouldRepaint(_) => false;
+}
 
-          const SizedBox(height: 14),
-          // Section (paal) footer
-          Row(
-            children: [
-              Icon(Icons.menu_book_outlined,
-                  size: 14, color: context.cTextSecondary),
-              const SizedBox(width: 6),
-              Text(
-                '${kural.paalTa}  •  ${kural.paalEn}',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: context.cTextSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
+class _SkeletonBox extends StatelessWidget {
+  final double? width;
+  final double height;
+  final BorderRadius? radius;
+  const _SkeletonBox({this.width, required this.height, this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: radius ?? BorderRadius.circular(8),
       ),
     );
   }
@@ -197,42 +299,44 @@ class _ThirukkuralSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.cSurface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: context.cBorder),
-        boxShadow: context.isDark ? null : AppTheme.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ShimmerBox(width: 34, height: 34, borderRadius: BorderRadius.circular(17)),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShimmerBox(height: 13, width: 140),
-                    SizedBox(height: 6),
-                    ShimmerBox(height: 10, width: 100),
-                  ],
-                ),
-              ),
-            ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D3D26), Color(0xFF145C36)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 18),
-          const ShimmerBox(height: 16),
-          const SizedBox(height: 8),
-          const ShimmerBox(height: 16, width: 220),
-          const SizedBox(height: 14),
-          const ShimmerBox(height: 12),
-          const SizedBox(height: 6),
-          const ShimmerBox(height: 12, width: 180),
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _SkeletonBox(width: 36, height: 36, radius: BorderRadius.circular(10)),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SkeletonBox(height: 13, width: 160),
+                      SizedBox(height: 6),
+                      _SkeletonBox(height: 10, width: 120),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _SkeletonBox(height: 60, radius: BorderRadius.circular(12)),
+            const SizedBox(height: 12),
+            const _SkeletonBox(height: 12),
+            const SizedBox(height: 6),
+            const _SkeletonBox(height: 12, width: 240),
+          ],
+        ),
       ),
     );
   }
