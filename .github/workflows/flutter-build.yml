@@ -60,12 +60,12 @@ jobs:
       # GOOGLE_SERVER_CLIENT_ID = Web OAuth client ID from Firebase Console
       #   → needed so GoogleSignIn returns a valid idToken for backend verification.
       #   Add as GitHub Secret: GOOGLE_SERVER_CLIENT_ID
-      - name: Build release APK  (direct install / web download)
+      - name: Build release APKs (split per ABI — arm64, arm32, x86_64)
         working-directory: mobile
         env:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
-          flutter build apk --release \
+          flutter build apk --release --split-per-abi \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
             --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
@@ -83,17 +83,26 @@ jobs:
       # ── 6. Rename outputs with stable filenames ───────────────────────────────
       - name: Rename outputs
         run: |
-          cp mobile/build/app/outputs/flutter-apk/app-release.apk \
-             mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+          # Split APKs — one per architecture
+          cp mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             mobile/build/app/outputs/flutter-apk/fyc-connect-arm64.apk
+          cp mobile/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+             mobile/build/app/outputs/flutter-apk/fyc-connect-arm32.apk
+          cp mobile/build/app/outputs/flutter-apk/app-x86_64-release.apk \
+             mobile/build/app/outputs/flutter-apk/fyc-connect-x86_64.apk
+          # AAB
           cp mobile/build/app/outputs/bundle/release/app-release.aab \
              mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
       # ── 7. Artifacts (kept 30 days — useful for debugging) ───────────────────
-      - name: Upload APK artifact
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: fyc-connect-apk-${{ github.sha }}
-          path: mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+          name: fyc-connect-apks-${{ github.sha }}
+          path: |
+            mobile/build/app/outputs/flutter-apk/fyc-connect-arm64.apk
+            mobile/build/app/outputs/flutter-apk/fyc-connect-arm32.apk
+            mobile/build/app/outputs/flutter-apk/fyc-connect-x86_64.apk
           retention-days: 30
 
       - name: Upload AAB artifact (Play Store)
@@ -103,10 +112,12 @@ jobs:
           path: mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
           retention-days: 30
 
-      # ── 8. Publish APK + AAB to rolling GitHub Release ───────────────────────
+      # ── 8. Publish APKs + AAB to rolling GitHub Release ─────────────────────
       # Creates or updates the "app-latest" release on every successful build.
-      # Stable download URL (never changes):
-      #   https://github.com/v22kumar/fyc/releases/download/app-latest/fyc-connect-latest.apk
+      # Pick the APK that matches your phone:
+      #   fyc-connect-arm64.apk  — most modern Android phones (2017+)
+      #   fyc-connect-arm32.apk  — older/budget 32-bit Android phones
+      #   fyc-connect-x86_64.apk — Android emulators
       - name: Publish to GitHub Release (app-latest)
         uses: softprops/action-gh-release@v2
         with:
@@ -121,12 +132,20 @@ jobs:
             | Built at | ${{ github.run_started_at }} |
             | Workflow | [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
 
-            **Direct install (Android):** download `fyc-connect-latest.apk` below.
+            **Pick the APK for your device:**
+            | File | Device |
+            |---|---|
+            | `fyc-connect-arm64.apk` | ✅ Most modern Android phones (2017+) |
+            | `fyc-connect-arm32.apk` | Older / budget 32-bit phones |
+            | `fyc-connect-x86_64.apk` | Android emulator (PC/laptop) |
+
             **Play Store upload:** download `fyc-connect-latest.aab` below.
           prerelease: true
           make_latest: false
           files: |
-            mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
+            mobile/build/app/outputs/flutter-apk/fyc-connect-arm64.apk
+            mobile/build/app/outputs/flutter-apk/fyc-connect-arm32.apk
+            mobile/build/app/outputs/flutter-apk/fyc-connect-x86_64.apk
             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
       # ── 9. Wire up backend download URL (idempotent) ─────────────────────────
