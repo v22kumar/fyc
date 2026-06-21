@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -57,7 +58,8 @@ class _SplashScreenState extends State<SplashScreen>
         if (state is AuthAuthenticated) {
           context.go('/home');
         } else if (state is AuthUnauthenticated) {
-          context.go('/lang-select');
+          // DEV ONLY — skip the language/login flow and go straight to home.
+          context.go(ApiConstants.devBypassAuth ? '/home' : '/lang-select');
         }
       },
       child: Scaffold(

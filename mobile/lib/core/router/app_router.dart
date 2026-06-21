@@ -17,6 +17,7 @@ import '../../features/membership/presentation/screens/membership_card_screen.da
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
 import '../../service_locator.dart';
+import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
 import '../../features/issues/presentation/bloc/issue_bloc.dart';
@@ -84,6 +85,8 @@ import '../../features/community/presentation/screens/community_directory_screen
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
+    // DEV ONLY — bypass the auth guard so every route is reachable for testing.
+    if (ApiConstants.devBypassAuth) return null;
     final authState = sl<AuthBloc>().state;
     final isAuth = authState is AuthAuthenticated;
     final publicRoutes = {'/', '/lang-select', '/login', '/register'};

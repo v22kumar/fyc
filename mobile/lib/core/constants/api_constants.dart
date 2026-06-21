@@ -1,6 +1,12 @@
 class ApiConstants {
   ApiConstants._();
 
+  /// DEV ONLY — when true the login/auth guard is bypassed so the app opens
+  /// straight to /home for free testing. Backend calls that need a token
+  /// (online games, history, stats) will fail; local game + vs Computer work.
+  /// Set back to false before any production / Play Store build.
+  static const bool devBypassAuth = true;
+
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8000', // Android emulator → host localhost
