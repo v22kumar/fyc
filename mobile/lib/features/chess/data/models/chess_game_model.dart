@@ -336,6 +336,53 @@ class ChessGameDetailModel extends ChessGameModel {
   }
 }
 
+// ── Weekly Awards ─────────────────────────────────────────────────────────────
+
+class AwardWinnerModel {
+  final String userId;
+  final String name;
+
+  const AwardWinnerModel({required this.userId, required this.name});
+
+  factory AwardWinnerModel.fromJson(Map<String, dynamic> json) =>
+      AwardWinnerModel(
+        userId: json['user_id'] as String,
+        name: json['name'] as String,
+      );
+}
+
+class WeeklyAwardsModel {
+  final String weekStart;
+  final AwardWinnerModel? topPlayer;
+  final AwardWinnerModel? mostActive;
+  final AwardWinnerModel? bestNewcomer;
+  final AwardWinnerModel? sharpestMind;
+
+  const WeeklyAwardsModel({
+    required this.weekStart,
+    this.topPlayer,
+    this.mostActive,
+    this.bestNewcomer,
+    this.sharpestMind,
+  });
+
+  factory WeeklyAwardsModel.fromJson(Map<String, dynamic> json) {
+    AwardWinnerModel? _parse(String key) {
+      final v = json[key];
+      if (v == null) return null;
+      return AwardWinnerModel.fromJson(v as Map<String, dynamic>);
+    }
+
+    return WeeklyAwardsModel(
+      weekStart: json['week_start'] as String? ?? '',
+      topPlayer: _parse('top_player'),
+      mostActive: _parse('most_active'),
+      bestNewcomer: _parse('best_newcomer'),
+      sharpestMind: _parse('sharpest_mind'),
+    );
+  }
+}
+
 class ChallengeAcceptResult {
   final String gameId;
   final String color; // "white" | "black"

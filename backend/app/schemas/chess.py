@@ -167,3 +167,18 @@ class LiveGameOut(BaseModel):
     ply: int
     time_control: str
     spectator_count: int
+
+
+# ── Weekly Awards ──────────────────────────────────────────────────────────────
+
+class AwardWinnerOut(BaseModel):
+    user_id: str
+    name: str
+
+
+class WeeklyAwardsOut(BaseModel):
+    week_start: str
+    top_player: Optional[AwardWinnerOut] = None
+    most_active: Optional[AwardWinnerOut] = None
+    best_newcomer: Optional[AwardWinnerOut] = None
+    sharpest_mind: Optional[AwardWinnerOut] = None

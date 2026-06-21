@@ -20,6 +20,7 @@ abstract class ChessRemoteDataSource {
   Future<ChallengeAcceptResult> acceptChallenge(String challengeId);
   Future<void> declineChallenge(String challengeId);
   Future<List<LiveGameModel>> liveGames();
+  Future<WeeklyAwardsModel> weeklyAwards();
 }
 
 class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
@@ -161,6 +162,16 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
       return (response.data as List)
           .map((e) => LiveGameModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<WeeklyAwardsModel> weeklyAwards() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.chessAwardsWeekly);
+      return WeeklyAwardsModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

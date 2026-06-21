@@ -142,6 +142,22 @@ class ChessHomePage extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+
+                    // Hall of Fame button
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/chess/legacy'),
+                      icon: const Icon(Icons.emoji_events_rounded, size: 18),
+                      label: const Text('Hall of Fame'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFFFD700),
+                        side: const BorderSide(color: Color(0xFFFFD700)),
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 12),
 
                     // Stats row (live from backend)

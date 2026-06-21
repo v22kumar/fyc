@@ -89,6 +89,7 @@ class ApiConstants {
   static const String chessChallengesIncoming = '/api/v1/chess/challenges/incoming';
   static const String chessChallengesOutgoing = '/api/v1/chess/challenges/outgoing';
   static const String chessLiveGames = '/api/v1/chess/games/live';
+  static const String chessAwardsWeekly = '/api/v1/chess/awards/weekly';
 
   // Chess — WebSocket
   // e.g. ws://10.0.2.2:8000/api/v1/chess/games/{id}/ws?token=...

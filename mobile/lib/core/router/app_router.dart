@@ -43,6 +43,7 @@ import '../../features/chess/presentation/pages/online_game_page.dart';
 import '../../features/chess/presentation/pages/spectator_page.dart';
 import '../../features/chess/presentation/pages/ai_game_page.dart';
 import '../../features/chess/presentation/pages/replay_page.dart';
+import '../../features/chess/presentation/pages/legacy_page.dart';
 
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
@@ -345,6 +346,10 @@ final appRouter = GoRouter(
             final gameId = state.pathParameters['gameId']!;
             return ReplayPage(gameId: gameId);
           },
+        ),
+        GoRoute(
+          path: 'legacy',
+          builder: (context, state) => const LegacyPage(),
         ),
       ],
     ),
