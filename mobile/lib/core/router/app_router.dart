@@ -27,6 +27,25 @@ import '../../features/sports/presentation/screens/sports_hub_screen.dart';
 import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
 import '../../features/sports/presentation/screens/challenge_form_screen.dart';
 
+// Chess
+import '../../features/chess/data/datasources/chess_remote_datasource.dart';
+import '../../features/chess/presentation/bloc/game_bloc.dart';
+import '../../features/chess/presentation/bloc/online_game_bloc.dart';
+import '../../features/chess/presentation/bloc/online_game_event.dart';
+import '../../features/chess/presentation/bloc/spectator_bloc.dart';
+import '../../features/chess/presentation/bloc/spectator_event.dart';
+import '../../features/chess/presentation/bloc/ai_game_bloc.dart';
+import '../../features/chess/presentation/pages/chess_home_page.dart';
+import '../../features/chess/presentation/pages/local_game_page.dart';
+import '../../features/chess/presentation/pages/game_history_page.dart';
+import '../../features/chess/presentation/pages/challenge_page.dart';
+import '../../features/chess/presentation/pages/online_game_page.dart';
+import '../../features/chess/presentation/pages/spectator_page.dart';
+import '../../features/chess/presentation/pages/ai_game_page.dart';
+import '../../features/chess/presentation/pages/replay_page.dart';
+import '../../features/chess/presentation/pages/legacy_page.dart';
+import '../../features/chess/presentation/pages/legends_page.dart';
+
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
 import '../../features/green_fyc/presentation/screens/green_fyc_screen.dart';
@@ -246,6 +265,98 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/opportunities',
       builder: (context, state) => const OpportunitiesScreen(),
+    ),
+
+    // Chess
+    GoRoute(
+      path: '/chess',
+      builder: (context, state) => BlocProvider(
+        create: (_) => GameBloc(remote: sl<ChessRemoteDataSource>()),
+        child: const ChessHomePage(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'local',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (_) => GameBloc(remote: sl<ChessRemoteDataSource>()),
+              child: LocalGamePage(
+                whiteName: extra['white'] as String? ?? 'White',
+                blackName: extra['black'] as String? ?? 'Black',
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'history',
+          builder: (context, state) => const GameHistoryPage(),
+        ),
+        GoRoute(
+          path: 'challenge',
+          builder: (context, state) => const ChallengePage(),
+        ),
+        GoRoute(
+          path: 'online/:gameId',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            final gameId = state.pathParameters['gameId']!;
+            final token = extra['token'] as String? ?? '';
+            final myColor = (extra['color'] ?? extra['myColor']) as String? ?? 'white';
+            return BlocProvider(
+              create: (_) => OnlineGameBloc()
+                ..add(ConnectToGame(
+                  gameId: gameId,
+                  token: token,
+                  myColor: myColor,
+                )),
+              child: OnlineGamePage(gameId: gameId),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'spectate/:gameId',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            final gameId = state.pathParameters['gameId']!;
+            final token = extra['token'] as String? ?? '';
+            return BlocProvider(
+              create: (_) => SpectatorBloc()
+                ..add(ConnectSpectator(gameId: gameId, token: token)),
+              child: SpectatorPage(gameId: gameId),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'ai',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (_) => AiGameBloc(),
+              child: AiGamePage(
+                depth: extra['depth'] as int? ?? 5,
+                skill: extra['skill'] as int? ?? 10,
+                playerIsWhite: extra['playerIsWhite'] as bool? ?? true,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'replay/:gameId',
+          builder: (context, state) {
+            final gameId = state.pathParameters['gameId']!;
+            return ReplayPage(gameId: gameId);
+          },
+        ),
+        GoRoute(
+          path: 'legacy',
+          builder: (context, state) => const LegacyPage(),
+        ),
+        GoRoute(
+          path: 'legends',
+          builder: (context, state) => const LegendsPage(),
+        ),
+      ],
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

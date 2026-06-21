@@ -368,6 +368,8 @@ class _ModuleGrid extends StatelessWidget {
           '/blood-donation', const Color(0xFFEF4444)),
       _Module('🎉', ta ? 'நிகழ்வுகள்' : 'Events',
           '/events', const Color(0xFF8B5CF6)),
+      _Module('♟', ta ? 'சதுரங்கம்' : 'Chess',
+          '/chess', const Color(0xFF0F172A)),
       _Module('🏆', ta ? 'விளையாட்டு' : 'Sports Hub',
           '/sports', const Color(0xFF10B981)),
       _Module('🚧', ta ? 'புகார்' : 'Report Issue',

@@ -32,6 +32,8 @@ from app.routers import utilities as utilities_router
 from app.routers import instagram as instagram_router
 from app.routers import broadcasts as broadcasts_router
 from app.routers import app_meta as app_meta_router
+from app.routers import chess as chess_router
+from app.routers import awards as awards_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -207,6 +209,8 @@ app.include_router(utilities_router.router, prefix="/api/v1")
 app.include_router(instagram_router.router, prefix="/api/v1")
 app.include_router(broadcasts_router.router, prefix="/api/v1")
 app.include_router(app_meta_router.router, prefix="/api/v1")
+app.include_router(chess_router.router, prefix="/api/v1")
+app.include_router(awards_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

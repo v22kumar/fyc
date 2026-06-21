@@ -84,4 +84,32 @@ class ApiConstants {
   // Utilities
   static const String weatherCurrent = '/api/v1/utilities/weather';
   static const String goldPrice = '/api/v1/utilities/gold-price';
+
+  // Chess — REST
+  static const String chessGames = '/api/v1/chess/games';
+  static const String chessMyGames = '/api/v1/chess/games/my';
+  static const String chessMyStats = '/api/v1/chess/players/me/stats';
+  static const String chessMembers = '/api/v1/chess/members';
+  static const String chessChallenges = '/api/v1/chess/challenges';
+  static const String chessChallengesIncoming = '/api/v1/chess/challenges/incoming';
+  static const String chessChallengesOutgoing = '/api/v1/chess/challenges/outgoing';
+  static const String chessLiveGames = '/api/v1/chess/games/live';
+  static const String chessAwardsWeekly = '/api/v1/chess/awards/weekly';
+
+  // Chess — WebSocket
+  // e.g. ws://10.0.2.2:8000/api/v1/chess/games/{id}/ws?token=...
+  static String chessGameWs(String gameId) {
+    final wsBase = baseUrl
+        .replaceFirst('https://', 'wss://')
+        .replaceFirst('http://', 'ws://');
+    return '$wsBase/api/v1/chess/games/$gameId/ws';
+  }
+
+  // e.g. ws://10.0.2.2:8000/api/v1/chess/games/{id}/spectate?token=...
+  static String chessGameSpectateWs(String gameId) {
+    final wsBase = baseUrl
+        .replaceFirst('https://', 'wss://')
+        .replaceFirst('http://', 'ws://');
+    return '$wsBase/api/v1/chess/games/$gameId/spectate';
+  }
 }

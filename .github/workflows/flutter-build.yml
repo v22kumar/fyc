@@ -24,10 +24,10 @@ jobs:
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          channel: 'stable'
           cache: true
 
-      # ── 3. Release signing ────────────────────────────────────────────────────
+      # ── 3. Release signing ───────────────────────────────────────────────────
       # Skipped automatically if KEYSTORE_BASE64 secret is not configured.
       # Add these in GitHub → Settings → Secrets → Actions:
       #   KEYSTORE_BASE64   — base64 of fyc-release.jks
@@ -50,7 +50,7 @@ jobs:
             "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
           echo "Release signing configured ✓"
 
-      # ── 4. Dependencies ─────────────────────────────────────────────────────
+      # ── 4. Dependencies ───────────────────────────────────────────────────────
       - name: Flutter pub get
         working-directory: mobile
         run: flutter pub get
@@ -129,7 +129,7 @@ jobs:
             mobile/build/app/outputs/flutter-apk/fyc-connect-latest.apk
             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
 
-      # ── 9. Wire up backend download URL (idempotent) ────────────────────────
+      # ── 9. Wire up backend download URL (idempotent) ─────────────────────────
       # Sets APP_APK_URL on fyc-backend so the web "Download App" button works.
       # Skipped automatically if FLY_API_TOKEN secret is not configured.
       # The GitHub Release URL is stable, so this only triggers a backend
