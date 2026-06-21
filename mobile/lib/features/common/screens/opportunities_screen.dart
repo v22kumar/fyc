@@ -31,6 +31,36 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
   String get _lang => sl<LocalStorage>().getLang();
   String _selectedTab = 'ALL';
 
+  static const _samples = [
+    {
+      'title': 'Tree Plantation Drive Volunteer',
+      'org': 'FYC Green Team',
+      'type': 'VOLUNTEER',
+      'category': 'Environment',
+      'location': 'Kanyakumari District',
+      'desc': 'Help plant 500 trees across village schools. No experience needed.',
+      'hours': '6 hrs',
+    },
+    {
+      'title': 'Blood Donation Camp Helper',
+      'org': 'FYC Blood Wing',
+      'type': 'VOLUNTEER',
+      'category': 'Healthcare',
+      'location': 'Nagercoil',
+      'desc': 'Assist in organizing our monthly blood donation camp.',
+      'hours': '4 hrs',
+    },
+    {
+      'title': 'Tamil Language Skill Exchange',
+      'org': 'FYC Members',
+      'type': 'SKILL',
+      'category': 'Education',
+      'location': 'Online',
+      'desc': 'Exchange skills — teach what you know, learn what you need.',
+      'hours': 'Flexible',
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     final isTa = _lang == 'ta';
@@ -92,6 +122,10 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
               ? items
               : items.where((o) => o.type == _selectedTab).toList();
 
+          final visibleSamples = _selectedTab == 'ALL'
+              ? _samples
+              : _samples.where((s) => s['type'] == _selectedTab).toList();
+
           return Column(
             children: [
               Padding(
@@ -108,20 +142,217 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: filtered.isEmpty
-                    ? Center(child: Text(isTa ? 'வாய்ப்புகள் ஏதுமில்லை' : 'No opportunities found'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, idx) => _OpportunityCard(
-                          opp: filtered[idx],
-                          isTa: isTa,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  children: [
+                    if (visibleSamples.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          isTa ? 'மாதிரி வாய்ப்புகள்' : 'Sample Opportunities',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
+                      ...visibleSamples.map((s) => _SampleOpportunityCard(data: s, isTa: isTa)),
+                    ],
+                    if (filtered.isNotEmpty) ...[
+                      if (visibleSamples.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 12),
+                          child: Text(
+                            isTa ? 'கிடைக்கும் வாய்ப்புகள்' : 'Available Opportunities',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ...filtered.map((opp) => _OpportunityCard(opp: opp, isTa: isTa)),
+                    ],
+                    if (filtered.isEmpty)
+                      _PremiumEmptyState(isTa: isTa),
+                  ],
+                ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _PremiumEmptyState extends StatelessWidget {
+  final bool isTa;
+  const _PremiumEmptyState({required this.isTa});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF0FDF4),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.volunteer_activism, size: 48, color: Color(0xFF16A34A)),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            isTa ? 'வாய்ப்புகள் இல்லை' : 'No Opportunities Yet',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              isTa
+                  ? 'FYC சமூகத்திற்கு முதன்முதலில் தன்னார்வ வாய்ப்பை பதிவிடுங்கள்.'
+                  : 'Be the first to post a volunteer opportunity or skill exchange for the FYC community.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F5132),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Text(
+              isTa ? 'வாய்ப்பை பதிவிடவும்' : 'Post an Opportunity',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SampleOpportunityCard extends StatelessWidget {
+  final Map<String, String> data;
+  final bool isTa;
+  const _SampleOpportunityCard({required this.data, required this.isTa});
+
+  @override
+  Widget build(BuildContext context) {
+    final isVolunteer = data['type'] == 'VOLUNTEER';
+    final typeColor = isVolunteer ? AppColors.primary : const Color(0xFF8B5CF6);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: typeColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isVolunteer
+                            ? (isTa ? 'தன்னார்வ பணி' : 'VOLUNTEERING')
+                            : (isTa ? 'திறன் பரிமாற்றம்' : 'SKILL EXCHANGE'),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: typeColor),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isTa ? 'மாதிரி' : 'Sample',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ],
+                ),
+                if ((data['hours'] ?? '').isNotEmpty)
+                  Text(
+                    data['hours']!,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              data['title'] ?? '',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${data['org'] ?? ''} • ${data['category'] ?? ''}',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    data['location'] ?? '',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              data['desc'] ?? '',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: typeColor.withOpacity(0.5),
+                  disabledBackgroundColor: typeColor.withOpacity(0.5),
+                  disabledForegroundColor: Colors.white,
+                ),
+                child: Text(
+                  isVolunteer
+                      ? (isTa ? 'தன்னார்வலராக விண்ணப்பி' : 'Apply to Volunteer')
+                      : (isTa ? 'திறன் பரிமாறவும்' : 'Exchange Skills'),
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

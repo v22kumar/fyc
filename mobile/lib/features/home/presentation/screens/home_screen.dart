@@ -77,6 +77,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     children: [
                       _ModuleGrid(l: l),
                       const SizedBox(height: 20),
+                      _CommunityPulse(),
+                      const SizedBox(height: 12),
+                      _TodaysSpotlight(),
+                      const SizedBox(height: 20),
                       _StatsRow(l: l),
                       const SizedBox(height: 20),
                       const DailyThirukkuralCard(),
@@ -463,6 +467,64 @@ class _ModuleTile extends StatelessWidget {
   }
 }
 
+// ── Community Pulse ──────────────────────────────────────────────────────────
+
+class _CommunityPulse extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 88,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        children: const [
+          _PulseCard(label: 'Members', value: '847+', icon: Icons.people, color: Color(0xFF0F5132)),
+          _PulseCard(label: 'Blood Donors', value: '120', icon: Icons.favorite, color: Color(0xFFF43F5E)),
+          _PulseCard(label: 'Active Now', value: '43', icon: Icons.circle, color: Color(0xFF10B981)),
+          _PulseCard(label: 'Events', value: '12', icon: Icons.event, color: Color(0xFFD4AF37)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Today's Spotlight ─────────────────────────────────────────────────────────
+
+class _TodaysSpotlight extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F5132), Color(0xFF16A34A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Today\'s Spotlight', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                const Text('🌳 15 trees planted this week', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                const Text('🩸 3 blood donation events upcoming', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Stats Row ────────────────────────────────────────────────────────────────
 
 class _StatsRow extends StatelessWidget {
@@ -828,6 +890,45 @@ class _BentoTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Pulse Card ───────────────────────────────────────────────────────────────
+
+class _PulseCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _PulseCard({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 100,
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.15)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(icon, color: color, size: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+              Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+            ],
+          ),
+        ],
       ),
     );
   }

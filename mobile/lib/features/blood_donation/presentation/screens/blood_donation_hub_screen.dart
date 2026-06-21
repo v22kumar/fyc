@@ -84,7 +84,9 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       ),
       body: Column(
         children: [
-          _EmergencyBanner(),
+          _EmergencyBanner(onTap: () {
+            context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
+          }),
           _FilterRow(
             groups: _groups,
             selected: _selectedGroup,
@@ -182,44 +184,54 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
 }
 
 class _EmergencyBanner extends StatelessWidget {
+  final VoidCallback onTap;
+  const _EmergencyBanner({required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     final lang = sl<LocalStorage>().getLang();
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFDC2626).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFE11D48).withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ]
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.emergency_outlined, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              lang == 'ta'
-                  ? 'அவசர நிலை? கீழே உள்ள அனைத்து கொடையாளர்களும் தற்போது தயாராக உள்ளனர்.'
-                  : 'Emergency? All donors below are currently available.',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+        child: Row(
+          children: [
+            const Icon(Icons.emergency, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lang == 'ta' ? 'அவசர இரத்தம் தேவையா?' : 'Emergency Blood Needed?',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                  Text(
+                    lang == 'ta'
+                        ? 'உங்கள் பகுதியில் உள்ள தகுதியான கொடையாளர்களை எச்சரிக்க தட்டவும்'
+                        : 'Tap to alert all eligible donors in your area',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const Icon(Icons.chevron_right, color: Colors.white),
+          ],
+        ),
       ),
     );
   }
@@ -278,6 +290,8 @@ class _DonorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lang = sl<LocalStorage>().getLang();
+    final isVerified = donor.phoneNumber != null && donor.phoneNumber!.isNotEmpty;
+
     return ScaleOnTap(
       onTap: onContact,
       child: Container(
@@ -309,16 +323,29 @@ class _DonorCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      (donor.fullNameTa?.isNotEmpty == true
-                              ? donor.fullNameTa!
-                              : donor.fullNameEn) ??
-                          '—',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            (donor.fullNameTa?.isNotEmpty == true
+                                    ? donor.fullNameTa!
+                                    : donor.fullNameEn) ??
+                                '—',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (isVerified) ...[
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: lang == 'ta' ? 'சரிபார்க்கப்பட்ட உறுப்பினர்' : 'Verified Member',
+                            child: const Icon(Icons.verified, size: 16, color: Color(0xFF10B981)),
+                          ),
+                        ],
+                      ],
                     ),
                     if (donor.geographyId != null) ...[
                       const SizedBox(height: 4),
@@ -368,22 +395,44 @@ class _EmptyDonors extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = sl<LocalStorage>().getLang();
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bloodtype_outlined, size: 64, color: Colors.grey),
+          const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           Text(
             group != null
-                ? 'No $group donors available right now'
-                : 'No donors available right now',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ? (lang == 'ta' ? 'இப்போது $group கொடையாளர்கள் இல்லை' : 'No donors found')
+                : (lang == 'ta' ? 'கொடையாளர்கள் இல்லை' : 'No donors found'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Be the first to register as a donor!',
-            style: TextStyle(color: Colors.grey),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              lang == 'ta'
+                  ? 'வேறு இரத்த வகையை முயற்சிக்கவும் அல்லது உங்கள் பகுதியில் முதல் கொடையாளராக பதிவு செய்யுங்கள்'
+                  : 'Try a different blood group or be the first to register as a donor in your area',
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () => context.push('/blood-donation/register'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Text(
+                lang == 'ta' ? 'கொடையாளராக பதிவு செய்யுங்கள்' : 'Register as Donor',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ),
           ),
         ],
       ),
