@@ -81,6 +81,23 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String password,
   }) async {
+    // Dev bypass — only active when built with --dart-define=DEV_AUTH_BYPASS=true
+    if (ApiConstants.devBypassAuth && username.trim() == 'admin' && password == 'password123') {
+      const mockUser = UserEntity(
+        id: 'dev-admin-id',
+        phoneNumber: '+919999999999',
+        email: 'admin@friendsyouthclub.com',
+        role: 'SUPER_ADMIN',
+        isVerified: true,
+        preferredLanguage: 'en',
+        fullNameEn: 'FYC Admin',
+        fullNameTa: 'நிர்வாகி',
+        isProfileComplete: true,
+      );
+      await _storage.saveToken('dev_bypass_token');
+      return const Right(mockUser);
+    }
+
     try {
       final token = await _remote.loginWithPassword(
         organizationId: organizationId,
@@ -114,6 +131,21 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> getMe() async {
     try {
+      // Dev bypass token — paired with the DEV_AUTH_BYPASS admin login
+      final token = await _storage.getToken();
+      if (ApiConstants.devBypassAuth && token == 'dev_bypass_token') {
+        return const Right(UserEntity(
+          id: 'dev-admin-id',
+          phoneNumber: '+919999999999',
+          email: 'admin@friendsyouthclub.com',
+          role: 'SUPER_ADMIN',
+          isVerified: true,
+          preferredLanguage: 'en',
+          fullNameEn: 'FYC Admin',
+          fullNameTa: 'நிர்வாகி',
+          isProfileComplete: true,
+        ));
+      }
       final user = await _remote.getMe();
       return Right(user);
     } on Failure catch (f) {

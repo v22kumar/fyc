@@ -1,11 +1,10 @@
 class ApiConstants {
   ApiConstants._();
 
-  /// DEV ONLY — when true the login/auth guard is bypassed so the app opens
-  /// straight to /home for free testing. Backend calls that need a token
-  /// (online games, history, stats) will fail; local game + vs Computer work.
-  /// Set back to false before any production / Play Store build.
-  static const bool devBypassAuth = false;
+  /// Controls dev-only auth bypass. Activated by --dart-define=DEV_AUTH_BYPASS=true
+  /// at build time. Always false in production Play Store builds.
+  /// Allows admin/password123 login and skips the auth guard for fast testing.
+  static const bool devBypassAuth = bool.fromEnvironment('DEV_AUTH_BYPASS', defaultValue: false);
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',

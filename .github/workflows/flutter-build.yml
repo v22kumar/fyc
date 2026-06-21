@@ -50,6 +50,25 @@ jobs:
             "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
           echo "Release signing configured ✓"
 
+      # ── 3b. Print release key SHA-1 (needed for Firebase/Google Sign-In) ───────
+      - name: Print release key SHA-1 fingerprint
+        working-directory: mobile/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::notice::No keystore — skipping SHA-1 print"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > /tmp/check-release.jks
+          echo "=== Release Key SHA-1 (add to Firebase Console for Google Sign-In) ==="
+          keytool -list -v -keystore /tmp/check-release.jks -alias fyc \
+            -storepass "$KEY_STORE_PASSWORD" 2>/dev/null \
+            | grep -E "SHA1:|SHA256:" | head -4
+          echo "======================================================================="
+          rm -f /tmp/check-release.jks
+
       # ── 4. Dependencies ───────────────────────────────────────────────────────
       - name: Flutter pub get
         working-directory: mobile
@@ -68,7 +87,8 @@ jobs:
           flutter build apk --release --split-per-abi \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-} \
+            --dart-define=DEV_AUTH_BYPASS=true
 
       - name: Build release AAB  (Google Play Store)
         working-directory: mobile
