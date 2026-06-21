@@ -17,6 +17,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
   AiGameBloc() : super(const AiGameIdle()) {
     on<StartAiGame>(_onStart);
     on<MakeAiMove>(_onPlayerMove);
+    on<TakeBackAiMove>(_onTakeBack);
     on<ResignToAi>(_onResign);
     on<NewAiGame>(_onNewGame);
     on<FlipAiBoard>(_onFlip);
@@ -173,6 +174,26 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
   }
 
   // ── Other events ───────────────────────────────────────────────────────────
+
+  void _onTakeBack(TakeBackAiMove event, Emitter<AiGameState> emit) {
+    final s = state;
+    if (s is! AiGameInProgress || s.moveSans.length < 2) return;
+
+    // Undo AI move + player move (2 half-moves)
+    s.engine.undoMove();
+    s.engine.undoMove();
+
+    final newSans = List<String>.from(s.moveSans)
+      ..removeLast()
+      ..removeLast();
+
+    emit(s.copyWith(
+      boardState: s.engine.squaresState(s.orientation),
+      moveSans: newSans,
+      isPlayerTurn: true,
+      isThinking: false,
+    ));
+  }
 
   void _onResign(ResignToAi event, Emitter<AiGameState> emit) {
     final s = state;
