@@ -177,11 +177,16 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
 
   void _onTakeBack(TakeBackAiMove event, Emitter<AiGameState> emit) {
     final s = state;
-    if (s is! AiGameInProgress || s.moveSans.length < 2) return;
+    // Only allow take-back on the player's turn (not while Stockfish is thinking,
+    // otherwise a late bestmove would desync the board).
+    if (s is! AiGameInProgress ||
+        s.moveSans.length < 2 ||
+        !s.isPlayerTurn ||
+        s.isThinking) return;
 
     // Undo AI move + player move (2 half-moves)
-    s.engine.undoMove();
-    s.engine.undoMove();
+    s.engine.undo();
+    s.engine.undo();
 
     final newSans = List<String>.from(s.moveSans)
       ..removeLast()

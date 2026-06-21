@@ -293,7 +293,9 @@ class _AiGamePageState extends State<AiGamePage>
 
           // ── Action bar ───────────────────────────────────────────────────
           _ActionBar(
-            onTakeBack: state.moveSans.length >= 2
+            onTakeBack: (state.moveSans.length >= 2 &&
+                    state.isPlayerTurn &&
+                    !state.isThinking)
                 ? () => context
                     .read<AiGameBloc>()
                     .add(const TakeBackAiMove())
