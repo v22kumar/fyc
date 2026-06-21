@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart' hide GameState;
 import '../../domain/entities/chess_game.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
 import 'game_event.dart';
@@ -19,7 +20,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<AcceptDraw>(_onAcceptDraw);
     on<FlipBoard>(_onFlip);
     on<NewGame>(_onNewGame);
-    on<_SubmitGameToBackend>(_onSubmit);
+    on<SubmitGameToBackend>(_onSubmit);
   }
 
   void _onStartLocal(StartLocalGame event, Emitter<GameState> emit) {
@@ -43,19 +44,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (!success) return;
 
     final lastSan = s.engine.history.isNotEmpty
-        ? (s.engine.history.last.meta?.san ?? '')
+        ? (s.engine.history.last.meta?.prettyName ?? '')
         : '';
     final newSans = List<String>.from(s.moveSans)..add(lastSan);
-    final isWhiteTurn = s.engine.turn == bishop.Squares.white;
+    final isWhiteTurn = s.engine.turn == bishop.Bishop.white;
 
-    if (s.engine.inCheckmate) {
+    if (s.engine.checkmate) {
       final result = isWhiteTurn ? GameResult.blackWins : GameResult.whiteWins;
       final over = _buildGameOver(s, result, null, newSans);
       emit(over);
       _submitAsync(s, over);
       return;
     }
-    if (s.engine.inStalemate) {
+    if (s.engine.stalemate) {
       final over = _buildGameOver(s, GameResult.draw, DrawReason.stalemate, newSans);
       emit(over);
       _submitAsync(s, over);
@@ -109,7 +110,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   Future<void> _onSubmit(
-      _SubmitGameToBackend event, Emitter<GameState> emit) async {
+      SubmitGameToBackend event, Emitter<GameState> emit) async {
     if (_remote == null) return;
     try {
       await _remote.submitGame(event.payload);
@@ -149,7 +150,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       'total_moves': over.moveSans.length,
       'moves': _buildMoveList(s.engine),
     };
-    add(_SubmitGameToBackend(payload));
+    add(SubmitGameToBackend(payload));
   }
 
   String _resultKey(GameResult r) => switch (r) {
@@ -165,8 +166,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       final h = engine.history[i];
       moves.add({
         'ply': i + 1,
-        'uci': h.move.algebraic(),
-        'san': h.meta?.san ?? '',
+        'uci': h.move != null ? engine.toAlgebraic(h.move!) : '',
+        'san': h.meta?.prettyName ?? '',
       });
     }
     return moves;

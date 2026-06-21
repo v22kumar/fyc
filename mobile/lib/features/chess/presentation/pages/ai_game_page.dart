@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
@@ -185,8 +186,10 @@ class _AiGamePageState extends State<AiGamePage> {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: BoardWidget(
-                    state: state.boardState,
+                  child: BoardController(
+                    state: state.boardState.board,
+                    playState: state.boardState.state,
+                    moves: state.boardState.moves,
                     onMove: (state.isPlayerTurn && !state.isThinking)
                         ? (move) =>
                             context.read<AiGameBloc>().add(MakeAiMove(move))
@@ -196,14 +199,12 @@ class _AiGamePageState extends State<AiGamePage> {
                       lightSquare: const Color(0xFFF0D9B5),
                       darkSquare: const Color(0xFFB58863),
                       selected: AppColors.primaryLight.withOpacity(0.7),
-                      lastFrom: AppColors.gold.withOpacity(0.45),
-                      lastTo: AppColors.gold.withOpacity(0.45),
-                      checkSquare: Colors.red.withOpacity(0.6),
-                      hint: AppColors.primaryLight.withOpacity(0.45),
+                      check: Colors.red.withOpacity(0.6),
+                      checkmate: Colors.red.withOpacity(0.6),
+                      previous: AppColors.gold.withOpacity(0.45),
+                      premove: AppColors.primaryLight.withOpacity(0.45),
                     ),
-                    settings: const BoardSettings(
-                      animationDuration: Duration(milliseconds: 200),
-                    ),
+                    animationDuration: const Duration(milliseconds: 200),
                   ),
                 ),
               ),

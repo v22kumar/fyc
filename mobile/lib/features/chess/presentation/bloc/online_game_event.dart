@@ -53,14 +53,14 @@ class SendFlag extends OnlineGameEvent {
 }
 
 // Internal — fired every second when a timed game is in progress
-class _ClockTick extends OnlineGameEvent {
-  const _ClockTick();
+class ClockTick extends OnlineGameEvent {
+  const ClockTick();
 }
 
 // Server-push (translated from WS messages by bloc)
-class _ServerMessage extends OnlineGameEvent {
+class ServerMessage extends OnlineGameEvent {
   final Map<String, dynamic> msg;
-  const _ServerMessage(this.msg);
+  const ServerMessage(this.msg);
   @override
   List<Object?> get props => [];
 }

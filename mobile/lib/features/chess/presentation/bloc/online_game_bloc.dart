@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import '../../data/datasources/chess_ws_client.dart';
 import 'online_game_event.dart';
 import 'online_game_state.dart';
@@ -21,8 +22,8 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     on<SendDeclineDraw>(_onDeclineDraw);
     on<FlipOnlineBoard>(_onFlip);
     on<SendFlag>(_onSendFlag);
-    on<_ClockTick>(_onClockTick);
-    on<_ServerMessage>(_onServerMsg);
+    on<ClockTick>(_onClockTick);
+    on<ServerMessage>(_onServerMsg);
   }
 
   @override
@@ -41,7 +42,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
 
     _wsClient = ChessWsClient(gameId: event.gameId, token: event.token);
     _wsSub = _wsClient!.messages.listen(
-      (msg) => add(_ServerMessage(msg)),
+      (msg) => add(ServerMessage(msg)),
     );
     _wsClient!.connect();
   }
@@ -51,7 +52,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   void _startClockTimer() {
     _clockTimer?.cancel();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!isClosed) add(const _ClockTick());
+      if (!isClosed) add(const ClockTick());
     });
   }
 
@@ -60,7 +61,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     _clockTimer = null;
   }
 
-  void _onClockTick(_ClockTick event, Emitter<OnlineGameState> emit) {
+  void _onClockTick(ClockTick event, Emitter<OnlineGameState> emit) {
     final s = state;
     if (s is! OnlineGameInProgress || !s.isTimed) return;
 
@@ -94,7 +95,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
 
   // ── Server messages ────────────────────────────────────────────────────────
 
-  void _onServerMsg(_ServerMessage event, Emitter<OnlineGameState> emit) {
+  void _onServerMsg(ServerMessage event, Emitter<OnlineGameState> emit) {
     final msg = event.msg;
     final type = msg['type'] as String?;
 
@@ -298,7 +299,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   bool _applyUci(bishop.Game engine, String uci) {
     final moves = engine.generateLegalMoves();
     for (final m in moves) {
-      if (m.algebraic() == uci) {
+      if (engine.toAlgebraic(m) == uci) {
         return engine.makeMove(m);
       }
     }
@@ -312,10 +313,8 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       return '$file$rank';
     }
     final base = '${sq(move.from)}${sq(move.to)}';
-    if (move.promo != null && move.promo! > 0) {
-      const promoChars = {1: 'q', 2: 'n', 3: 'b', 4: 'r'};
-      final p = promoChars[move.promo! & 7] ?? 'q';
-      return '$base$p';
+    if (move.promo != null && move.promo!.isNotEmpty) {
+      return '$base${move.promo!.toLowerCase()}';
     }
     return base;
   }

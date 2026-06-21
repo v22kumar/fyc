@@ -2,6 +2,7 @@ import 'package:bishop/bishop.dart' as bishop;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
@@ -24,7 +25,7 @@ class _ReplayPageState extends State<ReplayPage> {
   final _engine = bishop.Game(variant: bishop.Variant.standard());
   final _history = <bishop.Game>[]; // snapshots after each half-move
   int _ply = 0; // 0 = initial position, 1 = after move 1, etc.
-  late BoardState _boardState;
+  late SquaresState _boardState;
 
   @override
   void initState() {
@@ -52,7 +53,7 @@ class _ReplayPageState extends State<ReplayPage> {
     for (final m in moves) {
       final legalMoves = engine.generateLegalMoves();
       for (final lm in legalMoves) {
-        if (lm.algebraic() == m.uci) {
+        if (engine.toAlgebraic(lm) == m.uci) {
           engine.makeMove(lm);
           break;
         }
@@ -154,22 +155,22 @@ class _ReplayPageState extends State<ReplayPage> {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: BoardWidget(
-                    state: _boardState,
+                  child: BoardController(
+                    state: _boardState.board,
+                    playState: _boardState.state,
+                    moves: _boardState.moves,
                     onMove: null, // read-only
                     pieceSet: PieceSet.merida(),
                     theme: BoardTheme(
                       lightSquare: const Color(0xFFF0D9B5),
                       darkSquare: const Color(0xFFB58863),
-                      lastFrom: AppColors.gold.withOpacity(0.5),
-                      lastTo: AppColors.gold.withOpacity(0.5),
                       selected: Colors.transparent,
-                      hint: Colors.transparent,
-                      checkSquare: Colors.red.withOpacity(0.6),
+                      check: Colors.red.withOpacity(0.6),
+                      checkmate: Colors.red.withOpacity(0.6),
+                      previous: AppColors.gold.withOpacity(0.5),
+                      premove: Colors.transparent,
                     ),
-                    settings: const BoardSettings(
-                      animationDuration: Duration(milliseconds: 150),
-                    ),
+                    animationDuration: const Duration(milliseconds: 150),
                   ),
                 ),
               ),

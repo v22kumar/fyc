@@ -64,9 +64,10 @@ dependencies:
   google_fonts: ^6.2.0
 
   # Chess
-  squares: ^5.0.0       # board widget, drag/drop, piece images, animations
-  bishop: ^5.0.0        # chess rules, move validation, FEN/PGN
-  stockfish_chess_engine: ^3.0.0  # native Stockfish AI via platform channel
+  squares: ^1.2.1       # board widget, drag/drop, piece images, animations
+  bishop: ^1.4.4        # chess rules, move validation, FEN/PGN
+  square_bishop: ^0.3.0 # bridge between squares and bishop
+  stockfish_chess_engine: ^0.8.2  # native Stockfish AI via platform channel
   web_socket_channel: ^3.0.1      # WebSocket client for real-time online games
   share_plus: ^10.0.0             # share PGN / game links
 

@@ -24,6 +24,9 @@ class LocalStorage {
   String getLang() =>
       _prefs.getString(AppConstants.langKey) ?? AppConstants.defaultLang;
 
+  // Generic getString
+  String? getString(String key) => _prefs.getString(key);
+
   // Organization ID
   Future<void> saveOrgId(String orgId) async =>
       _prefs.setString(AppConstants.orgIdKey, orgId);

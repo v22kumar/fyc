@@ -44,9 +44,9 @@ class FlipAiBoard extends AiGameEvent {
 }
 
 // Internal — dispatched when Stockfish outputs a bestmove line
-class _AiBestMove extends AiGameEvent {
+class AiBestMove extends AiGameEvent {
   final String uci;
-  const _AiBestMove(this.uci);
+  const AiBestMove(this.uci);
   @override
   List<Object?> get props => [uci];
 }

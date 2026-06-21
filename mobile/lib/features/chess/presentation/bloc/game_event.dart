@@ -46,9 +46,9 @@ class NewGame extends GameEvent {
 }
 
 // Fired internally after game ends — fire-and-forget backend sync
-class _SubmitGameToBackend extends GameEvent {
+class SubmitGameToBackend extends GameEvent {
   final Map<String, dynamic> payload;
-  const _SubmitGameToBackend(this.payload);
+  const SubmitGameToBackend(this.payload);
   @override
   List<Object?> get props => [];
 }

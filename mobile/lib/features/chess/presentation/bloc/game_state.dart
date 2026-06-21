@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import '../../domain/entities/chess_game.dart';
 
 abstract class GameState extends Equatable {
@@ -15,7 +16,7 @@ class GameIdle extends GameState {
 
 class GameInProgress extends GameState {
   final bishop.Game engine;        // authoritative game logic
-  final BoardState boardState;     // squares rendering state
+  final SquaresState boardState;     // squares rendering state
   final int orientation;           // Squares.white or Squares.black (whose POV)
   final String whiteName;
   final String blackName;
@@ -38,28 +39,39 @@ class GameInProgress extends GameState {
 
   // Pieces captured by white (black's pieces taken)
   List<String> get capturedByWhite {
-    final counts = engine.capturedPieceCounts(bishop.Squares.black);
-    return _expandCounts(counts);
+    return _getCapturedPieces(true);
   }
 
   List<String> get capturedByBlack {
-    final counts = engine.capturedPieceCounts(bishop.Squares.white);
-    return _expandCounts(counts);
+    return _getCapturedPieces(false);
   }
 
-  List<String> _expandCounts(Map<int, int> counts) {
-    const symbols = {1: '♟', 2: '♞', 3: '♝', 4: '♜', 5: '♛'};
+  List<String> _getCapturedPieces(bool getBlackPieces) {
+    if (engine.state.meta == null) return [];
+    final Map<String, int> captured = engine.state.capturedPieces();
     final result = <String>[];
-    for (final entry in counts.entries) {
-      final sym = symbols[entry.key & 7];
-      if (sym != null) result.addAll(List.filled(entry.value, sym));
-    }
+    const symbols = {
+      'p': '♟', 'P': '♟',
+      'n': '♞', 'N': '♞',
+      'b': '♝', 'B': '♝',
+      'r': '♜', 'R': '♜',
+      'q': '♛', 'Q': '♛',
+    };
+    captured.forEach((key, count) {
+      final isBlack = key == key.toLowerCase();
+      if (isBlack == getBlackPieces) {
+        final sym = symbols[key];
+        if (sym != null) {
+          result.addAll(List.filled(count, sym));
+        }
+      }
+    });
     return result;
   }
 
   GameInProgress copyWith({
     bishop.Game? engine,
-    BoardState? boardState,
+    SquaresState? boardState,
     int? orientation,
     String? whiteName,
     String? blackName,

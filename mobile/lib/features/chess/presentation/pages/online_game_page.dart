@@ -2,6 +2,7 @@ import 'package:bishop/bishop.dart' as bishop;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/online_game_bloc.dart';
 import '../bloc/online_game_event.dart';
@@ -180,8 +181,10 @@ class OnlineGamePage extends StatelessWidget {
                   child: Center(
                     child: AspectRatio(
                       aspectRatio: 1,
-                      child: BoardWidget(
-                        state: state.boardState,
+                      child: BoardController(
+                        state: state.boardState.board,
+                        playState: state.boardState.state,
+                        moves: state.boardState.moves,
                         onMove: (state.isMyTurn && !state.moveInFlight)
                             ? (move) => context
                                 .read<OnlineGameBloc>()
@@ -192,14 +195,12 @@ class OnlineGamePage extends StatelessWidget {
                           lightSquare: const Color(0xFFF0D9B5),
                           darkSquare: const Color(0xFFB58863),
                           selected: AppColors.primaryLight.withOpacity(0.7),
-                          lastFrom: AppColors.gold.withOpacity(0.45),
-                          lastTo: AppColors.gold.withOpacity(0.45),
-                          checkSquare: Colors.red.withOpacity(0.6),
-                          hint: AppColors.primaryLight.withOpacity(0.45),
+                          check: Colors.red.withOpacity(0.6),
+                          checkmate: Colors.red.withOpacity(0.6),
+                          previous: AppColors.gold.withOpacity(0.45),
+                          premove: AppColors.primaryLight.withOpacity(0.45),
                         ),
-                        settings: const BoardSettings(
-                          animationDuration: Duration(milliseconds: 180),
-                        ),
+                        animationDuration: const Duration(milliseconds: 180),
                       ),
                     ),
                   ),
@@ -396,18 +397,31 @@ class OnlineGamePage extends StatelessWidget {
   }
 
   List<String> _capturedByWhite(OnlineGameInProgress s) =>
-      _expandCounts(s.engine.capturedPieceCounts(bishop.Squares.black));
+      _getCapturedPieces(s.engine, true);
 
   List<String> _capturedByBlack(OnlineGameInProgress s) =>
-      _expandCounts(s.engine.capturedPieceCounts(bishop.Squares.white));
+      _getCapturedPieces(s.engine, false);
 
-  List<String> _expandCounts(Map<int, int> counts) {
-    const symbols = {1: '♟', 2: '♞', 3: '♝', 4: '♜', 5: '♛'};
+  List<String> _getCapturedPieces(bishop.Game engine, bool getBlackPieces) {
+    if (engine.state.meta == null) return [];
+    final Map<String, int> captured = engine.state.capturedPieces();
     final result = <String>[];
-    for (final entry in counts.entries) {
-      final sym = symbols[entry.key & 7];
-      if (sym != null) result.addAll(List.filled(entry.value, sym));
-    }
+    const symbols = {
+      'p': '♟', 'P': '♟',
+      'n': '♞', 'N': '♞',
+      'b': '♝', 'B': '♝',
+      'r': '♜', 'R': '♜',
+      'q': '♛', 'Q': '♛',
+    };
+    captured.forEach((key, count) {
+      final isBlack = key == key.toLowerCase();
+      if (isBlack == getBlackPieces) {
+        final sym = symbols[key];
+        if (sym != null) {
+          result.addAll(List.filled(count, sym));
+        }
+      }
+    });
     return result;
   }
 }

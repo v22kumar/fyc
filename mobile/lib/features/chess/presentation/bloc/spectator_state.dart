@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 
 abstract class SpectatorState extends Equatable {
   const SpectatorState();
@@ -15,7 +16,7 @@ class SpectatorConnecting extends SpectatorState {
 
 class SpectatorWatching extends SpectatorState {
   final bishop.Game engine;
-  final BoardState boardState;
+  final SquaresState boardState;
   final String whiteName;
   final String blackName;
   final List<String> moveSans;
@@ -42,7 +43,7 @@ class SpectatorWatching extends SpectatorState {
 
   SpectatorWatching copyWith({
     bishop.Game? engine,
-    BoardState? boardState,
+    SquaresState? boardState,
     List<String>? moveSans,
     String? currentTurn,
     int? whiteTimeMs,

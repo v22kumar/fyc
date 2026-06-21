@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -250,7 +251,7 @@ class SpectatorBloc extends Bloc<SpectatorEvent, SpectatorState> {
   bool _applyUci(bishop.Game engine, String uci) {
     final moves = engine.generateLegalMoves();
     for (final m in moves) {
-      if (m.algebraic() == uci) {
+      if (engine.toAlgebraic(m) == uci) {
         return engine.makeMove(m);
       }
     }

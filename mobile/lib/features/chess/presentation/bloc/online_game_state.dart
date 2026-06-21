@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 
 abstract class OnlineGameState extends Equatable {
   const OnlineGameState();
@@ -21,7 +22,7 @@ class OnlineGameWaiting extends OnlineGameState {
 
 class OnlineGameInProgress extends OnlineGameState {
   final bishop.Game engine;
-  final BoardState boardState;
+  final SquaresState boardState;
   final int orientation;         // Squares.white | Squares.black
   final String myColor;          // "white" | "black"
   final String whiteName;
@@ -56,7 +57,7 @@ class OnlineGameInProgress extends OnlineGameState {
 
   OnlineGameInProgress copyWith({
     bishop.Game? engine,
-    BoardState? boardState,
+    SquaresState? boardState,
     int? orientation,
     List<String>? moveSans,
     bool? isMyTurn,

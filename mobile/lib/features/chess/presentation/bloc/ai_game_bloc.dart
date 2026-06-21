@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
 import 'package:stockfish_chess_engine/stockfish_chess_engine.dart';
+import 'package:stockfish_chess_engine/stockfish_chess_engine_state.dart';
+import 'package:square_bishop/square_bishop.dart';
 import 'ai_game_event.dart';
 import 'ai_game_state.dart';
 
@@ -18,7 +20,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     on<ResignToAi>(_onResign);
     on<NewAiGame>(_onNewGame);
     on<FlipAiBoard>(_onFlip);
-    on<_AiBestMove>(_onAiBestMove);
+    on<AiBestMove>(_onAiBestMove);
   }
 
   @override
@@ -91,7 +93,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     if (line.startsWith('bestmove')) {
       final parts = line.split(' ');
       if (parts.length >= 2 && parts[1] != '(none)') {
-        add(_AiBestMove(parts[1]));
+        add(AiBestMove(parts[1]));
       }
     }
   }
@@ -112,7 +114,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     if (!success) return;
 
     final san = s.engine.history.isNotEmpty
-        ? (s.engine.history.last.meta?.san ?? '')
+        ? (s.engine.history.last.meta?.prettyName ?? '')
         : '';
     final newSans = List<String>.from(s.moveSans)..add(san);
 
@@ -135,14 +137,14 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
 
   // ── AI move ────────────────────────────────────────────────────────────────
 
-  void _onAiBestMove(_AiBestMove event, Emitter<AiGameState> emit) {
+  void _onAiBestMove(AiBestMove event, Emitter<AiGameState> emit) {
     final s = state;
     if (s is! AiGameInProgress) return;
 
     // Find and apply the legal move matching this UCI
     bishop.Move? aiMove;
     for (final m in s.engine.generateLegalMoves()) {
-      if (m.algebraic() == event.uci) {
+      if (s.engine.toAlgebraic(m) == event.uci) {
         aiMove = m;
         break;
       }
@@ -152,7 +154,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     s.engine.makeMove(aiMove);
 
     final san = s.engine.history.isNotEmpty
-        ? (s.engine.history.last.meta?.san ?? '')
+        ? (s.engine.history.last.meta?.prettyName ?? '')
         : '';
     final newSans = List<String>.from(s.moveSans)..add(san);
 
@@ -209,7 +211,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     AiGameInProgress s, {
     required bool playerJustMoved,
   }) {
-    if (engine.inCheckmate) {
+    if (engine.checkmate) {
       return AiGameOver(
         result: playerJustMoved ? 'player_wins' : 'ai_wins',
         reason: 'checkmate',
@@ -218,7 +220,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
         moveSans: sans,
       );
     }
-    if (engine.inStalemate) {
+    if (engine.stalemate) {
       return AiGameOver(
         result: 'draw',
         reason: 'stalemate',

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
+import 'package:square_bishop/square_bishop.dart';
 
 abstract class AiGameState extends Equatable {
   const AiGameState();
@@ -18,7 +19,7 @@ class AiGameLoading extends AiGameState {
 
 class AiGameInProgress extends AiGameState {
   final bishop.Game engine;
-  final BoardState boardState;
+  final SquaresState boardState;
   final int orientation;      // Squares.white | Squares.black (player's POV)
   final String playerName;
   final String aiName;        // e.g. "Stockfish (Medium)"
@@ -40,28 +41,39 @@ class AiGameInProgress extends AiGameState {
   });
 
   List<String> get capturedByPlayer {
-    final side = playerIsWhite ? bishop.Squares.black : bishop.Squares.white;
-    return _expandCounts(engine.capturedPieceCounts(side));
+    return _getCapturedPieces(playerIsWhite ? true : false);
   }
 
   List<String> get capturedByAi {
-    final side = playerIsWhite ? bishop.Squares.white : bishop.Squares.black;
-    return _expandCounts(engine.capturedPieceCounts(side));
+    return _getCapturedPieces(playerIsWhite ? false : true);
   }
 
-  List<String> _expandCounts(Map<int, int> counts) {
-    const symbols = {1: '♟', 2: '♞', 3: '♝', 4: '♜', 5: '♛'};
+  List<String> _getCapturedPieces(bool getBlackPieces) {
+    if (engine.state.meta == null) return [];
+    final Map<String, int> captured = engine.state.capturedPieces();
     final result = <String>[];
-    for (final entry in counts.entries) {
-      final sym = symbols[entry.key & 7];
-      if (sym != null) result.addAll(List.filled(entry.value, sym));
-    }
+    const symbols = {
+      'p': '♟', 'P': '♟',
+      'n': '♞', 'N': '♞',
+      'b': '♝', 'B': '♝',
+      'r': '♜', 'R': '♜',
+      'q': '♛', 'Q': '♛',
+    };
+    captured.forEach((key, count) {
+      final isBlack = key == key.toLowerCase();
+      if (isBlack == getBlackPieces) {
+        final sym = symbols[key];
+        if (sym != null) {
+          result.addAll(List.filled(count, sym));
+        }
+      }
+    });
     return result;
   }
 
   AiGameInProgress copyWith({
     bishop.Game? engine,
-    BoardState? boardState,
+    SquaresState? boardState,
     int? orientation,
     List<String>? moveSans,
     bool? isPlayerTurn,
