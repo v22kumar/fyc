@@ -154,6 +154,16 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
           // Restart clock if it was stopped optimistically
           if (s.isTimed && s.isMyTurn) _startClockTimer();
         }
+
+      case 'disconnected':
+      case 'connection_error':
+        // Client auto-reconnects; pause the clock to avoid unfair deduction
+        _stopClockTimer();
+
+      // pong and spectator_count are no-ops for the player client
+      case 'pong':
+      case 'spectator_count':
+        break;
     }
   }
 

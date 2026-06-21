@@ -26,10 +26,12 @@ DISCONNECT_GRACE_SECONDS = 60
 def _initial_time_ms(time_control: str) -> Optional[int]:
     """Return starting milliseconds for each player, or None if untimed."""
     return {
-        "blitz_5_0": 5 * 60 * 1000,
-        "blitz_3_0": 3 * 60 * 1000,
-        "rapid_10_0": 10 * 60 * 1000,
-        "bullet_1_0": 1 * 60 * 1000,
+        "bullet_1_0":    1 * 60 * 1000,
+        "blitz_3_0":     3 * 60 * 1000,
+        "blitz_3_2":     3 * 60 * 1000 + 2000,  # 3 min + 2s increment (flat, no per-move add)
+        "blitz_5_0":     5 * 60 * 1000,
+        "rapid_10_0":   10 * 60 * 1000,
+        "classical_30_0": 30 * 60 * 1000,
     }.get(time_control)
 
 

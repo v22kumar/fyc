@@ -27,8 +27,11 @@ class _ChallengePageState extends State<ChallengePage>
 
   static const _timeControls = [
     ('untimed', 'Casual'),
+    ('bullet_1_0', 'Bullet 1+0'),
+    ('blitz_3_2', 'Blitz 3+2'),
     ('blitz_5_0', 'Blitz 5+0'),
     ('rapid_10_0', 'Rapid 10+0'),
+    ('classical_30_0', 'Classical 30+0'),
   ];
 
   @override
@@ -492,9 +495,11 @@ class _ChallengeTile extends StatelessWidget {
   }
 
   String _timeLabel(String tc) => switch (tc) {
-    'blitz_5_0' => '⚡ Blitz 5+0',
-    'rapid_10_0' => '🕐 Rapid 10+0',
-    'bullet_1_0' => '🔫 Bullet 1+0',
-    _ => '♟ Casual (untimed)',
+    'bullet_1_0'     => '🔫 Bullet 1+0',
+    'blitz_3_2'      => '⚡ Blitz 3+2',
+    'blitz_5_0'      => '⚡ Blitz 5+0',
+    'rapid_10_0'     => '🕐 Rapid 10+0',
+    'classical_30_0' => '🏛 Classical 30+0',
+    _                => '♟ Casual (untimed)',
   };
 }

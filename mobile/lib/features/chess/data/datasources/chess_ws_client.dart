@@ -6,12 +6,15 @@ import '../../../../core/constants/api_constants.dart';
 
 /// WebSocket client for a single online chess game.
 /// Reconnects automatically with exponential backoff.
+/// Sends application-level pings every 30 s to prevent proxy timeouts (Fly.io
+/// drops idle WebSocket connections after ~60 s).
 class ChessWsClient {
   final String gameId;
   final String token;
 
   WebSocketChannel? _channel;
   StreamController<Map<String, dynamic>>? _controller;
+  Timer? _pingTimer;
   bool _disposed = false;
   int _reconnectDelay = 1; // seconds
 
@@ -24,6 +27,7 @@ class ChessWsClient {
 
   void connect() {
     if (_disposed) return;
+    _cancelPingTimer();
     final uri = Uri.parse('${ApiConstants.chessGameWs(gameId)}?token=$token');
     _channel = IOWebSocketChannel.connect(uri);
     _channel!.stream.listen(
@@ -32,6 +36,7 @@ class ChessWsClient {
       onDone: _onDone,
       cancelOnError: false,
     );
+    _startPingTimer();
   }
 
   void send(Map<String, dynamic> message) {
@@ -49,10 +54,12 @@ class ChessWsClient {
   }
 
   void _onError(Object error) {
+    _cancelPingTimer();
     _controller?.add({'type': 'connection_error', 'message': error.toString()});
   }
 
   void _onDone() {
+    _cancelPingTimer();
     if (_disposed) return;
     _controller?.add({'type': 'disconnected'});
     _scheduleReconnect();
@@ -67,8 +74,20 @@ class ChessWsClient {
     });
   }
 
+  void _startPingTimer() {
+    _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      send({'type': 'ping'});
+    });
+  }
+
+  void _cancelPingTimer() {
+    _pingTimer?.cancel();
+    _pingTimer = null;
+  }
+
   void dispose() {
     _disposed = true;
+    _cancelPingTimer();
     _channel?.sink.close();
     _controller?.close();
     _channel = null;

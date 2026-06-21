@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/chess/awards", tags=["Chess Awards"])
 @router.get("/weekly", response_model=WeeklyAwardsOut)
 def weekly_awards(
     current_user: User = Depends(get_current_user),
-    tenant_id: str = Depends(require_tenant_id),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
     db: Session = Depends(get_db),
 ):
     """Return weekly recognition awards for the organisation's chess players."""

@@ -894,6 +894,9 @@ async def game_websocket(
             elif msg_type == "sync":
                 await session.send_to(uid, session.state_snapshot(uid))
 
+            elif msg_type == "ping":
+                await session.send_to(uid, {"type": "pong"})
+
     except WebSocketDisconnect:
         pass
     finally:
