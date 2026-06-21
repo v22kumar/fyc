@@ -137,3 +137,12 @@ class ChessMemberOut(BaseModel):
     area: Optional[str] = None
     glicko_rating: float
     games_played: int
+
+
+class LiveGameOut(BaseModel):
+    id: UUID
+    white_name: str
+    black_name: str
+    ply: int
+    time_control: str
+    spectator_count: int

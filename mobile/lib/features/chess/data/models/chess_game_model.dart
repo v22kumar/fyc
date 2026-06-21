@@ -193,6 +193,35 @@ class ChessMemberModel {
   String get ratingDisplay => glickoRating.round().toString();
 }
 
+class LiveGameModel {
+  final String id;
+  final String whiteName;
+  final String blackName;
+  final int ply;
+  final String timeControl;
+  final int spectatorCount;
+
+  const LiveGameModel({
+    required this.id,
+    required this.whiteName,
+    required this.blackName,
+    required this.ply,
+    required this.timeControl,
+    required this.spectatorCount,
+  });
+
+  factory LiveGameModel.fromJson(Map<String, dynamic> json) {
+    return LiveGameModel(
+      id: json['id'] as String,
+      whiteName: json['white_name'] as String? ?? 'White',
+      blackName: json['black_name'] as String? ?? 'Black',
+      ply: json['ply'] as int? ?? 0,
+      timeControl: json['time_control'] as String? ?? 'untimed',
+      spectatorCount: json['spectator_count'] as int? ?? 0,
+    );
+  }
+}
+
 class ChallengeAcceptResult {
   final String gameId;
   final String color; // "white" | "black"

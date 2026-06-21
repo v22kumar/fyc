@@ -18,6 +18,7 @@ abstract class ChessRemoteDataSource {
   Future<List<ChessChallengeModel>> outgoingChallenges();
   Future<ChallengeAcceptResult> acceptChallenge(String challengeId);
   Future<void> declineChallenge(String challengeId);
+  Future<List<LiveGameModel>> liveGames();
 }
 
 class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
@@ -135,6 +136,18 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
       await _client.dio.post(
         '${ApiConstants.chessChallenges}/$challengeId/decline',
       );
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<LiveGameModel>> liveGames() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.chessLiveGames);
+      return (response.data as List)
+          .map((e) => LiveGameModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw mapDioException(e);
     }

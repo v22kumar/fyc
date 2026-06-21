@@ -88,6 +88,7 @@ class ApiConstants {
   static const String chessChallenges = '/api/v1/chess/challenges';
   static const String chessChallengesIncoming = '/api/v1/chess/challenges/incoming';
   static const String chessChallengesOutgoing = '/api/v1/chess/challenges/outgoing';
+  static const String chessLiveGames = '/api/v1/chess/games/live';
 
   // Chess — WebSocket
   // e.g. ws://10.0.2.2:8000/api/v1/chess/games/{id}/ws?token=...
@@ -96,5 +97,13 @@ class ApiConstants {
         .replaceFirst('https://', 'wss://')
         .replaceFirst('http://', 'ws://');
     return '$wsBase/api/v1/chess/games/$gameId/ws';
+  }
+
+  // e.g. ws://10.0.2.2:8000/api/v1/chess/games/{id}/spectate?token=...
+  static String chessGameSpectateWs(String gameId) {
+    final wsBase = baseUrl
+        .replaceFirst('https://', 'wss://')
+        .replaceFirst('http://', 'ws://');
+    return '$wsBase/api/v1/chess/games/$gameId/spectate';
   }
 }

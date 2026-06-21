@@ -52,6 +52,7 @@ class GameSession:
 
         self.board = chess.Board()
         self.connections: Dict[str, WebSocket] = {}
+        self.spectators: Dict[str, WebSocket] = {}
         self.san_list: list[str] = []
         self.uci_list: list[str] = []
         self.fen_list: list[str] = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]
@@ -64,6 +65,39 @@ class GameSession:
         self.white_time_ms: Optional[int] = _ms
         self.black_time_ms: Optional[int] = _ms
         self._last_move_at: Optional[float] = None  # monotonic timestamp
+
+    # ── Spectator helpers ─────────────────────────────────────────────────────
+
+    @property
+    def spectator_count(self) -> int:
+        return len(self.spectators)
+
+    async def add_spectator(self, user_id: str, ws: WebSocket) -> None:
+        self.spectators[str(user_id)] = ws
+
+    async def remove_spectator(self, user_id: str) -> None:
+        self.spectators.pop(str(user_id), None)
+
+    def spectator_snapshot(self) -> dict:
+        """Full state snapshot for a new spectator."""
+        snap: dict = {
+            "type": "state",
+            "role": "spectator",
+            "white_name": self.white_name,
+            "black_name": self.black_name,
+            "fen": self.board.fen(),
+            "ply": len(self.san_list),
+            "moves": [
+                {"ply": i + 1, "san": s, "uci": self.uci_list[i]}
+                for i, s in enumerate(self.san_list)
+            ],
+            "turn": "white" if self.board.turn else "black",
+            "time_control": self.time_control,
+        }
+        clock = self.clock_snapshot()
+        if clock:
+            snap["clock"] = clock
+        return snap
 
     # ── Identity ──────────────────────────────────────────────────────────────
 
@@ -94,7 +128,7 @@ class GameSession:
 
     # ── Messaging ─────────────────────────────────────────────────────────────
 
-    async def broadcast(self, msg: dict, exclude: Optional[str] = None) -> None:
+    async def broadcast(self, msg: dict, exclude: Optional[str] = None, players_only: bool = False) -> None:
         data = json.dumps(msg)
         for uid, ws in list(self.connections.items()):
             if exclude and uid == exclude:
@@ -103,6 +137,12 @@ class GameSession:
                 await ws.send_text(data)
             except Exception:
                 pass
+        if not players_only:
+            for uid, ws in list(self.spectators.items()):
+                try:
+                    await ws.send_text(data)
+                except Exception:
+                    pass
 
     async def send_to(self, user_id: str, msg: dict) -> None:
         ws = self.connections.get(str(user_id))

@@ -17,6 +17,7 @@ from app.schemas.chess import (
     ChessGameOut, ChessGameDetailOut,
     ChessPlayerStatsOut, ChessMemberOut,
     ChallengeCreate, ChallengeOut, ChallengeAcceptOut,
+    LiveGameOut,
 )
 from app.services.chess_ws_manager import ws_manager
 
@@ -452,6 +453,123 @@ def decline_challenge(
     c.status = "declined"
     db.commit()
     return {"ok": True}
+
+
+# ── Live games list ────────────────────────────────────────────────────────────
+
+@router.get("/games/live", response_model=List[LiveGameOut])
+def list_live_games(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Returns all in-progress games for this organisation."""
+    games = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.status == "in_progress",
+        )
+        .order_by(ChessGame.started_at.desc())
+        .limit(50)
+        .all()
+    )
+    result = []
+    for g in games:
+        gid = str(g.id)
+        session = ws_manager.get(gid)
+        if session:
+            ply = len(session.san_list)
+            spec_count = session.spectator_count
+        else:
+            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
+            spec_count = 0
+        result.append(LiveGameOut(
+            id=g.id,
+            white_name=_display_name(db, g.white) or "White",
+            black_name=_display_name(db, g.black) or "Black",
+            ply=ply,
+            time_control=g.time_control,
+            spectator_count=spec_count,
+        ))
+    return result
+
+
+# ── WebSocket: spectate game ───────────────────────────────────────────────────
+
+@router.websocket("/games/{game_id}/spectate")
+async def spectate_websocket(
+    game_id: str,
+    websocket: WebSocket,
+    token: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    # ── Auth ──────────────────────────────────────────────────────────────────
+    try:
+        payload = decode_token(token)
+        user_id = str(payload["sub"])
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    # ── Load game ─────────────────────────────────────────────────────────────
+    try:
+        gid = uuid.UUID(game_id)
+    except ValueError:
+        await websocket.close(code=4002, reason="Invalid game_id")
+        return
+
+    game = db.query(ChessGame).filter(ChessGame.id == gid).first()
+    if not game:
+        await websocket.close(code=4003, reason="Game not found")
+        return
+
+    if game.status not in ("waiting", "in_progress"):
+        await websocket.close(code=4005, reason="Game is not live")
+        return
+
+    # ── Accept + register as spectator ────────────────────────────────────────
+    await websocket.accept()
+
+    session = ws_manager.get(str(gid))
+    if not session:
+        # Game exists in DB but session hasn't started yet — send minimal snapshot
+        await websocket.send_text(__import__("json").dumps({
+            "type": "waiting",
+            "role": "spectator",
+        }))
+        await websocket.close()
+        return
+
+    await session.add_spectator(user_id, websocket)
+
+    # Send current state immediately
+    await websocket.send_text(__import__("json").dumps(session.spectator_snapshot()))
+
+    # Notify players of new spectator count
+    await session.broadcast(
+        {"type": "spectator_count", "count": session.spectator_count},
+        players_only=True,
+    )
+
+    # ── Spectator message loop ─────────────────────────────────────────────────
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                msg = __import__("json").loads(raw)
+            except Exception:
+                continue
+            if msg.get("type") == "ping":
+                await websocket.send_text(__import__("json").dumps({"type": "pong"}))
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await session.remove_spectator(user_id)
+        await session.broadcast(
+            {"type": "spectator_count", "count": session.spectator_count},
+            players_only=True,
+        )
 
 
 # ── WebSocket: live game ───────────────────────────────────────────────────────
