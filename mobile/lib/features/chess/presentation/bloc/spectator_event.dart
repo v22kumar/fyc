@@ -20,13 +20,3 @@ class ConnectSpectator extends SpectatorEvent {
 class DisconnectSpectator extends SpectatorEvent {
   const DisconnectSpectator();
 }
-
-// Internal — carries raw WS message into the bloc
-class _SpectatorMessage extends SpectatorEvent {
-  final Map<String, dynamic> msg;
-
-  const _SpectatorMessage(this.msg);
-
-  @override
-  List<Object?> get props => [];
-}

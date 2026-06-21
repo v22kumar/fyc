@@ -9,6 +9,16 @@ import '../../../../core/constants/api_constants.dart';
 import 'spectator_event.dart';
 import 'spectator_state.dart';
 
+// Internal event — carries raw WS message into the bloc
+class _SpectatorMessage extends SpectatorEvent {
+  final Map<String, dynamic> msg;
+
+  const _SpectatorMessage(this.msg);
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// A minimal WebSocket client that connects to the /spectate endpoint.
 /// Reconnects automatically with exponential backoff, mirroring ChessWsClient.
 class _SpectatorWsClient {

@@ -123,6 +123,10 @@ class ChessHomePage extends StatelessWidget {
                       color: const Color(0xFF0EA5E9),
                       onTap: () => context.push('/chess/challenge'),
                     ),
+                    const SizedBox(height: 24),
+
+                    // Live Games section
+                    _LiveGamesSection(),
                     const Spacer(),
 
                     // History button
@@ -283,6 +287,187 @@ class _ModeCard extends StatelessWidget {
     );
   }
 }
+
+// ── Live Games section ────────────────────────────────────────────────────────
+
+class _LiveGamesSection extends StatefulWidget {
+  @override
+  State<_LiveGamesSection> createState() => _LiveGamesSectionState();
+}
+
+class _LiveGamesSectionState extends State<_LiveGamesSection> {
+  late Future<List<LiveGameModel>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = sl<ChessRemoteDataSource>().liveGames();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Live Games',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        FutureBuilder<List<LiveGameModel>>(
+          future: _future,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 48,
+                child: Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primaryLight,
+                    ),
+                  ),
+                ),
+              );
+            }
+            final games = snap.data ?? [];
+            if (games.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                alignment: Alignment.center,
+                child: const Text(
+                  'No live games right now',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: games
+                  .map((game) => _LiveGameTile(game: game))
+                  .toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _LiveGameTile extends StatelessWidget {
+  final LiveGameModel game;
+  const _LiveGameTile({required this.game});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          const Text('♟', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${game.whiteName} vs ${game.blackName}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      '${game.ply} moves',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.visibility, size: 12,
+                        color: AppColors.textSecondary),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${game.spectatorCount} watching',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => _watch(context, game),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(64, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Watch'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _watch(BuildContext context, LiveGameModel game) async {
+    final token = await sl<LocalStorage>().getToken() ?? '';
+    if (!context.mounted) return;
+    context.push(
+      '/chess/spectate/${game.id}',
+      extra: {'token': token},
+    );
+  }
+}
+
+// ── Stats banner ───────────────────────────────────────────────────────────────
 
 class _StatsBanner extends StatefulWidget {
   @override

@@ -170,6 +170,44 @@ def my_games(
     return [_game_out(db, g) for g in games]
 
 
+@router.get("/games/live", response_model=List[LiveGameOut])
+def list_live_games(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Returns all in-progress games for this organisation."""
+    games = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.status == "in_progress",
+        )
+        .order_by(ChessGame.started_at.desc())
+        .limit(50)
+        .all()
+    )
+    result = []
+    for g in games:
+        gid = str(g.id)
+        session = ws_manager.get(gid)
+        if session:
+            ply = len(session.san_list)
+            spec_count = session.spectator_count
+        else:
+            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
+            spec_count = 0
+        result.append(LiveGameOut(
+            id=g.id,
+            white_name=_display_name(db, g.white) or "White",
+            black_name=_display_name(db, g.black) or "Black",
+            ply=ply,
+            time_control=g.time_control,
+            spectator_count=spec_count,
+        ))
+    return result
+
+
 @router.get("/games", response_model=List[ChessGameOut])
 def list_games(
     player_id: Optional[uuid.UUID] = Query(None),
@@ -453,46 +491,6 @@ def decline_challenge(
     c.status = "declined"
     db.commit()
     return {"ok": True}
-
-
-# ── Live games list ────────────────────────────────────────────────────────────
-
-@router.get("/games/live", response_model=List[LiveGameOut])
-def list_live_games(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    tenant_id: uuid.UUID = Depends(require_tenant_id),
-):
-    """Returns all in-progress games for this organisation."""
-    games = (
-        db.query(ChessGame)
-        .filter(
-            ChessGame.organization_id == tenant_id,
-            ChessGame.status == "in_progress",
-        )
-        .order_by(ChessGame.started_at.desc())
-        .limit(50)
-        .all()
-    )
-    result = []
-    for g in games:
-        gid = str(g.id)
-        session = ws_manager.get(gid)
-        if session:
-            ply = len(session.san_list)
-            spec_count = session.spectator_count
-        else:
-            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
-            spec_count = 0
-        result.append(LiveGameOut(
-            id=g.id,
-            white_name=_display_name(db, g.white) or "White",
-            black_name=_display_name(db, g.black) or "Black",
-            ply=ply,
-            time_control=g.time_control,
-            spectator_count=spec_count,
-        ))
-    return result
 
 
 # ── WebSocket: spectate game ───────────────────────────────────────────────────

@@ -32,11 +32,14 @@ import '../../features/chess/data/datasources/chess_remote_datasource.dart';
 import '../../features/chess/presentation/bloc/game_bloc.dart';
 import '../../features/chess/presentation/bloc/online_game_bloc.dart';
 import '../../features/chess/presentation/bloc/online_game_event.dart';
+import '../../features/chess/presentation/bloc/spectator_bloc.dart';
+import '../../features/chess/presentation/bloc/spectator_event.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
 import '../../features/chess/presentation/pages/game_history_page.dart';
 import '../../features/chess/presentation/pages/challenge_page.dart';
 import '../../features/chess/presentation/pages/online_game_page.dart';
+import '../../features/chess/presentation/pages/spectator_page.dart';
 
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
@@ -303,6 +306,19 @@ final appRouter = GoRouter(
                   myColor: myColor,
                 )),
               child: OnlineGamePage(gameId: gameId),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'spectate/:gameId',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            final gameId = state.pathParameters['gameId']!;
+            final token = extra['token'] as String? ?? '';
+            return BlocProvider(
+              create: (_) => SpectatorBloc()
+                ..add(ConnectSpectator(gameId: gameId, token: token)),
+              child: SpectatorPage(gameId: gameId),
             );
           },
         ),
