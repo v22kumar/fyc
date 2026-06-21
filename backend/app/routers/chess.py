@@ -17,9 +17,10 @@ from app.schemas.chess import (
     ChessGameOut, ChessGameDetailOut,
     ChessPlayerStatsOut, ChessMemberOut,
     ChallengeCreate, ChallengeOut, ChallengeAcceptOut,
-    LiveGameOut,
+    LiveGameOut, PlayerProfileOut,
 )
 from app.services.chess_ws_manager import ws_manager
+from app.services.glicko2 import update as glicko2_update, PlayerRating, prestige_title, title_emoji
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chess", tags=["Chess"])
@@ -75,13 +76,40 @@ def _get_or_create_stats(db, user_id, org_id) -> ChessPlayerStats:
 def _update_stats(db, game: ChessGame, org_id) -> None:
     if game.result is None or game.mode == "vs_ai":
         return
+
+    white_s = _get_or_create_stats(db, game.white_id, org_id) if game.white_id else None
+    black_s = _get_or_create_stats(db, game.black_id, org_id) if game.black_id else None
+
+    # Record pre-game ratings
+    if white_s:
+        game.white_rating_before = white_s.glicko_rating
+    if black_s:
+        game.black_rating_before = black_s.glicko_rating
+
+    # Glicko-2 update (skip untimed casual games for rating purposes)
+    if game.time_control != "untimed" and white_s and black_s:
+        white_pr = PlayerRating(white_s.glicko_rating, white_s.glicko_rd, white_s.glicko_vol)
+        black_pr = PlayerRating(black_s.glicko_rating, black_s.glicko_rd, black_s.glicko_vol)
+        if game.result == "white_wins":
+            w_score, b_score = 1.0, 0.0
+        elif game.result == "black_wins":
+            w_score, b_score = 0.0, 1.0
+        else:
+            w_score, b_score = 0.5, 0.5
+        wr, wrd, wvol = glicko2_update(white_pr, black_pr, w_score)
+        br, brd, bvol = glicko2_update(black_pr, white_pr, b_score)
+        white_s.glicko_rating, white_s.glicko_rd, white_s.glicko_vol = wr, wrd, wvol
+        black_s.glicko_rating, black_s.glicko_rd, black_s.glicko_vol = br, brd, bvol
+        game.white_rating_after = wr
+        game.black_rating_after = br
+
+    # Update win/loss/draw counters and streaks
     pairs = []
-    if game.white_id:
-        pairs.append((game.white_id, game.result == "white_wins", game.result == "draw"))
-    if game.black_id:
-        pairs.append((game.black_id, game.result == "black_wins", game.result == "draw"))
-    for user_id, won, drew in pairs:
-        s = _get_or_create_stats(db, user_id, org_id)
+    if white_s:
+        pairs.append((white_s, game.result == "white_wins", game.result == "draw"))
+    if black_s:
+        pairs.append((black_s, game.result == "black_wins", game.result == "draw"))
+    for s, won, drew in pairs:
         s.games_played += 1
         if won:
             s.wins += 1
@@ -276,12 +304,15 @@ def patch_game(
 
 def _stats_out(user_id, stats: Optional[ChessPlayerStats]) -> ChessPlayerStatsOut:
     if not stats:
+        title = prestige_title(1500.0, 0)
         return ChessPlayerStatsOut(
             user_id=user_id, glicko_rating=1500.0, glicko_rd=350.0,
             games_played=0, wins=0, losses=0, draws=0,
             current_streak=0, longest_win_streak=0, win_rate=0.0,
+            title=title, title_emoji=title_emoji(title),
         )
     wr = round(stats.wins / stats.games_played, 3) if stats.games_played else 0.0
+    title = prestige_title(stats.glicko_rating, stats.games_played)
     return ChessPlayerStatsOut(
         user_id=stats.user_id,
         glicko_rating=round(stats.glicko_rating, 1),
@@ -291,6 +322,7 @@ def _stats_out(user_id, stats: Optional[ChessPlayerStats]) -> ChessPlayerStatsOu
         current_streak=stats.current_streak,
         longest_win_streak=stats.longest_win_streak,
         win_rate=wr,
+        title=title, title_emoji=title_emoji(title),
     )
 
 
@@ -317,6 +349,87 @@ def player_stats(
         ChessPlayerStats.user_id == user_id
     ).first()
     return _stats_out(user_id, stats)
+
+
+@router.get("/players/{user_id}/profile", response_model=PlayerProfileOut)
+def player_profile(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Full prestige profile: rating, title, rival, recent form."""
+    stats = db.query(ChessPlayerStats).filter(
+        ChessPlayerStats.user_id == user_id
+    ).first()
+    stats_out = _stats_out(user_id, stats)
+
+    # Recent form: last 10 online games
+    recent_games = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.mode == "online",
+            ChessGame.status == "ended",
+            ChessGame.result.isnot(None),
+            (ChessGame.white_id == user_id) | (ChessGame.black_id == user_id),
+        )
+        .order_by(ChessGame.ended_at.desc())
+        .limit(10)
+        .all()
+    )
+    form = []
+    for g in recent_games:
+        is_white = str(g.white_id) == str(user_id)
+        if g.result == "draw":
+            form.append("D")
+        elif (is_white and g.result == "white_wins") or (not is_white and g.result == "black_wins"):
+            form.append("W")
+        else:
+            form.append("L")
+
+    # Rivalry: most-played online opponent
+    rival_name = None
+    rival_id = None
+    from collections import Counter
+    opp_counts: Counter = Counter()
+    all_online = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.mode == "online",
+            ChessGame.status == "ended",
+            (ChessGame.white_id == user_id) | (ChessGame.black_id == user_id),
+        )
+        .all()
+    )
+    for g in all_online:
+        opp = g.black_id if str(g.white_id) == str(user_id) else g.white_id
+        if opp:
+            opp_counts[str(opp)] += 1
+    if opp_counts:
+        top_opp_id, _ = opp_counts.most_common(1)[0]
+        rival = db.query(User).filter(User.id == top_opp_id).first()
+        if rival:
+            rival_id = str(rival.id)
+            profile = db.query(UserProfile).filter(UserProfile.user_id == rival.id).first()
+            rival_name = (profile.full_name_en or profile.full_name_ta) if profile else str(rival.id)
+
+    return PlayerProfileOut(
+        user_id=user_id,
+        glicko_rating=stats_out.glicko_rating,
+        glicko_rd=stats_out.glicko_rd,
+        games_played=stats_out.games_played,
+        wins=stats_out.wins, losses=stats_out.losses, draws=stats_out.draws,
+        win_rate=stats_out.win_rate,
+        current_streak=stats_out.current_streak,
+        longest_win_streak=stats_out.longest_win_streak,
+        title=stats_out.title,
+        title_emoji=stats_out.title_emoji,
+        recent_form=form[:10],
+        rival_id=rival_id,
+        rival_name=rival_name,
+    )
 
 
 # ── Members list (for challenge opponent search) ───────────────────────────────

@@ -127,8 +127,29 @@ class ChessPlayerStatsOut(BaseModel):
     current_streak: int
     longest_win_streak: int
     win_rate: float
+    title: str = "Newcomer"
+    title_emoji: str = "🌱"
 
     model_config = {"from_attributes": True}
+
+
+class PlayerProfileOut(BaseModel):
+    user_id: UUID
+    name: Optional[str] = None
+    glicko_rating: float
+    glicko_rd: float
+    games_played: int
+    wins: int
+    losses: int
+    draws: int
+    current_streak: int
+    longest_win_streak: int
+    win_rate: float
+    title: str
+    title_emoji: str
+    recent_form: List[str] = []        # e.g. ["W", "L", "D", "W", "W"]
+    rival_id: Optional[str] = None
+    rival_name: Optional[str] = None
 
 
 class ChessMemberOut(BaseModel):

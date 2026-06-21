@@ -81,6 +81,8 @@ class ChessStatsModel {
   final int currentStreak;
   final int longestWinStreak;
   final double winRate;
+  final String title;
+  final String titleEmoji;
 
   const ChessStatsModel({
     required this.glickoRating,
@@ -92,6 +94,8 @@ class ChessStatsModel {
     required this.currentStreak,
     required this.longestWinStreak,
     required this.winRate,
+    this.title = 'Newcomer',
+    this.titleEmoji = '🌱',
   });
 
   factory ChessStatsModel.fromJson(Map<String, dynamic> json) {
@@ -105,6 +109,8 @@ class ChessStatsModel {
       currentStreak: json['current_streak'] as int? ?? 0,
       longestWinStreak: json['longest_win_streak'] as int? ?? 0,
       winRate: (json['win_rate'] as num?)?.toDouble() ?? 0.0,
+      title: json['title'] as String? ?? 'Newcomer',
+      titleEmoji: json['title_emoji'] as String? ?? '🌱',
     );
   }
 

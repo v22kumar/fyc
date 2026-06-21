@@ -5,6 +5,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
 import '../../data/models/chess_game_model.dart';
+import '../widgets/prestige_card.dart';
 
 class GameHistoryPage extends StatefulWidget {
   const GameHistoryPage({super.key});
@@ -120,37 +121,46 @@ class _StatsBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.darkBg,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: AppTheme.gradientPrimary,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _Stat(
-              value: stats.ratingDisplay,
-              label: 'Rating',
-              sub: '±${stats.glickoRd.round()}',
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      child: Column(
+        children: [
+          // Prestige title card
+          PrestigeCard(stats: stats),
+          const SizedBox(height: 12),
+
+          // Win / Games / Rate row
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: AppTheme.gradientPrimary,
+              borderRadius: BorderRadius.circular(16),
             ),
-            _Divider(),
-            _Stat(
-              value: '${stats.gamesPlayed}',
-              label: 'Games',
-              sub: '${stats.wins}W ${stats.losses}L ${stats.draws}D',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _Stat(
+                  value: stats.ratingDisplay,
+                  label: 'Rating',
+                  sub: '±${stats.glickoRd.round()}',
+                ),
+                _Divider(),
+                _Stat(
+                  value: '${stats.gamesPlayed}',
+                  label: 'Games',
+                  sub: '${stats.wins}W ${stats.losses}L ${stats.draws}D',
+                ),
+                _Divider(),
+                _Stat(
+                  value: stats.winRateDisplay,
+                  label: 'Win rate',
+                  sub: stats.currentStreak != 0
+                      ? '${stats.currentStreak > 0 ? '+' : ''}${stats.currentStreak} streak'
+                      : '—',
+                ),
+              ],
             ),
-            _Divider(),
-            _Stat(
-              value: stats.winRateDisplay,
-              label: 'Win rate',
-              sub: stats.currentStreak != 0
-                  ? '${stats.currentStreak > 0 ? '+' : ''}${stats.currentStreak} streak'
-                  : '—',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
