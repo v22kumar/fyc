@@ -71,6 +71,10 @@ dependencies:
   web_socket_channel: ^3.0.1      # WebSocket client for real-time online games
   share_plus: ^10.0.0             # share PGN / game links
 
+  # Performance — image caching & network awareness
+  cached_network_image: ^3.4.1
+  connectivity_plus: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

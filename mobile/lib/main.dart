@@ -6,6 +6,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
+import 'core/widgets/offline_banner.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'service_locator.dart';
 
@@ -44,6 +45,12 @@ class FycApp extends StatelessWidget {
             locale: locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
+            builder: (context, child) => Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(child: child ?? const SizedBox()),
+              ],
+            ),
           );
         },
       ),
