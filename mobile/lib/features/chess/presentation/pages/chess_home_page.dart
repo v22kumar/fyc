@@ -158,6 +158,22 @@ class ChessHomePage extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+
+                    // Legends button
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/chess/legends'),
+                      icon: const Icon(Icons.auto_stories_rounded, size: 18),
+                      label: const Text('Chess Legends · சதுரங்க மேதைகள்'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFA855F7),
+                        side: const BorderSide(color: Color(0xFFA855F7)),
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 12),
 
                     // Stats row (live from backend)

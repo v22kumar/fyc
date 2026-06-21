@@ -16,6 +16,18 @@
 -keepattributes Signature
 -keepattributes *Annotation*
 
-# OkHttp (used by Dio internally)
+# OkHttp (used by Dio internally) + WebSocket
 -dontwarn okhttp3.**
 -keep class okhttp3.** { *; }
+-dontwarn okio.**
+-keep class okio.** { *; }
+
+# Stockfish native library (JNI bridge — keep the method names intact)
+-keep class com.github.bhlangonijr.chesslib.** { *; }
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Dio / http_parser
+-keep class com.squareup.okhttp3.** { *; }
+-dontwarn com.squareup.okhttp3.**
