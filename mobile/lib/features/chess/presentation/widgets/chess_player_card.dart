@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Lichess-style player card — shown above and below the board.
@@ -21,6 +20,15 @@ class ChessPlayerCard extends StatelessWidget {
   /// Captured piece strings (unicode symbols)
   final List<String> captured;
 
+  /// Optional clock label (e.g. "14:55"). When set, shown on the right.
+  final String? clock;
+
+  /// Whether the clock is low on time (turns red).
+  final bool clockLow;
+
+  /// Label shown next to the name while [isThinking] (e.g. "thinking").
+  final String thinkingText;
+
   const ChessPlayerCard({
     super.key,
     required this.name,
@@ -31,6 +39,9 @@ class ChessPlayerCard extends StatelessWidget {
     this.avatarLetter,
     this.avatarColor = const Color(0xFF4A7C59),
     this.captured = const [],
+    this.clock,
+    this.clockLow = false,
+    this.thinkingText = 'thinking',
   });
 
   @override
@@ -39,18 +50,18 @@ class ChessPlayerCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isActive
-            ? const Color(0xFF1E2D1F)
-            : const Color(0xFF1A1D1E),
+            ? const Color(0xFF1E2D1F).withOpacity(0.85)
+            : const Color(0xFF14181A).withOpacity(0.70),
         border: Border(
           top: BorderSide(
             color: isActive
                 ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : Colors.white.withOpacity(0.05),
+                : Colors.white.withOpacity(0.04),
           ),
           bottom: BorderSide(
             color: isActive
                 ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : Colors.white.withOpacity(0.05),
+                : Colors.white.withOpacity(0.04),
           ),
         ),
       ),
@@ -102,6 +113,15 @@ class ChessPlayerCard extends StatelessWidget {
                     if (isThinking) ...[
                       const SizedBox(width: 8),
                       const _ThinkingDots(),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$thinkingText…',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.45),
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -109,13 +129,20 @@ class ChessPlayerCard extends StatelessWidget {
                 Row(
                   children: [
                     if (rating != null)
-                      Text(
-                        'Rating $rating',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.40),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.shield_outlined,
+                              size: 11, color: Color(0xFF7C8A80)),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Rating $rating',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.42),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     if (captured.isNotEmpty) ...[
                       const SizedBox(width: 8),
@@ -123,7 +150,7 @@ class ChessPlayerCard extends StatelessWidget {
                         child: Text(
                           captured.join(''),
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: Colors.white.withOpacity(0.50),
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -136,8 +163,8 @@ class ChessPlayerCard extends StatelessWidget {
             ),
           ),
 
-          // Active badge or just space
-          if (isActive)
+          // "Your turn" badge (only when active and no clock present)
+          if (isActive && clock == null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -154,7 +181,74 @@ class ChessPlayerCard extends StatelessWidget {
                 ),
               ),
             ),
+
+          // Clock
+          if (clock != null) ...[
+            if (isActive)
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A7C59),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Your turn',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            _ClockChip(label: clock!, isActive: isActive, isLow: clockLow),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ClockChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final bool isLow;
+
+  const _ClockChip({
+    required this.label,
+    required this.isActive,
+    required this.isLow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isActive
+        ? (isLow ? const Color(0xFF8E1B1B) : const Color(0xFF2A3A2C))
+        : const Color(0xFF1A1D1E);
+    final fg = isActive
+        ? (isLow ? Colors.red.shade200 : Colors.white)
+        : const Color(0xFF7C8A80);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: isActive
+            ? Border.all(
+                color: isLow
+                    ? Colors.red.shade400
+                    : const Color(0xFF4A7C59).withOpacity(0.7),
+                width: 1)
+            : null,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
     );
   }

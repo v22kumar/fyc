@@ -112,7 +112,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                           // Thinking indicator after last partial move
                           if (widget.isThinking && isLastPair && black == null) ...[
                             const SizedBox(width: 6),
-                            const _ThinkingIndicator(),
+                            _ThinkingIndicator(label: widget.thinkingLabel),
                           ],
                         ],
                       );
@@ -122,9 +122,9 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
 
           // If thinking and no moves yet, show indicator at right
           if (widget.isThinking && widget.moveSans.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: _ThinkingIndicator(),
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: _ThinkingIndicator(label: widget.thinkingLabel),
             ),
         ],
       ),
@@ -162,7 +162,8 @@ class _MoveToken extends StatelessWidget {
 }
 
 class _ThinkingIndicator extends StatefulWidget {
-  const _ThinkingIndicator();
+  final String label;
+  const _ThinkingIndicator({this.label = ''});
 
   @override
   State<_ThinkingIndicator> createState() => _ThinkingIndicatorState();
@@ -205,9 +206,11 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
           ),
         ),
         const SizedBox(width: 5),
-        const Text(
-          'thinking…',
-          style: TextStyle(
+        Text(
+          widget.label.isEmpty
+              ? 'thinking…'
+              : '${widget.label} is thinking…',
+          style: const TextStyle(
             color: Color(0xFF8B8682),
             fontSize: 11,
             fontStyle: FontStyle.italic,
