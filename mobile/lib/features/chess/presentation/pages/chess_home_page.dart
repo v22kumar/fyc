@@ -121,8 +121,7 @@ class ChessHomePage extends StatelessWidget {
                       titleTa: 'நேரடி போட்டி',
                       description: 'Challenge another FYC member',
                       color: const Color(0xFF0EA5E9),
-                      onTap: null, // Sprint 3
-                      comingSoon: true,
+                      onTap: () => context.push('/chess/challenge'),
                     ),
                     const Spacer(),
 

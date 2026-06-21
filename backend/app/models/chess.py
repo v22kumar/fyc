@@ -6,8 +6,10 @@ from app.models.base import GUID, TimestampMixin, TenantModelMixin
 
 GAME_RESULTS = ["white_wins", "black_wins", "draw", "abandoned"]
 GAME_MODES = ["local", "vs_ai", "online"]
+GAME_STATUSES = ["local", "waiting", "in_progress", "ended"]
 TIME_CONTROLS = ["untimed", "bullet_1_0", "blitz_3_2", "blitz_5_0", "rapid_10_0", "classical_30_0"]
 DRAW_REASONS = ["stalemate", "insufficient_material", "fifty_moves", "repetition", "agreement"]
+CHALLENGE_STATUSES = ["pending", "accepted", "declined", "expired"]
 
 
 class ChessGame(Base, TimestampMixin, TenantModelMixin):
@@ -19,6 +21,7 @@ class ChessGame(Base, TimestampMixin, TenantModelMixin):
     black_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
 
     mode = Column(String(20), nullable=False, default="local")
+    status = Column(String(20), nullable=False, default="local")  # local/waiting/in_progress/ended
     time_control = Column(String(30), nullable=False, default="untimed")
 
     result = Column(String(20), nullable=True)        # null while in progress
@@ -54,6 +57,25 @@ class ChessMove(Base, TimestampMixin, TenantModelMixin):
     fen_after = Column(Text, nullable=True)
 
     game = relationship("ChessGame", back_populates="moves")
+
+
+class ChessChallenge(Base, TimestampMixin, TenantModelMixin):
+    """A pending challenge from one member to another."""
+    __tablename__ = "chess_challenges"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    challenger_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    challenged_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    time_control = Column(String(30), nullable=False, default="untimed")
+    status = Column(String(20), nullable=False, default="pending")
+    game_id = Column(GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"), nullable=True)
+    message = Column(String(200), nullable=True)
+
+    challenger = relationship("User", foreign_keys=[challenger_id])
+    challenged = relationship("User", foreign_keys=[challenged_id])
+    game = relationship("ChessGame", foreign_keys=[game_id])
 
 
 class ChessPlayerStats(Base, TimestampMixin, TenantModelMixin):

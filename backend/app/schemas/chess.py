@@ -16,9 +16,9 @@ class ChessMoveIn(BaseModel):
 class ChessGameCreate(BaseModel):
     mode: str = "local"
     time_control: str = "untimed"
-    white_name: Optional[str] = None  # display name for local/guest players
+    white_name: Optional[str] = None
     black_name: Optional[str] = None
-    result: str                        # white_wins | black_wins | draw | abandoned
+    result: str
     draw_reason: Optional[str] = None
     pgn: Optional[str] = None
     final_fen: Optional[str] = None
@@ -34,7 +34,46 @@ class ChessGamePatch(BaseModel):
     pgn: Optional[str] = None
     final_fen: Optional[str] = None
     total_moves: Optional[int] = None
+    status: Optional[str] = None
     ended_at: Optional[datetime] = None
+
+
+# ── Challenge ──────────────────────────────────────────────────────────────────
+
+class ChallengeCreate(BaseModel):
+    challenged_id: UUID
+    time_control: str = "untimed"
+    message: Optional[str] = None
+
+
+class ChallengeOut(BaseModel):
+    id: UUID
+    challenger_id: UUID
+    challenged_id: UUID
+    challenger_name: Optional[str] = None
+    challenged_name: Optional[str] = None
+    time_control: str
+    status: str
+    game_id: Optional[UUID] = None
+    message: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ChallengeAcceptOut(BaseModel):
+    game_id: UUID
+    color: str          # "white" | "black"
+    opponent_name: Optional[str] = None
+    time_control: str
+
+
+# ── Online game creation ───────────────────────────────────────────────────────
+
+class OnlineGameCreate(BaseModel):
+    white_id: UUID
+    black_id: UUID
+    time_control: str = "untimed"
 
 
 # ── Output schemas ─────────────────────────────────────────────────────────────
@@ -51,10 +90,11 @@ class ChessMoveOut(BaseModel):
 class ChessGameOut(BaseModel):
     id: UUID
     mode: str
+    status: str
     time_control: str
     white_id: Optional[UUID] = None
     black_id: Optional[UUID] = None
-    white_name: Optional[str] = None   # resolved from UserProfile
+    white_name: Optional[str] = None
     black_name: Optional[str] = None
     result: Optional[str] = None
     draw_reason: Optional[str] = None
@@ -86,6 +126,14 @@ class ChessPlayerStatsOut(BaseModel):
     draws: int
     current_streak: int
     longest_win_streak: int
-    win_rate: float   # computed
+    win_rate: float
 
     model_config = {"from_attributes": True}
+
+
+class ChessMemberOut(BaseModel):
+    user_id: UUID
+    name: str
+    area: Optional[str] = None
+    glicko_rating: float
+    games_played: int

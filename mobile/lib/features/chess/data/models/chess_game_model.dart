@@ -123,3 +123,95 @@ class ChessStatsModel {
   String get ratingDisplay => '${glickoRating.round()}';
   String get winRateDisplay => '${(winRate * 100).round()}%';
 }
+
+class ChessChallengeModel {
+  final String id;
+  final String challengerId;
+  final String challengedId;
+  final String? challengerName;
+  final String? challengedName;
+  final String timeControl;
+  final String status;
+  final String? gameId;
+  final String? message;
+  final String createdAt;
+
+  const ChessChallengeModel({
+    required this.id,
+    required this.challengerId,
+    required this.challengedId,
+    this.challengerName,
+    this.challengedName,
+    required this.timeControl,
+    required this.status,
+    this.gameId,
+    this.message,
+    required this.createdAt,
+  });
+
+  factory ChessChallengeModel.fromJson(Map<String, dynamic> json) {
+    return ChessChallengeModel(
+      id: json['id'] as String,
+      challengerId: json['challenger_id'] as String,
+      challengedId: json['challenged_id'] as String,
+      challengerName: json['challenger_name'] as String?,
+      challengedName: json['challenged_name'] as String?,
+      timeControl: json['time_control'] as String? ?? 'untimed',
+      status: json['status'] as String? ?? 'pending',
+      gameId: json['game_id'] as String?,
+      message: json['message'] as String?,
+      createdAt: json['created_at'] as String? ?? '',
+    );
+  }
+}
+
+class ChessMemberModel {
+  final String userId;
+  final String name;
+  final String? area;
+  final double glickoRating;
+  final int gamesPlayed;
+
+  const ChessMemberModel({
+    required this.userId,
+    required this.name,
+    this.area,
+    required this.glickoRating,
+    required this.gamesPlayed,
+  });
+
+  factory ChessMemberModel.fromJson(Map<String, dynamic> json) {
+    return ChessMemberModel(
+      userId: json['user_id'] as String,
+      name: json['name'] as String,
+      area: json['area'] as String?,
+      glickoRating: (json['glicko_rating'] as num?)?.toDouble() ?? 1500.0,
+      gamesPlayed: json['games_played'] as int? ?? 0,
+    );
+  }
+
+  String get ratingDisplay => glickoRating.round().toString();
+}
+
+class ChallengeAcceptResult {
+  final String gameId;
+  final String color; // "white" | "black"
+  final String? opponentName;
+  final String timeControl;
+
+  const ChallengeAcceptResult({
+    required this.gameId,
+    required this.color,
+    this.opponentName,
+    required this.timeControl,
+  });
+
+  factory ChallengeAcceptResult.fromJson(Map<String, dynamic> json) {
+    return ChallengeAcceptResult(
+      gameId: json['game_id'] as String,
+      color: json['color'] as String,
+      opponentName: json['opponent_name'] as String?,
+      timeControl: json['time_control'] as String? ?? 'untimed',
+    );
+  }
+}

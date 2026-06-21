@@ -67,6 +67,7 @@ dependencies:
   squares: ^5.0.0       # board widget, drag/drop, piece images, animations
   bishop: ^5.0.0        # chess rules, move validation, FEN/PGN
   stockfish_chess_engine: ^3.0.0  # native Stockfish AI via platform channel
+  web_socket_channel: ^3.0.1      # WebSocket client for real-time online games
 
 dev_dependencies:
   flutter_test:

@@ -15,7 +15,7 @@ from app.models.green_fyc import PlantationDrive, TreeRegistration, TreeStatus
 from app.models.opportunity import Opportunity, OpportunityApplication, OpportunityType
 from app.models.club_request import ClubMemberRequest
 from app.models.instagram_post import InstagramPost, InstagramPostStatus
-from app.models.chess import ChessGame, ChessMove, ChessPlayerStats
+from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
 
 __all__ = [
     "Base",
@@ -56,4 +56,5 @@ __all__ = [
     "ChessGame",
     "ChessMove",
     "ChessPlayerStats",
+    "ChessChallenge",
 ]

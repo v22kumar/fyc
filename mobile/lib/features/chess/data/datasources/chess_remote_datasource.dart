@@ -8,6 +8,16 @@ abstract class ChessRemoteDataSource {
   Future<ChessGameModel> submitGame(Map<String, dynamic> payload);
   Future<List<ChessGameModel>> myGames({int limit = 30});
   Future<ChessStatsModel> myStats();
+  Future<List<ChessMemberModel>> members();
+  Future<ChessChallengeModel> sendChallenge({
+    required String challengedId,
+    required String timeControl,
+    String? message,
+  });
+  Future<List<ChessChallengeModel>> incomingChallenges();
+  Future<List<ChessChallengeModel>> outgoingChallenges();
+  Future<ChallengeAcceptResult> acceptChallenge(String challengeId);
+  Future<void> declineChallenge(String challengeId);
 }
 
 class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
@@ -18,10 +28,7 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
   @override
   Future<ChessGameModel> submitGame(Map<String, dynamic> payload) async {
     try {
-      final response = await _client.dio.post(
-        ApiConstants.chessGames,
-        data: payload,
-      );
+      final response = await _client.dio.post(ApiConstants.chessGames, data: payload);
       return ChessGameModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
@@ -35,8 +42,7 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
         ApiConstants.chessMyGames,
         queryParameters: {'limit': limit},
       );
-      final list = response.data as List<dynamic>;
-      return list
+      return (response.data as List)
           .map((e) => ChessGameModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
@@ -49,6 +55,86 @@ class ChessRemoteDataSourceImpl implements ChessRemoteDataSource {
     try {
       final response = await _client.dio.get(ApiConstants.chessMyStats);
       return ChessStatsModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<ChessMemberModel>> members() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.chessMembers);
+      return (response.data as List)
+          .map((e) => ChessMemberModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<ChessChallengeModel> sendChallenge({
+    required String challengedId,
+    required String timeControl,
+    String? message,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.chessChallenges,
+        data: {
+          'challenged_id': challengedId,
+          'time_control': timeControl,
+          if (message != null) 'message': message,
+        },
+      );
+      return ChessChallengeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<ChessChallengeModel>> incomingChallenges() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.chessChallengesIncoming);
+      return (response.data as List)
+          .map((e) => ChessChallengeModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<ChessChallengeModel>> outgoingChallenges() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.chessChallengesOutgoing);
+      return (response.data as List)
+          .map((e) => ChessChallengeModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<ChallengeAcceptResult> acceptChallenge(String challengeId) async {
+    try {
+      final response = await _client.dio.post(
+        '${ApiConstants.chessChallenges}/$challengeId/accept',
+      );
+      return ChallengeAcceptResult.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> declineChallenge(String challengeId) async {
+    try {
+      await _client.dio.post(
+        '${ApiConstants.chessChallenges}/$challengeId/decline',
+      );
     } on DioException catch (e) {
       throw mapDioException(e);
     }
