@@ -11,6 +11,11 @@ class ApiConstants {
     defaultValue: '8f8b80b7-4b71-4770-b183-5c5f49e49a1d',
   );
 
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com',
+  );
+
   // Auth
   static const String otpSend = '/api/v1/auth/otp/send';
   static const String otpVerify = '/api/v1/auth/otp/verify';

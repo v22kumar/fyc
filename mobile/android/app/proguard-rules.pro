@@ -31,3 +31,6 @@
 # Dio / http_parser
 -keep class com.squareup.okhttp3.** { *; }
 -dontwarn com.squareup.okhttp3.**
+
+# Flutter Play Store Split compatibility (deferred components) fallback
+-dontwarn com.google.android.play.core.**

@@ -25,7 +25,7 @@ android {
 
     defaultConfig {
         applicationId = "com.friendsyouthclub.fycconnect"
-        minSdk = 23   // Required by firebase_messaging, google_sign_in
+        minSdk = flutter.minSdkVersion   // Required by firebase_messaging, google_sign_in
         targetSdk = 34 // Required for new Play Store submissions (2024+)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
