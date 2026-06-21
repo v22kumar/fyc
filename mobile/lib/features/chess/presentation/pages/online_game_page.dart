@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../bloc/online_game_bloc.dart';
 import '../bloc/online_game_event.dart';
 import '../bloc/online_game_state.dart';
-import '../widgets/player_info_bar.dart';
-import '../widgets/move_history_panel.dart';
+import '../widgets/chess_player_card.dart';
+import '../widgets/chess_move_bar.dart';
+
+const _kBg = Color(0xFF262421);
+const _kSurface = Color(0xFF312E2B);
+const _kGreen = Color(0xFF4A7C59);
+const _kBoardLight = Color(0xFFEEEED2);
+const _kBoardDark = Color(0xFF769656);
 
 class OnlineGamePage extends StatelessWidget {
   final String gameId;
@@ -17,11 +22,16 @@ class OnlineGamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBg,
+        backgroundColor: _kBg,
         foregroundColor: Colors.white,
         elevation: 0,
+        leadingWidth: 44,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: BlocBuilder<OnlineGameBloc, OnlineGameState>(
           builder: (context, state) {
             if (state is OnlineGameInProgress) {
@@ -44,23 +54,33 @@ class OnlineGamePage extends StatelessWidget {
               return Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.flip, color: Colors.white70),
+                    icon: const Icon(Icons.swap_vert_rounded,
+                        color: Colors.white54, size: 22),
                     onPressed: () =>
                         context.read<OnlineGameBloc>().add(const FlipOnlineBoard()),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Colors.white70),
+                    icon: const Icon(Icons.more_vert,
+                        color: Colors.white54, size: 22),
+                    color: _kSurface,
                     onSelected: (v) {
                       if (v == 'resign') _confirmResign(context);
                       if (v == 'draw') {
-                        context.read<OnlineGameBloc>().add(const SendOfferDraw());
+                        context
+                            .read<OnlineGameBloc>()
+                            .add(const SendOfferDraw());
                       }
                     },
                     itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'draw', child: Text('Offer Draw')),
+                      PopupMenuItem(
+                        value: 'draw',
+                        child: Text('Offer Draw',
+                            style: TextStyle(color: Colors.white)),
+                      ),
                       PopupMenuItem(
                         value: 'resign',
-                        child: Text('Resign', style: TextStyle(color: Colors.red)),
+                        child: Text('Resign',
+                            style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -92,10 +112,10 @@ class OnlineGamePage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: AppColors.primaryLight),
+          CircularProgressIndicator(color: _kGreen),
           SizedBox(height: 16),
           Text('Connecting…',
-              style: TextStyle(color: Colors.white70, fontSize: 16)),
+              style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
       ),
     );
@@ -106,9 +126,9 @@ class OnlineGamePage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('♛', style: TextStyle(fontSize: 64)),
+          const Text('♛', style: TextStyle(fontSize: 64, color: _kGreen)),
           const SizedBox(height: 20),
-          const CircularProgressIndicator(color: AppColors.primaryLight),
+          const CircularProgressIndicator(color: _kGreen),
           const SizedBox(height: 16),
           const Text(
             'Waiting for opponent…',
@@ -117,7 +137,7 @@ class OnlineGamePage extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'You play as ${state.myColor}',
-            style: const TextStyle(color: Colors.white38, fontSize: 13),
+            style: const TextStyle(color: Color(0xFF8B8682), fontSize: 13),
           ),
         ],
       ),
@@ -135,7 +155,6 @@ class OnlineGamePage extends StatelessWidget {
         ? _capturedByBlack(state)
         : _capturedByWhite(state);
 
-    // Which player is on top vs bottom depends on orientation (can be flipped)
     final myIsBottom = state.orientation == Squares.white
         ? state.myColor == 'white'
         : state.myColor == 'black';
@@ -146,92 +165,72 @@ class OnlineGamePage extends StatelessWidget {
     final bottomTimeMs = myIsBottom
         ? (isWhite ? state.whiteTimeMs : state.blackTimeMs)
         : (isWhite ? state.blackTimeMs : state.whiteTimeMs);
+    final topActive = topIsMe ? state.isMyTurn : !state.isMyTurn;
+    final bottomActive = myIsBottom ? state.isMyTurn : !state.isMyTurn;
 
     return SafeArea(
       child: Stack(
         children: [
           Column(
             children: [
-              // Opponent info + clock (top)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: PlayerInfoBar(
-                        name: topIsMe ? myName : oppName,
-                        captured: topIsMe ? myCaptured : oppCaptured,
-                        isActive: topIsMe ? state.isMyTurn : !state.isMyTurn,
-                        isTop: true,
-                      ),
-                    ),
-                    if (state.isTimed)
-                      _ChessClock(
-                        ms: topTimeMs ?? 0,
-                        isActive: topIsMe ? state.isMyTurn : !state.isMyTurn,
-                      ),
-                  ],
-                ),
+              // Opponent card + clock
+              _PlayerRow(
+                name: topIsMe ? myName : oppName,
+                captured: topIsMe ? myCaptured : oppCaptured,
+                isActive: topActive,
+                timeMs: state.isTimed ? topTimeMs : null,
               ),
 
               // Board
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: BoardController(
-                        state: state.boardState.board,
-                        playState: state.boardState.state,
-                        moves: state.boardState.moves,
-                        onMove: (state.isMyTurn && !state.moveInFlight)
-                            ? (move) => context
-                                .read<OnlineGameBloc>()
-                                .add(SendMove(move))
-                            : null,
-                        pieceSet: PieceSet.merida(),
-                        theme: BoardTheme(
-                          lightSquare: const Color(0xFFF0D9B5),
-                          darkSquare: const Color(0xFFB58863),
-                          selected: AppColors.primaryLight.withOpacity(0.7),
-                          check: Colors.red.withOpacity(0.6),
-                          checkmate: Colors.red.withOpacity(0.6),
-                          previous: AppColors.gold.withOpacity(0.45),
-                          premove: AppColors.primaryLight.withOpacity(0.45),
-                        ),
-                        animationDuration: const Duration(milliseconds: 180),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: BoardController(
+                      state: state.boardState.board,
+                      playState: state.boardState.state,
+                      moves: state.boardState.moves,
+                      onMove: (state.isMyTurn && !state.moveInFlight)
+                          ? (move) => context
+                              .read<OnlineGameBloc>()
+                              .add(SendMove(move))
+                          : null,
+                      pieceSet: PieceSet.merida(),
+                      theme: const BoardTheme(
+                        lightSquare: _kBoardLight,
+                        darkSquare: _kBoardDark,
+                        selected: Color(0xFFFFFFAA),
+                        check: Color(0xAAFF3333),
+                        checkmate: Color(0xAAFF3333),
+                        previous: Color(0xAAF6F669),
+                        premove: Color(0x99AAD4AA),
                       ),
+                      animationDuration: const Duration(milliseconds: 180),
                     ),
                   ),
                 ),
               ),
 
-              // Move history
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: MoveHistoryPanel(moveSans: state.moveSans),
+              // Move bar
+              ChessMoveBar(moveSans: state.moveSans),
+
+              // My card + clock
+              _PlayerRow(
+                name: myIsBottom ? myName : oppName,
+                captured: myIsBottom ? myCaptured : oppCaptured,
+                isActive: bottomActive,
+                timeMs: state.isTimed ? bottomTimeMs : null,
               ),
 
-              // My info + clock (bottom)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: PlayerInfoBar(
-                        name: myIsBottom ? myName : oppName,
-                        captured: myIsBottom ? myCaptured : oppCaptured,
-                        isActive: myIsBottom ? state.isMyTurn : !state.isMyTurn,
-                      ),
-                    ),
-                    if (state.isTimed)
-                      _ChessClock(
-                        ms: bottomTimeMs ?? 0,
-                        isActive: myIsBottom ? state.isMyTurn : !state.isMyTurn,
-                      ),
-                  ],
-                ),
+              // Online action bar
+              _OnlineActionBar(
+                onResign: () => _confirmResign(context),
+                onDraw: () => context
+                    .read<OnlineGameBloc>()
+                    .add(const SendOfferDraw()),
+                onFlip: () => context
+                    .read<OnlineGameBloc>()
+                    .add(const FlipOnlineBoard()),
               ),
             ],
           ),
@@ -243,10 +242,9 @@ class OnlineGamePage extends StatelessWidget {
               left: 16,
               right: 16,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.warning,
+                  color: const Color(0xFFB45309),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Row(
@@ -265,18 +263,18 @@ class OnlineGamePage extends StatelessWidget {
               ),
             ),
 
-          // Draw offered banner
+          // Draw offer banner
           if (state.drawOffered)
             Positioned(
-              bottom: 100,
+              bottom: 70,
               left: 16,
               right: 16,
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.darkSurface,
+                  color: _kSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.gold),
+                  border: Border.all(color: const Color(0xFFD4AF37)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -308,7 +306,7 @@ class OnlineGamePage extends StatelessWidget {
                                 .read<OnlineGameBloc>()
                                 .add(const SendAcceptDraw()),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.gold,
+                              backgroundColor: const Color(0xFFD4AF37),
                               foregroundColor: Colors.black,
                             ),
                             child: const Text('Accept'),
@@ -329,25 +327,35 @@ class OnlineGamePage extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(state.resultLabel,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800)),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryLight,
-                  minimumSize: const Size(200, 52),
+              Text(
+                state.resultLabel,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Back to Chess',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
-                child: const Text('Back to Chess',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -377,19 +385,25 @@ class OnlineGamePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Resign?'),
-        content: const Text('You will forfeit this game.'),
+        backgroundColor: _kSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Resign?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        content: const Text('You will forfeit this game.',
+            style: TextStyle(color: Color(0xFF8B8682))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Color(0xFF8B8682)))),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<OnlineGameBloc>().add(const SendResign());
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign'),
+            child: const Text('Resign',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -417,16 +431,50 @@ class OnlineGamePage extends StatelessWidget {
       final isBlack = key == key.toLowerCase();
       if (isBlack == getBlackPieces) {
         final sym = symbols[key];
-        if (sym != null) {
-          result.addAll(List.filled(count, sym));
-        }
+        if (sym != null) result.addAll(List.filled(count, sym));
       }
     });
     return result;
   }
 }
 
-// ── Chess clock widget ────────────────────────────────────────────────────────
+// ── Player row (card + clock) ───────────────────────────────────────────────
+
+class _PlayerRow extends StatelessWidget {
+  final String name;
+  final List<String> captured;
+  final bool isActive;
+  final int? timeMs;
+
+  const _PlayerRow({
+    required this.name,
+    required this.captured,
+    required this.isActive,
+    this.timeMs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        ChessPlayerCard(
+          name: name,
+          isActive: isActive,
+          avatarColor: _kGreen,
+          captured: captured,
+        ),
+        if (timeMs != null)
+          Positioned(
+            right: 14,
+            child: _ChessClock(ms: timeMs!, isActive: isActive),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Chess clock ─────────────────────────────────────────────────────────────
 
 class _ChessClock extends StatelessWidget {
   final int ms;
@@ -439,30 +487,27 @@ class _ChessClock extends StatelessWidget {
     final totalSecs = (ms / 1000).ceil();
     final mins = totalSecs ~/ 60;
     final secs = totalSecs % 60;
-    final label = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-
-    final isLow = ms < 30000; // <30 seconds
-    final bg = isActive
-        ? (isLow ? Colors.red.shade700 : AppColors.primary)
-        : AppColors.darkSurface;
-    final fg = isActive ? Colors.white : Colors.white38;
+    final label =
+        '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    final isLow = ms < 30000;
 
     return Container(
-      margin: const EdgeInsets.only(left: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(10),
+        color: isActive
+            ? (isLow ? Colors.red.shade800 : _kGreen)
+            : const Color(0xFF1E1B18),
+        borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: Colors.red.shade300, width: 1.5)
+            ? Border.all(color: Colors.red.shade400, width: 1.5)
             : null,
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: fg,
+          color: isActive ? Colors.white : const Color(0xFF6B6762),
           fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-          fontSize: 16,
+          fontSize: 15,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
@@ -470,7 +515,88 @@ class _ChessClock extends StatelessWidget {
   }
 }
 
-// ── Result sheet ───────────────────────────────────────────────────────────────
+// ── Online action bar ────────────────────────────────────────────────────────
+
+class _OnlineActionBar extends StatelessWidget {
+  final VoidCallback onResign;
+  final VoidCallback onDraw;
+  final VoidCallback onFlip;
+
+  const _OnlineActionBar({
+    required this.onResign,
+    required this.onDraw,
+    required this.onFlip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      color: const Color(0xFF1E1B18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _Btn(icon: Icons.swap_vert_rounded, label: 'Flip', onTap: onFlip),
+          _Btn(
+            icon: Icons.handshake_outlined,
+            label: 'Draw',
+            onTap: onDraw,
+            color: const Color(0xFFD4AF37),
+          ),
+          _Btn(
+            icon: Icons.flag_rounded,
+            label: 'Resign',
+            onTap: onResign,
+            color: Colors.red[400],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Btn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _Btn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? const Color(0xFFBDB9B4);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: c),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: c,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Result sheet ──────────────────────────────────────────────────────────────
 
 class _OnlineResultSheet extends StatelessWidget {
   final OnlineGameOver state;
@@ -482,18 +608,18 @@ class _OnlineResultSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: _kSurface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40,
+            width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: const Color(0xFF4A4440),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -501,15 +627,16 @@ class _OnlineResultSheet extends StatelessWidget {
           Text(
             state.resultLabel,
             style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary),
+              color: _kGreen,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             '${state.moveSans.length} moves',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: const TextStyle(color: Color(0xFF8B8682), fontSize: 14),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -520,11 +647,11 @@ class _OnlineResultSheet extends StatelessWidget {
                 onClose();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: _kGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text('Back to Chess',
                   style: TextStyle(fontWeight: FontWeight.w700)),

@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart' hide GameState;
-import '../../../../core/theme/app_theme.dart';
 import '../bloc/game_bloc.dart';
 import '../bloc/game_event.dart';
 import '../bloc/game_state.dart';
-import '../widgets/player_info_bar.dart';
-import '../widgets/move_history_panel.dart';
+import '../widgets/chess_player_card.dart';
+import '../widgets/chess_move_bar.dart';
 import '../widgets/game_result_sheet.dart';
+
+const _kBg = Color(0xFF262421);
+const _kSurface = Color(0xFF312E2B);
+const _kGreen = Color(0xFF4A7C59);
+const _kBoardLight = Color(0xFFEEEED2);
+const _kBoardDark = Color(0xFF769656);
 
 class LocalGamePage extends StatefulWidget {
   final String whiteName;
@@ -49,7 +54,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
           Navigator.pop(context);
           _resultShown = false;
           context.read<GameBloc>().add(const NewGame());
-          Navigator.pop(context); // back to chess home
+          Navigator.pop(context);
         },
         onClose: () => Navigator.pop(context),
       ),
@@ -59,11 +64,16 @@ class _LocalGamePageState extends State<LocalGamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBg,
+        backgroundColor: _kBg,
         foregroundColor: Colors.white,
         elevation: 0,
+        leadingWidth: 44,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'Local Game',
           style: TextStyle(
@@ -78,15 +88,16 @@ class _LocalGamePageState extends State<LocalGamePage> {
               if (state is! GameInProgress) return const SizedBox.shrink();
               return Row(
                 children: [
-                  // Flip board
                   IconButton(
-                    icon: const Icon(Icons.flip, color: Colors.white70),
+                    icon: const Icon(Icons.swap_vert_rounded,
+                        color: Colors.white54, size: 22),
                     tooltip: 'Flip board',
-                    onPressed: () => context.read<GameBloc>().add(const FlipBoard()),
+                    onPressed: () =>
+                        context.read<GameBloc>().add(const FlipBoard()),
                   ),
-                  // Resign
                   IconButton(
-                    icon: const Icon(Icons.flag_outlined, color: Colors.white70),
+                    icon: const Icon(Icons.flag_rounded,
+                        color: Colors.white54, size: 22),
                     tooltip: 'Resign',
                     onPressed: () => _confirmResign(context, state),
                   ),
@@ -105,7 +116,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
           if (state is GameInProgress) return _buildGame(context, state);
           if (state is GameOver) return _buildGameOver(context, state);
           return const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryLight),
+            child: CircularProgressIndicator(color: _kGreen),
           );
         },
       ),
@@ -116,72 +127,68 @@ class _LocalGamePageState extends State<LocalGamePage> {
     final isWhiteTurn = state.isWhiteTurn;
     final bottomIsWhite = state.orientation == Squares.white;
 
-    // Who is shown at bottom (current player from board orientation POV)
     final bottomName = bottomIsWhite ? state.whiteName : state.blackName;
     final topName = bottomIsWhite ? state.blackName : state.whiteName;
     final bottomActive = bottomIsWhite ? isWhiteTurn : !isWhiteTurn;
     final topActive = !bottomActive;
-    final bottomCaptured = bottomIsWhite ? state.capturedByWhite : state.capturedByBlack;
-    final topCaptured = bottomIsWhite ? state.capturedByBlack : state.capturedByWhite;
+    final bottomCaptured =
+        bottomIsWhite ? state.capturedByWhite : state.capturedByBlack;
+    final topCaptured =
+        bottomIsWhite ? state.capturedByBlack : state.capturedByWhite;
 
     return SafeArea(
       child: Column(
         children: [
-          // Top player info
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: PlayerInfoBar(
-              name: topName,
-              captured: topCaptured,
-              isActive: topActive,
-              isTop: true,
-            ),
+          ChessPlayerCard(
+            name: topName,
+            isActive: topActive,
+            avatarColor: _kGreen,
+            captured: topCaptured,
           ),
 
-          // Chess board (expands to fill available space)
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: BoardController(
-                    state: state.boardState.board,
-                    playState: state.boardState.state,
-                    moves: state.boardState.moves,
-                    onMove: (move) =>
-                        context.read<GameBloc>().add(MakeMove(move)),
-                    pieceSet: PieceSet.merida(),
-                    theme: BoardTheme(
-                      lightSquare: const Color(0xFFF0D9B5),
-                      darkSquare: const Color(0xFFB58863),
-                      selected: AppColors.primaryLight.withOpacity(0.7),
-                      check: Colors.red.withOpacity(0.6),
-                      checkmate: Colors.red.withOpacity(0.6),
-                      previous: AppColors.gold.withOpacity(0.45),
-                      premove: AppColors.primaryLight.withOpacity(0.45),
-                    ),
-                    animationDuration: const Duration(milliseconds: 180),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: BoardController(
+                  state: state.boardState.board,
+                  playState: state.boardState.state,
+                  moves: state.boardState.moves,
+                  onMove: (move) =>
+                      context.read<GameBloc>().add(MakeMove(move)),
+                  pieceSet: PieceSet.merida(),
+                  theme: const BoardTheme(
+                    lightSquare: _kBoardLight,
+                    darkSquare: _kBoardDark,
+                    selected: Color(0xFFFFFFAA),
+                    check: Color(0xAAFF3333),
+                    checkmate: Color(0xAAFF3333),
+                    previous: Color(0xAAF6F669),
+                    premove: Color(0x99AAD4AA),
                   ),
+                  animationDuration: const Duration(milliseconds: 180),
                 ),
               ),
             ),
           ),
 
-          // Move history
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: MoveHistoryPanel(moveSans: state.moveSans),
+          ChessMoveBar(moveSans: state.moveSans),
+
+          ChessPlayerCard(
+            name: bottomName,
+            isActive: bottomActive,
+            avatarColor: _kGreen,
+            captured: bottomCaptured,
           ),
 
-          // Bottom player info
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: PlayerInfoBar(
-              name: bottomName,
-              captured: bottomCaptured,
-              isActive: bottomActive,
-            ),
+          _LocalActionBar(
+            onFlip: () => context.read<GameBloc>().add(const FlipBoard()),
+            onResign: () => _confirmResign(context, state),
+            onNewGame: () {
+              _resultShown = false;
+              context.read<GameBloc>().add(const NewGame());
+              Navigator.pop(context);
+            },
           ),
         ],
       ),
@@ -189,50 +196,46 @@ class _LocalGamePageState extends State<LocalGamePage> {
   }
 
   Widget _buildGameOver(BuildContext context, GameOver state) {
-    // Board is still visible behind the sheet; show a frozen board
     return SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkSurface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
                 state.resultLabel,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: () {
-                _resultShown = false;
-                context.read<GameBloc>().add(const NewGame());
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryLight,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _resultShown = false;
+                    context.read<GameBloc>().add(const NewGame());
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('New Game',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
               ),
-              child: const Text('New Game', style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -241,26 +244,106 @@ class _LocalGamePageState extends State<LocalGamePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Resign?'),
+        backgroundColor: _kSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Resign?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         content: Text(
           '${state.currentPlayerName} will forfeit this game.',
+          style: const TextStyle(color: Color(0xFF8B8682)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF8B8682))),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<GameBloc>().add(
-                Resign(whiteResigns: state.isWhiteTurn),
-              );
+              context
+                  .read<GameBloc>()
+                  .add(Resign(whiteResigns: state.isWhiteTurn));
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign'),
+            child: const Text('Resign',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocalActionBar extends StatelessWidget {
+  final VoidCallback onFlip;
+  final VoidCallback onResign;
+  final VoidCallback onNewGame;
+
+  const _LocalActionBar({
+    required this.onFlip,
+    required this.onResign,
+    required this.onNewGame,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      color: const Color(0xFF1E1B18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _Btn(icon: Icons.swap_vert_rounded, label: 'Flip', onTap: onFlip),
+          _Btn(icon: Icons.add_rounded, label: 'New Game', onTap: onNewGame),
+          _Btn(
+            icon: Icons.flag_rounded,
+            label: 'Resign',
+            onTap: onResign,
+            color: Colors.red[400],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Btn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _Btn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? const Color(0xFFBDB9B4);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: c),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: c,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

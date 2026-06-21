@@ -43,6 +43,10 @@ class FlipAiBoard extends AiGameEvent {
   const FlipAiBoard();
 }
 
+class TakeBackAiMove extends AiGameEvent {
+  const TakeBackAiMove();
+}
+
 // Internal — dispatched when Stockfish outputs a bestmove line
 class AiBestMove extends AiGameEvent {
   final String uci;

@@ -1,15 +1,22 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../bloc/ai_game_bloc.dart';
 import '../bloc/ai_game_event.dart';
 import '../bloc/ai_game_state.dart';
-import '../widgets/player_info_bar.dart';
-import '../widgets/move_history_panel.dart';
+import '../widgets/chess_player_card.dart';
+import '../widgets/chess_move_bar.dart';
+
+// ── Lichess colour palette ────────────────────────────────────────────────────
+const _kBg = Color(0xFF262421);
+const _kSurface = Color(0xFF312E2B);
+const _kGreen = Color(0xFF4A7C59);
+const _kBoardLight = Color(0xFFEEEED2);
+const _kBoardDark = Color(0xFF769656);
 
 class AiGamePage extends StatefulWidget {
   final int depth;
@@ -27,12 +34,24 @@ class AiGamePage extends StatefulWidget {
   State<AiGamePage> createState() => _AiGamePageState();
 }
 
-class _AiGamePageState extends State<AiGamePage> {
+class _AiGamePageState extends State<AiGamePage>
+    with SingleTickerProviderStateMixin {
   bool _resultShown = false;
+  bool _is3D = false;
+
+  late AnimationController _flipCtrl;
+  late Animation<double> _flipAnim;
 
   @override
   void initState() {
     super.initState();
+
+    _flipCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _flipAnim = CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOutCubic);
+
     final name = sl<LocalStorage>().getString('member_name') ?? 'You';
     context.read<AiGameBloc>().add(StartAiGame(
       playerName: name,
@@ -40,6 +59,21 @@ class _AiGamePageState extends State<AiGamePage> {
       skill: widget.skill,
       playerIsWhite: widget.playerIsWhite,
     ));
+  }
+
+  @override
+  void dispose() {
+    _flipCtrl.dispose();
+    super.dispose();
+  }
+
+  void _toggle3D() {
+    setState(() => _is3D = !_is3D);
+    if (_is3D) {
+      _flipCtrl.forward();
+    } else {
+      _flipCtrl.reverse();
+    }
   }
 
   void _showResult(BuildContext context, AiGameOver state) {
@@ -68,44 +102,8 @@ class _AiGamePageState extends State<AiGamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      appBar: AppBar(
-        backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: BlocBuilder<AiGameBloc, AiGameState>(
-          builder: (context, state) {
-            if (state is AiGameInProgress) {
-              return Text('vs ${state.aiName}',
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
-            }
-            return const Text('vs Computer',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
-          },
-        ),
-        actions: [
-          BlocBuilder<AiGameBloc, AiGameState>(
-            builder: (context, state) {
-              if (state is! AiGameInProgress) return const SizedBox.shrink();
-              return Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.flip, color: Colors.white70),
-                    tooltip: 'Flip board',
-                    onPressed: () =>
-                        context.read<AiGameBloc>().add(const FlipAiBoard()),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.flag_outlined, color: Colors.white70),
-                    tooltip: 'Resign',
-                    onPressed: () => _confirmResign(context),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+      backgroundColor: _kBg,
+      appBar: _buildAppBar(context),
       body: BlocConsumer<AiGameBloc, AiGameState>(
         listener: (context, state) {
           if (state is AiGameOver) _showResult(context, state);
@@ -121,19 +119,87 @@ class _AiGamePageState extends State<AiGamePage> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: _kBg,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      leadingWidth: 44,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: BlocBuilder<AiGameBloc, AiGameState>(
+        builder: (context, state) {
+          final label = state is AiGameInProgress
+              ? state.aiName
+              : 'vs Computer';
+          return Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          );
+        },
+      ),
+      actions: [
+        // 3D / 2D toggle
+        BlocBuilder<AiGameBloc, AiGameState>(
+          builder: (context, state) {
+            if (state is! AiGameInProgress) return const SizedBox.shrink();
+            return _AppBarBtn(
+              label: _is3D ? '2D' : '3D',
+              onTap: _toggle3D,
+            );
+          },
+        ),
+        // Flip board
+        BlocBuilder<AiGameBloc, AiGameState>(
+          builder: (context, state) {
+            if (state is! AiGameInProgress) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.swap_vert_rounded,
+                  color: Colors.white54, size: 22),
+              tooltip: 'Flip board',
+              onPressed: () =>
+                  context.read<AiGameBloc>().add(const FlipAiBoard()),
+            );
+          },
+        ),
+        const SizedBox(width: 4),
+      ],
+    );
+  }
+
+  // ── Loading ─────────────────────────────────────────────────────────────────
+
   Widget _buildLoading() {
     return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: AppColors.primaryLight),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: CircularProgressIndicator(
+              color: _kGreen,
+              strokeWidth: 3,
+            ),
+          ),
           SizedBox(height: 16),
           Text('Loading Stockfish…',
-              style: TextStyle(color: Colors.white70, fontSize: 16)),
+              style: TextStyle(
+                color: Color(0xFF8B8682),
+                fontSize: 15,
+              )),
         ],
       ),
     );
   }
+
+  // ── Main game layout ────────────────────────────────────────────────────────
 
   Widget _buildGame(BuildContext context, AiGameInProgress state) {
     final bottomIsPlayer = state.orientation == Squares.white
@@ -142,122 +208,160 @@ class _AiGamePageState extends State<AiGamePage> {
 
     final bottomName = bottomIsPlayer ? state.playerName : state.aiName;
     final topName = bottomIsPlayer ? state.aiName : state.playerName;
-    final bottomActive = bottomIsPlayer ? state.isPlayerTurn : !state.isPlayerTurn;
+    final bottomActive =
+        bottomIsPlayer ? state.isPlayerTurn : !state.isPlayerTurn;
     final topActive = !bottomActive;
-    final bottomCaptured = bottomIsPlayer ? state.capturedByPlayer : state.capturedByAi;
-    final topCaptured = bottomIsPlayer ? state.capturedByAi : state.capturedByPlayer;
+    final bottomCaptured =
+        bottomIsPlayer ? state.capturedByPlayer : state.capturedByAi;
+    final topCaptured =
+        bottomIsPlayer ? state.capturedByAi : state.capturedByPlayer;
+    final topIsAi = bottomIsPlayer;
 
     return SafeArea(
       child: Column(
         children: [
-          // Top player (opponent / AI)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: PlayerInfoBar(
-                    name: topName,
-                    captured: topCaptured,
-                    isActive: topActive,
-                    isTop: true,
-                  ),
-                ),
-                if (state.isThinking && topActive)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.primaryLight,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          // ── Opponent card ────────────────────────────────────────────────
+          ChessPlayerCard(
+            name: topName,
+            isActive: topActive,
+            isThinking: state.isThinking && topActive,
+            avatarColor: topIsAi ? const Color(0xFF5B4B8A) : _kGreen,
+            avatarWidget: topIsAi
+                ? const Text('🤖', style: TextStyle(fontSize: 20))
+                : null,
+            captured: topCaptured,
           ),
 
-          // Board
+          // ── Board ────────────────────────────────────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: BoardController(
-                    state: state.boardState.board,
-                    playState: state.boardState.state,
-                    moves: state.boardState.moves,
-                    onMove: (state.isPlayerTurn && !state.isThinking)
-                        ? (move) =>
-                            context.read<AiGameBloc>().add(MakeAiMove(move))
-                        : null,
-                    pieceSet: PieceSet.merida(),
-                    theme: BoardTheme(
-                      lightSquare: const Color(0xFFF0D9B5),
-                      darkSquare: const Color(0xFFB58863),
-                      selected: AppColors.primaryLight.withOpacity(0.7),
-                      check: Colors.red.withOpacity(0.6),
-                      checkmate: Colors.red.withOpacity(0.6),
-                      previous: AppColors.gold.withOpacity(0.45),
-                      premove: AppColors.primaryLight.withOpacity(0.45),
+                  child: AnimatedBuilder(
+                    animation: _flipAnim,
+                    builder: (context, child) {
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform: _build3DMatrix(_flipAnim.value),
+                        child: child,
+                      );
+                    },
+                    child: BoardController(
+                      state: state.boardState.board,
+                      playState: state.boardState.state,
+                      moves: state.boardState.moves,
+                      onMove: (state.isPlayerTurn && !state.isThinking)
+                          ? (move) =>
+                              context.read<AiGameBloc>().add(MakeAiMove(move))
+                          : null,
+                      pieceSet: PieceSet.merida(),
+                      theme: const BoardTheme(
+                        lightSquare: _kBoardLight,
+                        darkSquare: _kBoardDark,
+                        selected: Color(0xFFFFFFAA),
+                        check: Color(0xAAFF3333),
+                        checkmate: Color(0xAAFF3333),
+                        previous: Color(0xAAF6F669),
+                        premove: Color(0x99AAD4AA),
+                      ),
+                      animationDuration: const Duration(milliseconds: 200),
                     ),
-                    animationDuration: const Duration(milliseconds: 200),
                   ),
                 ),
               ),
             ),
           ),
 
-          // Move history
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: MoveHistoryPanel(moveSans: state.moveSans),
+          // ── Move bar ─────────────────────────────────────────────────────
+          ChessMoveBar(
+            moveSans: state.moveSans,
+            isThinking: state.isThinking,
+            thinkingLabel: state.aiName,
           ),
 
-          // Bottom player (usually the human)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: PlayerInfoBar(
-              name: bottomName,
-              captured: bottomCaptured,
-              isActive: bottomActive,
-            ),
+          // ── Player card ──────────────────────────────────────────────────
+          ChessPlayerCard(
+            name: bottomName,
+            isActive: bottomActive,
+            isThinking: false,
+            avatarColor:
+                bottomIsPlayer ? _kGreen : const Color(0xFF5B4B8A),
+            captured: bottomCaptured,
+          ),
+
+          // ── Action bar ───────────────────────────────────────────────────
+          _ActionBar(
+            onTakeBack: state.moveSans.length >= 2
+                ? () => context
+                    .read<AiGameBloc>()
+                    .add(const TakeBackAiMove())
+                : null,
+            onNewGame: () {
+              _resultShown = false;
+              context.read<AiGameBloc>().add(const NewAiGame());
+              Navigator.pop(context);
+            },
+            onResign: () => _confirmResign(context),
           ),
         ],
       ),
     );
   }
 
+  // ── Game over ────────────────────────────────────────────────────────────────
+
   Widget _buildOver(BuildContext context, AiGameOver state) {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(state.resultLabel,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800)),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  _resultShown = false;
-                  context.read<AiGameBloc>().add(const NewAiGame());
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryLight,
-                  minimumSize: const Size(200, 52),
+              Text(
+                state.resultLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
-                child: const Text('Back',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${state.moveSans.length} moves played',
+                style: const TextStyle(
+                  color: Color(0xFF8B8682),
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _resultShown = false;
+                    context.read<AiGameBloc>().add(const NewAiGame());
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'New Game',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w700)),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -266,23 +370,141 @@ class _AiGamePageState extends State<AiGamePage> {
     );
   }
 
+  // ── Resign dialog ──────────────────────────────────────────────────────────
+
   void _confirmResign(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Resign?'),
-        content: const Text('You will forfeit this game to Stockfish.'),
+        backgroundColor: _kSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Resign?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Forfeit this game to ${(context.read<AiGameBloc>().state is AiGameInProgress) ? (context.read<AiGameBloc>().state as AiGameInProgress).aiName : "Stockfish"}?',
+          style: const TextStyle(color: Color(0xFF8B8682)),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF8B8682)),
+            ),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<AiGameBloc>().add(const ResignToAi());
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign'),
+            child: const Text(
+              'Resign',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 3D perspective matrix ──────────────────────────────────────────────────
+
+  Matrix4 _build3DMatrix(double t) {
+    final m = Matrix4.identity();
+    if (t <= 0) return m;
+
+    // Tilt: rotate X axis + slight Y rotation for depth illusion
+    final tiltX = t * (math.pi / 8);   // max ~22.5° tilt back
+    final tiltY = t * (math.pi / 48);  // subtle lateral angle
+
+    // Apply perspective
+    m.setEntry(3, 2, -0.0015 * t);
+    m.rotateX(tiltX);
+    m.rotateY(tiltY);
+
+    // Scale down slightly so board fits while tilted
+    final scale = 1.0 - 0.08 * t;
+    m.scale(scale, scale, 1.0);
+
+    return m;
+  }
+}
+
+// ── App bar button ──────────────────────────────────────────────────────────
+
+class _AppBarBtn extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _AppBarBtn({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFF4A4440)),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFBDB9B4),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Bottom action bar ──────────────────────────────────────────────────────
+
+class _ActionBar extends StatelessWidget {
+  final VoidCallback? onTakeBack;
+  final VoidCallback onNewGame;
+  final VoidCallback onResign;
+
+  const _ActionBar({
+    required this.onTakeBack,
+    required this.onNewGame,
+    required this.onResign,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      color: const Color(0xFF1E1B18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _ActionBtn(
+            icon: Icons.undo_rounded,
+            label: 'Take Back',
+            onTap: onTakeBack,
+            disabled: onTakeBack == null,
+          ),
+          _ActionBtn(
+            icon: Icons.add_rounded,
+            label: 'New Game',
+            onTap: onNewGame,
+          ),
+          _ActionBtn(
+            icon: Icons.flag_rounded,
+            label: 'Resign',
+            onTap: onResign,
+            color: Colors.red[400],
           ),
         ],
       ),
@@ -290,7 +512,52 @@ class _AiGamePageState extends State<AiGamePage> {
   }
 }
 
-// ── Result sheet ───────────────────────────────────────────────────────────────
+class _ActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool disabled;
+  final Color? color;
+
+  const _ActionBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.disabled = false,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = disabled
+        ? const Color(0xFF4A4440)
+        : (color ?? const Color(0xFFBDB9B4));
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: effectiveColor),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: effectiveColor,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Result bottom sheet ────────────────────────────────────────────────────
 
 class _AiResultSheet extends StatelessWidget {
   final AiGameOver state;
@@ -308,57 +575,61 @@ class _AiResultSheet extends StatelessWidget {
     final playerWon = state.result == 'player_wins';
     final isDraw = state.result == 'draw';
     final emoji = isDraw ? '🤝' : (playerWon ? '🏆' : '🤖');
+    final resultColor = isDraw
+        ? const Color(0xFF8B8682)
+        : (playerWon ? _kGreen : Colors.red[400]!);
 
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: _kSurface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle
           Container(
-            width: 40,
+            width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: const Color(0xFF4A4440),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 20),
-          Text(emoji, style: const TextStyle(fontSize: 48)),
+          const SizedBox(height: 24),
+          Text(emoji, style: const TextStyle(fontSize: 52)),
           const SizedBox(height: 12),
           Text(
             state.resultLabel,
-            style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
+            style: TextStyle(
+              color: resultColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
             '${state.moveSans.length} moves',
-            style:
-                const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: const TextStyle(
+              color: Color(0xFF8B8682),
+              fontSize: 14,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onClose();
-                  },
+                  onPressed: onClose,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.border),
+                    foregroundColor: const Color(0xFF8B8682),
+                    side: const BorderSide(color: Color(0xFF4A4440)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusBtn)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: const Text('Review'),
                 ),
@@ -368,15 +639,17 @@ class _AiResultSheet extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onPlayAgain,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: _kGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusBtn)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: const Text('Play Again',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Play Again',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],
