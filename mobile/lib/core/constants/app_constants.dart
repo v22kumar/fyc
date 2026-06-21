@@ -5,6 +5,7 @@ class AppConstants {
   static const String tokenKey = 'fyc_auth_token';
   static const String langKey = 'fyc_lang';
   static const String orgIdKey = 'fyc_org_id';
+  static const String themeKey = 'fyc_theme'; // 'light' | 'dark' | 'system'
   static const String defaultLang = 'ta';
 
   static const List<String> bloodGroups = [

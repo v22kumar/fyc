@@ -74,6 +74,7 @@ import '../../features/issues/presentation/screens/issues_track_screen.dart';
 
 // About
 import '../../features/about/presentation/screens/about_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 
 // Volunteer certificate
 import '../../features/volunteers/presentation/screens/certificate_screen.dart';
@@ -253,6 +254,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/about',
       builder: (context, state) => const AboutScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       path: '/certificate',

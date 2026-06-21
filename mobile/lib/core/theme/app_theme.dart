@@ -30,6 +30,24 @@ class AppColors {
 
   static const Color success = Color(0xFF10B981);       // Emerald 500
   static const Color warning = Color(0xFFF59E0B);       // Amber 500
+
+  // ── Dark theme palette ─────────────────────────────────────────────────────
+  static const Color darkBackground = Color(0xFF0B0F0D); // near-black green
+  static const Color darkCard = Color(0xFF161B22);       // elevated surface
+  static const Color darkBorder = Color(0xFF222B33);     // subtle divider
+  static const Color darkText = Color(0xFFF1F5F9);        // off-white
+  static const Color darkTextSecondary = Color(0xFF94A3B8); // slate 400
+}
+
+/// Theme-aware colour getters — use `context.cSurface` etc. so a widget renders
+/// correctly in both light and dark mode without touching every call site.
+extension AppColorsX on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Color get cBackground => isDark ? AppColors.darkBackground : AppColors.background;
+  Color get cSurface => isDark ? AppColors.darkCard : AppColors.surface;
+  Color get cText => isDark ? AppColors.darkText : AppColors.textPrimary;
+  Color get cTextSecondary => isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+  Color get cBorder => isDark ? AppColors.darkBorder : AppColors.border;
 }
 
 class AppTheme {
@@ -232,6 +250,82 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
+        ),
+      );
+
+  static ThemeData get dark => ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.dark,
+          primary: AppColors.primaryLight,
+          secondary: AppColors.primary,
+          surface: AppColors.darkCard,
+          background: AppColors.darkBackground,
+          error: AppColors.accent,
+        ),
+        scaffoldBackgroundColor: AppColors.darkBackground,
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData(brightness: Brightness.dark).textTheme).apply(
+          bodyColor: AppColors.darkText,
+          displayColor: AppColors.darkText,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.darkBackground,
+          foregroundColor: AppColors.darkText,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: GoogleFonts.outfit(
+            color: AppColors.darkText,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+          iconTheme: const IconThemeData(color: AppColors.darkText),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryLight,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 54),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusBtn)),
+            textStyle: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            elevation: 0,
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.darkCard,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radiusBtn),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radiusBtn),
+            borderSide: const BorderSide(color: AppColors.darkBorder),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radiusBtn),
+            borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          hintStyle: GoogleFonts.outfit(color: AppColors.darkTextSecondary, fontSize: 14),
+        ),
+        cardTheme: CardThemeData(
+          color: AppColors.darkCard,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusCard),
+            side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          ),
+          margin: EdgeInsets.zero,
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: AppColors.darkCard,
+          selectedItemColor: AppColors.primaryLight,
+          unselectedItemColor: AppColors.darkTextSecondary,
+          type: BottomNavigationBarType.fixed,
+          elevation: 12,
         ),
       );
 }

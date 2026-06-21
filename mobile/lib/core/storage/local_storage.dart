@@ -24,6 +24,13 @@ class LocalStorage {
   String getLang() =>
       _prefs.getString(AppConstants.langKey) ?? AppConstants.defaultLang;
 
+  // Theme preference: 'light' | 'dark' | 'system'
+  Future<void> saveTheme(String mode) async =>
+      _prefs.setString(AppConstants.themeKey, mode);
+
+  String getTheme() =>
+      _prefs.getString(AppConstants.themeKey) ?? 'light';
+
   // Generic getString
   String? getString(String key) => _prefs.getString(key);
 

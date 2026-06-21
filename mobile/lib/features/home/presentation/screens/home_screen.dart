@@ -12,6 +12,10 @@ import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
+import '../../../news/presentation/widgets/daily_news_card.dart';
+import '../widgets/weather_card.dart';
+import '../widgets/gold_price_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (state is AuthUnauthenticated) context.go('/login');
       },
       child: Scaffold(
-        backgroundColor: AppColors.darkBg,
+        backgroundColor: context.cBackground,
         extendBody: true,
         body: RefreshIndicator(
           color: AppColors.primaryLight,
@@ -57,9 +61,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Transform.translate(
                 offset: const Offset(0, -22),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                  decoration: BoxDecoration(
+                    color: context.cBackground,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
                   ),
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: Column(
@@ -74,6 +78,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       _ImpactStats(l: l),
                       const SizedBox(height: 22),
                       const _UpcomingAndNews(),
+                      const SizedBox(height: 22),
+                      _SectionHeader(title: 'Today'),
+                      const SizedBox(height: 12),
+                      const DailyThirukkuralCard(),
+                      const SizedBox(height: 14),
+                      const DailyNewsCard(),
+                      const SizedBox(height: 14),
+                      const WeatherCard(),
+                      const SizedBox(height: 14),
+                      const GoldPriceCard(),
                       const SizedBox(height: 130),
                     ],
                   ),
@@ -202,7 +216,7 @@ class _Header extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: () => _showMoreSheet(context),
+                            onTap: () => context.push('/settings'),
                             child: CircleAvatar(
                               radius: 18,
                               backgroundColor: Colors.white.withOpacity(0.15),
@@ -479,10 +493,10 @@ class _ServiceTile extends StatelessWidget {
     return Pressable(
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cSurface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: context.cBorder),
+          boxShadow: context.isDark ? null : AppTheme.cardShadow,
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -497,22 +511,22 @@ class _ServiceTile extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: s.color.withOpacity(0.12),
+                    color: s.color.withOpacity(context.isDark ? 0.22 : 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: s.glyph != null
-                        ? Text(s.glyph!, style: TextStyle(fontSize: 22, color: s.color, height: 1))
+                        ? Text(s.glyph!, style: TextStyle(fontSize: 22, color: context.isDark && s.color == const Color(0xFF0F172A) ? Colors.white : s.color, height: 1))
                         : Icon(s.icon, color: s.color, size: 21),
                   ),
                 ),
                 const SizedBox(height: 7),
                 Text(s.label,
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: context.cText),
                     textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 1),
                 Text(s.sub,
-                    style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w500, color: context.cTextSecondary),
                     textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -536,31 +550,31 @@ class _AnnouncementsBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.primarySurface,
+            color: context.isDark ? AppColors.primaryLight.withOpacity(0.12) : AppColors.primarySurface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primaryLight.withOpacity(0.20)),
+            border: Border.all(color: AppColors.primaryLight.withOpacity(context.isDark ? 0.30 : 0.20)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.14), shape: BoxShape.circle),
-                child: const Icon(Icons.campaign_rounded, color: AppColors.primary, size: 18),
+                decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.18), shape: BoxShape.circle),
+                child: Icon(Icons.campaign_rounded, color: context.isDark ? AppColors.primaryLight : AppColors.primary, size: 18),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Announcements',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
                     Text('Annual Sports Meet on 25th May!',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        style: TextStyle(fontSize: 11, color: context.cTextSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
-              const Text('View All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
-              const Icon(Icons.chevron_right, color: AppColors.primary, size: 18),
+              Text('View All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
+              Icon(Icons.chevron_right, color: context.isDark ? AppColors.primaryLight : AppColors.primary, size: 18),
             ],
           ),
         ),
@@ -597,16 +611,16 @@ class _ImpactStats extends StatelessWidget {
                 margin: EdgeInsets.only(right: isLast ? 0 : 8),
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
                 decoration: BoxDecoration(
-                  color: s.$4,
+                  color: context.isDark ? s.$3.withOpacity(0.16) : s.$4,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: s.$3.withOpacity(0.18)),
+                  border: Border.all(color: s.$3.withOpacity(context.isDark ? 0.30 : 0.18)),
                 ),
                 child: Column(
                   children: [
-                    Text(s.$1, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: s.$3)),
+                    Text(s.$1, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.isDark ? s.$3.withOpacity(0.95) : s.$3)),
                     const SizedBox(height: 3),
                     Text(s.$2,
-                        style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
                         textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
@@ -682,7 +696,7 @@ class _MiniCard extends StatelessWidget {
           children: [
             Flexible(
               child: Text(sectionTitle,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cText),
                   maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             GestureDetector(
@@ -698,10 +712,10 @@ class _MiniCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.cSurface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-                boxShadow: AppTheme.cardShadow,
+                border: Border.all(color: context.cBorder),
+                boxShadow: context.isDark ? null : AppTheme.cardShadow,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,16 +723,16 @@ class _MiniCard extends StatelessWidget {
                   Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(color: iconColor.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: iconColor.withOpacity(context.isDark ? 0.22 : 0.12), borderRadius: BorderRadius.circular(10)),
                     child: Icon(icon, color: iconColor, size: 18),
                   ),
                   const SizedBox(height: 10),
                   Text(title,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.cText),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
@@ -742,7 +756,7 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.3)),
+        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3)),
         if (onViewAll != null)
           GestureDetector(
             onTap: onViewAll,
@@ -779,10 +793,10 @@ class _BottomBar extends StatelessWidget {
                   child: Container(
                     height: 64,
                     decoration: BoxDecoration(
-                      color: AppColors.surface.withOpacity(0.96),
+                      color: context.cSurface.withOpacity(0.96),
                       borderRadius: BorderRadius.circular(26),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppTheme.cardShadow,
+                      border: Border.all(color: context.cBorder),
+                      boxShadow: context.isDark ? null : AppTheme.cardShadow,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -812,7 +826,7 @@ class _BottomBar extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: AppTheme.gradientPrimary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.background, width: 3),
+                        border: Border.all(color: context.cBackground, width: 3),
                         boxShadow: [
                           BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4)),
                         ],
@@ -820,7 +834,7 @@ class _BottomBar extends StatelessWidget {
                       child: const Icon(Icons.add, color: Colors.white, size: 28),
                     ),
                     const SizedBox(height: 2),
-                    const Text('Create', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                    Text('Create', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
                   ],
                 ),
               ),
@@ -841,7 +855,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.primary : AppColors.textSecondary;
+    final color = active
+        ? (context.isDark ? AppColors.primaryLight : AppColors.primary)
+        : context.cTextSecondary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -873,9 +889,9 @@ void _showCreateSheet(BuildContext context) {
     context: context,
     backgroundColor: Colors.transparent,
     builder: (_) => Container(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      decoration: BoxDecoration(
+        color: context.cBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: Column(
@@ -883,10 +899,10 @@ void _showCreateSheet(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(4))),
+            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
           ),
           const SizedBox(height: 18),
-          const Text('Create', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Create', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
           const SizedBox(height: 14),
           ...actions.map((a) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -899,22 +915,22 @@ void _showCreateSheet(BuildContext context) {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.cSurface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.cBorder),
                       ),
                       child: Row(
                         children: [
                           Container(
                             width: 42,
                             height: 42,
-                            decoration: BoxDecoration(color: a.$4.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                            decoration: BoxDecoration(color: a.$4.withOpacity(0.14), borderRadius: BorderRadius.circular(12)),
                             child: Icon(a.$1, color: a.$4, size: 20),
                           ),
                           const SizedBox(width: 14),
-                          Text(a.$2, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                          Text(a.$2, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.cText)),
                           const Spacer(),
-                          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                          Icon(Icons.chevron_right, color: context.cTextSecondary),
                         ],
                       ),
                     ),
@@ -979,6 +995,7 @@ class _MoreSheet extends StatelessWidget {
       (
         ta ? 'கணக்கு' : 'Account',
         [
+          _MenuItem('⚙️', ta ? 'அமைப்புகள்' : 'Settings', '/settings', const Color(0xFF475569)),
           _MenuItem('🎓', ta ? 'சான்றிதழ்' : 'Certificates', '/certificate', const Color(0xFF6366F1)),
           _MenuItem('ℹ️', ta ? 'எங்களைப் பற்றி' : 'About', '/about', AppColors.textSecondary),
         ],
@@ -991,21 +1008,21 @@ class _MoreSheet extends StatelessWidget {
       maxChildSize: 0.94,
       expand: false,
       builder: (_, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: context.cBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: ListView(
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
           children: [
             Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(4))),
+              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
             ),
             const SizedBox(height: 20),
             for (final section in sections) ...[
               Text(section.$1,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.cTextSecondary, letterSpacing: 0.5)),
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 3,
@@ -1017,12 +1034,12 @@ class _MoreSheet extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
-            const Divider(color: AppColors.border),
+            Divider(color: context.cBorder),
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.logout, color: AppColors.accent),
-              title: Text(l.logout, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              title: Text(l.logout, style: TextStyle(fontWeight: FontWeight.bold, color: context.cText)),
               onTap: () {
                 Navigator.pop(context);
                 context.read<AuthBloc>().add(const AuthLogoutRequested());
@@ -1044,10 +1061,10 @@ class _BentoTile extends StatelessWidget {
     return Pressable(
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: context.cBorder),
+          boxShadow: context.isDark ? null : AppTheme.cardShadow,
         ),
         child: Material(
           color: Colors.transparent,
@@ -1065,12 +1082,12 @@ class _BentoTile extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(color: item.color.withOpacity(0.08), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: item.color.withOpacity(context.isDark ? 0.18 : 0.08), shape: BoxShape.circle),
                     child: Text(item.icon, style: const TextStyle(fontSize: 22)),
                   ),
                   const SizedBox(height: 6),
                   Text(item.label,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.cText),
                       textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
