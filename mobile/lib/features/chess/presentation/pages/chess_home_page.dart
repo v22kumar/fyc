@@ -111,8 +111,7 @@ class ChessHomePage extends StatelessWidget {
                       titleTa: 'கணினி எதிர்',
                       description: 'Practice against Stockfish AI',
                       color: const Color(0xFF7C3AED),
-                      onTap: null, // Sprint 6
-                      comingSoon: true,
+                      onTap: () => _startAiGame(context),
                     ),
                     const SizedBox(height: 12),
                     _ModeCard(
@@ -167,11 +166,27 @@ class ChessHomePage extends StatelessWidget {
         defaultBlack: 'Black',
         onStart: (white, black) {
           Navigator.pop(ctx);
-          context.read<GameBloc>().add(const NewGame()); // reset any previous
+          context.read<GameBloc>().add(const NewGame());
           context.push(
             '/chess/local',
             extra: {'white': white, 'black': black},
           );
+        },
+      ),
+    );
+  }
+
+  void _startAiGame(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _DifficultyDialog(
+        onStart: (depth, skill, playerIsWhite) {
+          Navigator.pop(ctx);
+          context.push('/chess/ai', extra: {
+            'depth': depth,
+            'skill': skill,
+            'playerIsWhite': playerIsWhite,
+          });
         },
       ),
     );
@@ -606,6 +621,164 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
           child: const Text('Start Game'),
         ),
       ],
+    );
+  }
+}
+
+// ── Difficulty picker dialog ───────────────────────────────────────────────────
+
+class _Difficulty {
+  final String label;
+  final String emoji;
+  final int depth;
+  final int skill;
+  const _Difficulty(this.label, this.emoji, this.depth, this.skill);
+}
+
+class _DifficultyDialog extends StatefulWidget {
+  final void Function(int depth, int skill, bool playerIsWhite) onStart;
+  const _DifficultyDialog({required this.onStart});
+
+  @override
+  State<_DifficultyDialog> createState() => _DifficultyDialogState();
+}
+
+class _DifficultyDialogState extends State<_DifficultyDialog> {
+  static const _levels = [
+    _Difficulty('Beginner', '🌱', 1, 0),
+    _Difficulty('Easy', '😊', 3, 5),
+    _Difficulty('Medium', '🎯', 5, 10),
+    _Difficulty('Hard', '🔥', 8, 15),
+    _Difficulty('Expert', '💀', 12, 20),
+  ];
+
+  int _selectedIndex = 2; // Default: Medium
+  bool _playerIsWhite = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('vs Computer',
+          style: TextStyle(fontWeight: FontWeight.w700)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Difficulty',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, color: AppColors.textSecondary, fontSize: 13)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(_levels.length, (i) {
+              final d = _levels[i];
+              final selected = _selectedIndex == i;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedIndex = i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: selected ? AppColors.primary : AppColors.border,
+                    ),
+                  ),
+                  child: Text(
+                    '${d.emoji} ${d.label}',
+                    style: TextStyle(
+                      color: selected ? Colors.white : AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 20),
+          const Text('Play as',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, color: AppColors.textSecondary, fontSize: 13)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _ColorChip(
+                  label: '♔ White',
+                  selected: _playerIsWhite,
+                  onTap: () => setState(() => _playerIsWhite = true),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ColorChip(
+                  label: '♚ Black',
+                  selected: !_playerIsWhite,
+                  onTap: () => setState(() => _playerIsWhite = false),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final d = _levels[_selectedIndex];
+            widget.onStart(d.depth, d.skill, _playerIsWhite);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
+          ),
+          child: const Text('Play'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ColorChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ColorChip(
+      {required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? Colors.white : AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }

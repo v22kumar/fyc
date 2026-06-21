@@ -34,12 +34,14 @@ import '../../features/chess/presentation/bloc/online_game_bloc.dart';
 import '../../features/chess/presentation/bloc/online_game_event.dart';
 import '../../features/chess/presentation/bloc/spectator_bloc.dart';
 import '../../features/chess/presentation/bloc/spectator_event.dart';
+import '../../features/chess/presentation/bloc/ai_game_bloc.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
 import '../../features/chess/presentation/pages/game_history_page.dart';
 import '../../features/chess/presentation/pages/challenge_page.dart';
 import '../../features/chess/presentation/pages/online_game_page.dart';
 import '../../features/chess/presentation/pages/spectator_page.dart';
+import '../../features/chess/presentation/pages/ai_game_page.dart';
 
 // Green FYC
 import '../../features/green_fyc/presentation/bloc/green_bloc.dart';
@@ -319,6 +321,20 @@ final appRouter = GoRouter(
               create: (_) => SpectatorBloc()
                 ..add(ConnectSpectator(gameId: gameId, token: token)),
               child: SpectatorPage(gameId: gameId),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'ai',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (_) => AiGameBloc(),
+              child: AiGamePage(
+                depth: extra['depth'] as int? ?? 5,
+                skill: extra['skill'] as int? ?? 10,
+                playerIsWhite: extra['playerIsWhite'] as bool? ?? true,
+              ),
             );
           },
         ),
