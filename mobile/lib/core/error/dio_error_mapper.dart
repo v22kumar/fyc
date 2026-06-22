@@ -17,7 +17,10 @@ Failure mapDioException(DioException e) {
   }
 
   final data = e.response?.data;
-  final detail = (data is Map ? data['detail'] as String? : null) ?? 'Error';
+  // FastAPI validation errors return detail as a List, not a String.
+  // Fall back to a user-readable message rather than the raw value.
+  final rawDetail = data is Map ? data['detail'] : null;
+  final detail = rawDetail is String ? rawDetail : 'Something went wrong (${e.response?.statusCode ?? 'offline'})';
 
   switch (e.response?.statusCode) {
     case 401:
