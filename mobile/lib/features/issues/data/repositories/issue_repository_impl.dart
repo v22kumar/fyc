@@ -16,6 +16,7 @@ class IssueRepositoryImpl implements IssueRepository {
     required double latitude,
     required double longitude,
     String? photoUrl,
+    bool isEmergency = false,
   }) async {
     try {
       final issue = await _remote.submitIssue(
@@ -25,6 +26,7 @@ class IssueRepositoryImpl implements IssueRepository {
         latitude: latitude,
         longitude: longitude,
         photoUrl: photoUrl,
+        isEmergency: isEmergency,
       );
       return Right(issue);
     } on Failure catch (f) {

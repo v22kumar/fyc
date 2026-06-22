@@ -2,27 +2,85 @@ from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.issue import PublicIssue, IssueStatus, VALID_TRANSITIONS
 from app.models.user import User
 from app.models.audit import AuditLog
-from app.schemas.issue import IssueCreate, IssueStatusUpdate, IssueOut
+from app.schemas.issue import IssueCreate, IssueStatusUpdate, IssueOut, IssueStats
 from app.dependencies import get_current_user, RoleChecker, get_current_token_payload
 from app.middleware.tenant import get_current_tenant_id, require_tenant_id
+from app.services.notifications import notify_issue_assigned, notify_issue_resolved
 
 router = APIRouter(prefix="/issues", tags=["Public Issues"])
 
 require_staff = RoleChecker(["VOLUNTEER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 require_executive = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
+# Category → department label mapping (used in notifications)
+_DEPT_MAP = {
+    "ROAD":         "Municipal Engineering / PWD",
+    "WATER":        "Water Supply Board",
+    "STREET_LIGHT": "Electricity Board / Municipality",
+    "GARBAGE":      "Sanitation Department",
+    "SAFETY":       "Police / Fire & Rescue",
+    "OTHER":        "General Administration",
+}
+
+
+@router.get("/stats", response_model=IssueStats)
+def get_issue_stats(
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Public stats for the home screen header — no auth required."""
+    base = db.query(PublicIssue).filter(PublicIssue.organization_id == tenant_id)
+    total = base.count()
+    resolved = base.filter(
+        PublicIssue.status.in_([IssueStatus.RESOLVED, IssueStatus.CLOSED])
+    ).count()
+    resolution_rate = round(resolved * 100 / total) if total else 0
+
+    # Avg days from created_at to updated_at for resolved issues
+    resolved_q = base.filter(
+        PublicIssue.status.in_([IssueStatus.RESOLVED, IssueStatus.CLOSED])
+    ).all()
+    if resolved_q:
+        total_days = sum(
+            (i.updated_at - i.created_at).total_seconds() / 86400
+            for i in resolved_q
+        )
+        avg_days = round(total_days / len(resolved_q), 1)
+    else:
+        avg_days = 0.0
+
+    # "Active citizens" = distinct reporters (rough proxy)
+    active = (
+        db.query(func.count(func.distinct(PublicIssue.reported_by_user_id)))
+        .filter(
+            PublicIssue.organization_id == tenant_id,
+            PublicIssue.reported_by_user_id.isnot(None),
+        )
+        .scalar()
+        or 0
+    )
+
+    return IssueStats(
+        total=total,
+        resolved=resolved,
+        resolution_rate=resolution_rate,
+        avg_response_days=avg_days,
+        active_citizens=active,
+    )
+
+
 @router.post("", response_model=IssueOut, status_code=status.HTTP_201_CREATED)
 def submit_issue(
     payload: IssueCreate,
     request: Request,
     db: Session = Depends(get_db),
-    authorization: Optional[str] = None
 ):
     """
     Submit a public issue. Can be called anonymously (no auth required).
@@ -37,6 +95,7 @@ def submit_issue(
 
     # Attempt to extract user from token (optional auth)
     reported_by_user_id = None
+    reporter_fcm_token = None
     auth_header = request.headers.get("Authorization")
     if auth_header:
         try:
@@ -44,9 +103,13 @@ def submit_issue(
             parts = auth_header.split()
             if len(parts) == 2 and parts[0].lower() == "bearer":
                 payload_token = decode_token(parts[1])
-                reported_by_user_id = UUID(payload_token["sub"])
+                uid = UUID(payload_token["sub"])
+                reported_by_user_id = uid
+                user = db.query(User).filter(User.id == uid).first()
+                if user:
+                    reporter_fcm_token = getattr(user, "fcm_token", None)
         except Exception:
-            pass  # Anonymous submission if token invalid
+            pass
 
     issue = PublicIssue(
         organization_id=tenant_id,
@@ -58,12 +121,27 @@ def submit_issue(
         longitude=float(payload.longitude),
         geography_id=payload.geography_id,
         photo_url=payload.photo_url,
-        status=IssueStatus.NEW
+        is_emergency=payload.is_emergency,
+        status=IssueStatus.NEW,
     )
     db.add(issue)
     db.commit()
     db.refresh(issue)
+
+    # Notify reporter: issue received
+    if reporter_fcm_token:
+        try:
+            dept = _DEPT_MAP.get(payload.category.value if hasattr(payload.category, 'value') else payload.category, "the relevant department")
+            notify_issue_assigned(
+                fcm_token=reporter_fcm_token,
+                issue_id=str(issue.id),
+                category=dept,
+            )
+        except Exception:
+            pass  # Non-critical
+
     return issue
+
 
 @router.get("", response_model=List[IssueOut])
 def list_issues(
@@ -80,6 +158,7 @@ def list_issues(
         query = query.filter(PublicIssue.category == category.upper())
     return query.order_by(PublicIssue.created_at.desc()).all()
 
+
 @router.get("/{issue_id}", response_model=IssueOut)
 def get_issue(
     issue_id: UUID,
@@ -95,16 +174,17 @@ def get_issue(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
     return issue
 
+
 @router.patch("/{issue_id}/status", response_model=IssueOut)
 def update_issue_status(
     issue_id: UUID,
     payload: IssueStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff)
+    current_user: User = Depends(require_staff),
 ):
     """
     Transition an issue through the state machine.
-    Volunteers can move to UNDER_REVIEW/RESOLVED; Admins/Executives control full lifecycle.
+    Volunteers can move to UNDER_REVIEW/RESOLVED on their assigned issues.
     """
     issue = db.query(PublicIssue).filter(PublicIssue.id == issue_id).first()
     if not issue:
@@ -113,7 +193,6 @@ def update_issue_status(
     current_status = issue.status
     new_status = payload.status
 
-    # Enforce state machine transitions
     allowed = VALID_TRANSITIONS.get(current_status, set())
     if new_status not in allowed:
         raise HTTPException(
@@ -122,7 +201,6 @@ def update_issue_status(
                    f"Allowed: {[s.value for s in allowed]}"
         )
 
-    # Volunteers can only move to UNDER_REVIEW or RESOLVED on their own assigned issues
     if current_user.role == "VOLUNTEER":
         if new_status not in {IssueStatus.UNDER_REVIEW, IssueStatus.RESOLVED}:
             raise HTTPException(
@@ -143,7 +221,6 @@ def update_issue_status(
     if payload.verification_photo_url:
         issue.verification_photo_url = payload.verification_photo_url
 
-    # Audit log
     log = AuditLog(
         organization_id=current_user.organization_id,
         user_id=current_user.id,
@@ -156,6 +233,17 @@ def update_issue_status(
     db.add(log)
     db.commit()
     db.refresh(issue)
+
+    # Notify reporter when issue is resolved
+    if new_status in {IssueStatus.RESOLVED, IssueStatus.CLOSED} and issue.reported_by_user_id:
+        try:
+            reporter = db.query(User).filter(User.id == issue.reported_by_user_id).first()
+            fcm = getattr(reporter, "fcm_token", None) if reporter else None
+            if fcm:
+                notify_issue_resolved(fcm_token=fcm, issue_id=str(issue.id))
+        except Exception:
+            pass
+
     return issue
 
 
@@ -168,11 +256,11 @@ def assign_issue_volunteer(
     issue_id: UUID,
     payload: IssueAssignRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_executive)
+    current_user: User = Depends(require_executive),
 ):
     """
     Assign a volunteer to an issue (Executive Member, Admin, Super Admin only).
-    Automatically transitions status from NEW -> ASSIGNED if currently NEW.
+    Automatically transitions status from NEW -> ASSIGNED.
     """
     tenant_id = get_current_tenant_id()
     issue = db.query(PublicIssue).filter(
@@ -188,8 +276,6 @@ def assign_issue_volunteer(
     }
 
     issue.assigned_volunteer_id = payload.volunteer_id
-
-    # Auto-transition NEW -> ASSIGNED
     if issue.status == IssueStatus.NEW:
         issue.status = IssueStatus.ASSIGNED
 
@@ -208,4 +294,18 @@ def assign_issue_volunteer(
     db.add(log)
     db.commit()
     db.refresh(issue)
+
+    # Notify assigned volunteer
+    try:
+        volunteer = db.query(User).filter(User.id == payload.volunteer_id).first()
+        fcm = getattr(volunteer, "fcm_token", None) if volunteer else None
+        if fcm:
+            dept = _DEPT_MAP.get(
+                issue.category.value if hasattr(issue.category, 'value') else str(issue.category),
+                "General"
+            )
+            notify_issue_assigned(fcm_token=fcm, issue_id=str(issue.id), category=dept)
+    except Exception:
+        pass
+
     return issue

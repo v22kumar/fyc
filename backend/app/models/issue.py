@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, ForeignKey, Enum as SAEnum
+from sqlalchemy import Column, String, Text, Numeric, Boolean, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -49,6 +49,7 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     geography_id = Column(GUID(), ForeignKey("geographic_nodes.id", ondelete="SET NULL"), nullable=True)
     photo_url = Column(Text, nullable=True)
     verification_photo_url = Column(Text, nullable=True)
+    is_emergency = Column(Boolean, nullable=True, default=False)
     status = Column(SAEnum(IssueStatus, name="issue_status"), default=IssueStatus.NEW, nullable=False)
     assigned_volunteer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 

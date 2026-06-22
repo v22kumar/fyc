@@ -127,6 +127,19 @@ def _seed_database():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+
+    # Safe column migrations — idempotent, never fails on re-deploy
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE public_issues ADD COLUMN IF NOT EXISTS is_emergency BOOLEAN DEFAULT FALSE"
+                )
+            )
+            conn.commit()
+    except Exception as _me:
+        logger.warning(f"[migration] is_emergency column: {_me}")
+
     _seed_database()
 
     # Pre-warm external API caches so cold-start users see instant results

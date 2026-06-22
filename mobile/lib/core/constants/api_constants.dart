@@ -35,6 +35,7 @@ class ApiConstants {
 
   // Issues
   static const String issues = '/api/v1/issues';
+  static const String issueStats = '/api/v1/issues/stats';
 
   // Events
   static const String events = '/api/v1/events';
