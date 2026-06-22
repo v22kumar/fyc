@@ -128,21 +128,23 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    # Safe column migrations — idempotent, never fails on re-deploy
+    # Safe column migrations — idempotent; try/except handles "duplicate column
+    # name" on SQLite (which does NOT support ALTER TABLE ... IF NOT EXISTS
+    # before version 3.37.0).
     try:
         from sqlalchemy import text as _sql_text
         _migrations = [
-            "ALTER TABLE public_issues ADD COLUMN IF NOT EXISTS is_emergency BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS num_teams INTEGER",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS match_config VARCHAR(60)",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS registration_mode VARCHAR(20) DEFAULT 'MANUAL_APPROVAL'",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS end_date TIMESTAMPTZ",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS venue VARCHAR(200)",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_points_table BOOLEAN DEFAULT TRUE",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_live_scores BOOLEAN DEFAULT TRUE",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_prize_details BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS prize_details TEXT",
+            "ALTER TABLE public_issues ADD COLUMN is_emergency BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tournaments ADD COLUMN num_teams INTEGER",
+            "ALTER TABLE tournaments ADD COLUMN match_config VARCHAR(60)",
+            "ALTER TABLE tournaments ADD COLUMN registration_mode VARCHAR(20) DEFAULT 'MANUAL_APPROVAL'",
+            "ALTER TABLE tournaments ADD COLUMN start_date TIMESTAMPTZ",
+            "ALTER TABLE tournaments ADD COLUMN end_date TIMESTAMPTZ",
+            "ALTER TABLE tournaments ADD COLUMN venue VARCHAR(200)",
+            "ALTER TABLE tournaments ADD COLUMN show_points_table BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE tournaments ADD COLUMN show_live_scores BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE tournaments ADD COLUMN show_prize_details BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tournaments ADD COLUMN prize_details TEXT",
         ]
         with engine.connect() as conn:
             for stmt in _migrations:
@@ -156,22 +158,25 @@ async def lifespan(app: FastAPI):
 
     _seed_database()
 
-    # Pre-warm external API caches so cold-start users see instant results
-    try:
-        from app.services.weather import get_weather
-        from app.services.gold_price import get_gold_price
-        from app.services import news as _news_svc
-        get_weather(8.1833, 77.4119)   # Nagercoil default coords
-        get_gold_price()
-        # Pre-fetch all five news feeds so first app-load hits cache, not Google RSS
-        _news_svc.get_top_tamil_news()
-        _news_svc.get_india_news()
-        _news_svc.get_kanyakumari_news()
-        _news_svc.get_tn_jobs_news()
-        _news_svc.get_central_jobs_news()
-        logger.info("[startup] Weather, gold price, and news caches pre-warmed")
-    except Exception as _e:
-        logger.warning(f"[startup] Cache pre-warm failed: {_e}")
+    # Pre-warm external API caches — run in a background thread so slow RSS
+    # feeds don't delay the server becoming ready to accept requests.
+    import threading as _threading
+    def _prewarm():
+        try:
+            from app.services.weather import get_weather
+            from app.services.gold_price import get_gold_price
+            from app.services import news as _news_svc
+            get_weather(8.1833, 77.4119)
+            get_gold_price()
+            _news_svc.get_top_tamil_news()
+            _news_svc.get_india_news()
+            _news_svc.get_kanyakumari_news()
+            _news_svc.get_tn_jobs_news()
+            _news_svc.get_central_jobs_news()
+            logger.info("[startup] All caches pre-warmed (weather, gold, news×5)")
+        except Exception as _e:
+            logger.warning(f"[startup] Cache pre-warm failed: {_e}")
+    _threading.Thread(target=_prewarm, daemon=True).start()
 
     # Schedulers — birthday always on; morning broadcast requires MORNING_BROADCAST_ENABLED
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
