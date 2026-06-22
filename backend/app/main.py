@@ -160,9 +160,16 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.weather import get_weather
         from app.services.gold_price import get_gold_price
+        from app.services import news as _news_svc
         get_weather(8.1833, 77.4119)   # Nagercoil default coords
         get_gold_price()
-        logger.info("[startup] Weather and gold price caches pre-warmed")
+        # Pre-fetch all five news feeds so first app-load hits cache, not Google RSS
+        _news_svc.get_top_tamil_news()
+        _news_svc.get_india_news()
+        _news_svc.get_kanyakumari_news()
+        _news_svc.get_tn_jobs_news()
+        _news_svc.get_central_jobs_news()
+        logger.info("[startup] Weather, gold price, and news caches pre-warmed")
     except Exception as _e:
         logger.warning(f"[startup] Cache pre-warm failed: {_e}")
 
@@ -177,8 +184,19 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
                           id="morning_broadcast", replace_existing=True)
         logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
+
+    async def _keepalive():
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=5) as c:
+                await c.get("http://localhost:8000/api/health")
+        except Exception:
+            pass
+
+    scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
     scheduler.start()
     logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
+    logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
 
     yield
 

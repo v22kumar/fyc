@@ -26,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _aurora;
+  int _refreshKey = 0;
 
   @override
   void initState() {
@@ -37,6 +38,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _aurora.dispose();
     super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    setState(() => _refreshKey++);
+    // Give the new futures a moment to kick off before hiding the spinner
+    await Future.delayed(const Duration(milliseconds: 800));
   }
 
   @override
@@ -53,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         body: RefreshIndicator(
           color: AppColors.primaryLight,
           backgroundColor: AppColors.darkSurface,
-          onRefresh: () async => await Future.delayed(const Duration(milliseconds: 600)),
+          onRefresh: _onRefresh,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -81,13 +88,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(height: 22),
                       _SectionHeader(title: 'Today'),
                       const SizedBox(height: 12),
-                      const DailyThirukkuralCard(),
+                      DailyThirukkuralCard(key: ValueKey('kural-$_refreshKey')),
                       const SizedBox(height: 14),
-                      const DailyNewsCard(),
+                      DailyNewsCard(key: ValueKey('news-$_refreshKey')),
                       const SizedBox(height: 14),
-                      const WeatherCard(),
+                      WeatherCard(key: ValueKey('weather-$_refreshKey')),
                       const SizedBox(height: 14),
-                      const GoldPriceCard(),
+                      GoldPriceCard(key: ValueKey('gold-$_refreshKey')),
                       const SizedBox(height: 130),
                     ],
                   ),
