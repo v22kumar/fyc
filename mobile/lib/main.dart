@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
 import 'core/widgets/offline_banner.dart';
+import 'core/network/api_client.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'service_locator.dart';
 
@@ -32,7 +33,19 @@ void main() async {
   await initServiceLocator();
   localeNotifier.value = Locale(sl<LocalStorage>().getLang());
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
+  // Fire-and-forget: wake the Fly.io backend before the home screen loads.
+  _warmUpBackend();
   runApp(const FycApp());
+}
+
+Future<void> _warmUpBackend() async {
+  try {
+    await sl<ApiClient>().dio
+        .get('/api/health')
+        .timeout(const Duration(seconds: 20));
+  } catch (_) {
+    // Ignore — this is best-effort only.
+  }
 }
 
 class FycApp extends StatelessWidget {

@@ -4,6 +4,124 @@ import '../../../../service_locator.dart';
 import '../../data/datasources/thirukkural_datasource.dart';
 import '../../data/models/thirukkural_model.dart';
 
+// Seed kurals shown instantly while the API loads (offline-first).
+// Picked by day-of-year so the same kural shows all day.
+const _seedKurals = [
+  (
+    number: 1,
+    line1: 'அகர முதல எழுத்தெல்லாம் ஆதி',
+    line2: 'பகவன் முதற்றே உலகு.',
+    tamilMeaning:
+        'அகரம் எழுத்துக்களுக்கு முதலாக உள்ளது போல ஆதிபகவன் உலகிற்கு முதலாக உள்ளான்.',
+    englishCouplet:
+        'A, as its first of letters, every speech maintains;\nThe "Primal Deity" is first through all the world\'s domains.',
+    englishMeaning:
+        'As the letter A is the first of all letters, so the eternal God is first in the world.',
+    paalTa: 'அறத்துப்பால்',
+    paalEn: 'Virtue',
+  ),
+  (
+    number: 2,
+    line1: 'கற்றதனால் ஆய பயனென்கொல் வாலறிவன்',
+    line2: 'நற்றாள் தொழாஅர் எனின்.',
+    tamilMeaning:
+        'தூய அறிவுடையவனின் திருவடிகளை வணங்காதவர்கள் கற்றதனால் என்ன பயன் அடைவார்கள்?',
+    englishCouplet:
+        'What profit have those reaped from learning\'s lore,\nWho worship not the good God\'s foot, adored for evermore?',
+    englishMeaning:
+        'What benefit have those who learn derived from learning, if they worship not the good feet of the pure in knowledge?',
+    paalTa: 'அறத்துப்பால்',
+    paalEn: 'Virtue',
+  ),
+  (
+    number: 391,
+    line1: 'அன்பிலார் எல்லாம் தமக்குரியர் அன்புடையார்',
+    line2: 'என்பும் உரியர் பிறர்க்கு.',
+    tamilMeaning:
+        'அன்பில்லாதவர்கள் எல்லாவற்றையும் தமக்காக வைத்திருப்பர்; அன்புள்ளவர்கள் தம் எலும்பும் பிறருக்கு உரியது என்பர்.',
+    englishCouplet:
+        'Men without love claim all things for their own;\nThe loving give their very bones for others\' good alone.',
+    englishMeaning:
+        'Those without love claim everything for themselves; those with love consider even their bones to belong to others.',
+    paalTa: 'அறத்துப்பால்',
+    paalEn: 'Virtue',
+  ),
+  (
+    number: 423,
+    line1: 'அழுக்காறு அவாவெகுளி இன்னாச்சொல் நான்கும்',
+    line2: 'இழுக்கா இயன்றது அறம்.',
+    tamilMeaning:
+        'பொறாமை, ஆசை, சினம், கடுஞ்சொல் ஆகிய நான்கையும் விட்டு ஒழுகுவதே அறம்.',
+    englishCouplet:
+        'Virtue is free from envy, avarice, wrath, and bitter speech;\nConduct that avoids these four, true virtue\'s heights can reach.',
+    englishMeaning:
+        'That conduct is virtue which is free from envy, covetousness, anger, and bitter speech.',
+    paalTa: 'அறத்துப்பால்',
+    paalEn: 'Virtue',
+  ),
+  (
+    number: 595,
+    line1: 'இடிப்பாரை இல்லாத ஏமரா மன்னன்',
+    line2: 'கெடுப்பார் இலானும் கெடும்.',
+    tamilMeaning:
+        'கண்டிப்பவர்கள் இல்லாத பாதுகாப்பற்ற மன்னன், அழிக்க எதிரிகள் இல்லாமலேயே தானாகவே அழிவான்.',
+    englishCouplet:
+        'The king who lacks men bold enough to chide his faults aright\nPerishes, though no enemy appears to blight.',
+    englishMeaning:
+        'A king without counselors who reprove him will perish even without enemies to destroy him.',
+    paalTa: 'பொருட்பால்',
+    paalEn: 'Wealth',
+  ),
+  (
+    number: 11,
+    line1: 'துப்பார்க்குத் துப்பாய துப்பாக்கித் துப்பார்க்குத்',
+    line2: 'துப்பாய தூஉம் மழை.',
+    tamilMeaning:
+        'தின்பவர்க்கு உணவாகி, தின்னும் உணவை விளைவித்துத் தின்பவர்க்கே மழையும் தூவும்.',
+    englishCouplet:
+        'Rain makes the food that all who eat require;\nAnd rain itself is food, all creatures\' life-desire.',
+    englishMeaning:
+        'Rain creates the food that those who eat desire, and is itself the food that satisfies the eater.',
+    paalTa: 'அறத்துப்பால்',
+    paalEn: 'Virtue',
+  ),
+  (
+    number: 702,
+    line1: 'அறிவுடையார் ஆவதறிவார் அறிவிலார்',
+    line2: 'அஃகும் சிறுமை நகும்.',
+    tamilMeaning:
+        'அறிவுடையவர்கள் நிகழப்போவதை அறிவார்கள்; அறிவில்லாதவர்கள் தங்கள் சிறுமையில் சிரிப்பார்கள்.',
+    englishCouplet:
+        'The wise foresee what is to come; the foolish laugh\nAt their own littleness — not knowing what they lack.',
+    englishMeaning:
+        'The wise know what is coming; the ignorant laugh at their own smallness without knowing it.',
+    paalTa: 'பொருட்பால்',
+    paalEn: 'Wealth',
+  ),
+];
+
+ThirukkuralModel _seedForToday() {
+  final idx = DateTime.now().dayOfYear % _seedKurals.length;
+  final s = _seedKurals[idx];
+  return ThirukkuralModel(
+    number: s.number,
+    line1: s.line1,
+    line2: s.line2,
+    tamilMeaning: s.tamilMeaning,
+    englishCouplet: s.englishCouplet,
+    englishMeaning: s.englishMeaning,
+    adhikaram: 0,
+    paalTa: s.paalTa,
+    paalEn: s.paalEn,
+  );
+}
+
+extension on DateTime {
+  int get dayOfYear {
+    return difference(DateTime(year)).inDays;
+  }
+}
+
 class DailyThirukkuralCard extends StatefulWidget {
   const DailyThirukkuralCard({super.key});
 
@@ -12,32 +130,38 @@ class DailyThirukkuralCard extends StatefulWidget {
 }
 
 class _DailyThirukkuralCardState extends State<DailyThirukkuralCard> {
-  late Future<ThirukkuralModel> _future;
+  // Start with seed data immediately so there's no blank state.
+  ThirukkuralModel _kural = _seedForToday();
+  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
-    _future = sl<ThirukkuralDataSource>().fetchDaily();
+    _fetchLive();
+  }
+
+  Future<void> _fetchLive() async {
+    try {
+      final live = await sl<ThirukkuralDataSource>()
+          .fetchDaily()
+          .timeout(const Duration(seconds: 12));
+      if (mounted) setState(() { _kural = live; _loaded = true; });
+    } catch (_) {
+      // Keep showing the seed kural — no visible error needed.
+      if (mounted) setState(() => _loaded = true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<ThirukkuralModel>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _ThirukkuralSkeleton();
-        }
-        if (!snapshot.hasData) return const SizedBox.shrink();
-        return _ThirukkuralContent(kural: snapshot.data!);
-      },
-    );
+    return _ThirukkuralContent(kural: _kural, isLive: _loaded);
   }
 }
 
 class _ThirukkuralContent extends StatelessWidget {
   final ThirukkuralModel kural;
-  const _ThirukkuralContent({required this.kural});
+  final bool isLive;
+  const _ThirukkuralContent({required this.kural, this.isLive = true});
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +270,7 @@ class _ThirukkuralContent extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Tamil couplet — the star of the show
+                  // Tamil couplet
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
@@ -233,6 +357,15 @@ class _ThirukkuralContent extends StatelessWidget {
                           color: Colors.white.withOpacity(0.55),
                         ),
                       ),
+                      if (!isLive) ...[
+                        const Spacer(),
+                        Icon(Icons.cloud_off_rounded, size: 12, color: Colors.white.withOpacity(0.35)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'offline',
+                          style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.35)),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -259,7 +392,6 @@ class _KuralBgPainter extends CustomPainter {
     for (int i = 0; i < 5; i++) {
       canvas.drawCircle(Offset(cx, cy), (i + 1) * size.width / 6, paint);
     }
-    // Decorative dots
     final dotPaint = Paint()..color = Colors.white.withOpacity(opacity * 1.5);
     for (int i = 0; i < 8; i++) {
       final angle = i * math.pi / 4;
@@ -273,71 +405,4 @@ class _KuralBgPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
-}
-
-class _SkeletonBox extends StatelessWidget {
-  final double? width;
-  final double height;
-  final BorderRadius? radius;
-  const _SkeletonBox({this.width, required this.height, this.radius});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: radius ?? BorderRadius.circular(8),
-      ),
-    );
-  }
-}
-
-class _ThirukkuralSkeleton extends StatelessWidget {
-  const _ThirukkuralSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0D3D26), Color(0xFF145C36)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _SkeletonBox(width: 36, height: 36, radius: BorderRadius.circular(10)),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SkeletonBox(height: 13, width: 160),
-                      SizedBox(height: 6),
-                      _SkeletonBox(height: 10, width: 120),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _SkeletonBox(height: 60, radius: BorderRadius.circular(12)),
-            const SizedBox(height: 12),
-            const _SkeletonBox(height: 12),
-            const SizedBox(height: 6),
-            const _SkeletonBox(height: 12, width: 240),
-          ],
-        ),
-      ),
-    );
-  }
 }
