@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -25,7 +26,8 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   late Future<List<NewsItemModel>> _tnJobsFuture;
   late Future<List<NewsItemModel>> _centralJobsFuture;
 
-  static const _timeout = Duration(seconds: 12);
+  // Version counter: incrementing this tells _NewsFeed a fresh future arrived.
+  int _version = 0;
 
   @override
   void initState() {
@@ -36,11 +38,13 @@ class _DailyNewsCardState extends State<DailyNewsCard>
 
   void _initFutures() {
     final ds = sl<NewsDataSource>();
-    _kanyakumariFuture = ds.fetchKanyakumari(limit: 8).timeout(_timeout);
-    _tamilFuture = ds.fetchTop(limit: 10).timeout(_timeout);
-    _indiaFuture = ds.fetchIndia(limit: 5).timeout(_timeout);
-    _tnJobsFuture = ds.fetchTnJobs(limit: 8).timeout(_timeout);
-    _centralJobsFuture = ds.fetchCentralJobs(limit: 8).timeout(_timeout);
+    // No dart .timeout() here — _NewsFeed owns the UI-level failsafe timer.
+    _kanyakumariFuture = ds.fetchKanyakumari(limit: 8);
+    _tamilFuture       = ds.fetchTop(limit: 10);
+    _indiaFuture       = ds.fetchIndia(limit: 5);
+    _tnJobsFuture      = ds.fetchTnJobs(limit: 8);
+    _centralJobsFuture = ds.fetchCentralJobs(limit: 8);
+    _version++;
   }
 
   void _retry() => setState(_initFutures);
@@ -85,6 +89,16 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                     color: context.cText,
                   ),
                 ),
+                const Spacer(),
+                // Manual refresh icon
+                IconButton(
+                  onPressed: _retry,
+                  icon: Icon(Icons.refresh_rounded,
+                      size: 18, color: context.cTextSecondary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Refresh news',
+                ),
               ],
             ),
           ),
@@ -113,11 +127,11 @@ class _DailyNewsCardState extends State<DailyNewsCard>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _NewsFeed(future: _kanyakumariFuture, onRetry: _retry),
-                _NewsFeed(future: _tamilFuture, onRetry: _retry),
-                _NewsFeed(future: _indiaFuture, onRetry: _retry),
-                _NewsFeed(future: _tnJobsFuture, jobMode: true, onRetry: _retry),
-                _NewsFeed(future: _centralJobsFuture, jobMode: true, onRetry: _retry),
+                _NewsFeed(key: ValueKey('kk-$_version'), future: _kanyakumariFuture, onRetry: _retry),
+                _NewsFeed(key: ValueKey('ta-$_version'), future: _tamilFuture, onRetry: _retry),
+                _NewsFeed(key: ValueKey('in-$_version'), future: _indiaFuture, onRetry: _retry),
+                _NewsFeed(key: ValueKey('tnj-$_version'), future: _tnJobsFuture, jobMode: true, onRetry: _retry),
+                _NewsFeed(key: ValueKey('cj-$_version'), future: _centralJobsFuture, jobMode: true, onRetry: _retry),
               ],
             ),
           ),
@@ -127,45 +141,92 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   }
 }
 
-class _NewsFeed extends StatelessWidget {
+// ─── _NewsFeed ────────────────────────────────────────────────────────────────
+
+class _NewsFeed extends StatefulWidget {
   final Future<List<NewsItemModel>> future;
   final bool jobMode;
   final VoidCallback onRetry;
-  const _NewsFeed({required this.future, this.jobMode = false, required this.onRetry});
+  const _NewsFeed({
+    super.key,
+    required this.future,
+    this.jobMode = false,
+    required this.onRetry,
+  });
+
+  @override
+  State<_NewsFeed> createState() => _NewsFeedState();
+}
+
+class _NewsFeedState extends State<_NewsFeed> {
+  // Hard UI-level failsafe: if the future hasn't resolved after 10 s, show
+  // the error/retry state so the user is never stuck in grey indefinitely.
+  static const _kUiTimeout = Duration(seconds: 10);
+
+  Timer? _timer;
+  bool _uiTimedOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _uiTimedOut = false;
+    _timer?.cancel();
+    _timer = Timer(_kUiTimeout, () {
+      if (mounted) setState(() => _uiTimedOut = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<NewsItemModel>>(
-      future: future,
+      future: widget.future,
       builder: (context, snapshot) {
+        // Still waiting — cancel timer once done
         if (snapshot.connectionState == ConnectionState.waiting) {
+          if (_uiTimedOut) {
+            return _ErrorState(onRetry: widget.onRetry);
+          }
           return const _NewsSkeleton();
         }
 
+        // Future resolved — cancel the failsafe timer
+        _timer?.cancel();
+
         if (snapshot.hasError) {
-          return _ErrorState(onRetry: onRetry);
+          return _ErrorState(onRetry: widget.onRetry);
         }
 
         final items = snapshot.data;
         if (items == null || items.isEmpty) {
-          return _EmptyState(onRetry: onRetry);
+          return _EmptyState(onRetry: widget.onRetry);
         }
 
         return ListView.separated(
           padding: EdgeInsets.zero,
-          // Scrollable within the fixed 380px box
           physics: const ClampingScrollPhysics(),
           itemCount: items.length,
           separatorBuilder: (_, __) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Divider(height: 1, color: context.cBorder),
           ),
-          itemBuilder: (_, i) => _NewsRow(item: items[i], jobMode: jobMode),
+          itemBuilder: (_, i) => _NewsRow(item: items[i], jobMode: widget.jobMode),
         );
       },
     );
   }
 }
+
+// ─── Error / Empty states ────────────────────────────────────────────────────
 
 class _ErrorState extends StatelessWidget {
   final VoidCallback onRetry;
@@ -177,24 +238,26 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.signal_wifi_statusbar_connected_no_internet_4_rounded,
-              size: 40, color: context.cTextSecondary),
+          Icon(Icons.cloud_off_rounded, size: 40, color: context.cTextSecondary),
           const SizedBox(height: 10),
           Text('Couldn\'t load news',
               style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: context.cTextSecondary,
+                  color: context.cText,
                   fontSize: 13)),
           const SizedBox(height: 4),
-          Text('Check your connection and try again',
+          Text('Check connection and try again',
               style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
           const SizedBox(height: 14),
-          TextButton.icon(
+          ElevatedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Retry'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
+            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+            label: const Text('Retry', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
               textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
@@ -219,15 +282,18 @@ class _EmptyState extends StatelessWidget {
           Text('No news available',
               style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: context.cTextSecondary,
+                  color: context.cText,
                   fontSize: 13)),
           const SizedBox(height: 12),
-          TextButton.icon(
+          ElevatedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Retry'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
+            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+            label: const Text('Retry', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
               textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
@@ -236,6 +302,8 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
+// ─── News row ─────────────────────────────────────────────────────────────────
 
 class _NewsRow extends StatelessWidget {
   final NewsItemModel item;
@@ -336,6 +404,8 @@ class _NewsRow extends StatelessWidget {
   }
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
 class _NewsSkeleton extends StatelessWidget {
   const _NewsSkeleton();
 
@@ -346,7 +416,6 @@ class _NewsSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Render 5 skeleton rows to fill the 380px box visually
           for (int i = 0; i < 5; i++) ...[
             const SizedBox(height: 12),
             ShimmerBox(height: 14, width: i.isEven ? double.infinity : 280),

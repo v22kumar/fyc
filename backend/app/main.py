@@ -160,9 +160,16 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.weather import get_weather
         from app.services.gold_price import get_gold_price
+        from app.services import news as _news_svc
         get_weather(8.1833, 77.4119)   # Nagercoil default coords
         get_gold_price()
-        logger.info("[startup] Weather and gold price caches pre-warmed")
+        # Pre-fetch all five news feeds so first app-load hits cache, not Google RSS
+        _news_svc.get_top_tamil_news()
+        _news_svc.get_india_news()
+        _news_svc.get_kanyakumari_news()
+        _news_svc.get_tn_jobs_news()
+        _news_svc.get_central_jobs_news()
+        logger.info("[startup] Weather, gold price, and news caches pre-warmed")
     except Exception as _e:
         logger.warning(f"[startup] Cache pre-warm failed: {_e}")
 
