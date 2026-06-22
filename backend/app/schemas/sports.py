@@ -12,6 +12,17 @@ class TournamentCreate(BaseModel):
     format: str = "LEAGUE"
     description_ta: Optional[str] = None
     description_en: Optional[str] = None
+    # Rich config
+    num_teams: Optional[int] = None
+    match_config: Optional[str] = None
+    registration_mode: str = "MANUAL_APPROVAL"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    venue: Optional[str] = None
+    show_points_table: bool = True
+    show_live_scores: bool = True
+    show_prize_details: bool = False
+    prize_details: Optional[str] = None
 
 
 class TournamentOut(BaseModel):
@@ -24,6 +35,16 @@ class TournamentOut(BaseModel):
     status: str
     description_ta: Optional[str]
     description_en: Optional[str]
+    num_teams: Optional[int] = None
+    match_config: Optional[str] = None
+    registration_mode: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    venue: Optional[str] = None
+    show_points_table: Optional[bool] = True
+    show_live_scores: Optional[bool] = True
+    show_prize_details: Optional[bool] = False
+    prize_details: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -116,3 +137,37 @@ class ChallengeOut(BaseModel):
 class ChallengeStatusUpdate(BaseModel):
     status: str  # ACCEPTED, REJECTED, COMPLETED
     admin_response: Optional[str] = None
+
+
+# ── Live Score Entry (club-member submission → admin approval) ─────────────────
+
+class LiveScoreEntryCreate(BaseModel):
+    team_a_score: Optional[str] = None
+    team_b_score: Optional[str] = None
+    winner_id: Optional[UUID] = None
+    notes: Optional[str] = None
+
+
+class LiveScoreReview(BaseModel):
+    status: str  # APPROVED or REJECTED
+    review_notes: Optional[str] = None
+
+
+class LiveScoreEntryOut(BaseModel):
+    id: UUID
+    fixture_id: UUID
+    tournament_id: UUID
+    submitted_by_id: Optional[UUID]
+    submitted_by_name: Optional[str] = None
+    team_a_name: Optional[str] = None
+    team_b_name: Optional[str] = None
+    team_a_score: Optional[str]
+    team_b_score: Optional[str]
+    winner_id: Optional[UUID]
+    notes: Optional[str]
+    status: str
+    review_notes: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

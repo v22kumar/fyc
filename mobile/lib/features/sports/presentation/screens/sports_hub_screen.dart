@@ -8,6 +8,8 @@ import '../bloc/sports_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class _SportFilter {
   final String value; // empty == all
@@ -57,12 +59,37 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
         );
   }
 
+  bool get _isAdmin {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isAdmin;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isAdmin = _isAdmin;
     return Scaffold(
       appBar: AppBar(
         title: Text(_lang == 'ta' ? 'விளையாட்டு மையம்' : 'Sports Hub'),
+        actions: [
+          if (isAdmin)
+            IconButton(
+              tooltip: _lang == 'ta' ? 'மதிப்பீடுகள்' : 'Score Approvals',
+              icon: const Icon(Icons.fact_check_outlined),
+              onPressed: () => context.push('/sports/approvals'),
+            ),
+        ],
       ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/sports/create'),
+              backgroundColor: AppColors.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                _lang == 'ta' ? 'போட்டி உருவாக்கு' : 'Create',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            )
+          : null,
       body: Column(
         children: [
           _SportTabs(
