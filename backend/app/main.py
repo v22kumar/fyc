@@ -177,8 +177,19 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
                           id="morning_broadcast", replace_existing=True)
         logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
+
+    async def _keepalive():
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=5) as c:
+                await c.get("http://localhost:8000/api/health")
+        except Exception:
+            pass
+
+    scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
     scheduler.start()
     logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
+    logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
 
     yield
 
