@@ -12,6 +12,7 @@ abstract class IssueDataSource {
     required double latitude,
     required double longitude,
     String? photoUrl,
+    bool isEmergency = false,
   });
 }
 
@@ -27,6 +28,7 @@ class IssueDataSourceImpl implements IssueDataSource {
     required double latitude,
     required double longitude,
     String? photoUrl,
+    bool isEmergency = false,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -35,6 +37,7 @@ class IssueDataSourceImpl implements IssueDataSource {
         'description_en': descriptionEn,
         'latitude': latitude,
         'longitude': longitude,
+        'is_emergency': isEmergency,
       };
       if (photoUrl != null) body['photo_url'] = photoUrl;
       final response = await _client.dio.post(

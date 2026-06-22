@@ -14,6 +14,7 @@ class SubmitIssueUseCase {
     required double latitude,
     required double longitude,
     String? photoUrl,
+    bool isEmergency = false,
   }) {
     if (descriptionTa.trim().isEmpty && descriptionEn.trim().isEmpty) {
       return Future.value(
@@ -27,6 +28,7 @@ class SubmitIssueUseCase {
       latitude: latitude,
       longitude: longitude,
       photoUrl: photoUrl,
+      isEmergency: isEmergency,
     );
   }
 }

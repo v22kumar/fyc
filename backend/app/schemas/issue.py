@@ -12,6 +12,7 @@ class IssueCreate(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     geography_id: Optional[UUID] = None
     photo_url: Optional[str] = None
+    is_emergency: bool = False
 
 class IssueStatusUpdate(BaseModel):
     status: IssueStatus
@@ -30,8 +31,16 @@ class IssueOut(BaseModel):
     geography_id: Optional[UUID]
     photo_url: Optional[str]
     verification_photo_url: Optional[str]
+    is_emergency: Optional[bool] = False
     status: IssueStatus
     assigned_volunteer_id: Optional[UUID]
     reported_by_user_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
+
+class IssueStats(BaseModel):
+    total: int
+    resolved: int
+    resolution_rate: int        # percentage 0–100
+    avg_response_days: float
+    active_citizens: int

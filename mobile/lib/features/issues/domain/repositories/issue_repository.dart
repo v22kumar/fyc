@@ -10,5 +10,6 @@ abstract class IssueRepository {
     required double latitude,
     required double longitude,
     String? photoUrl,
+    bool isEmergency = false,
   });
 }
