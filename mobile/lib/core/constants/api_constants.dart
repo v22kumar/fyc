@@ -46,6 +46,15 @@ class ApiConstants {
   // Sports
   static const String sportsTournaments = '/api/v1/sports/tournaments';
   static const String sportsChallenges = '/api/v1/sports/challenges';
+  static const String sportsLiveEntries = '/api/v1/sports/live-entries';
+  static String sportsGenerateFixtures(String tid) =>
+      '/api/v1/sports/tournaments/$tid/generate-fixtures';
+  static String sportsFixtureLiveEntry(String fid) =>
+      '/api/v1/sports/fixtures/$fid/live-entry';
+  static String sportsTournamentFixtures(String tid) =>
+      '/api/v1/sports/tournaments/$tid/fixtures';
+  static String sportsTournamentTeams(String tid) =>
+      '/api/v1/sports/tournaments/$tid/teams';
 
   // Announcements
   static const String announcements = '/api/v1/announcements';

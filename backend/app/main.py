@@ -130,15 +130,29 @@ async def lifespan(app: FastAPI):
 
     # Safe column migrations — idempotent, never fails on re-deploy
     try:
+        from sqlalchemy import text as _sql_text
+        _migrations = [
+            "ALTER TABLE public_issues ADD COLUMN IF NOT EXISTS is_emergency BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS num_teams INTEGER",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS match_config VARCHAR(60)",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS registration_mode VARCHAR(20) DEFAULT 'MANUAL_APPROVAL'",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS end_date TIMESTAMPTZ",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS venue VARCHAR(200)",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_points_table BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_live_scores BOOLEAN DEFAULT TRUE",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS show_prize_details BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS prize_details TEXT",
+        ]
         with engine.connect() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE public_issues ADD COLUMN IF NOT EXISTS is_emergency BOOLEAN DEFAULT FALSE"
-                )
-            )
+            for stmt in _migrations:
+                try:
+                    conn.execute(_sql_text(stmt))
+                except Exception as _se:
+                    logger.warning(f"[migration] skipped: {_se}")
             conn.commit()
     except Exception as _me:
-        logger.warning(f"[migration] is_emergency column: {_me}")
+        logger.warning(f"[migration] column migration block: {_me}")
 
     _seed_database()
 

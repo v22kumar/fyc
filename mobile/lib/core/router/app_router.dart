@@ -27,6 +27,8 @@ import '../../features/sports/presentation/bloc/sports_bloc.dart';
 import '../../features/sports/presentation/screens/sports_hub_screen.dart';
 import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
 import '../../features/sports/presentation/screens/challenge_form_screen.dart';
+import '../../features/sports/presentation/screens/create_tournament_screen.dart';
+import '../../features/sports/presentation/screens/live_entries_approval_screen.dart';
 
 // Chess
 import '../../features/chess/data/datasources/chess_remote_datasource.dart';
@@ -210,6 +212,14 @@ final appRouter = GoRouter(
             create: (_) => sl<SportsBloc>(),
             child: const ChallengeFormScreen(),
           ),
+        ),
+        GoRoute(
+          path: 'create',
+          builder: (context, state) => const CreateTournamentScreen(),
+        ),
+        GoRoute(
+          path: 'approvals',
+          builder: (context, state) => const LiveEntriesApprovalScreen(),
         ),
       ],
     ),

@@ -6,9 +6,14 @@ import '../../domain/entities/team_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
+import '../widgets/live_score_entry_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class SportsTournamentDetailScreen extends StatefulWidget {
   final String tournamentId;
@@ -37,11 +42,65 @@ class _SportsTournamentDetailScreenState
         .add(SportsTournamentSelected(widget.tournamentId));
   }
 
+  bool get _isAdmin {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isAdmin;
+  }
+
+  bool get _isMember {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isMember;
+  }
+
+  Future<void> _enterScore(FixtureEntity f) async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.cBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => LiveScoreEntrySheet(fixture: f),
+    );
+    if (ok == true) _reload();
+  }
+
+  Future<void> _generateFixtures() async {
+    try {
+      await sl<ApiClient>().dio.post(
+        ApiConstants.sportsGenerateFixtures(widget.tournamentId),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fixtures generated'), backgroundColor: AppColors.primary),
+      );
+      _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not generate — need ≥2 teams and no existing fixtures'),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isAdmin = _isAdmin;
+    final isMember = _isMember;
     return Scaffold(
       appBar: AppBar(
         title: Text(_lang == 'ta' ? 'போட்டி விவரம்' : 'Tournament'),
+        actions: [
+          if (isAdmin)
+            IconButton(
+              tooltip: _lang == 'ta' ? 'அட்டவணை உருவாக்கு' : 'Generate Fixtures',
+              icon: const Icon(Icons.auto_awesome_motion_outlined),
+              onPressed: _generateFixtures,
+            ),
+        ],
       ),
       body: BlocBuilder<SportsBloc, SportsState>(
         builder: (context, state) {
@@ -72,7 +131,12 @@ class _SportsTournamentDetailScreenState
                     )
                   else
                     ...state.fixtures.map(
-                      (f) => _FixtureCard(fixture: f, lang: _lang),
+                      (f) => _FixtureCard(
+                        fixture: f,
+                        lang: _lang,
+                        onEnterScore:
+                            (isMember && !f.isCompleted) ? () => _enterScore(f) : null,
+                      ),
                     ),
                   const SizedBox(height: 16),
                   _SectionHeader(
@@ -143,8 +207,9 @@ class _SectionHeader extends StatelessWidget {
 class _FixtureCard extends StatelessWidget {
   final FixtureEntity fixture;
   final String lang;
+  final VoidCallback? onEnterScore;
 
-  const _FixtureCard({required this.fixture, required this.lang});
+  const _FixtureCard({required this.fixture, required this.lang, this.onEnterScore});
 
   @override
   Widget build(BuildContext context) {
@@ -243,6 +308,23 @@ class _FixtureCard extends StatelessWidget {
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic),
+              ),
+            ],
+            if (onEnterScore != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onEnterScore,
+                  icon: const Icon(Icons.bolt_rounded, size: 16),
+                  label: Text(lang == 'ta' ? 'ஸ்கோர் பதிவு செய்' : 'Enter Live Score'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
               ),
             ],
           ],
