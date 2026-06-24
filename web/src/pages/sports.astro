@@ -174,10 +174,13 @@ async function renderTournaments() {
     section.innerHTML = `
       <div class="bg-gradient-to-r from-[#064e3b] to-[#065f46] px-6 py-4 text-white flex items-center justify-between">
         <div>
-          <div class="text-xl font-bold">${SPORT_ICONS[t.sport]||'🏆'} ${t.name_en}</div>
-          <div class="text-sm text-green-200">${t.name_ta} · ${t.format} · ${t.year}</div>
+          <a href="/tournament-detail?id=${t.id}" class="hover:underline text-xl font-bold block">${SPORT_ICONS[t.sport]||'🏆'} ${t.name_en}</a>
+          <div class="text-sm text-green-200 mt-1">${t.name_ta} · ${t.format} · ${t.year}</div>
         </div>
-        <span class="text-xs px-3 py-1 rounded-full font-medium ${t.status==='ONGOING'?'bg-yellow-400 text-yellow-900':t.status==='COMPLETED'?'bg-white/20 text-white':'bg-blue-400 text-white'}">${t.status}</span>
+        <div class="flex flex-col items-end gap-2">
+          <span class="text-xs px-3 py-1 rounded-full font-medium ${t.status==='UPCOMING'?'bg-blue-400 text-white':t.status==='ONGOING'?'bg-yellow-400 text-yellow-900':'bg-white/20 text-white'}">${t.status}</span>
+          ${t.status === 'UPCOMING' ? `<a href="/tournament-detail?id=${t.id}" class="text-xs bg-white text-[#064e3b] px-3 py-1 rounded-full font-bold hover:bg-green-50 transition-colors">Register Team</a>` : ''}
+        </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
         <div class="p-5">

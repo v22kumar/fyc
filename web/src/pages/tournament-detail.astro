@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+
+<BaseLayout
+  title="FYC Sports | Team Registration & Fixtures"
+  description="Register your team for FYC sports tournaments and view match fixtures."
+>
+  <main class="page-bg bg-gray-50 min-h-screen pb-16">
+    <div id="loading" class="text-center py-16">
+        <div class="inline-block w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500">Loading tournament details...</p>
+    </div>
+    
+    <div id="error" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">⚠️</div>
+        <p class="text-gray-600 font-medium">Tournament not found or failed to load.</p>
+        <a href="/sports" class="inline-block mt-4 text-[#064e3b] underline font-medium">Back to Sports Hub</a>
+    </div>
+
+    <div id="content" class="hidden">
+        <div class="header-banner bg-[#0f5132] text-white py-12">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <a href="/sports" class="back-link inline-block text-green-200 hover:text-white transition-colors mb-4 text-sm font-medium">← Back to Sports Hub</a>
+            <h1 id="t-name-en" class="text-3xl sm:text-4xl font-bold mb-2"></h1>
+            <p id="t-name-ta" class="ta-title text-green-100 text-lg mb-6"></p>
+            <div class="meta flex flex-wrap gap-6 text-sm text-green-100 font-medium">
+                <span id="t-venue" class="flex items-center gap-2">🏟️ <span></span></span>
+                <span id="t-sport" class="flex items-center gap-2">🏆 <span></span></span>
+            </div>
+        </div>
+        </div>
+
+        <div class="container mx-auto px-4 max-w-6xl content-split mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="details lg:col-span-7">
+            <h3 class="text-2xl font-bold mb-6 text-gray-900 border-b border-gray-200 pb-2">Match Fixtures</h3>
+            <div id="fixtures-container">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <div class="form-container lg:col-span-5 self-start bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="text-xl font-bold mb-6 pb-4 border-b border-gray-100 text-gray-900">Register Your Team</h3>
+            
+            <div id="auth-warning" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg mb-6 text-sm">
+                You must <a href="/login" class="font-bold underline text-amber-900">Log In</a> to register a team.
+            </div>
+
+            <form id="teamForm" class="reg-form flex flex-col gap-5">
+            <input type="hidden" id="tourneyId" />
+            
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Team Name *</label>
+                <input type="text" id="tname" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#064e3b] focus:border-[#064e3b] outline-none transition-shadow" placeholder="e.g. FYC Warriors" />
+            </div>
+            
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Captain Name *</label>
+                <input type="text" id="cname" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#064e3b] focus:border-[#064e3b] outline-none transition-shadow" placeholder="Full Name" />
+            </div>
+
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Contact Number *</label>
+                <input type="tel" id="mobile" required pattern="[0-9]{10}" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#064e3b] focus:border-[#064e3b] outline-none transition-shadow" placeholder="10-digit mobile number" />
+            </div>
+
+            <button type="submit" id="submitBtn" class="submit-btn bg-[#064e3b] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#0f5132] transition-colors mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-sm">
+                Submit Team Registration
+            </button>
+            <div id="msg" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+            </form>
+        </div>
+        </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tourneyId = urlParams.get('id');
+
+    async function loadData() {
+        if (!tourneyId) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const [tRes, fixRes] = await Promise.all([
+                fetch(`${API_BASE}/api/v1/sports/tournaments/${tourneyId}`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } }),
+                fetch(`${API_BASE}/api/v1/sports/tournaments/${tourneyId}/fixtures`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } })
+            ]);
+
+            if (!tRes.ok) throw new Error('Not found');
+
+            const tournament = await tRes.json();
+            const fixtures = fixRes.ok ? await fixRes.json() : [];
+
+            document.getElementById('tourneyId').value = tournament.id;
+            document.getElementById('t-name-en').textContent = tournament.name_en;
+            document.getElementById('t-name-ta').textContent = tournament.name_ta;
+            document.querySelector('#t-venue span').textContent = tournament.venue || 'TBA';
+            document.querySelector('#t-sport span').textContent = `${tournament.sport.toUpperCase()} - ${tournament.year}`;
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (tournament.status !== 'UPCOMING') {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Registration Closed';
+            }
+
+            const token = localStorage.getItem('fyc_token');
+            if (!token && tournament.status === 'UPCOMING') {
+                document.getElementById('auth-warning').classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Login Required';
+            }
+
+            renderFixtures(fixtures);
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        } catch (e) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+        }
+    }
+
+    function renderFixtures(fixtures) {
+        const container = document.getElementById('fixtures-container');
+        if (!fixtures || fixtures.length === 0) {
+            container.innerHTML = '<div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg text-sm">Fixtures have not been generated yet. Register your team below to participate!</div>';
+            return;
+        }
+
+        container.innerHTML = `<div class="flex flex-col gap-4">` + fixtures.map((f) => `
+            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider flex justify-between items-center">
+                    <span>Match #${f.match_number}</span>
+                    <span class="px-2 py-1 rounded-full ${f.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : f.status === 'LIVE' ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-700'}">${f.status}</span>
+                </div>
+                <div class="flex items-center justify-between font-bold text-lg text-gray-900 px-2 md:px-8">
+                    <span class="flex-1 text-center truncate">${f.team_a_name || '?'}</span>
+                    <span class="text-gray-300 font-medium text-sm px-4">VS</span>
+                    <span class="flex-1 text-center truncate">${f.team_b_name || '?'}</span>
+                </div>
+                ${f.status === 'COMPLETED' ? `
+                    <div class="mt-4 text-center">
+                        <span class="inline-block bg-green-50 text-green-800 font-bold px-4 py-2 rounded-lg text-sm border border-green-100">Score: ${f.team_a_score || 0} - ${f.team_b_score || 0}</span>
+                        ${f.result_notes ? `<div class="text-xs text-gray-500 mt-2">${f.result_notes}</div>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('') + `</div>`;
+    }
+
+    loadData();
+
+    const form = document.getElementById('teamForm');
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tId = document.getElementById('tourneyId').value;
+        const msgEl = document.getElementById('msg');
+        const btn = document.getElementById('submitBtn');
+        
+        const payload = {
+            name: document.getElementById('tname').value,
+            captain_name: document.getElementById('cname').value,
+            contact_number: document.getElementById('mobile').value
+        };
+
+        btn.disabled = true;
+        btn.textContent = "Registering...";
+
+        try {
+            const token = localStorage.getItem('fyc_token') || ''; 
+
+            const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tId}/teams`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'X-Organization-ID': DEFAULT_ORG_ID
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            msgEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+
+            if (res.ok) {
+                msgEl.classList.add('block', 'bg-green-100', 'text-green-800');
+                msgEl.textContent = 'Team Registered successfully!';
+                form.reset();
+            } else {
+                msgEl.classList.add('block', 'bg-red-100', 'text-red-800');
+                msgEl.textContent = data.detail || 'Failed to register. Please try again.';
+            }
+        } catch (err) {
+            msgEl.classList.remove('hidden');
+            msgEl.classList.add('block', 'bg-red-100', 'text-red-800');
+            msgEl.textContent = 'Network error. Please try again.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Submit Team Registration";
+        }
+    });
+</script>

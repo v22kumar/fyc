@@ -1,0 +1,294 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+
+<BaseLayout
+  title="நிகழ்வு பதிவு | Event Registration"
+  description="Register for upcoming FYC events and competitions."
+>
+  <main class="registration-page">
+    <div id="loading" class="text-center py-16">
+        <div class="inline-block w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500">Loading event details...</p>
+    </div>
+    
+    <div id="error" class="hidden text-center py-16">
+        <div class="text-5xl mb-4">⚠️</div>
+        <p class="text-gray-600 font-medium">Event not found or failed to load.</p>
+        <a href="/events" class="inline-block mt-4 text-primary underline">Back to Events</a>
+    </div>
+
+    <div id="event-content" class="hidden">
+        <div class="header-banner">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <a href="/events" class="back-link mb-4 inline-block text-green-200 hover:text-white transition-colors">← Back to Events</a>
+            <h1 id="ev-title-en" class="text-3xl font-bold mb-2"></h1>
+            <p id="ev-title-ta" class="ta-title text-green-100 text-lg mb-6"></p>
+            <div class="meta flex flex-wrap gap-6 text-sm text-green-100">
+                <span id="ev-date" class="flex items-center gap-2">📅 <span></span></span>
+                <span id="ev-time" class="flex items-center gap-2">⏰ <span></span></span>
+            </div>
+        </div>
+        </div>
+
+        <div class="container mx-auto px-4 max-w-6xl content-split mt-8 mb-16 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="details lg:col-span-7">
+            <h3 class="text-2xl font-bold mb-4 text-gray-900">About Event</h3>
+            <p id="ev-desc-en" class="text-gray-600 mb-4 leading-relaxed"></p>
+            <p id="ev-desc-ta" class="text-gray-600 leading-relaxed"></p>
+            
+            <div id="ev-deadline-container" class="hidden alert warning mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+                Registration Deadline: <strong id="ev-deadline"></strong>
+            </div>
+        </div>
+
+        <div class="registration-form-container lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="text-xl font-bold mb-6 pb-4 border-b border-gray-100">Register Now</h3>
+            <form id="regForm" class="reg-form flex flex-col gap-4">
+            <input type="hidden" id="eventId" />
+            
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Full Name *</label>
+                <input type="text" id="name" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">Age *</label>
+                    <input type="number" id="age" required min="5" max="100" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">Gender *</label>
+                    <select id="gender" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">Mobile *</label>
+                    <input type="tel" id="mobile" required pattern="[0-9]{10}" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                </div>
+            </div>
+
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">School / College</label>
+                <input type="text" id="school" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+            </div>
+            
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Class / Grade Category *</label>
+                <select id="grade" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
+                <option value="">Select Category</option>
+                <option value="1 முதல் 3 ஆம் வகுப்பு">1 முதல் 3 ஆம் வகுப்பு</option>
+                <option value="4 முதல் 5 ஆம் வகுப்பு">4 முதல் 5 ஆம் வகுப்பு</option>
+                <option value="6 முதல் 8 ஆம் வகுப்பு">6 முதல் 8 ஆம் வகுப்பு</option>
+                <option value="9 முதல் 10 ஆம் வகுப்பு">9 முதல் 10 ஆம் வகுப்பு</option>
+                <option value="11 மற்றும் 12 ஆம் வகுப்பு">11 மற்றும் 12 ஆம் வகுப்பு</option>
+                <option value="கல்லூரி மாணவர்கள்">கல்லூரி மாணவர்கள்</option>
+                <option value="திறந்த பிரிவு">திறந்த பிரிவு</option>
+                </select>
+            </div>
+
+            <div class="form-group hidden flex-col gap-1.5" id="competitions-container">
+                <label class="text-sm font-medium text-gray-700">Select Competitions & Topics *</label>
+                <div id="dynamic-competitions" class="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
+                <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Address</label>
+                <textarea id="address" rows="2" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-700 transition-colors mt-2 shadow-sm">Submit Registration</button>
+            <div id="msg" class="hidden mt-4 p-3 rounded-lg text-sm text-center"></div>
+            </form>
+        </div>
+        </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+
+    async function loadEvent() {
+        if (!eventId) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/events/${eventId}`, {
+                headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
+            });
+            if (!res.ok) throw new Error('Not found');
+            const event = await res.json();
+
+            document.getElementById('eventId').value = event.id;
+            document.getElementById('ev-title-en').textContent = event.title_en;
+            document.getElementById('ev-title-ta').textContent = event.title_ta;
+            document.querySelector('#ev-date span').textContent = new Date(event.event_start).toLocaleDateString();
+            document.querySelector('#ev-time span').textContent = `${new Date(event.event_start).toLocaleTimeString()} - ${new Date(event.event_end).toLocaleTimeString()}`;
+            document.getElementById('ev-desc-en').textContent = event.description_en;
+            document.getElementById('ev-desc-ta').textContent = event.description_ta;
+
+            if (event.registration_deadline) {
+                document.getElementById('ev-deadline-container').classList.remove('hidden');
+                document.getElementById('ev-deadline').textContent = new Date(event.registration_deadline).toLocaleDateString();
+            }
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('event-content').classList.remove('hidden');
+        } catch (e) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+        }
+    }
+
+    loadEvent();
+
+    const compData = {
+      "1 முதல் 3 ஆம் வகுப்பு": {
+        "பேச்சுப் போட்டி": ["என் அம்மா என் முதல் ஆசிரியர்", "நான் பெரியவனாக / பெரியவளாக ஆன பிறகு", "என் செல்லப் பிராணி", "மரங்கள் ஏன் நண்பர்கள்?", "மகிழ்ச்சியான பள்ளி"],
+        "ஒப்பித்தல் போட்டி": ["தாய் பற்றிய கவிதை", "இயற்கை கவிதை", "குழந்தைகள் கவிதை", "நல்ல பழக்கங்கள்"],
+        "ஓவியப் போட்டி": ["என் குடும்பம்", "என் பள்ளி", "வண்ணத்துப்பூச்சி உலகம்"]
+      },
+      "4 முதல் 5 ஆம் வகுப்பு": {
+        "பேச்சுப் போட்டி": ["மொபைல் நல்ல நண்பனா?", "புத்தகம் VS மொபைல்", "நான் காப்பாற்ற விரும்பும் ஒரு உயிரினம்", "என் ஊர்", "எதிர்காலத்தில் நான் உருவாக்க விரும்பும் கண்டுபிடிப்பு"],
+        "ஒப்பித்தல் போட்டி": ["தேசபற்று கவிதை", "தமிழ் பற்றிய கவிதை", "உழைப்பு பற்றிய கவிதை"],
+        "கட்டுரைப் போட்டி": ["என் கனவு பள்ளி", "சுற்றுச்சூழலை நான் எப்படி காப்பாற்றுவேன்?"]
+      },
+      "6 முதல் 8 ஆம் வகுப்பு": {
+        "பேச்சுப் போட்டி": ["AI என் நண்பனா அல்லது போட்டியாளரா?", "சமூக ஊடகங்கள் நம்மை மாற்றுகிறதா?", "பிளாஸ்டிக் இல்லா உலகம் சாத்தியமா?", "விளையாட்டு மற்றும் வாழ்க்கை", "தோல்வி வெற்றியின் தாயா?"],
+        "ஒப்பித்தல் போட்டி": ["மனிதநேயம்", "இயற்கை பாதுகாப்பு", "இளைஞர் எழுச்சி"],
+        "கட்டுரைப் போட்டி": ["2050-ல் என் இந்தியா", "இணைய உலகில் பாதுகாப்பு", "விண்வெளி ஆராய்ச்சியின் எதிர்காலம்"]
+      },
+      "9 முதல் 10 ஆம் வகுப்பு": {
+        "பேச்சுப் போட்டி": ["செயற்கை நுண்ணறிவு மனிதனை மிஞ்சுமா?", "மதிப்பெண்களா? திறமைகளா?", "சமூக ஊடகங்கள்: வரமா சாபமா?", "காலநிலை மாற்றம் – இளைஞர்களின் பங்கு", "எதிர்கால வேலைகள் எப்படி இருக்கும்?"],
+        "ஒப்பித்தல் போட்டி": ["பாரதியார் கவிதைகள்", "பெண்கள் முன்னேற்றம்", "சுதந்திரம் மற்றும் பொறுப்பு"],
+        "கட்டுரைப் போட்டி": ["AI மற்றும் மனிதநேயம்", "டிஜிட்டல் இந்தியா", "நல்ல தலைமைத்துவம்"]
+      },
+      "11 மற்றும் 12 ஆம் வகுப்பு": {
+        "பேச்சுப் போட்டி": ["AI காலத்தில் கல்வி எப்படி மாற வேண்டும்?", "தொழில்நுட்பம் மனித உறவுகளை பாதிக்கிறதா?", "இந்தியா 2047", "இளைஞர்களும் தொழில்முனைவும்", "மனநலம் பற்றி பேச வேண்டிய நேரமா?"],
+        "ஒப்பித்தல் போட்டி": ["பாரதிதாசன் கவிதைகள்", "சமூக மாற்றக் கவிதைகள்", "பெண் விடுதலைக் கவிதைகள்"],
+        "கட்டுரைப் போட்டி": ["Start-up India", "செயற்கை நுண்ணறிவு மற்றும் வேலைவாய்ப்பு", "இந்தியாவின் உலகளாவிய பங்கு"]
+      },
+      "கல்லூரி மாணவர்கள்": {
+        "பேச்சுப் போட்டி": ["ChatGPT மற்றும் AI: கல்வியின் எதிர்காலம்", "Startup vs Job", "இந்தியா உலகின் AI தலைநகரமாக முடியுமா?", "சமூக ஊடகங்களில் உண்மை மற்றும் பொய்", "இன்றைய தலைமுறையின் மிகப்பெரிய சவால் என்ன?"],
+        "விவாதப் போட்டி": ["AI மனித வேலைகளை பறிக்குமா?", "ஆன்லைன் கல்வியா? நேரடி கல்வியா?", "அரசு வேலை vs தனியார் வேலை"],
+        "கட்டுரைப் போட்டி": ["2047 வளர்ந்த இந்தியா", "Climate Tech", "AI Ethics"]
+      },
+      "திறந்த பிரிவு": {
+        "திறந்த பிரிவு": ["3 நிமிடங்களில் ஒரு பிரச்சனைக்கு தீர்வு கூறு", "தமிழில் TED Talk", "ஒரு புதிய சமூக மாற்ற யோசனை", "என் ஊருக்கான ஒரு Startup Idea", "AI-ஐ பயன்படுத்தி கிராம வளர்ச்சி"]
+      }
+    };
+
+    const gradeSelect = document.getElementById('grade');
+    const compContainer = document.getElementById('competitions-container');
+    const dynComps = document.getElementById('dynamic-competitions');
+
+    gradeSelect?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (!val || !compData[val]) {
+            if (compContainer) {
+                compContainer.classList.add('hidden');
+                compContainer.classList.remove('flex');
+            }
+            if (dynComps) dynComps.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        const types = compData[val];
+        for (const [type, topics] of Object.entries(types)) {
+            html += `<div class="mb-4"><strong class="block text-gray-800 text-sm mb-2">${type}</strong>`;
+            topics.forEach((topic) => {
+                html += `
+                <label class="flex items-start gap-2 mb-2 ml-2 cursor-pointer group">
+                    <input type="checkbox" name="competitions" value="${type}: ${topic}" class="mt-1 border-gray-300 rounded text-primary focus:ring-primary" />
+                    <span class="text-sm text-gray-600 group-hover:text-gray-900">${topic}</span>
+                </label>`;
+            });
+            html += `</div>`;
+        }
+        if (dynComps) dynComps.innerHTML = html;
+        if (compContainer) {
+            compContainer.classList.remove('hidden');
+            compContainer.classList.add('flex');
+        }
+    });
+
+    const form = document.getElementById('regForm');
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const evId = document.getElementById('eventId').value;
+        const msgEl = document.getElementById('msg');
+        
+        const cbNodes = document.querySelectorAll('input[name="competitions"]:checked');
+        const competitions = Array.from(cbNodes).map((cb) => cb.value);
+
+        if (competitions.length === 0) {
+            alert("Please select at least one competition topic.");
+            return;
+        }
+
+        const payload = {
+            name: document.getElementById('name').value,
+            age: parseInt(document.getElementById('age').value),
+            gender: document.getElementById('gender').value,
+            mobile_number: document.getElementById('mobile').value,
+            email: document.getElementById('email').value || null,
+            school_college: document.getElementById('school').value || null,
+            class_grade: document.getElementById('grade').value,
+            address: document.getElementById('address').value || null,
+            competition_category: competitions
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/events/${evId}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Organization-ID': DEFAULT_ORG_ID
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            msgEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            if (res.ok) {
+                msgEl.classList.add('block', 'bg-green-100', 'text-green-800');
+                msgEl.textContent = 'Registration successful!';
+                form.reset();
+                compContainer.classList.add('hidden');
+                compContainer.classList.remove('flex');
+            } else {
+                msgEl.classList.add('block', 'bg-red-100', 'text-red-800');
+                msgEl.textContent = data.detail || 'Registration failed';
+            }
+        } catch (err) {
+            msgEl.classList.remove('hidden');
+            msgEl.classList.add('block', 'bg-red-100', 'text-red-800');
+            msgEl.textContent = 'Network error. Please try again.';
+        }
+    });
+</script>
+
+<style>
+  .header-banner { background: linear-gradient(135deg, #064e3b, #0f766e); color: white; padding: 2.5rem 0; }
+</style>

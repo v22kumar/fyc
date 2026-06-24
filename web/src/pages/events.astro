@@ -143,41 +143,43 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     const upcoming = isUpcoming(event.event_start);
 
     return `
-      <div class="bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-        ${event.banner_url ? `
-          <div class="h-40 bg-primary-100 overflow-hidden">
-            <img src="${event.banner_url}" alt="${title}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\"h-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-5xl\\">🎗️</div>'" />
-          </div>
-        ` : `
-          <div class="h-40 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-5xl">🎗️</div>
-        `}
-        <div class="p-5">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full ${upcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
-              ${upcoming ? t('வரவிருக்கிறது', 'Upcoming') : t('முடிந்தது', 'Past')}
-            </span>
-          </div>
-          <h3 class="font-bold text-gray-900 text-lg mb-2 leading-snug">${title}</h3>
-          <p class="text-sm text-gray-600 mb-3 line-clamp-2">${desc}</p>
-          <div class="space-y-1.5">
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <span>📅</span>
-              <span>${formatDate(event.event_start)}</span>
+      <a href="/event-detail?id=${event.id}" class="block group">
+        <div class="bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group-hover:-translate-y-1 transform duration-200">
+          ${event.banner_url ? `
+            <div class="h-40 bg-primary-100 overflow-hidden">
+              <img src="${event.banner_url}" alt="${title}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\"h-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-5xl\\">🎗️</div>'" />
             </div>
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <span>⏱️</span>
-              <span>${t('முடிவு', 'Ends')}: ${formatDate(event.event_end)}</span>
+          ` : `
+            <div class="h-40 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-5xl">🎗️</div>
+          `}
+          <div class="p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full ${upcoming ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                ${upcoming ? t('வரவிருக்கிறது', 'Upcoming') : t('முடிந்தது', 'Past')}
+              </span>
             </div>
+            <h3 class="font-bold text-gray-900 text-lg mb-2 leading-snug group-hover:text-primary transition-colors">${title}</h3>
+            <p class="text-sm text-gray-600 mb-3 line-clamp-2">${desc}</p>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>📅</span>
+                <span>${formatDate(event.event_start)}</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>⏱️</span>
+                <span>${t('முடிவு', 'Ends')}: ${formatDate(event.event_end)}</span>
+              </div>
+            </div>
+            ${upcoming ? `
+              <div class="mt-4 pt-4 border-t border-gray-100">
+                <span class="inline-block bg-primary text-white text-xs font-semibold px-4 py-2 rounded-lg" data-ta="பதிவு செய்க" data-en="Register Now">
+                  ${t('பதிவு செய்க', 'Register Now')}
+                </span>
+              </div>
+            ` : ''}
           </div>
-          ${upcoming ? `
-            <div class="mt-4 pt-4 border-t border-gray-100">
-              <p class="text-xs text-gray-400" data-ta="வருகை பதிவிட FYC App பயன்படுத்துங்கள்" data-en="Use the FYC App to check in at this event">
-                ${t('வருகை பதிவிட FYC App பயன்படுத்துங்கள்', 'Use the FYC App to check in at this event')}
-              </p>
-            </div>
-          ` : ''}
         </div>
-      </div>
+      </a>
     `;
   }
 
