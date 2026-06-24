@@ -73,6 +73,19 @@ def get_current_user(
         
     return user
 
+def get_current_user_optional(
+    authorization: Optional[str] = Security(api_key_header),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Retrieve the logged in user based on the JWT token, or None if missing/invalid."""
+    if not authorization:
+        return None
+    try:
+        payload = get_current_token_payload(authorization)
+        return get_current_user(payload=payload, db=db)
+    except HTTPException:
+        return None
+
 class RoleChecker:
     """Dependency factory to restrict access to specific roles."""
     def __init__(self, allowed_roles: List[str]):

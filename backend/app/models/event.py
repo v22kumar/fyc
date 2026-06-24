@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Numeric, UniqueConstraint
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Numeric, UniqueConstraint, Boolean, Integer, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -21,7 +21,13 @@ class Event(Base, TimestampMixin, TenantModelMixin):
     geography_id = Column(GUID(), ForeignKey("geographic_nodes.id", ondelete="SET NULL"), nullable=True)
     created_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
+    is_published = Column(Boolean, default=False)
+    registration_deadline = Column(DateTime(timezone=True), nullable=True)
+    max_participants = Column(Integer, nullable=True)
+    competition_categories = Column(JSON, nullable=True)
+
     attendances = relationship("EventAttendance", back_populates="event", cascade="all, delete-orphan")
+    registrations = relationship("EventRegistration", back_populates="event", cascade="all, delete-orphan")
     creator = relationship("User", foreign_keys=[created_by_user_id])
     geography = relationship("GeographicNode", foreign_keys=[geography_id])
 
@@ -44,3 +50,27 @@ class EventAttendance(Base):
     __table_args__ = (
         UniqueConstraint("event_id", "user_id", name="uq_event_attendance"),
     )
+
+class EventRegistration(Base, TimestampMixin):
+    """
+    Stores registrations for an event including personal details and competition categories.
+    """
+    __tablename__ = "event_registrations"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    event_id = Column(GUID(), ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    name = Column(String(150), nullable=False)
+    age = Column(Integer, nullable=False)
+    gender = Column(String(20), nullable=False)
+    mobile_number = Column(String(15), nullable=False)
+    email = Column(String(100), nullable=True)
+    address = Column(Text, nullable=True)
+    school_college = Column(String(200), nullable=True)
+    competition_category = Column(JSON, nullable=False, default=list) # List of chosen categories
+    class_grade = Column(String(50), nullable=True)
+    remarks = Column(Text, nullable=True)
+    
+    event = relationship("Event", back_populates="registrations")
+    user = relationship("User", foreign_keys=[user_id])

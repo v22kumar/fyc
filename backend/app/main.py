@@ -145,6 +145,10 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE tournaments ADD COLUMN show_live_scores BOOLEAN DEFAULT TRUE",
             "ALTER TABLE tournaments ADD COLUMN show_prize_details BOOLEAN DEFAULT FALSE",
             "ALTER TABLE tournaments ADD COLUMN prize_details TEXT",
+            "ALTER TABLE events ADD COLUMN is_published BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE events ADD COLUMN registration_deadline TIMESTAMPTZ",
+            "ALTER TABLE events ADD COLUMN max_participants INTEGER",
+            "ALTER TABLE events ADD COLUMN competition_categories JSON",
         ]
         with engine.connect() as conn:
             for stmt in _migrations:
