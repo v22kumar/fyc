@@ -117,6 +117,14 @@ def _seed_database():
                 db.execute(text(sql))
                 db.commit()
                 print(f"[migration] Added column {table}.{col}")
+
+        # Ensure vrn2252@gmail.com is SUPER_ADMIN
+        admin_user = db.query(User).filter(User.email == "vrn2252@gmail.com").first()
+        if admin_user and admin_user.role != "SUPER_ADMIN":
+            admin_user.role = "SUPER_ADMIN"
+            db.commit()
+            print("Updated vrn2252@gmail.com to SUPER_ADMIN role.")
+            
     except Exception as e:
         print(f"Error seeding database: {e}")
         db.rollback()
