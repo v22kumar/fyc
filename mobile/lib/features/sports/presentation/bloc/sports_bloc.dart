@@ -39,7 +39,29 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
     SportsTournamentSelected event,
     Emitter<SportsState> emit,
   ) async {
+    TournamentEntity? tournament;
+    if (state is SportsLoaded) {
+      final list = (state as SportsLoaded).tournaments;
+      tournament = list.where((t) => t.id == event.tournamentId).firstOrNull;
+    } else if (state is SportsDetailLoaded && (state as SportsDetailLoaded).tournament.id == event.tournamentId) {
+      tournament = (state as SportsDetailLoaded).tournament;
+    }
+
     emit(const SportsLoading());
+
+    if (tournament == null) {
+      final tResult = await _fetchTournaments();
+      tResult.fold(
+        (f) => null,
+        (list) => tournament = list.where((t) => t.id == event.tournamentId).firstOrNull,
+      );
+    }
+
+    if (tournament == null) {
+      emit(const SportsFailure('Tournament not found'));
+      return;
+    }
+
     final fixturesResult = await _repository.fetchFixtures(event.tournamentId);
     final fixtures = fixturesResult.fold((f) => null, (list) => list);
     if (fixtures == null) {
@@ -53,6 +75,7 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
     standingsResult.fold(
       (f) => emit(SportsFailure(f.message)),
       (standings) => emit(SportsDetailLoaded(
+        tournament: tournament!,
         fixtures: fixtures,
         standings: standings,
       )),

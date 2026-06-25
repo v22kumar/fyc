@@ -32,7 +32,7 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await sl<ApiClient>().dio.post(
-        ApiConstants.sportsTeams(widget.tournamentId),
+        ApiConstants.sportsTournamentTeams(widget.tournamentId),
         data: {
           'name': _nameCtrl.text.trim(),
           'captain_name': _captainCtrl.text.trim(),

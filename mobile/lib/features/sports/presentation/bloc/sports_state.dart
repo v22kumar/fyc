@@ -25,14 +25,16 @@ class SportsLoaded extends SportsState {
 }
 
 class SportsDetailLoaded extends SportsState {
+  final TournamentEntity tournament;
   final List<FixtureEntity> fixtures;
   final List<TeamEntity> standings;
   const SportsDetailLoaded({
+    required this.tournament,
     required this.fixtures,
     required this.standings,
   });
   @override
-  List<Object?> get props => [fixtures, standings];
+  List<Object?> get props => [tournament, fixtures, standings];
 }
 
 class SportsChallengeSuccess extends SportsState {
