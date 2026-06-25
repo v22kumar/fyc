@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,9 +23,17 @@ ThemeMode themeModeFromString(String s) => switch (s) {
       _ => ThemeMode.light,
     };
 
+
 @pragma('vm:entry-point')
-Future<void> _onBackgroundMessage(RemoteMessage _) async {
+Future<void> _onBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp();
+}
+
+void _handleNotificationClick(BuildContext context, RemoteMessage message) {
+  final route = message.data['route'];
+  if (route != null && route.isNotEmpty) {
+    context.go(route);
+  }
 }
 
 void main() async {
@@ -33,7 +44,7 @@ void main() async {
   await initServiceLocator();
   localeNotifier.value = Locale(sl<LocalStorage>().getLang());
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
-  // Fire-and-forget: wake the Fly.io backend before the home screen loads.
+  
   _warmUpBackend();
   runApp(const FycApp());
 }
@@ -43,13 +54,73 @@ Future<void> _warmUpBackend() async {
     await sl<ApiClient>().dio
         .get('/api/health')
         .timeout(const Duration(seconds: 20));
-  } catch (_) {
-    // Ignore — this is best-effort only.
-  }
+  } catch (_) {}
 }
 
-class FycApp extends StatelessWidget {
+class FycApp extends StatefulWidget {
   const FycApp({super.key});
+
+  @override
+  State<FycApp> createState() => _FycAppState();
+}
+
+class _FycAppState extends State<FycApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupFCM();
+  }
+
+  Future<void> _setupFCM() async {
+    // Background message interaction
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null && mounted) {
+        // Delay to allow router to initialize
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
+        });
+      }
+    });
+
+    // Foreground message handler
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (mounted && message.notification != null) {
+        final context = appRouter.routerDelegate.navigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message.notification!.title ?? 'New Notification'),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () => _handleNotificationClick(context, message),
+              ),
+            ),
+          );
+        }
+      }
+    });
+
+    // Background interaction handler
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      if (mounted) {
+        _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
+      }
+    });
+
+    // Token Sync
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) _syncToken(token);
+    FirebaseMessaging.instance.onTokenRefresh.listen(_syncToken);
+  }
+
+  Future<void> _syncToken(String token) async {
+    try {
+      await sl<ApiClient>().dio.post(
+        '/users/me/fcm-token',
+        data: {'token': token},
+      );
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -21,6 +21,14 @@ class Notification(Base, TimestampMixin, TenantModelMixin):
     is_read = Column(Boolean(), default=False)
     data = Column(JSON, nullable=True) # Custom payload for navigation (e.g. {"route": "/tournament/123"})
     
+    # Analytics / Audit tracking
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    clicked_at = Column(DateTime(timezone=True), nullable=True)
+    failed_at = Column(DateTime(timezone=True), nullable=True)
+    failure_reason = Column(String(500), nullable=True)
+    delivery_channel = Column(String(50), nullable=True) # E.g., 'FCM', 'WHATSAPP', 'SMS'
+    
     # Relationships
     user = relationship("User", backref="notifications")
 

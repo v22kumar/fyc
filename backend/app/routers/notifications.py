@@ -57,6 +57,22 @@ def mark_all_as_read(
     db.commit()
     return {"message": "All notifications marked as read"}
 
+@router.put("/{notification_id}/track-click")
+def track_click(
+    notification_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from datetime import datetime, timezone
+    notif = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id == current_user.id
+    ).first()
+    if notif and not notif.clicked_at:
+        notif.clicked_at = datetime.now(timezone.utc)
+        db.commit()
+    return {"status": "tracked"}
+
 @router.get("/preferences", response_model=NotificationPreferenceResponse)
 def get_preferences(
     db: Session = Depends(get_db),

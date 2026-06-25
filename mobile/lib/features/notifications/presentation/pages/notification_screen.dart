@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../bloc/notification_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -73,10 +74,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     ],
                   ),
                   onTap: () {
+                    context.read<NotificationBloc>().add(TrackNotificationClick(notif.id));
                     if (!notif.isRead) {
                       context.read<NotificationBloc>().add(MarkNotificationAsRead(notif.id));
                     }
-                    // Handle navigation if notif.data contains route mapping
+                    if (notif.data != null && notif.data!['route'] != null) {
+                      context.go(notif.data!['route']);
+                    }
                   },
                 );
               },

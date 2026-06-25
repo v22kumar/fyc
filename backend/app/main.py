@@ -219,6 +219,13 @@ async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
                       id="birthday_notifications", replace_existing=True)
+    
+    from app.services.daily_digest import run_morning_digest, run_evening_digest
+    scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC", # 8:00 AM IST
+                      id="morning_digest", replace_existing=True)
+    scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC", # 8:00 PM IST
+                      id="evening_digest", replace_existing=True)
+
     if settings.MORNING_BROADCAST_ENABLED:
         from app.services.whatsapp_broadcast import run_morning_broadcast
         scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",

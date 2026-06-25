@@ -36,6 +36,15 @@ class NotificationRepository {
     }
   }
 
+  Future<Either<Failure, void>> trackClick(String id) async {
+    try {
+      await remoteDataSource.trackClick(id);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   Future<Either<Failure, NotificationPreferenceEntity>> getPreferences() async {
     try {
       final prefs = await remoteDataSource.getPreferences();

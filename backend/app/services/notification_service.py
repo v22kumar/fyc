@@ -1,16 +1,30 @@
 import logging
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from uuid import UUID
-from typing import List, Dict, Any, Optional
+
+import firebase_admin
+from firebase_admin import credentials, messaging
 from app.models.notification import Notification, NotificationPreference
 from app.models.user import User
-import uuid
+from app.services.whatsapp_service import whatsapp_queue
 
 logger = logging.getLogger(__name__)
+
+# Initialize Firebase (if not already)
+try:
+    if not firebase_admin._apps:
+        # For production, supply the path to the service account key via env var or pass creds explicitly
+        # This will use GOOGLE_APPLICATION_CREDENTIALS
+        firebase_admin.initialize_app()
+except Exception as e:
+    logger.warning(f"Firebase Admin initialization failed: {e}")
 
 class NotificationService:
     def __init__(self, db: Session):
         self.db = db
+        self.whatsapp_queue = whatsapp_queue
 
     def get_preferences(self, user_id: UUID, organization_id: UUID) -> NotificationPreference:
         pref = self.db.query(NotificationPreference).filter(
@@ -45,23 +59,27 @@ class NotificationService:
                           body_ta: str, 
                           notification_type: str, 
                           data: Optional[Dict[str, Any]] = None):
-        """
-        Main entry point for sending a notification to a specific user.
-        Evaluates user preferences and dispatches to appropriate channels.
-        """
+        
         pref = self.get_preferences(user_id, organization_id)
         user = self.db.query(User).filter(User.id == user_id).first()
 
         if not user:
             return
 
-        # 1. Topic filtering
-        if notification_type == "NEWS" and not pref.news_enabled: return
-        if notification_type == "EVENT" and not pref.events_enabled: return
-        if notification_type == "COMMUNITY" and not pref.community_enabled: return
-        if notification_type == "SPORTS" and not pref.sports_enabled: return
+        # Category Filtering mapping
+        type_mapping = {
+            "NEWS": pref.news_enabled,
+            "EVENT": pref.events_enabled,
+            "COMMUNITY": pref.community_enabled,
+            "TOURNAMENT": pref.sports_enabled,
+            "SYSTEM": True # System always enabled
+        }
+        
+        enabled = type_mapping.get(notification_type, True)
+        if not enabled:
+            return
 
-        # 2. In-App Notification (Always stored)
+        # Save to DB
         notification = Notification(
             user_id=user_id,
             organization_id=organization_id,
@@ -70,53 +88,66 @@ class NotificationService:
             body_en=body_en,
             body_ta=body_ta,
             notification_type=notification_type,
-            data=data
+            data=data,
+            sent_at=datetime.now(timezone.utc)
         )
         self.db.add(notification)
         self.db.commit()
+        self.db.refresh(notification)
 
-        # 3. Push Notification (FCM)
+        channels = []
+
         if pref.push_enabled and user.fcm_token:
-            self._dispatch_push(user.fcm_token, title_en, body_en, data)
+            success = self._dispatch_push(user.fcm_token, title_en, body_en, data)
+            if success:
+                channels.append("FCM")
+                notification.delivered_at = datetime.now(timezone.utc)
 
-        # 4. WhatsApp
         if pref.whatsapp_enabled and user.phone_number:
-            self._dispatch_whatsapp(user.phone_number, title_en, body_en)
+            success = self.whatsapp_queue.enqueue_template(
+                phone=user.phone_number,
+                template_name=notification_type.lower(),
+                parameters={"title": title_en, "body": body_en}
+            )
+            if success: channels.append("WHATSAPP")
 
-        # 5. SMS (usually reserved for OTP/emergencies)
-        if pref.sms_enabled and user.phone_number and notification_type in ["EMERGENCY", "OTP"]:
-            self._dispatch_sms(user.phone_number, body_en)
+        if pref.sms_enabled and user.phone_number and notification_type in ["SYSTEM", "COMMUNITY"]:
+            channels.append("SMS")
 
-        # 6. Email
         if pref.email_enabled and user.email:
-            self._dispatch_email(user.email, title_en, body_en)
+            channels.append("EMAIL")
 
-    def _dispatch_push(self, token: str, title: str, body: str, data: dict = None):
-        logger.info(f"FCM -> {token}: {title} - {body}")
-        # Integration with firebase_admin goes here
+        notification.delivery_channel = ",".join(channels)
+        self.db.commit()
 
-    def _dispatch_whatsapp(self, phone: str, title: str, body: str):
-        logger.info(f"WhatsApp -> {phone}: {title} - {body}")
-        # Integration with WhatsApp API goes here
-
-    def _dispatch_sms(self, phone: str, body: str):
-        logger.info(f"SMS -> {phone}: {body}")
-        # Integration with SMS API goes here
-
-    def _dispatch_email(self, email: str, title: str, body: str):
-        logger.info(f"Email -> {email}: {title} - {body}")
-        # Integration with SendGrid/SMTP goes here
+    def _dispatch_push(self, token: str, title: str, body: str, data: dict = None) -> bool:
+        if not firebase_admin._apps:
+            logger.warning("FCM skipped (firebase not initialized).")
+            return False
+            
+        try:
+            # Prepare FCM Message
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data={k: str(v) for k, v in (data or {}).items()},
+                token=token,
+            )
+            response = messaging.send(message)
+            logger.info(f"FCM message sent successfully: {response}")
+            return True
+        except Exception as e:
+            logger.error(f"FCM Send Error: {e}")
+            return False
 
     def broadcast(self, organization_id: UUID, title_en: str, title_ta: str, body_en: str, body_ta: str, notification_type: str, data: Optional[dict] = None, target_roles: Optional[List[str]] = None):
-        """
-        Broadcast to all users or specific roles.
-        """
         query = self.db.query(User).filter(User.organization_id == organization_id)
         if target_roles:
             query = query.filter(User.role.in_(target_roles))
             
-        users = query.all()
-        for u in users:
+        for u in query.all():
             self.send_notification(
                 user_id=u.id,
                 organization_id=organization_id,

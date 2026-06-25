@@ -22,6 +22,10 @@ class NotificationRemoteDataSource {
     await dio.put('/notifications/read-all');
   }
 
+  Future<void> trackClick(String id) async {
+    await dio.put('/notifications/$id/track-click');
+  }
+
   Future<NotificationPreferenceModel> getPreferences() async {
     final response = await dio.get('/notifications/preferences');
     return NotificationPreferenceModel.fromJson(response.data);

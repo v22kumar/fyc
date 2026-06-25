@@ -10,6 +10,10 @@ class MarkNotificationAsRead extends NotificationEvent {
   MarkNotificationAsRead(this.id);
 }
 class MarkAllNotificationsAsRead extends NotificationEvent {}
+class TrackNotificationClick extends NotificationEvent {
+  final String id;
+  TrackNotificationClick(this.id);
+}
 
 // States
 abstract class NotificationState {}
@@ -32,6 +36,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<FetchNotifications>(_onFetchNotifications);
     on<MarkNotificationAsRead>(_onMarkAsRead);
     on<MarkAllNotificationsAsRead>(_onMarkAllAsRead);
+    on<TrackNotificationClick>(_onTrackClick);
   }
 
   Future<void> _onFetchNotifications(FetchNotifications event, Emitter<NotificationState> emit) async {
@@ -41,6 +46,10 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       (failure) => emit(NotificationError(failure.message)),
       (notifications) => emit(NotificationLoaded(notifications)),
     );
+  }
+
+  Future<void> _onTrackClick(TrackNotificationClick event, Emitter<NotificationState> emit) async {
+    await repository.trackClick(event.id);
   }
 
   Future<void> _onMarkAsRead(MarkNotificationAsRead event, Emitter<NotificationState> emit) async {
