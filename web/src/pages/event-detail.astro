@@ -269,7 +269,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             });
             const data = await res.json();
             
-            msgEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            msgEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-amber-100', 'text-amber-800');
             
             if (res.ok) {
                 msgEl.classList.add('block', 'bg-green-100', 'text-green-800');
@@ -277,6 +277,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 form.reset();
                 compContainer.classList.add('hidden');
                 compContainer.classList.remove('flex');
+            } else if (res.status === 401) {
+                localStorage.removeItem('fyc_token');
+                msgEl.classList.add('block', 'bg-amber-100', 'text-amber-800');
+                msgEl.innerHTML = 'Session expired. Please <a href="/login" class="underline font-bold text-amber-900">log in again</a>.';
             } else {
                 msgEl.classList.add('block', 'bg-red-100', 'text-red-800');
                 msgEl.textContent = data.detail || 'Registration failed';
