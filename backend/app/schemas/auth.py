@@ -63,6 +63,11 @@ class AdminLogin(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    organization_id: UUID
+    id_token: str
+
+
 def _build_user_out(user, profile=None):
     """Build UserOut from User + optional UserProfile."""
     is_complete = bool(

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
@@ -160,6 +161,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       rethrow;
     } on DioException catch (e) {
       throw mapDioException(e);
+    } on PlatformException catch (e) {
+      if (e.code == 'sign_in_failed') {
+        if (e.message != null && e.message!.contains('10')) {
+          throw const AuthFailure('Google Sign-In is not configured correctly in Firebase (Missing SHA-1 fingerprint). Please contact support.');
+        } else if (e.code == 'network_error') {
+          throw const AuthFailure('Network error. Please check your connection and try again.');
+        }
+      }
+      throw AuthFailure('Google sign-in failed. Please try again later.');
     } catch (e) {
       throw ServerFailure(e.toString());
     }

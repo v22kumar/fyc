@@ -139,6 +139,14 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
             SnackBar(
               content: Text(state.message),
               backgroundColor: AppColors.accent,
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
             ),
           );
         }
@@ -541,14 +549,20 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                 AuthGoogleSignInRequested(
                                                     organizationId: _orgId),
                                               ),
-                                      icon: Image.network(
-                                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                                        height: 18,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                                Icons.g_mobiledata,
-                                                size: 18),
-                                      ),
+                                      icon: isLoading
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            )
+                                          : Image.network(
+                                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                                              height: 18,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                      Icons.g_mobiledata,
+                                                      size: 18),
+                                            ),
                                       label: const Text(
                                           'Continue with Google'),
                                       style: OutlinedButton.styleFrom(

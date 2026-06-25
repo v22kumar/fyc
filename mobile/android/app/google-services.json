@@ -9,10 +9,23 @@
       "client_info": {
         "mobilesdk_app_id": "1:986299606001:android:36c0433860771e7535da50",
         "android_client_info": {
-          "package_name": "com.friendsyouthclub.fycconnect"
+          "package_name": "com.example.fyc_connect"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "986299606001-orcgegist5cimo04k116qsihptgelelq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fyc_connect",
+            "certificate_hash": "bf7a9c253288937f3e9a0779d57e9163a4f17f17"
+          }
+        },
+        {
+          "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBlfpkHow8xOM72bD8pkMyo6ZDoEDDU3is"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

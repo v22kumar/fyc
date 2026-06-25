@@ -1,0 +1,166 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../../lib/config';
+
+export function getStaticPaths() {
+  // We can't know all fixtures at build time in Astro for dynamic data unless we SSR.
+  // Astro in this project might be set to SSR. Let's assume standard Astro dynamic route with SSR enabled.
+  return [];
+}
+// For SSR
+export const prerender = false;
+---
+
+<BaseLayout title="Live Cricket Score" description="Follow live ball-by-ball cricket action.">
+  <main class="page-bg bg-gray-900 min-h-screen pb-16 text-white font-sans">
+    <div id="loading" class="text-center py-16">
+        <div class="inline-block w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-400">Loading Live Score...</p>
+    </div>
+
+    <div id="score-container" class="hidden max-w-lg mx-auto p-4 mt-6">
+      {/* Header */}
+      <div class="text-center mb-6">
+        <div class="text-xs uppercase tracking-widest text-gray-400 mb-1 font-bold">Live Match</div>
+        <h1 id="match-title" class="text-xl font-bold text-yellow-500">... vs ...</h1>
+        <div id="match-status" class="text-sm text-gray-300 bg-gray-800 inline-block px-3 py-1 rounded-full mt-2">First Innings</div>
+      </div>
+
+      {/* Main Scoreboard */}
+      <div class="bg-gray-800 rounded-2xl p-6 shadow-2xl border border-gray-700 relative overflow-hidden mb-6">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-500 rounded-full mix-blend-overlay filter blur-3xl opacity-10"></div>
+        
+        <div class="flex justify-between items-end mb-4">
+          <div>
+            <div class="text-6xl font-black tabular-nums tracking-tighter" id="score">0-0</div>
+            <div class="text-lg text-gray-400 font-medium mt-1">Overs: <span id="overs" class="text-white">0.0</span> <span id="total-overs" class="text-xs text-gray-500">/ 20</span></div>
+          </div>
+          <div class="text-right">
+            <div id="crr-box" class="text-sm text-gray-400">CRR: <span id="crr" class="text-white font-bold">0.0</span></div>
+            <div id="rrr-box" class="text-sm text-gray-400 hidden mt-1">Req: <span id="rrr" class="text-yellow-400 font-bold">0.0</span></div>
+            <div id="target-box" class="text-sm bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded font-bold hidden mt-2">Target: <span id="target"></span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Players */}
+      <div class="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 overflow-hidden">
+        <div class="grid grid-cols-2 text-sm border-b border-gray-700">
+          <div class="p-4 border-r border-gray-700">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-bold">Batters</div>
+            <div id="striker" class="font-bold text-yellow-400 flex justify-between">
+              <span class="name truncate mr-2">Striker *</span> 
+              <span class="stats"><span class="r">0</span><span class="text-gray-500 text-xs ml-1">(<span class="b">0</span>)</span></span>
+            </div>
+            <div id="non-striker" class="text-gray-300 flex justify-between mt-2">
+              <span class="name truncate mr-2">Non-Striker</span> 
+              <span class="stats"><span class="r">0</span><span class="text-gray-500 text-xs ml-1">(<span class="b">0</span>)</span></span>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-bold">Bowler</div>
+            <div id="bowler" class="font-bold text-white flex justify-between">
+              <span class="name truncate mr-2">Bowler</span>
+              <span class="stats">
+                <span class="w">0</span>-<span class="r text-gray-400">0</span>
+              </span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1 text-right">Overs: <span id="b-overs" class="text-white">0.0</span></div>
+          </div>
+        </div>
+        <div class="p-3 bg-gray-900/50 flex justify-between text-xs text-gray-400">
+          <div>Extras: <span id="extras" class="text-white">0</span> (W <span id="ex-w">0</span>, NB <span id="ex-nb">0</span>, B <span id="ex-b">0</span>, LB <span id="ex-lb">0</span>)</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+  const pathParts = window.location.pathname.split('/');
+  const fixtureId = pathParts[pathParts.length - 1]; // e.g. /live/1234
+  
+  let matchCache = null;
+  
+  async function fetchScore() {
+    try {
+      // Use existing generic fixture endpoint to get names, then cricket endpoint for state
+      const [fRes, mRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/sports/fixtures/${fixtureId}`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } }).catch(() => null), // Generic get fixture not available? Just use cricket endpoint
+        fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } })
+      ]);
+      
+      if (!mRes.ok) throw new Error('Not started');
+      const match = await mRes.json();
+      const state = match.match_state;
+      if (!state) return; // Match initialized but no state
+      
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('score-container').classList.remove('hidden');
+      
+      // Update basic details
+      document.getElementById('match-status').textContent = match.status.replace('_', ' ');
+      document.getElementById('score').textContent = `${state.score}-${state.wickets}`;
+      
+      const overInt = Math.floor(state.balls / 6);
+      const ballsRem = state.balls % 6;
+      document.getElementById('overs').textContent = `${state.overs}.${state.balls}`;
+      document.getElementById('total-overs').textContent = `/ ${match.overs_per_innings}`;
+      
+      const totalLegalBalls = state.overs * 6 + state.balls;
+      const crr = totalLegalBalls > 0 ? (state.score / (totalLegalBalls / 6)).toFixed(2) : "0.00";
+      document.getElementById('crr').textContent = crr;
+      
+      if (state.target) {
+        document.getElementById('target-box').classList.remove('hidden');
+        document.getElementById('target').textContent = state.target;
+        document.getElementById('rrr-box').classList.remove('hidden');
+        const remBalls = (match.overs_per_innings * 6) - totalLegalBalls;
+        const reqRuns = state.target - state.score;
+        const rrr = remBalls > 0 ? (reqRuns / (remBalls / 6)).toFixed(2) : "0.00";
+        document.getElementById('rrr').textContent = rrr;
+      }
+      
+      // We don't explicitly know who is striker right now if we are just a read-only viewer.
+      // We can just show two active batters.
+      const activeBatters = Object.values(state.batters).filter(b => !b.out);
+      if (activeBatters.length > 0) {
+        const s = activeBatters[0];
+        document.querySelector('#striker .name').textContent = s.name + ' *';
+        document.querySelector('#striker .r').textContent = s.runs;
+        document.querySelector('#striker .b').textContent = s.balls;
+      }
+      if (activeBatters.length > 1) {
+        const ns = activeBatters[1];
+        document.querySelector('#non-striker .name').textContent = ns.name;
+        document.querySelector('#non-striker .r').textContent = ns.runs;
+        document.querySelector('#non-striker .b').textContent = ns.balls;
+      }
+      
+      // Find active bowler (the one who bowled last, or the one with highest legal_balls if equal we can't tell, but it's ok for viewer)
+      const bowlers = Object.values(state.bowlers);
+      if (bowlers.length > 0) {
+        // Just pick the last added bowler for now, since it's a dict
+        const b = bowlers[bowlers.length - 1];
+        document.querySelector('#bowler .name').textContent = b.name;
+        document.querySelector('#bowler .w').textContent = b.wickets;
+        document.querySelector('#bowler .r').textContent = b.runs;
+        document.getElementById('b-overs').textContent = `${Math.floor(b.legal_balls/6)}.${b.legal_balls%6}`;
+      }
+      
+      document.getElementById('extras').textContent = (state.extras.w + state.extras.nb + state.extras.b + state.extras.lb);
+      document.getElementById('ex-w').textContent = state.extras.w;
+      document.getElementById('ex-nb').textContent = state.extras.nb;
+      document.getElementById('ex-b').textContent = state.extras.b;
+      document.getElementById('ex-lb').textContent = state.extras.lb;
+      
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loading').innerHTML = '<p class="text-gray-400">Match not yet started or failed to load.</p>';
+    }
+  }
+
+  // Poll every 3 seconds for instant updates
+  fetchScore();
+  setInterval(fetchScore, 3000);
+</script>

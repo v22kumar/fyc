@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.friendsyouthclub.fycconnect"
+    namespace = "com.example.fyc_connect"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.friendsyouthclub.fycconnect"
+        applicationId = "com.example.fyc_connect"
         minSdk = flutter.minSdkVersion   // Required by firebase_messaging, google_sign_in
         targetSdk = 34 // Required for new Play Store submissions (2024+)
         versionCode = flutter.versionCode
