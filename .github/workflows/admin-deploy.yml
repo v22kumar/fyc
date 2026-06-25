@@ -1,0 +1,33 @@
+name: Admin Deploy (Next.js → Fly.io)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'admin/**'
+      - '.github/workflows/admin-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Admin to Fly.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy Admin
+        run: |
+          if ! flyctl status --config admin/fly.toml > /dev/null 2>&1; then
+            echo "App does not exist on Fly.io. Creating it..."
+            APP_NAME=$(grep -E "^app\s*=" admin/fly.toml | cut -d'"' -f2)
+            flyctl apps create "$APP_NAME" --org personal || true
+          fi
+          cd admin
+          flyctl deploy --config fly.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
