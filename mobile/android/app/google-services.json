@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "986299606001-releasecimo04k116qsihptgelelq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fyc_connect",
+            "certificate_hash": "bbda573dcd4a7ee3ed3e882ea9abb1d449c72d7b"
+          }
+        },
+        {
           "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
           "client_type": 3
         }
