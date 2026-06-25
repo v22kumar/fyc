@@ -135,11 +135,47 @@ def update_tournament_status(
     ).first()
     if not t:
         raise HTTPException(404, "Tournament not found")
-    if new_status.upper() not in ["UPCOMING", "ONGOING", "COMPLETED"]:
+    if new_status.upper() not in ["DRAFT", "UPCOMING", "ONGOING", "COMPLETED", "ARCHIVED", "PUBLISHED"]:
         raise HTTPException(400, "Invalid status")
     t.status = new_status.upper()
     db.commit()
     return {"status": t.status}
+
+@router.put("/tournaments/{tournament_id}", response_model=TournamentOut)
+def update_tournament(
+    tournament_id: str,
+    payload: TournamentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == current_user.organization_id,
+    ).first()
+    if not t:
+        raise HTTPException(404, "Tournament not found")
+    
+    for k, v in payload.model_dump().items():
+        setattr(t, k, v)
+    db.commit()
+    db.refresh(t)
+    return t
+
+@router.delete("/tournaments/{tournament_id}")
+def delete_tournament(
+    tournament_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == current_user.organization_id,
+    ).first()
+    if not t:
+        raise HTTPException(404, "Tournament not found")
+    db.delete(t)
+    db.commit()
+    return {"status": "deleted"}
 
 
 # ── Teams ─────────────────────────────────────────────────────────────────────
