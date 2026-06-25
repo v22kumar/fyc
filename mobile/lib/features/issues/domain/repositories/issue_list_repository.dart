@@ -8,4 +8,6 @@ abstract class IssueListRepository {
     String? category,
   });
   Future<Either<Failure, IssueEntity>> getIssue(String id);
+  Future<Either<Failure, IssueEntity>> markIssueResolved(String id);
+  Future<Either<Failure, void>> logEmailSent(String id);
 }

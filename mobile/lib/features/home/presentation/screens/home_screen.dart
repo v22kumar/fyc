@@ -76,25 +76,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _BeAHeroCard(),
-                      const SizedBox(height: 22),
-                      _QuickServices(),
-                      const SizedBox(height: 10),
-                      const _AnnouncementsBar(),
-                      const SizedBox(height: 22),
-                      _ImpactStats(l: l),
-                      const SizedBox(height: 22),
-                      const _UpcomingAndNews(),
-                      const SizedBox(height: 22),
-                      _SectionHeader(title: 'Today'),
-                      const SizedBox(height: 12),
-                      DailyThirukkuralCard(key: ValueKey('kural-$_refreshKey')),
-                      const SizedBox(height: 14),
-                      DailyNewsCard(key: ValueKey('news-$_refreshKey')),
-                      const SizedBox(height: 14),
-                      WeatherCard(key: ValueKey('weather-$_refreshKey')),
-                      const SizedBox(height: 14),
-                      GoldPriceCard(key: ValueKey('gold-$_refreshKey')),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          if (state is AuthAuthenticated) {
+                            if (state.user.isAdmin) {
+                              return _ManagerDashboard(l: l, refreshKey: _refreshKey);
+                            } else if (state.user.isVolunteer) {
+                              return _VolunteerDashboard(l: l, refreshKey: _refreshKey);
+                            }
+                          }
+                          return _CitizenDashboard(l: l, refreshKey: _refreshKey);
+                        },
+                      ),
                       const SizedBox(height: 130),
                     ],
                   ),
@@ -239,7 +232,7 @@ class _Header extends StatelessWidget {
                       const SizedBox(height: 16),
                       // Search bar
                       GestureDetector(
-                        onTap: () => _showSearchSheet(context),
+                        onTap: () => context.push('/search'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                           decoration: BoxDecoration(
@@ -455,6 +448,7 @@ class _QuickServices extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final services = <_Service>[
+      const _Service(icon: Icons.feed, label: 'Feed', sub: 'Updates', route: '/feed', color: Color(0xFF6366F1)),
       const _Service(icon: Icons.water_drop, label: 'Blood Donors', sub: 'Find Donors', route: '/blood-donation', color: Color(0xFFEF4444)),
       const _Service(icon: Icons.event, label: 'Events', sub: 'Explore', route: '/events', color: Color(0xFF8B5CF6)),
       const _Service(glyph: '♚', label: 'Chess', sub: 'Play & Connect', route: '/chess', color: Color(0xFF0F172A)),
@@ -462,6 +456,7 @@ class _QuickServices extends StatelessWidget {
       const _Service(icon: Icons.campaign, label: 'Report Issue', sub: 'Raise Report', route: '/issues', color: Color(0xFFEAB308)),
       const _Service(icon: Icons.eco, label: 'Green FYC', sub: 'Discover', route: '/green', color: Color(0xFF16A34A)),
       const _Service(icon: Icons.contacts, label: 'Directory', sub: 'Contacts', route: '/directory', color: Color(0xFF2563EB)),
+      const _Service(icon: Icons.map, label: 'Journey', sub: 'My Impact', route: '/journey', color: Color(0xFFEC4899)),
       const _Service(icon: Icons.verified_user, label: 'Verify Card', sub: 'Verify Now', route: '/membership', color: Color(0xFF14B8A6)),
     ];
 
@@ -1318,8 +1313,25 @@ class _MoreSheet extends StatelessWidget {
               leading: const Icon(Icons.logout, color: AppColors.accent),
               title: Text(l.logout, style: TextStyle(fontWeight: FontWeight.bold, color: context.cText)),
               onTap: () {
-                Navigator.pop(context);
-                context.read<AuthBloc>().add(const AuthLogoutRequested());
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Confirm Logout'),
+                    content: const Text('Are you sure you want to log out?'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                          context.read<AuthBloc>().add(const AuthLogoutRequested());
+                        },
+                        child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ],
@@ -1372,6 +1384,182 @@ class _BentoTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Dashboards ───────────────────────────────────────────────────────────────
+
+class _CitizenDashboard extends StatelessWidget {
+  final AppLocalizations l;
+  final int refreshKey;
+  const _CitizenDashboard({required this.l, required this.refreshKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _BeAHeroCard(),
+        const SizedBox(height: 22),
+        _QuickServices(),
+        const SizedBox(height: 10),
+        const _AnnouncementsBar(),
+        const SizedBox(height: 22),
+        const _UpcomingAndNews(),
+        const SizedBox(height: 22),
+        _SectionHeader(title: 'Today'),
+        const SizedBox(height: 12),
+        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
+        const SizedBox(height: 14),
+        DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        const SizedBox(height: 14),
+        WeatherCard(key: ValueKey('weather-$refreshKey')),
+        const SizedBox(height: 14),
+        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
+      ],
+    );
+  }
+}
+
+class _VolunteerDashboard extends StatelessWidget {
+  final AppLocalizations l;
+  final int refreshKey;
+  const _VolunteerDashboard({required this.l, required this.refreshKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF8B5CF6).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.volunteer_activism, color: Color(0xFF8B5CF6), size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Volunteer Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF8B5CF6))),
+                    Text('Thanks for making a difference!', style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF8B5CF6)),
+                onPressed: () => context.push('/journey'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        _QuickServices(),
+        const SizedBox(height: 22),
+        _SectionHeader(title: "Today's Activities"),
+        const SizedBox(height: 12),
+        _MiniCard(
+          sectionTitle: 'Activity',
+          title: 'Tree Plantation Drive',
+          subtitle: '9:00 AM - 12:00 PM',
+          icon: Icons.eco,
+          iconColor: const Color(0xFF16A34A),
+          onViewAll: () {},
+          onTap: () => context.push('/green'),
+        ),
+        const SizedBox(height: 22),
+        _SectionHeader(title: "My Contributions"),
+        const SizedBox(height: 12),
+        _ImpactStats(l: l),
+      ],
+    );
+  }
+}
+
+class _ManagerDashboard extends StatelessWidget {
+  final AppLocalizations l;
+  final int refreshKey;
+  const _ManagerDashboard({required this.l, required this.refreshKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF59E0B).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.admin_panel_settings, color: Color(0xFFF59E0B), size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Manager Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFF59E0B))),
+                    Text('Manage club activities and requests', style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        _QuickServices(),
+        const SizedBox(height: 22),
+        Row(
+          children: [
+            Expanded(
+              child: _MiniCard(
+                sectionTitle: 'Pending Items',
+                title: '3 New Approvals',
+                subtitle: 'Action required',
+                icon: Icons.pending_actions,
+                iconColor: const Color(0xFFF59E0B),
+                onViewAll: () {},
+                onTap: () {},
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _MiniCard(
+                sectionTitle: 'Registrations',
+                title: '12 New Members',
+                subtitle: 'Last 7 days',
+                icon: Icons.people,
+                iconColor: const Color(0xFF3B82F6),
+                onViewAll: () {},
+                onTap: () => context.push('/community'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 22),
+        _ImpactStats(l: l),
+        const SizedBox(height: 22),
+        _SectionHeader(title: 'Recent Reports'),
+        const SizedBox(height: 12),
+        _MiniCard(
+          sectionTitle: 'Issue',
+          title: 'Street Light Broken',
+          subtitle: 'Main Road, Zone 3',
+          icon: Icons.report_problem,
+          iconColor: const Color(0xFFEF4444),
+          onViewAll: () => context.push('/issues/track'),
+          onTap: () => context.push('/issues/track'),
+        ),
+      ],
     );
   }
 }

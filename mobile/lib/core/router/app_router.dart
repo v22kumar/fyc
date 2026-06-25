@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/language_select_screen.dart';
 import '../../features/auth/presentation/screens/otp_login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
 import '../../features/blood_donation/presentation/screens/donor_registration_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
@@ -85,6 +86,14 @@ import '../../features/volunteers/presentation/screens/certificate_screen.dart';
 import '../../features/community/presentation/bloc/community_bloc.dart';
 import '../../features/community/presentation/screens/community_directory_screen.dart';
 
+// Journey
+import '../../features/journey/presentation/screens/journey_screen.dart';
+import '../../features/journey/presentation/bloc/journey_bloc.dart';
+
+// Community Feed
+import '../../features/community_feed/presentation/screens/community_feed_screen.dart';
+import '../../features/community_feed/presentation/bloc/community_feed_bloc.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
@@ -124,6 +133,24 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/search',
+      builder: (context, state) => const SearchScreen(),
+    ),
+    GoRoute(
+      path: '/journey',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<JourneyBloc>(),
+        child: const JourneyScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/feed',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<CommunityFeedBloc>(),
+        child: const CommunityFeedScreen(),
+      ),
     ),
     GoRoute(
       path: '/blood-donation',

@@ -83,7 +83,24 @@ import 'features/issues/data/datasources/issue_list_datasource.dart';
 import 'features/issues/data/repositories/issue_list_repository_impl.dart';
 import 'features/issues/domain/repositories/issue_list_repository.dart';
 import 'features/issues/domain/usecases/fetch_issues_usecase.dart';
+import 'features/issues/domain/usecases/mark_issue_resolved_usecase.dart';
+import 'features/issues/domain/usecases/log_email_sent_usecase.dart';
 import 'features/issues/presentation/bloc/issue_list_bloc.dart';
+import 'features/issues/presentation/bloc/issue_detail_bloc.dart';
+
+// Journey
+import 'features/journey/data/datasources/journey_datasource.dart';
+import 'features/journey/data/repositories/journey_repository_impl.dart';
+import 'features/journey/domain/repositories/journey_repository.dart';
+import 'features/journey/domain/usecases/fetch_journey_usecase.dart';
+import 'features/journey/presentation/bloc/journey_bloc.dart';
+
+// Community Feed
+import 'features/community_feed/data/datasources/community_feed_datasource.dart';
+import 'features/community_feed/data/repositories/community_feed_repository_impl.dart';
+import 'features/community_feed/domain/repositories/community_feed_repository.dart';
+import 'features/community_feed/domain/usecases/fetch_community_feed_usecase.dart';
+import 'features/community_feed/presentation/bloc/community_feed_bloc.dart';
 
 // Volunteer certificate
 import 'features/volunteers/data/datasources/certificate_datasource.dart';
@@ -290,6 +307,38 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton(() => FetchIssuesUseCase(sl<IssueListRepository>()));
   sl.registerFactory<IssueListBloc>(
     () => IssueListBloc(fetchIssues: sl<FetchIssuesUseCase>()),
+  );
+  sl.registerLazySingleton(() => MarkIssueResolvedUseCase(sl<IssueListRepository>()));
+  sl.registerLazySingleton(() => LogEmailSentUseCase(sl<IssueListRepository>()));
+  sl.registerFactory<IssueDetailBloc>(
+    () => IssueDetailBloc(
+      markResolved: sl<MarkIssueResolvedUseCase>(),
+      logEmail: sl<LogEmailSentUseCase>(),
+    ),
+  );
+
+  // Journey
+  sl.registerLazySingleton<JourneyDataSource>(
+    () => JourneyDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<JourneyRepository>(
+    () => JourneyRepositoryImpl(sl<JourneyDataSource>()),
+  );
+  sl.registerLazySingleton(() => FetchJourneyUseCase(sl<JourneyRepository>()));
+  sl.registerFactory<JourneyBloc>(
+    () => JourneyBloc(fetchJourney: sl<FetchJourneyUseCase>()),
+  );
+
+  // Community Feed
+  sl.registerLazySingleton<CommunityFeedDataSource>(
+    () => CommunityFeedDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<CommunityFeedRepository>(
+    () => CommunityFeedRepositoryImpl(sl<CommunityFeedDataSource>()),
+  );
+  sl.registerLazySingleton(() => FetchCommunityFeedUseCase(sl<CommunityFeedRepository>()));
+  sl.registerFactory<CommunityFeedBloc>(
+    () => CommunityFeedBloc(fetchFeed: sl<FetchCommunityFeedUseCase>()),
   );
 
   // Volunteer certificate

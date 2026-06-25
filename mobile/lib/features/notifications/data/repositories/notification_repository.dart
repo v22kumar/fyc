@@ -14,7 +14,7 @@ class NotificationRepository {
       final notifications = await remoteDataSource.getNotifications();
       return Right(notifications);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -23,7 +23,7 @@ class NotificationRepository {
       final notification = await remoteDataSource.markAsRead(id);
       return Right(notification);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -32,7 +32,7 @@ class NotificationRepository {
       await remoteDataSource.markAllAsRead();
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -41,7 +41,7 @@ class NotificationRepository {
       await remoteDataSource.trackClick(id);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -50,7 +50,7 @@ class NotificationRepository {
       final prefs = await remoteDataSource.getPreferences();
       return Right(prefs);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -69,7 +69,7 @@ class NotificationRepository {
       final updatedPrefs = await remoteDataSource.updatePreferences(model);
       return Right(updatedPrefs);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 }

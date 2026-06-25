@@ -78,8 +78,38 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _showLive = true;
   bool _showPrize = false;
   bool _submitting = false;
+  bool _showAdvanced = false;
 
   String get _lang => sl<LocalStorage>().getLang();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDraft();
+    _nameCtrl.addListener(_saveDraft);
+    _venueCtrl.addListener(_saveDraft);
+    _prizeCtrl.addListener(_saveDraft);
+    _customTeamsCtrl.addListener(_saveDraft);
+    _descCtrl.addListener(_saveDraft);
+  }
+
+  void _loadDraft() {
+    final storage = sl<LocalStorage>();
+    _nameCtrl.text = storage.getDraft('tournament_draft_name') ?? '';
+    _venueCtrl.text = storage.getDraft('tournament_draft_venue') ?? '';
+    _prizeCtrl.text = storage.getDraft('tournament_draft_prize') ?? '';
+    _customTeamsCtrl.text = storage.getDraft('tournament_draft_custom_teams') ?? '';
+    _descCtrl.text = storage.getDraft('tournament_draft_desc') ?? '';
+  }
+
+  void _saveDraft() {
+    final storage = sl<LocalStorage>();
+    storage.saveDraft('tournament_draft_name', _nameCtrl.text);
+    storage.saveDraft('tournament_draft_venue', _venueCtrl.text);
+    storage.saveDraft('tournament_draft_prize', _prizeCtrl.text);
+    storage.saveDraft('tournament_draft_custom_teams', _customTeamsCtrl.text);
+    storage.saveDraft('tournament_draft_desc', _descCtrl.text);
+  }
 
   @override
   void dispose() {
@@ -154,17 +184,33 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       final res = await sl<ApiClient>().dio.post(ApiConstants.sportsTournaments, data: body);
       final id = res.data['id'] as String?;
       if (!mounted) return;
+      final storage = sl<LocalStorage>();
+      storage.clearDraft('tournament_draft_name');
+      storage.clearDraft('tournament_draft_venue');
+      storage.clearDraft('tournament_draft_prize');
+      storage.clearDraft('tournament_draft_custom_teams');
+      storage.clearDraft('tournament_draft_desc');
       _showCreatedSheet(id);
     } catch (e) {
-      _snack('Could not create tournament. Check your access and try again.');
+      _snack('We couldn\'t create the tournament right now. Please check your connection and try again.', onRetry: _submit);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  void _snack(String msg) {
+  void _snack(String msg, {VoidCallback? onRetry}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.accent),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: AppColors.accent,
+        action: onRetry != null
+            ? SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: onRetry,
+              )
+            : null,
+      ),
     );
   }
 
@@ -277,94 +323,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Number of teams
-          _Label('Number of Teams'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final n in [4, 6, 8, 16])
-                _PickChip(
-                  label: '$n',
-                  selected: !_customTeams && _numTeams == n,
-                  onTap: () => setState(() { _customTeams = false; _numTeams = n; }),
-                ),
-              _PickChip(
-                label: 'Custom',
-                selected: _customTeams,
-                onTap: () => setState(() => _customTeams = true),
-              ),
-            ],
-          ),
-          if (_customTeams) ...[
-            const SizedBox(height: 10),
-            TextField(
-              controller: _customTeamsCtrl,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
-              decoration: _dec(context, 'Enter number of teams', Icons.groups_outlined),
-            ),
-          ],
-          const SizedBox(height: 18),
-
-          // Format
-          _Label('Format'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _formats.map((f) => _PickChip(
-              label: _formatLabels[f]!,
-              selected: _format == f,
-              onTap: () => setState(() => _format = f),
-            )).toList(),
-          ),
-          const SizedBox(height: 18),
-
-          // Match config (sport-specific)
-          if (configOpts.isNotEmpty) ...[
-            _Label(_matchConfigLabel[_sport] ?? 'Match Format'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: configOpts.map((c) => _PickChip(
-                label: c,
-                selected: _matchConfig == c,
-                onTap: () => setState(() => _matchConfig = c),
-              )).toList(),
-            ),
-            const SizedBox(height: 18),
-          ],
-
-          // Registration
-          _Label('Team Registration'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _ModeCard(
-                  icon: Icons.verified_user_outlined,
-                  title: 'Manual Approval',
-                  subtitle: 'You approve teams',
-                  selected: _registration == 'MANUAL_APPROVAL',
-                  onTap: () => setState(() => _registration = 'MANUAL_APPROVAL'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ModeCard(
-                  icon: Icons.public,
-                  title: 'Open Registration',
-                  subtitle: 'Anyone can join',
-                  selected: _registration == 'OPEN',
-                  onTap: () => setState(() => _registration = 'OPEN'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
           // Dates
           _Label('Tournament Dates'),
           const SizedBox(height: 8),
@@ -377,107 +335,216 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Venue
-          _Label('Venue'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _venueCtrl,
-            decoration: _dec(context, 'Where the matches are played', Icons.location_on_outlined),
+          // Advanced settings toggle
+          GestureDetector(
+            onTap: () => setState(() => _showAdvanced = !_showAdvanced),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _showAdvanced ? 'Hide Advanced Settings' : 'Show Advanced Settings',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                ),
+                Icon(
+                  _showAdvanced ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 18),
 
-          // Additional settings
-          _Label('Additional Settings'),
-          const SizedBox(height: 8),
-          _ToggleRow(
-            icon: Icons.leaderboard_outlined,
-            label: 'Points Table',
-            value: _showPoints,
-            onChanged: (v) => setState(() => _showPoints = v),
-          ),
-          _ToggleRow(
-            icon: Icons.bolt_outlined,
-            label: 'Live Scores',
-            value: _showLive,
-            onChanged: (v) => setState(() => _showLive = v),
-          ),
-          _ToggleRow(
-            icon: Icons.card_giftcard_outlined,
-            label: 'Prize Details',
-            value: _showPrize,
-            onChanged: (v) => setState(() => _showPrize = v),
-          ),
-          if (_showPrize) ...[
+          if (_showAdvanced) ...[
+            // Number of teams
+            _Label('Number of Teams'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final n in [4, 6, 8, 16])
+                  _PickChip(
+                    label: '$n',
+                    selected: !_customTeams && _numTeams == n,
+                    onTap: () => setState(() { _customTeams = false; _numTeams = n; }),
+                  ),
+                _PickChip(
+                  label: 'Custom',
+                  selected: _customTeams,
+                  onTap: () => setState(() => _customTeams = true),
+                ),
+              ],
+            ),
+            if (_customTeams) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: _customTeamsCtrl,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {}),
+                decoration: _dec(context, 'Enter number of teams', Icons.groups_outlined),
+              ),
+            ],
+            const SizedBox(height: 18),
+
+            // Format
+            _Label('Format'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _formats.map((f) => _PickChip(
+                label: _formatLabels[f]!,
+                selected: _format == f,
+                onTap: () => setState(() => _format = f),
+              )).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Match config (sport-specific)
+            if (configOpts.isNotEmpty) ...[
+              _Label(_matchConfigLabel[_sport] ?? 'Match Format'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: configOpts.map((c) => _PickChip(
+                  label: c,
+                  selected: _matchConfig == c,
+                  onTap: () => setState(() => _matchConfig = c),
+                )).toList(),
+              ),
+              const SizedBox(height: 18),
+            ],
+
+            // Registration
+            _Label('Team Registration'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _ModeCard(
+                    icon: Icons.verified_user_outlined,
+                    title: 'Manual Approval',
+                    subtitle: 'You approve teams',
+                    selected: _registration == 'MANUAL_APPROVAL',
+                    onTap: () => setState(() => _registration = 'MANUAL_APPROVAL'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ModeCard(
+                    icon: Icons.public,
+                    title: 'Open Registration',
+                    subtitle: 'Anyone can join',
+                    selected: _registration == 'OPEN',
+                    onTap: () => setState(() => _registration = 'OPEN'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Venue
+            _Label('Venue'),
             const SizedBox(height: 8),
             TextField(
-              controller: _prizeCtrl,
-              maxLines: 2,
-              decoration: _dec(context, 'e.g. Winner ₹10,000 · Runner-up ₹5,000', Icons.emoji_events_outlined),
+              controller: _venueCtrl,
+              decoration: _dec(context, 'Where the matches are played', Icons.location_on_outlined),
             ),
-          ],
-          const SizedBox(height: 18),
+            const SizedBox(height: 18),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _Label('Description (Markdown Supported)'),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
-                tooltip: 'Templates',
-                onSelected: (template) {
-                  setState(() {
-                    if (template == 'Cricket') {
-                      _descCtrl.text = '''### 🏏 Cricket Tournament Rules
+            // Additional settings
+            _Label('Additional Settings'),
+            const SizedBox(height: 8),
+            _ToggleRow(
+              icon: Icons.leaderboard_outlined,
+              label: 'Points Table',
+              value: _showPoints,
+              onChanged: (v) => setState(() => _showPoints = v),
+            ),
+            _ToggleRow(
+              icon: Icons.bolt_outlined,
+              label: 'Live Scores',
+              value: _showLive,
+              onChanged: (v) => setState(() => _showLive = v),
+            ),
+            _ToggleRow(
+              icon: Icons.card_giftcard_outlined,
+              label: 'Prize Details',
+              value: _showPrize,
+              onChanged: (v) => setState(() => _showPrize = v),
+            ),
+            if (_showPrize) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _prizeCtrl,
+                maxLines: 2,
+                decoration: _dec(context, 'e.g. Winner ₹10,000 · Runner-up ₹5,000', Icons.emoji_events_outlined),
+              ),
+            ],
+            const SizedBox(height: 18),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _Label('Description (Markdown Supported)'),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
+                  tooltip: 'Templates',
+                  onSelected: (template) {
+                    setState(() {
+                      if (template == 'Cricket') {
+                        _descCtrl.text = '''### 🏏 Cricket Tournament Rules
 **Format**: 20 Overs, Knockout
 **Entry Fee**: ₹1000
 **Rules**:
 1. ICC T20 Rules apply.
 2. Umpires decision is final.
 3. Teams must report 30 mins early.''';
-                    } else if (template == 'Volleyball') {
-                      _descCtrl.text = '''### 🏐 Volleyball Tournament
+                      } else if (template == 'Volleyball') {
+                        _descCtrl.text = '''### 🏐 Volleyball Tournament
 **Format**: Best of 3 Sets, 25 Points
 **Rules**:
 1. Standard FIVB rules.
 2. Max 8 players per squad.''';
-                    } else if (template == 'Independence') {
-                      _descCtrl.text = '''### 🇮🇳 Independence Day Sports
+                      } else if (template == 'Independence') {
+                        _descCtrl.text = '''### 🇮🇳 Independence Day Sports
 Celebrate freedom with friendly matches!
 **Events**: Cricket, Tug of War, Athletics
 **Prizes**: Medals and Trophies for winners.''';
-                    } else if (template == 'Blood Donation') {
-                      _descCtrl.text = '''### 🩸 Blood Donation Camp
+                      } else if (template == 'Blood Donation') {
+                        _descCtrl.text = '''### 🩸 Blood Donation Camp
 **In association with**: Government Hospital
 *Give blood, save a life.*
 - Refreshments provided.
 - Certificate of appreciation.''';
-                    } else if (template == 'General') {
-                      _descCtrl.text = '''### 🎉 Annual Celebration Event
+                      } else if (template == 'General') {
+                        _descCtrl.text = '''### 🎉 Annual Celebration Event
 Join us for our yearly gathering!
 **Highlights**:
 - Cultural Programs
 - Sports Finals
 - Prize Distribution''';
-                    }
-                  });
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(value: 'Cricket', child: Text('🏏 Cricket Tournament')),
-                  PopupMenuItem(value: 'Volleyball', child: Text('🏐 Volleyball Tournament')),
-                  PopupMenuItem(value: 'Independence', child: Text('🇮🇳 Independence Day')),
-                  PopupMenuItem(value: 'Blood Donation', child: Text('🩸 Blood Donation')),
-                  PopupMenuItem(value: 'General', child: Text('🎉 General Event')),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _descCtrl,
-            maxLines: 8,
-            decoration: _dec(context, 'Write tournament rules, timings, and information here. You can use markdown like **bold** or *italic*.', Icons.description_outlined),
-          ),
-          const SizedBox(height: 20),
+                      }
+                    });
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'Cricket', child: Text('🏏 Cricket Tournament')),
+                    PopupMenuItem(value: 'Volleyball', child: Text('🏐 Volleyball Tournament')),
+                    PopupMenuItem(value: 'Independence', child: Text('🇮🇳 Independence Day')),
+                    PopupMenuItem(value: 'Blood Donation', child: Text('🩸 Blood Donation')),
+                    PopupMenuItem(value: 'General', child: Text('🎉 General Event')),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _descCtrl,
+              maxLines: 8,
+              decoration: _dec(context, 'Write tournament rules, timings, and information here. You can use markdown like **bold** or *italic*.', Icons.description_outlined),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           // Summary
           _SummaryCard(

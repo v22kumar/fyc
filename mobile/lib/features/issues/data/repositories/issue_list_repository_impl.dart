@@ -19,7 +19,7 @@ class IssueListRepositoryImpl implements IssueListRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
     }
   }
 
@@ -31,7 +31,31 @@ class IssueListRepositoryImpl implements IssueListRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, IssueEntity>> markIssueResolved(String id) async {
+    try {
+      final issue = await _remote.markIssueResolved(id);
+      return Right(issue);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> logEmailSent(String id) async {
+    try {
+      await _remote.logEmailSent(id);
+      return const Right(null);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
     }
   }
 }

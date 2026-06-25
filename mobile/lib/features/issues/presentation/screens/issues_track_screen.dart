@@ -8,6 +8,10 @@ import '../bloc/issue_list_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../../core/widgets/empty_state.dart';
+import 'issue_detail_screen.dart';
+import 'submit_issue_screen.dart';
 
 class IssuesTrackScreen extends StatefulWidget {
   const IssuesTrackScreen({super.key});
@@ -48,11 +52,19 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
             child: BlocBuilder<IssueListBloc, IssueListState>(
               builder: (context, state) {
                 if (state is IssueListLoading || state is IssueListInitial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ShimmerCardList();
                 }
                 if (state is IssueListLoaded) {
                   if (state.issues.isEmpty) {
-                    return _EmptyIssues(lang: _lang);
+                    return EmptyState(
+                      emoji: '📋',
+                      title: _lang == 'ta' ? 'புகார்கள் இல்லை' : 'All Clear!',
+                      message: _lang == 'ta' ? 'உங்கள் பகுதியில் புகார்கள் எதுவும் இல்லை.' : 'There are no reported issues in your area. Everything looks good!',
+                      buttonText: _lang == 'ta' ? 'புதிய புகார்' : 'Report an Issue',
+                      onAction: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SubmitIssueScreen()),
+                      ),
+                    );
                   }
                   return RefreshIndicator(
                     onRefresh: () async {
@@ -190,8 +202,16 @@ class _IssueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM yyyy');
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => IssueDetailScreen(issue: issue),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -290,24 +310,4 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _EmptyIssues extends StatelessWidget {
-  final String lang;
-  const _EmptyIssues({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('📋', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            lang == 'ta' ? 'புகார்கள் இல்லை' : 'No issues found',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed _EmptyIssues

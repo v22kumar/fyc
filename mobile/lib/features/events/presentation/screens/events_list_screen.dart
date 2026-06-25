@@ -11,6 +11,8 @@ import '../../../../service_locator.dart';
 
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/success_snackbar.dart';
 
 class EventsListScreen extends StatefulWidget {
   const EventsListScreen({super.key});
@@ -37,11 +39,10 @@ class _EventsListScreenState extends State<EventsListScreen> {
       body: BlocConsumer<EventBloc, EventState>(
         listener: (context, state) {
           if (state is EventCheckinSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.primary,
-              ),
+            SuccessSnackbar.show(
+              context,
+              title: _lang == 'ta' ? 'வெற்றி' : 'Success',
+              message: state.message,
             );
             context.read<EventBloc>().add(const EventFetchRequested());
           }
@@ -60,7 +61,13 @@ class _EventsListScreenState extends State<EventsListScreen> {
           }
           if (state is EventLoaded) {
             if (state.events.isEmpty) {
-              return _EmptyEvents(lang: _lang);
+              return EmptyState(
+                emoji: '🎗️',
+                title: _lang == 'ta' ? 'தற்போது நிகழ்வுகள் இல்லை' : 'No Events Right Now',
+                message: _lang == 'ta' ? 'சமூக நிகழ்வுகளுக்குப் பிறகு மீண்டும் பார்க்கவும்.' : 'Check back later for upcoming community events and initiatives.',
+                buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
+                onAction: () => context.read<EventBloc>().add(const EventFetchRequested()),
+              );
             }
             final upcoming = state.events.where((e) => e.isUpcoming).toList();
             final past = state.events.where((e) => !e.isUpcoming).toList();
@@ -263,24 +270,4 @@ class _EventCard extends StatelessWidget {
   }
 }
 
-class _EmptyEvents extends StatelessWidget {
-  final String lang;
-  const _EmptyEvents({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🎗️', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            lang == 'ta' ? 'நிகழ்வுகள் இல்லை' : 'No events yet',
-            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed _EmptyEvents

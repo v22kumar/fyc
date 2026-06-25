@@ -171,7 +171,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw AuthFailure('Google sign-in failed. Please try again later.');
     } catch (e) {
-      throw ServerFailure(e.toString());
+      throw ServerFailure();
     }
   }
 }

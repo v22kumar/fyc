@@ -11,6 +11,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
+import '../../../../core/widgets/empty_state.dart';
 
 Color announcementCategoryColor(String category) {
   switch (category) {
@@ -59,7 +60,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           }
           if (state is AnnouncementLoaded) {
             if (state.announcements.isEmpty) {
-              return _EmptyAnnouncements(lang: _lang);
+              return EmptyState(
+                emoji: '📢',
+                title: _lang == 'ta' ? 'அறிவிப்புகள் இல்லை' : 'No Announcements',
+                message: _lang == 'ta' ? 'FYC இலிருந்து புதிய அறிவிப்புகள் எதுவும் இல்லை.' : 'You\'re all caught up! There are no new announcements from FYC.',
+                buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
+                onAction: () => context.read<AnnouncementBloc>().add(const AnnouncementFetchRequested()),
+              );
             }
             return RefreshIndicator(
               onRefresh: () async {
@@ -200,24 +207,4 @@ class _AnnouncementCard extends StatelessWidget {
   }
 }
 
-class _EmptyAnnouncements extends StatelessWidget {
-  final String lang;
-  const _EmptyAnnouncements({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('📢', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            lang == 'ta' ? 'அறிவிப்புகள் இல்லை' : 'No announcements yet',
-            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed _EmptyAnnouncements

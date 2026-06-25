@@ -7,6 +7,8 @@ import '../models/issue_detail_model.dart';
 abstract class IssueListDataSource {
   Future<List<IssueDetailModel>> fetchIssues({String? status, String? category});
   Future<IssueDetailModel> getIssue(String id);
+  Future<IssueDetailModel> markIssueResolved(String id);
+  Future<void> logEmailSent(String id);
 }
 
 class IssueListDataSourceImpl implements IssueListDataSource {
@@ -40,6 +42,28 @@ class IssueListDataSourceImpl implements IssueListDataSource {
     try {
       final response = await _client.dio.get('${ApiConstants.issues}/$id');
       return IssueDetailModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<IssueDetailModel> markIssueResolved(String id) async {
+    try {
+      final response = await _client.dio.patch(
+        '${ApiConstants.issues}/$id/status',
+        data: {'status': 'RESOLVED'},
+      );
+      return IssueDetailModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> logEmailSent(String id) async {
+    try {
+      await _client.dio.post('${ApiConstants.issues}/$id/email');
     } on DioException catch (e) {
       throw mapDioException(e);
     }

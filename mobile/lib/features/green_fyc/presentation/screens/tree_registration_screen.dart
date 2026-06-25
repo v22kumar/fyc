@@ -11,6 +11,7 @@ import '../bloc/green_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/widgets/success_snackbar.dart';
 
 class TreeRegistrationScreen extends StatefulWidget {
   const TreeRegistrationScreen({super.key});
@@ -37,6 +38,30 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
     super.initState();
     // Load drives so the user can optionally associate the tree with one.
     context.read<GreenBloc>().add(const GreenFetchRequested());
+    _loadDraft();
+    _speciesTaCtrl.addListener(_saveDraft);
+    _speciesEnCtrl.addListener(_saveDraft);
+    _notesCtrl.addListener(_saveDraft);
+    _latCtrl.addListener(_saveDraft);
+    _lonCtrl.addListener(_saveDraft);
+  }
+
+  void _loadDraft() {
+    final storage = sl<LocalStorage>();
+    _speciesTaCtrl.text = storage.getDraft('tree_draft_ta') ?? '';
+    _speciesEnCtrl.text = storage.getDraft('tree_draft_en') ?? '';
+    _notesCtrl.text = storage.getDraft('tree_draft_notes') ?? '';
+    _latCtrl.text = storage.getDraft('tree_draft_lat') ?? '';
+    _lonCtrl.text = storage.getDraft('tree_draft_lon') ?? '';
+  }
+
+  void _saveDraft() {
+    final storage = sl<LocalStorage>();
+    storage.saveDraft('tree_draft_ta', _speciesTaCtrl.text);
+    storage.saveDraft('tree_draft_en', _speciesEnCtrl.text);
+    storage.saveDraft('tree_draft_notes', _notesCtrl.text);
+    storage.saveDraft('tree_draft_lat', _latCtrl.text);
+    storage.saveDraft('tree_draft_lon', _lonCtrl.text);
   }
 
   @override
@@ -99,15 +124,18 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
       body: BlocConsumer<GreenBloc, GreenState>(
         listener: (context, state) {
           if (state is GreenTreeRegisteredSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  lang == 'ta'
-                      ? 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது! 🌳'
-                      : 'Tree registered successfully! 🌳',
-                ),
-                backgroundColor: AppColors.primary,
-              ),
+            final storage = sl<LocalStorage>();
+            storage.clearDraft('tree_draft_ta');
+            storage.clearDraft('tree_draft_en');
+            storage.clearDraft('tree_draft_notes');
+            storage.clearDraft('tree_draft_lat');
+            storage.clearDraft('tree_draft_lon');
+            SuccessSnackbar.show(
+              context,
+              title: lang == 'ta' ? 'வெற்றி' : 'Success',
+              message: lang == 'ta'
+                  ? 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது! 🌳'
+                  : 'Tree registered successfully! 🌳',
             );
             context.pop();
           }
@@ -116,6 +144,11 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: AppColors.accent,
+                action: SnackBarAction(
+                  label: lang == 'ta' ? 'மீண்டும் முயற்சி' : 'Retry',
+                  textColor: Colors.white,
+                  onPressed: _submit,
+                ),
               ),
             );
           }

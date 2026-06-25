@@ -110,8 +110,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Logout',
               color: AppColors.accent,
               onTap: () {
-                context.read<AuthBloc>().add(const AuthLogoutRequested());
-                context.go('/login');
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Confirm Logout'),
+                    content: const Text('Are you sure you want to log out of your account?'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          context.read<AuthBloc>().add(const AuthLogoutRequested());
+                          context.go('/login');
+                        },
+                        child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
               },
               context: context,
             ),

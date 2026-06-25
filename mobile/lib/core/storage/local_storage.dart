@@ -34,6 +34,14 @@ class LocalStorage {
   // Generic getString
   String? getString(String key) => _prefs.getString(key);
 
+  // Draft form data
+  Future<void> saveDraft(String key, String value) async =>
+      _prefs.setString(key, value);
+      
+  String? getDraft(String key) => _prefs.getString(key);
+  
+  Future<void> clearDraft(String key) async => _prefs.remove(key);
+
   // Organization ID
   Future<void> saveOrgId(String orgId) async =>
       _prefs.setString(AppConstants.orgIdKey, orgId);

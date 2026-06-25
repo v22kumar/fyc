@@ -58,6 +58,8 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
   Uint8List? _photo;
   String? _uploadedPhotoUrl;
   bool _uploading = false;
+  
+  bool _showAdvanced = false;
 
   // Stats (loaded async)
   Map<String, dynamic>? _stats;
@@ -70,7 +72,23 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
     super.initState();
     _fetchStats();
     _fetchLocation();
+    _loadDraft();
+    _descTaCtrl.addListener(_saveDraft);
+    _descEnCtrl.addListener(_saveDraft);
   }
+
+  void _loadDraft() {
+    final storage = sl<LocalStorage>();
+    _descTaCtrl.text = storage.getDraft('issue_draft_ta') ?? '';
+    _descEnCtrl.text = storage.getDraft('issue_draft_en') ?? '';
+  }
+
+  void _saveDraft() {
+    final storage = sl<LocalStorage>();
+    storage.saveDraft('issue_draft_ta', _descTaCtrl.text);
+    storage.saveDraft('issue_draft_en', _descEnCtrl.text);
+  }
+
 
   @override
   void dispose() {
@@ -152,15 +170,6 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
   }
 
   void _submit() {
-    if (_descTaCtrl.text.trim().isEmpty && _descEnCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isTa ? 'விவரம் எழுதவும்' : 'Please describe the issue'),
-          backgroundColor: AppColors.accent,
-        ),
-      );
-      return;
-    }
     context.read<IssueBloc>().add(
           IssueSubmitRequested(
             category: _selectedCategory,
@@ -207,11 +216,24 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
       body: BlocListener<IssueBloc, IssueState>(
         listener: (context, state) {
           if (state is IssueSubmitSuccess) {
+            final storage = sl<LocalStorage>();
+            storage.clearDraft('issue_draft_ta');
+            storage.clearDraft('issue_draft_en');
+            _descTaCtrl.clear();
+            _descEnCtrl.clear();
             _showSuccessSheet(context, state.issue.id);
           }
           if (state is IssueFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.accent),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.accent,
+                action: SnackBarAction(
+                  label: _isTa ? 'மீண்டும் முயற்சி' : 'Retry',
+                  textColor: Colors.white,
+                  onPressed: _submit,
+                ),
+              ),
             );
           }
         },
@@ -244,41 +266,62 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Description — Tamil
-            _SectionLabel(_isTa ? 'விவரம் (தமிழ்)' : 'Description (Tamil)'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descTaCtrl,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: InputDecoration(
-                hintText: 'இங்கே தமிழில் எழுதுங்கள்...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: context.cBorder),
-                ),
+            // Advanced settings toggle
+            GestureDetector(
+              onTap: () => setState(() => _showAdvanced = !_showAdvanced),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _showAdvanced ? (_isTa ? 'மேலும் விவரங்களை மறை' : 'Hide Details') : (_isTa ? 'மேலும் விவரங்கள் (விருப்பமானவை)' : 'Add Details (Optional)'),
+                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                  ),
+                  Icon(
+                    _showAdvanced ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: AppColors.primary,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
 
-            // Description — English
-            _SectionLabel(_isTa ? 'விவரம் (ஆங்கிலம்)' : 'Description (English)'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descEnCtrl,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: InputDecoration(
-                hintText: 'Describe the issue in English...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: context.cBorder),
+            if (_showAdvanced) ...[
+              // Description — Tamil
+              _SectionLabel(_isTa ? 'விவரம் (தமிழ்)' : 'Description (Tamil)'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descTaCtrl,
+                maxLines: 3,
+                maxLength: 500,
+                decoration: InputDecoration(
+                  hintText: 'இங்கே தமிழில் எழுதுங்கள்...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: context.cBorder),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 12),
+
+              // Description — English
+              _SectionLabel(_isTa ? 'விவரம் (ஆங்கிலம்)' : 'Description (English)'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descEnCtrl,
+                maxLines: 3,
+                maxLength: 500,
+                decoration: InputDecoration(
+                  hintText: 'Describe the issue in English...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: context.cBorder),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // Photo Evidence
             _SectionLabel(

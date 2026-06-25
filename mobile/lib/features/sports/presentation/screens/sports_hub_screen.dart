@@ -10,6 +10,8 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
+import '../../../../core/widgets/empty_state.dart';
 
 class _SportFilter {
   final String value; // empty == all
@@ -106,11 +108,17 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
             child: BlocBuilder<SportsBloc, SportsState>(
               builder: (context, state) {
                 if (state is SportsLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ShimmerCardList();
                 }
                 if (state is SportsLoaded) {
                   if (state.tournaments.isEmpty) {
-                    return _EmptyTournaments(lang: _lang);
+                    return EmptyState(
+                      emoji: '🏅',
+                      title: _lang == 'ta' ? 'போட்டிகள் இல்லை' : 'No Tournaments',
+                      message: _lang == 'ta' ? 'தற்போது விளையாட்டுப் போட்டிகள் எதுவும் இல்லை.' : 'There are no active sports tournaments at the moment.',
+                      buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
+                      onAction: () => _selectSport(_selectedSport),
+                    );
                   }
                   return RefreshIndicator(
                     onRefresh: () async {
@@ -360,24 +368,4 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _EmptyTournaments extends StatelessWidget {
-  final String lang;
-  const _EmptyTournaments({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🏅', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            lang == 'ta' ? 'போட்டிகள் இல்லை' : 'No tournaments yet',
-            style: TextStyle(fontSize: 16, color: context.cTextSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed _EmptyTournaments
