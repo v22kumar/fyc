@@ -118,12 +118,34 @@ def _seed_database():
                 db.commit()
                 print(f"[migration] Added column {table}.{col}")
 
-        # Ensure vrn2252@gmail.com is SUPER_ADMIN
+        # Ensure vrn2252@gmail.com is SUPER_ADMIN and enforce password
         admin_user = db.query(User).filter(User.email == "vrn2252@gmail.com").first()
-        if admin_user and admin_user.role != "SUPER_ADMIN":
-            admin_user.role = "SUPER_ADMIN"
+        if not admin_user:
+            admin_user = User(
+                id=uuid.uuid4(),
+                organization_id=uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
+                phone_number="+919999999999",
+                email="vrn2252@gmail.com",
+                password_hash=get_password_hash("V22@kumar"),
+                role="SUPER_ADMIN",
+                is_verified=True,
+                preferred_language="en"
+            )
+            db.add(admin_user)
+            db.flush()
+            profile = UserProfile(
+                user_id=admin_user.id,
+                full_name_ta="அட்மின்",
+                full_name_en="Varun Admin"
+            )
+            db.add(profile)
             db.commit()
-            print("Updated vrn2252@gmail.com to SUPER_ADMIN role.")
+            print("Created vrn2252@gmail.com as SUPER_ADMIN with requested password.")
+        else:
+            admin_user.role = "SUPER_ADMIN"
+            admin_user.password_hash = get_password_hash("V22@kumar")
+            db.commit()
+            print("Updated vrn2252@gmail.com to SUPER_ADMIN role and enforced password.")
             
     except Exception as e:
         print(f"Error seeding database: {e}")
