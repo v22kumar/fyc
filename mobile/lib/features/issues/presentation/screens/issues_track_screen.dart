@@ -280,6 +280,7 @@ class _IssueCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }

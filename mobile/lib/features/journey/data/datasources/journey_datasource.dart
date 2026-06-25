@@ -15,7 +15,7 @@ class JourneyDataSourceImpl implements JourneyDataSource {
   @override
   Future<JourneyModel> fetchJourney() async {
     try {
-      final response = await _client.dio.get('${ApiConstants.users}/me/journey');
+      final response = await _client.dio.get('/api/v1/users/me/journey');
       return JourneyModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);

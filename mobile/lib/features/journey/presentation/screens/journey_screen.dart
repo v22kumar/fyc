@@ -214,7 +214,7 @@ class _ImpactCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
