@@ -6,8 +6,9 @@ import '../../domain/entities/team_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
-import '../widgets/live_score_entry_sheet.dart';
+import '../widgets/live_score_entry_sheet.dart' as import_LiveScoreEntrySheet;
 import '../widgets/register_team_sheet.dart' as import_RegisterTeamSheet;
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -54,6 +55,15 @@ class _SportsTournamentDetailScreenState
   }
 
   Future<void> _enterScore(FixtureEntity f) async {
+    final state = context.read<SportsBloc>().state;
+    if (state is SportsDetailLoaded && state.tournament.sport == 'cricket') {
+      final url = Uri.parse('https://fyc-admin.fly.dev/dashboard/sports/cricket/${f.id}');
+      if (await url_launcher.canLaunchUrl(url)) {
+        await url_launcher.launchUrl(url, mode: url_launcher.LaunchMode.externalApplication);
+        return;
+      }
+    }
+
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -61,7 +71,7 @@ class _SportsTournamentDetailScreenState
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (_) => LiveScoreEntrySheet(fixture: f),
+      builder: (_) => import_LiveScoreEntrySheet.LiveScoreEntrySheet(fixture: f),
     );
     if (ok == true) _reload();
   }
