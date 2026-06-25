@@ -8,7 +8,7 @@ from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveSco
 from app.models.user import User
 from app.schemas.sports import (
     TournamentCreate, TournamentOut,
-    TeamCreate, TeamOut,
+    TeamCreate, TeamOut, TeamStatusUpdate,
     FixtureCreate, FixtureResultUpdate, FixtureOut,
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
     LiveScoreEntryCreate, LiveScoreReview, LiveScoreEntryOut,
@@ -165,11 +165,16 @@ def register_team(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    
+    # Auto-approve if OPEN, else PENDING
+    status = "APPROVED" if t.registration_mode == "OPEN" else "PENDING"
+    
     team = Team(
         id=uuid.uuid4(),
         organization_id=current_user.organization_id,
         tournament_id=tournament_id,
+        status=status,
         **payload.model_dump(),
     )
     db.add(team)
@@ -197,6 +202,29 @@ def delete_team(
     db.commit()
     return None
 
+@router.patch("/tournaments/{tournament_id}/teams/{team_id}/status", response_model=TeamOut)
+def update_team_status(
+    tournament_id: str,
+    team_id: str,
+    payload: TeamStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.tournament_id == tournament_id
+    ).first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+    
+    if payload.status.upper() not in ["PENDING", "APPROVED", "REJECTED"]:
+        raise HTTPException(400, "Invalid status")
+        
+    team.status = payload.status.upper()
+    db.commit()
+    db.refresh(team)
+    return team
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -275,12 +303,12 @@ def generate_fixtures(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
-    """Auto-generate round-robin fixtures from the registered teams.
+    """Auto-generate round-robin fixtures from the APPROVED registered teams.
     Set double_round=true for home-and-away. Skips if fixtures already exist."""
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
-    teams = db.query(Team).filter(Team.tournament_id == tournament_id).all()
+    teams = db.query(Team).filter(Team.tournament_id == tournament_id, Team.status == "APPROVED").all()
     if len(teams) < 2:
-        raise HTTPException(400, "Need at least 2 registered teams to generate fixtures")
+        raise HTTPException(400, "Need at least 2 APPROVED teams to generate fixtures")
 
     existing = db.query(Fixture).filter(Fixture.tournament_id == tournament_id).count()
     if existing > 0:

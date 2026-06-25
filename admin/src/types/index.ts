@@ -132,6 +132,7 @@ export interface Team {
   draws: number;
   points: number;
   is_fyc_team: boolean;
+  status: string;
 }
 
 export interface Fixture {

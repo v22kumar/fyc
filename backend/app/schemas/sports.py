@@ -68,9 +68,14 @@ class TeamOut(BaseModel):
     draws: int
     points: int
     is_fyc_team: bool
+    status: str
 
     class Config:
         from_attributes = True
+
+
+class TeamStatusUpdate(BaseModel):
+    status: str  # PENDING, APPROVED, REJECTED
 
 
 class FixtureCreate(BaseModel):

@@ -74,6 +74,16 @@ export default function SportsPage() {
     }
   }
 
+  async function approveTeam(teamId: string) {
+    if (!selectedTournament) return;
+    try {
+      const updated = await api.updateTeamStatus(selectedTournament.id, teamId, 'APPROVED');
+      setTeams(prev => prev.map(t => t.id === teamId ? updated : t));
+    } catch (err: any) {
+      alert(err.message || 'Failed to approve team');
+    }
+  }
+
   async function submitResult() {
     if (!selectedTournament || !resultFixture) return;
     const updated = await api.submitFixtureResult(selectedTournament.id, resultFixture.id, resultForm);
@@ -165,11 +175,18 @@ export default function SportsPage() {
                       <thead><tr className="text-xs text-gray-500 border-b"><th className="text-left py-1">Team</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr></thead>
                       <tbody>
                         {teams.map((t, i) => (
-                          <tr key={t.id} className="border-b border-gray-50 group">
-                            <td className="py-1.5 font-medium flex items-center gap-2">
+                          <tr key={t.id} className={`border-b border-gray-50 group ${t.status === 'PENDING' ? 'bg-amber-50/50' : ''}`}>
+                            <td className="py-2 font-medium flex items-center gap-2">
                               <span>{i + 1}. {t.name}</span>
                               {t.is_fyc_team && <span className="text-xs bg-primary/10 text-primary px-1 rounded">FYC</span>}
-                              <button onClick={() => deleteTeam(t.id)} className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs transition-opacity" title="Remove Team">✕</button>
+                              {t.status === 'PENDING' && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-medium">Pending</span>}
+                              
+                              <div className="flex gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                {t.status === 'PENDING' && (
+                                  <button onClick={() => approveTeam(t.id)} className="text-green-600 hover:bg-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Approve">✓ Approve</button>
+                                )}
+                                <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">✕</button>
+                              </div>
                             </td>
                             <td className="text-center text-green-600">{t.wins}</td>
                             <td className="text-center text-red-500">{t.losses}</td>

@@ -57,6 +57,7 @@ class Team(Base, TimestampMixin, TenantModelMixin):
     draws = Column(Integer, default=0)
     points = Column(Integer, default=0)
     is_fyc_team = Column(Boolean, default=False)
+    status = Column(String(20), default="PENDING")
 
     tournament = relationship("Tournament", back_populates="teams")
 

@@ -179,6 +179,7 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE events ADD COLUMN registration_deadline TIMESTAMPTZ",
             "ALTER TABLE events ADD COLUMN max_participants INTEGER",
             "ALTER TABLE events ADD COLUMN competition_categories JSON",
+            "ALTER TABLE teams ADD COLUMN status VARCHAR(20) DEFAULT 'PENDING'",
         ]
         with engine.connect() as conn:
             for stmt in _migrations:
