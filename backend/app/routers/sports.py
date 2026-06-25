@@ -4,17 +4,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveScoreEntry
+from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveScoreEntry, Player
 from app.models.user import User
 from app.schemas.sports import (
     TournamentCreate, TournamentOut,
     TeamCreate, TeamOut, TeamStatusUpdate,
+    PlayerCreate, PlayerOut,
     FixtureCreate, FixtureResultUpdate, FixtureOut,
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
     LiveScoreEntryCreate, LiveScoreReview, LiveScoreEntryOut,
 )
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.services.notification_service import NotificationService
+from app.schemas.notification import NotificationCategory
+from app.services.whatsapp_service import whatsapp_queue
 
 router = APIRouter(prefix="/sports", tags=["Sports Hub"])
 
@@ -44,6 +48,19 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
         if loser_team:
             loser_team.losses += 1
     f.status = "COMPLETED"
+    
+    t = db.query(Tournament).filter(Tournament.id == f.tournament_id).first()
+    if t:
+        NotificationService.broadcast_to_tenant(
+            db=db,
+            tenant_id=t.organization_id,
+            category=NotificationCategory.SPORTS,
+            title_en=f"Match Result: {t.name_en}",
+            title_ta=f"போட்டி முடிவு: {t.name_ta}",
+            body_en=f"{f.team_a.name} vs {f.team_b.name} has concluded.",
+            body_ta=f"{f.team_a.name} vs {f.team_b.name} போட்டி முடிவடைந்தது.",
+            route=f"/sports/{t.id}/fixtures/{f.id}"
+        )
 
 
 def _fixture_out(f: Fixture) -> FixtureOut:
@@ -139,6 +156,19 @@ def update_tournament_status(
         raise HTTPException(400, "Invalid status")
     t.status = new_status.upper()
     db.commit()
+    
+    if t.status == "PUBLISHED":
+        NotificationService.broadcast_to_tenant(
+            db=db,
+            tenant_id=t.organization_id,
+            category=NotificationCategory.SPORTS,
+            title_en=f"New Tournament: {t.name_en}",
+            title_ta=f"புதிய போட்டி: {t.name_ta}",
+            body_en=f"Registration is now open for {t.name_en} ({t.sport}).",
+            body_ta=f"{t.name_ta} ({t.sport}) பதிவு துவங்கியுள்ளது.",
+            route=f"/sports/{t.id}"
+        )
+        
     return {"status": t.status}
 
 @router.put("/tournaments/{tournament_id}", response_model=TournamentOut)
@@ -267,7 +297,68 @@ def update_team_status(
     team.status = payload.status.upper()
     db.commit()
     db.refresh(team)
+    
+    if team.status == "APPROVED" and team.contact_phone:
+        t = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+        whatsapp_queue.enqueue_template(
+            phone=team.contact_phone,
+            template_name="team_registration_approved",
+            parameters={
+                "team_name": team.name,
+                "tournament_name": t.name_en if t else "Tournament",
+            }
+        )
+        
     return team
+
+# ── Players ───────────────────────────────────────────────────────────────────
+
+@router.get("/teams/{team_id}/players", response_model=List[PlayerOut])
+def list_players(
+    team_id: str,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    team = db.query(Team).filter(Team.id == team_id, Team.organization_id == tenant_id).first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+    return db.query(Player).filter(Player.team_id == team_id).all()
+
+
+@router.post("/teams/{team_id}/players", response_model=PlayerOut, status_code=201)
+def register_player(
+    team_id: str,
+    payload: PlayerCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    team = db.query(Team).filter(Team.id == team_id, Team.organization_id == current_user.organization_id).first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+    
+    player = Player(
+        id=uuid.uuid4(),
+        organization_id=current_user.organization_id,
+        team_id=team_id,
+        **payload.model_dump(),
+    )
+    db.add(player)
+    db.commit()
+    db.refresh(player)
+    return player
+
+@router.delete("/players/{player_id}", status_code=204)
+def delete_player(
+    player_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    player = db.query(Player).filter(Player.id == player_id, Player.organization_id == current_user.organization_id).first()
+    if not player:
+        raise HTTPException(404, "Player not found")
+    db.delete(player)
+    db.commit()
+    return None
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -380,6 +471,18 @@ def generate_fixtures(
     db.commit()
     for f in created:
         db.refresh(f)
+        
+    NotificationService.broadcast_to_tenant(
+        db=db,
+        tenant_id=current_user.organization_id,
+        category=NotificationCategory.SPORTS,
+        title_en=f"Fixtures Released: {t.name_en}",
+        title_ta=f"போட்டி அட்டவணை: {t.name_ta}",
+        body_en=f"The match schedule for {t.name_en} is now available.",
+        body_ta=f"{t.name_ta} க்கான போட்டி அட்டவணை வெளியிடப்பட்டுள்ளது.",
+        route=f"/sports/{t.id}/fixtures"
+    )
+        
     return [_fixture_out(f) for f in created]
 
 

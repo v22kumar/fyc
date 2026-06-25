@@ -4,6 +4,8 @@ import '../../domain/entities/tournament_entity.dart';
 import '../../domain/entities/fixture_entity.dart';
 import '../../domain/entities/team_entity.dart';
 import '../../domain/entities/challenge_entity.dart';
+import '../../domain/entities/player_entity.dart';
+import '../../domain/entities/cricket_match_state_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
 import '../datasources/sports_datasource.dart';
 
@@ -74,6 +76,66 @@ class SportsRepositoryImpl implements SportsRepository {
         message: message,
       );
       return Right(challenge);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<PlayerEntity>>> fetchTeamPlayers(String teamId) async {
+    try {
+      final result = await _remote.fetchTeamPlayers(teamId);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PlayerEntity>> registerPlayer(String teamId, Map<String, dynamic> data) async {
+    try {
+      final result = await _remote.registerPlayer(teamId, data);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, CricketMatchStateEntity>> fetchCricketMatchState(String fixtureId) async {
+    try {
+      final result = await _remote.fetchCricketMatchState(fixtureId);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, CricketMatchStateEntity>> scoreCricketBall(String fixtureId, Map<String, dynamic> data) async {
+    try {
+      final result = await _remote.scoreCricketBall(fixtureId, data);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, CricketMatchStateEntity>> undoCricketBall(String fixtureId) async {
+    try {
+      final result = await _remote.undoCricketBall(fixtureId);
+      return Right(result);
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {

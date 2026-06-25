@@ -58,8 +58,39 @@ class Team(Base, TimestampMixin, TenantModelMixin):
     points = Column(Integer, default=0)
     is_fyc_team = Column(Boolean, default=False)
     status = Column(String(20), default="PENDING")
+    
+    # Sportsmanship and History
+    championships = Column(Integer, default=0)
+    runner_ups = Column(Integer, default=0)
+    fair_play_score = Column(Integer, default=100)
+    logo_url = Column(String(500), nullable=True)
 
     tournament = relationship("Tournament", back_populates="teams")
+    players = relationship("Player", back_populates="team", cascade="all, delete-orphan")
+
+
+class Player(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "players"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    team_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True) # Optional linking to registered user
+    name = Column(String(100), nullable=False)
+    photo_url = Column(String(500), nullable=True)
+    jersey_number = Column(String(10), nullable=True)
+    role = Column(String(50), nullable=True) # e.g. Batsman, Bowler, All-rounder
+    batting_style = Column(String(50), nullable=True)
+    bowling_style = Column(String(50), nullable=True)
+    
+    # Career Stats
+    matches_played = Column(Integer, default=0)
+    runs_scored = Column(Integer, default=0)
+    wickets_taken = Column(Integer, default=0)
+    mvp_count = Column(Integer, default=0)
+    sportsmanship_score = Column(Integer, default=100)
+    
+    team = relationship("Team", back_populates="players")
+    user = relationship("User", foreign_keys=[user_id])
 
 
 class Fixture(Base, TimestampMixin, TenantModelMixin):

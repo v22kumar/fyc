@@ -78,6 +78,36 @@ class TeamStatusUpdate(BaseModel):
     status: str  # PENDING, APPROVED, REJECTED
 
 
+class PlayerCreate(BaseModel):
+    user_id: Optional[UUID] = None
+    name: str
+    photo_url: Optional[str] = None
+    jersey_number: Optional[str] = None
+    role: Optional[str] = None
+    batting_style: Optional[str] = None
+    bowling_style: Optional[str] = None
+
+
+class PlayerOut(BaseModel):
+    id: UUID
+    team_id: UUID
+    user_id: Optional[UUID]
+    name: str
+    photo_url: Optional[str]
+    jersey_number: Optional[str]
+    role: Optional[str]
+    batting_style: Optional[str]
+    bowling_style: Optional[str]
+    matches_played: int
+    runs_scored: int
+    wickets_taken: int
+    mvp_count: int
+    sportsmanship_score: int
+
+    class Config:
+        from_attributes = True
+
+
 class FixtureCreate(BaseModel):
     team_a_id: UUID
     team_b_id: UUID

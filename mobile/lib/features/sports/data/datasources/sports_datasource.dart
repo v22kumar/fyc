@@ -6,6 +6,8 @@ import '../models/tournament_model.dart';
 import '../models/fixture_model.dart';
 import '../models/team_model.dart';
 import '../models/challenge_model.dart';
+import '../models/player_model.dart';
+import '../models/cricket_match_state_model.dart';
 
 abstract class SportsDataSource {
   Future<List<TournamentModel>> fetchTournaments({String? sport});
@@ -20,6 +22,11 @@ abstract class SportsDataSource {
     String? venue,
     String? message,
   });
+  Future<List<PlayerModel>> fetchTeamPlayers(String teamId);
+  Future<PlayerModel> registerPlayer(String teamId, Map<String, dynamic> data);
+  Future<CricketMatchStateModel> fetchCricketMatchState(String fixtureId);
+  Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data);
+  Future<CricketMatchStateModel> undoCricketBall(String fixtureId);
 }
 
 class SportsDataSourceImpl implements SportsDataSource {
@@ -97,6 +104,68 @@ class SportsDataSourceImpl implements SportsDataSource {
         },
       );
       return ChallengeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<PlayerModel>> fetchTeamPlayers(String teamId) async {
+    try {
+      final response = await _client.dio.get(ApiConstants.sportsTeamPlayers(teamId));
+      final list = response.data as List<dynamic>;
+      return list.map((e) => PlayerModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<PlayerModel> registerPlayer(String teamId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsTeamPlayers(teamId),
+        data: data,
+      );
+      return PlayerModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<CricketMatchStateModel> fetchCricketMatchState(String fixtureId) async {
+    try {
+      final response = await _client.dio.get(ApiConstants.sportsFixtureCricket(fixtureId));
+      final data = response.data as Map<String, dynamic>;
+      return CricketMatchStateModel.fromJson(data['match_state'] as Map<String, dynamic>? ?? {});
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsFixtureCricketBall(fixtureId),
+        data: data,
+      );
+      final resData = response.data as Map<String, dynamic>;
+      return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<CricketMatchStateModel> undoCricketBall(String fixtureId) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsFixtureCricketUndo(fixtureId),
+      );
+      final resData = response.data as Map<String, dynamic>;
+      return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
     } on DioException catch (e) {
       throw mapDioException(e);
     }

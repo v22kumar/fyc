@@ -7,7 +7,7 @@ from app.models.blood_donor import BloodDonor
 from app.models.issue import PublicIssue, IssueStatus, IssueCategory, VALID_TRANSITIONS
 from app.models.event import Event, EventAttendance
 from app.models.community import CommunityProfile
-from app.models.sports import Tournament, Team, Fixture, ChallengeMatch
+from app.models.sports import Tournament, Team, Fixture, LiveScoreEntry, ChallengeMatch, Player
 from app.models.directory import DirectoryContact, ContactCategory
 from app.models.announcement import Announcement, AnnouncementCategory
 from app.models.gallery import EventPhoto
@@ -16,7 +16,7 @@ from app.models.opportunity import Opportunity, OpportunityApplication, Opportun
 from app.models.club_request import ClubMemberRequest
 from app.models.instagram_post import InstagramPost, InstagramPostStatus
 from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
-from app.models.cricket import CricketMatch, CricketPlayer, CricketBall
+from app.models.cricket import CricketMatch, CricketBall
 from app.models.notification import Notification, NotificationPreference
 
 __all__ = [
@@ -60,8 +60,8 @@ __all__ = [
     "ChessPlayerStats",
     "ChessChallenge",
     "CricketMatch",
-    "CricketPlayer",
     "CricketBall",
     "Notification",
-    "NotificationPreference"
+    "NotificationPreference",
+    "Player"
 ]

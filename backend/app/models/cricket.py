@@ -25,14 +25,8 @@ class CricketMatch(Base, TimestampMixin, TenantModelMixin):
     scorer = relationship("User")
 
 
-class CricketPlayer(Base, TimestampMixin, TenantModelMixin):
-    __tablename__ = "cricket_players"
-
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    team_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
-    name = Column(String(100), nullable=False)
-
-    team = relationship("Team")
+    # Using central Player model from sports.py
+    # CricketPlayer is removed
 
 
 class CricketBall(Base, TimestampMixin, TenantModelMixin):
@@ -46,9 +40,9 @@ class CricketBall(Base, TimestampMixin, TenantModelMixin):
     ball_index = Column(Integer, nullable=False) # absolute index in innings (1, 2, 3...)
     
     # Players
-    striker_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
-    non_striker_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
-    bowler_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
+    striker_id = Column(GUID(), ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    non_striker_id = Column(GUID(), ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    bowler_id = Column(GUID(), ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
     
     # Runs
     runs_batter = Column(Integer, default=0)
@@ -58,13 +52,13 @@ class CricketBall(Base, TimestampMixin, TenantModelMixin):
     # Wicket
     is_wicket = Column(Boolean, default=False)
     wicket_type = Column(String(50), nullable=True) # BOWLED, CAUGHT, RUN_OUT, etc.
-    player_dismissed_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="SET NULL"), nullable=True)
+    player_dismissed_id = Column(GUID(), ForeignKey("players.id", ondelete="SET NULL"), nullable=True)
     
     # Audit
     scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     match = relationship("CricketMatch")
-    striker = relationship("CricketPlayer", foreign_keys=[striker_id])
-    non_striker = relationship("CricketPlayer", foreign_keys=[non_striker_id])
-    bowler = relationship("CricketPlayer", foreign_keys=[bowler_id])
-    player_dismissed = relationship("CricketPlayer", foreign_keys=[player_dismissed_id])
+    striker = relationship("Player", foreign_keys=[striker_id])
+    non_striker = relationship("Player", foreign_keys=[non_striker_id])
+    bowler = relationship("Player", foreign_keys=[bowler_id])
+    player_dismissed = relationship("Player", foreign_keys=[player_dismissed_id])

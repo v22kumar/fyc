@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.user import User
 from app.models.sports import Fixture, Team
-from app.models.cricket import CricketMatch, CricketPlayer, CricketBall
+from app.models.cricket import CricketMatch, CricketBall
+from app.models.sports import Player
 from app.dependencies import get_current_user, RoleChecker
 
 require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
@@ -39,12 +40,12 @@ class CricketBallRequest(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
-def _get_or_create_player(db: Session, team_id: str, name: str) -> CricketPlayer:
+def _get_or_create_player(db: Session, team_id: str, name: str) -> Player:
     if not name:
         return None
-    player = db.query(CricketPlayer).filter(CricketPlayer.team_id == team_id, CricketPlayer.name == name).first()
+    player = db.query(Player).filter(Player.team_id == team_id, Player.name == name).first()
     if not player:
-        player = CricketPlayer(id=uuid.uuid4(), team_id=team_id, name=name)
+        player = Player(id=uuid.uuid4(), team_id=team_id, name=name)
         db.add(player)
         db.commit()
     return player

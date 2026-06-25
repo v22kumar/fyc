@@ -91,13 +91,13 @@ export default function SportsPage() {
     }
   }
 
-  async function approveTeam(teamId: string) {
+  async function handleTeamStatus(teamId: string, status: 'APPROVED' | 'REJECTED') {
     if (!selectedTournament) return;
     try {
-      const updated = await api.updateTeamStatus(selectedTournament.id, teamId, 'APPROVED');
+      const updated = await api.updateTeamStatus(selectedTournament.id, teamId, status);
       setTeams(prev => prev.map(t => t.id === teamId ? updated : t));
     } catch (err: any) {
-      alert(err.message || 'Failed to approve team');
+      alert(err.message || `Failed to ${status.toLowerCase()} team`);
     }
   }
 
@@ -222,9 +222,12 @@ export default function SportsPage() {
                               
                               <div className="flex gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                                 {t.status === 'PENDING' && (
-                                  <button onClick={() => approveTeam(t.id)} className="text-green-600 hover:bg-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Approve">✓ Approve</button>
+                                  <>
+                                    <button onClick={() => handleTeamStatus(t.id, 'APPROVED')} className="text-green-600 hover:bg-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Approve">✓ Approve</button>
+                                    <button onClick={() => handleTeamStatus(t.id, 'REJECTED')} className="text-orange-600 hover:bg-orange-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Reject">✕ Reject</button>
+                                  </>
                                 )}
-                                <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">✕</button>
+                                <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">🗑️</button>
                               </div>
                             </td>
                             <td className="text-center text-green-600">{t.wins}</td>
@@ -255,8 +258,10 @@ export default function SportsPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-gray-800">Fixtures</h3>
-                  {fixtures.length === 0 && teams.length > 1 && (
-                    <button onClick={generateFixtures} className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium">Generate Fixtures</button>
+                  {teams.length > 1 && (
+                    <button onClick={generateFixtures} className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium">
+                      {fixtures.length === 0 ? 'Generate Fixtures' : 'Regenerate Fixtures'}
+                    </button>
                   )}
                 </div>
                 {fixtures.length === 0 ? <p className="text-sm text-gray-400">No fixtures scheduled.</p> : (

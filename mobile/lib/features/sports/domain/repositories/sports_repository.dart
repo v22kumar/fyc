@@ -4,6 +4,8 @@ import '../entities/tournament_entity.dart';
 import '../entities/fixture_entity.dart';
 import '../entities/team_entity.dart';
 import '../entities/challenge_entity.dart';
+import '../entities/player_entity.dart';
+import '../entities/cricket_match_state_entity.dart';
 
 abstract class SportsRepository {
   Future<Either<Failure, List<TournamentEntity>>> fetchTournaments({
@@ -24,4 +26,9 @@ abstract class SportsRepository {
     String? venue,
     String? message,
   });
+  Future<Either<Failure, List<PlayerEntity>>> fetchTeamPlayers(String teamId);
+  Future<Either<Failure, PlayerEntity>> registerPlayer(String teamId, Map<String, dynamic> data);
+  Future<Either<Failure, CricketMatchStateEntity>> fetchCricketMatchState(String fixtureId);
+  Future<Either<Failure, CricketMatchStateEntity>> scoreCricketBall(String fixtureId, Map<String, dynamic> data);
+  Future<Either<Failure, CricketMatchStateEntity>> undoCricketBall(String fixtureId);
 }
