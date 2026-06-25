@@ -7,6 +7,7 @@ import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
 import '../widgets/live_score_entry_sheet.dart';
+import '../widgets/register_team_sheet.dart' as import_RegisterTeamSheet;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -139,6 +140,50 @@ class _SportsTournamentDetailScreenState
                       ),
                     ),
                   const SizedBox(height: 16),
+                  
+                  if (state.tournament.descriptionEn != null && state.tournament.descriptionEn!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.isDark ? Colors.grey[900] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: context.cBorder),
+                        ),
+                        child: Text(
+                          _lang == 'ta' && state.tournament.descriptionTa != null && state.tournament.descriptionTa!.isNotEmpty
+                              ? state.tournament.descriptionTa!
+                              : state.tournament.descriptionEn!,
+                          style: TextStyle(fontSize: 13, color: context.cText, height: 1.5),
+                        ),
+                      ),
+                    ),
+                  
+                  if (state.tournament.status == 'UPCOMING' || state.tournament.status == 'PUBLISHED')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final ok = await showModalBottomSheet<bool>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: context.cBackground,
+                              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+                              builder: (_) => import_RegisterTeamSheet.RegisterTeamSheet(tournamentId: widget.tournamentId),
+                            );
+                            if (ok == true) _reload();
+                          },
+                          icon: const Icon(Icons.group_add, color: Colors.white),
+                          label: Text(_lang == 'ta' ? 'அணியை பதிவு செய்' : 'Register Your Team', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        ),
+                      ),
+                    ),
+                  
                   _SectionHeader(
                     label: _lang == 'ta' ? 'புள்ளிப்பட்டியல்' : 'Standings',
                   ),

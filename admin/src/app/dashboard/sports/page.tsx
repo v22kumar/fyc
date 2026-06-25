@@ -58,6 +58,21 @@ export default function SportsPage() {
     setForm({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
   }
 
+  async function updateStatus(id: string, status: string) {
+    await api.updateTournamentStatus(id, status);
+    setTournaments(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+    if (selectedTournament?.id === id) {
+      setSelectedTournament(prev => prev ? { ...prev, status } : prev);
+    }
+  }
+
+  async function deleteTournament(id: string) {
+    if (!confirm('Are you sure you want to delete this tournament? This cannot be undone.')) return;
+    await api.deleteTournament(id);
+    setTournaments(prev => prev.filter(t => t.id !== id));
+    if (selectedTournament?.id === id) setSelectedTournament(null);
+  }
+
   async function addTeam() {
     if (!selectedTournament) return;
     const t = await api.createTeam(selectedTournament.id, teamForm);
@@ -168,6 +183,28 @@ export default function SportsPage() {
           {/* Right: tournament detail */}
           {selectedTournament ? (
             <div className="lg:col-span-2 space-y-5">
+              
+              {/* Manage Tournament */}
+              <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-2 overflow-x-auto">
+                <span className="text-sm font-semibold text-gray-700 mr-2 self-center">Manage:</span>
+                {selectedTournament.status === 'DRAFT' && (
+                  <button onClick={() => updateStatus(selectedTournament.id, 'UPCOMING')} className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 font-medium">Approve Draft</button>
+                )}
+                {['DRAFT', 'UPCOMING'].includes(selectedTournament.status) && (
+                  <button onClick={() => updateStatus(selectedTournament.id, 'PUBLISHED')} className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 font-medium">Publish</button>
+                )}
+                {selectedTournament.status === 'PUBLISHED' && (
+                  <button onClick={() => updateStatus(selectedTournament.id, 'ONGOING')} className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 font-medium">Start (Ongoing)</button>
+                )}
+                {selectedTournament.status === 'ONGOING' && (
+                  <button onClick={() => updateStatus(selectedTournament.id, 'COMPLETED')} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Mark Completed</button>
+                )}
+                {selectedTournament.status === 'COMPLETED' && (
+                  <button onClick={() => updateStatus(selectedTournament.id, 'ARCHIVED')} className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg hover:bg-orange-200 font-medium">Archive</button>
+                )}
+                <button onClick={() => deleteTournament(selectedTournament.id)} className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 font-medium ml-auto">Delete</button>
+              </div>
+
               {/* Teams */}
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <h3 className="font-semibold text-gray-800 mb-3">Teams — Standings</h3>

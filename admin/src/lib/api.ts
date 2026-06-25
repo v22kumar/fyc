@@ -98,9 +98,17 @@ export const api = {
   verifyCommunityProfile: (id: string) => request(`/api/v1/community/${id}/verify`, { method: 'PATCH', body: JSON.stringify({}) }),
   deleteCommunityProfile: (id: string) => request(`/api/v1/community/${id}`, { method: 'DELETE' }),
 
-  // Sports Hub
-  listTournaments: () => request('/api/v1/sports/tournaments'),
-  createTournament: (data: object) => request('/api/v1/sports/tournaments', { method: 'POST', body: JSON.stringify(data) }),
+  // Sports - Tournaments
+  listTournaments: () => request<import('@/types').Tournament[]>('/api/v1/sports/tournaments'),
+  createTournament: (payload: any) =>
+    request<import('@/types').Tournament>('/api/v1/sports/tournaments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  deleteTournament: (id: string) =>
+    request(`/api/v1/sports/tournaments/${id}`, { method: 'DELETE' }),
+  updateTournamentStatus: (id: string, status: string) =>
+    request<{ status: string }>(`/api/v1/sports/tournaments/${id}/status?new_status=${status}`, { method: 'PATCH' }),
   listTeams: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`),
   createTeam: (tournamentId: string, data: object) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`, { method: 'POST', body: JSON.stringify(data) }),
   deleteTeam: (tournamentId: string, teamId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}`, { method: 'DELETE' }),
