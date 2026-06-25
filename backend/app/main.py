@@ -298,6 +298,9 @@ app.include_router(app_meta_router.router, prefix="/api/v1")
 app.include_router(chess_router.router, prefix="/api/v1")
 app.include_router(awards_router.router, prefix="/api/v1")
 
+from app.routers import notifications as notifications_router
+app.include_router(notifications_router.router, prefix="/api/v1")
+
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
 FilePath("uploads").mkdir(exist_ok=True)

@@ -17,6 +17,7 @@ from app.models.club_request import ClubMemberRequest
 from app.models.instagram_post import InstagramPost, InstagramPostStatus
 from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
 from app.models.cricket import CricketMatch, CricketPlayer, CricketBall
+from app.models.notification import Notification, NotificationPreference
 
 __all__ = [
     "Base",
@@ -61,4 +62,6 @@ __all__ = [
     "CricketMatch",
     "CricketPlayer",
     "CricketBall",
+    "Notification",
+    "NotificationPreference"
 ]
