@@ -1,0 +1,70 @@
+import uuid
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, JSON
+from sqlalchemy.orm import relationship
+from app.core.database import Base
+from app.models.base import GUID, TimestampMixin, TenantModelMixin
+
+
+class CricketMatch(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "cricket_matches"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    fixture_id = Column(GUID(), ForeignKey("fixtures.id", ondelete="CASCADE"), nullable=False, unique=True)
+    toss_winner_id = Column(GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    toss_decision = Column(String(20), nullable=True) # "BAT" or "BOWL"
+    status = Column(String(20), default="NOT_STARTED") # NOT_STARTED, FIRST_INNINGS, INNINGS_BREAK, SECOND_INNINGS, COMPLETED
+    overs_per_innings = Column(Integer, default=20)
+    scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    # We will store the full calculated real-time state as JSON for ultra-fast reads.
+    # Every time a ball is scored, we rebuild this JSON.
+    match_state = Column(JSON, nullable=True)
+
+    fixture = relationship("Fixture")
+    toss_winner = relationship("Team", foreign_keys=[toss_winner_id])
+    scorer = relationship("User")
+
+
+class CricketPlayer(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "cricket_players"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    team_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+
+    team = relationship("Team")
+
+
+class CricketBall(Base, TimestampMixin, TenantModelMixin):
+    __tablename__ = "cricket_balls"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    match_id = Column(GUID(), ForeignKey("cricket_matches.id", ondelete="CASCADE"), nullable=False)
+    innings_number = Column(Integer, nullable=False) # 1 or 2
+    
+    # Audit trail ordering
+    ball_index = Column(Integer, nullable=False) # absolute index in innings (1, 2, 3...)
+    
+    # Players
+    striker_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
+    non_striker_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
+    bowler_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="CASCADE"), nullable=False)
+    
+    # Runs
+    runs_batter = Column(Integer, default=0)
+    extras_type = Column(String(20), nullable=True) # WIDE, NO_BALL, BYE, LEG_BYE
+    extras_runs = Column(Integer, default=0)
+    
+    # Wicket
+    is_wicket = Column(Boolean, default=False)
+    wicket_type = Column(String(50), nullable=True) # BOWLED, CAUGHT, RUN_OUT, etc.
+    player_dismissed_id = Column(GUID(), ForeignKey("cricket_players.id", ondelete="SET NULL"), nullable=True)
+    
+    # Audit
+    scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    match = relationship("CricketMatch")
+    striker = relationship("CricketPlayer", foreign_keys=[striker_id])
+    non_striker = relationship("CricketPlayer", foreign_keys=[non_striker_id])
+    bowler = relationship("CricketPlayer", foreign_keys=[bowler_id])
+    player_dismissed = relationship("CricketPlayer", foreign_keys=[player_dismissed_id])

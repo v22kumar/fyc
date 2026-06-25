@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { Tournament, Team, Fixture, ChallengeMatch } from '@/types';
 
@@ -9,6 +10,7 @@ const SPORT_ICONS: Record<string, string> = {
 };
 
 export default function SportsPage() {
+  const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [challenges, setChallenges] = useState<ChallengeMatch[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -240,7 +242,12 @@ export default function SportsPage() {
                           </div>
                         )}
                         {f.status !== 'COMPLETED' && (
-                          <button onClick={() => { setResultFixture(f); setResultForm({ team_a_score: '', team_b_score: '', winner_id: '', result_notes: '' }); }} className="mt-2 text-xs text-primary underline">Enter Result</button>
+                          <div className="flex gap-4 mt-2">
+                            <button onClick={() => { setResultFixture(f); setResultForm({ team_a_score: '', team_b_score: '', winner_id: '', result_notes: '' }); }} className="text-xs text-primary underline">Enter Result</button>
+                            {selectedTournament?.sport === 'cricket' && (
+                              <button onClick={() => router.push(`/dashboard/sports/cricket/${f.id}`)} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Score Live Match 🏏</button>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}

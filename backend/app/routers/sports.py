@@ -82,16 +82,23 @@ def list_tournaments(
     return q.order_by(Tournament.year.desc()).all()
 
 
+require_member_or_exec = RoleChecker(["CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
+
 @router.post("/tournaments", response_model=TournamentOut, status_code=201)
 def create_tournament(
     payload: TournamentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_exec),
+    current_user: User = Depends(require_member_or_exec),
 ):
+    # Members create DRAFT tournaments. Admins create UPCOMING (official) tournaments.
+    is_admin = current_user.role in ["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"]
+    status = "UPCOMING" if is_admin else "DRAFT"
+    
     t = Tournament(
         id=uuid.uuid4(),
         organization_id=current_user.organization_id,
         created_by_id=current_user.id,
+        status=status,
         **payload.model_dump(),
     )
     db.add(t)

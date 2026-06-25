@@ -16,6 +16,7 @@ from app.models.opportunity import Opportunity, OpportunityApplication, Opportun
 from app.models.club_request import ClubMemberRequest
 from app.models.instagram_post import InstagramPost, InstagramPostStatus
 from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
+from app.models.cricket import CricketMatch, CricketPlayer, CricketBall
 
 __all__ = [
     "Base",
@@ -57,4 +58,7 @@ __all__ = [
     "ChessMove",
     "ChessPlayerStats",
     "ChessChallenge",
+    "CricketMatch",
+    "CricketPlayer",
+    "CricketBall",
 ]

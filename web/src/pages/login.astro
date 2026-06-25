@@ -228,6 +228,9 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   function onAuthSuccess(data) {
     localStorage.setItem('fyc_token', data.access_token);
     localStorage.setItem('fyc_user', JSON.stringify(data.user ?? {}));
+    if (data.user && data.user.role) {
+      localStorage.setItem('fyc_role', data.user.role);
+    }
     showSuccess('✅ Signed in successfully!');
     setTimeout(() => {
       const next = new URLSearchParams(location.search).get('next') || '/';

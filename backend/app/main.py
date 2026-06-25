@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import users as users_router, media as media_router
-from app.routers import community as community_router, sports as sports_router
+from app.routers import community as community_router, sports as sports_router, cricket as cricket_router
 from app.routers import directory as directory_router, announcements as announcements_router
 from app.routers import gallery as gallery_router, green_fyc as green_router
 from app.routers import volunteers as volunteers_router
@@ -278,6 +278,7 @@ app.include_router(events.router, prefix="/api/v1")
 app.include_router(membership.router, prefix="/api/v1")
 app.include_router(community_router.router, prefix="/api/v1")
 app.include_router(sports_router.router, prefix="/api/v1")
+app.include_router(cricket_router.router, prefix="/api/v1")
 app.include_router(users_router.router, prefix="/api/v1")
 app.include_router(media_router.router, prefix="/api/v1")
 app.include_router(directory_router.router, prefix="/api/v1")
