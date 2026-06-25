@@ -30,6 +30,6 @@ jobs:
             flyctl volumes create fyc_data --region sin --size 1 --yes --config backend/fly.toml || true
           fi
           cd backend
-          flyctl deploy --config fly.toml --remote-only
+          flyctl deploy --config fly.toml --local-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
