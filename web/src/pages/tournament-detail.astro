@@ -35,6 +35,17 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
         <div class="container mx-auto px-4 max-w-6xl content-split mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div class="details lg:col-span-7">
+            
+            <div id="admin-tools" class="hidden mb-10 bg-amber-50 p-6 rounded-xl border border-amber-200">
+                <h3 class="text-xl font-bold mb-4 text-amber-900 border-b border-amber-200 pb-2 flex justify-between items-center">
+                    Admin Tools
+                    <button id="generateFixturesBtn" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-700 transition-colors">Generate Fixtures</button>
+                </h3>
+                <div id="admin-teams-list" class="flex flex-col gap-3 max-h-96 overflow-y-auto pr-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
             <div id="t-description-container" class="hidden mb-10">
                 <h3 class="text-2xl font-bold mb-6 text-gray-900 border-b border-gray-200 pb-2">About Tournament</h3>
                 <div id="t-description" class="prose max-w-none text-gray-700 leading-relaxed"></div>
@@ -122,6 +133,13 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             }
 
             const token = localStorage.getItem('fyc_token');
+            const role = localStorage.getItem('fyc_role');
+            
+            if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'EXECUTIVE_MEMBER') {
+                document.getElementById('admin-tools').classList.remove('hidden');
+                loadAdminTeams(tournament.id, token);
+            }
+
             if (!token && tournament.status === 'UPCOMING') {
                 document.getElementById('auth-warning').classList.remove('hidden');
                 submitBtn.disabled = true;
@@ -137,6 +155,69 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             document.getElementById('error').classList.remove('hidden');
         }
     }
+
+    async function loadAdminTeams(tId, token) {
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tId}/teams`, {
+                headers: { 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) return;
+            const teams = await res.json();
+            const container = document.getElementById('admin-teams-list');
+            if (teams.length === 0) {
+                container.innerHTML = '<p class="text-sm text-amber-800">No teams registered yet.</p>';
+                return;
+            }
+            container.innerHTML = teams.map(t => `
+                <div class="bg-white p-4 rounded-lg border border-amber-100 flex justify-between items-center shadow-sm">
+                    <div>
+                        <div class="font-bold text-gray-900">${t.name} ${t.status === 'PENDING' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">PENDING</span>' : '<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">APPROVED</span>'}</div>
+                        <div class="text-xs text-gray-500 mt-1">Capt: ${t.captain_name || 'N/A'} | ${t.contact_number || 'N/A'}</div>
+                    </div>
+                    ${t.status === 'PENDING' ? `<button onclick="approveTeam('${t.id}')" class="bg-[#064e3b] text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-[#0f5132]">Approve</button>` : ''}
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    window.approveTeam = async function(teamId) {
+        const token = localStorage.getItem('fyc_token');
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tourneyId}/teams/${teamId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: 'APPROVED' })
+            });
+            if (res.ok) {
+                loadAdminTeams(tourneyId, token);
+            } else {
+                alert('Failed to approve team');
+            }
+        } catch (e) {
+            alert('Error approving team');
+        }
+    };
+
+    document.getElementById('generateFixturesBtn')?.addEventListener('click', async () => {
+        const token = localStorage.getItem('fyc_token');
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tourneyId}/generate-fixtures?double_round=false`, {
+                method: 'POST',
+                headers: { 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Fixtures generated successfully!');
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert(data.detail || 'Failed to generate fixtures');
+            }
+        } catch (e) {
+            alert('Error generating fixtures');
+        }
+    });
 
     function renderFixtures(fixtures) {
         const container = document.getElementById('fixtures-container');

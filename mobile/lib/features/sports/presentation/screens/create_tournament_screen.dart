@@ -64,6 +64,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _venueCtrl = TextEditingController();
   final _prizeCtrl = TextEditingController();
   final _customTeamsCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
 
   String _sport = 'cricket';
   int? _numTeams = 8;
@@ -86,6 +87,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     _venueCtrl.dispose();
     _prizeCtrl.dispose();
     _customTeamsCtrl.dispose();
+    _descCtrl.dispose();
     super.dispose();
   }
 
@@ -144,6 +146,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'show_live_scores': _showLive,
         'show_prize_details': _showPrize,
         'prize_details': _showPrize && _prizeCtrl.text.trim().isNotEmpty ? _prizeCtrl.text.trim() : null,
+        'description_en': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        'description_ta': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         if (_startDate != null) 'start_date': _startDate!.toUtc().toIso8601String(),
         if (_endDate != null) 'end_date': _endDate!.toUtc().toIso8601String(),
       };
@@ -411,6 +415,15 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               decoration: _dec(context, 'e.g. Winner ₹10,000 · Runner-up ₹5,000', Icons.emoji_events_outlined),
             ),
           ],
+          const SizedBox(height: 18),
+
+          _Label('Description (Markdown Supported)'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _descCtrl,
+            maxLines: 4,
+            decoration: _dec(context, 'Write tournament rules, timings, and information here. You can use markdown like **bold** or *italic*.', Icons.description_outlined),
+          ),
           const SizedBox(height: 20),
 
           // Summary
