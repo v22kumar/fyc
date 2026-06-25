@@ -8,7 +8,9 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.sports import Fixture, Team
 from app.models.cricket import CricketMatch, CricketPlayer, CricketBall
-from app.routers.auth import get_current_user, require_exec
+from app.dependencies import get_current_user, RoleChecker
+
+require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 router = APIRouter(tags=["Cricket Scoring"])
 
