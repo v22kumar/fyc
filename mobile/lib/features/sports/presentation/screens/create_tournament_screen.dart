@@ -417,11 +417,64 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ],
           const SizedBox(height: 18),
 
-          _Label('Description (Markdown Supported)'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _Label('Description (Markdown Supported)'),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
+                tooltip: 'Templates',
+                onSelected: (template) {
+                  setState(() {
+                    if (template == 'Cricket') {
+                      _descCtrl.text = '''### 🏏 Cricket Tournament Rules
+**Format**: 20 Overs, Knockout
+**Entry Fee**: ₹1000
+**Rules**:
+1. ICC T20 Rules apply.
+2. Umpires decision is final.
+3. Teams must report 30 mins early.''';
+                    } else if (template == 'Volleyball') {
+                      _descCtrl.text = '''### 🏐 Volleyball Tournament
+**Format**: Best of 3 Sets, 25 Points
+**Rules**:
+1. Standard FIVB rules.
+2. Max 8 players per squad.''';
+                    } else if (template == 'Independence') {
+                      _descCtrl.text = '''### 🇮🇳 Independence Day Sports
+Celebrate freedom with friendly matches!
+**Events**: Cricket, Tug of War, Athletics
+**Prizes**: Medals and Trophies for winners.''';
+                    } else if (template == 'Blood Donation') {
+                      _descCtrl.text = '''### 🩸 Blood Donation Camp
+**In association with**: Government Hospital
+*Give blood, save a life.*
+- Refreshments provided.
+- Certificate of appreciation.''';
+                    } else if (template == 'General') {
+                      _descCtrl.text = '''### 🎉 Annual Celebration Event
+Join us for our yearly gathering!
+**Highlights**:
+- Cultural Programs
+- Sports Finals
+- Prize Distribution''';
+                    }
+                  });
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'Cricket', child: Text('🏏 Cricket Tournament')),
+                  PopupMenuItem(value: 'Volleyball', child: Text('🏐 Volleyball Tournament')),
+                  PopupMenuItem(value: 'Independence', child: Text('🇮🇳 Independence Day')),
+                  PopupMenuItem(value: 'Blood Donation', child: Text('🩸 Blood Donation')),
+                  PopupMenuItem(value: 'General', child: Text('🎉 General Event')),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _descCtrl,
-            maxLines: 4,
+            maxLines: 8,
             decoration: _dec(context, 'Write tournament rules, timings, and information here. You can use markdown like **bold** or *italic*.', Icons.description_outlined),
           ),
           const SizedBox(height: 20),
