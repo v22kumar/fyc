@@ -103,7 +103,9 @@ export const api = {
   createTournament: (data: object) => request('/api/v1/sports/tournaments', { method: 'POST', body: JSON.stringify(data) }),
   listTeams: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`),
   createTeam: (tournamentId: string, data: object) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteTeam: (tournamentId: string, teamId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}`, { method: 'DELETE' }),
   listFixtures: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/fixtures`),
+  generateFixtures: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/generate-fixtures`, { method: 'POST' }),
   submitFixtureResult: (tournamentId: string, fixtureId: string, data: object) =>
     request(`/api/v1/sports/tournaments/${tournamentId}/fixtures/${fixtureId}/result`, { method: 'POST', body: JSON.stringify(data) }),
   listChallenges: () => request('/api/v1/sports/challenges'),

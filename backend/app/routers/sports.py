@@ -178,6 +178,26 @@ def register_team(
     return team
 
 
+@router.delete("/tournaments/{tournament_id}/teams/{team_id}", status_code=204)
+def delete_team(
+    tournament_id: str,
+    team_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.tournament_id == tournament_id
+    ).first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+    
+    db.delete(team)
+    db.commit()
+    return None
+
+
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 @router.get("/tournaments/{tournament_id}/fixtures", response_model=List[FixtureOut])

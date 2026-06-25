@@ -8,6 +8,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   description="Register your team for FYC sports tournaments and view match fixtures."
 >
   <main class="page-bg bg-gray-50 min-h-screen pb-16">
+    <script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <div id="loading" class="text-center py-16">
         <div class="inline-block w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-gray-500">Loading tournament details...</p>
@@ -34,6 +35,11 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
         <div class="container mx-auto px-4 max-w-6xl content-split mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div class="details lg:col-span-7">
+            <div id="t-description-container" class="hidden mb-10">
+                <h3 class="text-2xl font-bold mb-6 text-gray-900 border-b border-gray-200 pb-2">About Tournament</h3>
+                <div id="t-description" class="prose max-w-none text-gray-700 leading-relaxed"></div>
+            </div>
+
             <h3 class="text-2xl font-bold mb-6 text-gray-900 border-b border-gray-200 pb-2">Match Fixtures</h3>
             <div id="fixtures-container">
                 <!-- Populated by JS -->
@@ -103,6 +109,11 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             document.getElementById('t-name-ta').textContent = tournament.name_ta;
             document.querySelector('#t-venue span').textContent = tournament.venue || 'TBA';
             document.querySelector('#t-sport span').textContent = `${tournament.sport.toUpperCase()} - ${tournament.year}`;
+
+            if (tournament.description_en) {
+                document.getElementById('t-description-container').classList.remove('hidden');
+                document.getElementById('t-description').innerHTML = marked.parse(tournament.description_en);
+            }
 
             const submitBtn = document.getElementById('submitBtn');
             if (tournament.status !== 'UPCOMING') {

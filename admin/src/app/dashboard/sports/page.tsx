@@ -18,7 +18,7 @@ export default function SportsPage() {
   const [showCreate, setShowCreate] = useState(false);
 
   // Create tournament form
-  const [form, setForm] = useState({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE' });
+  const [form, setForm] = useState({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
 
   // Add team form
   const [teamForm, setTeamForm] = useState({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
@@ -53,7 +53,7 @@ export default function SportsPage() {
     const t = await api.createTournament(form);
     setTournaments(prev => [t, ...prev]);
     setShowCreate(false);
-    setForm({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE' });
+    setForm({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
   }
 
   async function addTeam() {
@@ -61,6 +61,17 @@ export default function SportsPage() {
     const t = await api.createTeam(selectedTournament.id, teamForm);
     setTeams(prev => [...prev, t]);
     setTeamForm({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
+  }
+
+  async function deleteTeam(teamId: string) {
+    if (!selectedTournament) return;
+    if (!confirm('Are you sure you want to remove this team?')) return;
+    try {
+      await api.deleteTeam(selectedTournament.id, teamId);
+      setTeams(prev => prev.filter(t => t.id !== teamId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete team');
+    }
   }
 
   async function submitResult() {
@@ -73,6 +84,17 @@ export default function SportsPage() {
   async function respondChallenge(id: string, status: string) {
     await api.respondChallenge(id, { status, admin_response: status === 'ACCEPTED' ? 'Challenge accepted! We will contact you.' : 'Challenge declined.' });
     loadChallenges();
+  }
+
+  async function generateFixtures() {
+    if (!selectedTournament) return;
+    if (!confirm('Are you sure you want to generate round-robin fixtures?')) return;
+    try {
+      const generated = await api.generateFixtures(selectedTournament.id);
+      setFixtures(generated);
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate fixtures');
+    }
   }
 
   return (
@@ -110,6 +132,7 @@ export default function SportsPage() {
                   </select>
                 </div>
                 <input type="number" placeholder="Year" value={form.year} onChange={e => setForm(f => ({ ...f, year: +e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                <textarea placeholder="Description (Markdown supported) - Info, Rules, Prize Pool..." rows={3} value={form.description_en} onChange={e => setForm(f => ({ ...f, description_en: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></textarea>
                 <button onClick={createTournament} className="w-full bg-primary text-white rounded-lg py-1.5 text-sm font-medium">Create</button>
               </div>
             )}
@@ -142,8 +165,12 @@ export default function SportsPage() {
                       <thead><tr className="text-xs text-gray-500 border-b"><th className="text-left py-1">Team</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr></thead>
                       <tbody>
                         {teams.map((t, i) => (
-                          <tr key={t.id} className="border-b border-gray-50">
-                            <td className="py-1.5 font-medium">{i + 1}. {t.name} {t.is_fyc_team && <span className="ml-1 text-xs bg-primary/10 text-primary px-1 rounded">FYC</span>}</td>
+                          <tr key={t.id} className="border-b border-gray-50 group">
+                            <td className="py-1.5 font-medium flex items-center gap-2">
+                              <span>{i + 1}. {t.name}</span>
+                              {t.is_fyc_team && <span className="text-xs bg-primary/10 text-primary px-1 rounded">FYC</span>}
+                              <button onClick={() => deleteTeam(t.id)} className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs transition-opacity" title="Remove Team">✕</button>
+                            </td>
                             <td className="text-center text-green-600">{t.wins}</td>
                             <td className="text-center text-red-500">{t.losses}</td>
                             <td className="text-center text-gray-500">{t.draws}</td>
@@ -170,7 +197,12 @@ export default function SportsPage() {
 
               {/* Fixtures */}
               <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-800 mb-3">Fixtures</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-800">Fixtures</h3>
+                  {fixtures.length === 0 && teams.length > 1 && (
+                    <button onClick={generateFixtures} className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium">Generate Fixtures</button>
+                  )}
+                </div>
                 {fixtures.length === 0 ? <p className="text-sm text-gray-400">No fixtures scheduled.</p> : (
                   <div className="space-y-2">
                     {fixtures.map(f => (
