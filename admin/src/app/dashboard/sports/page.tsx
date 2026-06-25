@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { Tournament, Team, Fixture, ChallengeMatch } from '@/types';
+import toast from 'react-hot-toast';
+import { Trophy, Users, CalendarDays, Swords } from 'lucide-react';
 
 const SPORT_ICONS: Record<string, string> = {
   cricket: '🏏', kabaddi: '🤼', volleyball: '🏐',
@@ -17,7 +19,12 @@ export default function SportsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [tab, setTab] = useState<'tournaments' | 'challenges'>('tournaments');
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [isAdvanced, setIsAdvanced] = useState(false);
+  const [showQuickComplete, setShowQuickComplete] = useState(false);
+  const [quickCompleteForm, setQuickCompleteForm] = useState({ winner_id: '', runner_up_id: '' });
+  const [submitting, setSubmitting] = useState({ tournament: false, team: false, result: false, quick: false });
 
   // Create tournament form
   const [form, setForm] = useState({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
@@ -39,7 +46,10 @@ export default function SportsPage() {
     setChallenges(data);
   }
 
-  useEffect(() => { loadTournaments(); loadChallenges(); }, []);
+  useEffect(() => { 
+    setLoading(true);
+    Promise.all([loadTournaments(), loadChallenges()]).finally(() => setLoading(false));
+  }, []);
 
   async function selectTournament(t: Tournament) {
     setSelectedTournament(t);
@@ -52,10 +62,16 @@ export default function SportsPage() {
   }
 
   async function createTournament() {
-    const t = await api.createTournament(form);
-    setTournaments(prev => [t, ...prev]);
-    setShowCreate(false);
-    setForm({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
+    setSubmitting(s => ({ ...s, tournament: true }));
+    try {
+      const t = await api.createTournament(form);
+      setTournaments(prev => [t, ...prev]);
+      setShowCreate(false);
+      setForm({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
+      toast.success('Tournament created successfully!');
+    } finally {
+      setSubmitting(s => ({ ...s, tournament: false }));
+    }
   }
 
   async function updateStatus(id: string, status: string) {
@@ -64,20 +80,50 @@ export default function SportsPage() {
     if (selectedTournament?.id === id) {
       setSelectedTournament(prev => prev ? { ...prev, status } : prev);
     }
+    toast.success(`Status updated to ${status}`);
   }
 
   async function deleteTournament(id: string) {
     if (!confirm('Are you sure you want to delete this tournament? This cannot be undone.')) return;
-    await api.deleteTournament(id);
-    setTournaments(prev => prev.filter(t => t.id !== id));
-    if (selectedTournament?.id === id) setSelectedTournament(null);
+    try {
+      await api.deleteTournament(id);
+      setTournaments(prev => prev.filter(t => t.id !== id));
+      if (selectedTournament?.id === id) setSelectedTournament(null);
+      toast.success('Tournament deleted');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete tournament');
+    }
+  }
+
+  async function handleQuickComplete() {
+    if (!selectedTournament) return;
+    if (!quickCompleteForm.winner_id) return toast.error('Please select a winner');
+    setSubmitting(s => ({ ...s, quick: true }));
+    try {
+      const updated = await api.quickCompleteTournament(selectedTournament.id, quickCompleteForm.winner_id, quickCompleteForm.runner_up_id || undefined);
+      setTournaments(prev => prev.map(t => t.id === updated.id ? updated : t));
+      setSelectedTournament(updated);
+      setShowQuickComplete(false);
+      setQuickCompleteForm({ winner_id: '', runner_up_id: '' });
+      toast.success('Tournament completed successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to quick complete tournament');
+    } finally {
+      setSubmitting(s => ({ ...s, quick: false }));
+    }
   }
 
   async function addTeam() {
     if (!selectedTournament) return;
-    const t = await api.createTeam(selectedTournament.id, teamForm);
-    setTeams(prev => [...prev, t]);
-    setTeamForm({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
+    setSubmitting(s => ({ ...s, team: true }));
+    try {
+      const t = await api.createTeam(selectedTournament.id, teamForm);
+      setTeams(prev => [...prev, t]);
+      setTeamForm({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
+      toast.success('Team added successfully!');
+    } finally {
+      setSubmitting(s => ({ ...s, team: false }));
+    }
   }
 
   async function deleteTeam(teamId: string) {
@@ -86,8 +132,9 @@ export default function SportsPage() {
     try {
       await api.deleteTeam(selectedTournament.id, teamId);
       setTeams(prev => prev.filter(t => t.id !== teamId));
+      toast.success('Team removed');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete team');
+      toast.error(err.message || 'Failed to delete team');
     }
   }
 
@@ -96,20 +143,28 @@ export default function SportsPage() {
     try {
       const updated = await api.updateTeamStatus(selectedTournament.id, teamId, status);
       setTeams(prev => prev.map(t => t.id === teamId ? updated : t));
+      toast.success(`Team ${status.toLowerCase()}`);
     } catch (err: any) {
-      alert(err.message || `Failed to ${status.toLowerCase()} team`);
+      toast.error(err.message || `Failed to ${status.toLowerCase()} team`);
     }
   }
 
   async function submitResult() {
     if (!selectedTournament || !resultFixture) return;
-    const updated = await api.submitFixtureResult(selectedTournament.id, resultFixture.id, resultForm);
-    setFixtures(prev => prev.map(f => f.id === updated.id ? updated : f));
-    setResultFixture(null);
+    setSubmitting(s => ({ ...s, result: true }));
+    try {
+      const updated = await api.submitFixtureResult(selectedTournament.id, resultFixture.id, resultForm);
+      setFixtures(prev => prev.map(f => f.id === updated.id ? updated : f));
+      setResultFixture(null);
+      toast.success('Result saved successfully');
+    } finally {
+      setSubmitting(s => ({ ...s, result: false }));
+    }
   }
 
   async function respondChallenge(id: string, status: string) {
     await api.respondChallenge(id, { status, admin_response: status === 'ACCEPTED' ? 'Challenge accepted! We will contact you.' : 'Challenge declined.' });
+    toast.success(`Challenge ${status.toLowerCase()}`);
     loadChallenges();
   }
 
@@ -119,8 +174,9 @@ export default function SportsPage() {
     try {
       const generated = await api.generateFixtures(selectedTournament.id);
       setFixtures(generated);
+      toast.success('Fixtures generated successfully');
     } catch (err: any) {
-      alert(err.message || 'Failed to generate fixtures');
+      toast.error(err.message || 'Failed to generate fixtures');
     }
   }
 
@@ -145,38 +201,86 @@ export default function SportsPage() {
             </div>
 
             {showCreate && (
-              <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 space-y-2">
-                <input placeholder="Name (English)" value={form.name_en} onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
-                <input placeholder="பெயர் (Tamil)" value={form.name_ta} onChange={e => setForm(f => ({ ...f, name_ta: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
-                <div className="grid grid-cols-2 gap-2">
-                  <select value={form.sport} onChange={e => setForm(f => ({ ...f, sport: e.target.value }))} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
-                    {['cricket','kabaddi','volleyball','football','carrom','chess','other'].map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value }))} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
-                    <option value="LEAGUE">League</option>
-                    <option value="KNOCKOUT">Knockout</option>
-                    <option value="GROUP_STAGE">Group Stage</option>
-                  </select>
+              <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-gray-700">Create Tournament</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Advanced</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAdvanced(!isAdvanced)}
+                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${isAdvanced ? 'bg-primary' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${isAdvanced ? 'translate-x-4' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
                 </div>
-                <input type="number" placeholder="Year" value={form.year} onChange={e => setForm(f => ({ ...f, year: +e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
-                <textarea placeholder="Description (Markdown supported) - Info, Rules, Prize Pool..." rows={3} value={form.description_en} onChange={e => setForm(f => ({ ...f, description_en: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></textarea>
-                <button onClick={createTournament} className="w-full bg-primary text-white rounded-lg py-1.5 text-sm font-medium">Create</button>
+
+                <div className="space-y-2">
+                  <input placeholder="Name (E.g. FYC Premier League)" value={form.name_en} onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                  
+                  {isAdvanced && (
+                    <input placeholder="பெயர் (Tamil)" value={form.name_ta} onChange={e => setForm(f => ({ ...f, name_ta: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <select value={form.sport} onChange={e => setForm(f => ({ ...f, sport: e.target.value }))} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
+                      {['cricket','kabaddi','volleyball','football','carrom','chess','other'].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value }))} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
+                      <option value="LEAGUE">League</option>
+                      <option value="KNOCKOUT">Knockout</option>
+                      <option value="GROUP_STAGE">Group Stage</option>
+                    </select>
+                  </div>
+                  
+                  <input type="number" placeholder="Year" value={form.year} onChange={e => setForm(f => ({ ...f, year: +e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                  
+                  {isAdvanced && (
+                    <textarea placeholder="Description (Markdown supported) - Info, Rules, Prize Pool..." rows={3} value={form.description_en} onChange={e => setForm(f => ({ ...f, description_en: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></textarea>
+                  )}
+
+                  <button onClick={createTournament} disabled={submitting.tournament} className="w-full bg-primary text-white rounded-lg py-1.5 text-sm font-medium disabled:opacity-70 disabled:cursor-not-allowed">
+                    {submitting.tournament ? 'Creating...' : 'Create Tournament'}
+                  </button>
+                </div>
               </div>
             )}
 
             <div className="space-y-2">
-              {tournaments.map(t => (
-                <button key={t.id} onClick={() => selectTournament(t)} className={`w-full text-left p-3 rounded-xl border transition-colors ${selectedTournament?.id === t.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{SPORT_ICONS[t.sport] ?? '🏆'}</span>
-                    <div>
-                      <div className="font-medium text-sm text-gray-900">{t.name_en}</div>
-                      <div className="text-xs text-gray-500">{t.sport} · {t.year} · {t.format}</div>
+              {loading ? (
+                [1, 2, 3].map(i => (
+                  <div key={i} className="w-full p-3 rounded-xl border border-gray-100 bg-white animate-pulse">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-1"></div>
+                        <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+                      </div>
                     </div>
+                    <div className="h-4 bg-gray-100 rounded-full w-16 mt-2"></div>
                   </div>
-                  <span className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-full ${t.status === 'ONGOING' ? 'bg-green-100 text-green-700' : t.status === 'COMPLETED' ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>{t.status}</span>
-                </button>
-              ))}
+                ))
+              ) : tournaments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">
+                  <Trophy className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-sm font-medium text-gray-700">No tournaments</p>
+                  <p className="text-xs text-gray-500 mt-1">Create one to get started</p>
+                </div>
+              ) : (
+                tournaments.map(t => (
+                  <button key={t.id} onClick={() => selectTournament(t)} className={`w-full text-left p-3 rounded-xl border transition-colors ${selectedTournament?.id === t.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{SPORT_ICONS[t.sport] ?? '🏆'}</span>
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">{t.name_en}</div>
+                        <div className="text-xs text-gray-500">{t.sport} · {t.year} · {t.format}</div>
+                      </div>
+                    </div>
+                    <span className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-full ${t.status === 'ONGOING' ? 'bg-green-100 text-green-700' : t.status === 'COMPLETED' ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>{t.status}</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
@@ -202,14 +306,53 @@ export default function SportsPage() {
                 {selectedTournament.status === 'COMPLETED' && (
                   <button onClick={() => updateStatus(selectedTournament.id, 'ARCHIVED')} className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg hover:bg-orange-200 font-medium">Archive</button>
                 )}
+                {selectedTournament.status !== 'COMPLETED' && selectedTournament.status !== 'ARCHIVED' && (
+                  <button onClick={() => setShowQuickComplete(!showQuickComplete)} className="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium">Quick Complete</button>
+                )}
                 <button onClick={() => deleteTournament(selectedTournament.id)} className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 font-medium ml-auto">Delete</button>
               </div>
+
+              {/* Quick Complete Form */}
+              {showQuickComplete && (
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-4">
+                  <h4 className="font-semibold text-purple-900 mb-2 text-sm">Quick Complete Tournament</h4>
+                  <p className="text-xs text-purple-700 mb-3">Skip remaining fixtures and immediately declare winners.</p>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-medium text-purple-800 mb-1">Winner *</label>
+                      <select value={quickCompleteForm.winner_id} onChange={e => setQuickCompleteForm(f => ({ ...f, winner_id: e.target.value }))} className="w-full border border-purple-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+                        <option value="">Select Winner</option>
+                        {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-purple-800 mb-1">Runner Up (Optional)</label>
+                      <select value={quickCompleteForm.runner_up_id} onChange={e => setQuickCompleteForm(f => ({ ...f, runner_up_id: e.target.value }))} className="w-full border border-purple-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+                        <option value="">Select Runner Up</option>
+                        {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleQuickComplete} disabled={submitting.quick} className="text-xs bg-purple-600 text-white px-4 py-1.5 rounded-lg hover:bg-purple-700 font-medium disabled:opacity-70 disabled:cursor-not-allowed">
+                      {submitting.quick ? 'Processing...' : 'Complete Tournament'}
+                    </button>
+                    <button onClick={() => setShowQuickComplete(false)} disabled={submitting.quick} className="text-xs bg-white text-purple-700 border border-purple-200 px-4 py-1.5 rounded-lg hover:bg-purple-50 font-medium disabled:opacity-70 disabled:cursor-not-allowed">Cancel</button>
+                  </div>
+                </div>
+              )}
 
               {/* Teams */}
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <h3 className="font-semibold text-gray-800 mb-3">Teams — Standings</h3>
                 <div className="space-y-2 mb-4">
-                  {teams.length === 0 ? <p className="text-sm text-gray-400">No teams yet.</p> : (
+                  {teams.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">
+                      <Users className="w-8 h-8 text-gray-400 mb-2" />
+                      <p className="text-sm font-medium text-gray-700">No teams yet</p>
+                      <p className="text-xs text-gray-500 mt-1">Add teams below to start the tournament</p>
+                    </div>
+                  ) : (
                     <table className="w-full text-sm">
                       <thead><tr className="text-xs text-gray-500 border-b"><th className="text-left py-1">Team</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr></thead>
                       <tbody>
@@ -250,7 +393,9 @@ export default function SportsPage() {
                       <input type="checkbox" checked={teamForm.is_fyc_team} onChange={e => setTeamForm(f => ({ ...f, is_fyc_team: e.target.checked }))} /> FYC Team
                     </label>
                   </div>
-                  <button onClick={addTeam} className="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-medium">Add Team</button>
+                  <button onClick={addTeam} disabled={submitting.team} className="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-70 disabled:cursor-not-allowed">
+                    {submitting.team ? 'Adding...' : 'Add Team'}
+                  </button>
                 </div>
               </div>
 
@@ -264,7 +409,13 @@ export default function SportsPage() {
                     </button>
                   )}
                 </div>
-                {fixtures.length === 0 ? <p className="text-sm text-gray-400">No fixtures scheduled.</p> : (
+                {fixtures.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">
+                    <CalendarDays className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-sm font-medium text-gray-700">No fixtures scheduled</p>
+                    <p className="text-xs text-gray-500 mt-1">Generate fixtures when teams are ready</p>
+                  </div>
+                ) : (
                   <div className="space-y-2">
                     {fixtures.map(f => (
                       <div key={f.id} className="border border-gray-100 rounded-lg p-3 text-sm">
@@ -305,7 +456,24 @@ export default function SportsPage() {
 
       {tab === 'challenges' && (
         <div className="space-y-3">
-          {challenges.length === 0 ? <p className="text-gray-400 text-sm">No challenges yet.</p> : challenges.map(c => (
+          {loading ? (
+            [1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
+                <div className="h-5 bg-gray-200 rounded w-1/3 mb-2"></div>
+                <div className="h-4 bg-gray-100 rounded w-1/2 mb-1"></div>
+                <div className="h-4 bg-gray-100 rounded w-2/3 mb-3"></div>
+                <div className="h-4 bg-gray-100 rounded w-full"></div>
+              </div>
+            ))
+          ) : challenges.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 bg-white border border-dashed border-gray-200 rounded-xl text-center shadow-sm">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                <Swords className="w-8 h-8 text-blue-500" />
+              </div>
+              <p className="text-lg font-semibold text-gray-900">No open challenges</p>
+              <p className="text-sm text-gray-500 mt-1 max-w-md">There are currently no challenges from external teams. Challenges will appear here when submitted.</p>
+            </div>
+          ) : challenges.map(c => (
             <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-start justify-between">
                 <div>
@@ -344,8 +512,10 @@ export default function SportsPage() {
               <input placeholder="Notes (e.g. won by 5 wickets)" value={resultForm.result_notes} onChange={e => setResultForm(f => ({ ...f, result_notes: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div className="flex gap-3 mt-4">
-              <button onClick={submitResult} className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold">Save Result</button>
-              <button onClick={() => setResultFixture(null)} className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600">Cancel</button>
+              <button onClick={submitResult} disabled={submitting.result} className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold disabled:opacity-70 disabled:cursor-not-allowed">
+                {submitting.result ? 'Saving...' : 'Save Result'}
+              </button>
+              <button onClick={() => setResultFixture(null)} disabled={submitting.result} className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600 disabled:opacity-70 disabled:cursor-not-allowed">Cancel</button>
             </div>
           </div>
         </div>

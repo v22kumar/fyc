@@ -5,6 +5,7 @@ import type { Issue, IssueStatus, Member } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import IssueDetailDrawer from '@/components/IssueDetailDrawer';
 import { CATEGORY_LABELS } from '@/types';
+import { CheckCircle2 } from 'lucide-react';
 
 const TABS: { label: string; value: IssueStatus | 'ALL' }[] = [
   { label: 'All',          value: 'ALL' },
@@ -75,13 +76,37 @@ export default function IssuesPage() {
       {/* Table */}
       <div className="bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-40">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+              <tr>
+                <th className="text-left px-5 py-3">ID</th>
+                <th className="text-left px-5 py-3">Category</th>
+                <th className="text-left px-5 py-3">Description</th>
+                <th className="text-left px-5 py-3">Status</th>
+                <th className="text-left px-5 py-3">Submitted</th>
+                <th className="text-left px-5 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+                  <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                  <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
+                  <td className="px-5 py-4"><div className="h-6 bg-gray-200 rounded-full w-20"></div></td>
+                  <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-20"></div></td>
+                  <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : issues.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">🎉</div>
-            <p>No issues in this state</p>
+          <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Inbox Zero</h3>
+            <p className="text-sm text-gray-500 max-w-sm">There are no issues in this state. Great job keeping the community running smoothly!</p>
           </div>
         ) : (
           <table className="w-full text-sm">

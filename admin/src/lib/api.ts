@@ -33,6 +33,10 @@ export const api = {
       body: JSON.stringify({ organization_id: orgId, username, password }),
     }),
 
+  // Search
+  globalSearch: (query: string) => request<any>(`/api/v1/search?q=${encodeURIComponent(query)}`),
+
+
   // Issues
   listIssues: (status?: string) =>
     request<import('@/types').Issue[]>(
@@ -62,6 +66,7 @@ export const api = {
     description_en: string;
     event_start: string;
     event_end: string;
+    requires_registration: boolean;
   }) =>
     request<import('@/types').Event>('/api/v1/events', {
       method: 'POST',
@@ -97,6 +102,7 @@ export const api = {
   listCommunityProfiles: () => request('/api/v1/community?available_only=false'),
   verifyCommunityProfile: (id: string) => request(`/api/v1/community/${id}/verify`, { method: 'PATCH', body: JSON.stringify({}) }),
   deleteCommunityProfile: (id: string) => request(`/api/v1/community/${id}`, { method: 'DELETE' }),
+  getCommunityStats: () => request<import('@/types').CommunityStats>('/api/v1/community/stats'),
 
   // Sports - Tournaments
   listTournaments: () => request<import('@/types').Tournament[]>('/api/v1/sports/tournaments'),
@@ -109,6 +115,14 @@ export const api = {
     request(`/api/v1/sports/tournaments/${id}`, { method: 'DELETE' }),
   updateTournamentStatus: (id: string, status: string) =>
     request<{ status: string }>(`/api/v1/sports/tournaments/${id}/status?new_status=${status}`, { method: 'PATCH' }),
+  quickCompleteTournament: (tournamentId: string, winnerId: string, runnerUpId?: string) =>
+    request<import('@/types').Tournament>(`/api/v1/sports/tournaments/${tournamentId}/quick-complete`, {
+      method: 'POST',
+      body: JSON.stringify({
+        winner_id: winnerId,
+        ...(runnerUpId ? { runner_up_id: runnerUpId } : {}),
+      }),
+    }),
   listTeams: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`),
   createTeam: (tournamentId: string, data: object) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`, { method: 'POST', body: JSON.stringify(data) }),
   deleteTeam: (tournamentId: string, teamId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}`, { method: 'DELETE' }),

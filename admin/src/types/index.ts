@@ -39,6 +39,7 @@ export interface Event {
   description_en: string;
   event_start: string;
   event_end: string;
+  requires_registration: boolean | null;
   banner_url: string | null;
   created_by_user_id: string | null;
   created_at: string;
@@ -175,4 +176,12 @@ export interface MembershipCard {
   designation_en: string;
   issued_at: string | null;
   expires_at: string;
+}
+
+export interface CommunityStats {
+  total_volunteers: number;
+  total_events: number;
+  total_blood_donations: number;
+  total_trees_planted: number;
+  total_issues_solved: number;
 }

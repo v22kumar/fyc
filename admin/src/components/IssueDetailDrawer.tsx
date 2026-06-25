@@ -4,6 +4,8 @@ import type { Issue, IssueStatus, Member } from '@/types';
 import { VALID_TRANSITIONS, STATUS_LABELS, CATEGORY_LABELS } from '@/types';
 import StatusBadge from './StatusBadge';
 import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 interface Props {
   issue: Issue;
@@ -28,9 +30,12 @@ export default function IssueDetailDrawer({ issue, volunteers, onClose, onUpdate
         newStatus,
         newStatus === 'ASSIGNED' && assignee ? assignee : undefined,
       );
+      toast.success(`Issue moved to ${STATUS_LABELS[newStatus]}`);
       onUpdated(updated);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Update failed');
+      const errorMsg = e instanceof Error ? e.message : 'Update failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -152,15 +157,16 @@ export default function IssueDetailDrawer({ issue, volunteers, onClose, onUpdate
                     key={s}
                     onClick={() => doTransition(s)}
                     disabled={saving}
-                    className="px-4 py-2 bg-primary-900 text-white text-sm rounded-lg hover:bg-primary-800 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-primary-900 text-white text-sm rounded-lg hover:bg-primary-800 disabled:opacity-70 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
-                    {saving ? '…' : STATUS_LABELS[s]}
+                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {saving ? 'Saving...' : STATUS_LABELS[s]}
                   </button>
                 ))}
                 <button
                   onClick={() => doTransition('REJECTED')}
                   disabled={saving || issue.status !== 'NEW'}
-                  className="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent-700 disabled:hidden transition-colors"
+                  className="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent-700 disabled:hidden transition-colors flex items-center justify-center gap-2"
                 >
                   Reject
                 </button>
