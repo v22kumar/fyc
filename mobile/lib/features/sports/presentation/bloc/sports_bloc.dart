@@ -4,6 +4,7 @@ import '../../domain/usecases/submit_challenge_usecase.dart';
 import '../../domain/repositories/sports_repository.dart';
 import 'sports_event.dart';
 import 'sports_state.dart';
+import '../../domain/entities/tournament_entity.dart';
 
 class SportsBloc extends Bloc<SportsEvent, SportsState> {
   final FetchTournamentsUseCase _fetchTournaments;
