@@ -24,6 +24,10 @@ class TournamentCreate(BaseModel):
     show_prize_details: bool = False
     prize_details: Optional[str] = None
 
+class TournamentQuickComplete(BaseModel):
+    winner_id: UUID
+    runner_up_id: Optional[UUID] = None
+
 
 class TournamentOut(BaseModel):
     id: UUID

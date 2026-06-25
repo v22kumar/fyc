@@ -18,6 +18,10 @@ from app.models.instagram_post import InstagramPost, InstagramPostStatus
 from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
 from app.models.cricket import CricketMatch, CricketBall
 from app.models.notification import Notification, NotificationPreference
+from app.models.core_services import CommunityActivity, Follow, Comment, Attachment, MediaLibraryItem, Tag, EntityTag, SavedItem
+from app.models.workflow import WorkflowState, ApprovalRequest
+from app.models.dynamic_forms import FormDefinition, FormSubmission
+from app.models.platform_settings import OrganizationSettings, FeatureFlag
 
 __all__ = [
     "Base",

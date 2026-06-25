@@ -38,10 +38,14 @@ class Tournament(Base, TimestampMixin, TenantModelMixin):
     show_live_scores = Column(Boolean, default=True)
     show_prize_details = Column(Boolean, default=False)
     prize_details = Column(Text, nullable=True)
+    winner_id = Column(GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    runner_up_id = Column(GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
 
-    teams = relationship("Team", back_populates="tournament", cascade="all, delete-orphan")
+    teams = relationship("Team", back_populates="tournament", cascade="all, delete-orphan", foreign_keys="[Team.tournament_id]")
     fixtures = relationship("Fixture", back_populates="tournament", cascade="all, delete-orphan")
     created_by = relationship("User", foreign_keys=[created_by_id])
+    winner = relationship("Team", foreign_keys=[winner_id])
+    runner_up = relationship("Team", foreign_keys=[runner_up_id])
 
 
 class Team(Base, TimestampMixin, TenantModelMixin):

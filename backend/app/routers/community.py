@@ -6,9 +6,14 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.community import CommunityProfile
 from app.models.user import User, UserProfile
-from app.schemas.community import CommunityProfileRegister, CommunityProfileUpdate, CommunityProfileOut
+from app.schemas.community import CommunityProfileRegister, CommunityProfileUpdate, CommunityProfileOut, CommunityFeedItem, CommunityStatsOut
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.models.news import News
+from app.models.event import Event
+from app.models.sports import Tournament
+from app.models.issue import PublicIssue
+from app.models.announcement import Announcement
 
 router = APIRouter(prefix="/community", tags=["Community Directory"])
 
@@ -34,6 +39,117 @@ def _build_out(profile: CommunityProfile, db: Session) -> CommunityProfileOut:
         is_verified=profile.is_verified,
         full_name_en=up.full_name_en if up else None,
         full_name_ta=up.full_name_ta if up else None,
+    )
+
+
+@router.get("/feed", response_model=List[CommunityFeedItem])
+def get_community_feed(
+    limit: int = 20,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    feed = []
+    
+    # 1. News
+    news = db.query(News).filter(News.organization_id == tenant_id, News.is_published == True).order_by(News.published_at.desc()).offset(offset).limit(limit).all()
+    for n in news:
+        feed.append(CommunityFeedItem(
+            item_type="NEWS",
+            id=str(n.id),
+            title_en=n.title_en,
+            title_ta=n.title_ta,
+            subtitle_en=n.content_en[:100] if n.content_en else "",
+            subtitle_ta=n.content_ta[:100] if n.content_ta else "",
+            image_url=n.cover_image_url,
+            created_at=n.published_at.isoformat() if n.published_at else n.created_at.isoformat()
+        ))
+        
+    # 2. Events
+    events = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True).order_by(Event.event_start.desc()).offset(offset).limit(limit).all()
+    for e in events:
+        feed.append(CommunityFeedItem(
+            item_type="EVENT",
+            id=str(e.id),
+            title_en=e.title_en,
+            title_ta=e.title_ta,
+            subtitle_en=e.description_en[:100] if e.description_en else "",
+            subtitle_ta=e.description_ta[:100] if e.description_ta else "",
+            image_url=e.banner_url,
+            created_at=e.created_at.isoformat()
+        ))
+        
+    # 3. Sports Tournaments
+    sports = db.query(Tournament).filter(Tournament.organization_id == tenant_id, Tournament.status.in_(["PUBLISHED", "ONGOING"])).order_by(Tournament.created_at.desc()).offset(offset).limit(limit).all()
+    for s in sports:
+        feed.append(CommunityFeedItem(
+            item_type="TOURNAMENT",
+            id=str(s.id),
+            title_en=s.name_en,
+            title_ta=s.name_ta,
+            subtitle_en=f"Sport: {s.sport}",
+            subtitle_ta=f"விளையாட்டு: {s.sport}",
+            image_url=None,
+            created_at=s.created_at.isoformat()
+        ))
+        
+    # 4. Public Issues
+    issues = db.query(PublicIssue).filter(PublicIssue.organization_id == tenant_id, PublicIssue.status.in_(["RESOLVED", "CLOSED"])).order_by(PublicIssue.updated_at.desc()).offset(offset).limit(limit).all()
+    for i in issues:
+        feed.append(CommunityFeedItem(
+            item_type="ISSUE",
+            id=str(i.id),
+            title_en="Issue Resolved",
+            title_ta="பிரச்சனை தீர்க்கப்பட்டது",
+            subtitle_en=i.description_en[:100] if i.description_en else "",
+            subtitle_ta=i.description_ta[:100] if i.description_ta else "",
+            image_url=i.verification_photo_url or i.photo_url,
+            created_at=i.updated_at.isoformat()
+        ))
+
+    # Sort all feed items by date desc and return the paginated slice
+    feed.sort(key=lambda x: x.created_at, reverse=True)
+    # We slice again because we gathered `limit` from each category, meaning we have up to 4*limit items.
+    return feed[:limit]
+
+@router.get("/stats", response_model=CommunityStatsOut)
+def get_community_stats(
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    from app.models.user import User
+    from app.models.blood_donor import BloodDonor
+    from app.models.green_fyc import TreeRegistration
+    
+    total_volunteers = db.query(User).filter(
+        User.organization_id == tenant_id,
+        User.role == "VOLUNTEER"
+    ).count()
+    
+    total_events = db.query(Event).filter(
+        Event.organization_id == tenant_id,
+        Event.is_published == True
+    ).count()
+    
+    total_blood_donations = db.query(BloodDonor).filter(
+        BloodDonor.organization_id == tenant_id
+    ).count()
+    
+    total_trees_planted = db.query(TreeRegistration).filter(
+        TreeRegistration.organization_id == tenant_id
+    ).count()
+    
+    total_issues_solved = db.query(PublicIssue).filter(
+        PublicIssue.organization_id == tenant_id,
+        PublicIssue.status == "RESOLVED"
+    ).count()
+    
+    return CommunityStatsOut(
+        total_volunteers=total_volunteers,
+        total_events=total_events,
+        total_blood_donations=total_blood_donations,
+        total_trees_planted=total_trees_planted,
+        total_issues_solved=total_issues_solved
     )
 
 

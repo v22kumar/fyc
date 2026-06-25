@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, DateTime, ForeignKey, func
+from sqlalchemy import Column, DateTime, ForeignKey, func, JSON
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import declared_attr
@@ -52,6 +52,14 @@ class TimestampMixin:
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False
+    )
+    deleted_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    metadata_json = Column(
+        JSON,
+        nullable=True
     )
 
 class TenantModelMixin:

@@ -22,6 +22,7 @@ class Event(Base, TimestampMixin, TenantModelMixin):
     created_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     is_published = Column(Boolean, default=False)
+    requires_registration = Column(Boolean, default=True)
     registration_deadline = Column(DateTime(timezone=True), nullable=True)
     max_participants = Column(Integer, nullable=True)
     competition_categories = Column(JSON, nullable=True)

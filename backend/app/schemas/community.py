@@ -47,3 +47,21 @@ class CommunityProfileOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CommunityFeedItem(BaseModel):
+    item_type: str  # "NEWS", "EVENT", "TOURNAMENT", "ISSUE", "ANNOUNCEMENT"
+    id: str
+    title_en: Optional[str] = None
+    title_ta: Optional[str] = None
+    subtitle_en: Optional[str] = None
+    subtitle_ta: Optional[str] = None
+    image_url: Optional[str] = None
+    created_at: str
+    metadata: Optional[dict] = None
+
+class CommunityStatsOut(BaseModel):
+    total_volunteers: int
+    total_events: int
+    total_blood_donations: int
+    total_trees_planted: int
+    total_issues_solved: int

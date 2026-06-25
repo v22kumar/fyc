@@ -13,6 +13,7 @@ class EventCreate(BaseModel):
     banner_url: Optional[str] = None
     geography_id: Optional[UUID] = None
     is_published: Optional[bool] = False
+    requires_registration: Optional[bool] = True
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
     competition_categories: Optional[List[str]] = None
@@ -27,6 +28,7 @@ class EventUpdate(BaseModel):
     banner_url: Optional[str] = None
     geography_id: Optional[UUID] = None
     is_published: Optional[bool] = None
+    requires_registration: Optional[bool] = None
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
     competition_categories: Optional[List[str]] = None
@@ -46,6 +48,7 @@ class EventOut(BaseModel):
     created_by_user_id: Optional[UUID]
     created_at: datetime
     is_published: Optional[bool]
+    requires_registration: Optional[bool]
     registration_deadline: Optional[datetime]
     max_participants: Optional[int]
     competition_categories: Optional[Any]

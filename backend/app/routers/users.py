@@ -237,3 +237,60 @@ def promote_user(
     target.role = payload.role
     db.commit()
     return {"ok": True, "user_id": str(user_id), "new_role": payload.role}
+
+class UserCommunityJourneyOut(_BaseModel):
+    events_attended: int
+    issues_helped: int
+    blood_donations: int
+    trees_planted: int
+    sports_matches_played: int
+    volunteer_hours: float
+
+@router.get("/me/journey", response_model=UserCommunityJourneyOut)
+def get_my_community_journey(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Returns an aggregated living profile of the user's community journey.
+    """
+    from app.models.event import EventAttendance
+    from app.models.issue import PublicIssue
+    from app.models.blood_donor import BloodDonor
+    from app.models.green_fyc import TreeRegistration
+    from app.models.sports import Player
+    
+    events_attended = db.query(EventAttendance).filter(
+        EventAttendance.user_id == current_user.id
+    ).count()
+    
+    issues_helped = db.query(PublicIssue).filter(
+        PublicIssue.assigned_volunteer_id == current_user.id,
+        PublicIssue.status == "RESOLVED"
+    ).count()
+    
+    blood_donations = db.query(BloodDonor).filter(
+        BloodDonor.user_id == current_user.id
+    ).count()
+    
+    trees_planted = db.query(TreeRegistration).filter(
+        TreeRegistration.user_id == current_user.id
+    ).count()
+    
+    # Sports matches: SUM of matches_played across all Player profiles for this user
+    from sqlalchemy.sql import func
+    sports_matches = db.query(func.sum(Player.matches_played)).filter(
+        Player.user_id == current_user.id
+    ).scalar() or 0
+    
+    volunteer_meta = db.query(VolunteerMetadata).filter(VolunteerMetadata.user_id == current_user.id).first()
+    volunteer_hours = float(volunteer_meta.total_hours_accrued) if volunteer_meta else 0.0
+
+    return UserCommunityJourneyOut(
+        events_attended=events_attended,
+        issues_helped=issues_helped,
+        blood_donations=blood_donations,
+        trees_planted=trees_planted,
+        sports_matches_played=int(sports_matches),
+        volunteer_hours=volunteer_hours
+    )

@@ -6,10 +6,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.issue import PublicIssue, IssueStatus, VALID_TRANSITIONS
+from app.models.issue import PublicIssue, IssueStatus, IssueEmailLog
 from app.models.user import User
 from app.models.audit import AuditLog
-from app.schemas.issue import IssueCreate, IssueStatusUpdate, IssueOut, IssueStats
+from app.schemas.issue import IssueCreate, IssueStatusUpdate, IssueOut, IssueStats, IssueEmailCreate, IssueEmailOut
 from app.dependencies import get_current_user, RoleChecker, get_current_token_payload
 from app.middleware.tenant import get_current_tenant_id, require_tenant_id
 from app.services.notifications import notify_issue_assigned, notify_issue_resolved
@@ -193,26 +193,7 @@ def update_issue_status(
     current_status = issue.status
     new_status = payload.status
 
-    allowed = VALID_TRANSITIONS.get(current_status, set())
-    if new_status not in allowed:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid transition from '{current_status}' to '{new_status}'. "
-                   f"Allowed: {[s.value for s in allowed]}"
-        )
-
-    if current_user.role == "VOLUNTEER":
-        if new_status not in {IssueStatus.UNDER_REVIEW, IssueStatus.RESOLVED}:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Volunteers may only update to UNDER_REVIEW or RESOLVED"
-            )
-        if issue.assigned_volunteer_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only update issues assigned to you"
-            )
-
+    # Remove strict transition rules - community decides when it's resolved or in progress.
     old_status = issue.status.value if hasattr(issue.status, 'value') else str(issue.status)
     issue.status = new_status
 
@@ -309,3 +290,47 @@ def assign_issue_volunteer(
         pass
 
     return issue
+
+@router.post("/{issue_id}/email", response_model=IssueEmailOut)
+def log_issue_email(
+    issue_id: UUID,
+    payload: IssueEmailCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Log and simulate sending an email to a concerned authority about an issue.
+    """
+    issue = db.query(PublicIssue).filter(PublicIssue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+        
+    email_log = IssueEmailLog(
+        organization_id=current_user.organization_id,
+        issue_id=issue_id,
+        sent_by_user_id=current_user.id,
+        authority_email=payload.authority_email,
+        subject=payload.subject,
+        body=payload.body
+    )
+    db.add(email_log)
+    db.commit()
+    db.refresh(email_log)
+    
+    # In a real app, integrate SES/SendGrid here to dispatch the email.
+    
+    return email_log
+
+@router.get("/{issue_id}/email", response_model=List[IssueEmailOut])
+def list_issue_emails(
+    issue_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """
+    Get the history of emails sent for an issue.
+    """
+    return db.query(IssueEmailLog).filter(
+        IssueEmailLog.issue_id == issue_id,
+        IssueEmailLog.organization_id == tenant_id
+    ).order_by(IssueEmailLog.created_at.desc()).all()

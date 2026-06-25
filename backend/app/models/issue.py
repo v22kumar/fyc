@@ -22,16 +22,7 @@ class IssueStatus(str, enum.Enum):
     CLOSED = "CLOSED"
     REJECTED = "REJECTED"
 
-# Valid status transitions for the state machine
-VALID_TRANSITIONS = {
-    IssueStatus.NEW: {IssueStatus.ASSIGNED, IssueStatus.REJECTED},
-    IssueStatus.ASSIGNED: {IssueStatus.UNDER_REVIEW, IssueStatus.ESCALATED},
-    IssueStatus.UNDER_REVIEW: {IssueStatus.RESOLVED, IssueStatus.ESCALATED},
-    IssueStatus.ESCALATED: {IssueStatus.UNDER_REVIEW, IssueStatus.RESOLVED},
-    IssueStatus.RESOLVED: {IssueStatus.CLOSED},
-    IssueStatus.CLOSED: set(),
-    IssueStatus.REJECTED: set(),
-}
+# Removed VALID_TRANSITIONS to allow flexible community updates
 
 class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     """
@@ -56,3 +47,19 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     reporter = relationship("User", foreign_keys=[reported_by_user_id])
     assigned_volunteer = relationship("User", foreign_keys=[assigned_volunteer_id])
     geography = relationship("GeographicNode", foreign_keys=[geography_id])
+
+class IssueEmailLog(Base, TimestampMixin, TenantModelMixin):
+    """
+    Tracks emails sent to relevant authorities regarding a public issue.
+    """
+    __tablename__ = "issue_email_logs"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    issue_id = Column(GUID(), ForeignKey("public_issues.id", ondelete="CASCADE"), nullable=False)
+    sent_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    authority_email = Column(String(255), nullable=False)
+    subject = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    
+    issue = relationship("PublicIssue")
+    sender = relationship("User")

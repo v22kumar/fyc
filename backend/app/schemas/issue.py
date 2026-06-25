@@ -44,3 +44,20 @@ class IssueStats(BaseModel):
     resolution_rate: int        # percentage 0–100
     avg_response_days: float
     active_citizens: int
+
+class IssueEmailCreate(BaseModel):
+    authority_email: str
+    subject: str
+    body: str
+
+class IssueEmailOut(BaseModel):
+    id: UUID
+    issue_id: UUID
+    sent_by_user_id: Optional[UUID]
+    authority_email: str
+    subject: str
+    body: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True

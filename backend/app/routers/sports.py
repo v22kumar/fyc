@@ -13,6 +13,7 @@ from app.schemas.sports import (
     FixtureCreate, FixtureResultUpdate, FixtureOut,
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
     LiveScoreEntryCreate, LiveScoreReview, LiveScoreEntryOut,
+    TournamentQuickComplete,
 )
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
@@ -187,6 +188,39 @@ def update_tournament(
     
     for k, v in payload.model_dump().items():
         setattr(t, k, v)
+    db.commit()
+    db.refresh(t)
+    return t
+
+@router.post("/tournaments/{tournament_id}/quick-complete", response_model=TournamentOut)
+def quick_complete_tournament(
+    tournament_id: str,
+    payload: TournamentQuickComplete,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    """
+    Skip all fixtures and ball-by-ball. Just declare a winner and finish.
+    """
+    t = db.query(Tournament).filter(
+        Tournament.id == tournament_id,
+        Tournament.organization_id == current_user.organization_id,
+    ).first()
+    if not t:
+        raise HTTPException(404, "Tournament not found")
+        
+    winner = db.query(Team).filter(Team.id == str(payload.winner_id), Team.tournament_id == tournament_id).first()
+    if not winner:
+        raise HTTPException(400, "Winner team not found in this tournament")
+        
+    if payload.runner_up_id:
+        runner_up = db.query(Team).filter(Team.id == str(payload.runner_up_id), Team.tournament_id == tournament_id).first()
+        if not runner_up:
+            raise HTTPException(400, "Runner up team not found in this tournament")
+        t.runner_up_id = payload.runner_up_id
+        
+    t.winner_id = payload.winner_id
+    t.status = "COMPLETED"
     db.commit()
     db.refresh(t)
     return t

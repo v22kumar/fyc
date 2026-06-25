@@ -41,6 +41,7 @@ def create_event(
         banner_url=payload.banner_url,
         geography_id=payload.geography_id,
         is_published=payload.is_published,
+        requires_registration=payload.requires_registration,
         registration_deadline=payload.registration_deadline,
         max_participants=payload.max_participants,
         competition_categories=payload.competition_categories,
@@ -121,6 +122,9 @@ def register_for_event(
     
     if not event.is_published:
         raise HTTPException(status_code=400, detail="Event is not open for registration")
+        
+    if not event.requires_registration:
+        raise HTTPException(status_code=400, detail="This event does not require registration. Anyone can join!")
         
     if event.registration_deadline and datetime.now(timezone.utc) > event.registration_deadline:
         raise HTTPException(status_code=400, detail="Registration deadline has passed")
