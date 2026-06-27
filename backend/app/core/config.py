@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     OPENWEATHER_API_KEY: str = ""
 
     # Metal / Gold price API (https://www.goldapi.io — free tier)
-    # TODO: move to Fly.io secret (flyctl secrets set GOLD_API_KEY=...) before public launch
-    GOLD_API_KEY: str = "goldapi-8d7e18a2d211857e02ecbe99945ab204-io"
+    # Set via env / flyctl secrets set GOLD_API_KEY=... — never commit a real key.
+    GOLD_API_KEY: str = ""
 
     # ── Daily WhatsApp Morning Broadcast ────────────────────────────────────
     # Set MORNING_BROADCAST_ENABLED=true in Fly.io env to activate (no redeploy needed)

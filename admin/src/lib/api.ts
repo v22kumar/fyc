@@ -1,6 +1,8 @@
 import { getToken } from './auth';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
+// Fallback points at prod so a missing build-time env var never silently makes
+// the deployed admin call localhost. For local dev set NEXT_PUBLIC_API_BASE=http://localhost:8000.
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://fyc-backend.fly.dev';
 export const ORG_ID = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
 
 function headers(extra?: Record<string, string>): HeadersInit {
