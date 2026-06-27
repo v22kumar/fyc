@@ -41,6 +41,12 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     Initiate authentication by sending a 6-digit OTP to the phone number.
     Rate-limited to 5 requests per minute per IP.
     """
+    # Ensure phone number is E.164 formatted (default to +91 for India)
+    if len(payload.phone_number) == 10 and payload.phone_number.isdigit():
+        payload.phone_number = f"+91{payload.phone_number}"
+    elif not payload.phone_number.startswith('+'):
+        payload.phone_number = f"+{payload.phone_number}"
+
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
@@ -117,6 +123,12 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
 @router.post("/register", response_model=Token)
 def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new Citizen or Volunteer after OTP verification."""
+    # Ensure phone number is E.164 formatted (default to +91 for India)
+    if len(payload.phone_number) == 10 and payload.phone_number.isdigit():
+        payload.phone_number = f"+91{payload.phone_number}"
+    elif not payload.phone_number.startswith('+'):
+        payload.phone_number = f"+{payload.phone_number}"
+
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
