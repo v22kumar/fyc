@@ -9,7 +9,6 @@ from app.middleware.tenant import require_tenant_id
 from app.models.user import UserProfile
 from app.models.event import Event
 from app.models.sports import Tournament, Team, Player
-from app.models.news import News
 from app.models.issue import PublicIssue
 from app.models.blood_donor import BloodDonor
 from pydantic import BaseModel
@@ -99,21 +98,8 @@ def global_search(
                 image_url=t.logo_url
             ))
 
-    # News
-    if should_search("NEWS"):
-        news = db.query(News).filter(
-            News.organization_id == tenant_id,
-            News.is_published == True,
-            (News.title_en.ilike(q_like) | News.title_ta.ilike(q_like) | News.content_en.ilike(q_like))
-        ).limit(10).all()
-        for n in news:
-            results.append(SearchResult(
-                id=n.id,
-                type="NEWS",
-                title=n.title_en or n.title_ta,
-                subtitle="News Article",
-                image_url=n.cover_image_url
-            ))
+    # News search omitted — there is no News model in the schema (public news
+    # is sourced from Google RSS, not a local table).
 
     # Issues
     if should_search("ISSUE"):

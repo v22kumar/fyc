@@ -281,7 +281,7 @@ app.add_middleware(TenantMiddleware)
 
 # Routers
 from app.routers import (
-    tenant, users, auth, directory,
+    users, auth, directory,
     news, announcements, gallery,
     events, issues, club_requests,
     opportunities, community, blood_donors,
