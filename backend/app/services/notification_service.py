@@ -142,6 +142,38 @@ class NotificationService:
             logger.error(f"FCM Send Error: {e}")
             return False
 
+    @classmethod
+    def broadcast_to_tenant(
+        cls,
+        db: Session,
+        tenant_id: UUID,
+        category,
+        title_en: str,
+        title_ta: str,
+        body_en: str,
+        body_ta: str,
+        route: Optional[str] = None,
+        target_roles: Optional[List[str]] = None,
+    ):
+        """Convenience entry point used by routers: broadcast a categorized
+        notification to every user in a tenant. Never raises into the caller —
+        notification delivery must not break the primary action (e.g. scoring)."""
+        try:
+            notification_type = getattr(category, "value", str(category))
+            data = {"route": route} if route else None
+            cls(db).broadcast(
+                organization_id=tenant_id,
+                title_en=title_en,
+                title_ta=title_ta,
+                body_en=body_en,
+                body_ta=body_ta,
+                notification_type=notification_type,
+                data=data,
+                target_roles=target_roles,
+            )
+        except Exception as e:  # pragma: no cover - best-effort delivery
+            logger.warning(f"broadcast_to_tenant failed (non-fatal): {e}")
+
     def broadcast(self, organization_id: UUID, title_en: str, title_ta: str, body_en: str, body_ta: str, notification_type: str, data: Optional[dict] = None, target_roles: Optional[List[str]] = None):
         query = self.db.query(User).filter(User.organization_id == organization_id)
         if target_roles:

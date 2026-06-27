@@ -113,10 +113,14 @@ def register_for_event(
     event_id: UUID,
     payload: EventRegistrationCreate,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    tenant_id: UUID = Depends(require_tenant_id),
 ):
     """Register for an event."""
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == tenant_id,
+    ).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     

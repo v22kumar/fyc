@@ -186,14 +186,24 @@ def update_issue_status(
     Transition an issue through the state machine.
     Volunteers can move to UNDER_REVIEW/RESOLVED on their assigned issues.
     """
-    issue = db.query(PublicIssue).filter(PublicIssue.id == issue_id).first()
+    # Tenant scoping: never allow mutating an issue outside the caller's org.
+    issue = db.query(PublicIssue).filter(
+        PublicIssue.id == issue_id,
+        PublicIssue.organization_id == current_user.organization_id,
+    ).first()
     if not issue:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
 
-    current_status = issue.status
+    # Volunteers may only act on issues assigned to them; staff/admins are unrestricted.
+    if current_user.role == "VOLUNTEER" and issue.assigned_volunteer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update issues assigned to you.",
+        )
+
     new_status = payload.status
 
-    # Remove strict transition rules - community decides when it's resolved or in progress.
+    # Relaxed transition rules - community decides when it's resolved or in progress.
     old_status = issue.status.value if hasattr(issue.status, 'value') else str(issue.status)
     issue.status = new_status
 
@@ -301,10 +311,13 @@ def log_issue_email(
     """
     Log and simulate sending an email to a concerned authority about an issue.
     """
-    issue = db.query(PublicIssue).filter(PublicIssue.id == issue_id).first()
+    issue = db.query(PublicIssue).filter(
+        PublicIssue.id == issue_id,
+        PublicIssue.organization_id == current_user.organization_id,
+    ).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
-        
+
     email_log = IssueEmailLog(
         organization_id=current_user.organization_id,
         issue_id=issue_id,

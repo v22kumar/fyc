@@ -1,7 +1,20 @@
+from enum import Enum
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 from datetime import datetime
+
+
+class NotificationCategory(str, Enum):
+    """Logical grouping for a notification; maps to Notification.notification_type."""
+    GENERAL = "GENERAL"
+    SPORTS = "SPORTS"
+    EVENTS = "EVENTS"
+    ISSUES = "ISSUES"
+    BLOOD = "BLOOD"
+    COMMUNITY = "COMMUNITY"
+    ANNOUNCEMENT = "ANNOUNCEMENT"
+
 
 class NotificationBase(BaseModel):
     title_en: str

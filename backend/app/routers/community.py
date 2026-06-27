@@ -9,7 +9,6 @@ from app.models.user import User, UserProfile
 from app.schemas.community import CommunityProfileRegister, CommunityProfileUpdate, CommunityProfileOut, CommunityFeedItem, CommunityStatsOut
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
-from app.models.news import News
 from app.models.event import Event
 from app.models.sports import Tournament
 from app.models.issue import PublicIssue
@@ -50,22 +49,12 @@ def get_community_feed(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     feed = []
-    
-    # 1. News
-    news = db.query(News).filter(News.organization_id == tenant_id, News.is_published == True).order_by(News.published_at.desc()).offset(offset).limit(limit).all()
-    for n in news:
-        feed.append(CommunityFeedItem(
-            item_type="NEWS",
-            id=str(n.id),
-            title_en=n.title_en,
-            title_ta=n.title_ta,
-            subtitle_en=n.content_en[:100] if n.content_en else "",
-            subtitle_ta=n.content_ta[:100] if n.content_ta else "",
-            image_url=n.cover_image_url,
-            created_at=n.published_at.isoformat() if n.published_at else n.created_at.isoformat()
-        ))
-        
-    # 2. Events
+
+    # NOTE: a dedicated News source was removed here — there is no News model
+    # in the schema. The home feed aggregates Events, Tournaments and resolved
+    # Issues. (Public news on the website is sourced separately from Google RSS.)
+
+    # Events
     events = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True).order_by(Event.event_start.desc()).offset(offset).limit(limit).all()
     for e in events:
         feed.append(CommunityFeedItem(

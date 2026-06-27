@@ -87,8 +87,7 @@ jobs:
           flutter build apk --release --split-per-abi \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-} \
-            --dart-define=DEV_AUTH_BYPASS=true
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
 
       - name: Build release AAB  (Google Play Store)
         working-directory: mobile

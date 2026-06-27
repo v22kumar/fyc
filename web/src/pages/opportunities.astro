@@ -101,6 +101,13 @@ const ORG_ID = DEFAULT_ORG_ID;
 const token = localStorage.getItem('fyc_token');
 const headers = { 'Authorization': `Bearer ${token}`, 'X-Organization-ID': ORG_ID };
 
+// Escape API/user-supplied values before inserting into innerHTML (XSS guard).
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 const TYPE_BADGE = {
   job: 'bg-blue-100 text-blue-700',
   internship: 'bg-purple-100 text-purple-700',
@@ -116,20 +123,20 @@ function renderCard(o) {
     <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
       <div class="flex items-start justify-between mb-3">
         <div class="flex-1">
-          <div class="font-bold text-gray-900 text-lg mb-1">${o.title_en || o.title_ta || 'Opportunity'}</div>
-          ${o.organization ? `<div class="text-sm text-gray-500">🏢 ${o.organization}</div>` : ''}
-          ${o.location ? `<div class="text-sm text-gray-500">📍 ${o.location}</div>` : ''}
+          <div class="font-bold text-gray-900 text-lg mb-1">${esc(o.title_en || o.title_ta || 'Opportunity')}</div>
+          ${o.organization ? `<div class="text-sm text-gray-500">🏢 ${esc(o.organization)}</div>` : ''}
+          ${o.location ? `<div class="text-sm text-gray-500">📍 ${esc(o.location)}</div>` : ''}
         </div>
-        <span class="ml-3 text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${badge}">${icon} ${o.type || 'other'}</span>
+        <span class="ml-3 text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${badge}">${icon} ${esc(o.type || 'other')}</span>
       </div>
-      ${o.description_en ? `<p class="text-sm text-gray-600 mb-3 line-clamp-3">${o.description_en}</p>` : ''}
+      ${o.description_en ? `<p class="text-sm text-gray-600 mb-3 line-clamp-3">${esc(o.description_en)}</p>` : ''}
       <div class="flex items-center justify-between pt-3 border-t border-gray-100">
         <div class="text-xs text-gray-400">
           ${o.deadline ? `⏰ Deadline: ${new Date(o.deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}` : ''}
-          ${o.stipend ? `<span class="ml-3">💰 ${o.stipend}</span>` : ''}
+          ${o.stipend ? `<span class="ml-3">💰 ${esc(o.stipend)}</span>` : ''}
         </div>
         ${o.contact_email || o.contact_phone ? `
-          <a href="${o.contact_email ? 'mailto:'+o.contact_email : 'tel:'+o.contact_phone}"
+          <a href="${o.contact_email ? 'mailto:'+encodeURIComponent(o.contact_email) : 'tel:'+encodeURIComponent(o.contact_phone)}"
             class="text-xs bg-[#d97706] text-white px-4 py-1.5 rounded-lg font-semibold hover:bg-[#b45309] transition-colors">
             ${o.contact_email ? '✉️ Apply' : '📞 Call'}
           </a>` : ''}

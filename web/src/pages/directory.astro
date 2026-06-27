@@ -100,6 +100,12 @@ const ORG_ID = DEFAULT_ORG_ID;
 </style>
 
 <script define:vars={{ API_BASE, ORG_ID }}>
+// Escape API/user-supplied values before inserting into innerHTML (XSS guard).
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 const CATEGORY_LABELS = {
   carpenter:'Carpenter / தச்சன்', electrician:'Electrician / மின்சாரி',
   plumber:'Plumber', mason:'Mason / கொத்தனார்', painter:'Painter',
@@ -128,20 +134,20 @@ function renderCard(p) {
   return `
     <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
       <div class="flex items-start justify-between mb-2">
-        <div class="font-semibold text-gray-900 text-lg">${name}</div>
+        <div class="font-semibold text-gray-900 text-lg">${esc(name)}</div>
         ${p.is_verified ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>' : ''}
       </div>
       <div class="flex items-center gap-2 mb-3 flex-wrap">
-        <span class="text-xs bg-[#064e3b]/10 text-[#064e3b] px-2 py-0.5 rounded-full font-medium">${CATEGORY_LABELS[p.category] || p.category}</span>
+        <span class="text-xs bg-[#064e3b]/10 text-[#064e3b] px-2 py-0.5 rounded-full font-medium">${esc(CATEGORY_LABELS[p.category] || p.category)}</span>
         <span class="text-xs ${p.is_available ? 'text-green-600' : 'text-gray-400'}">${p.is_available ? '● Available' : '● Unavailable'}</span>
       </div>
-      ${desc ? `<p class="text-sm text-gray-500 mb-3 line-clamp-2">${desc}</p>` : ''}
+      ${desc ? `<p class="text-sm text-gray-500 mb-3 line-clamp-2">${esc(desc)}</p>` : ''}
       <div class="text-xs text-gray-400 space-y-0.5 mb-3">
-        ${p.service_area ? `<div>📍 ${p.service_area}</div>` : ''}
-        ${p.years_experience ? `<div>⏱ ${p.years_experience} years experience</div>` : ''}
+        ${p.service_area ? `<div>📍 ${esc(p.service_area)}</div>` : ''}
+        ${p.years_experience ? `<div>⏱ ${esc(p.years_experience)} years experience</div>` : ''}
       </div>
       <div class="flex gap-2 pt-3 border-t border-gray-100">
-        ${p.contact_phone ? `<a href="tel:${p.contact_phone}" class="flex-1 text-center text-sm bg-[#064e3b] text-white py-2 rounded-xl font-medium hover:bg-[#065f46] transition-colors">📞 Call</a>` : ''}
+        ${p.contact_phone ? `<a href="tel:${encodeURIComponent(p.contact_phone)}" class="flex-1 text-center text-sm bg-[#064e3b] text-white py-2 rounded-xl font-medium hover:bg-[#065f46] transition-colors">📞 Call</a>` : ''}
         ${p.contact_whatsapp ? `<a href="https://wa.me/${p.contact_whatsapp.replace(/\D/g,'')}" target="_blank" class="flex-1 text-center text-sm bg-[#25D366] text-white py-2 rounded-xl font-medium">💬 WhatsApp</a>` : ''}
       </div>
     </div>`;

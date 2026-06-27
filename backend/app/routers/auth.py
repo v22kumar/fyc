@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash
+from app.dependencies import get_current_user
 from app.services.otp_sender import send_otp as deliver_otp, send_verify_otp, check_verify_otp
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata

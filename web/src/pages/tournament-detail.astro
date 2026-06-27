@@ -97,6 +97,23 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     const urlParams = new URLSearchParams(window.location.search);
     const tourneyId = urlParams.get('id');
 
+    // Escape user/API-supplied values before inserting into innerHTML (XSS guard).
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    // Strip <script>/<style> blocks and inline event handlers from rendered
+    // markdown HTML as a defense-in-depth pass (marked does not sanitize).
+    function sanitizeHtml(html) {
+        return String(html ?? '')
+            .replace(/<\/(?:script|style)>/gi, '')
+            .replace(/<(?:script|style)\b[^>]*>/gi, '')
+            .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+            .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '$1="#"');
+    }
+
     async function loadData() {
         if (!tourneyId) {
             document.getElementById('loading').classList.add('hidden');
@@ -123,7 +140,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
             if (tournament.description_en) {
                 document.getElementById('t-description-container').classList.remove('hidden');
-                document.getElementById('t-description').innerHTML = marked.parse(tournament.description_en);
+                document.getElementById('t-description').innerHTML = sanitizeHtml(marked.parse(tournament.description_en));
             }
 
             const submitBtn = document.getElementById('submitBtn');
@@ -171,10 +188,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             container.innerHTML = teams.map(t => `
                 <div class="bg-white p-4 rounded-lg border border-amber-100 flex justify-between items-center shadow-sm">
                     <div>
-                        <div class="font-bold text-gray-900">${t.name} ${t.status === 'PENDING' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">PENDING</span>' : '<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">APPROVED</span>'}</div>
-                        <div class="text-xs text-gray-500 mt-1">Capt: ${t.captain_name || 'N/A'} | ${t.contact_number || 'N/A'}</div>
+                        <div class="font-bold text-gray-900">${escapeHtml(t.name)} ${t.status === 'PENDING' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">PENDING</span>' : '<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">APPROVED</span>'}</div>
+                        <div class="text-xs text-gray-500 mt-1">Capt: ${escapeHtml(t.captain_name || 'N/A')} | ${escapeHtml(t.contact_number || 'N/A')}</div>
                     </div>
-                    ${t.status === 'PENDING' ? `<button onclick="approveTeam('${t.id}')" class="bg-[#064e3b] text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-[#0f5132]">Approve</button>` : ''}
+                    ${t.status === 'PENDING' ? `<button onclick="approveTeam('${escapeHtml(t.id)}')" class="bg-[#064e3b] text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-[#0f5132]">Approve</button>` : ''}
                 </div>
             `).join('');
         } catch (e) {

@@ -72,6 +72,9 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
                 if (res.ok) {
                   localStorage.setItem('fyc_token', data.access_token);
                   localStorage.setItem('fyc_user', JSON.stringify(data.user || {}));
+                  // Persist role so admin-gated UI (e.g. tournament-detail) works
+                  // for Google sign-in too, matching the password-login path.
+                  if (data.user && data.user.role) localStorage.setItem('fyc_role', data.user.role);
                   window.location.reload();
                 }
               } catch (_) {}
