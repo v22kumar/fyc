@@ -2,15 +2,26 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.database import get_db
+from app.dependencies import RoleChecker
+from app.models.user import User
 import psutil
 import os
 
 router = APIRouter(prefix="/system", tags=["System & Health"])
 
+# Both endpoints expose infrastructure internals / cross-table data — admin only.
+require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
+
+
 @router.get("/health")
-def system_health(db: Session = Depends(get_db)):
+def system_health(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
     """
     Comprehensive system health check for Admins & DevOps.
+    (Public liveness probe is GET /api/health — this one is admin-gated as it
+    exposes DB/storage/CPU/memory internals.)
     """
     health_status = {
         "status": "healthy",
@@ -62,34 +73,36 @@ import csv
 @router.get("/export/{entity_type}")
 def export_data(
     entity_type: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
 ):
     """
-    Generic Data Export Endpoint.
-    Generates CSV files for members, events, volunteers, etc.
+    Generic Data Export Endpoint (admin only).
+    Generates CSV files for members, events, tournaments — scoped to the
+    caller's own organization to prevent cross-tenant data exposure.
     """
-    from app.models.user import User, UserProfile
     from app.models.event import Event
     from app.models.sports import Tournament
 
+    org_id = current_user.organization_id
     output = io.StringIO()
     writer = csv.writer(output)
-    
+
     if entity_type.upper() == "USERS":
         writer.writerow(["ID", "Phone", "Role", "Language", "Verified"])
-        users = db.query(User).all()
+        users = db.query(User).filter(User.organization_id == org_id).all()
         for u in users:
             writer.writerow([str(u.id), u.phone_number, u.role, u.preferred_language, u.is_verified])
-    
+
     elif entity_type.upper() == "EVENTS":
         writer.writerow(["ID", "Title", "Start Date", "Status"])
-        events = db.query(Event).all()
+        events = db.query(Event).filter(Event.organization_id == org_id).all()
         for e in events:
             writer.writerow([str(e.id), e.title_en, e.event_start, "Published" if e.is_published else "Draft"])
-            
+
     elif entity_type.upper() == "TOURNAMENTS":
         writer.writerow(["ID", "Name", "Sport", "Status"])
-        tournaments = db.query(Tournament).all()
+        tournaments = db.query(Tournament).filter(Tournament.organization_id == org_id).all()
         for t in tournaments:
             writer.writerow([str(t.id), t.name_en, t.sport, t.status])
             

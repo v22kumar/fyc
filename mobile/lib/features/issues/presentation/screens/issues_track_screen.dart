@@ -204,9 +204,15 @@ class _IssueCard extends StatelessWidget {
     final fmt = DateFormat('d MMM yyyy');
     return GestureDetector(
       onTap: () {
+        // Pass the existing IssueListBloc down so the detail screen can refresh
+        // the list on success (it is pushed on the root navigator, outside this
+        // screen's provider subtree).
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => IssueDetailScreen(issue: issue),
+            builder: (_) => BlocProvider.value(
+              value: context.read<IssueListBloc>(),
+              child: IssueDetailScreen(issue: issue),
+            ),
           ),
         );
       },

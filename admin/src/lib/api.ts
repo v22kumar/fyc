@@ -1,7 +1,7 @@
 import { getToken } from './auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
-const ORG_ID = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
+export const ORG_ID = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
 
 function headers(extra?: Record<string, string>): HeadersInit {
   const token = getToken();
@@ -133,7 +133,7 @@ export const api = {
     request(`/api/v1/sports/tournaments/${tournamentId}/fixtures/${fixtureId}/result`, { method: 'POST', body: JSON.stringify(data) }),
   listChallenges: () => request('/api/v1/sports/challenges'),
   respondChallenge: (id: string, data: object) => request(`/api/v1/sports/challenges/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  getCricketLiveScore: (fixtureId: string) => request(`/api/v1/sports/fixtures/${fixtureId}/cricket`),
+  getCricketLiveScore: (fixtureId: string) => request(`/api/v1/fixtures/${fixtureId}/cricket`),
 
   // Media
   uploadMedia: async (file: File): Promise<{ url: string }> => {

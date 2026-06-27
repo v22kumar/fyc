@@ -118,15 +118,19 @@ def _seed_database():
                 db.commit()
                 print(f"[migration] Added column {table}.{col}")
 
-        # Ensure vrn2252@gmail.com is SUPER_ADMIN and enforce password
-        admin_user = db.query(User).filter(User.email == "vrn2252@gmail.com").first()
+        # Ensure the owner account is SUPER_ADMIN. Email + bootstrap password are
+        # env-overridable so the credential is not pinned in source; the literal
+        # fallback preserves the existing login until BOOTSTRAP_ADMIN_PASSWORD is set.
+        bootstrap_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "vrn2252@gmail.com")
+        bootstrap_password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "V22@kumar")
+        admin_user = db.query(User).filter(User.email == bootstrap_email).first()
         if not admin_user:
             admin_user = User(
                 id=uuid.uuid4(),
                 organization_id=uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
                 phone_number="+919999999999",
-                email="vrn2252@gmail.com",
-                password_hash=get_password_hash("V22@kumar"),
+                email=bootstrap_email,
+                password_hash=get_password_hash(bootstrap_password),
                 role="SUPER_ADMIN",
                 is_verified=True,
                 preferred_language="en"
@@ -140,12 +144,12 @@ def _seed_database():
             )
             db.add(profile)
             db.commit()
-            print("Created vrn2252@gmail.com as SUPER_ADMIN with requested password.")
-        else:
+            print(f"Created {bootstrap_email} as SUPER_ADMIN.")
+        elif admin_user.role != "SUPER_ADMIN":
+            # Only elevate role; do not silently reset the password on every boot.
             admin_user.role = "SUPER_ADMIN"
-            admin_user.password_hash = get_password_hash("V22@kumar")
             db.commit()
-            print("Updated vrn2252@gmail.com to SUPER_ADMIN role and enforced password.")
+            print(f"Elevated {bootstrap_email} to SUPER_ADMIN.")
             
     except Exception as e:
         print(f"Error seeding database: {e}")

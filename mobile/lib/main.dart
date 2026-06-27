@@ -11,6 +11,7 @@ import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
 import 'core/widgets/offline_banner.dart';
 import 'core/network/api_client.dart';
+import 'core/constants/api_constants.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'service_locator.dart';
 
@@ -116,7 +117,7 @@ class _FycAppState extends State<FycApp> {
   Future<void> _syncToken(String token) async {
     try {
       await sl<ApiClient>().dio.post(
-        '/users/me/fcm-token',
+        ApiConstants.fcmToken,
         data: {'token': token},
       );
     } catch (_) {}

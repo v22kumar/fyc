@@ -12,6 +12,20 @@ from app.models.user import User
 
 router = APIRouter(prefix="/attachments", tags=["Attachments"])
 
+# Only allow safe, fetchable URL schemes — blocks javascript:/data:/file: etc.
+_ALLOWED_URL_SCHEMES = ("http://", "https://", "/uploads/")
+
+
+def _validate_file_url(url: str) -> str:
+    u = (url or "").strip()
+    if not u or not u.lower().startswith(_ALLOWED_URL_SCHEMES):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="file_url must be an http(s) URL or an /uploads/ path.",
+        )
+    return u
+
+
 class AttachmentCreatePayload(BaseModel):
     entity_type: str
     entity_id: UUID
@@ -38,12 +52,13 @@ def add_attachment(
     current_user: User = Depends(get_current_user)
 ):
     """Add a file attachment to any entity."""
+    safe_url = _validate_file_url(payload.file_url)
     attachment = Attachment(
         organization_id=current_user.organization_id,
         uploader_id=current_user.id,
         entity_type=payload.entity_type,
         entity_id=payload.entity_id,
-        file_url=payload.file_url,
+        file_url=safe_url,
         file_type=payload.file_type,
         description=payload.description
     )

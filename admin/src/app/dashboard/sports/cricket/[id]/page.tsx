@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { API_BASE, ORG_ID } from '@/lib/api';
+import { getToken } from '@/lib/auth';
+
+// Auth + tenant headers for the raw fetches in this scorer (mirrors lib/api).
+function cricketHeaders(json = true): HeadersInit {
+  const token = getToken();
+  return {
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
+    'X-Organization-ID': ORG_ID,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 export default function CricketScorer({ params }: { params: { id: string } }) {
-  const router = useRouter();
   const [match, setMatch] = useState<any>(null);
   const [currentPlayers, setCurrentPlayers] = useState<any>(null);
   
@@ -30,8 +39,8 @@ export default function CricketScorer({ params }: { params: { id: string } }) {
   async function loadData() {
     try {
       // Get the match state if it exists
-      const m = await fetch(`/api/v1/fixtures/${params.id}/cricket`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('fyc_token')}` }
+      const m = await fetch(`${API_BASE}/api/v1/fixtures/${params.id}/cricket`, {
+        headers: cricketHeaders(false)
       }).then(r => r.ok ? r.json() : null);
       
       setMatch(m);
@@ -92,12 +101,9 @@ export default function CricketScorer({ params }: { params: { id: string } }) {
           <button 
             className="w-full bg-indigo-600 text-white font-bold py-2 rounded mt-4"
             onClick={async () => {
-              const res = await fetch(`/api/v1/fixtures/${params.id}/cricket/init`, {
+              const res = await fetch(`${API_BASE}/api/v1/fixtures/${params.id}/cricket/init`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${localStorage.getItem('fyc_token')}`
-                },
+                headers: cricketHeaders(),
                 body: JSON.stringify(initForm)
               }).then(r => r.json());
               if (res.match) {
@@ -138,20 +144,15 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
 
   const [scoringAction, setScoringAction] = useState<any>(null); // For wickets, extras, etc.
   
-  const token = typeof window !== 'undefined' ? localStorage.getItem('fyc_token') : '';
-
   async function postBall(payload: any) {
     let finalPayload = { ...payload };
     if (scoringAction?.type === 'PENDING_NEW_BOWLER') {
       finalPayload.new_bowler_name = scoringAction.name;
     }
-    
-    const res = await fetch(`/api/v1/fixtures/${fixtureId}/cricket/ball`, {
+
+    const res = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/ball`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: cricketHeaders(),
       body: JSON.stringify({
         striker_id: strikerId,
         non_striker_id: nonStrikerId,
@@ -193,9 +194,9 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
 
   async function undoBall() {
     if (!confirm("Undo last ball?")) return;
-    const res = await fetch(`/api/v1/fixtures/${fixtureId}/cricket/undo`, {
+    const res = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/undo`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: cricketHeaders(false)
     });
     if (res.ok) {
       const data = await res.json();
@@ -215,9 +216,9 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
              <input id="ns2" placeholder="Non-Striker Name" className="border p-2 w-full rounded" />
              <input id="b2" placeholder="Bowler Name" className="border p-2 w-full rounded" />
              <button className="w-full bg-green-600 text-white p-2 rounded font-bold" onClick={async () => {
-               const res = await fetch(`/api/v1/fixtures/${fixtureId}/cricket/second-innings`, {
+               const res = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/second-innings`, {
                  method: 'POST',
-                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                 headers: cricketHeaders(),
                  body: JSON.stringify({
                    toss_winner_id: '', toss_decision: '', overs: 0,
                    striker_name: (document.getElementById('s2') as HTMLInputElement).value,

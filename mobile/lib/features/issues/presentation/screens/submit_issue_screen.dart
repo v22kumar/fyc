@@ -170,6 +170,19 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
   }
 
   void _submit() {
+    // Require at least one description so blank issues can't be submitted.
+    if (_descTaCtrl.text.trim().isEmpty && _descEnCtrl.text.trim().isEmpty) {
+      final ta = sl<LocalStorage>().getLang() == 'ta';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ta
+              ? 'தயவுசெய்து சிக்கலை விவரிக்கவும்'
+              : 'Please describe the issue before submitting'),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+      return;
+    }
     context.read<IssueBloc>().add(
           IssueSubmitRequested(
             category: _selectedCategory,
