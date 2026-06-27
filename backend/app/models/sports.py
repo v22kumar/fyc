@@ -69,7 +69,11 @@ class Team(Base, TimestampMixin, TenantModelMixin):
     fair_play_score = Column(Integer, default=100)
     logo_url = Column(String(500), nullable=True)
 
-    tournament = relationship("Tournament", back_populates="teams")
+    # Tournament<->Team has multiple FK paths (Team.tournament_id plus
+    # Tournament.winner_id / runner_up_id), so pin the join column explicitly
+    # to match Tournament.teams' foreign_keys and avoid ambiguous-mapper errors
+    # that otherwise 500 every ORM query at runtime.
+    tournament = relationship("Tournament", back_populates="teams", foreign_keys=[tournament_id])
     players = relationship("Player", back_populates="team", cascade="all, delete-orphan")
 
 
