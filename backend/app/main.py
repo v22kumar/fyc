@@ -184,6 +184,19 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE events ADD COLUMN max_participants INTEGER",
             "ALTER TABLE events ADD COLUMN competition_categories JSON",
             "ALTER TABLE teams ADD COLUMN status VARCHAR(20) DEFAULT 'PENDING'",
+            # Auth-critical: these UserProfile/User columns are read while building
+            # UserOut on every login/OTP/me call. create_all never adds columns to a
+            # pre-existing table, so on a long-lived DB their absence 500s ALL auth.
+            "ALTER TABLE user_profiles ADD COLUMN gender VARCHAR(20)",
+            "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE",
+            "ALTER TABLE user_profiles ADD COLUMN address_line_ta VARCHAR(255)",
+            "ALTER TABLE user_profiles ADD COLUMN address_line_en VARCHAR(255)",
+            "ALTER TABLE user_profiles ADD COLUMN geography_id CHAR(32)",
+            "ALTER TABLE user_profiles ADD COLUMN profile_image_url VARCHAR(255)",
+            "ALTER TABLE user_profiles ADD COLUMN last_login_at TIMESTAMP",
+            "ALTER TABLE users ADD COLUMN google_sub VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)",
+            "ALTER TABLE users ADD COLUMN email VARCHAR(100)",
         ]
         with engine.connect() as conn:
             for stmt in _migrations:
