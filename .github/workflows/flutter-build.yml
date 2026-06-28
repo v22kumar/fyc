@@ -201,7 +201,10 @@ jobs:
             exit 0
           fi
 
-          APK_URL="https://github.com/${{ github.repository }}/releases/download/app-latest/fyc-connect-latest.apk"
+          # Must match a real published asset — the split-per-ABI build does NOT
+          # produce a single fyc-connect-latest.apk (it is deleted above), so
+          # point at the arm64 asset that always exists.
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk"
 
           # Only set if not already configured (avoids unnecessary backend redeploy)
           CURRENT=$(flyctl secrets list --app fyc-backend --json 2>/dev/null \

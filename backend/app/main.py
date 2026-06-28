@@ -267,14 +267,17 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS — restrict via ALLOWED_ORIGINS env var in staging/production
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS — restrict via ALLOWED_ORIGINS env var in staging/production.
+# NOTE: a literal "*" origin is INVALID together with allow_credentials=True —
+# browsers reject the response, which surfaces as "Failed to fetch" on any
+# preflighted (POST/JSON) request. When wildcard is configured we therefore
+# reflect the request Origin via regex (valid with credentials); otherwise we
+# pin the explicit allow-list.
+_cors_common = dict(allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+if settings.allowed_origins_list == ["*"]:
+    app.add_middleware(CORSMiddleware, allow_origin_regex=".*", **_cors_common)
+else:
+    app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins_list, **_cors_common)
 
 # Multi-Tenant Middleware
 app.add_middleware(TenantMiddleware)
