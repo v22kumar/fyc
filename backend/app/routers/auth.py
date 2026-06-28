@@ -202,9 +202,20 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    valid_client_ids = [
-        cid for cid in [settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID] if cid
+    # Accepted token audiences = configured client IDs + known first-party client
+    # IDs. The Android app (Firebase project 986299606001 / fyc-connect-25ab0) mints
+    # tokens with its own web client ID, while the website uses the 717823550652
+    # web client; both are legitimate. OAuth client IDs are not secrets (they ship
+    # inside the APK and google-services.json), so listing them here is safe and
+    # avoids "Token has wrong audience" rejections from env drift.
+    _KNOWN_GOOGLE_CLIENT_IDS = [
+        "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",  # Android (fyc-connect-25ab0)
+        "717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com",  # Web
     ]
+    valid_client_ids = list(dict.fromkeys(
+        [cid for cid in [settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID] if cid]
+        + _KNOWN_GOOGLE_CLIENT_IDS
+    ))
     if not valid_client_ids:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
