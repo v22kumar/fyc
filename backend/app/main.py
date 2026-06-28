@@ -162,51 +162,54 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    # Safe column migrations — idempotent; try/except handles "duplicate column
-    # name" on SQLite (which does NOT support ALTER TABLE ... IF NOT EXISTS
-    # before version 3.37.0).
+    # Auto-reconcile schema drift. Base.metadata.create_all only creates missing
+    # TABLES — it never adds columns to a pre-existing table. On a long-lived DB
+    # (the persistent prod SQLite) any column added to a model after its table was
+    # first created is therefore missing, and every query that selects it 500s.
+    # This is exactly what broke ALL logins (user_profiles.gender). Rather than
+    # maintain a hand-written ALTER list (which drifts), introspect every mapped
+    # table and ADD any column the live DB is missing.
     try:
-        from sqlalchemy import text as _sql_text
-        _migrations = [
-            "ALTER TABLE public_issues ADD COLUMN is_emergency BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE tournaments ADD COLUMN num_teams INTEGER",
-            "ALTER TABLE tournaments ADD COLUMN match_config VARCHAR(60)",
-            "ALTER TABLE tournaments ADD COLUMN registration_mode VARCHAR(20) DEFAULT 'MANUAL_APPROVAL'",
-            "ALTER TABLE tournaments ADD COLUMN start_date TIMESTAMPTZ",
-            "ALTER TABLE tournaments ADD COLUMN end_date TIMESTAMPTZ",
-            "ALTER TABLE tournaments ADD COLUMN venue VARCHAR(200)",
-            "ALTER TABLE tournaments ADD COLUMN show_points_table BOOLEAN DEFAULT TRUE",
-            "ALTER TABLE tournaments ADD COLUMN show_live_scores BOOLEAN DEFAULT TRUE",
-            "ALTER TABLE tournaments ADD COLUMN show_prize_details BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE tournaments ADD COLUMN prize_details TEXT",
-            "ALTER TABLE events ADD COLUMN is_published BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE events ADD COLUMN registration_deadline TIMESTAMPTZ",
-            "ALTER TABLE events ADD COLUMN max_participants INTEGER",
-            "ALTER TABLE events ADD COLUMN competition_categories JSON",
-            "ALTER TABLE teams ADD COLUMN status VARCHAR(20) DEFAULT 'PENDING'",
-            # Auth-critical: these UserProfile/User columns are read while building
-            # UserOut on every login/OTP/me call. create_all never adds columns to a
-            # pre-existing table, so on a long-lived DB their absence 500s ALL auth.
-            "ALTER TABLE user_profiles ADD COLUMN gender VARCHAR(20)",
-            "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE",
-            "ALTER TABLE user_profiles ADD COLUMN address_line_ta VARCHAR(255)",
-            "ALTER TABLE user_profiles ADD COLUMN address_line_en VARCHAR(255)",
-            "ALTER TABLE user_profiles ADD COLUMN geography_id CHAR(32)",
-            "ALTER TABLE user_profiles ADD COLUMN profile_image_url VARCHAR(255)",
-            "ALTER TABLE user_profiles ADD COLUMN last_login_at TIMESTAMP",
-            "ALTER TABLE users ADD COLUMN google_sub VARCHAR(100)",
-            "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)",
-            "ALTER TABLE users ADD COLUMN email VARCHAR(100)",
-        ]
-        with engine.connect() as conn:
-            for stmt in _migrations:
+        from sqlalchemy import inspect as _sa_inspect, text as _sql_text
+        insp = _sa_inspect(engine)
+        live_tables = set(insp.get_table_names())
+        added = []
+        for table_name, table in Base.metadata.tables.items():
+            if table_name not in live_tables:
+                continue  # brand-new table — create_all already handled it
+            live_cols = {c["name"] for c in insp.get_columns(table_name)}
+            for col in table.columns:
+                if col.name in live_cols:
+                    continue
                 try:
-                    conn.execute(_sql_text(stmt))
-                except Exception as _se:
-                    logger.warning(f"[migration] skipped: {_se}")
-            conn.commit()
+                    coltype = col.type.compile(dialect=engine.dialect)
+                except Exception:
+                    coltype = "VARCHAR"
+                ddl = f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}'
+                # Carry a server default when present so NOT NULL columns can be added.
+                sd = getattr(col.server_default, "arg", None)
+                if sd is not None:
+                    ddl += f" DEFAULT {sd}"
+                for attempt in range(3):
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(_sql_text(ddl))
+                        added.append(f"{table_name}.{col.name}")
+                        break
+                    except Exception as _e:
+                        m = str(_e).lower()
+                        if "duplicate column" in m or "already exists" in m:
+                            break
+                        if "locked" in m and attempt < 2:
+                            continue  # retry SQLite write-lock from concurrent worker
+                        logger.warning(f"[schema-reconcile] {table_name}.{col.name}: {_e}")
+                        break
+        if added:
+            logger.info(f"[schema-reconcile] added {len(added)} missing column(s): {added}")
+        else:
+            logger.info("[schema-reconcile] no drift — all model columns present")
     except Exception as _me:
-        logger.warning(f"[migration] column migration block: {_me}")
+        logger.warning(f"[schema-reconcile] block failed: {_me}")
 
     _seed_database()
 
