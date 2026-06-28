@@ -256,31 +256,33 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = sl<LocalStorage>().getLang();
+    Widget chip(String text, bool sel, VoidCallback onTap) => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: ChoiceChip(
+            label: Text(text),
+            selected: sel,
+            onSelected: (_) => onTap(),
+            labelStyle: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: sel ? Colors.white : AppColors.accent,
+            ),
+            selectedColor: AppColors.accent,
+            backgroundColor: AppColors.accent.withOpacity(0.10),
+            shape: StadiumBorder(side: BorderSide(color: AppColors.accent.withOpacity(0.35))),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            showCheckmark: false,
+          ),
+        );
     return SizedBox(
-      height: 52,
+      height: 60,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: const Text('All'),
-              selected: selected == null,
-              onSelected: (_) => onSelect(null),
-            ),
-          ),
-          ...groups.map(
-            (g) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(g),
-                selected: selected == g,
-                selectedColor: AppColors.accent.withOpacity(0.2),
-                onSelected: (_) => onSelect(selected == g ? null : g),
-              ),
-            ),
-          ),
+          chip(lang == 'ta' ? 'அனைத்தும்' : 'All', selected == null, () => onSelect(null)),
+          ...groups.map((g) => chip(g, selected == g, () => onSelect(selected == g ? null : g))),
         ],
       ),
     );
@@ -314,17 +316,17 @@ class _DonorCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: AppColors.accent.withOpacity(0.12),
-                radius: 24,
+                radius: 28,
                 child: Text(
                   donor.bloodGroup,
                   style: const TextStyle(
                     color: AppColors.accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,58 +335,69 @@ class _DonorCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            (donor.fullNameTa?.isNotEmpty == true
-                                    ? donor.fullNameTa!
-                                    : donor.fullNameEn) ??
-                                '—',
+                            donor.displayName(lang),
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                              height: 1.2,
                               color: context.cText,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (isVerified) ...[
                           const SizedBox(width: 6),
                           Tooltip(
                             message: lang == 'ta' ? 'சரிபார்க்கப்பட்ட உறுப்பினர்' : 'Verified Member',
-                            child: const Icon(Icons.verified, size: 16, color: Color(0xFF10B981)),
+                            child: const Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
                           ),
                         ],
                       ],
                     ),
-                    if (donor.geographyId != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.place_outlined, size: 12, color: context.cTextSecondary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              donor.geographyId!,
-                              style: TextStyle(color: context.cTextSecondary, fontSize: 12),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Icon(Icons.place_outlined, size: 15, color: context.cTextSecondary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            donor.displayLocation(lang),
+                            style: TextStyle(
+                              color: context.cTextSecondary,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  lang == 'ta' ? 'தொடர்பு' : 'Contact',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.call, size: 15, color: AppColors.primary),
+                    const SizedBox(width: 5),
+                    Text(
+                      lang == 'ta' ? 'தொடர்பு' : 'Contact',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
