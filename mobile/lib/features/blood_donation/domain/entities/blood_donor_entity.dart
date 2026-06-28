@@ -5,6 +5,8 @@ class BloodDonorEntity extends Equatable {
   final String bloodGroup;
   final bool isAvailable;
   final String? geographyId;
+  final String? geographyNameEn;
+  final String? geographyNameTa;
   final String? fullNameEn;
   final String? fullNameTa;
   final String? phoneNumber; // only available after authenticated contact request
@@ -14,6 +16,8 @@ class BloodDonorEntity extends Equatable {
     required this.bloodGroup,
     required this.isAvailable,
     this.geographyId,
+    this.geographyNameEn,
+    this.geographyNameTa,
     this.fullNameEn,
     this.fullNameTa,
     this.phoneNumber,
@@ -24,7 +28,25 @@ class BloodDonorEntity extends Equatable {
           ? (fullNameTa ?? fullNameEn ?? '—')
           : (fullNameEn ?? fullNameTa ?? '—');
 
+  /// Human-readable location (place/taluk name) — never the raw geography UUID.
+  String displayLocation(String lang) {
+    final name = lang == 'ta'
+        ? (geographyNameTa ?? geographyNameEn)
+        : (geographyNameEn ?? geographyNameTa);
+    return (name != null && name.trim().isNotEmpty)
+        ? name
+        : (lang == 'ta' ? 'இடம் குறிப்பிடப்படவில்லை' : 'Location not set');
+  }
+
   @override
-  List<Object?> get props =>
-      [id, bloodGroup, isAvailable, geographyId, fullNameEn, fullNameTa];
+  List<Object?> get props => [
+        id,
+        bloodGroup,
+        isAvailable,
+        geographyId,
+        geographyNameEn,
+        geographyNameTa,
+        fullNameEn,
+        fullNameTa,
+      ];
 }
