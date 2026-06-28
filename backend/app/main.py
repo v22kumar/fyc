@@ -195,6 +195,35 @@ async def lifespan(app: FastAPI):
     except Exception as _me:
         logger.warning(f"[migration] column migration block: {_me}")
 
+    # Reconcile schema drift: TimestampMixin gained `deleted_at` and `metadata_json`
+    # AFTER several tables were first created, and Base.metadata.create_all() never
+    # adds columns to EXISTING tables. The result was a 500 on any query touching a
+    # drifted table (e.g. /auth/google -> "no such column: organizations.deleted_at",
+    # which the browser surfaces as "Failed to fetch" because the 500 is emitted
+    # outside the CORS middleware). Backfill every model column that is missing from
+    # its table and is safe to add on existing rows (nullable, no foreign key).
+    try:
+        from sqlalchemy import inspect as _sa_inspect, text as _drift_text
+        insp = _sa_inspect(engine)
+        with engine.begin() as conn:
+            for table in Base.metadata.sorted_tables:
+                if not insp.has_table(table.name):
+                    continue
+                existing = {c["name"] for c in insp.get_columns(table.name)}
+                for col in table.columns:
+                    if col.name in existing or col.foreign_keys or not col.nullable:
+                        continue
+                    coltype = col.type.compile(dialect=engine.dialect)
+                    try:
+                        conn.execute(_drift_text(
+                            f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {coltype}'
+                        ))
+                        logger.info(f"[schema-drift] added {table.name}.{col.name} ({coltype})")
+                    except Exception as _ce:
+                        logger.warning(f"[schema-drift] could not add {table.name}.{col.name}: {_ce}")
+    except Exception as _de:
+        logger.warning(f"[schema-drift] reconciliation block: {_de}")
+
     _seed_database()
 
     # Pre-warm external API caches — run in a background thread so slow RSS
