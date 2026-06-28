@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -118,38 +117,45 @@ def _seed_database():
                 db.commit()
                 print(f"[migration] Added column {table}.{col}")
 
-        # Ensure the owner account is SUPER_ADMIN. Email + bootstrap password are
-        # env-overridable so the credential is not pinned in source; the literal
-        # fallback preserves the existing login until BOOTSTRAP_ADMIN_PASSWORD is set.
-        bootstrap_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "vrn2252@gmail.com")
-        bootstrap_password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "V22@kumar")
-        admin_user = db.query(User).filter(User.email == bootstrap_email).first()
-        if not admin_user:
-            admin_user = User(
-                id=uuid.uuid4(),
-                organization_id=uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
-                phone_number="+919999999999",
-                email=bootstrap_email,
-                password_hash=get_password_hash(bootstrap_password),
-                role="SUPER_ADMIN",
-                is_verified=True,
-                preferred_language="en"
+        # Ensure the owner account is SUPER_ADMIN. Credentials come EXCLUSIVELY
+        # from secrets (BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD). If
+        # either is unset we skip provisioning entirely — there is deliberately
+        # no baked-in fallback so no admin credential lives in source.
+        bootstrap_email = settings.BOOTSTRAP_ADMIN_EMAIL
+        bootstrap_password = settings.BOOTSTRAP_ADMIN_PASSWORD
+        if not (bootstrap_email and bootstrap_password):
+            logger.info(
+                "[bootstrap] BOOTSTRAP_ADMIN_EMAIL/PASSWORD not set — "
+                "skipping bootstrap admin provisioning."
             )
-            db.add(admin_user)
-            db.flush()
-            profile = UserProfile(
-                user_id=admin_user.id,
-                full_name_ta="அட்மின்",
-                full_name_en="Varun Admin"
-            )
-            db.add(profile)
-            db.commit()
-            print(f"Created {bootstrap_email} as SUPER_ADMIN.")
-        elif admin_user.role != "SUPER_ADMIN":
-            # Only elevate role; do not silently reset the password on every boot.
-            admin_user.role = "SUPER_ADMIN"
-            db.commit()
-            print(f"Elevated {bootstrap_email} to SUPER_ADMIN.")
+        else:
+            admin_user = db.query(User).filter(User.email == bootstrap_email).first()
+            if not admin_user:
+                admin_user = User(
+                    id=uuid.uuid4(),
+                    organization_id=uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
+                    phone_number="+919999999999",
+                    email=bootstrap_email,
+                    password_hash=get_password_hash(bootstrap_password),
+                    role="SUPER_ADMIN",
+                    is_verified=True,
+                    preferred_language="en"
+                )
+                db.add(admin_user)
+                db.flush()
+                profile = UserProfile(
+                    user_id=admin_user.id,
+                    full_name_ta="அட்மின்",
+                    full_name_en="Admin"
+                )
+                db.add(profile)
+                db.commit()
+                print(f"Created {bootstrap_email} as SUPER_ADMIN.")
+            elif admin_user.role != "SUPER_ADMIN":
+                # Only elevate role; do not silently reset the password on every boot.
+                admin_user.role = "SUPER_ADMIN"
+                db.commit()
+                print(f"Elevated {bootstrap_email} to SUPER_ADMIN.")
             
     except Exception as e:
         print(f"Error seeding database: {e}")

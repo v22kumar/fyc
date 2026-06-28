@@ -12,7 +12,13 @@ primary_region = "sin"
 [env]
   PORT = "8000"
   DATABASE_URL = "sqlite:////app/data/fyc_connect.db"
-  OTP_BYPASS_CODE = "123456"
+  ENVIRONMENT = "production"
+  # Real CORS origins (no "*"). Browser frontends that call the backend.
+  # Add custom domains (e.g. https://fycconnect.org) here once their certs are live.
+  ALLOWED_ORIGINS = "https://fyc-web.fly.dev,https://fyc-admin.fly.dev"
+  # NOTE: OTP_BYPASS_CODE intentionally removed — real OTP via Twilio Verify.
+  # Secrets (SECRET_KEY, FIRST_SUPERADMIN_PASSWORD, BOOTSTRAP_ADMIN_*) are set
+  # via `flyctl secrets set`, never in this file.
 
 [http_service]
   internal_port = 8000
@@ -21,6 +27,15 @@ primary_region = "sin"
   auto_start_machines = true
   min_machines_running = 1
   processes = ["app"]
+
+  # Fail broken deploys instead of going green: Fly waits for this HTTP check
+  # to pass before marking a machine healthy during a release.
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health"
 
 [[vm]]
   size = "shared-cpu-1x"

@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
     FIRST_SUPERADMIN_PASSWORD: str = "supersecureadminpassword123"
 
+    # Owner/bootstrap admin — provisioned at startup ONLY when both are set.
+    # No insecure fallback: supply via `flyctl secrets set` in production.
+    BOOTSTRAP_ADMIN_EMAIL: str = ""
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""
+
     # Comma-separated list of allowed CORS origins, e.g. "https://fycconnect.org,https://admin.fycconnect.org"
     ALLOWED_ORIGINS: str = "*"
 
