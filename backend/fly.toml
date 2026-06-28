@@ -22,6 +22,17 @@ primary_region = "sin"
   min_machines_running = 1
   processes = ["app"]
 
+  # Deploy gate: Fly marks a machine healthy only after this check passes, so a
+  # release that boots but can't serve DB-backed requests FAILS instead of going
+  # green. Points at the deep readiness probe (real DB query), not the shallow
+  # /api/health — schema drift kept /api/health at 200 during the last outage.
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health/ready"
+
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"

@@ -399,9 +399,37 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/api/health", tags=["System"])
 def health_check():
-    """Health check endpoint to verify API server is operational."""
+    """Liveness probe: confirms the process is up and serving. Intentionally does
+    NOT touch the database, so it stays cheap and never flaps on transient DB load.
+    Use /api/health/ready for deploy gating."""
     return {
         "status": "healthy",
         "project": settings.PROJECT_NAME,
         "version": "1.0.0"
     }
+
+
+@app.get("/api/health/ready", tags=["System"])
+def readiness_check():
+    """Readiness probe: verifies the DB is reachable AND its schema matches the ORM.
+
+    The shallow /api/health stayed 200 throughout the login outage caused by
+    schema drift (`organizations.deleted_at` missing -> every query 500s), so a
+    Fly check against it would have let a broken release go green. This probe runs
+    a real ORM query against a core table, so connection loss or column drift makes
+    it return 503 -> the deploy fails its health check instead of going green.
+    """
+    from fastapi.responses import JSONResponse
+
+    db = SessionLocal()
+    try:
+        db.query(Organization).first()
+        return {"status": "ready"}
+    except Exception as e:  # noqa: BLE001 - any DB failure must fail the probe
+        logger.error(f"[readiness] DB check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unready", "detail": str(e)[:200]},
+        )
+    finally:
+        db.close()
