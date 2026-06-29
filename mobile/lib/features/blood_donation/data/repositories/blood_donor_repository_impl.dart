@@ -12,11 +12,15 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
   @override
   Future<Either<Failure, List<BloodDonorEntity>>> searchDonors({
     String? bloodGroup,
+    String? geographyId,
+    bool nearby = false,
     bool availableOnly = true,
   }) async {
     try {
       final donors = await _remote.searchDonors(
         bloodGroup: bloodGroup,
+        geographyId: geographyId,
+        nearby: nearby,
         availableOnly: availableOnly,
       );
       return Right(donors);

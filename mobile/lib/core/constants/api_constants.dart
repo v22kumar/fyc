@@ -33,6 +33,9 @@ class ApiConstants {
   static const String bloodDonors = '/api/v1/blood-donors';
   static const String registerDonor = '/api/v1/blood-donors/register';
 
+  // Geography (taluk dropdown for location filtering)
+  static const String geography = '/api/v1/geography';
+
   // Issues
   static const String issues = '/api/v1/issues';
   static const String issueStats = '/api/v1/issues/stats';

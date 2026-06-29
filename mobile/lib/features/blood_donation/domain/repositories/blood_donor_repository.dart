@@ -5,6 +5,8 @@ import '../entities/blood_donor_entity.dart';
 abstract class BloodDonorRepository {
   Future<Either<Failure, List<BloodDonorEntity>>> searchDonors({
     String? bloodGroup,
+    String? geographyId,
+    bool nearby = false,
     bool availableOnly = true,
   });
 

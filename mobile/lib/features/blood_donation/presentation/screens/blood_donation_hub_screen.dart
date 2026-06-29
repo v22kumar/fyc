@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
@@ -25,17 +29,118 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   String? _selectedGroup;
 
+  // Location filter (taluk dropdown + nearby toggle + GPS auto-detect)
+  List<_Taluk> _taluks = [];
+  String? _selectedGeographyId;
+  bool _nearby = false;
+  bool _locating = false;
+
   @override
   void initState() {
     super.initState();
     context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
+    _loadTaluks();
+  }
+
+  Future<void> _loadTaluks() async {
+    try {
+      final res = await sl<ApiClient>()
+          .dio
+          .get(ApiConstants.geography, queryParameters: {'level': 'TALUK'});
+      final list = (res.data as List<dynamic>)
+          .map((e) => _Taluk(
+                id: e['id'] as String,
+                nameEn: (e['name_en'] as String?) ?? '',
+                nameTa: (e['name_ta'] as String?) ?? '',
+              ))
+          .toList()
+        ..sort((a, b) => a.nameEn.toLowerCase().compareTo(b.nameEn.toLowerCase()));
+      if (mounted) setState(() => _taluks = list);
+    } catch (_) {/* keep dropdown empty on failure */}
+  }
+
+  void _runSearch() {
+    context.read<BloodDonorBloc>().add(
+          BloodDonorSearchRequested(
+            bloodGroup: _selectedGroup,
+            geographyId: _selectedGeographyId,
+            nearby: _nearby && _selectedGeographyId != null,
+          ),
+        );
   }
 
   void _search(String? group) {
     setState(() => _selectedGroup = group);
-    context.read<BloodDonorBloc>().add(
-          BloodDonorSearchRequested(bloodGroup: group),
-        );
+    _runSearch();
+  }
+
+  void _selectLocation(String? geographyId) {
+    setState(() {
+      _selectedGeographyId = geographyId;
+      if (geographyId == null) _nearby = false;
+    });
+    _runSearch();
+  }
+
+  void _toggleNearby(bool value) {
+    setState(() => _nearby = value);
+    _runSearch();
+  }
+
+  /// GPS auto-detect: find the user's place and pre-select the matching taluk.
+  Future<void> _detectLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final ta = _lang == 'ta';
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+        messenger.showSnackBar(SnackBar(
+            content: Text(ta ? 'இருப்பிட அனுமதி தேவை' : 'Location permission needed')));
+        return;
+      }
+      if (_taluks.isEmpty) await _loadTaluks();
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 12)),
+      );
+      final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      final candidates = <String>[
+        for (final m in marks) ...[
+          (m.subLocality ?? ''), (m.locality ?? ''), (m.subAdministrativeArea ?? '')
+        ]
+      ].where((s) => s.trim().isNotEmpty).map((s) => s.toLowerCase()).toList();
+
+      _Taluk? match;
+      for (final t in _taluks) {
+        final n = t.nameEn.toLowerCase();
+        if (candidates.any((c) => c.contains(n) || n.contains(c))) {
+          match = t;
+          break;
+        }
+      }
+      if (match != null) {
+        final t = match;
+        setState(() {
+          _selectedGeographyId = t.id;
+          _nearby = true;
+        });
+        _runSearch();
+        messenger.showSnackBar(SnackBar(
+            content: Text(ta ? '${t.nameTa} அருகில் காட்டுகிறது' : 'Showing donors near ${t.nameEn}')));
+      } else {
+        messenger.showSnackBar(SnackBar(
+            content: Text(ta ? 'அருகிலுள்ள பகுதியை கண்டறிய முடியவில்லை' : 'Could not match your area — pick it manually')));
+      }
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(ta ? 'இருப்பிடத்தை கண்டறிய முடியவில்லை' : 'Could not detect location')));
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
   }
 
   Future<void> _launchWhatsApp(String link) async {
@@ -47,6 +152,13 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
 
   Future<void> _launchPhone(String phone) async {
     final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchSms(String phone) async {
+    final uri = Uri.parse('sms:$phone');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -92,6 +204,16 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
             selected: _selectedGroup,
             onSelect: _search,
           ),
+          _LocationFilter(
+            taluks: _taluks,
+            selectedId: _selectedGeographyId,
+            nearby: _nearby,
+            locating: _locating,
+            lang: _lang,
+            onSelect: _selectLocation,
+            onToggleNearby: _toggleNearby,
+            onDetect: _detectLocation,
+          ),
           Expanded(
             child: BlocConsumer<BloodDonorBloc, BloodDonorState>(
               listener: (context, state) {
@@ -115,12 +237,12 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 if (state is BloodDonorSearchSuccess) {
                   if (state.donors.isEmpty) {
                     return RefreshIndicator(
-                      onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup)),
+                      onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
                       child: ListView(children: [_EmptyDonors(group: _selectedGroup)]),
                     );
                   }
                   return RefreshIndicator(
-                    onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup)),
+                    onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: state.donors.length,
@@ -162,24 +284,34 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: () => _launchPhone(state.phoneNumber),
-                    icon: const Icon(Icons.phone),
-                    label: const Text('Call'),
+                    icon: const Icon(Icons.call, color: Colors.white),
+                    label: const Text('Call', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchWhatsApp(state.whatsappLink),
-                    icon: const Icon(Icons.chat),
-                    label: const Text('WhatsApp'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF25D366),
-                    ),
+                  child: OutlinedButton.icon(
+                    onPressed: () => _launchSms(state.phoneNumber),
+                    icon: const Icon(Icons.sms_outlined),
+                    label: const Text('Message'),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _launchWhatsApp(state.whatsappLink),
+                icon: const Icon(Icons.chat, color: Colors.white),
+                label: const Text('WhatsApp', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -283,6 +415,118 @@ class _FilterRow extends StatelessWidget {
         children: [
           chip(lang == 'ta' ? 'அனைத்தும்' : 'All', selected == null, () => onSelect(null)),
           ...groups.map((g) => chip(g, selected == g, () => onSelect(selected == g ? null : g))),
+        ],
+      ),
+    );
+  }
+}
+
+class _Taluk {
+  final String id;
+  final String nameEn;
+  final String nameTa;
+  const _Taluk({required this.id, required this.nameEn, required this.nameTa});
+}
+
+class _LocationFilter extends StatelessWidget {
+  final List<_Taluk> taluks;
+  final String? selectedId;
+  final bool nearby;
+  final bool locating;
+  final String lang;
+  final void Function(String?) onSelect;
+  final void Function(bool) onToggleNearby;
+  final VoidCallback onDetect;
+
+  const _LocationFilter({
+    required this.taluks,
+    required this.selectedId,
+    required this.nearby,
+    required this.locating,
+    required this.lang,
+    required this.onSelect,
+    required this.onToggleNearby,
+    required this.onDetect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = lang == 'ta';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: context.cSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: context.cBorder),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String?>(
+                      isExpanded: true,
+                      value: selectedId,
+                      hint: Text(ta ? 'அனைத்து பகுதிகள்' : 'All locations',
+                          style: TextStyle(fontSize: 14, color: context.cTextSecondary)),
+                      icon: Icon(Icons.expand_more, color: context.cTextSecondary),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(ta ? 'அனைத்து பகுதிகள்' : 'All locations',
+                              style: const TextStyle(fontSize: 14)),
+                        ),
+                        ...taluks.map((t) => DropdownMenuItem<String?>(
+                              value: t.id,
+                              child: Text(ta ? (t.nameTa.isNotEmpty ? t.nameTa : t.nameEn) : t.nameEn,
+                                  style: const TextStyle(fontSize: 14)),
+                            )),
+                      ],
+                      onChanged: onSelect,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // GPS auto-detect ("near me")
+              Material(
+                color: AppColors.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: locating ? null : onDetect,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: locating
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                        : const Icon(Icons.my_location, color: AppColors.primary, size: 22),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (selectedId != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: nearby,
+                    onChanged: (v) => onToggleNearby(v ?? false),
+                    visualDensity: VisualDensity.compact,
+                    activeColor: AppColors.primary,
+                  ),
+                  Text(ta ? 'அருகிலுள்ள பகுதிகளையும் சேர்' : 'Include nearby areas',
+                      style: TextStyle(fontSize: 13, color: context.cText)),
+                ],
+              ),
+            ),
         ],
       ),
     );

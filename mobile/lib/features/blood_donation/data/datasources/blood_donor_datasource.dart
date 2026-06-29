@@ -7,6 +7,8 @@ import '../models/blood_donor_model.dart';
 abstract class BloodDonorDataSource {
   Future<List<BloodDonorModel>> searchDonors({
     String? bloodGroup,
+    String? geographyId,
+    bool nearby = false,
     bool availableOnly = true,
   });
 
@@ -33,12 +35,18 @@ class BloodDonorDataSourceImpl implements BloodDonorDataSource {
   @override
   Future<List<BloodDonorModel>> searchDonors({
     String? bloodGroup,
+    String? geographyId,
+    bool nearby = false,
     bool availableOnly = true,
   }) async {
     try {
       final params = <String, dynamic>{'available_only': availableOnly};
       if (bloodGroup != null && bloodGroup.isNotEmpty) {
         params['blood_group'] = bloodGroup;
+      }
+      if (geographyId != null && geographyId.isNotEmpty) {
+        params['geography_id'] = geographyId;
+        params['nearby'] = nearby;
       }
       final response = await _client.dio.get(
         ApiConstants.bloodDonors,

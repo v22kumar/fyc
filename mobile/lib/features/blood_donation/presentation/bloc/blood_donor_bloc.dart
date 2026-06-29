@@ -31,6 +31,8 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
     emit(const BloodDonorLoading());
     final result = await _searchDonors(
       bloodGroup: event.bloodGroup,
+      geographyId: event.geographyId,
+      nearby: event.nearby,
       availableOnly: event.availableOnly,
     );
     result.fold(

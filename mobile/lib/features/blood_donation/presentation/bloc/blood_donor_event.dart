@@ -8,11 +8,18 @@ abstract class BloodDonorEvent extends Equatable {
 
 class BloodDonorSearchRequested extends BloodDonorEvent {
   final String? bloodGroup;
+  final String? geographyId;
+  final bool nearby;
   final bool availableOnly;
-  const BloodDonorSearchRequested({this.bloodGroup, this.availableOnly = true});
+  const BloodDonorSearchRequested({
+    this.bloodGroup,
+    this.geographyId,
+    this.nearby = false,
+    this.availableOnly = true,
+  });
 
   @override
-  List<Object?> get props => [bloodGroup, availableOnly];
+  List<Object?> get props => [bloodGroup, geographyId, nearby, availableOnly];
 }
 
 class BloodDonorRegisterRequested extends BloodDonorEvent {
