@@ -15,7 +15,10 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.example.fyc_connect"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 35 (>= 34): the geocoding plugin's transitive AndroidX deps
+    // (lifecycle 2.7.0, exifinterface 1.4.1) require compiling against API 34+.
+    // flutter.compileSdkVersion resolved to 33, which failed assembleRelease.
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
