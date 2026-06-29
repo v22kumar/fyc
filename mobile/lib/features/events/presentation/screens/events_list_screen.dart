@@ -63,6 +63,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
             if (state.events.isEmpty) {
               return EmptyState(
                 emoji: '🎗️',
+                imageAsset: 'assets/illustrations/empty_events.png',
                 title: _lang == 'ta' ? 'தற்போது நிகழ்வுகள் இல்லை' : 'No Events Right Now',
                 message: _lang == 'ta' ? 'சமூக நிகழ்வுகளுக்குப் பிறகு மீண்டும் பார்க்கவும்.' : 'Check back later for upcoming community events and initiatives.',
                 buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
@@ -185,16 +186,43 @@ class _EventCard extends StatelessWidget {
           bottom: BorderSide(color: context.cBorder, width: 1),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner: network banner if present, else themed placeholder
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: ColorFiltered(
+              colorFilter: isPast
+                  ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+                  : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+              child: (event.bannerUrl != null && event.bannerUrl!.isNotEmpty)
+                  ? Image.network(
+                      event.bannerUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/event_placeholder.png',
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/images/event_placeholder.png',
+                      fit: BoxFit.cover,
+                    ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    event.displayTitle(lang),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.displayTitle(lang),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -255,9 +283,11 @@ class _EventCard extends StatelessWidget {
                 style: TextStyle(color: context.cTextSecondary, fontSize: 12),
               ),
             ],
-          ],
-        ),
-      ),
+              ], // inner Column children
+            ), // inner Column
+          ), // Padding
+        ], // outer Column children
+      ), // outer Column
     );
 
     if (onCheckin != null) {

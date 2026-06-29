@@ -94,6 +94,47 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
           : null,
       body: Column(
         children: [
+          // Hero banner (street cricket at golden hour)
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/sports_cricket.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      Container(color: AppColors.primary.withOpacity(0.15)),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.0),
+                        Colors.black.withOpacity(0.45),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  bottom: 12,
+                  child: Text(
+                    _lang == 'ta' ? 'விளையாடு · வெல்' : 'Play. Compete. Win.',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           _SportTabs(
             filters: _sportFilters,
             selected: _selectedSport,

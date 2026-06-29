@@ -8,6 +8,9 @@ class EmptyState extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onAction;
 
+  /// Optional illustration asset shown instead of the emoji bubble.
+  final String? imageAsset;
+
   const EmptyState({
     super.key,
     required this.emoji,
@@ -15,6 +18,7 @@ class EmptyState extends StatelessWidget {
     required this.message,
     this.buttonText,
     this.onAction,
+    this.imageAsset,
   });
 
   @override
@@ -26,18 +30,34 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: context.cSurface,
-                shape: BoxShape.circle,
-                boxShadow: AppTheme.glowShadow,
+            if (imageAsset != null)
+              Image.asset(
+                imageAsset!,
+                width: 170,
+                height: 170,
+                errorBuilder: (_, __, ___) => Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: context.cSurface,
+                    shape: BoxShape.circle,
+                    boxShadow: AppTheme.glowShadow,
+                  ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 64)),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: context.cSurface,
+                  shape: BoxShape.circle,
+                  boxShadow: AppTheme.glowShadow,
+                ),
+                child: Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 64),
+                ),
               ),
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 64),
-              ),
-            ),
             const SizedBox(height: 24),
             Text(
               title,

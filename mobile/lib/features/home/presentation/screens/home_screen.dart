@@ -138,6 +138,18 @@ class _Header extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               Container(color: AppColors.darkBg),
+              // Photographic backdrop (FYC youth at Kanyakumari) — faded under aurora
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.32,
+                  child: Image.asset(
+                    'assets/images/hero_community.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
               AnimatedBuilder(
                 animation: aurora,
                 builder: (_, __) {

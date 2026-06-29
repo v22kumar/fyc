@@ -172,6 +172,17 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
         body: Stack(
           fit: StackFit.expand,
           children: [
+            // ── Photographic backdrop (faded) ─────────────────────────
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.30,
+                child: Image.asset(
+                  'assets/images/auth_bg.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
             // ── Aurora background ─────────────────────────────────────
             AnimatedBuilder(
               animation: _aurora,
