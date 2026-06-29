@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'notification_model.dart';
+import '../models/notification_model.dart';
 
 class NotificationRemoteDataSource {
   final Dio dio;

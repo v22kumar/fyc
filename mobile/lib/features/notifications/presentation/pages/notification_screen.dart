@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/notification_bloc.dart';
-import 'package:timeago/timeago.dart' as timeago;
+
+/// Local relative-time formatter (avoids a third-party dependency).
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inMinutes < 1) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  return '${(diff.inDays / 7).floor()}w ago';
+}
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -68,7 +77,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       Text(notif.bodyEn),
                       const SizedBox(height: 4),
                       Text(
-                        timeago.format(notif.createdAt),
+                        _timeAgo(notif.createdAt),
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
