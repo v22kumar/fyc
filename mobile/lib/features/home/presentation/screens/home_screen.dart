@@ -7,6 +7,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/widgets/pressable.dart';
+import '../../../../core/widgets/update_dialog.dart';
 import '../../../../service_locator.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -32,6 +33,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _aurora = AnimationController(vsync: this, duration: const Duration(seconds: 12))..repeat();
+    // Best-effort in-app update check once the home screen is shown.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateDialog.maybePrompt(context);
+    });
   }
 
   @override

@@ -79,6 +79,13 @@ class Settings(BaseSettings):
     #   flyctl secrets set APP_APK_URL=https://fyc-backend.fly.dev/uploads/fyc-connect-latest.apk
     APP_APK_URL: str = ""
 
+    # In-app updater: latest published Android build. Set by the flutter-build CI
+    # on every release so the app can detect a newer version and offer to update.
+    APP_LATEST_VERSION_CODE: int = 0          # numeric build number (must increase)
+    APP_LATEST_VERSION_NAME: str = ""         # display version, e.g. "1.0.42"
+    APP_UPDATE_MANDATORY: bool = False        # force update (block "Later")
+    APP_UPDATE_NOTES: str = ""                # short "what's new" text
+
     # SMTP Email OTP
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

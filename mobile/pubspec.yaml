@@ -30,8 +30,11 @@ dependencies:
   # Local storage
   shared_preferences: ^2.3.0
 
-  # Deep links (WhatsApp wa.me)
+  # Deep links (WhatsApp wa.me) + APK download for the in-app updater
   url_launcher: ^6.3.0
+
+  # App version info (in-app update check)
+  package_info_plus: ^8.0.0
 
   # Functional error handling
   dartz: ^0.10.1

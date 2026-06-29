@@ -31,8 +31,11 @@ class LocalStorage {
   String getTheme() =>
       _prefs.getString(AppConstants.themeKey) ?? 'light';
 
-  // Generic getString
+  // Generic getString / saveString
   String? getString(String key) => _prefs.getString(key);
+
+  Future<void> saveString(String key, String value) async =>
+      _prefs.setString(key, value);
 
   // Draft form data
   Future<void> saveDraft(String key, String value) async =>
