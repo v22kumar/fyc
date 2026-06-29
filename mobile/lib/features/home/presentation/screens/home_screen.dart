@@ -537,6 +537,152 @@ class _ServiceTile extends StatelessWidget {
   }
 }
 
+// ── Service Bento (rich, web-parity cards) ───────────────────────────────────
+
+class _BentoService {
+  final IconData? icon;
+  final String? glyph;
+  final String title, desc, badge, route;
+  final Color color;
+  const _BentoService({
+    this.icon,
+    this.glyph,
+    required this.title,
+    required this.desc,
+    required this.badge,
+    required this.route,
+    required this.color,
+  });
+}
+
+class _ServiceBento extends StatelessWidget {
+  const _ServiceBento();
+
+  @override
+  Widget build(BuildContext context) {
+    const items = <_BentoService>[
+      _BentoService(icon: Icons.water_drop, title: 'Blood Donation', desc: 'Find verified donors nearby and connect securely in emergencies.', badge: 'URGENT', route: '/blood-donation', color: Color(0xFFEF4444)),
+      _BentoService(icon: Icons.event, title: 'Events', desc: 'Upcoming community events, festivals and meetings. Register and attend.', badge: 'LIVE', route: '/events', color: Color(0xFF8B5CF6)),
+      _BentoService(icon: Icons.emoji_events, title: 'Sports Hub', desc: 'Track local tournaments, teams, fixtures and live scores.', badge: 'NEW', route: '/sports', color: Color(0xFFF97316)),
+      _BentoService(icon: Icons.campaign, title: 'Report Issue', desc: 'Raise civic complaints like water or street lights and track resolution.', badge: 'ACTIVE', route: '/issues', color: Color(0xFFEAB308)),
+      _BentoService(icon: Icons.eco, title: 'Green FYC', desc: 'Tree-planting drives, eco initiatives and environmental activities.', badge: 'ECO', route: '/green', color: Color(0xFF16A34A)),
+      _BentoService(icon: Icons.contacts, title: 'Skills Directory', desc: 'Find local carpenters, electricians, tutors and verified profiles.', badge: 'NEW', route: '/directory', color: Color(0xFF2563EB)),
+      _BentoService(glyph: '♚', title: 'Chess Arena', desc: 'Play, challenge friends and climb the club leaderboard.', badge: 'PLAY', route: '/chess', color: Color(0xFF0F172A)),
+      _BentoService(icon: Icons.work, title: 'Opportunities', desc: 'TN & Central govt jobs, scholarships and community openings.', badge: 'JOBS', route: '/opportunities', color: Color(0xFFD97706)),
+      _BentoService(icon: Icons.verified_user, title: 'Verify Card', desc: 'Scan and verify FYC membership cards using a QR code.', badge: 'OFFICIAL', route: '/membership', color: Color(0xFF14B8A6)),
+      _BentoService(icon: Icons.map, title: 'My Journey', desc: 'Your contributions, impact and volunteer milestones.', badge: 'IMPACT', route: '/journey', color: Color(0xFFEC4899)),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: 'Explore', onViewAll: () => _showMoreSheet(context)),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.96,
+          ),
+          itemCount: items.length,
+          itemBuilder: (_, i) => _BentoCard(s: items[i]),
+        ),
+      ],
+    );
+  }
+}
+
+class _BentoCard extends StatelessWidget {
+  final _BentoService s;
+  const _BentoCard({required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.isDark;
+    return Pressable(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => context.push(s.route),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: dark ? s.color.withOpacity(0.14) : s.color.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: s.color.withOpacity(dark ? 0.30 : 0.16)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: dark ? s.color.withOpacity(0.22) : Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: dark ? null : AppTheme.cardShadow,
+                      ),
+                      child: Center(
+                        child: s.glyph != null
+                            ? Text(s.glyph!, style: TextStyle(fontSize: 22, color: dark ? Colors.white : s.color, height: 1))
+                            : Icon(s.icon, color: s.color, size: 22),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: dark ? Colors.white.withOpacity(0.10) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: s.color.withOpacity(0.25)),
+                      ),
+                      child: Text(
+                        s.badge,
+                        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: s.color),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  s.title,
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: context.cText, height: 1.1),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 5),
+                Expanded(
+                  child: Text(
+                    s.desc,
+                    style: TextStyle(fontSize: 11, height: 1.32, color: context.cTextSecondary),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text('Open', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: s.color)),
+                    const SizedBox(width: 3),
+                    Icon(Icons.arrow_forward, size: 13, color: s.color),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Announcements bar ────────────────────────────────────────────────────────
 
 class _AnnouncementsBar extends StatelessWidget {
@@ -1407,7 +1553,7 @@ class _CitizenDashboard extends StatelessWidget {
       children: [
         const _BeAHeroCard(),
         const SizedBox(height: 22),
-        _QuickServices(),
+        const _ServiceBento(),
         const SizedBox(height: 10),
         const _AnnouncementsBar(),
         const SizedBox(height: 22),
@@ -1465,7 +1611,7 @@ class _VolunteerDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        _QuickServices(),
+        const _ServiceBento(),
         const SizedBox(height: 22),
         _SectionHeader(title: "Today's Activities"),
         const SizedBox(height: 12),
@@ -1521,7 +1667,7 @@ class _ManagerDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        _QuickServices(),
+        const _ServiceBento(),
         const SizedBox(height: 22),
         Row(
           children: [
