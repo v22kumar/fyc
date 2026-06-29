@@ -304,13 +304,15 @@ def assign_issue_volunteer(
 @router.post("/{issue_id}/email", response_model=IssueEmailOut)
 def log_issue_email(
     issue_id: UUID,
-    payload: IssueEmailCreate,
+    payload: Optional[IssueEmailCreate] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Log and simulate sending an email to a concerned authority about an issue.
+    The body is optional — a one-tap "log email sent" records sensible defaults.
     """
+    payload = payload or IssueEmailCreate()
     issue = db.query(PublicIssue).filter(
         PublicIssue.id == issue_id,
         PublicIssue.organization_id == current_user.organization_id,
@@ -318,13 +320,17 @@ def log_issue_email(
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
+    dept = _DEPT_MAP.get(
+        issue.category.value if hasattr(issue.category, "value") else str(issue.category),
+        "Concerned Authority",
+    )
     email_log = IssueEmailLog(
         organization_id=current_user.organization_id,
         issue_id=issue_id,
         sent_by_user_id=current_user.id,
-        authority_email=payload.authority_email,
-        subject=payload.subject,
-        body=payload.body
+        authority_email=payload.authority_email or "authority@local.gov",
+        subject=payload.subject or f"Public issue forwarded to {dept}",
+        body=payload.body or "An email regarding this issue was sent to the concerned authority.",
     )
     db.add(email_log)
     db.commit()

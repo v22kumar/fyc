@@ -41,7 +41,8 @@ class _SearchScreenState extends State<SearchScreen> {
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (_searchController.text.trim().isNotEmpty) {
+      // Backend requires >= 2 characters; searching on 1 char just errors.
+      if (_searchController.text.trim().length >= 2) {
         _performSearch(_searchController.text.trim());
       } else {
         setState(() {
