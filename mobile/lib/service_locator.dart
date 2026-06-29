@@ -70,6 +70,9 @@ import 'features/announcements/data/repositories/announcement_repository_impl.da
 import 'features/announcements/domain/repositories/announcement_repository.dart';
 import 'features/announcements/domain/usecases/fetch_announcements_usecase.dart';
 import 'features/announcements/presentation/bloc/announcement_bloc.dart';
+import 'features/notifications/data/datasources/notification_remote_data_source.dart';
+import 'features/notifications/data/repositories/notification_repository.dart';
+import 'features/notifications/presentation/bloc/notification_bloc.dart';
 
 // Gallery
 import 'features/gallery/data/datasources/gallery_datasource.dart';
@@ -280,6 +283,17 @@ Future<void> initServiceLocator() async {
   );
   sl.registerFactory<AnnouncementBloc>(
     () => AnnouncementBloc(fetchAnnouncements: sl<FetchAnnouncementsUseCase>()),
+  );
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  sl.registerLazySingleton<NotificationRemoteDataSource>(
+    () => NotificationRemoteDataSource(sl<ApiClient>().dio),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepository(sl<NotificationRemoteDataSource>()),
+  );
+  sl.registerFactory<NotificationBloc>(
+    () => NotificationBloc(repository: sl<NotificationRepository>()),
   );
 
   // ── Gallery ───────────────────────────────────────────────────────────────

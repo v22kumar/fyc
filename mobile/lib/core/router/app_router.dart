@@ -64,6 +64,8 @@ import '../../features/announcements/domain/entities/announcement_entity.dart';
 import '../../features/announcements/presentation/bloc/announcement_bloc.dart';
 import '../../features/announcements/presentation/screens/announcements_screen.dart';
 import '../../features/announcements/presentation/screens/announcement_detail_screen.dart';
+import '../../features/notifications/presentation/bloc/notification_bloc.dart';
+import '../../features/notifications/presentation/pages/notification_screen.dart';
 
 // Gallery
 import '../../features/gallery/domain/entities/photo_entity.dart';
@@ -270,6 +272,13 @@ final appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/notifications',
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<NotificationBloc>(),
+        child: const NotificationScreen(),
+      ),
     ),
     GoRoute(
       path: '/announcements',

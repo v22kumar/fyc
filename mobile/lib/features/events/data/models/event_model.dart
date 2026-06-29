@@ -11,6 +11,7 @@ class EventModel extends EventEntity {
     required super.eventEnd,
     super.bannerUrl,
     super.geographyId,
+    super.registrationCount,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -24,6 +25,7 @@ class EventModel extends EventEntity {
       eventEnd: DateTime.parse(json['event_end'] as String),
       bannerUrl: json['banner_url'] as String?,
       geographyId: json['geography_id'] as String?,
+      registrationCount: (json['registration_count'] as num?)?.toInt() ?? 0,
     );
   }
 }
