@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../core/widgets/update_dialog.dart';
 import '../../../../service_locator.dart';
@@ -1455,6 +1456,245 @@ class _BentoTile extends StatelessWidget {
 
 // ── Dashboards ───────────────────────────────────────────────────────────────
 
+// ── Today's Impact Hub (live community stats + quick actions) ────────────────
+
+class _TodayImpactHub extends StatefulWidget {
+  final AppLocalizations l;
+  const _TodayImpactHub({required this.l});
+
+  @override
+  State<_TodayImpactHub> createState() => _TodayImpactHubState();
+}
+
+class _TodayImpactHubState extends State<_TodayImpactHub> {
+  int _volunteers = 0, _events = 0, _donations = 0, _trees = 0, _issues = 0;
+  bool _loaded = false;
+
+  String get _lang => sl<LocalStorage>().getLang();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await sl<ApiClient>().dio.get('/api/v1/community/stats');
+      final d = res.data as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _volunteers = (d['total_volunteers'] as num?)?.toInt() ?? 0;
+        _events = (d['total_events'] as num?)?.toInt() ?? 0;
+        _donations = (d['total_blood_donations'] as num?)?.toInt() ?? 0;
+        _trees = (d['total_trees_planted'] as num?)?.toInt() ?? 0;
+        _issues = (d['total_issues_solved'] as num?)?.toInt() ?? 0;
+        _loaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = _lang == 'ta';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Location + live pill
+        Row(
+          children: [
+            const Icon(Icons.place_rounded, size: 16, color: Color(0xFF12A150)),
+            const SizedBox(width: 4),
+            Text(
+              ta ? 'நாகர்கோவில், கன்னியாகுமரி' : 'Nagercoil, Kanyakumari',
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: context.cTextSecondary),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF12A150).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFF12A150), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(ta ? 'நேரலை' : 'LIVE',
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0B6E4F),
+                          letterSpacing: 0.5)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Community impact card
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
+          decoration: BoxDecoration(
+            color: context.cSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.cBorder),
+            boxShadow: context.isDark ? null : AppTheme.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 14),
+                child: Row(
+                  children: [
+                    const Text('🌟', style: TextStyle(fontSize: 15)),
+                    const SizedBox(width: 6),
+                    Text(
+                      ta ? 'நமது சமூகத் தாக்கம்' : 'Our Community Impact',
+                      style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: context.cText),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  _metric(context, _trees.toString(),
+                      ta ? 'மரங்கள்' : 'Trees', Icons.eco, const Color(0xFF16A34A)),
+                  _metric(context, _donations.toString(),
+                      ta ? 'தானம்' : 'Donations', Icons.water_drop,
+                      const Color(0xFFEF4444)),
+                  _metric(context, _events.toString(),
+                      ta ? 'நிகழ்வுகள்' : 'Events', Icons.event,
+                      const Color(0xFF8B5CF6)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _metric(context, _volunteers.toString(),
+                      ta ? 'தன்னார்வலர்' : 'Volunteers', Icons.people_alt,
+                      const Color(0xFF2563EB)),
+                  _metric(context, _issues.toString(),
+                      ta ? 'தீர்வுகள்' : 'Resolved', Icons.task_alt,
+                      const Color(0xFF0EA5E9)),
+                  _metric(context, _loaded ? '24/7' : '—',
+                      ta ? 'சேவை' : 'Service', Icons.support_agent,
+                      const Color(0xFFF59E0B)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Quick actions
+        Row(
+          children: [
+            _quickAction(context, Icons.water_drop_rounded,
+                ta ? 'இரத்தம்' : 'Donate', const Color(0xFFEF4444),
+                () => context.push('/blood-donation')),
+            const SizedBox(width: 10),
+            _quickAction(context, Icons.campaign_rounded,
+                ta ? 'புகார்' : 'Report', const Color(0xFFEAB308),
+                () => context.push('/issues')),
+            const SizedBox(width: 10),
+            _quickAction(context, Icons.celebration_rounded,
+                ta ? 'நிகழ்வு' : 'Events', const Color(0xFF8B5CF6),
+                () => context.push('/events')),
+            const SizedBox(width: 10),
+            _quickAction(context, Icons.eco_rounded,
+                ta ? 'பசுமை' : 'Green', const Color(0xFF16A34A),
+                () => context.push('/green')),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _metric(BuildContext context, String value, String label,
+      IconData icon, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+                color: color.withOpacity(context.isDark ? 0.22 : 0.12),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 7),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: context.cText)),
+          const SizedBox(height: 1),
+          Text(label,
+              style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickAction(BuildContext context, IconData icon, String label,
+      Color color, VoidCallback onTap) {
+    return Expanded(
+      child: Pressable(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: context.cSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.cBorder),
+              boxShadow: context.isDark ? null : AppTheme.cardShadow,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                      color: color.withOpacity(context.isDark ? 0.22 : 0.12),
+                      shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 21),
+                ),
+                const SizedBox(height: 8),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: context.cText),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CitizenDashboard extends StatelessWidget {
   final AppLocalizations l;
   final int refreshKey;
@@ -1465,6 +1705,8 @@ class _CitizenDashboard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _TodayImpactHub(l: l),
+        const SizedBox(height: 22),
         const _BeAHeroCard(),
         const SizedBox(height: 22),
         const _ServiceBento(),
