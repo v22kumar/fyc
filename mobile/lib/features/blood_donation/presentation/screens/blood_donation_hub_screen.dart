@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
@@ -29,11 +27,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   String? _selectedGroup;
 
-  // Location filter (taluk dropdown + nearby toggle + GPS auto-detect)
+  // Location filter (taluk dropdown + nearby toggle)
   List<_Taluk> _taluks = [];
   String? _selectedGeographyId;
   bool _nearby = false;
-  bool _locating = false;
 
   @override
   void initState() {
@@ -85,62 +82,6 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   void _toggleNearby(bool value) {
     setState(() => _nearby = value);
     _runSearch();
-  }
-
-  /// GPS auto-detect: find the user's place and pre-select the matching taluk.
-  Future<void> _detectLocation() async {
-    if (_locating) return;
-    setState(() => _locating = true);
-    final messenger = ScaffoldMessenger.of(context);
-    final ta = _lang == 'ta';
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        messenger.showSnackBar(SnackBar(
-            content: Text(ta ? 'இருப்பிட அனுமதி தேவை' : 'Location permission needed')));
-        return;
-      }
-      if (_taluks.isEmpty) await _loadTaluks();
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 12)),
-      );
-      final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
-      final candidates = <String>[
-        for (final m in marks) ...[
-          (m.subLocality ?? ''), (m.locality ?? ''), (m.subAdministrativeArea ?? '')
-        ]
-      ].where((s) => s.trim().isNotEmpty).map((s) => s.toLowerCase()).toList();
-
-      _Taluk? match;
-      for (final t in _taluks) {
-        final n = t.nameEn.toLowerCase();
-        if (candidates.any((c) => c.contains(n) || n.contains(c))) {
-          match = t;
-          break;
-        }
-      }
-      if (match != null) {
-        final t = match;
-        setState(() {
-          _selectedGeographyId = t.id;
-          _nearby = true;
-        });
-        _runSearch();
-        messenger.showSnackBar(SnackBar(
-            content: Text(ta ? '${t.nameTa} அருகில் காட்டுகிறது' : 'Showing donors near ${t.nameEn}')));
-      } else {
-        messenger.showSnackBar(SnackBar(
-            content: Text(ta ? 'அருகிலுள்ள பகுதியை கண்டறிய முடியவில்லை' : 'Could not match your area — pick it manually')));
-      }
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(ta ? 'இருப்பிடத்தை கண்டறிய முடியவில்லை' : 'Could not detect location')));
-    } finally {
-      if (mounted) setState(() => _locating = false);
-    }
   }
 
   Future<void> _launchWhatsApp(String link) async {
@@ -208,11 +149,9 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
             taluks: _taluks,
             selectedId: _selectedGeographyId,
             nearby: _nearby,
-            locating: _locating,
             lang: _lang,
             onSelect: _selectLocation,
             onToggleNearby: _toggleNearby,
-            onDetect: _detectLocation,
           ),
           Expanded(
             child: BlocConsumer<BloodDonorBloc, BloodDonorState>(
@@ -432,21 +371,17 @@ class _LocationFilter extends StatelessWidget {
   final List<_Taluk> taluks;
   final String? selectedId;
   final bool nearby;
-  final bool locating;
   final String lang;
   final void Function(String?) onSelect;
   final void Function(bool) onToggleNearby;
-  final VoidCallback onDetect;
 
   const _LocationFilter({
     required this.taluks,
     required this.selectedId,
     required this.nearby,
-    required this.locating,
     required this.lang,
     required this.onSelect,
     required this.onToggleNearby,
-    required this.onDetect,
   });
 
   @override
@@ -488,24 +423,6 @@ class _LocationFilter extends StatelessWidget {
                       ],
                       onChanged: onSelect,
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // GPS auto-detect ("near me")
-              Material(
-                color: AppColors.primary.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: locating ? null : onDetect,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: locating
-                        ? const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
-                        : const Icon(Icons.my_location, color: AppColors.primary, size: 22),
                   ),
                 ),
               ),
