@@ -223,10 +223,7 @@ class _Header extends StatelessWidget {
                             onTap: () => _showLanguagePicker(context),
                           ),
                           const SizedBox(width: 8),
-                          _CircleBtn(
-                            icon: Icons.notifications_outlined,
-                            onTap: () => context.push('/announcements'),
-                          ),
+                          const _NotificationBell(),
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () => context.push('/settings'),
@@ -315,6 +312,73 @@ class _CircleBtn extends StatelessWidget {
       ),
     );
     return tooltip != null ? Tooltip(message: tooltip!, child: btn) : btn;
+  }
+}
+
+/// Notification bell with an unread-count badge. Taps through to /notifications.
+class _NotificationBell extends StatefulWidget {
+  const _NotificationBell();
+
+  @override
+  State<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBell> {
+  int _unread = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnread();
+  }
+
+  Future<void> _loadUnread() async {
+    try {
+      final res = await sl<ApiClient>().dio.get('/api/v1/notifications');
+      final list = (res.data as List?) ?? const [];
+      final count = list
+          .where((e) => e is Map && e['is_read'] != true)
+          .length;
+      if (mounted) setState(() => _unread = count);
+    } catch (_) {/* leave badge hidden on failure */}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _CircleBtn(
+          icon: Icons.notifications_outlined,
+          onTap: () async {
+            await context.push('/notifications');
+            _loadUnread();
+          },
+        ),
+        if (_unread > 0)
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.darkBg, width: 1.5),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                _unread > 9 ? '9+' : '$_unread',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -1456,6 +1520,367 @@ class _BentoTile extends StatelessWidget {
 
 // ── Dashboards ───────────────────────────────────────────────────────────────
 
+// ── Next upcoming event (real data) ──────────────────────────────────────────
+
+class _NextEventCard extends StatefulWidget {
+  const _NextEventCard();
+
+  @override
+  State<_NextEventCard> createState() => _NextEventCardState();
+}
+
+class _NextEventCardState extends State<_NextEventCard> {
+  Map<String, dynamic>? _event;
+  bool _loaded = false;
+
+  String get _lang => sl<LocalStorage>().getLang();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await sl<ApiClient>().dio.get('/api/v1/events');
+      final list = (res.data as List?) ?? const [];
+      final now = DateTime.now();
+      final upcoming = list
+          .whereType<Map<String, dynamic>>()
+          .where((e) {
+            final s = DateTime.tryParse((e['event_start'] as String?) ?? '');
+            return s != null && s.isAfter(now);
+          })
+          .toList()
+        ..sort((a, b) => DateTime.parse(a['event_start'])
+            .compareTo(DateTime.parse(b['event_start'])));
+      if (!mounted) return;
+      setState(() {
+        _event = upcoming.isNotEmpty ? upcoming.first : null;
+        _loaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = _lang == 'ta';
+    if (!_loaded || _event == null) return const SizedBox.shrink();
+    final e = _event!;
+    final start = DateTime.parse(e['event_start']).toLocal();
+    final title = (ta
+            ? (e['title_ta'] ?? e['title_en'])
+            : (e['title_en'] ?? e['title_ta'])) as String? ??
+        '';
+    final count = (e['registration_count'] as num?)?.toInt() ?? 0;
+    final month = _monthAbbr(start.month, ta);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(ta ? 'வரவிருக்கும் நிகழ்வு' : 'Upcoming Event',
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: context.cText)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: context.cSurface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: context.cBorder),
+            boxShadow: context.isDark ? null : AppTheme.cardShadow,
+          ),
+          child: Row(
+            children: [
+              // Date badge
+              Container(
+                width: 52,
+                decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    Text(month,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary)),
+                    Text('${start.day}',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: context.cText)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: context.cText),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.schedule,
+                            size: 13, color: context.cTextSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${start.day} ${_monthAbbr(start.month, false)}, ${_time(start)}',
+                          style: TextStyle(
+                              fontSize: 11.5, color: context.cTextSecondary),
+                        ),
+                      ],
+                    ),
+                    if (count > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(ta ? '$count பேர் வருகிறார்கள்' : '$count Going',
+                          style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF12A150))),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () => context.push('/events'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(ta ? 'பதிவு' : 'Register',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _monthAbbr(int m, bool ta) {
+    const en = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return en[m];
+  }
+
+  String _time(DateTime d) {
+    final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    final mm = d.minute.toString().padLeft(2, '0');
+    final ap = d.hour < 12 ? 'AM' : 'PM';
+    return '$h:$mm $ap';
+  }
+}
+
+// ── Live Updates (recent community activity feed) ────────────────────────────
+
+class _LiveUpdates extends StatefulWidget {
+  const _LiveUpdates();
+
+  @override
+  State<_LiveUpdates> createState() => _LiveUpdatesState();
+}
+
+class _LiveUpdatesState extends State<_LiveUpdates> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loaded = false;
+
+  String get _lang => sl<LocalStorage>().getLang();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res =
+          await sl<ApiClient>().dio.get('/api/v1/community/feed', queryParameters: {'limit': 5});
+      final list = (res.data as List?) ?? const [];
+      if (!mounted) return;
+      setState(() {
+        _items = list.whereType<Map<String, dynamic>>().take(3).toList();
+        _loaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  ({IconData icon, Color color}) _style(String type) {
+    switch (type.toUpperCase()) {
+      case 'EVENT':
+        return (icon: Icons.celebration_rounded, color: const Color(0xFF8B5CF6));
+      case 'TOURNAMENT':
+        return (icon: Icons.emoji_events_rounded, color: const Color(0xFFF97316));
+      case 'ISSUE':
+      case 'ISSUE_RESOLVED':
+        return (icon: Icons.task_alt_rounded, color: const Color(0xFF0EA5E9));
+      case 'BLOOD':
+        return (icon: Icons.water_drop_rounded, color: const Color(0xFFEF4444));
+      case 'TREE':
+      case 'GREEN':
+        return (icon: Icons.eco_rounded, color: const Color(0xFF16A34A));
+      default:
+        return (icon: Icons.campaign_rounded, color: AppColors.primary);
+    }
+  }
+
+  String _ago(String iso, bool ta) {
+    try {
+      final d = DateTime.parse(iso).toLocal();
+      final diff = DateTime.now().difference(d);
+      if (diff.inMinutes < 1) return ta ? 'இப்போது' : 'just now';
+      if (diff.inMinutes < 60) return ta ? '${diff.inMinutes} நிமிடம்' : '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return ta ? '${diff.inHours} மணி' : '${diff.inHours}h ago';
+      return ta ? '${diff.inDays} நாள்' : '${diff.inDays}d ago';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = _lang == 'ta';
+    // Hide the section entirely when there's nothing to show.
+    if (_loaded && _items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFEF4444), shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 7),
+                Text(ta ? 'நேரடி புதுப்பிப்புகள்' : 'Live Updates',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: context.cText)),
+              ],
+            ),
+            GestureDetector(
+              onTap: () => context.push('/announcements'),
+              child: Text(ta ? 'அனைத்தும்' : 'View All',
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF12A150))),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (!_loaded)
+          Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: context.cSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.cBorder),
+            ),
+            child: const Center(
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))),
+          )
+        else
+          ..._items.map((it) {
+            final type = (it['item_type'] as String?) ?? '';
+            final s = _style(type);
+            final title = (ta
+                    ? (it['title_ta'] ?? it['title_en'])
+                    : (it['title_en'] ?? it['title_ta'])) as String? ??
+                '';
+            final sub = (ta
+                    ? (it['subtitle_ta'] ?? it['subtitle_en'])
+                    : (it['subtitle_en'] ?? it['subtitle_ta'])) as String? ??
+                '';
+            final ago = _ago((it['created_at'] as String?) ?? '', ta);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.cSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.cBorder),
+                boxShadow: context.isDark ? null : AppTheme.cardShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                        color: s.color.withOpacity(context.isDark ? 0.22 : 0.12),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Icon(s.icon, color: s.color, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: context.cText),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        if (sub.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(sub,
+                              style: TextStyle(
+                                  fontSize: 11.5, color: context.cTextSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (ago.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Text(ago,
+                        style: TextStyle(
+                            fontSize: 10.5, color: context.cTextSecondary)),
+                  ],
+                ],
+              ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
 // ── Today's Impact Hub (live community stats + quick actions) ────────────────
 
 class _TodayImpactHub extends StatefulWidget {
@@ -1707,13 +2132,15 @@ class _CitizenDashboard extends StatelessWidget {
       children: [
         _TodayImpactHub(l: l),
         const SizedBox(height: 22),
+        const _LiveUpdates(),
+        const SizedBox(height: 22),
+        const _NextEventCard(),
+        const SizedBox(height: 22),
         const _BeAHeroCard(),
         const SizedBox(height: 22),
         const _ServiceBento(),
         const SizedBox(height: 10),
         const _AnnouncementsBar(),
-        const SizedBox(height: 22),
-        const _UpcomingAndNews(),
         const SizedBox(height: 22),
         _SectionHeader(title: 'Today'),
         const SizedBox(height: 12),
