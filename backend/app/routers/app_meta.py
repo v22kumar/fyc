@@ -25,11 +25,23 @@ def download_app():
 
 @router.get("/info")
 def app_info():
-    """Returns basic metadata about the Android app download."""
+    """Metadata for the in-app updater: latest version + APK URL.
+
+    The app compares its own build number to latest_version_code and, if older,
+    offers a one-tap update that downloads apk_url.
+    """
+    apk_url = settings.APP_APK_URL or _CANONICAL_APK
+    if "fyc-connect-latest.apk" in apk_url:
+        apk_url = _CANONICAL_APK
     return {
         "name": "FYC Connect",
         "platform": "Android",
         "package": "com.friendsyouthclub.fycconnect",
-        "available": bool(settings.APP_APK_URL),
-        "download_url": settings.APP_APK_URL or None,
+        "available": True,
+        "download_url": apk_url,
+        "apk_url": apk_url,
+        "latest_version_code": settings.APP_LATEST_VERSION_CODE,
+        "latest_version_name": settings.APP_LATEST_VERSION_NAME,
+        "mandatory": settings.APP_UPDATE_MANDATORY,
+        "notes": settings.APP_UPDATE_NOTES,
     }

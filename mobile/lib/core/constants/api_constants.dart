@@ -100,6 +100,10 @@ class ApiConstants {
   static const String newsTnJobs = '/api/v1/news/tn-jobs';
   static const String newsCentralJobs = '/api/v1/news/central-jobs';
 
+  // App metadata / in-app updater
+  static const String appInfo = '/api/v1/app/info';
+  static const String appDownload = '/api/v1/app/download';
+
   // User profile
   static const String fcmToken = '/api/v1/users/me/fcm-token';
   static const String myProfile = '/api/v1/users/me/profile';

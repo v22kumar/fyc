@@ -84,7 +84,12 @@ jobs:
         env:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
+          # --build-number makes versionCode unique+increasing per build so the
+          # in-app updater can detect a newer version. --build-name is the display
+          # version (1.0.<run_number>).
           flutter build apk --release --split-per-abi \
+            --build-number=${{ github.run_number }} \
+            --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
             --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
@@ -95,6 +100,8 @@ jobs:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
           flutter build appbundle --release \
+            --build-number=${{ github.run_number }} \
+            --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
             --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
@@ -217,3 +224,19 @@ jobs:
           else
             echo "APP_APK_URL already configured — no backend redeploy needed ✓"
           fi
+
+      - name: Publish latest version to backend (for in-app updater)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::notice::FLY_API_TOKEN not set — skipping version publish"
+            exit 0
+          fi
+          # versionCode == this run number (matches --build-number used in the build).
+          # One combined secrets set = a single backend redeploy per release.
+          flyctl secrets set \
+            APP_LATEST_VERSION_CODE="${{ github.run_number }}" \
+            APP_LATEST_VERSION_NAME="1.0.${{ github.run_number }}" \
+            --app fyc-backend
+          echo "Published latest version 1.0.${{ github.run_number }} (code ${{ github.run_number }}) ✓"
