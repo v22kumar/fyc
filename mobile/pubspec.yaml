@@ -36,8 +36,6 @@ dependencies:
   # App version info (in-app update check)
   package_info_plus: ^8.0.0
 
-  # Reverse geocoding for blood-donor "near me" auto-detect (geolocator already present)
-  geocoding: ^3.0.0
 
   # Functional error handling
   dartz: ^0.10.1

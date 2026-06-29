@@ -15,11 +15,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.example.fyc_connect"
-    // Pinned to 36: transitive AndroidX deps pulled in via geocoding/plugins
-    // (androidx.core 1.18.0, lifecycle 2.7.0, exifinterface 1.4.1) require
-    // compiling against API 36. flutter.compileSdkVersion resolved to 33, which
-    // failed assembleRelease ("compile against version 36 or later").
-    compileSdk = 36
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
