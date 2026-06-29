@@ -27,10 +27,14 @@ primary_region = "sin"
   # green. Points at the deep readiness probe (real DB query), not the shallow
   # /api/health — schema drift kept /api/health at 200 during the last outage.
   [[http_service.checks]]
-    grace_period = "30s"
+    # Generous grace: startup runs create_all + a full schema-reconcile across all
+    # tables + idempotent seeding before the app serves, which can take well over
+    # 30s on a cold machine. Too-short a grace makes the deploy fail its health
+    # check even though the app comes up fine moments later.
+    grace_period = "120s"
     interval = "15s"
     method = "GET"
-    timeout = "5s"
+    timeout = "8s"
     path = "/api/health/ready"
 
 [[vm]]
