@@ -46,9 +46,11 @@ class IssueStats(BaseModel):
     active_citizens: int
 
 class IssueEmailCreate(BaseModel):
-    authority_email: str
-    subject: str
-    body: str
+    # Optional so "Log email sent to authorities" can be recorded with one tap;
+    # the router fills sensible defaults when omitted.
+    authority_email: Optional[str] = None
+    subject: Optional[str] = None
+    body: Optional[str] = None
 
 class IssueEmailOut(BaseModel):
     id: UUID
