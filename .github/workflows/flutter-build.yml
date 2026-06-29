@@ -199,7 +199,12 @@ jobs:
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
+      # The APK build + GitHub release above is the deliverable. Updating Fly
+      # secrets is best-effort: a transient machine-lease conflict (the backend
+      # runs a single machine) must NOT fail the build or discard the published
+      # APK. Hence continue-on-error + --detach + retry.
       - name: Set APP_APK_URL on backend (first build only)
+        continue-on-error: true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
@@ -208,24 +213,20 @@ jobs:
             exit 0
           fi
 
-          # Must match a real published asset — the split-per-ABI build does NOT
-          # produce a single fyc-connect-latest.apk (it is deleted above), so
-          # point at the arm64 asset that always exists.
           APK_URL="https://github.com/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk"
 
-          # Only set if not already configured (avoids unnecessary backend redeploy)
           CURRENT=$(flyctl secrets list --app fyc-backend --json 2>/dev/null \
             | python3 -c "import sys,json; s=json.load(sys.stdin); print(next((x['Name'] for x in s if x['Name']=='APP_APK_URL'),''))" 2>/dev/null || echo "")
 
           if [ -z "$CURRENT" ]; then
             echo "Setting APP_APK_URL on fyc-backend..."
-            flyctl secrets set APP_APK_URL="$APK_URL" --app fyc-backend
-            echo "APP_APK_URL set ✓  — backend redeploying with download link active"
+            flyctl secrets set APP_APK_URL="$APK_URL" --app fyc-backend --detach || echo "::warning::APP_APK_URL set failed (non-fatal)"
           else
             echo "APP_APK_URL already configured — no backend redeploy needed ✓"
           fi
 
       - name: Publish latest version to backend (for in-app updater)
+        continue-on-error: true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
@@ -234,9 +235,17 @@ jobs:
             exit 0
           fi
           # versionCode == this run number (matches --build-number used in the build).
-          # One combined secrets set = a single backend redeploy per release.
-          flyctl secrets set \
-            APP_LATEST_VERSION_CODE="${{ github.run_number }}" \
-            APP_LATEST_VERSION_NAME="1.0.${{ github.run_number }}" \
-            --app fyc-backend
-          echo "Published latest version 1.0.${{ github.run_number }} (code ${{ github.run_number }}) ✓"
+          # Retry on the single-machine lease conflict; --detach stages without
+          # waiting for the machine update.
+          for attempt in 1 2 3; do
+            if flyctl secrets set \
+                 APP_LATEST_VERSION_CODE="${{ github.run_number }}" \
+                 APP_LATEST_VERSION_NAME="1.0.${{ github.run_number }}" \
+                 --app fyc-backend --detach; then
+              echo "Published latest version 1.0.${{ github.run_number }} (code ${{ github.run_number }}) ✓"
+              exit 0
+            fi
+            echo "::warning::version publish attempt $attempt failed (lease conflict?) — retrying"
+            sleep 20
+          done
+          echo "::warning::version publish did not succeed after retries (non-fatal)"
