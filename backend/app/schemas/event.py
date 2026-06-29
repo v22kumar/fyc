@@ -52,6 +52,7 @@ class EventOut(BaseModel):
     registration_deadline: Optional[datetime]
     max_participants: Optional[int]
     competition_categories: Optional[Any]
+    registration_count: int = 0  # number of registrations ("N Going")
 
 class EventCheckinOut(BaseModel):
     message: str
