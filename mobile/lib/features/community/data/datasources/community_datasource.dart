@@ -15,7 +15,13 @@ class CommunityDataSourceImpl implements CommunityDataSource {
   @override
   Future<List<CommunityProfileModel>> fetchProfiles() async {
     try {
-      final response = await _client.dio.get(ApiConstants.community);
+      // available_only defaults to true server-side, which hides registered
+      // members who haven't marked themselves available — making the directory
+      // look empty. Request all profiles; availability is shown per-card.
+      final response = await _client.dio.get(
+        ApiConstants.community,
+        queryParameters: {'available_only': false},
+      );
       final list = response.data as List<dynamic>;
       return list
           .map((e) => CommunityProfileModel.fromJson(e as Map<String, dynamic>))
