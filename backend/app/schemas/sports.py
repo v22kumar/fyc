@@ -16,6 +16,7 @@ class TournamentCreate(BaseModel):
     num_teams: Optional[int] = None
     match_config: Optional[str] = None
     registration_mode: str = "MANUAL_APPROVAL"
+    registration_close_date: Optional[datetime] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     venue: Optional[str] = None
@@ -42,6 +43,7 @@ class TournamentOut(BaseModel):
     num_teams: Optional[int] = None
     match_config: Optional[str] = None
     registration_mode: Optional[str] = None
+    registration_close_date: Optional[datetime] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     venue: Optional[str] = None

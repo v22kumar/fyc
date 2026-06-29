@@ -274,7 +274,7 @@ def get_my_community_journey(
     ).count()
     
     trees_planted = db.query(TreeRegistration).filter(
-        TreeRegistration.user_id == current_user.id
+        TreeRegistration.registered_by_user_id == current_user.id
     ).count()
     
     # Sports matches: SUM of matches_played across all Player profiles for this user
