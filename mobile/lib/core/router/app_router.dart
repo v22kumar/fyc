@@ -89,6 +89,7 @@ import '../../features/community/presentation/screens/community_directory_screen
 // Journey
 import '../../features/journey/presentation/screens/journey_screen.dart';
 import '../../features/journey/presentation/bloc/journey_bloc.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 
 // Community Feed
 import '../../features/community_feed/presentation/screens/community_feed_screen.dart';
@@ -137,6 +138,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/search',
       builder: (context, state) => const SearchScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       path: '/journey',
