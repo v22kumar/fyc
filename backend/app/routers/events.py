@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.core.database import get_db
 from app.models.event import Event, EventAttendance, EventRegistration
@@ -16,6 +17,23 @@ router = APIRouter(prefix="/events", tags=["Events"])
 
 require_executive = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 require_member = RoleChecker(["VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
+
+
+def _attach_registration_counts(db: Session, events):
+    """Attach a transient `registration_count` to each Event for EventOut."""
+    if not events:
+        return events
+    ids = [e.id for e in events]
+    rows = (
+        db.query(EventRegistration.event_id, func.count(EventRegistration.id))
+        .filter(EventRegistration.event_id.in_(ids))
+        .group_by(EventRegistration.event_id)
+        .all()
+    )
+    counts = {eid: c for eid, c in rows}
+    for e in events:
+        e.registration_count = counts.get(e.id, 0)
+    return events
 
 @router.post("", response_model=EventOut, status_code=status.HTTP_201_CREATED)
 def create_event(
@@ -82,7 +100,7 @@ def list_events(
 ):
     """List published events for the current tenant (public)."""
     query = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True)
-    return query.order_by(Event.event_start.desc()).all()
+    return _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
 
 @router.get("/admin/all", response_model=List[EventOut])
 def list_all_events(
@@ -91,7 +109,7 @@ def list_all_events(
 ):
     """List all events (including drafts) for admin."""
     query = db.query(Event).filter(Event.organization_id == current_user.organization_id)
-    return query.order_by(Event.event_start.desc()).all()
+    return _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
 
 @router.get("/{event_id}", response_model=EventOut)
 def get_event(
@@ -106,6 +124,7 @@ def get_event(
     ).first()
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    _attach_registration_counts(db, [event])
     return event
 
 @router.post("/{event_id}/register", response_model=EventRegistrationOut)
