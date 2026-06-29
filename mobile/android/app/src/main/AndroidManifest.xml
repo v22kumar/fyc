@@ -71,6 +71,11 @@
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
         </intent>
+        <!-- url_launcher: SMS to donor -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="sms" />
+        </intent>
         <!-- url_launcher: web + WhatsApp -->
         <intent>
             <action android:name="android.intent.action.VIEW" />

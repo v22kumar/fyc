@@ -9,10 +9,14 @@ class SearchDonorsUseCase {
 
   Future<Either<Failure, List<BloodDonorEntity>>> call({
     String? bloodGroup,
+    String? geographyId,
+    bool nearby = false,
     bool availableOnly = true,
   }) =>
       repository.searchDonors(
         bloodGroup: bloodGroup,
+        geographyId: geographyId,
+        nearby: nearby,
         availableOnly: availableOnly,
       );
 }
