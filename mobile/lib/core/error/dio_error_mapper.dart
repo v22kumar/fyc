@@ -17,29 +17,34 @@ Failure mapDioException(DioException e) {
   }
 
   final data = e.response?.data;
-  // FastAPI validation errors return detail as a List, not a String.
-  // Fall back to a user-readable message rather than the raw value.
+  // Only surface the server's `detail` when it's a clean human string (FastAPI
+  // HTTPException). Validation (422) detail is a technical List, and 5xx detail
+  // can leak internals — for those we ALWAYS use a friendly canned message so a
+  // user never sees "422", "500", "ValidationError" or "SocketException".
   final rawDetail = data is Map ? data['detail'] : null;
-  final detail = rawDetail is String ? rawDetail : 'Something went wrong (${e.response?.statusCode ?? 'offline'})';
+  final serverMsg = rawDetail is String && rawDetail.trim().isNotEmpty ? rawDetail : null;
 
   switch (e.response?.statusCode) {
     case 401:
-      return AuthFailure(detail);
+      return const AuthFailure('Your session has expired. Please sign in again.');
     case 403:
-      return ForbiddenFailure(detail);
+      return ForbiddenFailure(serverMsg ?? 'You don\'t have permission to do this.');
     case 404:
-      return NotFoundFailure(detail);
+      return NotFoundFailure(serverMsg ?? 'We couldn\'t find what you were looking for.');
     case 409:
-      return ConflictFailure(detail);
+      return ConflictFailure(serverMsg ?? 'That already exists.');
+    case 400:
+      return ValidationFailure(serverMsg ?? 'Please check the details and try again.');
     case 422:
-      return ValidationFailure(detail);
+      // Never expose validation internals.
+      return const ValidationFailure('Please check the details and try again.');
     case 429:
-      return RateLimitFailure(detail);
+      return const RateLimitFailure('You\'re going a bit fast — please wait a moment and try again.');
   }
 
   final statusCode = e.response?.statusCode ?? 0;
   if (statusCode >= 500) {
-    return ServerFailure(detail);
+    return const ServerFailure('Something went wrong on our end. Please try again in a moment.');
   }
-  return UnknownFailure(detail);
+  return const UnknownFailure('Something went wrong. Please try again.');
 }

@@ -31,6 +31,7 @@ class Tournament(Base, TimestampMixin, TenantModelMixin):
     num_teams = Column(Integer, nullable=True)
     match_config = Column(String(60), nullable=True)        # e.g. "20 Overs", "Best of 5 sets"
     registration_mode = Column(String(20), default="MANUAL_APPROVAL")
+    registration_close_date = Column(DateTime(timezone=True), nullable=True)  # registration deadline
     start_date = Column(DateTime(timezone=True), nullable=True)
     end_date = Column(DateTime(timezone=True), nullable=True)
     venue = Column(String(200), nullable=True)
