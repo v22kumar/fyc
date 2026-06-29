@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Base directory of the backend project
@@ -99,6 +100,24 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    @field_validator("APP_UPDATE_MANDATORY", "MORNING_BROADCAST_ENABLED", mode="before")
+    @classmethod
+    def _lenient_bool(cls, v):
+        """Never let a malformed boolean env var crash app startup.
+
+        A mistyped secret (e.g. two key=value pairs collapsed into one value)
+        previously raised a ValidationError at import and took the whole backend
+        down. Here we coerce defensively: read the first token and treat common
+        truthy strings as True, everything else as False.
+        """
+        if isinstance(v, bool):
+            return v
+        s = str(v or "").strip()
+        if not s:
+            return False
+        token = s.split()[0].strip("\"'").lower()
+        return token in {"1", "true", "yes", "on", "y", "t"}
 
     @property
     def is_production(self) -> bool:
