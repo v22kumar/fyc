@@ -1530,6 +1530,16 @@ class _VolunteerDashboard extends StatelessWidget {
         _SectionHeader(title: "My Contributions"),
         const SizedBox(height: 12),
         _ImpactStats(l: l),
+        const SizedBox(height: 22),
+        _SectionHeader(title: 'Today'),
+        const SizedBox(height: 12),
+        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
+        const SizedBox(height: 14),
+        DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        const SizedBox(height: 14),
+        WeatherCard(key: ValueKey('weather-$refreshKey')),
+        const SizedBox(height: 14),
+        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
       ],
     );
   }
@@ -1612,6 +1622,16 @@ class _ManagerDashboard extends StatelessWidget {
           onViewAll: () => context.push('/issues/track'),
           onTap: () => context.push('/issues/track'),
         ),
+        const SizedBox(height: 22),
+        _SectionHeader(title: 'Today'),
+        const SizedBox(height: 12),
+        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
+        const SizedBox(height: 14),
+        DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        const SizedBox(height: 14),
+        WeatherCard(key: ValueKey('weather-$refreshKey')),
+        const SizedBox(height: 14),
+        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
       ],
     );
   }
