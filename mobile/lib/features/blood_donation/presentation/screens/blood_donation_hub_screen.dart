@@ -137,6 +137,51 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       ),
       body: Column(
         children: [
+          // Hero photo banner (FYC blood drive)
+          SizedBox(
+            height: 132,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/blood_drive.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) =>
+                      Container(color: AppColors.primary.withOpacity(0.15)),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.05),
+                        Colors.black.withOpacity(0.55),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 12,
+                  child: Text(
+                    _lang == 'ta'
+                        ? 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்'
+                        : 'Your one donation can save up to 3 lives',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           _EmergencyBanner(onTap: () {
             context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
           }),
@@ -580,7 +625,13 @@ class _EmptyDonors extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+          Image.asset(
+            'assets/illustrations/empty_donors.png',
+            width: 150,
+            height: 150,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+          ),
           const SizedBox(height: 16),
           Text(
             group != null
