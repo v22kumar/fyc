@@ -158,6 +158,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    await _remote.signOutGoogle(); // clear cached Google session
     await _storage.clearToken();
   }
 }

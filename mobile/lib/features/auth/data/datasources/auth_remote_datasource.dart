@@ -16,6 +16,8 @@ abstract class AuthRemoteDataSource {
 
   Future<TokenModel> signInWithGoogle({required String organizationId});
 
+  Future<void> signOutGoogle();
+
   Future<TokenModel> verifyOtp({
     required String verificationId,
     required String otpCode,
@@ -145,6 +147,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
     );
     try {
+      // Clear any cached Google session first so the account chooser always
+      // appears — otherwise the previously signed-in account is silently
+      // reused and users can't switch accounts after logging out.
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {/* no cached session — fine */}
+
       final account = await googleSignIn.signIn();
       if (account == null) throw const AuthFailure('Google sign-in cancelled');
 
@@ -173,5 +182,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (e) {
       throw ServerFailure();
     }
+  }
+
+  @override
+  Future<void> signOutGoogle() async {
+    try {
+      await GoogleSignIn(scopes: ['email', 'profile']).signOut();
+    } catch (_) {/* best-effort */}
   }
 }
