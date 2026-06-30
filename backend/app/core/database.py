@@ -34,6 +34,15 @@ if is_sqlite:
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
+        # Concurrency hardening for the single-file production DB under load
+        # (many users + live chess/sports scoring writing at once):
+        #   WAL          — readers don't block the writer and vice-versa
+        #   busy_timeout — a blocked writer waits up to 8s for the lock instead
+        #                  of failing immediately with "database is locked"
+        #   NORMAL sync  — keeps WAL durability while cutting fsync overhead
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=8000")
+        cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 
 # Dependency to yield database sessions
