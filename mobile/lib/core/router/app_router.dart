@@ -40,6 +40,7 @@ import '../../features/chess/presentation/bloc/spectator_bloc.dart';
 import '../../features/chess/presentation/bloc/spectator_event.dart';
 import '../../features/chess/presentation/bloc/ai_game_bloc.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
+import '../../features/chess_tournament/chess_tournament_list_screen.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
 import '../../features/chess/presentation/pages/game_history_page.dart';
 import '../../features/chess/presentation/pages/challenge_page.dart';
@@ -417,6 +418,10 @@ final appRouter = GoRouter(
         GoRoute(
           path: 'legends',
           builder: (context, state) => const LegendsPage(),
+        ),
+        GoRoute(
+          path: 'tournaments',
+          builder: (context, state) => const ChessTournamentListScreen(),
         ),
       ],
     ),
