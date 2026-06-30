@@ -7,6 +7,7 @@ import '../bloc/sports_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class _SportOption {
   final String value;
@@ -72,7 +73,7 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
 
   String? _required(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return _lang == 'ta' ? 'இது தேவை' : 'Required';
+      return tr(en: 'Required', ta: 'இது தேவை', hi: 'आवश्यक', ml: 'ആവശ്യമാണ്');
     }
     return null;
   }
@@ -82,7 +83,7 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(lang == 'ta' ? 'FYC ஐ சவால் விடுங்கள்' : 'Challenge FYC'),
+        title: Text(tr(en: 'Challenge FYC', ta: 'FYC ஐ சவால் விடுங்கள்', hi: 'FYC को चुनौती दें', ml: 'FYC-യെ വെല്ലുവിളിക്കൂ')),
       ),
       body: BlocConsumer<SportsBloc, SportsState>(
         listener: (context, state) {
@@ -90,9 +91,7 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  lang == 'ta'
-                      ? 'சவால் அனுப்பப்பட்டது! நிலை: ${state.message}'
-                      : 'Challenge sent! Status: ${state.message}',
+                  tr(en: 'Challenge sent! Status: ${state.message}', ta: 'சவால் அனுப்பப்பட்டது! நிலை: ${state.message}', hi: 'चुनौती भेजी गई! स्थिति: ${state.message}', ml: 'വെല്ലുവിളി അയച്ചു! നില: ${state.message}'),
                 ),
                 backgroundColor: AppColors.primary,
               ),
@@ -116,45 +115,43 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
               padding: const EdgeInsets.all(AppTheme.paddingPage),
               children: [
                 Text(
-                  lang == 'ta'
-                      ? 'உங்கள் அணியின் விவரங்களை பூர்த்தி செய்து FYC உடன் நட்பு போட்டிக்கு சவால் விடுங்கள்.'
-                      : 'Fill in your team details to challenge FYC to a friendly match.',
+                  tr(en: 'Fill in your team details to challenge FYC to a friendly match.', ta: 'உங்கள் அணியின் விவரங்களை பூர்த்தி செய்து FYC உடன் நட்பு போட்டிக்கு சவால் விடுங்கள்.', hi: 'FYC को दोस्ताना मैच के लिए चुनौती देने हेतु अपनी टीम का विवरण भरें।', ml: 'FYC-യെ ഒരു സൗഹൃദ മത്സരത്തിന് വെല്ലുവിളിക്കാൻ നിങ്ങളുടെ ടീം വിവരങ്ങൾ പൂരിപ്പിക്കുക.'),
                   style: const TextStyle(
                       fontSize: 13, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 20),
-                _Label(text: lang == 'ta' ? 'அணியின் பெயர்' : 'Team Name'),
+                _Label(text: tr(en: 'Team Name', ta: 'அணியின் பெயர்', hi: 'टीम का नाम', ml: 'ടീമിന്റെ പേര്')),
                 TextFormField(
                   controller: _teamNameController,
                   validator: _required,
                   decoration: InputDecoration(
                     hintText:
-                        lang == 'ta' ? 'உங்கள் அணியின் பெயர்' : 'Your team name',
+                        tr(en: 'Your team name', ta: 'உங்கள் அணியின் பெயர்', hi: 'आपकी टीम का नाम', ml: 'നിങ്ങളുടെ ടീമിന്റെ പേര്'),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _Label(text: lang == 'ta' ? 'அணித்தலைவர்' : 'Captain'),
+                _Label(text: tr(en: 'Captain', ta: 'அணித்தலைவர்', hi: 'कप्तान', ml: 'ക്യാപ്റ്റൻ')),
                 TextFormField(
                   controller: _captainController,
                   validator: _required,
                   decoration: InputDecoration(
                     hintText:
-                        lang == 'ta' ? 'அணித்தலைவர் பெயர்' : 'Captain name',
+                        tr(en: 'Captain name', ta: 'அணித்தலைவர் பெயர்', hi: 'कप्तान का नाम', ml: 'ക്യാപ്റ്റന്റെ പേര്'),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _Label(text: lang == 'ta' ? 'தொலைபேசி' : 'Phone'),
+                _Label(text: tr(en: 'Phone', ta: 'தொலைபேசி', hi: 'फ़ोन', ml: 'ഫോൺ')),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   validator: _required,
                   decoration: InputDecoration(
                     hintText:
-                        lang == 'ta' ? 'தொடர்பு எண்' : 'Contact number',
+                        tr(en: 'Contact number', ta: 'தொடர்பு எண்', hi: 'संपर्क नंबर', ml: 'ബന്ധപ്പെടാനുള്ള നമ്പർ'),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _Label(text: lang == 'ta' ? 'விளையாட்டு' : 'Sport'),
+                _Label(text: tr(en: 'Sport', ta: 'விளையாட்டு', hi: 'खेल', ml: 'കായികം')),
                 DropdownButtonFormField<String>(
                   initialValue: _sport,
                   items: _sportOptions
@@ -171,28 +168,22 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
                 ),
                 const SizedBox(height: 16),
                 _Label(
-                    text: lang == 'ta'
-                        ? 'இடம் (விருப்பத்திற்கு)'
-                        : 'Venue (optional)'),
+                    text: tr(en: 'Venue (optional)', ta: 'இடம் (விருப்பத்திற்கு)', hi: 'स्थान (वैकल्पिक)', ml: 'സ്ഥലം (ഓപ്ഷണൽ)')),
                 TextFormField(
                   controller: _venueController,
                   decoration: InputDecoration(
                     hintText:
-                        lang == 'ta' ? 'விளையாட்டு இடம்' : 'Match venue',
+                        tr(en: 'Match venue', ta: 'விளையாட்டு இடம்', hi: 'मैच स्थल', ml: 'മത്സര വേദി'),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _Label(
-                    text: lang == 'ta'
-                        ? 'செய்தி (விருப்பத்திற்கு)'
-                        : 'Message (optional)'),
+                    text: tr(en: 'Message (optional)', ta: 'செய்தி (விருப்பத்திற்கு)', hi: 'संदेश (वैकल्पिक)', ml: 'സന്ദേശം (ഓപ്ഷണൽ)')),
                 TextFormField(
                   controller: _messageController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: lang == 'ta'
-                        ? 'கூடுதல் விவரங்கள்'
-                        : 'Any additional details',
+                    hintText: tr(en: 'Any additional details', ta: 'கூடுதல் விவரங்கள்', hi: 'कोई अतिरिक्त विवरण', ml: 'എന്തെങ്കിലും അധിക വിവരങ്ങൾ'),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -209,7 +200,7 @@ class _ChallengeFormScreenState extends State<ChallengeFormScreen> {
                         )
                       : const Text('⚔️', style: TextStyle(fontSize: 18)),
                   label: Text(
-                    lang == 'ta' ? 'சவால் அனுப்பு' : 'Send Challenge',
+                    tr(en: 'Send Challenge', ta: 'சவால் அனுப்பு', hi: 'चुनौती भेजें', ml: 'വെല്ലുവിളി അയയ്ക്കുക'),
                   ),
                 ),
               ],

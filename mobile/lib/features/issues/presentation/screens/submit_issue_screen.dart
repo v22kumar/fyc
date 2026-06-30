@@ -14,6 +14,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 // ── Category definitions ──────────────────────────────────────────────────────
 
@@ -175,9 +176,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
       final ta = sl<LocalStorage>().getLang() == 'ta';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ta
-              ? 'தயவுசெய்து சிக்கலை விவரிக்கவும்'
-              : 'Please describe the issue before submitting'),
+          content: Text(tr(en: 'Please describe the issue before submitting', ta: 'தயவுசெய்து சிக்கலை விவரிக்கவும்', hi: 'कृपया सबमिट करने से पहले समस्या का विवरण दें', ml: 'സമർപ്പിക്കുന്നതിന് മുമ്പ് പ്രശ്നം വിവരിക്കുക')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -206,11 +205,11 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _isTa ? 'பிரச்சனை தெரிவிக்கவும்' : 'Report an Issue',
+              tr(en: 'Report an Issue', ta: 'பிரச்சனை தெரிவிக்கவும்', hi: 'समस्या की रिपोर्ट करें', ml: 'പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക'),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.cText),
             ),
             Text(
-              _isTa ? 'நாகர்கோவிலை மேம்படுத்த உதவுங்கள்' : 'Help us improve Nagercoil',
+              tr(en: 'Help us improve Nagercoil', ta: 'நாகர்கோவிலை மேம்படுத்த உதவுங்கள்', hi: 'नागरकोइल को बेहतर बनाने में मदद करें', ml: 'നാഗർകോവിൽ മെച്ചപ്പെടുത്താൻ സഹായിക്കൂ'),
               style: TextStyle(fontSize: 10, color: context.cTextSecondary),
             ),
           ],
@@ -220,7 +219,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             onPressed: () => context.push('/issues/track'),
             icon: Icon(Icons.list_alt_rounded, size: 16, color: AppColors.primary),
             label: Text(
-              _isTa ? 'என் புகார்கள்' : 'My Reports',
+              tr(en: 'My Reports', ta: 'என் புகார்கள்', hi: 'मेरी रिपोर्ट', ml: 'എന്റെ റിപ്പോർട്ടുകൾ'),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
             ),
           ),
@@ -242,7 +241,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 content: Text(state.message),
                 backgroundColor: AppColors.accent,
                 action: SnackBarAction(
-                  label: _isTa ? 'மீண்டும் முயற்சி' : 'Retry',
+                  label: tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'पुनः प्रयास', ml: 'വീണ്ടും ശ്രമിക്കുക'),
                   textColor: Colors.white,
                   onPressed: _submit,
                 ),
@@ -270,7 +269,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             const SizedBox(height: 20),
 
             // Category grid
-            _SectionLabel(_isTa ? 'வகை தேர்வு' : 'Select Category', trailing: _isTa ? null : 'Not sure? See examples'),
+            _SectionLabel(tr(en: 'Select Category', ta: 'வகை தேர்வு', hi: 'श्रेणी चुनें', ml: 'വിഭാഗം തിരഞ്ഞെടുക്കുക'), trailing: _isTa ? null : tr(en: 'Not sure? See examples', ta: '', hi: 'पक्का नहीं? उदाहरण देखें', ml: 'ഉറപ്പില്ലേ? ഉദാഹരണങ്ങൾ കാണുക')),
             const SizedBox(height: 10),
             _CategoryGrid(
               selected: _selectedCategory,
@@ -286,7 +285,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _showAdvanced ? (_isTa ? 'மேலும் விவரங்களை மறை' : 'Hide Details') : (_isTa ? 'மேலும் விவரங்கள் (விருப்பமானவை)' : 'Add Details (Optional)'),
+                    _showAdvanced ? (tr(en: 'Hide Details', ta: 'மேலும் விவரங்களை மறை', hi: 'विवरण छिपाएं', ml: 'വിശദാംശങ്ങൾ മറയ്ക്കുക')) : (tr(en: 'Add Details (Optional)', ta: 'மேலும் விவரங்கள் (விருப்பமானவை)', hi: 'विवरण जोड़ें (वैकल्पिक)', ml: 'വിശദാംശങ്ങൾ ചേർക്കുക (ഓപ്ഷണൽ)')),
                     style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
                   ),
                   Icon(
@@ -300,7 +299,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
 
             if (_showAdvanced) ...[
               // Description — Tamil
-              _SectionLabel(_isTa ? 'விவரம் (தமிழ்)' : 'Description (Tamil)'),
+              _SectionLabel(tr(en: 'Description (Tamil)', ta: 'விவரம் (தமிழ்)', hi: 'विवरण (तमिल)', ml: 'വിവരണം (തമിഴ്)')),
               const SizedBox(height: 8),
               TextField(
                 controller: _descTaCtrl,
@@ -318,7 +317,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
               const SizedBox(height: 12),
 
               // Description — English
-              _SectionLabel(_isTa ? 'விவரம் (ஆங்கிலம்)' : 'Description (English)'),
+              _SectionLabel(tr(en: 'Description (English)', ta: 'விவரம் (ஆங்கிலம்)', hi: 'विवरण (अंग्रेज़ी)', ml: 'വിവരണം (ഇംഗ്ലീഷ്)')),
               const SizedBox(height: 8),
               TextField(
                 controller: _descEnCtrl,
@@ -338,8 +337,8 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
 
             // Photo Evidence
             _SectionLabel(
-              _isTa ? 'புகைப்படம் (ஆதாரம்)' : 'Photo Evidence',
-              badge: _isTa ? 'தானாகப் பதிவாகும்' : 'Captured Automatically',
+              tr(en: 'Photo Evidence', ta: 'புகைப்படம் (ஆதாரம்)', hi: 'फ़ोटो प्रमाण', ml: 'ഫോട്ടോ തെളിവ്'),
+              badge: tr(en: 'Captured Automatically', ta: 'தானாகப் பதிவாகும்', hi: 'स्वतः कैप्चर', ml: 'സ്വയമേവ പകർത്തി'),
             ),
             const SizedBox(height: 8),
             _PhotoSection(
@@ -352,8 +351,8 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
 
             // Location
             _SectionLabel(
-              _isTa ? 'இடம்' : 'Auto Location',
-              badge: _locCaptured ? (_isTa ? 'தானாகப் பெறப்பட்டது' : 'Captured Automatically') : null,
+              tr(en: 'Auto Location', ta: 'இடம்', hi: 'स्वतः स्थान', ml: 'സ്വയം ലൊക്കേഷൻ'),
+              badge: _locCaptured ? (tr(en: 'Captured Automatically', ta: 'தானாகப் பெறப்பட்டது', hi: 'स्वतः प्राप्त', ml: 'സ്വയമേവ ലഭിച്ചു')) : null,
             ),
             const SizedBox(height: 8),
             _LocationCard(
@@ -402,8 +401,8 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                               const SizedBox(width: 10),
                               Text(
                                 _isEmergency
-                                    ? (_isTa ? 'அவசர புகார் அனுப்பவும்' : 'Send Emergency Report')
-                                    : (_isTa ? 'புகார் அனுப்பவும்' : 'Submit Issue'),
+                                    ? (tr(en: 'Send Emergency Report', ta: 'அவசர புகார் அனுப்பவும்', hi: 'आपातकालीन रिपोर्ट भेजें', ml: 'അടിയന്തര റിപ്പോർട്ട് അയയ്ക്കുക'))
+                                    : (tr(en: 'Submit Issue', ta: 'புகார் அனுப்பவும்', hi: 'समस्या सबमिट करें', ml: 'പ്രശ്നം സമർപ്പിക്കുക')),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 15,
@@ -419,9 +418,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             const SizedBox(height: 10),
             Center(
               child: Text(
-                _isTa
-                    ? '🔒 உங்கள் தகவல் பாதுகாக்கப்படும். யாரிடமும் பகிர்வதில்லை.'
-                    : '🔒 Your data is safe with us. We never share your personal info.',
+                tr(en: '🔒 Your data is safe with us. We never share your personal info.', ta: '🔒 உங்கள் தகவல் பாதுகாக்கப்படும். யாரிடமும் பகிர்வதில்லை.', hi: '🔒 आपका डेटा हमारे पास सुरक्षित है। हम आपकी निजी जानकारी कभी साझा नहीं करते।', ml: '🔒 നിങ്ങളുടെ വിവരങ്ങൾ ഞങ്ങളുടെ പക്കൽ സുരക്ഷിതമാണ്. നിങ്ങളുടെ വ്യക്തിവിവരം ഞങ്ങൾ പങ്കിടില്ല.'),
                 style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -659,13 +656,11 @@ class _EmergencyBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isTa ? 'அவசர புகார்!' : 'Emergency Issue?',
+                    tr(en: 'Emergency Issue?', ta: 'அவசர புகார்!', hi: 'आपातकालीन समस्या?', ml: 'അടിയന്തര പ്രശ്നമോ?'),
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFDC2626)),
                   ),
                   Text(
-                    isTa
-                        ? 'உடனடி கவனிப்பு தேவைப்படும் தீவிர பிரச்சனைகளுக்கு'
-                        : 'Report urgent hazards that need immediate attention.',
+                    tr(en: 'Report urgent hazards that need immediate attention.', ta: 'உடனடி கவனிப்பு தேவைப்படும் தீவிர பிரச்சனைகளுக்கு', hi: 'तुरंत ध्यान देने योग्य गंभीर खतरों की रिपोर्ट करें।', ml: 'ഉടനടി ശ്രദ്ധ വേണ്ട ഗുരുതര അപകടങ്ങൾ റിപ്പോർട്ട് ചെയ്യുക.'),
                     style: TextStyle(fontSize: 11, color: const Color(0xFFDC2626).withOpacity(0.75)),
                   ),
                 ],
@@ -766,9 +761,9 @@ class _PhotoSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Hint(isTa ? 'தெளிவான புகைப்படம் உதவும்' : 'Clear photo helps', icon: Icons.check_circle_outline),
-              _Hint(isTa ? 'சாலை ஓரத்தை முழுதாக காட்டவும்' : 'Show the exact problem area', icon: Icons.check_circle_outline),
-              _Hint(isTa ? 'பல புகைப்படங்கள் வரவேற்கப்படும்' : 'Multiple photos are welcome', icon: Icons.check_circle_outline),
+              _Hint(tr(en: 'Clear photo helps', ta: 'தெளிவான புகைப்படம் உதவும்', hi: 'साफ़ फ़ोटो मदद करती है', ml: 'വ്യക്തമായ ഫോട്ടോ സഹായിക്കും'), icon: Icons.check_circle_outline),
+              _Hint(tr(en: 'Show the exact problem area', ta: 'சாலை ஓரத்தை முழுதாக காட்டவும்', hi: 'सटीक समस्या क्षेत्र दिखाएं', ml: 'കൃത്യമായ പ്രശ്ന പ്രദേശം കാണിക്കുക'), icon: Icons.check_circle_outline),
+              _Hint(tr(en: 'Multiple photos are welcome', ta: 'பல புகைப்படங்கள் வரவேற்கப்படும்', hi: 'कई फ़ोटो स्वागत योग्य हैं', ml: 'ഒന്നിലധികം ഫോട്ടോകൾ സ്വാഗതം'), icon: Icons.check_circle_outline),
             ],
           ),
         ),
@@ -800,7 +795,7 @@ class _PhotoSection extends StatelessWidget {
                           Icon(Icons.camera_alt_rounded, color: context.cTextSecondary, size: 28),
                           const SizedBox(height: 4),
                           Text(
-                            isTa ? 'படம் எடு' : 'Take Photo',
+                            tr(en: 'Take Photo', ta: 'படம் எடு', hi: 'फ़ोटो लें', ml: 'ഫോട്ടോ എടുക്കുക'),
                             style: TextStyle(fontSize: 10, color: context.cTextSecondary, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -899,7 +894,7 @@ class _LocationCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
             child: Text(
-              isTa ? 'மீண்டும்' : 'Re-Capture',
+              tr(en: 'Re-Capture', ta: 'மீண்டும்', hi: 'फिर से कैप्चर', ml: 'വീണ്ടും പകർത്തുക'),
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
@@ -1022,8 +1017,8 @@ class _SuccessSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             isEmergency
-                ? (isTa ? 'அவசர புகார் பதிவாகியுள்ளது!' : 'Emergency Reported!')
-                : (isTa ? 'புகார் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!' : 'Issue Submitted Successfully!'),
+                ? (tr(en: 'Emergency Reported!', ta: 'அவசர புகார் பதிவாகியுள்ளது!', hi: 'आपातकाल की रिपोर्ट दर्ज!', ml: 'അടിയന്തരാവസ്ഥ റിപ്പോർട്ട് ചെയ്തു!'))
+                : (tr(en: 'Issue Submitted Successfully!', ta: 'புகார் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!', hi: 'समस्या सफलतापूर्वक सबमिट हुई!', ml: 'പ്രശ്നം വിജയകരമായി സമർപ്പിച്ചു!')),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
             textAlign: TextAlign.center,
           ),
@@ -1042,9 +1037,7 @@ class _SuccessSheet extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            isTa
-                ? 'நம் குழு 24 மணி நேரத்தில் ஆய்வு செய்து செயல்படும். நன்றி!'
-                : 'Our team will review and act within 24 hours. Thank you for making Nagercoil better!',
+            tr(en: 'Our team will review and act within 24 hours. Thank you for making Nagercoil better!', ta: 'நம் குழு 24 மணி நேரத்தில் ஆய்வு செய்து செயல்படும். நன்றி!', hi: 'हमारी टीम 24 घंटे में समीक्षा कर कार्रवाई करेगी। नागरकोइल को बेहतर बनाने के लिए धन्यवाद!', ml: 'ഞങ്ങളുടെ ടീം 24 മണിക്കൂറിനുള്ളിൽ പരിശോധിച്ച് നടപടിയെടുക്കും. നാഗർകോവിൽ മെച്ചപ്പെടുത്തിയതിന് നന്ദി!'),
             style: TextStyle(fontSize: 12.5, color: context.cTextSecondary, height: 1.5),
             textAlign: TextAlign.center,
           ),
@@ -1059,7 +1052,7 @@ class _SuccessSheet extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(isTa ? 'புகார் கண்காணிக்கவும்' : 'Track Issue',
+                  child: Text(tr(en: 'Track Issue', ta: 'புகார் கண்காணிக்கவும்', hi: 'समस्या ट्रैक करें', ml: 'പ്രശ്നം ട്രാക്ക് ചെയ്യുക'),
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
@@ -1073,7 +1066,7 @@ class _SuccessSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
-                  child: Text(isTa ? 'முடிந்தது' : 'Done',
+                  child: Text(tr(en: 'Done', ta: 'முடிந்தது', hi: 'हो गया', ml: 'പൂർത്തിയായി'),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                 ),
               ),

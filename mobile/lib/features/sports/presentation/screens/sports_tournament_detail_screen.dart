@@ -16,6 +16,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class SportsTournamentDetailScreen extends StatefulWidget {
   final String tournamentId;
@@ -103,11 +104,11 @@ class _SportsTournamentDetailScreenState
     final isMember = _isMember;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'போட்டி விவரம்' : 'Tournament'),
+        title: Text(tr(en: 'Tournament', ta: 'போட்டி விவரம்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്')),
         actions: [
           if (isAdmin)
             IconButton(
-              tooltip: _lang == 'ta' ? 'அட்டவணை உருவாக்கு' : 'Generate Fixtures',
+              tooltip: tr(en: 'Generate Fixtures', ta: 'அட்டவணை உருவாக்கு', hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
               icon: const Icon(Icons.auto_awesome_motion_outlined),
               onPressed: _generateFixtures,
             ),
@@ -189,15 +190,13 @@ class _SportsTournamentDetailScreenState
                   ),
                   const SizedBox(height: 18),
                   _SectionHeader(
-                    label: _lang == 'ta' ? 'போட்டிகள்' : 'Fixtures',
+                    label: tr(en: 'Fixtures', ta: 'போட்டிகள்', hi: 'फ़िक्स्चर', ml: 'ഫിക്സ്ചറുകൾ'),
                   ),
                   if (state.fixtures.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        _lang == 'ta'
-                            ? 'போட்டிகள் இல்லை'
-                            : 'No fixtures scheduled',
+                        tr(en: 'No fixtures scheduled', ta: 'போட்டிகள் இல்லை', hi: 'कोई फ़िक्स्चर निर्धारित नहीं', ml: 'ഫിക്സ്ചറുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല'),
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
@@ -249,22 +248,20 @@ class _SportsTournamentDetailScreenState
                             if (ok == true) _reload();
                           },
                           icon: const Icon(Icons.group_add, color: Colors.white),
-                          label: Text(_lang == 'ta' ? 'அணியை பதிவு செய்' : 'Register Your Team', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          label: Text(tr(en: 'Register Your Team', ta: 'அணியை பதிவு செய்', hi: 'अपनी टीम पंजीकृत करें', ml: 'നിങ്ങളുടെ ടീം രജിസ്റ്റർ ചെയ്യുക'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                         ),
                       ),
                     ),
                   
                   _SectionHeader(
-                    label: _lang == 'ta' ? 'புள்ளிப்பட்டியல்' : 'Standings',
+                    label: tr(en: 'Standings', ta: 'புள்ளிப்பட்டியல்', hi: 'अंक तालिका', ml: 'പോയിന്റ് പട്ടിക'),
                   ),
                   if (state.standings.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        _lang == 'ta'
-                            ? 'அணிகள் இல்லை'
-                            : 'No teams yet',
+                        tr(en: 'No teams yet', ta: 'அணிகள் இல்லை', hi: 'अभी कोई टीम नहीं', ml: 'ഇതുവരെ ടീമുകളൊന്നുമില്ല'),
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
@@ -286,7 +283,7 @@ class _SportsTournamentDetailScreenState
                   ElevatedButton(
                     onPressed: _reload,
                     child: Text(
-                        _lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                        tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -330,8 +327,8 @@ class _FixtureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM yyyy · h:mm a');
-    final teamA = fixture.teamAName ?? (lang == 'ta' ? 'அணி A' : 'Team A');
-    final teamB = fixture.teamBName ?? (lang == 'ta' ? 'அணி B' : 'Team B');
+    final teamA = fixture.teamAName ?? (tr(en: 'Team A', ta: 'அணி A', hi: 'टीम A', ml: 'ടീം A'));
+    final teamB = fixture.teamBName ?? (tr(en: 'Team B', ta: 'அணி B', hi: 'टीम B', ml: 'ടീം B'));
     final hasScore =
         (fixture.teamAScore != null) || (fixture.teamBScore != null);
 
@@ -346,7 +343,7 @@ class _FixtureCard extends StatelessWidget {
               children: [
                 if (fixture.matchNumber != null)
                   Text(
-                    (lang == 'ta' ? 'போட்டி #' : 'Match #') +
+                    (tr(en: 'Match #', ta: 'போட்டி #', hi: 'मैच #', ml: 'മത്സരം #')) +
                         '${fixture.matchNumber}',
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.textSecondary),
@@ -373,7 +370,7 @@ class _FixtureCard extends StatelessWidget {
                   )
                 else
                   Text(
-                    lang == 'ta' ? 'எதிராக' : 'vs',
+                    tr(en: 'vs', ta: 'எதிராக', hi: 'बनाम', ml: 'vs'),
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textSecondary),
                   ),
@@ -433,7 +430,7 @@ class _FixtureCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onEnterScore,
                   icon: const Icon(Icons.bolt_rounded, size: 16),
-                  label: Text(lang == 'ta' ? 'ஸ்கோர் பதிவு செய்' : 'Enter Live Score'),
+                  label: Text(tr(en: 'Enter Live Score', ta: 'ஸ்கோர் பதிவு செய்', hi: 'लाइव स्कोर दर्ज करें', ml: 'ലൈവ് സ്കോർ നൽകുക')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
@@ -506,7 +503,7 @@ class _StandingsTable extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: Text(
-                      lang == 'ta' ? 'அணி' : 'Team',
+                      tr(en: 'Team', ta: 'அணி', hi: 'टीम', ml: 'ടീം'),
                       style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -623,9 +620,7 @@ class _EmptyDetail extends StatelessWidget {
           const Text('🏟️', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            lang == 'ta'
-                ? 'விவரங்கள் இன்னும் இல்லை'
-                : 'No details available yet',
+            tr(en: 'No details available yet', ta: 'விவரங்கள் இன்னும் இல்லை', hi: 'अभी कोई विवरण उपलब्ध नहीं', ml: 'ഇതുവരെ വിശദാംശങ്ങളൊന്നുമില്ല'),
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ],
