@@ -1,0 +1,160 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../core/storage/local_storage.dart';
+import '../../core/theme/app_theme.dart';
+import '../../service_locator.dart';
+import 'feed_api.dart';
+
+class CreatePostScreen extends StatefulWidget {
+  const CreatePostScreen({super.key});
+
+  @override
+  State<CreatePostScreen> createState() => _CreatePostScreenState();
+}
+
+class _CreatePostScreenState extends State<CreatePostScreen> {
+  final _controller = TextEditingController();
+  final _picker = ImagePicker();
+  final List<File> _images = [];
+  bool _posting = false;
+
+  bool get _ta => sl<LocalStorage>().getLang() == 'ta';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    if (_images.length >= 4) return;
+    try {
+      final x = await _picker.pickImage(
+          source: ImageSource.gallery, imageQuality: 70, maxWidth: 1600);
+      if (x != null) setState(() => _images.add(File(x.path)));
+    } catch (_) {/* permission denied / cancelled */}
+  }
+
+  Future<void> _submit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty && _images.isEmpty) return;
+    setState(() => _posting = true);
+    final ta = _ta;
+    try {
+      final urls = <String>[];
+      for (final f in _images) {
+        urls.add(await FeedApi.uploadImage(f.path));
+      }
+      await FeedApi.create(content: text, imageUrls: urls);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _posting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(ta
+            ? 'இடுகையிட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
+            : "Couldn't post. Please try again."),
+        backgroundColor: AppColors.accent,
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ta = _ta;
+    final canPost =
+        !_posting && (_controller.text.trim().isNotEmpty || _images.isNotEmpty);
+    return Scaffold(
+      backgroundColor: context.cBackground,
+      appBar: AppBar(
+        title: Text(ta ? 'இடுகையை உருவாக்கு' : 'Create Post'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: canPost ? _submit : null,
+              child: _posting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(ta ? 'இடு' : 'Post',
+                      style: TextStyle(
+                          color: canPost
+                              ? AppColors.primary
+                              : context.cTextSecondary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15)),
+            ),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextField(
+            controller: _controller,
+            maxLines: null,
+            minLines: 4,
+            autofocus: true,
+            onChanged: (_) => setState(() {}),
+            style: TextStyle(fontSize: 16, color: context.cText),
+            decoration: InputDecoration(
+              hintText: ta
+                  ? 'உங்கள் சமூகத்தில் என்ன நடக்கிறது?'
+                  : "What's happening in your community?",
+              border: InputBorder.none,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_images.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (int i = 0; i < _images.length; i++)
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(_images[i],
+                            width: 100, height: 100, fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        right: 2,
+                        top: 2,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _images.removeAt(i)),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                                color: Colors.black54, shape: BoxShape.circle),
+                            padding: const EdgeInsets.all(2),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _images.length >= 4 ? null : _pickImage,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: Text(ta ? 'புகைப்படம் சேர்' : 'Add Photo'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

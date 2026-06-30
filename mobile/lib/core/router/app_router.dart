@@ -94,8 +94,8 @@ import '../../features/journey/presentation/bloc/journey_bloc.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 
 // Community Feed
-import '../../features/community_feed/presentation/screens/community_feed_screen.dart';
-import '../../features/community_feed/presentation/bloc/community_feed_bloc.dart';
+import '../../features/feed/feed_screen.dart';
+import '../../features/feed/create_post_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -154,10 +154,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/feed',
-      builder: (context, state) => BlocProvider(
-        create: (_) => sl<CommunityFeedBloc>(),
-        child: const CommunityFeedScreen(),
-      ),
+      builder: (context, state) => const FeedScreen(),
+      routes: [
+        GoRoute(
+          path: 'create',
+          builder: (context, state) => const CreatePostScreen(),
+        ),
+      ],
     ),
     GoRoute(
       path: '/blood-donation',
