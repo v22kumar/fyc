@@ -119,14 +119,75 @@ class _SportsTournamentDetailScreenState
             return const Center(child: CircularProgressIndicator());
           }
           if (state is SportsDetailLoaded) {
-            if (state.fixtures.isEmpty && state.standings.isEmpty) {
-              return _EmptyDetail(lang: _lang);
-            }
+            // NOTE: never gate the whole screen on fixtures/standings being
+            // present — a brand-new tournament has neither, yet the user still
+            // needs to see the details and the "Register Your Team" button.
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  // ── Tournament header ───────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0B6E4F), Color(0xFF12A150)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          state.tournament.displayName(_lang),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${state.tournament.sport} · ${state.tournament.year}',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                state.tournament.status,
+                                style: const TextStyle(
+                                    color: Color(0xFF0B6E4F),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   _SectionHeader(
                     label: _lang == 'ta' ? 'போட்டிகள்' : 'Fixtures',
                   ),
