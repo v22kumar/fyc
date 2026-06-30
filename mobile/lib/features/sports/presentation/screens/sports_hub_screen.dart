@@ -12,6 +12,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class _SportFilter {
   final String value; // empty == all
@@ -71,11 +72,11 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
     final isAdmin = _isAdmin;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'விளையாட்டு மையம்' : 'Sports Hub'),
+        title: Text(tr(en: 'Sports Hub', ta: 'விளையாட்டு மையம்', hi: 'खेल केंद्र', ml: 'കായിക കേന്ദ്രം')),
         actions: [
           if (isAdmin)
             IconButton(
-              tooltip: _lang == 'ta' ? 'மதிப்பீடுகள்' : 'Score Approvals',
+              tooltip: tr(en: 'Score Approvals', ta: 'மதிப்பீடுகள்', hi: 'स्कोर अनुमोदन', ml: 'സ്കോർ അംഗീകാരം'),
               icon: const Icon(Icons.fact_check_outlined),
               onPressed: () => context.push('/sports/approvals'),
             ),
@@ -87,7 +88,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
-                _lang == 'ta' ? 'போட்டி உருவாக்கு' : 'Create',
+                tr(en: 'Create', ta: 'போட்டி உருவாக்கு', hi: 'बनाएं', ml: 'സൃഷ്ടിക്കുക'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             )
@@ -123,7 +124,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   left: 16,
                   bottom: 12,
                   child: Text(
-                    _lang == 'ta' ? 'விளையாடு · வெல்' : 'Play. Compete. Win.',
+                    tr(en: 'Play. Compete. Win.', ta: 'விளையாடு · வெல்', hi: 'खेलें · प्रतिस्पर्धा · जीतें', ml: 'കളിക്കൂ · മത്സരിക്കൂ · ജയിക്കൂ'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
@@ -155,9 +156,9 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   if (state.tournaments.isEmpty) {
                     return EmptyState(
                       emoji: '🏅',
-                      title: _lang == 'ta' ? 'போட்டிகள் இல்லை' : 'No Tournaments',
-                      message: _lang == 'ta' ? 'தற்போது விளையாட்டுப் போட்டிகள் எதுவும் இல்லை.' : 'There are no active sports tournaments at the moment.',
-                      buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
+                      title: tr(en: 'No Tournaments', ta: 'போட்டிகள் இல்லை', hi: 'कोई टूर्नामेंट नहीं', ml: 'ടൂർണമെന്റുകളൊന്നുമില്ല'),
+                      message: tr(en: 'There are no active sports tournaments at the moment.', ta: 'தற்போது விளையாட்டுப் போட்டிகள் எதுவும் இல்லை.', hi: 'इस समय कोई सक्रिय खेल टूर्नामेंट नहीं है।', ml: 'ഇപ്പോൾ സജീവമായ കായിക ടൂർണമെന്റുകളൊന്നുമില്ല.'),
+                      buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
                       onAction: () => _selectSport(_selectedSport),
                     );
                   }
@@ -200,9 +201,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => _selectSport(_selectedSport),
-                          child: Text(_lang == 'ta'
-                              ? 'மீண்டும் முயற்சிக்கவும்'
-                              : 'Retry'),
+                          child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                         ),
                       ],
                     ),
@@ -290,7 +289,7 @@ class _ChallengeBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        lang == 'ta' ? 'FYC ஐ சவால் விடுங்கள்' : 'Challenge FYC',
+                        tr(en: 'Challenge FYC', ta: 'FYC ஐ சவால் விடுங்கள்', hi: 'FYC को चुनौती दें', ml: 'FYC-യെ വെല്ലുവിളിക്കൂ'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 15,
@@ -299,9 +298,7 @@ class _ChallengeBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        lang == 'ta'
-                            ? 'உங்கள் அணியுடன் போட்டியிடுங்கள்'
-                            : 'Send your team a match request',
+                        tr(en: 'Send your team a match request', ta: 'உங்கள் அணியுடன் போட்டியிடுங்கள்', hi: 'अपनी टीम को मैच अनुरोध भेजें', ml: 'നിങ്ങളുടെ ടീമിന് ഒരു മത്സര അഭ്യർത്ഥന അയയ്ക്കൂ'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,

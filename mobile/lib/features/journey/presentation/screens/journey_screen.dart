@@ -4,6 +4,7 @@ import '../bloc/journey_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class JourneyScreen extends StatefulWidget {
   const JourneyScreen({super.key});
@@ -25,7 +26,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'என் பயணம்' : 'My Journey'),
+        title: Text(tr(en: 'My Journey', ta: 'என் பயணம்', hi: 'मेरी यात्रा', ml: 'എന്റെ യാത്ര')),
         elevation: 0,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -64,37 +65,37 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         _ImpactCard(
                           icon: Icons.event,
                           color: Colors.purple,
-                          title: _lang == 'ta' ? 'நிகழ்வுகள்' : 'Events Attended',
+                          title: tr(en: 'Events Attended', ta: 'நிகழ்வுகள்', hi: 'शामिल कार्यक्रम', ml: 'പങ്കെടുത്ത പരിപാടികൾ'),
                           value: j.eventsAttended.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.check_circle,
                           color: Colors.green,
-                          title: _lang == 'ta' ? 'புகார்கள்' : 'Issues Resolved',
+                          title: tr(en: 'Issues Resolved', ta: 'புகார்கள்', hi: 'हल किए मुद्दे', ml: 'പരിഹരിച്ച പ്രശ്നങ്ങൾ'),
                           value: j.issuesHelped.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.park,
                           color: Colors.teal,
-                          title: _lang == 'ta' ? 'மரங்கள்' : 'Trees Planted',
+                          title: tr(en: 'Trees Planted', ta: 'மரங்கள்', hi: 'लगाए पेड़', ml: 'നട്ട മരങ്ങൾ'),
                           value: j.treesPlanted.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.water_drop,
                           color: Colors.redAccent,
-                          title: _lang == 'ta' ? 'இரத்ததானம்' : 'Blood Donations',
+                          title: tr(en: 'Blood Donations', ta: 'இரத்ததானம்', hi: 'रक्तदान', ml: 'രക്തദാനങ്ങൾ'),
                           value: j.bloodDonations.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.sports_soccer,
                           color: Colors.orange,
-                          title: _lang == 'ta' ? 'விளையாட்டு' : 'Sports Matches',
+                          title: tr(en: 'Sports Matches', ta: 'விளையாட்டு', hi: 'खेल मैच', ml: 'കായിക മത്സരങ്ങൾ'),
                           value: j.sportsMatchesPlayed.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.timer,
                           color: Colors.blueAccent,
-                          title: _lang == 'ta' ? 'நேரம்' : 'Volunteer Hours',
+                          title: tr(en: 'Volunteer Hours', ta: 'நேரம்', hi: 'सेवा घंटे', ml: 'വൊളന്റിയർ മണിക്കൂറുകൾ'),
                           value: '${j.volunteerHours}h',
                         ),
                       ],
@@ -115,7 +116,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                       onPressed: () {
                         context.read<JourneyBloc>().add(const JourneyFetchRequested());
                       },
-                      child: Text(_lang == 'ta' ? 'மீண்டும் முயற்சி' : 'Retry'),
+                      child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'पुनः प्रयास', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                     )
                   ],
                 ),
@@ -151,14 +152,12 @@ class _JourneyScreenState extends State<JourneyScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _lang == 'ta' ? 'உங்கள் சமூகத் தாக்கம்' : 'Your Community Impact',
+            tr(en: 'Your Community Impact', ta: 'உங்கள் சமூகத் தாக்கம்', hi: 'आपका सामुदायिक प्रभाव', ml: 'നിങ്ങളുടെ സമൂഹ സ്വാധീനം'),
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            _lang == 'ta'
-                ? 'உங்கள் பங்களிப்புகள் நமது சமூகத்தை மாற்றுகின்றன!'
-                : 'Your contributions are making a real difference!',
+            tr(en: 'Your contributions are making a real difference!', ta: 'உங்கள் பங்களிப்புகள் நமது சமூகத்தை மாற்றுகின்றன!', hi: 'आपके योगदान वास्तविक बदलाव ला रहे हैं!', ml: 'നിങ്ങളുടെ സംഭാവനകൾ യഥാർത്ഥ മാറ്റം വരുത്തുന്നു!'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
