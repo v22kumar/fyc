@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../service_locator.dart';
@@ -67,7 +68,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isTa ? 'வாய்ப்புகள் & பயிற்சி' : 'Opportunities & Skills'),
+        title: Text(tr(en: 'Opportunities & Skills', ta: 'வாய்ப்புகள் & பயிற்சி', hi: 'अवसर और कौशल', ml: 'അവസരങ്ങളും നൈപുണ്യങ്ങളും')),
       ),
       body: BlocConsumer<OpportunityBloc, OpportunityState>(
         listener: (context, state) {
@@ -80,9 +81,12 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        isTa
-                            ? 'வெற்றி! விண்ணப்பம் சமர்ப்பிக்கப்பட்டது.'
-                            : 'Success! Your application has been submitted.',
+                        tr(
+                          en: 'Success! Your application has been submitted.',
+                          ta: 'வெற்றி! விண்ணப்பம் சமர்ப்பிக்கப்பட்டது.',
+                          hi: 'सफलता! आपका आवेदन सबमिट कर दिया गया है।',
+                          ml: 'വിജയം! നിങ്ങളുടെ അപേക്ഷ സമർപ്പിച്ചു.',
+                        ),
                       ),
                     ),
                   ],
@@ -110,7 +114,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => context.read<OpportunityBloc>().add(const OpportunityFetchRequested()),
-                    child: Text(isTa ? 'மீண்டும் முயற்சி' : 'Retry'),
+                    child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'फिर से प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -134,11 +138,11 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    _FilterChip('ALL', isTa ? 'அனைத்தும்' : 'All', _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('ALL', tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                     const SizedBox(width: 8),
-                    _FilterChip('VOLUNTEER', isTa ? 'தன்னார்வ பணி' : 'Volunteer', _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('VOLUNTEER', tr(en: 'Volunteer', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                     const SizedBox(width: 8),
-                    _FilterChip('COURSE', isTa ? 'பயிற்சிகள்' : 'Courses', _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('COURSE', tr(en: 'Courses', ta: 'பயிற்சிகள்', hi: 'पाठ्यक्रम', ml: 'കോഴ്സുകൾ'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                   ],
                 ),
               ),
@@ -151,7 +155,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
-                          isTa ? 'மாதிரி வாய்ப்புகள்' : 'Sample Opportunities',
+                          tr(en: 'Sample Opportunities', ta: 'மாதிரி வாய்ப்புகள்', hi: 'नमूना अवसर', ml: 'സാമ്പിൾ അവസരങ്ങൾ'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -167,7 +171,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8, bottom: 12),
                           child: Text(
-                            isTa ? 'கிடைக்கும் வாய்ப்புகள்' : 'Available Opportunities',
+                            tr(en: 'Available Opportunities', ta: 'கிடைக்கும் வாய்ப்புகள்', hi: 'उपलब्ध अवसर', ml: 'ലഭ്യമായ അവസരങ്ങൾ'),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -213,16 +217,19 @@ class _PremiumEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            isTa ? 'வாய்ப்புகள் இல்லை' : 'No Opportunities Yet',
+            tr(en: 'No Opportunities Yet', ta: 'வாய்ப்புகள் இல்லை', hi: 'अभी तक कोई अवसर नहीं', ml: 'ഇതുവരെ അവസരങ്ങളൊന്നുമില്ല'),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.cText),
           ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              isTa
-                  ? 'FYC சமூகத்திற்கு முதன்முதலில் தன்னார்வ வாய்ப்பை பதிவிடுங்கள்.'
-                  : 'Be the first to post a volunteer opportunity or skill exchange for the FYC community.',
+              tr(
+                en: 'Be the first to post a volunteer opportunity or skill exchange for the FYC community.',
+                ta: 'FYC சமூகத்திற்கு முதன்முதலில் தன்னார்வ வாய்ப்பை பதிவிடுங்கள்.',
+                hi: 'FYC समुदाय के लिए स्वयंसेवक अवसर या कौशल विनिमय पोस्ट करने वाले पहले व्यक्ति बनें।',
+                ml: 'FYC സമൂഹത്തിനായി ഒരു വളണ്ടിയർ അവസരമോ നൈപുണ്യ കൈമാറ്റമോ ആദ്യമായി പോസ്റ്റ് ചെയ്യൂ.',
+              ),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
@@ -235,7 +242,7 @@ class _PremiumEmptyState extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             child: Text(
-              isTa ? 'வாய்ப்பை பதிவிடவும்' : 'Post an Opportunity',
+              tr(en: 'Post an Opportunity', ta: 'வாய்ப்பை பதிவிடவும்', hi: 'एक अवसर पोस्ट करें', ml: 'ഒരു അവസരം പോസ്റ്റ് ചെയ്യൂ'),
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
             ),
           ),
@@ -281,8 +288,8 @@ class _SampleOpportunityCard extends StatelessWidget {
                       ),
                       child: Text(
                         isVolunteer
-                            ? (isTa ? 'தன்னார்வ பணி' : 'VOLUNTEERING')
-                            : (isTa ? 'திறன் பரிமாற்றம்' : 'SKILL EXCHANGE'),
+                            ? tr(en: 'VOLUNTEERING', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवा', ml: 'വളണ്ടിയറിംഗ്')
+                            : tr(en: 'SKILL EXCHANGE', ta: 'திறன் பரிமாற்றம்', hi: 'कौशल विनिमय', ml: 'നൈപുണ്യ കൈമാറ്റം'),
                         style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: typeColor),
                       ),
                     ),
@@ -294,7 +301,7 @@ class _SampleOpportunityCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        isTa ? 'மாதிரி' : 'Sample',
+                        tr(en: 'Sample', ta: 'மாதிரி', hi: 'नमूना', ml: 'സാമ്പിൾ'),
                         style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.cTextSecondary),
                       ),
                     ),
@@ -348,8 +355,8 @@ class _SampleOpportunityCard extends StatelessWidget {
                 ),
                 child: Text(
                   isVolunteer
-                      ? (isTa ? 'தன்னார்வலராக விண்ணப்பி' : 'Apply to Volunteer')
-                      : (isTa ? 'திறன் பரிமாறவும்' : 'Exchange Skills'),
+                      ? tr(en: 'Apply to Volunteer', ta: 'தன்னார்வலராக விண்ணப்பி', hi: 'स्वयंसेवा के लिए आवेदन करें', ml: 'വളണ്ടിയർ ചെയ്യാൻ അപേക്ഷിക്കുക')
+                      : tr(en: 'Exchange Skills', ta: 'திறன் பரிமாறவும்', hi: 'कौशल का आदान-प्रदान करें', ml: 'നൈപുണ്യങ്ങൾ കൈമാറുക'),
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
@@ -395,8 +402,8 @@ class _OpportunityCard extends StatelessWidget {
                   ),
                   child: Text(
                     isVolunteer
-                        ? (isTa ? 'தன்னார்வ பணி' : 'VOLUNTEERING')
-                        : (isTa ? 'வகுப்பு' : 'SKILL COURSE'),
+                        ? tr(en: 'VOLUNTEERING', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवा', ml: 'വളണ്ടിയറിംഗ്')
+                        : tr(en: 'SKILL COURSE', ta: 'வகுப்பு', hi: 'कौशल पाठ्यक्रम', ml: 'നൈപുണ്യ കോഴ്സ്'),
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: typeColor),
                   ),
                 ),
@@ -446,8 +453,8 @@ class _OpportunityCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(backgroundColor: typeColor),
                 child: Text(
                   isVolunteer
-                      ? (isTa ? 'தன்னார்வலராக விண்ணப்பி' : 'Apply to Volunteer')
-                      : (isTa ? 'வகுப்பில் சேரவும்' : 'Enroll in Course'),
+                      ? tr(en: 'Apply to Volunteer', ta: 'தன்னார்வலராக விண்ணப்பி', hi: 'स्वयंसेवा के लिए आवेदन करें', ml: 'വളണ്ടിയർ ചെയ്യാൻ അപേക്ഷിക്കുക')
+                      : tr(en: 'Enroll in Course', ta: 'வகுப்பில் சேரவும்', hi: 'पाठ्यक्रम में नामांकन करें', ml: 'കോഴ്സിൽ ചേരുക'),
                   style: const TextStyle(fontSize: 14),
                 ),
               ),

@@ -13,6 +13,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class BloodDonationHubScreen extends StatefulWidget {
   const BloodDonationHubScreen({super.key});
@@ -123,13 +124,13 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'இரத்த தான மையம்' : 'Blood Donation Hub'),
+        title: Text(tr(en: 'Blood Donation Hub', ta: 'இரத்த தான மையம்', hi: 'रक्तदान केंद्र', ml: 'രക്തദാന കേന്ദ്രം')),
         actions: [
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
             icon: const Icon(Icons.volunteer_activism, color: Colors.white),
             label: Text(
-              _lang == 'ta' ? 'பதிவு' : 'Register',
+              tr(en: 'Register', ta: 'பதிவு', hi: 'पंजीकरण', ml: 'രജിസ്റ്റർ'),
               style: const TextStyle(color: Colors.white),
             ),
           ),
@@ -168,9 +169,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   right: 16,
                   bottom: 12,
                   child: Text(
-                    _lang == 'ta'
-                        ? 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்'
-                        : 'Your one donation can save up to 3 lives',
+                    tr(en: 'Your one donation can save up to 3 lives', ta: 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்', hi: 'आपका एक रक्तदान 3 जीवन बचा सकता है', ml: 'നിങ്ങളുടെ ഒരു ദാനം 3 ജീവൻ വരെ രക്ഷിക്കാം'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -258,9 +257,9 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Contact Donor',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              tr(en: 'Contact Donor', ta: 'கொடையாளரைத் தொடர்பு கொள்ளவும்', hi: 'दाता से संपर्क करें', ml: 'ദാതാവിനെ ബന്ധപ്പെടുക'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(state.phoneNumber, style: const TextStyle(fontSize: 20)),
@@ -271,7 +270,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () => _launchPhone(state.phoneNumber),
                     icon: const Icon(Icons.call, color: Colors.white),
-                    label: const Text('Call', style: TextStyle(color: Colors.white)),
+                    label: Text(tr(en: 'Call', ta: 'அழை', hi: 'कॉल करें', ml: 'വിളിക്കുക'), style: const TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                   ),
                 ),
@@ -280,7 +279,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _launchSms(state.phoneNumber),
                     icon: const Icon(Icons.sms_outlined),
-                    label: const Text('Message'),
+                    label: Text(tr(en: 'Message', ta: 'செய்தி', hi: 'संदेश', ml: 'സന്ദേശം')),
                   ),
                 ),
               ],
@@ -339,13 +338,11 @@ class _EmergencyBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    lang == 'ta' ? 'அவசர இரத்தம் தேவையா?' : 'Emergency Blood Needed?',
+                    tr(en: 'Emergency Blood Needed?', ta: 'அவசர இரத்தம் தேவையா?', hi: 'आपातकालीन रक्त चाहिए?', ml: 'അടിയന്തര രക്തം വേണോ?'),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                   Text(
-                    lang == 'ta'
-                        ? 'உங்கள் பகுதியில் உள்ள தகுதியான கொடையாளர்களை எச்சரிக்க தட்டவும்'
-                        : 'Tap to alert all eligible donors in your area',
+                    tr(en: 'Tap to alert all eligible donors in your area', ta: 'உங்கள் பகுதியில் உள்ள தகுதியான கொடையாளர்களை எச்சரிக்க தட்டவும்', hi: 'अपने क्षेत्र के सभी योग्य दाताओं को सूचित करने के लिए टैप करें', ml: 'നിങ്ങളുടെ പ്രദേശത്തെ യോഗ്യരായ എല്ലാ ദാതാക്കളെയും അറിയിക്കാൻ ടാപ്പ് ചെയ്യുക'),
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
@@ -397,7 +394,7 @@ class _FilterRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
-          chip(lang == 'ta' ? 'அனைத்தும்' : 'All', selected == null, () => onSelect(null)),
+          chip(tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം'), selected == null, () => onSelect(null)),
           ...groups.map((g) => chip(g, selected == g, () => onSelect(selected == g ? null : g))),
         ],
       ),
@@ -451,13 +448,13 @@ class _LocationFilter extends StatelessWidget {
                     child: DropdownButton<String?>(
                       isExpanded: true,
                       value: selectedId,
-                      hint: Text(ta ? 'அனைத்து பகுதிகள்' : 'All locations',
+                      hint: Text(tr(en: 'All locations', ta: 'அனைத்து பகுதிகள்', hi: 'सभी स्थान', ml: 'എല്ലാ സ്ഥലങ്ങളും'),
                           style: TextStyle(fontSize: 14, color: context.cTextSecondary)),
                       icon: Icon(Icons.expand_more, color: context.cTextSecondary),
                       items: [
                         DropdownMenuItem<String?>(
                           value: null,
-                          child: Text(ta ? 'அனைத்து பகுதிகள்' : 'All locations',
+                          child: Text(tr(en: 'All locations', ta: 'அனைத்து பகுதிகள்', hi: 'सभी स्थान', ml: 'എല്ലാ സ്ഥലങ്ങളും'),
                               style: const TextStyle(fontSize: 14)),
                         ),
                         ...taluks.map((t) => DropdownMenuItem<String?>(
@@ -484,7 +481,7 @@ class _LocationFilter extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     activeColor: AppColors.primary,
                   ),
-                  Text(ta ? 'அருகிலுள்ள பகுதிகளையும் சேர்' : 'Include nearby areas',
+                  Text(tr(en: 'Include nearby areas', ta: 'அருகிலுள்ள பகுதிகளையும் சேர்', hi: 'आस-पास के क्षेत्र शामिल करें', ml: 'സമീപ പ്രദേശങ്ങളും ഉൾപ്പെടുത്തുക'),
                       style: TextStyle(fontSize: 13, color: context.cText)),
                 ],
               ),
@@ -555,7 +552,7 @@ class _DonorCard extends StatelessWidget {
                         if (isVerified) ...[
                           const SizedBox(width: 6),
                           Tooltip(
-                            message: lang == 'ta' ? 'சரிபார்க்கப்பட்ட உறுப்பினர்' : 'Verified Member',
+                            message: tr(en: 'Verified Member', ta: 'சரிபார்க்கப்பட்ட உறுப்பினர்', hi: 'सत्यापित सदस्य', ml: 'പരിശോധിച്ച അംഗം'),
                             child: const Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
                           ),
                         ],
@@ -596,7 +593,7 @@ class _DonorCard extends StatelessWidget {
                     const Icon(Icons.call, size: 15, color: AppColors.primary),
                     const SizedBox(width: 5),
                     Text(
-                      lang == 'ta' ? 'தொடர்பு' : 'Contact',
+                      tr(en: 'Contact', ta: 'தொடர்பு', hi: 'संपर्क', ml: 'ബന്ധപ്പെടുക'),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -635,17 +632,15 @@ class _EmptyDonors extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             group != null
-                ? (lang == 'ta' ? 'இப்போது $group கொடையாளர்கள் இல்லை' : 'No donors found')
-                : (lang == 'ta' ? 'கொடையாளர்கள் இல்லை' : 'No donors found'),
+                ? tr(en: 'No donors found', ta: 'இப்போது $group கொடையாளர்கள் இல்லை', hi: 'अभी $group दाता नहीं मिले', ml: 'ഇപ്പോൾ $group ദാതാക്കളെ കണ്ടെത്തിയില്ല')
+                : tr(en: 'No donors found', ta: 'கொடையாளர்கள் இல்லை', hi: 'कोई दाता नहीं मिला', ml: 'ദാതാക്കളെ കണ്ടെത്തിയില്ല'),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.cText),
           ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              lang == 'ta'
-                  ? 'வேறு இரத்த வகையை முயற்சிக்கவும் அல்லது உங்கள் பகுதியில் முதல் கொடையாளராக பதிவு செய்யுங்கள்'
-                  : 'Try a different blood group or be the first to register as a donor in your area',
+              tr(en: 'Try a different blood group or be the first to register as a donor in your area', ta: 'வேறு இரத்த வகையை முயற்சிக்கவும் அல்லது உங்கள் பகுதியில் முதல் கொடையாளராக பதிவு செய்யுங்கள்', hi: 'कोई दूसरा रक्त समूह आज़माएं या अपने क्षेत्र में पहले दाता के रूप में पंजीकरण करें', ml: 'മറ്റൊരു രക്തഗ്രൂപ്പ് പരീക്ഷിക്കുക അല്ലെങ്കിൽ നിങ്ങളുടെ പ്രദേശത്ത് ആദ്യ ദാതാവായി രജിസ്റ്റർ ചെയ്യുക'),
               style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
@@ -660,7 +655,7 @@ class _EmptyDonors extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Text(
-                lang == 'ta' ? 'கொடையாளராக பதிவு செய்யுங்கள்' : 'Register as Donor',
+                tr(en: 'Register as Donor', ta: 'கொடையாளராக பதிவு செய்யுங்கள்', hi: 'दाता के रूप में पंजीकरण करें', ml: 'ദാതാവായി രജിസ്റ്റർ ചെയ്യുക'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
@@ -681,21 +676,25 @@ class _ContactDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = sl<LocalStorage>().getLang();
     return AlertDialog(
-      title: Text(lang == 'ta' ? 'தொடர்பு கோரிக்கை' : 'Request Contact'),
+      title: Text(tr(en: 'Request Contact', ta: 'தொடர்பு கோரிக்கை', hi: 'संपर्क का अनुरोध करें', ml: 'ബന്ധപ്പെടാൻ അഭ്യർത്ഥിക്കുക')),
       content: Text(
-        'Your contact request for this ${donor.bloodGroup} donor will be logged. '
-        'Their phone number will be revealed.',
+        tr(
+          en: 'Your contact request for this ${donor.bloodGroup} donor will be logged. Their phone number will be revealed.',
+          ta: 'இந்த ${donor.bloodGroup} கொடையாளருக்கான உங்கள் தொடர்பு கோரிக்கை பதிவு செய்யப்படும். அவர்களின் தொலைபேசி எண் வெளிப்படுத்தப்படும்.',
+          hi: 'इस ${donor.bloodGroup} दाता के लिए आपका संपर्क अनुरोध दर्ज किया जाएगा। उनका फ़ोन नंबर प्रकट किया जाएगा।',
+          ml: 'ഈ ${donor.bloodGroup} ദാതാവിനായുള്ള നിങ്ങളുടെ ബന്ധപ്പെടൽ അഭ്യർത്ഥന രേഖപ്പെടുത്തും. അവരുടെ ഫോൺ നമ്പർ വെളിപ്പെടുത്തും.',
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(lang == 'ta' ? 'ரத்து' : 'Cancel'),
+          child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
         ),
         ElevatedButton(
           onPressed: () {
             onConfirm();
           },
-          child: Text(lang == 'ta' ? 'தொடர்பு காட்டு' : 'Reveal Contact'),
+          child: Text(tr(en: 'Reveal Contact', ta: 'தொடர்பு காட்டு', hi: 'संपर्क दिखाएं', ml: 'ബന്ധം വെളിപ്പെടുത്തുക')),
         ),
       ],
     );

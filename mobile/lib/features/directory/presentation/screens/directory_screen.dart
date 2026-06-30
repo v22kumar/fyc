@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../domain/entities/contact_entity.dart';
 import '../bloc/directory_bloc.dart';
 import '../bloc/directory_event.dart';
@@ -69,7 +70,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'அவசர தொடர்பு' : 'Directory'),
+        title: Text(tr(en: 'Directory', ta: 'அவசர தொடர்பு', hi: 'निर्देशिका', ml: 'ഡയറക്ടറി')),
       ),
       body: Column(
         children: [
@@ -125,9 +126,11 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                                 DirectoryFetchRequested(
                                     category: _selectedCategory),
                               ),
-                          child: Text(_lang == 'ta'
-                              ? 'மீண்டும் முயற்சிக்கவும்'
-                              : 'Retry'),
+                          child: Text(tr(
+                              en: 'Retry',
+                              ta: 'மீண்டும் முயற்சிக்கவும்',
+                              hi: 'पुनः प्रयास करें',
+                              ml: 'വീണ്ടും ശ്രമിക്കുക')),
                         ),
                       ],
                     ),
@@ -167,7 +170,7 @@ class _FilterRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(lang == 'ta' ? 'அனைத்தும்' : 'All'),
+              label: Text(tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം')),
               selected: selected == null,
               onSelected: (_) => onSelect(null),
             ),
@@ -341,7 +344,7 @@ class _ContactCard extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onCall,
                       icon: const Icon(Icons.phone, size: 16),
-                      label: Text(lang == 'ta' ? 'அழைக்க' : 'Call'),
+                      label: Text(tr(en: 'Call', ta: 'அழைக்க', hi: 'कॉल करें', ml: 'വിളിക്കുക')),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 44),
                       ),
@@ -387,7 +390,11 @@ class _EmptyContacts extends StatelessWidget {
           const Text('📇', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            lang == 'ta' ? 'தொடர்புகள் இல்லை' : 'No contacts found',
+            tr(
+                en: 'No contacts found',
+                ta: 'தொடர்புகள் இல்லை',
+                hi: 'कोई संपर्क नहीं मिला',
+                ml: 'കോൺടാക്റ്റുകൾ ഒന്നും കണ്ടെത്തിയില്ല'),
             style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],

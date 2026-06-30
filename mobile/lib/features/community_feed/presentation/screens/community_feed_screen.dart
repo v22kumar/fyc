@@ -8,6 +8,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
   const CommunityFeedScreen({super.key});
@@ -30,7 +31,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'சமூகப் பதிவு' : 'Community Feed'),
+        title: Text(tr(en: 'Community Feed', ta: 'சமூகப் பதிவு', hi: 'समुदाय फ़ीड', ml: 'കമ്മ്യൂണിറ്റി ഫീഡ്')),
         elevation: 0,
         backgroundColor: Colors.white,
       ),
@@ -42,9 +43,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             if (state.feed.isEmpty) {
               return EmptyState(
                 emoji: '🗞️',
-                title: _lang == 'ta' ? 'பதிவுகள் இல்லை' : 'You\'re All Caught Up!',
-                message: _lang == 'ta' ? 'புதிய பதிவுகள் எதுவும் இல்லை.' : 'There are no new community updates at the moment.',
-                buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh Feed',
+                title: tr(en: 'You\'re All Caught Up!', ta: 'பதிவுகள் இல்லை', hi: 'आप पूरी तरह अपडेट हैं!', ml: 'നിങ്ങൾ എല്ലാം കണ്ടുകഴിഞ്ഞു!'),
+                message: tr(en: 'There are no new community updates at the moment.', ta: 'புதிய பதிவுகள் எதுவும் இல்லை.', hi: 'इस समय कोई नया समुदाय अपडेट नहीं है.', ml: 'ഇപ്പോൾ പുതിയ കമ്മ്യൂണിറ്റി അപ്ഡേറ്റുകളൊന്നുമില്ല.'),
+                buttonText: tr(en: 'Refresh Feed', ta: 'புதுப்பிக்கவும்', hi: 'फ़ीड रीफ़्रेश करें', ml: 'ഫീഡ് പുതുക്കുക'),
                 onAction: () => context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested()),
               );
             }
@@ -73,7 +74,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     onPressed: () {
                       context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested());
                     },
-                    child: Text(_lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                    child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -167,28 +168,28 @@ class _FeedCard extends StatelessWidget {
       case 'NEWS':
         icon = Icons.article;
         color = Colors.blue;
-        label = lang == 'ta' ? 'செய்திகள்' : 'News';
+        label = tr(en: 'News', ta: 'செய்திகள்', hi: 'समाचार', ml: 'വാർത്തകൾ');
         break;
       case 'EVENT':
         icon = Icons.event;
         color = Colors.purple;
-        label = lang == 'ta' ? 'நிகழ்வு' : 'Event';
+        label = tr(en: 'Event', ta: 'நிகழ்வு', hi: 'कार्यक्रम', ml: 'ഇവന്റ്');
         break;
       case 'TOURNAMENT':
         icon = Icons.emoji_events;
         color = Colors.amber.shade700;
-        label = lang == 'ta' ? 'விளையாட்டு' : 'Tournament';
+        label = tr(en: 'Tournament', ta: 'விளையாட்டு', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്');
         break;
       case 'ISSUE':
         icon = Icons.report_problem;
         color = Colors.red;
-        label = lang == 'ta' ? 'புகார்' : 'Issue';
+        label = tr(en: 'Issue', ta: 'புகார்', hi: 'समस्या', ml: 'പ്രശ്നം');
         break;
       case 'ANNOUNCEMENT':
       default:
         icon = Icons.campaign;
         color = Colors.teal;
-        label = lang == 'ta' ? 'அறிவிப்பு' : 'Announcement';
+        label = tr(en: 'Announcement', ta: 'அறிவிப்பு', hi: 'घोषणा', ml: 'അറിയിപ്പ്');
         break;
     }
 

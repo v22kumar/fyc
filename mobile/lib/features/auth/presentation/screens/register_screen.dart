@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -189,7 +190,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'சமூக சேவையில் இணைவோம்',
+                          tr(
+                            en: 'Join us in community service',
+                            ta: 'சமூக சேவையில் இணைவோம்',
+                            hi: 'सामुदायिक सेवा में हमसे जुड़ें',
+                            ml: 'സാമൂഹിക സേവനത്തിൽ ഞങ്ങളോടൊപ്പം ചേരൂ',
+                          ),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.55),
                             fontSize: 13,
@@ -246,7 +252,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       controller: _nameTaCtrl,
                                       decoration: InputDecoration(
                                         label: Text(l.nameInTamil),
-                                        hintText: 'உதா: கார்த்திக் ஜே',
+                                        hintText: tr(
+                                          en: 'e.g. Karthik J',
+                                          ta: 'உதா: கார்த்திக் ஜே',
+                                          hi: 'उदा. कार्तिक जे',
+                                          ml: 'ഉദാ. കാർത്തിക് ജെ',
+                                        ),
                                         prefixIcon: const Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
@@ -259,7 +270,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       controller: _nameEnCtrl,
                                       decoration: InputDecoration(
                                         label: Text(l.nameInEnglish),
-                                        hintText: 'e.g. Karthik J',
+                                        hintText: tr(
+                                          en: 'e.g. Karthik J',
+                                          ta: 'எ.கா. Karthik J',
+                                          hi: 'उदा. Karthik J',
+                                          ml: 'ഉദാ. Karthik J',
+                                        ),
                                         prefixIcon: const Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
@@ -283,7 +299,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           child: _RoleCard(
                                             icon: '🏠',
                                             label: l.citizen,
-                                            subtitle: 'குடிமகன்',
+                                            subtitle: tr(
+                                              en: 'Citizen',
+                                              ta: 'குடிமகன்',
+                                              hi: 'नागरिक',
+                                              ml: 'പൗരൻ',
+                                            ),
                                             isSelected: _role == 'PUBLIC_CITIZEN',
                                             onTap: () => setState(() => _role = 'PUBLIC_CITIZEN'),
                                           ),
@@ -293,7 +314,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           child: _RoleCard(
                                             icon: '🤝',
                                             label: l.volunteer,
-                                            subtitle: 'தொண்டர்',
+                                            subtitle: tr(
+                                              en: 'Volunteer',
+                                              ta: 'தொண்டர்',
+                                              hi: 'स्वयंसेवक',
+                                              ml: 'സന്നദ്ധപ്രവർത്തകൻ',
+                                            ),
                                             isSelected: _role == 'VOLUNTEER',
                                             onTap: () => setState(() => _role = 'VOLUNTEER'),
                                           ),
@@ -321,9 +347,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                 color: AppColors.textSecondary)),
                                         TextButton(
                                           onPressed: () => context.go('/login'),
-                                          child: Text(sl<LocalStorage>().getLang() == 'ta'
-                                              ? 'உள்நுழைக'
-                                              : 'Login'),
+                                          child: Text(tr(
+                                            en: 'Login',
+                                            ta: 'உள்நுழைக',
+                                            hi: 'लॉग इन',
+                                            ml: 'ലോഗിൻ',
+                                          )),
                                         ),
                                       ],
                                     ),

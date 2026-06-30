@@ -8,6 +8,7 @@ import '../bloc/community_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class CommunityDirectoryScreen extends StatefulWidget {
   const CommunityDirectoryScreen({super.key});
@@ -31,7 +32,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(lang == 'ta' ? 'சமூக அடைவு' : 'Community'),
+        title: Text(tr(en: 'Community', ta: 'சமூக அடைவு', hi: 'समुदाय', ml: 'കമ്മ്യൂണിറ്റി')),
       ),
       body: BlocBuilder<CommunityBloc, CommunityState>(
         builder: (context, state) {
@@ -69,8 +70,11 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                     onPressed: () => context
                         .read<CommunityBloc>()
                         .add(const CommunityFetchRequested()),
-                    child: Text(
-                        lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                    child: Text(tr(
+                        en: 'Retry',
+                        ta: 'மீண்டும் முயற்சிக்கவும்',
+                        hi: 'पुनः प्रयास करें',
+                        ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -95,9 +99,11 @@ class _ProfileCard extends StatelessWidget {
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(lang == 'ta'
-              ? 'அழைப்பைத் தொடங்க முடியவில்லை'
-              : 'Could not start call'),
+          content: Text(tr(
+              en: 'Could not start call',
+              ta: 'அழைப்பைத் தொடங்க முடியவில்லை',
+              hi: 'कॉल शुरू नहीं हो सका',
+              ml: 'കോൾ ആരംഭിക്കാനായില്ല')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -142,14 +148,20 @@ class _ProfileCard extends StatelessWidget {
                 _Tag(text: profile.category, color: AppColors.primary),
                 if (!profile.isAvailable)
                   _Tag(
-                    text: lang == 'ta' ? 'கிடைக்கவில்லை' : 'Unavailable',
+                    text: tr(
+                        en: 'Unavailable',
+                        ta: 'கிடைக்கவில்லை',
+                        hi: 'अनुपलब्ध',
+                        ml: 'ലഭ്യമല്ല'),
                     color: Colors.grey,
                   ),
                 if (profile.yearsExperience != null)
                   _Tag(
-                    text: lang == 'ta'
-                        ? '${profile.yearsExperience} ஆண்டு அனுபவம்'
-                        : '${profile.yearsExperience} yrs exp',
+                    text: tr(
+                        en: '${profile.yearsExperience} yrs exp',
+                        ta: '${profile.yearsExperience} ஆண்டு அனுபவம்',
+                        hi: '${profile.yearsExperience} वर्ष अनुभव',
+                        ml: '${profile.yearsExperience} വർഷ പരിചയം'),
                     color: AppColors.accent,
                   ),
               ],
@@ -187,7 +199,7 @@ class _ProfileCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _call(context),
                   icon: const Icon(Icons.call, size: 16),
-                  label: Text(lang == 'ta' ? 'அழைக்க' : 'Call'),
+                  label: Text(tr(en: 'Call', ta: 'அழைக்க', hi: 'कॉल करें', ml: 'വിളിക്കുക')),
                 ),
               ),
             ],
@@ -237,7 +249,11 @@ class _Empty extends StatelessWidget {
           const Text('👥', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            lang == 'ta' ? 'சுயவிவரங்கள் இல்லை' : 'No profiles yet',
+            tr(
+                en: 'No profiles yet',
+                ta: 'சுயவிவரங்கள் இல்லை',
+                hi: 'अभी तक कोई प्रोफ़ाइल नहीं',
+                ml: 'ഇതുവരെ പ്രൊഫൈലുകൾ ഇല്ല'),
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ],

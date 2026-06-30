@@ -10,6 +10,7 @@ import '../bloc/green_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class GreenFycScreen extends StatefulWidget {
   const GreenFycScreen({super.key});
@@ -32,13 +33,13 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(lang == 'ta' ? 'பசுமை FYC' : 'Green FYC'),
+        title: Text(tr(en: 'Green FYC', ta: 'பசுமை FYC', hi: 'ग्रीन FYC', ml: 'ഗ്രീൻ FYC')),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/green/register'),
         backgroundColor: AppColors.primary,
         icon: const Text('🌳', style: TextStyle(fontSize: 18)),
-        label: Text(lang == 'ta' ? 'மரம் பதிவு செய்க' : 'Register a Tree'),
+        label: Text(tr(en: 'Register a Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'ഒരു മരം രജിസ്റ്റർ ചെയ്യുക')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
         listener: (context, state) {
@@ -94,9 +95,12 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                             right: 16,
                             bottom: 14,
                             child: Text(
-                              lang == 'ta'
-                                  ? 'ஒவ்வொரு மரமும் ஒரு வாக்குறுதி'
-                                  : 'Every tree is a promise to tomorrow',
+                              tr(
+                                en: 'Every tree is a promise to tomorrow',
+                                ta: 'ஒவ்வொரு மரமும் ஒரு வாக்குறுதி',
+                                hi: 'हर पेड़ कल के लिए एक वादा है',
+                                ml: 'ഓരോ മരവും നാളെയ്ക്കുള്ള ഒരു വാഗ്ദാനമാണ്',
+                              ),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -115,9 +119,12 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                   _StatsHeader(stats: state.stats, lang: lang),
                   const SizedBox(height: 24),
                   _SectionHeader(
-                    label: lang == 'ta'
-                        ? 'மரம் நடும் இயக்கங்கள்'
-                        : 'Plantation Drives',
+                    label: tr(
+                      en: 'Plantation Drives',
+                      ta: 'மரம் நடும் இயக்கங்கள்',
+                      hi: 'वृक्षारोपण अभियान',
+                      ml: 'വൃക്ഷത്തൈ നടീൽ യജ്ഞങ്ങൾ',
+                    ),
                   ),
                   if (state.drives.isEmpty)
                     _EmptyDrives(lang: lang)
@@ -143,7 +150,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                         .read<GreenBloc>()
                         .add(const GreenFetchRequested()),
                     child: Text(
-                        lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                        tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -174,27 +181,27 @@ class _StatsHeader extends StatelessWidget {
         _StatCard(
           emoji: '🌱',
           value: stats.totalPlanted,
-          label: lang == 'ta' ? 'மொத்தம் நடப்பட்டது' : 'Total Planted',
+          label: tr(en: 'Total Planted', ta: 'மொத்தம் நடப்பட்டது', hi: 'कुल रोपित', ml: 'ആകെ നട്ടത്'),
         ),
         _StatCard(
           emoji: '🌿',
           value: stats.growing,
-          label: lang == 'ta' ? 'வளர்கிறது' : 'Growing',
+          label: tr(en: 'Growing', ta: 'வளர்கிறது', hi: 'बढ़ रहे हैं', ml: 'വളരുന്നു'),
         ),
         _StatCard(
           emoji: '🌳',
           value: stats.mature,
-          label: lang == 'ta' ? 'முதிர்ந்தது' : 'Mature',
+          label: tr(en: 'Mature', ta: 'முதிர்ந்தது', hi: 'परिपक्व', ml: 'പക്വമായത്'),
         ),
         _StatCard(
           emoji: '🥀',
           value: stats.dead,
-          label: lang == 'ta' ? 'அழிந்தது' : 'Dead',
+          label: tr(en: 'Dead', ta: 'அழிந்தது', hi: 'मृत', ml: 'നശിച്ചത്'),
         ),
         _StatCard(
           emoji: '📋',
           value: stats.drivesCount,
-          label: lang == 'ta' ? 'இயக்கங்கள்' : 'Drives',
+          label: tr(en: 'Drives', ta: 'இயக்கங்கள்', hi: 'अभियान', ml: 'യജ്ഞങ്ങൾ'),
         ),
       ],
     );
@@ -363,9 +370,12 @@ class _DriveCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  lang == 'ta'
-                      ? '${drive.treeCount} / ${drive.targetCount} மரங்கள்'
-                      : '${drive.treeCount} / ${drive.targetCount} trees',
+                  tr(
+                    en: '${drive.treeCount} / ${drive.targetCount} trees',
+                    ta: '${drive.treeCount} / ${drive.targetCount} மரங்கள்',
+                    hi: '${drive.treeCount} / ${drive.targetCount} पेड़',
+                    ml: '${drive.treeCount} / ${drive.targetCount} മരങ്ങൾ',
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: context.cTextSecondary,
@@ -395,9 +405,12 @@ class _EmptyDrives extends StatelessWidget {
             const Text('🌳', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
             Text(
-              lang == 'ta'
-                  ? 'மரம் நடும் இயக்கங்கள் இல்லை'
-                  : 'No plantation drives yet',
+              tr(
+                en: 'No plantation drives yet',
+                ta: 'மரம் நடும் இயக்கங்கள் இல்லை',
+                hi: 'अभी तक कोई वृक्षारोपण अभियान नहीं',
+                ml: 'ഇതുവരെ വൃക്ഷത്തൈ നടീൽ യജ്ഞങ്ങളൊന്നുമില്ല',
+              ),
               style: TextStyle(fontSize: 16, color: context.cTextSecondary),
             ),
           ],

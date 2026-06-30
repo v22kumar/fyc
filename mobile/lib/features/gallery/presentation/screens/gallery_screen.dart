@@ -8,6 +8,7 @@ import '../bloc/gallery_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
@@ -29,7 +30,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'புகைப்படத் தொகுப்பு' : 'Gallery'),
+        title: Text(tr(en: 'Gallery', ta: 'புகைப்படத் தொகுப்பு', hi: 'गैलरी', ml: 'ഗാലറി')),
       ),
       body: BlocBuilder<GalleryBloc, GalleryState>(
         builder: (context, state) {
@@ -82,7 +83,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         .read<GalleryBloc>()
                         .add(const GalleryFetchRequested()),
                     child: Text(
-                        _lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                        tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),
@@ -150,7 +151,7 @@ class _EmptyGallery extends StatelessWidget {
           const Text('📷', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            lang == 'ta' ? 'புகைப்படங்கள் இல்லை' : 'No photos yet',
+            tr(en: 'No photos yet', ta: 'புகைப்படங்கள் இல்லை', hi: 'अभी तक कोई फ़ोटो नहीं', ml: 'ഫോട്ടോകൾ ഒന്നുമില്ല'),
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ],

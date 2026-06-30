@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class QrScanScreen extends StatefulWidget {
   const QrScanScreen({super.key});
@@ -49,10 +50,13 @@ class _QrScanScreenState extends State<QrScanScreen> {
       final eventTitle = parts.length > 2 ? parts.sublist(2).join(':') : '';
       _showResultDialog(
         success: true,
-        title: isTa ? 'நிகழ்வு சரிபார்ப்பு' : 'Event Check-In',
-        message: isTa
-            ? 'நிகழ்வில் வெற்றிகரமாக பதிவு செய்யப்பட்டது!\n\n$eventTitle'
-            : 'Successfully checked in!\n\n$eventTitle',
+        title: tr(en: 'Event Check-In', ta: 'நிகழ்வு சரிபார்ப்பு', hi: 'इवेंट चेक-इन', ml: 'ഇവന്റ് ചെക്ക്-ഇൻ'),
+        message: tr(
+          en: 'Successfully checked in!\n\n$eventTitle',
+          ta: 'நிகழ்வில் வெற்றிகரமாக பதிவு செய்யப்பட்டது!\n\n$eventTitle',
+          hi: 'सफलतापूर्वक चेक-इन हो गया!\n\n$eventTitle',
+          ml: 'വിജയകരമായി ചെക്ക്-ഇൻ ചെയ്തു!\n\n$eventTitle',
+        ),
         detail: 'ID: $eventId',
       );
     } else if (payload.startsWith('FYC:')) {
@@ -60,19 +64,25 @@ class _QrScanScreenState extends State<QrScanScreen> {
       final membershipNumber = parts.length > 1 ? parts[1] : 'unknown';
       _showResultDialog(
         success: true,
-        title: isTa ? 'உறுப்பினர் சரிபார்ப்பு' : 'Membership Verified',
-        message: isTa
-            ? 'செல்லுபடியான FYC உறுப்பினர் அட்டை'
-            : 'Valid FYC Membership Card',
+        title: tr(en: 'Membership Verified', ta: 'உறுப்பினர் சரிபார்ப்பு', hi: 'सदस्यता सत्यापित', ml: 'അംഗത്വം പരിശോധിച്ചു'),
+        message: tr(
+          en: 'Valid FYC Membership Card',
+          ta: 'செல்லுபடியான FYC உறுப்பினர் அட்டை',
+          hi: 'वैध FYC सदस्यता कार्ड',
+          ml: 'സാധുവായ FYC അംഗത്വ കാർഡ്',
+        ),
         detail: membershipNumber,
       );
     } else {
       _showResultDialog(
         success: false,
-        title: isTa ? 'அறியப்படாத குறியீடு' : 'Unknown QR Code',
-        message: isTa
-            ? 'இந்த QR குறியீடு FYC அமைப்பால் உருவாக்கப்படவில்லை.'
-            : 'This QR code was not issued by the FYC system.',
+        title: tr(en: 'Unknown QR Code', ta: 'அறியப்படாத குறியீடு', hi: 'अज्ञात QR कोड', ml: 'അജ്ഞാത QR കോഡ്'),
+        message: tr(
+          en: 'This QR code was not issued by the FYC system.',
+          ta: 'இந்த QR குறியீடு FYC அமைப்பால் உருவாக்கப்படவில்லை.',
+          hi: 'यह QR कोड FYC सिस्टम द्वारा जारी नहीं किया गया था।',
+          ml: 'ഈ QR കോഡ് FYC സിസ്റ്റം നൽകിയതല്ല.',
+        ),
         detail: payload.length > 60 ? '${payload.substring(0, 60)}…' : payload,
       );
     }
@@ -133,14 +143,14 @@ class _QrScanScreenState extends State<QrScanScreen> {
               setState(() => _hasScanned = false);
               _controller.start();
             },
-            child: Text(isTa ? 'மீண்டும் ஸ்கேன்' : 'Scan Again'),
+            child: Text(tr(en: 'Scan Again', ta: 'மீண்டும் ஸ்கேன்', hi: 'फिर से स्कैन करें', ml: 'വീണ്ടും സ്കാൻ ചെയ്യുക')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
-            child: Text(isTa ? 'முடிந்தது' : 'Done'),
+            child: Text(tr(en: 'Done', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി')),
           ),
         ],
       ),
@@ -155,7 +165,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          isTa ? 'QR ஸ்கேன்' : 'Scan QR Code',
+          tr(en: 'Scan QR Code', ta: 'QR ஸ்கேன்', hi: 'QR कोड स्कैन करें', ml: 'QR കോഡ് സ്കാൻ ചെയ്യുക'),
           style: const TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -169,7 +179,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               _controller.toggleTorch();
               setState(() => _torchOn = !_torchOn);
             },
-            tooltip: isTa ? 'ஒளி' : 'Torch',
+            tooltip: tr(en: 'Torch', ta: 'ஒளி', hi: 'टॉर्च', ml: 'ടോർച്ച്'),
           ),
         ],
       ),
@@ -202,9 +212,12 @@ class _QrScanScreenState extends State<QrScanScreen> {
             left: 0,
             right: 0,
             child: Text(
-              isTa
-                  ? 'FYC QR குறியீட்டை சதுரத்தில் வைக்கவும்'
-                  : 'Place the FYC QR code inside the frame',
+              tr(
+                en: 'Place the FYC QR code inside the frame',
+                ta: 'FYC QR குறியீட்டை சதுரத்தில் வைக்கவும்',
+                hi: 'FYC QR कोड को फ्रेम के अंदर रखें',
+                ml: 'FYC QR കോഡ് ഫ്രെയിമിനുള്ളിൽ വയ്ക്കുക',
+              ),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,

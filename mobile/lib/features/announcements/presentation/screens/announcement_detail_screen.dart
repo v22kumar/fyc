@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import 'announcements_screen.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class AnnouncementDetailScreen extends StatelessWidget {
   final AnnouncementEntity announcement;
@@ -19,7 +20,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'அறிவிப்பு' : 'Announcement'),
+        title: Text(tr(en: 'Announcement', ta: 'அறிவிப்பு', hi: 'घोषणा', ml: 'അറിയിപ്പ്')),
       ),
       body: ListView(
         padding: EdgeInsets.zero,
