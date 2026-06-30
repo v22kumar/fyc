@@ -23,6 +23,7 @@ from app.models.workflow import WorkflowState, ApprovalRequest
 from app.models.dynamic_forms import FormDefinition, FormSubmission
 from app.models.platform_settings import OrganizationSettings, FeatureFlag
 from app.models.post import Post, PostLike
+from app.models.chess_tournament import ChessTournament, ChessTournamentEntry, ChessTournamentMatch
 
 __all__ = [
     "Base",
