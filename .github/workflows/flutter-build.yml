@@ -20,6 +20,14 @@ jobs:
       # ── 1. Source ────────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
+      # ── 1b. versionCode ──────────────────────────────────────────────────────
+      # Must be strictly greater than every APK already on a device AND keep
+      # increasing. Legacy field builds used ~2000+run, so a bare run number
+      # (e.g. 68) is LOWER than an installed 2067 and updates never fire. Base
+      # 100000 clears that ceiling with headroom and stays monotonic.
+      - name: Compute versionCode
+        run: echo "FYC_BUILD_NUM=$((100000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+
       # ── 2. Flutter SDK ───────────────────────────────────────────────────────
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -88,7 +96,7 @@ jobs:
           # in-app updater can detect a newer version. --build-name is the display
           # version (1.0.<run_number>).
           flutter build apk --release --split-per-abi \
-            --build-number=${{ github.run_number }} \
+            --build-number=${{ env.FYC_BUILD_NUM }} \
             --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
@@ -100,7 +108,7 @@ jobs:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
           flutter build appbundle --release \
-            --build-number=${{ github.run_number }} \
+            --build-number=${{ env.FYC_BUILD_NUM }} \
             --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://fyc-backend.fly.dev \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
@@ -169,7 +177,7 @@ jobs:
           if [ "$MANDATORY" = "false" ]; then MANDATORY="false"; else MANDATORY="true"; fi
           cat > mobile/build/version.json <<JSON
           {
-            "version_code": ${{ github.run_number }},
+            "version_code": ${{ env.FYC_BUILD_NUM }},
             "version_name": "1.0.${{ github.run_number }}",
             "apk_url": "${{ github.server_url }}/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk",
             "mandatory": $MANDATORY,
@@ -260,7 +268,7 @@ jobs:
           # waiting for the machine update.
           for attempt in 1 2 3; do
             if flyctl secrets set \
-                 APP_LATEST_VERSION_CODE="${{ github.run_number }}" \
+                 APP_LATEST_VERSION_CODE="${{ env.FYC_BUILD_NUM }}" \
                  APP_LATEST_VERSION_NAME="1.0.${{ github.run_number }}" \
                  --app fyc-backend --detach; then
               echo "Published latest version 1.0.${{ github.run_number }} (code ${{ github.run_number }}) ✓"
