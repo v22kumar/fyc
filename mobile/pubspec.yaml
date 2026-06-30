@@ -36,6 +36,10 @@ dependencies:
   # App version info (in-app update check)
   package_info_plus: ^8.0.0
 
+  # In-app APK download (to private cache) + one-tap install for the updater
+  path_provider: ^2.1.4
+  open_filex: ^4.5.0
+
 
   # Functional error handling
   dartz: ^0.10.1

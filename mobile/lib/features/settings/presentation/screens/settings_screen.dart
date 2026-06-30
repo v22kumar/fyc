@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/services/update_service.dart';
+import '../../../../core/widgets/update_sheet.dart';
 import '../../../../service_locator.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -78,57 +78,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.system_update, color: AppColors.primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(ta ? 'புதிய பதிப்பு' : 'Update available',
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800)),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(ta
-                ? 'FYC Connect ${update.latestVersionName} தயாராக உள்ளது.'
-                : 'FYC Connect ${update.latestVersionName} is ready to install.'),
-            if (update.notes.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(update.notes, style: const TextStyle(fontSize: 13)),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(ta ? 'பிறகு' : 'Later'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final uri = Uri.parse(update.apkUrl);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            icon: const Icon(Icons.download_rounded,
-                size: 18, color: Colors.white),
-            label: Text(ta ? 'புதுப்பி' : 'Update Now',
-                style: const TextStyle(color: Colors.white)),
-            style:
-                ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-          ),
-        ],
-      ),
-    );
+    // Polished sheet: in-app download progress + one-tap install.
+    UpdateSheet.show(context, update);
   }
 
   @override
