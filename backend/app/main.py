@@ -20,6 +20,7 @@ from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import users as users_router, media as media_router
 from app.routers import posts as posts_router
+from app.routers import chess_tournaments as chess_tournaments_router
 from app.routers import community as community_router, sports as sports_router, cricket as cricket_router
 from app.routers import directory as directory_router, announcements as announcements_router
 from app.routers import gallery as gallery_router, green_fyc as green_router
@@ -373,6 +374,7 @@ app.include_router(cricket_router.router, prefix="/api/v1")
 app.include_router(users_router.router, prefix="/api/v1")
 app.include_router(media_router.router, prefix="/api/v1")
 app.include_router(posts_router.router, prefix="/api/v1")
+app.include_router(chess_tournaments_router.router, prefix="/api/v1")
 app.include_router(directory_router.router, prefix="/api/v1")
 app.include_router(announcements_router.router, prefix="/api/v1")
 app.include_router(gallery_router.router, prefix="/api/v1")
