@@ -39,7 +39,10 @@ primary_region = "sin"
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"
+  # 1 GB headroom for live events: ~25 in-memory python-chess boards + WAL page
+  # cache + keepalive/scheduler. For a big event also bump CPU for the day:
+  #   flyctl scale vm shared-cpu-2x --app fyc-backend   (scale back after)
+  memory = "1024mb"
   cpus = 1
 
 [mounts]
