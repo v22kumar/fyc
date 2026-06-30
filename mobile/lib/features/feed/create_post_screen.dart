@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/app_theme.dart';
@@ -55,9 +56,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (!mounted) return;
       setState(() => _posting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(ta
-            ? 'இடுகையிட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
-            : "Couldn't post. Please try again."),
+        content: Text(tr(
+            en: "Couldn't post. Please try again.",
+            ta: 'இடுகையிட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+            hi: 'पोस्ट नहीं हो सका। कृपया पुनः प्रयास करें।',
+            ml: 'പോസ്റ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.')),
         backgroundColor: AppColors.accent,
       ));
     }
@@ -71,7 +74,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(
-        title: Text(ta ? 'இடுகையை உருவாக்கு' : 'Create Post'),
+        title: Text(tr(
+            en: 'Create Post',
+            ta: 'இடுகையை உருவாக்கு',
+            hi: 'पोस्ट बनाएं',
+            ml: 'പോസ്റ്റ് സൃഷ്ടിക്കുക')),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -82,7 +89,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(ta ? 'இடு' : 'Post',
+                  : Text(
+                      tr(en: 'Post', ta: 'இடு', hi: 'पोस्ट', ml: 'പോസ്റ്റ്'),
                       style: TextStyle(
                           color: canPost
                               ? AppColors.primary
@@ -104,9 +112,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             onChanged: (_) => setState(() {}),
             style: TextStyle(fontSize: 16, color: context.cText),
             decoration: InputDecoration(
-              hintText: ta
-                  ? 'உங்கள் சமூகத்தில் என்ன நடக்கிறது?'
-                  : "What's happening in your community?",
+              hintText: tr(
+                  en: "What's happening in your community?",
+                  ta: 'உங்கள் சமூகத்தில் என்ன நடக்கிறது?',
+                  hi: 'आपके समुदाय में क्या हो रहा है?',
+                  ml: 'നിങ്ങളുടെ സമൂഹത്തിൽ എന്താണ് നടക്കുന്നത്?'),
               border: InputBorder.none,
             ),
           ),
@@ -146,7 +156,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           OutlinedButton.icon(
             onPressed: _images.length >= 4 ? null : _pickImage,
             icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: Text(ta ? 'புகைப்படம் சேர்' : 'Add Photo'),
+            label: Text(tr(
+                en: 'Add Photo',
+                ta: 'புகைப்படம் சேர்',
+                hi: 'फ़ोटो जोड़ें',
+                ml: 'ഫോട്ടോ ചേർക്കുക')),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
               side: BorderSide(color: AppColors.primary.withOpacity(0.4)),

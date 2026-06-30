@@ -12,6 +12,7 @@ import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/empty_state.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 Color announcementCategoryColor(String category) {
   switch (category) {
@@ -51,7 +52,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_lang == 'ta' ? 'அறிவிப்புகள்' : 'Announcements'),
+        title: Text(tr(en: 'Announcements', ta: 'அறிவிப்புகள்', hi: 'घोषणाएँ', ml: 'അറിയിപ്പുകൾ')),
       ),
       body: BlocBuilder<AnnouncementBloc, AnnouncementState>(
         builder: (context, state) {
@@ -62,9 +63,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             if (state.announcements.isEmpty) {
               return EmptyState(
                 emoji: '📢',
-                title: _lang == 'ta' ? 'அறிவிப்புகள் இல்லை' : 'No Announcements',
-                message: _lang == 'ta' ? 'FYC இலிருந்து புதிய அறிவிப்புகள் எதுவும் இல்லை.' : 'You\'re all caught up! There are no new announcements from FYC.',
-                buttonText: _lang == 'ta' ? 'புதுப்பிக்கவும்' : 'Refresh',
+                title: tr(en: 'No Announcements', ta: 'அறிவிப்புகள் இல்லை', hi: 'कोई घोषणा नहीं', ml: 'അറിയിപ്പുകളൊന്നുമില്ല'),
+                message: tr(en: 'You\'re all caught up! There are no new announcements from FYC.', ta: 'FYC இலிருந்து புதிய அறிவிப்புகள் எதுவும் இல்லை.', hi: 'आप पूरी तरह अपडेट हैं! FYC से कोई नई घोषणा नहीं है।', ml: 'നിങ്ങൾ എല്ലാം കണ്ടുകഴിഞ്ഞു! FYC-യിൽ നിന്ന് പുതിയ അറിയിപ്പുകളൊന്നുമില്ല.'),
+                buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'रिफ्रेश करें', ml: 'പുതുക്കുക'),
                 onAction: () => context.read<AnnouncementBloc>().add(const AnnouncementFetchRequested()),
               );
             }
@@ -105,7 +106,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         .read<AnnouncementBloc>()
                         .add(const AnnouncementFetchRequested()),
                     child:
-                        Text(_lang == 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                        Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                   ),
                 ],
               ),

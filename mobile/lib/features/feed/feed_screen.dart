@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -13,10 +14,30 @@ String _fullUrl(String url) =>
 
 String _ago(DateTime d, bool ta) {
   final diff = DateTime.now().difference(d);
-  if (diff.inMinutes < 1) return ta ? 'இப்போது' : 'just now';
-  if (diff.inMinutes < 60) return ta ? '${diff.inMinutes} நிமி' : '${diff.inMinutes}m';
-  if (diff.inHours < 24) return ta ? '${diff.inHours} மணி' : '${diff.inHours}h';
-  if (diff.inDays < 7) return ta ? '${diff.inDays} நாள்' : '${diff.inDays}d';
+  if (diff.inMinutes < 1) {
+    return tr(en: 'just now', ta: 'இப்போது', hi: 'अभी', ml: 'ഇപ്പോൾ');
+  }
+  if (diff.inMinutes < 60) {
+    return tr(
+        en: '${diff.inMinutes}m',
+        ta: '${diff.inMinutes} நிமி',
+        hi: '${diff.inMinutes} मि',
+        ml: '${diff.inMinutes} മി');
+  }
+  if (diff.inHours < 24) {
+    return tr(
+        en: '${diff.inHours}h',
+        ta: '${diff.inHours} மணி',
+        hi: '${diff.inHours} घं',
+        ml: '${diff.inHours} മ');
+  }
+  if (diff.inDays < 7) {
+    return tr(
+        en: '${diff.inDays}d',
+        ta: '${diff.inDays} நாள்',
+        hi: '${diff.inDays} दि',
+        ml: '${diff.inDays} ദി');
+  }
   return '${(diff.inDays / 7).floor()}w';
 }
 
@@ -38,11 +59,22 @@ class _FeedScreenState extends State<FeedScreen> {
       child: Scaffold(
         backgroundColor: context.cBackground,
         appBar: AppBar(
-          title: Text(ta ? 'சமூக சுவர்' : 'Community Feed'),
+          title: Text(tr(
+              en: 'Community Feed',
+              ta: 'சமூக சுவர்',
+              hi: 'समुदाय फ़ीड',
+              ml: 'കമ്മ്യൂണിറ്റി ഫീഡ്')),
           bottom: TabBar(
             tabs: [
-              Tab(text: ta ? 'அனைத்தும்' : 'All'),
-              Tab(text: ta ? 'என் இடுகைகள்' : 'My Posts'),
+              Tab(
+                  text: tr(
+                      en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം')),
+              Tab(
+                  text: tr(
+                      en: 'My Posts',
+                      ta: 'என் இடுகைகள்',
+                      hi: 'मेरी पोस्ट',
+                      ml: 'എന്റെ പോസ്റ്റുകൾ')),
             ],
           ),
         ),
@@ -53,7 +85,8 @@ class _FeedScreenState extends State<FeedScreen> {
           },
           backgroundColor: AppColors.primary,
           icon: const Icon(Icons.edit, color: Colors.white),
-          label: Text(ta ? 'இடுகை' : 'Post',
+          label: Text(
+              tr(en: 'Post', ta: 'இடுகை', hi: 'पोस्ट', ml: 'പോസ്റ്റ്'),
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         ),
         body: const TabBarView(
@@ -118,11 +151,19 @@ class _FeedListState extends State<_FeedList>
           children: [
             Icon(Icons.wifi_off_rounded, size: 40, color: context.cTextSecondary),
             const SizedBox(height: 12),
-            Text(ta ? 'சுவரை ஏற்ற முடியவில்லை' : "Couldn't load the feed"),
+            Text(tr(
+                en: "Couldn't load the feed",
+                ta: 'சுவரை ஏற்ற முடியவில்லை',
+                hi: 'फ़ीड लोड नहीं हो सका',
+                ml: 'ഫീഡ് ലോഡ് ചെയ്യാനായില്ല')),
             const SizedBox(height: 12),
             ElevatedButton(
                 onPressed: _load,
-                child: Text(ta ? 'மீண்டும்' : 'Retry')),
+                child: Text(tr(
+                    en: 'Retry',
+                    ta: 'மீண்டும்',
+                    hi: 'पुनः प्रयास',
+                    ml: 'വീണ്ടും ശ്രമിക്കുക'))),
           ],
         ),
       );
@@ -142,8 +183,16 @@ class _FeedListState extends State<_FeedList>
             Center(
               child: Text(
                 widget.scope == 'mine'
-                    ? (ta ? 'நீங்கள் இன்னும் எதையும் பகிரவில்லை' : "You haven't posted yet")
-                    : (ta ? 'இன்னும் இடுகைகள் இல்லை' : 'No posts yet'),
+                    ? tr(
+                        en: "You haven't posted yet",
+                        ta: 'நீங்கள் இன்னும் எதையும் பகிரவில்லை',
+                        hi: 'आपने अभी तक पोस्ट नहीं किया',
+                        ml: 'നിങ്ങൾ ഇതുവരെ പോസ്റ്റ് ചെയ്തിട്ടില്ല')
+                    : tr(
+                        en: 'No posts yet',
+                        ta: 'இன்னும் இடுகைகள் இல்லை',
+                        hi: 'अभी कोई पोस्ट नहीं',
+                        ml: 'ഇതുവരെ പോസ്റ്റുകളൊന്നുമില്ല'),
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -153,7 +202,11 @@ class _FeedListState extends State<_FeedList>
             const SizedBox(height: 6),
             Center(
               child: Text(
-                ta ? 'முதலில் பகிர்ந்து கொள்ளுங்கள்!' : 'Be the first to share something!',
+                tr(
+                    en: 'Be the first to share something!',
+                    ta: 'முதலில் பகிர்ந்து கொள்ளுங்கள்!',
+                    hi: 'कुछ साझा करने वाले पहले बनें!',
+                    ml: 'ആദ്യം പങ്കിടുന്നയാളാകൂ!'),
                 style: TextStyle(fontSize: 13, color: context.cTextSecondary),
               ),
             ),
@@ -304,12 +357,18 @@ class _PostCardState extends State<_PostCard> {
                 ),
                 _action(
                   icon: Icons.share_outlined,
-                  label: ta ? 'பகிர்' : 'Share',
+                  label: tr(
+                      en: 'Share',
+                      ta: 'பகிர்',
+                      hi: 'साझा करें',
+                      ml: 'പങ്കിടുക'),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(ta
-                          ? 'பகிர்வு விரைவில் வரும்'
-                          : 'Sharing coming soon'),
+                      content: Text(tr(
+                          en: 'Sharing coming soon',
+                          ta: 'பகிர்வு விரைவில் வரும்',
+                          hi: 'साझाकरण जल्द आ रहा है',
+                          ml: 'പങ്കിടൽ ഉടൻ വരുന്നു')),
                     ));
                   },
                 ),
@@ -460,7 +519,12 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 12),
-            Text(ta ? 'கருத்துகள்' : 'Comments',
+            Text(
+                tr(
+                    en: 'Comments',
+                    ta: 'கருத்துகள்',
+                    hi: 'टिप्पणियाँ',
+                    ml: 'അഭിപ്രായങ്ങൾ'),
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -472,9 +536,11 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   : _comments!.isEmpty
                       ? Center(
                           child: Text(
-                              ta
-                                  ? 'முதல் கருத்தை இடுங்கள்'
-                                  : 'Be the first to comment',
+                              tr(
+                                  en: 'Be the first to comment',
+                                  ta: 'முதல் கருத்தை இடுங்கள்',
+                                  hi: 'टिप्पणी करने वाले पहले बनें',
+                                  ml: 'ആദ്യം അഭിപ്രായമിടൂ'),
                               style: TextStyle(color: context.cTextSecondary)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -536,8 +602,11 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _send(),
                         decoration: InputDecoration(
-                          hintText:
-                              ta ? 'கருத்தை எழுதுங்கள்…' : 'Write a comment…',
+                          hintText: tr(
+                              en: 'Write a comment…',
+                              ta: 'கருத்தை எழுதுங்கள்…',
+                              hi: 'टिप्पणी लिखें…',
+                              ml: 'ഒരു അഭിപ്രായം എഴുതുക…'),
                           filled: true,
                           fillColor: context.cBackground,
                           contentPadding: const EdgeInsets.symmetric(

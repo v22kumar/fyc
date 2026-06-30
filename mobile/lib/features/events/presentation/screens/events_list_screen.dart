@@ -10,6 +10,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -40,14 +41,14 @@ class _EventsListScreenState extends State<EventsListScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(ta ? 'நிகழ்வுகள்' : 'Events'),
+          title: Text(tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ')),
           bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: ta ? 'அனைத்தும்' : 'All'),
-              Tab(text: ta ? 'வரவிருக்கும்' : 'Upcoming'),
-              Tab(text: ta ? 'கடந்தவை' : 'Past'),
-              Tab(text: ta ? 'என் நிகழ்வுகள்' : 'My Events'),
+              Tab(text: tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം')),
+              Tab(text: tr(en: 'Upcoming', ta: 'வரவிருக்கும்', hi: 'आगामी', ml: 'വരാനിരിക്കുന്നവ')),
+              Tab(text: tr(en: 'Past', ta: 'கடந்தவை', hi: 'पिछले', ml: 'കഴിഞ്ഞവ')),
+              Tab(text: tr(en: 'My Events', ta: 'என் நிகழ்வுகள்', hi: 'मेरे कार्यक्रम', ml: 'എന്റെ പരിപാടികൾ')),
             ],
           ),
         ),
@@ -56,7 +57,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
             if (state is EventCheckinSuccess) {
               SuccessSnackbar.show(
                 context,
-                title: ta ? 'வெற்றி' : 'Success',
+                title: tr(en: 'Success', ta: 'வெற்றி', hi: 'सफलता', ml: 'വിജയം'),
                 message: state.message,
               );
               _refresh();
@@ -86,7 +87,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _refresh,
-                      child: Text(ta ? 'மீண்டும் முயற்சிக்கவும்' : 'Retry'),
+                      child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
                     ),
                   ],
                 ),
@@ -118,11 +119,13 @@ class _EventsListScreenState extends State<EventsListScreen> {
       return EmptyState(
         emoji: '🎗️',
         imageAsset: 'assets/illustrations/empty_events.png',
-        title: ta ? 'தற்போது நிகழ்வுகள் இல்லை' : 'No Events Right Now',
-        message: ta
-            ? 'சமூக நிகழ்வுகளுக்குப் பிறகு மீண்டும் பார்க்கவும்.'
-            : 'Check back later for upcoming community events and initiatives.',
-        buttonText: ta ? 'புதுப்பிக்கவும்' : 'Refresh',
+        title: tr(en: 'No Events Right Now', ta: 'தற்போது நிகழ்வுகள் இல்லை', hi: 'अभी कोई कार्यक्रम नहीं', ml: 'ഇപ്പോൾ പരിപാടികളൊന്നുമില്ല'),
+        message: tr(
+            en: 'Check back later for upcoming community events and initiatives.',
+            ta: 'சமூக நிகழ்வுகளுக்குப் பிறகு மீண்டும் பார்க்கவும்.',
+            hi: 'आगामी सामुदायिक कार्यक्रमों और पहलों के लिए बाद में फिर देखें।',
+            ml: 'വരാനിരിക്കുന്ന കമ്മ്യൂണിറ്റി പരിപാടികൾക്കും സംരംഭങ്ങൾക്കും പിന്നീട് വീണ്ടും പരിശോധിക്കുക.'),
+        buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
         onAction: _refresh,
       );
     }
@@ -152,10 +155,12 @@ class _EventsListScreenState extends State<EventsListScreen> {
     final ta = _lang == 'ta';
     return EmptyState(
       emoji: '🎟️',
-      title: ta ? 'பதிவுகள் இங்கே தோன்றும்' : 'Your registrations appear here',
-      message: ta
-          ? 'நீங்கள் பதிவு செய்யும் நிகழ்வுகள் இங்கே காண்பிக்கப்படும்.'
-          : 'Events you register for or check in to will show up here.',
+      title: tr(en: 'Your registrations appear here', ta: 'பதிவுகள் இங்கே தோன்றும்', hi: 'आपके पंजीकरण यहाँ दिखेंगे', ml: 'നിങ്ങളുടെ രജിസ്ട്രേഷനുകൾ ഇവിടെ കാണാം'),
+      message: tr(
+          en: 'Events you register for or check in to will show up here.',
+          ta: 'நீங்கள் பதிவு செய்யும் நிகழ்வுகள் இங்கே காண்பிக்கப்படும்.',
+          hi: 'आप जिन कार्यक्रमों के लिए पंजीकरण या चेक-इन करेंगे, वे यहाँ दिखेंगे।',
+          ml: 'നിങ്ങൾ രജിസ്റ്റർ ചെയ്യുകയോ ചെക്ക്-ഇൻ ചെയ്യുകയോ ചെയ്യുന്ന പരിപാടികൾ ഇവിടെ കാണാം.'),
     );
   }
 
@@ -294,7 +299,7 @@ class _EventCard extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: Text(ta ? 'பதிவு செய்க' : 'Register Now',
+                        child: Text(tr(en: 'Register Now', ta: 'பதிவு செய்க', hi: 'अभी पंजीकरण करें', ml: 'ഇപ്പോൾ രജിസ്റ്റർ ചെയ്യുക'),
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -304,10 +309,10 @@ class _EventCard extends StatelessWidget {
                       ElevatedButton.icon(
                         onPressed: onCheckin,
                         icon: const Icon(Icons.qr_code_scanner, size: 16),
-                        label: Text(ta ? 'செக்-இன்' : 'Check In'),
+                        label: Text(tr(en: 'Check In', ta: 'செக்-இன்', hi: 'चेक इन', ml: 'ചെക്ക് ഇൻ')),
                       )
                     else
-                      Text(ta ? 'நிகழ்வு முடிந்தது' : 'Event ended',
+                      Text(tr(en: 'Event ended', ta: 'நிகழ்வு முடிந்தது', hi: 'कार्यक्रम समाप्त', ml: 'പരിപാടി അവസാനിച്ചു'),
                           style: TextStyle(
                               color: context.cTextSecondary, fontSize: 12)),
                   ],
@@ -414,8 +419,8 @@ class _GoingRow extends StatelessWidget {
         if (count > 0) const SizedBox(width: 6),
         Text(
           count > 0
-              ? (ta ? '$count பேர் வருகிறார்கள்' : '$count Going')
-              : (ta ? 'முதலில் பதிவு செய்க' : 'Be the first'),
+              ? tr(en: '$count Going', ta: '$count பேர் வருகிறார்கள்', hi: '$count लोग आ रहे हैं', ml: '$count പേർ വരുന്നു')
+              : tr(en: 'Be the first', ta: 'முதலில் பதிவு செய்க', hi: 'पहले बनें', ml: 'ആദ്യത്തെയാളാകൂ'),
           style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -471,19 +476,23 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
       Navigator.pop(context);
       SuccessSnackbar.show(
         context,
-        title: ta ? 'பதிவு வெற்றி' : 'Registered',
-        message: ta
-            ? 'நிகழ்வுக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது.'
-            : 'You are registered for this event.',
+        title: tr(en: 'Registered', ta: 'பதிவு வெற்றி', hi: 'पंजीकृत', ml: 'രജിസ്റ്റർ ചെയ്തു'),
+        message: tr(
+            en: 'You are registered for this event.',
+            ta: 'நிகழ்வுக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது.',
+            hi: 'आप इस कार्यक्रम के लिए पंजीकृत हैं।',
+            ml: 'നിങ്ങൾ ഈ പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്തിട്ടുണ്ട്.'),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ta
-              ? 'பதிவு தோல்வி. மீண்டும் முயற்சிக்கவும்.'
-              : 'Registration failed. Please try again.'),
+          content: Text(tr(
+              en: 'Registration failed. Please try again.',
+              ta: 'பதிவு தோல்வி. மீண்டும் முயற்சிக்கவும்.',
+              hi: 'पंजीकरण विफल। कृपया पुनः प्रयास करें।',
+              ml: 'രജിസ്ട്രേഷൻ പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -521,7 +530,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 ),
               ),
               Text(
-                ta ? 'நிகழ்வுக்கு பதிவு' : 'Register for Event',
+                tr(en: 'Register for Event', ta: 'நிகழ்வுக்கு பதிவு', hi: 'कार्यक्रम के लिए पंजीकरण', ml: 'പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്യുക'),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -538,11 +547,11 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
               TextFormField(
                 controller: _name,
                 decoration: InputDecoration(
-                  labelText: ta ? 'பெயர்' : 'Full Name',
+                  labelText: tr(en: 'Full Name', ta: 'பெயர்', hi: 'पूरा नाम', ml: 'പൂർണ്ണ നാമം'),
                   prefixIcon: const Icon(Icons.person_outline),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? (ta ? 'பெயரை உள்ளிடவும்' : 'Enter your name')
+                    ? tr(en: 'Enter your name', ta: 'பெயரை உள்ளிடவும்', hi: 'अपना नाम दर्ज करें', ml: 'നിങ്ങളുടെ പേര് നൽകുക')
                     : null,
               ),
               const SizedBox(height: 12),
@@ -553,13 +562,13 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       controller: _age,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: ta ? 'வயது' : 'Age',
+                        labelText: tr(en: 'Age', ta: 'வயது', hi: 'आयु', ml: 'വയസ്സ്'),
                         prefixIcon: const Icon(Icons.cake_outlined),
                       ),
                       validator: (v) {
                         final n = int.tryParse((v ?? '').trim());
                         if (n == null || n <= 0) {
-                          return ta ? 'சரியான வயது' : 'Valid age';
+                          return tr(en: 'Valid age', ta: 'சரியான வயது', hi: 'मान्य आयु', ml: 'സാധുവായ വയസ്സ്');
                         }
                         return null;
                       },
@@ -570,18 +579,18 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                     child: DropdownButtonFormField<String>(
                       value: _gender,
                       decoration: InputDecoration(
-                        labelText: ta ? 'பாலினம்' : 'Gender',
+                        labelText: tr(en: 'Gender', ta: 'பாலினம்', hi: 'लिंग', ml: 'ലിംഗം'),
                       ),
                       items: [
                         DropdownMenuItem(
                             value: 'Male',
-                            child: Text(ta ? 'ஆண்' : 'Male')),
+                            child: Text(tr(en: 'Male', ta: 'ஆண்', hi: 'पुरुष', ml: 'പുരുഷൻ'))),
                         DropdownMenuItem(
                             value: 'Female',
-                            child: Text(ta ? 'பெண்' : 'Female')),
+                            child: Text(tr(en: 'Female', ta: 'பெண்', hi: 'महिला', ml: 'സ്ത്രീ'))),
                         DropdownMenuItem(
                             value: 'Other',
-                            child: Text(ta ? 'பிற' : 'Other')),
+                            child: Text(tr(en: 'Other', ta: 'பிற', hi: 'अन्य', ml: 'മറ്റുള്ളവ'))),
                       ],
                       onChanged: (v) =>
                           setState(() => _gender = v ?? 'Male'),
@@ -594,13 +603,13 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 controller: _mobile,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: ta ? 'கைபேசி எண்' : 'Mobile Number',
+                  labelText: tr(en: 'Mobile Number', ta: 'கைபேசி எண்', hi: 'मोबाइल नंबर', ml: 'മൊബൈൽ നമ്പർ'),
                   prefixIcon: const Icon(Icons.phone_outlined),
                 ),
                 validator: (v) {
                   final s = (v ?? '').trim();
                   if (s.length < 10) {
-                    return ta ? 'சரியான எண்' : 'Valid mobile number';
+                    return tr(en: 'Valid mobile number', ta: 'சரியான எண்', hi: 'मान्य मोबाइल नंबर', ml: 'സാധുവായ മൊബൈൽ നമ്പർ');
                   }
                   return null;
                 },
@@ -623,7 +632,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : Text(ta ? 'பதிவை உறுதிசெய்' : 'Confirm Registration',
+                      : Text(tr(en: 'Confirm Registration', ta: 'பதிவை உறுதிசெய்', hi: 'पंजीकरण की पुष्टि करें', ml: 'രജിസ്ട്രേഷൻ സ്ഥിരീകരിക്കുക'),
                           style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700)),

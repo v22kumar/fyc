@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -131,10 +132,10 @@ class _Header extends StatelessWidget {
 
         final hour = DateTime.now().hour;
         final greetingEn = hour < 12
-            ? 'Good Morning'
+            ? tr(en: 'Good Morning', ta: 'காலை வணக்கம்', hi: 'सुप्रभात', ml: 'സുപ്രഭാതം')
             : hour < 17
-                ? 'Good Afternoon'
-                : 'Good Evening';
+                ? tr(en: 'Good Afternoon', ta: 'மதிய வணக்கம்', hi: 'नमस्कार', ml: 'ഉച്ച വണക്കം')
+                : tr(en: 'Good Evening', ta: 'மாலை வணக்கம்', hi: 'शुभ संध्या', ml: 'ശുഭ സായാഹ്നം');
 
         return SizedBox(
           height: 268,
@@ -208,21 +209,21 @@ class _Header extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('FYC Connect',
+                                const Text('FYC Connect',
                                     style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
-                                Text('Welcome back!',
-                                    style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500)),
+                                Text(tr(en: 'Welcome back!', ta: 'மீண்டும் வரவேற்கிறோம்!', hi: 'वापसी पर स्वागत है!', ml: 'വീണ്ടും സ്വാഗതം!'),
+                                    style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500)),
                               ],
                             ),
                           ),
                           _CircleBtn(
                             icon: Icons.translate_rounded,
-                            tooltip: 'Change Language',
+                            tooltip: tr(en: 'Change Language', ta: 'மொழியை மாற்று', hi: 'भाषा बदलें', ml: 'ഭാഷ മാറ്റുക'),
                             onTap: () => _showLanguagePicker(context),
                           ),
                           const SizedBox(width: 8),
@@ -245,8 +246,8 @@ class _Header extends StatelessWidget {
                       Text('$greetingEn, $firstName! 👋',
                           style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                       const SizedBox(height: 4),
-                      const Text('Everything you need, all in one place.',
-                          style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w400)),
+                      Text(tr(en: 'Everything you need, all in one place.', ta: 'உங்களுக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.', hi: 'आपकी ज़रूरत की हर चीज़, एक ही जगह।', ml: 'നിങ്ങൾക്ക് വേണ്ടതെല്ലാം, ഒരിടത്ത്.'),
+                          style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w400)),
                       const SizedBox(height: 16),
                       // Search bar
                       GestureDetector(
@@ -263,7 +264,7 @@ class _Header extends StatelessWidget {
                               const Icon(Icons.search, color: Colors.white60, size: 20),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text('Search services, events, and more...',
+                                child: Text(tr(en: 'Search services, events, and more...', ta: 'சேவைகள், நிகழ்வுகள் மற்றும் பலவற்றைத் தேடுங்கள்...', hi: 'सेवाएँ, कार्यक्रम और बहुत कुछ खोजें...', ml: 'സേവനങ്ങൾ, പരിപാടികൾ എന്നിവ തിരയുക...'),
                                     style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
                               ),
                               Icon(Icons.tune_rounded, color: Colors.white.withOpacity(0.5), size: 18),
@@ -413,17 +414,17 @@ class _BeAHeroCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text('🩸 Be a Hero',
-                        style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                    Text(tr(en: '🩸 Be a Hero', ta: '🩸 ஒரு ஹீரோவாகுங்கள்', hi: '🩸 हीरो बनें', ml: '🩸 ഒരു ഹീറോ ആകൂ'),
+                        style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
                     const SizedBox(width: 6),
                     Icon(Icons.favorite, color: Colors.white.withOpacity(0.85), size: 15),
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Text('Donate Blood. Save Lives.',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(tr(en: 'Donate Blood. Save Lives.', ta: 'இரத்த தானம் செய்யுங்கள். உயிர்களைக் காப்பாற்றுங்கள்.', hi: 'रक्तदान करें। जीवन बचाएँ।', ml: 'രക്തദാനം ചെയ്യൂ. ജീവൻ രക്ഷിക്കൂ.'),
+                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text('Your one donation can save up to 3 lives.',
+                Text(tr(en: 'Your one donation can save up to 3 lives.', ta: 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்.', hi: 'आपका एक दान 3 जीवन तक बचा सकता है।', ml: 'നിങ്ങളുടെ ഒരു ദാനം 3 ജീവൻ വരെ രക്ഷിക്കാം.'),
                     style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11)),
                 const SizedBox(height: 14),
                 Pressable(
@@ -435,13 +436,13 @@ class _BeAHeroCard extends StatelessWidget {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Find Blood Donors',
-                              style: TextStyle(color: Color(0xFF0B6E4F), fontSize: 13, fontWeight: FontWeight.w700)),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_forward, color: Color(0xFF0B6E4F), size: 16),
+                          Text(tr(en: 'Find Blood Donors', ta: 'இரத்த தானம் செய்பவர்களைக் கண்டறியுங்கள்', hi: 'रक्तदाता खोजें', ml: 'രക്തദാതാക്കളെ കണ്ടെത്തുക'),
+                              style: const TextStyle(color: Color(0xFF0B6E4F), fontSize: 13, fontWeight: FontWeight.w700)),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_forward, color: Color(0xFF0B6E4F), size: 16),
                         ],
                       ),
                     ),
