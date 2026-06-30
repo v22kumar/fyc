@@ -932,7 +932,7 @@ class _BottomBar extends StatelessWidget {
                         _NavItem(icon: Icons.home_rounded, label: 'Home', active: true, onTap: () {}),
                         _NavItem(icon: Icons.grid_view_rounded, label: 'Services', onTap: () => _showMoreSheet(context)),
                         const SizedBox(width: 56),
-                        _NavItem(icon: Icons.people_alt_rounded, label: 'Community', onTap: () => context.push('/community')),
+                        _NavItem(icon: Icons.people_alt_rounded, label: 'Community', onTap: () => context.push('/feed')),
                         _NavItem(icon: Icons.person_rounded, label: 'Profile', onTap: () => context.push('/profile')),
                       ],
                     ),
@@ -1285,6 +1285,7 @@ class _SearchSheetState extends State<_SearchSheet> {
 
 void _showCreateSheet(BuildContext context) {
   final actions = <(IconData, String, String, Color)>[
+    (Icons.edit_note_rounded, 'Share a Post', '/feed/create', const Color(0xFF0B6E4F)),
     (Icons.water_drop, 'Register as Donor', '/blood-donation/register', const Color(0xFFEF4444)),
     (Icons.campaign, 'Report an Issue', '/issues', const Color(0xFFEAB308)),
     (Icons.eco, 'Register a Tree', '/green/register', const Color(0xFF16A34A)),
