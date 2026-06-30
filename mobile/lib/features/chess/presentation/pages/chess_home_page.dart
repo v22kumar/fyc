@@ -770,7 +770,44 @@ class _ChessHomePageState extends State<ChessHomePage>
   // ── Bottom Grid ───────────────────────────────────────────────────────────────
 
   Widget _buildBottomGrid() {
-    return Row(
+    return Column(
+      children: [
+        // Tournaments banner
+        GestureDetector(
+          onTap: () => context.push('/chess/tournaments'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0B6E4F), Color(0xFFD4AF37)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: const [
+                Text('🏟️', style: TextStyle(fontSize: 26)),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Chess Tournaments',
+                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                      Text('Compete in the FYC Arena',
+                          style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.white),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
       children: [
         Expanded(
           child: _BottomGridCard(
@@ -797,6 +834,8 @@ class _ChessHomePageState extends State<ChessHomePage>
             subtitle: 'Chess Stories',
             onTap: () => context.push('/chess/legends'),
           ),
+        ),
+      ],
         ),
       ],
     );
