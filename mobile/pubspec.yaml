@@ -40,10 +40,6 @@ dependencies:
   path_provider: ^2.1.4
   open_filex: ^4.5.0
 
-  # Image picking for community posts
-  image_picker: ^1.1.2
-
-
   # Functional error handling
   dartz: ^0.10.1
 
