@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'strings_en.dart';
 import 'strings_ta.dart';
 import 'strings_hi.dart';
@@ -14,6 +15,12 @@ abstract class AppLocalizations {
 
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
     delegate,
+    // Without these, Material widgets (TabBar, tooltips, text fields, date
+    // pickers…) have no MaterialLocalizations for ta/hi/ml and fail to build —
+    // the screen goes blank/grey when the app is in any non-English language.
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
   ];
 
   static const List<Locale> supportedLocales = [
