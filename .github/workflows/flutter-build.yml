@@ -158,6 +158,26 @@ jobs:
       #   fyc-connect-arm64.apk  — most modern Android phones (2017+)  ← USE THIS
       #   fyc-connect-arm32.apk  — older/budget 32-bit Android phones
       #   fyc-connect-x86_64.apk — Android emulators
+      # ── Version manifest for the in-app updater ──────────────────────────────
+      # Published to the release on EVERY build via GITHUB_TOKEN, so the backend
+      # always learns the latest version — no dependence on a Fly secret that can
+      # silently break. Set repo variable FORCE_UPDATE=false to make updates
+      # optional (defaults to mandatory so village users are always on latest).
+      - name: Generate version.json (in-app updater source of truth)
+        run: |
+          MANDATORY="${{ vars.FORCE_UPDATE }}"
+          if [ "$MANDATORY" = "false" ]; then MANDATORY="false"; else MANDATORY="true"; fi
+          cat > mobile/build/version.json <<JSON
+          {
+            "version_code": ${{ github.run_number }},
+            "version_name": "1.0.${{ github.run_number }}",
+            "apk_url": "${{ github.server_url }}/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk",
+            "mandatory": $MANDATORY,
+            "notes": "A new version of FYC Connect is available. Please update for the latest features and fixes."
+          }
+          JSON
+          echo "── version.json ──"; cat mobile/build/version.json
+
       - name: Publish to GitHub Release (app-latest)
         uses: softprops/action-gh-release@v2
         with:
@@ -190,6 +210,7 @@ jobs:
             mobile/build/app/outputs/flutter-apk/fyc-connect-arm32.apk
             mobile/build/app/outputs/flutter-apk/fyc-connect-x86_64.apk
             mobile/build/app/outputs/bundle/release/fyc-connect-latest.aab
+            mobile/build/version.json
 
       # ── 9. Wire up backend download URL (idempotent) ─────────────────────────
       # Sets APP_APK_URL on fyc-backend so the web "Download App" button works.
