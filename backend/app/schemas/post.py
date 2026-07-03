@@ -8,6 +8,8 @@ from pydantic import BaseModel, Field
 class PostCreate(BaseModel):
     content: str = ""
     image_urls: List[str] = Field(default_factory=list)
+    category: Optional[str] = None
+    location: Optional[str] = None
     # When true (and the post has an image), also publish to the org's
     # Instagram feed. Honoured only for managers/admins and only when
     # Instagram credentials are configured; otherwise silently ignored.
@@ -18,6 +20,8 @@ class PostAuthor(BaseModel):
     id: UUID
     name: str
     avatar_url: Optional[str] = None
+    role: Optional[str] = None       # "Admin" / "Manager" / "Member" / "Citizen"
+    verified: bool = False           # official/admin accounts get a check
 
 
 class PostOut(BaseModel):
@@ -25,10 +29,15 @@ class PostOut(BaseModel):
     author: PostAuthor
     content: str
     image_urls: List[str]
+    category: Optional[str] = None
+    source: str = "thread"           # "thread" or "instagram"
+    location: Optional[str] = None
     created_at: datetime
     like_count: int
     comment_count: int
+    repost_count: int = 0
     liked_by_me: bool
+    reposted_by_me: bool = False
 
 
 class CommentCreate(BaseModel):
