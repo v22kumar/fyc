@@ -188,9 +188,16 @@ async def lifespan(app: FastAPI):
                 except Exception:
                     coltype = "VARCHAR"
                 ddl = f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}'
-                # Carry a server default when present so NOT NULL columns can be added.
+                # Carry a server default ONLY when it is a simple constant literal.
+                # SQLite's ALTER TABLE ADD COLUMN rejects function/expression
+                # defaults (e.g. now() / CURRENT_TIMESTAMP -> "Cannot add a column
+                # with non-constant default"), which previously left created_at /
+                # updated_at unADDed on drifted tables — every INSERT then 500'd
+                # with "no such column: created_at". For such columns we add them
+                # nullable (no DEFAULT); new rows still populate the value via the
+                # ORM / server_default at insert time on a correctly-created table.
                 sd = getattr(col.server_default, "arg", None)
-                if sd is not None:
+                if sd is not None and isinstance(sd, (str, int, float)):
                     ddl += f" DEFAULT {sd}"
                 for attempt in range(3):
                     try:
