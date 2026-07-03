@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/fixture_entity.dart';
 import '../../domain/entities/team_entity.dart';
+import '../../domain/entities/tournament_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
@@ -138,6 +139,66 @@ class _SportsTournamentDetailScreenState
     }
   }
 
+  Future<void> _closeRegistration() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr(en: 'Close registration?', ta: 'பதிவை மூடவா?',
+            hi: 'रजिस्ट्रेशन बंद करें?', ml: 'രജിസ്ട്രേഷൻ അടയ്ക്കണോ?')),
+        content: Text(tr(
+            en: 'No new teams can register after this. You can then generate fixtures.',
+            ta: 'இதற்குப் பிறகு புதிய அணிகள் பதிவு செய்ய முடியாது. பிறகு அட்டவணை உருவாக்கலாம்.',
+            hi: 'इसके बाद कोई नई टीम रजिस्टर नहीं कर सकती। फिर आप फ़िक्स्चर बना सकते हैं।',
+            ml: 'ഇതിനുശേഷം പുതിയ ടീമുകൾക്ക് രജിസ്റ്റർ ചെയ്യാനാകില്ല. പിന്നീട് ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കാം.')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+              child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द', ml: 'റദ്ദാക്കുക'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr(en: 'Close registration', ta: 'பதிவை மூடு',
+                  hi: 'रजिस्ट्रेशन बंद करें', ml: 'രജിസ്ട്രേഷൻ അടയ്ക്കുക'))),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await sl<ApiClient>().dio.post(ApiConstants.sportsCloseRegistration(widget.tournamentId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr(en: 'Registration closed', ta: 'பதிவு மூடப்பட்டது',
+            hi: 'रजिस्ट्रेशन बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു')),
+        backgroundColor: AppColors.primary,
+      ));
+      _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr(en: 'Could not close registration', ta: 'மூட முடியவில்லை',
+            hi: 'बंद नहीं हो सका', ml: 'അടയ്ക്കാനായില്ല')),
+        backgroundColor: AppColors.accent,
+      ));
+    }
+  }
+
+  /// Friendly, localized label + color for the tournament's lifecycle phase.
+  (String, Color) _phaseChip(TournamentEntity t) {
+    switch (t.effectivePhase) {
+      case 'REGISTRATION_OPEN':
+        return (tr(en: 'REGISTRATION OPEN', ta: 'பதிவு திறந்துள்ளது',
+            hi: 'रजिस्ट्रेशन खुला', ml: 'രജിസ്ട്രേഷൻ തുറന്നു'), const Color(0xFF12A150));
+      case 'REGISTRATION_CLOSED':
+        return (tr(en: 'REGISTRATION CLOSED', ta: 'பதிவு மூடப்பட்டது',
+            hi: 'रजिस्ट्रेशन बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു'), const Color(0xFFD97706));
+      case 'ONGOING':
+        return (tr(en: 'ONGOING', ta: 'நடைபெறுகிறது', hi: 'चल रहा है', ml: 'നടക്കുന്നു'),
+            const Color(0xFF2563EB));
+      case 'COMPLETED':
+        return (tr(en: 'COMPLETED', ta: 'முடிந்தது', hi: 'समाप्त', ml: 'പൂർത്തിയായി'),
+            const Color(0xFF6B7280));
+      default:
+        return (t.status, const Color(0xFF0B6E4F));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdmin = _isAdmin;
@@ -145,14 +206,6 @@ class _SportsTournamentDetailScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(tr(en: 'Tournament', ta: 'போட்டி விவரம்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്')),
-        actions: [
-          if (isAdmin)
-            IconButton(
-              tooltip: tr(en: 'Generate Fixtures', ta: 'அட்டவணை உருவாக்கு', hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
-              icon: const Icon(Icons.auto_awesome_motion_outlined),
-              onPressed: _generateFixtures,
-            ),
-        ],
       ),
       body: BlocBuilder<SportsBloc, SportsState>(
         builder: (context, state) {
@@ -208,21 +261,24 @@ class _SportsTournamentDetailScreenState
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                state.tournament.status,
-                                style: const TextStyle(
-                                    color: Color(0xFF0B6E4F),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800),
-                              ),
-                            ),
+                            Builder(builder: (_) {
+                              final (label, color) = _phaseChip(state.tournament);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  label,
+                                  style: TextStyle(
+                                      color: color,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800),
+                                ),
+                              );
+                            }),
                           ],
                         ),
                       ],
@@ -270,9 +326,10 @@ class _SportsTournamentDetailScreenState
                       ),
                     ),
                   
-                  if (state.tournament.status == 'UPCOMING' || state.tournament.status == 'PUBLISHED')
+                  // Register: only while registration is open.
+                  if (state.tournament.isRegistrationOpen)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -290,6 +347,38 @@ class _SportsTournamentDetailScreenState
                           icon: const Icon(Icons.group_add, color: Colors.white),
                           label: Text(tr(en: 'Register Your Team', ta: 'அணியை பதிவு செய்', hi: 'अपनी टीम पंजीकृत करें', ml: 'നിങ്ങളുടെ ടീം രജിസ്റ്റർ ചെയ്യുക'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        ),
+                      ),
+                    ),
+
+                  // Admin lifecycle actions: close registration → generate fixtures.
+                  if (isAdmin && state.tournament.isRegistrationOpen)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _closeRegistration,
+                          icon: const Icon(Icons.lock_clock_outlined),
+                          label: Text(tr(en: 'Close registration now', ta: 'இப்போது பதிவை மூடு',
+                              hi: 'रजिस्ट्रेशन अभी बंद करें', ml: 'ഇപ്പോൾ രജിസ്ട്രേഷൻ അടയ്ക്കുക')),
+                        ),
+                      ),
+                    ),
+                  if (isAdmin && state.tournament.isRegistrationClosed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: _generateFixtures,
+                          icon: const Icon(Icons.auto_awesome_motion_outlined, color: Colors.white),
+                          label: Text(tr(en: 'Generate fixtures', ta: 'அட்டவணை உருவாக்கு',
+                              hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
+                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                         ),
                       ),
                     ),

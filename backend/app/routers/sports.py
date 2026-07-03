@@ -30,6 +30,34 @@ require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
 require_member = RoleChecker(["CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 
+def _registration_closed(t) -> bool:
+    """Registration is closed once an admin closed it early, or the due date
+    (registration_close_date) has passed."""
+    if t.registration_closed_at is not None:
+        return True
+    close = t.registration_close_date
+    if close is None:
+        return False
+    if close.tzinfo is None:  # SQLite hands back naive datetimes
+        close = close.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) >= close
+
+
+def _tournament_phase(db: Session, t) -> str:
+    """Single source of truth for a tournament's lifecycle phase, derived so the
+    stored status can't contradict reality (e.g. UPCOMING with a live match):
+      REGISTRATION_OPEN → REGISTRATION_CLOSED → ONGOING → COMPLETED.
+    """
+    if str(t.status or "").upper() in ("COMPLETED", "ARCHIVED"):
+        return "COMPLETED"
+    fixtures = db.query(Fixture).filter(Fixture.tournament_id == t.id).all()
+    if fixtures:
+        if all(f.status == "COMPLETED" for f in fixtures):
+            return "COMPLETED"
+        return "ONGOING"
+    return "REGISTRATION_CLOSED" if _registration_closed(t) else "REGISTRATION_OPEN"
+
+
 def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id, notes):
     """Apply a final result to a fixture and update team standings. Shared by
     direct executive result entry and approved club-member live entries."""
@@ -98,7 +126,10 @@ def list_tournaments(
         q = q.filter(Tournament.sport == sport.lower())
     if status:
         q = q.filter(Tournament.status == status.upper())
-    return q.order_by(Tournament.year.desc()).all()
+    tournaments = q.order_by(Tournament.year.desc()).all()
+    for t in tournaments:
+        t.phase = _tournament_phase(db, t)
+    return tournaments
 
 
 require_member_or_exec = RoleChecker(["CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
@@ -123,6 +154,7 @@ def create_tournament(
     db.add(t)
     db.commit()
     db.refresh(t)
+    t.phase = _tournament_phase(db, t)
     return t
 
 
@@ -138,6 +170,25 @@ def get_tournament(
     ).first()
     if not t:
         raise HTTPException(404, "Tournament not found")
+    t.phase = _tournament_phase(db, t)
+    return t
+
+
+@router.post("/tournaments/{tournament_id}/close-registration", response_model=TournamentOut)
+def close_registration(
+    tournament_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    """Manually close registration early (admin). After this, no new teams can
+    register and fixtures can be generated. Registration also closes on its own
+    once registration_close_date passes."""
+    t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    if t.registration_closed_at is None:
+        t.registration_closed_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(t)
+    t.phase = _tournament_phase(db, t)
     return t
 
 
@@ -274,7 +325,11 @@ def register_team(
     current_user: User = Depends(get_current_user),
 ):
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
-    
+
+    # Registration must be open — no new teams once it's closed or fixtures exist.
+    if _tournament_phase(db, t) != "REGISTRATION_OPEN":
+        raise HTTPException(400, "Registration is closed for this tournament.")
+
     # Auto-approve if OPEN, else PENDING
     status = "APPROVED" if t.registration_mode == "OPEN" else "PENDING"
     
@@ -476,26 +531,29 @@ def generate_fixtures(
     """Auto-generate round-robin fixtures from the APPROVED registered teams.
     Set double_round=true for home-and-away. Skips if fixtures already exist.
 
-    Fixtures cannot be generated while registration is still open: if the
-    tournament has a registration_close_date in the future, generation is
-    blocked so teams that register before the deadline aren't left out of the
-    draw. An organiser who deliberately wants to close registration early can
-    pass force=true to override."""
+    Fixtures cannot be generated while registration is still open. Registration
+    closes automatically once registration_close_date passes, or immediately when
+    an admin closes it early. Passing force=true closes registration now and
+    generates in one step."""
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
 
-    if not force and t.registration_close_date is not None:
-        close = t.registration_close_date
-        # Normalise to an aware UTC datetime for a safe comparison (SQLite can
-        # hand back naive datetimes even for timezone=True columns).
-        if close.tzinfo is None:
-            close = close.replace(tzinfo=timezone.utc)
-        if close > datetime.now(timezone.utc):
+    if _tournament_phase(db, t) == "REGISTRATION_OPEN":
+        if not force:
+            close = t.registration_close_date
+            when = ""
+            if close is not None:
+                if close.tzinfo is None:
+                    close = close.replace(tzinfo=timezone.utc)
+                when = f" until {close.date().isoformat()}"
             raise HTTPException(
                 400,
-                "Registration is still open until "
-                f"{close.date().isoformat()}. Wait for registration to close, "
-                "or pass force=true to close it early and generate fixtures now.",
+                f"Registration is still open{when}. Close registration first "
+                "(or pass force=true to close it now and generate fixtures).",
             )
+        # force → close registration now, then generate.
+        if t.registration_closed_at is None:
+            t.registration_closed_at = datetime.now(timezone.utc)
+            db.commit()
 
     teams = db.query(Team).filter(Team.tournament_id == tournament_id, Team.status == "APPROVED").all()
     if len(teams) < 2:
@@ -525,6 +583,8 @@ def generate_fixtures(
                 db.add(f)
                 created.append(f)
                 match_no += 1
+    # Fixtures are out → the tournament is now ONGOING.
+    t.status = "ONGOING"
     db.commit()
     for f in created:
         db.refresh(f)
