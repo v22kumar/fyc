@@ -57,12 +57,13 @@ class _SportsTournamentDetailScreenState
 
   Future<void> _enterScore(FixtureEntity f) async {
     final state = context.read<SportsBloc>().state;
-    if (state is SportsDetailLoaded && state.tournament.sport == 'cricket') {
+    if (state is SportsDetailLoaded &&
+        state.tournament.sport.toLowerCase() == 'cricket') {
       // Full ball-by-ball cricket scoring, in-app, for admin + manager
       // (backend gates these endpoints to EXECUTIVE_MEMBER and above).
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => CricketScoringScreen(fixtureId: f.id),
+          builder: (_) => CricketScoringScreen(fixture: f),
         ),
       );
       _reload();

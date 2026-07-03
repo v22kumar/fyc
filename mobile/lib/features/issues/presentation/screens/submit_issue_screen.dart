@@ -194,6 +194,53 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
         );
   }
 
+  void _showCategoryExamples() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.cBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr(en: 'Category examples', ta: 'வகை எடுத்துக்காட்டுகள்',
+                    hi: 'श्रेणी उदाहरण', ml: 'വിഭാഗ ഉദാഹരണങ്ങൾ'),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.cText),
+              ),
+              const SizedBox(height: 12),
+              ..._categories.map((c) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Text(c.emoji, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_isTa ? c.labelTa : c.labelEn,
+                                  style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
+                              Text(c.subtitleEn,
+                                  style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -269,7 +316,11 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             const SizedBox(height: 20),
 
             // Category grid
-            _SectionLabel(tr(en: 'Select Category', ta: 'வகை தேர்வு', hi: 'श्रेणी चुनें', ml: 'വിഭാഗം തിരഞ്ഞെടുക്കുക'), trailing: _isTa ? null : tr(en: 'Not sure? See examples', ta: '', hi: 'पक्का नहीं? उदाहरण देखें', ml: 'ഉറപ്പില്ലേ? ഉദാഹരണങ്ങൾ കാണുക')),
+            _SectionLabel(
+              tr(en: 'Select Category', ta: 'வகை தேர்வு', hi: 'श्रेणी चुनें', ml: 'വിഭാഗം തിരഞ്ഞെടുക്കുക'),
+              trailing: _isTa ? null : tr(en: 'Not sure? See examples', ta: '', hi: 'पक्का नहीं? उदाहरण देखें', ml: 'ഉറപ്പില്ലേ? ഉദാഹരണങ്ങൾ കാണുക'),
+              onTrailingTap: _showCategoryExamples,
+            ),
             const SizedBox(height: 10),
             _CategoryGrid(
               selected: _selectedCategory,
@@ -458,7 +509,8 @@ class _SectionLabel extends StatelessWidget {
   final String text;
   final String? trailing;
   final String? badge;
-  const _SectionLabel(this.text, {this.trailing, this.badge});
+  final VoidCallback? onTrailingTap;
+  const _SectionLabel(this.text, {this.trailing, this.badge, this.onTrailingTap});
 
   @override
   Widget build(BuildContext context) {
@@ -479,7 +531,7 @@ class _SectionLabel extends StatelessWidget {
         const Spacer(),
         if (trailing != null)
           GestureDetector(
-            onTap: () {},
+            onTap: onTrailingTap,
             child: Text(trailing!, style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
           ),
       ],

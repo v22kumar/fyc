@@ -27,6 +27,10 @@ abstract class SportsDataSource {
   Future<CricketMatchStateModel> fetchCricketMatchState(String fixtureId);
   Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data);
   Future<CricketMatchStateModel> undoCricketBall(String fixtureId);
+  Future<(CricketMatchStateModel, CricketPlayersModel?)> initCricketMatch(
+      String fixtureId, Map<String, dynamic> data);
+  Future<(CricketMatchStateModel, CricketPlayersModel?)> startCricketSecondInnings(
+      String fixtureId, Map<String, dynamic> data);
 }
 
 class SportsDataSourceImpl implements SportsDataSource {
@@ -166,6 +170,45 @@ class SportsDataSourceImpl implements SportsDataSource {
       );
       final resData = response.data as Map<String, dynamic>;
       return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<(CricketMatchStateModel, CricketPlayersModel?)> initCricketMatch(
+      String fixtureId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsFixtureCricketInit(fixtureId),
+        data: data,
+      );
+      final resData = response.data as Map<String, dynamic>;
+      final match = resData['match'] as Map<String, dynamic>? ?? {};
+      final playersJson = resData['current_players'] as Map<String, dynamic>?;
+      return (
+        CricketMatchStateModel.fromJson(match['match_state'] as Map<String, dynamic>? ?? {}),
+        playersJson != null ? CricketPlayersModel.fromJson(playersJson) : null,
+      );
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<(CricketMatchStateModel, CricketPlayersModel?)> startCricketSecondInnings(
+      String fixtureId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsFixtureCricketSecondInnings(fixtureId),
+        data: data,
+      );
+      final resData = response.data as Map<String, dynamic>;
+      final playersJson = resData['current_players'] as Map<String, dynamic>?;
+      return (
+        CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {}),
+        playersJson != null ? CricketPlayersModel.fromJson(playersJson) : null,
+      );
     } on DioException catch (e) {
       throw mapDioException(e);
     }
