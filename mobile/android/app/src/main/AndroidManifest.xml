@@ -60,6 +60,12 @@
             </intent-filter>
         </service>
 
+        <!-- Channel used for backgrounded/killed-app FCM notifications; the app
+             creates this channel at startup (LocalNotifications.init). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="fyc_default" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

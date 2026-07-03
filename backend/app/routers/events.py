@@ -12,6 +12,7 @@ from app.models.user import User, VolunteerMetadata
 from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOut, EventCheckoutOut, EventRegistrationCreate, EventRegistrationOut
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -68,6 +69,20 @@ def create_event(
     db.add(event)
     db.commit()
     db.refresh(event)
+
+    # Notify the tenant only when the event is actually published (drafts stay
+    # silent). Best-effort — never fails the create.
+    if payload.is_published:
+        NotificationService.broadcast_to_tenant(
+            db=db,
+            tenant_id=current_user.organization_id,
+            category="EVENT",
+            title_en=f"New event: {payload.title_en}",
+            title_ta=f"புதிய நிகழ்வு: {payload.title_ta}",
+            body_en=payload.description_en,
+            body_ta=payload.description_ta,
+            route="/events",
+        )
     return event
 
 @router.put("/{event_id}", response_model=EventOut)

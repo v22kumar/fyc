@@ -27,7 +27,16 @@ class Settings(BaseSettings):
     OTP_BYPASS_CODE: str = ""
 
     # Firebase Cloud Messaging — set in production .env to enable push notifications
-    FCM_SERVER_KEY: str = ""
+    FCM_SERVER_KEY: str = ""  # legacy HTTP API (decommissioned) — do not use
+
+    # Firebase Admin (FCM HTTP v1) — the modern push path. Provide EITHER a path
+    # to a service-account JSON file, OR the JSON itself (handy on Fly.io where
+    # secrets are env vars). Generate at Firebase Console → Project Settings →
+    # Service accounts → "Generate new private key" for project fyc-connect-25ab0.
+    # When neither is set, push is silently disabled (in-app notifications still
+    # work). On Fly:  flyctl secrets set FIREBASE_CREDENTIALS_JSON="$(cat key.json)"
+    FIREBASE_CREDENTIALS_PATH: str = ""
+    FIREBASE_CREDENTIALS_JSON: str = ""
 
     # Twilio — OTP delivery
     # Verify (SMS, recommended): set TWILIO_VERIFY_SID to use Twilio Verify service
