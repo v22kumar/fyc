@@ -15,6 +15,9 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/success_snackbar.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import 'event_create_screen.dart';
 
 class EventsListScreen extends StatefulWidget {
   const EventsListScreen({super.key});
@@ -34,12 +37,39 @@ class _EventsListScreenState extends State<EventsListScreen> {
 
   void _refresh() => context.read<EventBloc>().add(const EventFetchRequested());
 
+  bool get _canCreate {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isAdmin;
+  }
+
+  Future<void> _openCreate() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const EventCreateScreen()),
+    );
+    if (created == true && mounted) {
+      _refresh();
+      SuccessSnackbar.show(
+        context,
+        title: tr(en: 'Created', ta: 'உருவாக்கப்பட்டது', hi: 'बन गया', ml: 'സൃഷ്ടിച്ചു'),
+        message: tr(en: 'Event created', ta: 'நிகழ்வு உருவாக்கப்பட்டது',
+            hi: 'कार्यक्रम बन गया', ml: 'പരിപാടി സൃഷ്ടിച്ചു'),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ta = _lang == 'ta';
     return DefaultTabController(
       length: 4,
       child: Scaffold(
+        floatingActionButton: _canCreate
+            ? FloatingActionButton.extended(
+                onPressed: _openCreate,
+                icon: const Icon(Icons.add),
+                label: Text(tr(en: 'New', ta: 'புதிது', hi: 'नया', ml: 'പുതിയത്')),
+              )
+            : null,
         appBar: AppBar(
           title: Text(tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ')),
           bottom: TabBar(

@@ -7,6 +7,7 @@ import '../models/event_model.dart';
 abstract class EventDataSource {
   Future<List<EventModel>> fetchEvents();
   Future<Map<String, dynamic>> checkinEvent(String eventId);
+  Future<EventModel> createEvent(Map<String, dynamic> body);
 }
 
 class EventDataSourceImpl implements EventDataSource {
@@ -32,6 +33,16 @@ class EventDataSourceImpl implements EventDataSource {
       final response = await _client.dio
           .post('${ApiConstants.events}/$eventId/checkin');
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<EventModel> createEvent(Map<String, dynamic> body) async {
+    try {
+      final response = await _client.dio.post(ApiConstants.events, data: body);
+      return EventModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

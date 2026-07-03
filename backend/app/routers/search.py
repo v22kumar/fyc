@@ -51,7 +51,7 @@ def global_search(
                 id=u.user_id,
                 type="USER",
                 title=u.full_name_en or u.full_name_ta,
-                image_url=u.profile_picture_url
+                image_url=u.profile_image_url
             ))
 
     # Events

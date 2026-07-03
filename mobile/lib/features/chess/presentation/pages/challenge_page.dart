@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -20,7 +21,13 @@ class _ChallengePageState extends State<ChallengePage>
 
   late Future<List<ChessMemberModel>> _membersFuture;
   late Future<List<ChessChallengeModel>> _incomingFuture;
-  late Future<List<ChessChallengeModel>> _outgoingFuture;
+
+  /// Outgoing challenges, refreshed by [_poll] so we can detect when an
+  /// opponent accepts and route this (challenging) player into the game.
+  List<ChessChallengeModel> _outgoing = [];
+  Timer? _poll;
+  bool _navigating = false;
+  final Set<String> _enteredGameIds = {};
 
   String _selectedTime = 'untimed';
   bool _sending = false;
@@ -39,18 +46,64 @@ class _ChallengePageState extends State<ChallengePage>
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
     _reload();
+    // Poll so both sides move together: the challenger is auto-routed into the
+    // board the moment the opponent accepts, and the inbox stays fresh.
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _refreshOutgoing());
   }
 
   void _reload() {
     setState(() {
       _membersFuture = _ds.members();
       _incomingFuture = _ds.incomingChallenges();
-      _outgoingFuture = _ds.outgoingChallenges();
     });
+    _refreshOutgoing();
+  }
+
+  Future<void> _refreshOutgoing() async {
+    try {
+      final outgoing = await _ds.outgoingChallenges();
+      if (!mounted) return;
+      setState(() => _outgoing = outgoing);
+      // An accepted outgoing challenge means a game now exists and this player
+      // is White — enter it so both players' sockets connect and play begins.
+      for (final c in outgoing) {
+        if (c.status == 'accepted' &&
+            c.gameId != null &&
+            !_enteredGameIds.contains(c.gameId)) {
+          _enterAcceptedGame(c);
+          break;
+        }
+      }
+    } catch (_) {
+      // best-effort poll; ignore transient errors
+    }
+  }
+
+  Future<void> _enterAcceptedGame(ChessChallengeModel c) async {
+    if (_navigating || !mounted) return;
+    _navigating = true;
+    _enteredGameIds.add(c.gameId!);
+    try {
+      final token = await sl<LocalStorage>().getToken() ?? '';
+      if (!mounted) return;
+      await context.push(
+        '/chess/online/${c.gameId}',
+        extra: {
+          'token': token,
+          'color': 'white', // challenger is always White (backend sets white_id)
+          'opponent': c.challengedName ?? 'Opponent',
+        },
+      );
+      // Returned from the game — refresh so a finished/again challenge is clean.
+      if (mounted) _reload();
+    } finally {
+      _navigating = false;
+    }
   }
 
   @override
   void dispose() {
+    _poll?.cancel();
     _tabs.dispose();
     super.dispose();
   }
@@ -81,7 +134,7 @@ class _ChallengePageState extends State<ChallengePage>
         children: [
           _ChallengeTab(
             membersFuture: _membersFuture,
-            outgoingFuture: _outgoingFuture,
+            outgoing: _outgoing,
             selectedTime: _selectedTime,
             timeControls: _timeControls,
             onTimeChanged: (t) => setState(() => _selectedTime = t),
@@ -160,7 +213,7 @@ class _ChallengePageState extends State<ChallengePage>
 
 class _ChallengeTab extends StatelessWidget {
   final Future<List<ChessMemberModel>> membersFuture;
-  final Future<List<ChessChallengeModel>> outgoingFuture;
+  final List<ChessChallengeModel> outgoing;
   final String selectedTime;
   final List<(String, String)> timeControls;
   final void Function(String) onTimeChanged;
@@ -169,7 +222,7 @@ class _ChallengeTab extends StatelessWidget {
 
   const _ChallengeTab({
     required this.membersFuture,
-    required this.outgoingFuture,
+    required this.outgoing,
     required this.selectedTime,
     required this.timeControls,
     required this.onTimeChanged,
@@ -179,6 +232,8 @@ class _ChallengeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pending =
+        outgoing.where((c) => c.status == 'pending').toList();
     return Column(
       children: [
         // Time control selector
@@ -200,6 +255,40 @@ class _ChallengeTab extends StatelessWidget {
                 .toList(),
           ),
         ),
+
+        // Waiting-for-opponent banners for challenges we've sent.
+        if (pending.isNotEmpty)
+          Container(
+            width: double.infinity,
+            color: AppColors.darkBg.withOpacity(0.5),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: pending
+                  .map((c) => Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.gold),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Waiting for ${c.challengedName ?? 'opponent'} to accept…',
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
 
         Expanded(
           child: FutureBuilder<List<ChessMemberModel>>(

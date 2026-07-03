@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -82,21 +83,55 @@ class _SportsTournamentDetailScreenState
     if (ok == true) _reload();
   }
 
-  Future<void> _generateFixtures() async {
+  Future<void> _generateFixtures({bool force = false}) async {
     try {
       await sl<ApiClient>().dio.post(
         ApiConstants.sportsGenerateFixtures(widget.tournamentId),
+        queryParameters: force ? {'force': true} : null,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fixtures generated'), backgroundColor: AppColors.primary),
+        SnackBar(
+          content: Text(tr(en: 'Fixtures generated', ta: 'அட்டவணை உருவாக்கப்பட்டது',
+              hi: 'फ़िक्स्चर बन गए', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിച്ചു')),
+          backgroundColor: AppColors.primary,
+        ),
       );
       _reload();
-    } catch (_) {
+    } on DioException catch (e) {
       if (!mounted) return;
+      final detail = e.response?.data is Map ? e.response?.data['detail'] as String? : null;
+      // Registration still open → offer to close it early and force-generate.
+      if (!force && detail != null && detail.contains('Registration is still open')) {
+        final go = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(tr(en: 'Registration still open', ta: 'பதிவு இன்னும் திறந்துள்ளது',
+                hi: 'रजिस्ट्रेशन अभी खुला है', ml: 'രജിസ്ട്രേഷൻ ഇപ്പോഴും തുറന്നിരിക്കുന്നു')),
+            content: Text(detail),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(tr(en: 'Wait', ta: 'காத்திரு', hi: 'रुकें', ml: 'കാത്തിരിക്കുക')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(tr(en: 'Close early & generate', ta: 'முன்கூட்டியே மூடி உருவாக்கு',
+                    hi: 'जल्दी बंद करें और बनाएं', ml: 'നേരത്തെ അടച്ച് സൃഷ്ടിക്കുക')),
+              ),
+            ],
+          ),
+        );
+        if (go == true) await _generateFixtures(force: true);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not generate — need ≥2 teams and no existing fixtures'),
+        SnackBar(
+          content: Text(detail ??
+              tr(en: 'Could not generate — need ≥2 approved teams and no existing fixtures',
+                  ta: 'உருவாக்க முடியவில்லை — குறைந்தது 2 அணிகள் தேவை',
+                  hi: 'नहीं बना — कम से कम 2 टीमें चाहिए',
+                  ml: 'സൃഷ്ടിക്കാനായില്ല — കുറഞ്ഞത് 2 ടീമുകൾ വേണം')),
           backgroundColor: AppColors.accent,
         ),
       );
