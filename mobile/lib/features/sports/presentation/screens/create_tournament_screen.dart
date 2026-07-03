@@ -74,6 +74,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   String _registration = 'MANUAL_APPROVAL';
   DateTime? _startDate;
   DateTime? _endDate;
+  DateTime? _regCloseDate; // registration deadline — required
   bool _showPoints = true;
   bool _showLive = true;
   bool _showPrize = false;
@@ -134,6 +135,17 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     return _numTeams;
   }
 
+  Future<void> _pickRegClose() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _regCloseDate ?? now.add(const Duration(days: 7)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 730)),
+    );
+    if (picked != null) setState(() => _regCloseDate = picked);
+  }
+
   Future<void> _pickDate({required bool isStart}) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -160,6 +172,10 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       _snack('Please enter a tournament name');
       return;
     }
+    if (_regCloseDate == null) {
+      _snack('Please set the registration close date');
+      return;
+    }
     setState(() => _submitting = true);
     try {
       final body = <String, dynamic>{
@@ -180,6 +196,10 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'description_ta': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         if (_startDate != null) 'start_date': _startDate!.toUtc().toIso8601String(),
         if (_endDate != null) 'end_date': _endDate!.toUtc().toIso8601String(),
+        // Registration stays open through the whole chosen day (end-of-day).
+        'registration_close_date': DateTime(
+          _regCloseDate!.year, _regCloseDate!.month, _regCloseDate!.day, 23, 59, 59,
+        ).toUtc().toIso8601String(),
       };
       final res = await sl<ApiClient>().dio.post(ApiConstants.sportsTournaments, data: body);
       final id = res.data['id'] as String?;
@@ -320,6 +340,21 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           TextField(
             controller: _nameCtrl,
             decoration: _dec(context, 'e.g. FYC Summer ${DateTime.now().year}', Icons.emoji_events_outlined),
+          ),
+          const SizedBox(height: 18),
+
+          // Registration deadline (required — drives the register→close→fixtures flow)
+          _Label('Registration Closes On *'),
+          const SizedBox(height: 8),
+          _DateField(
+            label: 'Last day to register',
+            date: _regCloseDate,
+            onTap: _pickRegClose,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Teams can register until this date. Fixtures can only be generated after it (or when you close registration early).',
+            style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
           ),
           const SizedBox(height: 18),
 

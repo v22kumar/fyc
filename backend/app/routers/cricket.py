@@ -1,8 +1,11 @@
+import logging
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.models.user import User
@@ -304,10 +307,16 @@ def score_ball(
         scorer_id=current_user.id,
         organization_id=current_user.organization_id,
     )
-    db.add(ball)
-    db.commit()
-    
-    new_state = recalculate_match_state(db, match)
+    try:
+        db.add(ball)
+        db.commit()
+        new_state = recalculate_match_state(db, match)
+    except Exception as e:
+        db.rollback()
+        logger.exception("cricket score_ball failed")
+        # Surface the concrete reason to the scorer (returned as 400 so the app
+        # shows it) instead of a generic 500 — critical while stabilising live.
+        raise HTTPException(400, f"Scoring failed: {type(e).__name__}: {str(e)[:400]}")
     return {"status": "success", "match_state": new_state}
 
 

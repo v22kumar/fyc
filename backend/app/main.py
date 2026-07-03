@@ -177,6 +177,10 @@ async def lifespan(app: FastAPI):
         live_tables = set(insp.get_table_names())
         added = []
         for table_name, table in Base.metadata.tables.items():
+          # Per-table guard: a failure inspecting/altering ONE table must not
+          # abort the whole reconcile (that previously left later tables like
+          # cricket_balls undrifted -> scoring 500s).
+          try:
             if table_name not in live_tables:
                 continue  # brand-new table — create_all already handled it
             live_cols = {c["name"] for c in insp.get_columns(table_name)}
@@ -213,6 +217,9 @@ async def lifespan(app: FastAPI):
                             continue  # retry SQLite write-lock from concurrent worker
                         logger.warning(f"[schema-reconcile] {table_name}.{col.name}: {_e}")
                         break
+          except Exception as _te:
+            logger.warning(f"[schema-reconcile] table {table_name} skipped: {_te}")
+            continue
         if added:
             logger.info(f"[schema-reconcile] added {len(added)} missing column(s): {added}")
         else:
