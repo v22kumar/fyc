@@ -298,12 +298,20 @@ class _SportsTournamentDetailScreenState
                     )
                   else
                     ...state.fixtures.map(
-                      (f) => _FixtureCard(
-                        fixture: f,
-                        lang: _lang,
-                        onEnterScore:
-                            (isMember && !f.isCompleted) ? () => _enterScore(f) : null,
-                      ),
+                      (f) {
+                        // Cricket = ball-by-ball scoring: managers (EXECUTIVE_MEMBER+)
+                        // only, matching the backend. Other sports use the
+                        // club-member live-entry-for-approval flow.
+                        final isCricket =
+                            state.tournament.sport.toLowerCase() == 'cricket';
+                        final canScore = isCricket ? isAdmin : isMember;
+                        return _FixtureCard(
+                          fixture: f,
+                          lang: _lang,
+                          onEnterScore:
+                              (canScore && !f.isCompleted) ? () => _enterScore(f) : null,
+                        );
+                      },
                     ),
                   const SizedBox(height: 16),
                   
