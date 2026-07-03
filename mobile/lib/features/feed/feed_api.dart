@@ -21,10 +21,15 @@ class FeedApi {
         .toList();
   }
 
-  static Future<Post> create({required String content, required List<String> imageUrls}) async {
+  static Future<Post> create({
+    required String content,
+    required List<String> imageUrls,
+    bool shareToInstagram = false,
+  }) async {
     final res = await _dio.post('/api/v1/posts', data: {
       'content': content,
       'image_urls': imageUrls,
+      'share_to_instagram': shareToInstagram,
     });
     return Post.fromJson((res.data as Map).cast<String, dynamic>());
   }

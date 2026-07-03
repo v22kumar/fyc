@@ -175,9 +175,20 @@ jobs:
         run: |
           MANDATORY="${{ vars.FORCE_UPDATE }}"
           if [ "$MANDATORY" = "false" ]; then MANDATORY="false"; else MANDATORY="true"; fi
+          # The distributed APK is arm64 (apk_url below). Flutter's
+          # --split-per-abi rewrites each split's versionCode to
+          # (abi_offset*1000 + build-number); arm64-v8a's offset is 2, so the
+          # INSTALLED arm64 versionCode is FYC_BUILD_NUM + 2000. version.json
+          # must report that same offset code, otherwise (a) older clients that
+          # compared versionCode saw latest <= installed forever and never
+          # prompted, and (b) Android rejects the install as a downgrade.
+          # Newer clients compare version_name and are offset-immune, but we
+          # keep version_code truthful for the installed base still on the old
+          # comparison so THIS release finally reaches them.
+          ARM64_VERSION_CODE=$(( FYC_BUILD_NUM + 2000 ))
           cat > mobile/build/version.json <<JSON
           {
-            "version_code": ${{ env.FYC_BUILD_NUM }},
+            "version_code": ${ARM64_VERSION_CODE},
             "version_name": "1.0.${{ github.run_number }}",
             "apk_url": "${{ github.server_url }}/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk",
             "mandatory": $MANDATORY,
@@ -263,15 +274,19 @@ jobs:
             echo "::notice::FLY_API_TOKEN not set — skipping version publish"
             exit 0
           fi
-          # versionCode == this run number (matches --build-number used in the build).
+          # Report the arm64 split's actual versionCode (build-number + 2000);
+          # see the version.json step for why the ABI offset must be included.
+          # This is only a fallback — version.json on the release is the source
+          # of truth — but keep it consistent so both agree.
+          ARM64_VERSION_CODE=$(( FYC_BUILD_NUM + 2000 ))
           # Retry on the single-machine lease conflict; --detach stages without
           # waiting for the machine update.
           for attempt in 1 2 3; do
             if flyctl secrets set \
-                 APP_LATEST_VERSION_CODE="${{ env.FYC_BUILD_NUM }}" \
+                 APP_LATEST_VERSION_CODE="${ARM64_VERSION_CODE}" \
                  APP_LATEST_VERSION_NAME="1.0.${{ github.run_number }}" \
                  --app fyc-backend --detach; then
-              echo "Published latest version 1.0.${{ github.run_number }} (code ${{ github.run_number }}) ✓"
+              echo "Published latest version 1.0.${{ github.run_number }} (code ${ARM64_VERSION_CODE}) ✓"
               exit 0
             fi
             echo "::warning::version publish attempt $attempt failed (lease conflict?) — retrying"

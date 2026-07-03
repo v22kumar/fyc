@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -6,20 +8,52 @@ from uuid import UUID
 
 import firebase_admin
 from firebase_admin import credentials, messaging
+from app.core.config import settings
 from app.models.notification import Notification, NotificationPreference
 from app.models.user import User
 from app.services.whatsapp_service import whatsapp_queue
 
 logger = logging.getLogger(__name__)
 
-# Initialize Firebase (if not already)
-try:
-    if not firebase_admin._apps:
-        # For production, supply the path to the service account key via env var or pass creds explicitly
-        # This will use GOOGLE_APPLICATION_CREDENTIALS
-        firebase_admin.initialize_app()
-except Exception as e:
-    logger.warning(f"Firebase Admin initialization failed: {e}")
+
+def _init_firebase() -> None:
+    """Initialise firebase-admin from an explicit service-account credential.
+
+    Order of preference: FIREBASE_CREDENTIALS_JSON (inline JSON, ideal for
+    Fly.io secrets) → FIREBASE_CREDENTIALS_PATH (file) → application-default
+    (GOOGLE_APPLICATION_CREDENTIALS). If none is available, push is disabled
+    but the app keeps running (in-app notifications still work)."""
+    if firebase_admin._apps:
+        return
+    try:
+        cred = None
+        if settings.FIREBASE_CREDENTIALS_JSON.strip():
+            cred = credentials.Certificate(json.loads(settings.FIREBASE_CREDENTIALS_JSON))
+        elif settings.FIREBASE_CREDENTIALS_PATH.strip():
+            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+
+        if cred is not None:
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase Admin initialised — push notifications enabled.")
+        elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+            # Only use application-default creds when explicitly pointed at a key
+            # file; otherwise leave Firebase uninitialised so we don't attempt
+            # doomed sends on every notification.
+            firebase_admin.initialize_app()
+            logger.info("Firebase Admin initialised from application-default credentials.")
+        else:
+            logger.info(
+                "Firebase credentials not set — push disabled (in-app notifications "
+                "still work). Set FIREBASE_CREDENTIALS_JSON to enable tray pushes."
+            )
+    except Exception as e:
+        logger.warning(
+            "Firebase Admin not initialised — push notifications disabled "
+            f"(set FIREBASE_CREDENTIALS_JSON to enable): {e}"
+        )
+
+
+_init_firebase()
 
 class NotificationService:
     def __init__(self, db: Session):
@@ -126,11 +160,20 @@ class NotificationService:
             return False
             
         try:
-            # Prepare FCM Message
+            # Prepare FCM Message. AndroidConfig with high priority + an explicit
+            # channel_id makes Android reliably post to the system tray when the
+            # app is backgrounded/killed (the channel is created app-side).
             message = messaging.Message(
                 notification=messaging.Notification(
                     title=title,
                     body=body,
+                ),
+                android=messaging.AndroidConfig(
+                    priority="high",
+                    notification=messaging.AndroidNotification(
+                        channel_id="fyc_default",
+                        default_sound=True,
+                    ),
                 ),
                 data={k: str(v) for k, v in (data or {}).items()},
                 token=token,

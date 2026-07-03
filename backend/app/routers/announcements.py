@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate, AnnouncementUpdate, AnnouncementOut
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/announcements", tags=["Announcements"])
 
@@ -87,6 +88,20 @@ def create_announcement(
     db.add(announcement)
     db.commit()
     db.refresh(announcement)
+
+    # Push + in-app notification to the whole tenant (best-effort; never fails
+    # the create). Reaches the phone's system tray for backgrounded apps once a
+    # Firebase service-account credential is configured on the backend.
+    NotificationService.broadcast_to_tenant(
+        db=db,
+        tenant_id=current_user.organization_id,
+        category="SYSTEM",
+        title_en=payload.title_en,
+        title_ta=payload.title_ta,
+        body_en=payload.body_en,
+        body_ta=payload.body_ta,
+        route="/announcements",
+    )
     return announcement
 
 

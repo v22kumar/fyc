@@ -4,10 +4,13 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../service_locator.dart';
+import '../../auth/presentation/bloc/auth_bloc.dart';
+import '../../auth/presentation/bloc/auth_state.dart';
 import '../../opportunities/domain/entities/opportunity_entity.dart';
 import '../../opportunities/presentation/bloc/opportunity_bloc.dart';
 import '../../opportunities/presentation/bloc/opportunity_event.dart';
 import '../../opportunities/presentation/bloc/opportunity_state.dart';
+import '../../opportunities/presentation/screens/opportunity_create_screen.dart';
 
 class OpportunitiesScreen extends StatelessWidget {
   const OpportunitiesScreen({super.key});
@@ -31,6 +34,20 @@ class _OpportunitiesView extends StatefulWidget {
 class _OpportunitiesViewState extends State<_OpportunitiesView> {
   String get _lang => sl<LocalStorage>().getLang();
   String _selectedTab = 'ALL';
+
+  bool get _canPost {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isAdmin;
+  }
+
+  Future<void> _openCreate() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const OpportunityCreateScreen()),
+    );
+    if (created == true && mounted) {
+      context.read<OpportunityBloc>().add(const OpportunityFetchRequested());
+    }
+  }
 
   static const _samples = [
     {
@@ -70,6 +87,13 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
       appBar: AppBar(
         title: Text(tr(en: 'Opportunities & Skills', ta: 'வாய்ப்புகள் & பயிற்சி', hi: 'अवसर और कौशल', ml: 'അവസരങ്ങളും നൈപുണ്യങ്ങളും')),
       ),
+      floatingActionButton: _canPost
+          ? FloatingActionButton.extended(
+              onPressed: _openCreate,
+              icon: const Icon(Icons.add),
+              label: Text(tr(en: 'Post', ta: 'பதிவிடு', hi: 'पोस्ट', ml: 'പോസ്റ്റ്')),
+            )
+          : null,
       body: BlocConsumer<OpportunityBloc, OpportunityState>(
         listener: (context, state) {
           if (state is OpportunityApplySuccess) {
@@ -183,7 +207,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                       ...filtered.map((opp) => _OpportunityCard(opp: opp, isTa: isTa)),
                     ],
                     if (filtered.isEmpty)
-                      _PremiumEmptyState(isTa: isTa),
+                      _PremiumEmptyState(isTa: isTa, onPost: _canPost ? _openCreate : null),
                   ],
                 ),
               ),
@@ -198,7 +222,8 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
 
 class _PremiumEmptyState extends StatelessWidget {
   final bool isTa;
-  const _PremiumEmptyState({required this.isTa});
+  final VoidCallback? onPost;
+  const _PremiumEmptyState({required this.isTa, this.onPost});
 
   @override
   Widget build(BuildContext context) {
@@ -234,18 +259,23 @@ class _PremiumEmptyState extends StatelessWidget {
               style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
           ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F5132),
-              borderRadius: BorderRadius.circular(24),
+          if (onPost != null) ...[
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: onPost,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F5132),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Text(
+                  tr(en: 'Post an Opportunity', ta: 'வாய்ப்பை பதிவிடவும்', hi: 'एक अवसर पोस्ट करें', ml: 'ഒരു അവസരം പോസ്റ്റ് ചെയ്യൂ'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
-            child: Text(
-              tr(en: 'Post an Opportunity', ta: 'வாய்ப்பை பதிவிடவும்', hi: 'एक अवसर पोस्ट करें', ml: 'ഒരു അവസരം പോസ്റ്റ് ചെയ്യൂ'),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
+          ],
         ],
       ),
     );

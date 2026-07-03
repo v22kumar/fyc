@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime, timezone
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -468,12 +469,34 @@ def get_standings(
 def generate_fixtures(
     tournament_id: str,
     double_round: bool = False,
+    force: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
     """Auto-generate round-robin fixtures from the APPROVED registered teams.
-    Set double_round=true for home-and-away. Skips if fixtures already exist."""
+    Set double_round=true for home-and-away. Skips if fixtures already exist.
+
+    Fixtures cannot be generated while registration is still open: if the
+    tournament has a registration_close_date in the future, generation is
+    blocked so teams that register before the deadline aren't left out of the
+    draw. An organiser who deliberately wants to close registration early can
+    pass force=true to override."""
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+
+    if not force and t.registration_close_date is not None:
+        close = t.registration_close_date
+        # Normalise to an aware UTC datetime for a safe comparison (SQLite can
+        # hand back naive datetimes even for timezone=True columns).
+        if close.tzinfo is None:
+            close = close.replace(tzinfo=timezone.utc)
+        if close > datetime.now(timezone.utc):
+            raise HTTPException(
+                400,
+                "Registration is still open until "
+                f"{close.date().isoformat()}. Wait for registration to close, "
+                "or pass force=true to close it early and generate fixtures now.",
+            )
+
     teams = db.query(Team).filter(Team.tournament_id == tournament_id, Team.status == "APPROVED").all()
     if len(teams) < 2:
         raise HTTPException(400, "Need at least 2 APPROVED teams to generate fixtures")

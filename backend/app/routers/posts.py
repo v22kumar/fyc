@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, Optional
 
@@ -18,6 +19,9 @@ from app.schemas.post import (
 )
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -122,6 +126,29 @@ def create_post(
     db.add(post)
     db.commit()
     db.refresh(post)
+
+    # Optional cross-post to the org's Instagram feed. Gated to managers/admins
+    # (official voice), requires an image, and only runs when IG is configured.
+    # Best-effort: a failed cross-post must never fail the community post.
+    if (
+        payload.share_to_instagram
+        and images
+        and current_user.role in ("EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN")
+    ):
+        try:
+            from app.services import instagram as instagram_service
+
+            if instagram_service.is_configured():
+                image_url = images[0]
+                if not image_url.startswith("http"):
+                    # Instagram needs a public absolute URL.
+                    base = settings.PUBLIC_BASE_URL.rstrip("/") if getattr(settings, "PUBLIC_BASE_URL", "") else ""
+                    image_url = f"{base}{image_url}" if base else image_url
+                if image_url.startswith("http"):
+                    instagram_service.publish_photo(image_url, content[:2200])
+        except Exception as e:  # pragma: no cover - best-effort
+            logger.warning(f"Instagram cross-post failed (non-fatal): {e}")
+
     return _serialize(db, post, current_user.id)
 
 

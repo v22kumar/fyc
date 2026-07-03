@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/router/app_router.dart';
+import 'core/services/local_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
@@ -42,6 +43,11 @@ void main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
   await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
+  await LocalNotifications.init();
+  LocalNotifications.onTapRoute = (route) {
+    final context = appRouter.routerDelegate.navigatorKey.currentContext;
+    if (context != null && route.isNotEmpty) context.go(route);
+  };
   await initServiceLocator();
   localeNotifier.value = Locale(sl<LocalStorage>().getLang());
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
@@ -83,21 +89,11 @@ class _FycAppState extends State<FycApp> {
       }
     });
 
-    // Foreground message handler
+    // Foreground message handler — post to the system tray (FCM only auto-posts
+    // to the tray when the app is backgrounded) so the user sees it everywhere.
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (mounted && message.notification != null) {
-        final context = appRouter.routerDelegate.navigatorKey.currentContext;
-        if (context != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message.notification!.title ?? 'New Notification'),
-              action: SnackBarAction(
-                label: 'View',
-                onPressed: () => _handleNotificationClick(context, message),
-              ),
-            ),
-          );
-        }
+      if (message.notification != null) {
+        LocalNotifications.showFromMessage(message);
       }
     });
 

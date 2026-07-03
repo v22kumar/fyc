@@ -193,8 +193,15 @@ def register(
         raise HTTPException(status_code=404, detail="Tournament not found")
     if tour.status != "REGISTRATION_OPEN":
         raise HTTPException(status_code=400, detail="Registration is closed")
-    if tour.registration_deadline and datetime.now(timezone.utc) > tour.registration_deadline:
-        raise HTTPException(status_code=400, detail="Registration deadline has passed")
+    # SQLite drops tzinfo on DateTime(timezone=True) columns, so the deadline
+    # comes back naive; normalise to UTC before comparing to an aware now() or
+    # Python raises "can't compare offset-naive and offset-aware datetimes".
+    deadline = tour.registration_deadline
+    if deadline is not None:
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > deadline:
+            raise HTTPException(status_code=400, detail="Registration deadline has passed")
     existing = (
         db.query(ChessTournamentEntry)
         .filter(

@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/app_theme.dart';
 import '../../service_locator.dart';
+import '../auth/presentation/bloc/auth_bloc.dart';
+import '../auth/presentation/bloc/auth_state.dart';
 import 'feed_api.dart';
 
 class CreatePostScreen extends StatefulWidget {
@@ -21,8 +24,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _picker = ImagePicker();
   final List<File> _images = [];
   bool _posting = false;
+  bool _shareToInstagram = false;
 
   bool get _ta => sl<LocalStorage>().getLang() == 'ta';
+
+  bool get _isAdmin {
+    final s = context.read<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.isAdmin;
+  }
 
   @override
   void dispose() {
@@ -49,7 +58,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       for (final f in _images) {
         urls.add(await FeedApi.uploadImage(f.path));
       }
-      await FeedApi.create(content: text, imageUrls: urls);
+      await FeedApi.create(
+        content: text,
+        imageUrls: urls,
+        shareToInstagram: _shareToInstagram && urls.isNotEmpty,
+      );
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {
@@ -167,6 +180,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
+          // Admins/managers can mirror an image post to the club's Instagram.
+          if (_isAdmin && _images.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.camera_alt_outlined, color: Color(0xFFC13584)),
+              title: Text(tr(
+                  en: 'Also share to Instagram',
+                  ta: 'இன்ஸ்டாகிராமிலும் பகிர்',
+                  hi: 'इंस्टाग्राम पर भी साझा करें',
+                  ml: 'ഇൻസ്റ്റാഗ്രാമിലും പങ്കിടുക')),
+              subtitle: Text(tr(
+                  en: 'Posts the first photo to the club Instagram page',
+                  ta: 'முதல் புகைப்படம் கிளப் இன்ஸ்டாகிராமில் இடப்படும்',
+                  hi: 'पहली फ़ोटो क्लब इंस्टाग्राम पर पोस्ट होगी',
+                  ml: 'ആദ്യ ഫോട്ടോ ക്ലബ് ഇൻസ്റ്റാഗ്രാമിൽ പോസ്റ്റ് ചെയ്യും')),
+              value: _shareToInstagram,
+              onChanged: (v) => setState(() => _shareToInstagram = v),
+            ),
+          ],
         ],
       ),
     );

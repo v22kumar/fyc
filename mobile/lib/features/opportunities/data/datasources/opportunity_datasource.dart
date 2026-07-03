@@ -6,6 +6,7 @@ import '../models/opportunity_model.dart';
 abstract class OpportunityDataSource {
   Future<List<OpportunityModel>> fetchOpportunities();
   Future<void> applyForOpportunity(String id);
+  Future<OpportunityModel> createOpportunity(Map<String, dynamic> body);
 }
 
 class OpportunityDataSourceImpl implements OpportunityDataSource {
@@ -31,6 +32,16 @@ class OpportunityDataSourceImpl implements OpportunityDataSource {
   Future<void> applyForOpportunity(String id) async {
     try {
       await _client.dio.post('$_opportunities/$id/apply');
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<OpportunityModel> createOpportunity(Map<String, dynamic> body) async {
+    try {
+      final response = await _client.dio.post(_opportunities, data: body);
+      return OpportunityModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }
