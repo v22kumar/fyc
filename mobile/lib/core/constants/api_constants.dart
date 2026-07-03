@@ -60,12 +60,17 @@ class ApiConstants {
       '/api/v1/sports/tournaments/$tid/teams';
   static String sportsTeamPlayers(String teamId) =>
       '/api/v1/sports/teams/$teamId/players';
+  // Cricket scoring router has NO /sports prefix (mounted at /api/v1 directly).
   static String sportsFixtureCricket(String fid) =>
-      '/api/v1/sports/fixtures/$fid/cricket';
+      '/api/v1/fixtures/$fid/cricket';
+  static String sportsFixtureCricketInit(String fid) =>
+      '/api/v1/fixtures/$fid/cricket/init';
   static String sportsFixtureCricketBall(String fid) =>
-      '/api/v1/sports/fixtures/$fid/cricket/ball';
+      '/api/v1/fixtures/$fid/cricket/ball';
   static String sportsFixtureCricketUndo(String fid) =>
-      '/api/v1/sports/fixtures/$fid/cricket/undo';
+      '/api/v1/fixtures/$fid/cricket/undo';
+  static String sportsFixtureCricketSecondInnings(String fid) =>
+      '/api/v1/fixtures/$fid/cricket/second-innings';
 
   // Announcements
   static const String announcements = '/api/v1/announcements';
