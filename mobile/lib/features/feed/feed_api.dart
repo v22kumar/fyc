@@ -8,9 +8,18 @@ import 'feed_models.dart';
 class FeedApi {
   static Dio get _dio => sl<ApiClient>().dio;
 
-  static Future<List<Post>> list({String scope = 'all', int limit = 20, int offset = 0}) async {
+  static Future<List<Post>> list({
+    String scope = 'all',
+    String feed = 'recent', // recent | popular | following
+    String? category, // null/All = no filter
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final res = await _dio.get('/api/v1/posts', queryParameters: {
       'scope': scope,
+      'feed': feed,
+      if (category != null && category.isNotEmpty && category != 'All')
+        'category': category,
       'limit': limit,
       'offset': offset,
     });
@@ -24,11 +33,15 @@ class FeedApi {
   static Future<Post> create({
     required String content,
     required List<String> imageUrls,
+    String? category,
+    String? location,
     bool shareToInstagram = false,
   }) async {
     final res = await _dio.post('/api/v1/posts', data: {
       'content': content,
       'image_urls': imageUrls,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (location != null && location.trim().isNotEmpty) 'location': location.trim(),
       'share_to_instagram': shareToInstagram,
     });
     return Post.fromJson((res.data as Map).cast<String, dynamic>());
@@ -37,6 +50,20 @@ class FeedApi {
   static Future<Map<String, dynamic>> toggleLike(String postId) async {
     final res = await _dio.post('/api/v1/posts/$postId/like');
     return (res.data as Map).cast<String, dynamic>();
+  }
+
+  static Future<Map<String, dynamic>> toggleRepost(String postId) async {
+    final res = await _dio.post('/api/v1/posts/$postId/repost');
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
+  static Future<List<String>> recentHashtags() async {
+    try {
+      final res = await _dio.get('/api/v1/posts/hashtags');
+      return ((res.data as List?) ?? const []).map((e) => e.toString()).toList();
+    } catch (_) {
+      return const ['#FYC', '#Community', '#Teamwork', '#GreenFYC', '#Event', '#Cricket'];
+    }
   }
 
   static Future<List<PostComment>> comments(String postId) async {

@@ -1,4 +1,5 @@
 import logging
+import re
 import uuid
 from typing import List, Optional
 
@@ -7,7 +8,7 @@ from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.post import Post, PostLike
+from app.models.post import Post, PostLike, PostRepost
 from app.models.core_services import Comment
 from app.models.user import User
 from app.schemas.post import (
@@ -37,12 +38,24 @@ def _name(u: Optional[User]) -> str:
     return "FYC Member"
 
 
+_ROLE_LABEL = {
+    "SUPER_ADMIN": "Admin",
+    "ADMIN": "Admin",
+    "EXECUTIVE_MEMBER": "Manager",
+    "CLUB_MEMBER": "Member",
+    "VOLUNTEER": "Volunteer",
+}
+
+
 def _author(u: Optional[User], author_id) -> PostAuthor:
     p = getattr(u, "profile", None) if u else None
+    role = getattr(u, "role", None) if u else None
     return PostAuthor(
         id=author_id,
         name=_name(u),
         avatar_url=getattr(p, "profile_image_url", None) if p else None,
+        role=_ROLE_LABEL.get(role, "Member"),
+        verified=role in ("ADMIN", "SUPER_ADMIN") if role else False,
     )
 
 
@@ -59,7 +72,14 @@ def _serialize(db: Session, post: Post, current_user_id) -> PostOut:
         .scalar()
         or 0
     )
+    repost_count = (
+        db.query(func.count(PostRepost.id))
+        .filter(PostRepost.post_id == post.id)
+        .scalar()
+        or 0
+    )
     liked = False
+    reposted = False
     if current_user_id:
         liked = (
             db.query(PostLike.id)
@@ -70,36 +90,100 @@ def _serialize(db: Session, post: Post, current_user_id) -> PostOut:
             .first()
             is not None
         )
+        reposted = (
+            db.query(PostRepost.id)
+            .filter(
+                PostRepost.post_id == post.id,
+                PostRepost.user_id == current_user_id,
+            )
+            .first()
+            is not None
+        )
     return PostOut(
         id=post.id,
         author=_author(post.author, post.author_id),
         content=post.content or "",
         image_urls=post.image_urls or [],
+        category=post.category,
+        source=post.source or "thread",
+        location=post.location,
         created_at=post.created_at,
         like_count=like_count,
         comment_count=comment_count,
+        repost_count=repost_count,
         liked_by_me=liked,
+        reposted_by_me=reposted,
     )
 
 
 @router.get("", response_model=List[PostOut])
 def list_posts(
     scope: str = Query("all", pattern="^(all|mine)$"),
+    feed: str = Query("recent", pattern="^(recent|popular|following)$"),
+    category: Optional[str] = Query(None),
     limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Community feed (newest first). scope=mine returns only my posts."""
+    """Community feed. feed=recent (default, newest first), popular (most liked),
+    following (official/admin voices). category filters by post category.
+    scope=mine returns only my posts."""
     q = db.query(Post).filter(Post.organization_id == tenant_id)
     if scope == "mine":
         if not current_user:
             return []
         q = q.filter(Post.author_id == current_user.id)
-    posts = q.order_by(desc(Post.created_at)).offset(offset).limit(limit).all()
+    if category and category.lower() != "all":
+        q = q.filter(func.lower(Post.category) == category.lower())
+    if feed == "following":
+        # No follow graph yet → show the club's official voice (admin authors).
+        q = q.join(User, User.id == Post.author_id).filter(
+            User.role.in_(["ADMIN", "SUPER_ADMIN", "EXECUTIVE_MEMBER"])
+        )
+
+    if feed == "popular":
+        like_sub = (
+            db.query(PostLike.post_id, func.count(PostLike.id).label("lc"))
+            .group_by(PostLike.post_id)
+            .subquery()
+        )
+        q = q.outerjoin(like_sub, like_sub.c.post_id == Post.id).order_by(
+            desc(func.coalesce(like_sub.c.lc, 0)), desc(Post.created_at)
+        )
+    else:
+        q = q.order_by(desc(Post.created_at))
+
+    posts = q.offset(offset).limit(limit).all()
     cid = current_user.id if current_user else None
     return [_serialize(db, p, cid) for p in posts]
+
+
+@router.get("/hashtags", response_model=List[str])
+def recent_hashtags(
+    limit: int = Query(8, ge=1, le=20),
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Most-used hashtags across recent posts, for the create-post suggestions."""
+    recent = (
+        db.query(Post.content)
+        .filter(Post.organization_id == tenant_id)
+        .order_by(desc(Post.created_at))
+        .limit(100)
+        .all()
+    )
+    counts: dict = {}
+    for (content,) in recent:
+        for word in re.findall(r"#(\w+)", content or ""):
+            key = word.lower()
+            counts[key] = counts.get(key, 0) + 1
+    ordered = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    tags = [f"#{w}" for w, _ in ordered[:limit]]
+    if not tags:
+        tags = ["#FYC", "#Community", "#Teamwork", "#GreenFYC", "#Event", "#Cricket"]
+    return tags
 
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
@@ -122,6 +206,9 @@ def create_post(
         author_id=current_user.id,
         content=content,
         image_urls=images,
+        category=(payload.category or None),
+        location=(payload.location.strip() if payload.location else None),
+        source="thread",
     )
     db.add(post)
     db.commit()
@@ -146,10 +233,54 @@ def create_post(
                     image_url = f"{base}{image_url}" if base else image_url
                 if image_url.startswith("http"):
                     instagram_service.publish_photo(image_url, content[:2200])
+                    post.source = "instagram"
+                    db.commit()
+                    db.refresh(post)
         except Exception as e:  # pragma: no cover - best-effort
             logger.warning(f"Instagram cross-post failed (non-fatal): {e}")
 
     return _serialize(db, post, current_user.id)
+
+
+@router.post("/{post_id}/repost")
+def toggle_repost(
+    post_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Toggle a repost (like a retweet). Returns the new count + my state."""
+    post = (
+        db.query(Post)
+        .filter(Post.id == post_id, Post.organization_id == tenant_id)
+        .first()
+    )
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    existing = (
+        db.query(PostRepost)
+        .filter(PostRepost.post_id == post_id, PostRepost.user_id == current_user.id)
+        .first()
+    )
+    if existing:
+        db.delete(existing)
+        reposted = False
+    else:
+        db.add(PostRepost(
+            id=uuid.uuid4(),
+            organization_id=tenant_id,
+            post_id=post_id,
+            user_id=current_user.id,
+        ))
+        reposted = True
+    db.commit()
+    count = (
+        db.query(func.count(PostRepost.id))
+        .filter(PostRepost.post_id == post_id)
+        .scalar()
+        or 0
+    )
+    return {"reposted": reposted, "repost_count": count}
 
 
 @router.delete("/{post_id}")
