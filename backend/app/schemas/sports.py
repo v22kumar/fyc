@@ -44,6 +44,7 @@ class TournamentOut(BaseModel):
     match_config: Optional[str] = None
     registration_mode: Optional[str] = None
     registration_close_date: Optional[datetime] = None
+    registration_closed_at: Optional[datetime] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     venue: Optional[str] = None
@@ -51,6 +52,8 @@ class TournamentOut(BaseModel):
     show_live_scores: Optional[bool] = True
     show_prize_details: Optional[bool] = False
     prize_details: Optional[str] = None
+    # Derived lifecycle phase: REGISTRATION_OPEN / REGISTRATION_CLOSED / ONGOING / COMPLETED
+    phase: Optional[str] = None
 
     class Config:
         from_attributes = True

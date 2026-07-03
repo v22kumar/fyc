@@ -9,6 +9,7 @@ class TournamentModel extends TournamentEntity {
     required super.year,
     required super.format,
     required super.status,
+    super.phase,
     super.descriptionTa,
     super.descriptionEn,
   });
@@ -22,6 +23,7 @@ class TournamentModel extends TournamentEntity {
       year: (json['year'] as num?)?.toInt() ?? 0,
       format: (json['format'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
+      phase: json['phase'] as String?,
       descriptionTa: json['description_ta'] as String?,
       descriptionEn: json['description_en'] as String?,
     );
