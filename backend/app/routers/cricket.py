@@ -40,12 +40,14 @@ class CricketBallRequest(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
-def _get_or_create_player(db: Session, team_id: str, name: str) -> Player:
+def _get_or_create_player(db: Session, team_id: str, name: str, org_id=None) -> Player:
     if not name:
         return None
     player = db.query(Player).filter(Player.team_id == team_id, Player.name == name).first()
     if not player:
-        player = Player(id=uuid.uuid4(), team_id=team_id, name=name)
+        player = Player(
+            id=uuid.uuid4(), team_id=team_id, name=name, organization_id=org_id
+        )
         db.add(player)
         db.commit()
     return player
@@ -146,23 +148,36 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             if b.wicket_type in ["BOWLED", "CAUGHT", "LBW", "STUMPED", "HIT_WICKET"]:
                 state["bowlers"][str(b.bowler_id)]["wickets"] += 1
 
-    match.match_state = state
-    
-    if state["wickets"] >= 10 or (state["overs"] == match.overs_per_innings and state["balls"] == 0):
-        if state["innings"] == 1:
-            match.status = "INNINGS_BREAK"
+    innings_over = state["wickets"] >= 10 or (
+        state["overs"] == match.overs_per_innings and state["balls"] == 0 and state["overs"] > 0
+    )
+    chase_done = state["innings"] == 2 and state["target"] is not None and state["score"] >= state["target"]
+
+    if chase_done or (innings_over and state["innings"] == 2):
+        match.status = "COMPLETED"
+        if state["score"] >= state["target"]:
+            match.fixture.winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["batting_team_id"] else match.fixture.team_b_id
+        elif state["score"] == state["target"] - 1:
+            match.fixture.winner_id = None
         else:
-            match.status = "COMPLETED"
-            if state["score"] > state["target"]:
-                match.fixture.winner_id = match.fixture.team_b_id if str(match.fixture.team_a_id) == state["batting_team_id"] else match.fixture.team_a_id
-            elif state["score"] == state["target"] - 1:
-                match.fixture.winner_id = None
-            else:
-                match.fixture.winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["bowling_team_id"] else match.fixture.team_b_id
-            
-            match.fixture.status = "COMPLETED"
-            match.fixture.team_a_score = "Completed"
-            match.fixture.team_b_score = "Completed"
+            match.fixture.winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["bowling_team_id"] else match.fixture.team_b_id
+
+        match.fixture.status = "COMPLETED"
+        match.fixture.team_a_score = "Completed"
+        match.fixture.team_b_score = "Completed"
+    elif innings_over and state["innings"] == 1:
+        match.status = "INNINGS_BREAK"
+    else:
+        # Live play (also reverts a stale INNINGS_BREAK/COMPLETED after an undo).
+        match.status = "FIRST_INNINGS" if state["innings"] == 1 else "SECOND_INNINGS"
+        if match.fixture.status == "COMPLETED":
+            match.fixture.status = "LIVE"
+            match.fixture.winner_id = None
+
+    # Surface lifecycle status inside match_state so the mobile scorer sees
+    # INNINGS_BREAK / COMPLETED without a second request.
+    state["status"] = match.status
+    match.match_state = dict(state)
 
     db.commit()
     return state
@@ -182,7 +197,9 @@ def init_cricket_match(
         
     match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
     if match:
-        return match
+        # Already initialized — keep the response shape consistent with a fresh
+        # init so the client has a single contract to parse.
+        return {"match": match, "current_players": None}
 
     match = CricketMatch(
         id=uuid.uuid4(),
@@ -191,7 +208,8 @@ def init_cricket_match(
         toss_decision=payload.toss_decision,
         overs_per_innings=payload.overs,
         scorer_id=current_user.id,
-        status="FIRST_INNINGS"
+        status="FIRST_INNINGS",
+        organization_id=current_user.organization_id,
     )
     db.add(match)
     db.commit()
@@ -202,9 +220,9 @@ def init_cricket_match(
     batting_team_id = payload.toss_winner_id if payload.toss_decision == "BAT" else (str(fixture.team_a_id) if str(fixture.team_b_id) == payload.toss_winner_id else str(fixture.team_b_id))
     bowling_team_id = payload.toss_winner_id if payload.toss_decision == "BOWL" else (str(fixture.team_a_id) if str(fixture.team_b_id) == payload.toss_winner_id else str(fixture.team_b_id))
     
-    striker = _get_or_create_player(db, batting_team_id, payload.striker_name)
-    non_striker = _get_or_create_player(db, batting_team_id, payload.non_striker_name)
-    bowler = _get_or_create_player(db, bowling_team_id, payload.bowler_name)
+    striker = _get_or_create_player(db, batting_team_id, payload.striker_name, org_id=current_user.organization_id)
+    non_striker = _get_or_create_player(db, batting_team_id, payload.non_striker_name, org_id=current_user.organization_id)
+    bowler = _get_or_create_player(db, bowling_team_id, payload.bowler_name, org_id=current_user.organization_id)
     
     recalculate_match_state(db, match)
     
@@ -254,17 +272,17 @@ def score_ball(
     
     striker_id = payload.striker_id
     if payload.new_batter_name and payload.player_dismissed_id == payload.striker_id:
-        p = _get_or_create_player(db, batting_team_id, payload.new_batter_name)
+        p = _get_or_create_player(db, batting_team_id, payload.new_batter_name, org_id=current_user.organization_id)
         striker_id = str(p.id)
         
     non_striker_id = payload.non_striker_id
     if payload.new_batter_name and payload.player_dismissed_id == payload.non_striker_id:
-        p = _get_or_create_player(db, batting_team_id, payload.new_batter_name)
+        p = _get_or_create_player(db, batting_team_id, payload.new_batter_name, org_id=current_user.organization_id)
         non_striker_id = str(p.id)
         
     bowler_id = payload.bowler_id
     if payload.new_bowler_name:
-        p = _get_or_create_player(db, bowling_team_id, payload.new_bowler_name)
+        p = _get_or_create_player(db, bowling_team_id, payload.new_bowler_name, org_id=current_user.organization_id)
         bowler_id = str(p.id)
 
     ball_index = db.query(CricketBall).filter(CricketBall.match_id == match.id).count() + 1
@@ -283,7 +301,8 @@ def score_ball(
         is_wicket=payload.is_wicket,
         wicket_type=payload.wicket_type,
         player_dismissed_id=payload.player_dismissed_id,
-        scorer_id=current_user.id
+        scorer_id=current_user.id,
+        organization_id=current_user.organization_id,
     )
     db.add(ball)
     db.commit()
@@ -323,19 +342,21 @@ def start_second_innings(
     current_user: User = Depends(require_exec)
 ):
     match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    if not match:
+        raise HTTPException(404, "Match not initialized")
     if match.status != "INNINGS_BREAK":
         raise HTTPException(400, "Match is not in innings break")
         
     match.status = "SECOND_INNINGS"
     db.commit()
-    
-    state = match.match_state
+
+    state = dict(match.match_state or {})
     batting_team = state["bowling_team_id"]
     bowling_team = state["batting_team_id"]
     
-    s = _get_or_create_player(db, batting_team, payload.striker_name)
-    ns = _get_or_create_player(db, batting_team, payload.non_striker_name)
-    b = _get_or_create_player(db, bowling_team, payload.bowler_name)
+    s = _get_or_create_player(db, batting_team, payload.striker_name, org_id=current_user.organization_id)
+    ns = _get_or_create_player(db, batting_team, payload.non_striker_name, org_id=current_user.organization_id)
+    b = _get_or_create_player(db, bowling_team, payload.bowler_name, org_id=current_user.organization_id)
     
     state["innings"] = 2
     state["target"] = state["score"] + 1
@@ -346,7 +367,8 @@ def start_second_innings(
     state["batting_team_id"] = batting_team
     state["bowling_team_id"] = bowling_team
     state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
-    
+    state["status"] = "SECOND_INNINGS"
+
     match.match_state = state
     db.commit()
     

@@ -716,42 +716,14 @@ class _ChessHomePageState extends State<ChessHomePage>
           // Divider
           Container(height: 1, color: _kCardBorder),
           const SizedBox(height: 10),
-          // Quote + Bonus button
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  '"Every master was once a beginner"',
-                  style: TextStyle(
-                    color: _kTextSecondary,
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _kGreenLight,
-                  side: const BorderSide(color: _kGreen, width: 1),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Bonus!',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+          // Motivational quote
+          Text(
+            '"Every master was once a beginner"',
+            style: TextStyle(
+              color: _kTextSecondary,
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),

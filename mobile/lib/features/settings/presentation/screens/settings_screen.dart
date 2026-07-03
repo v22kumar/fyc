@@ -82,6 +82,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
     UpdateSheet.show(context, update);
   }
 
+  void _showPrivacySheet() {
+    final ta = _storage.getLang() == 'ta';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.cBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.shield_outlined, color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Text(
+                    ta ? 'தனியுரிமை & பாதுகாப்பு' : 'Privacy & Security',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.cText),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                ta
+                    ? 'FYC Connect உங்கள் பெயர், தொலைபேசி எண் மற்றும் சுயவிவரத் தகவல்களை உறுப்பினர் சேவைகளுக்காக மட்டுமே சேமிக்கிறது.\n\n'
+                        '• உங்கள் தரவு மூன்றாம் தரப்பினருக்கு விற்கப்படுவதில்லை.\n'
+                        '• இரத்த தான தொடர்பு விவரங்கள் நீங்கள் அனுமதித்தால் மட்டுமே காட்டப்படும்.\n'
+                        '• உள்நுழைவு டோக்கன்கள் உங்கள் சாதனத்தில் பாதுகாப்பாக சேமிக்கப்படுகின்றன.\n'
+                        '• உங்கள் கணக்கை நீக்க அல்லது தரவை அகற்ற நிர்வாகியை தொடர்பு கொள்ளவும்.'
+                    : 'FYC Connect stores your name, phone number and profile details only to provide member services.\n\n'
+                        '• Your data is never sold to third parties.\n'
+                        '• Blood-donor contact details are shown only with your consent.\n'
+                        '• Login tokens are stored securely on your device.\n'
+                        '• To delete your account or data, contact the club admin.',
+                style: TextStyle(fontSize: 13, height: 1.5, color: context.cTextSecondary),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(ta ? 'சரி' : 'OK'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentTheme = _storage.getTheme();
@@ -150,7 +206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _Divider(context),
                 _LinkRow(icon: Icons.info_outline, label: 'About FYC Connect', onTap: () => context.push('/about'), context: context),
                 _Divider(context),
-                _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: () {}, context: context),
+                _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
               ],
             ),
           ),
