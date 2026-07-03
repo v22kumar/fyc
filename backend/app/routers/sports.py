@@ -636,14 +636,20 @@ def submit_live_entry(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_member),
 ):
-    """A club member submits a live/final score. Stays PENDING until an
-    executive/admin approves it. Marks the fixture LIVE while pending."""
+    """Submit a live/final score for a non-cricket fixture.
+
+    Managers (EXECUTIVE_MEMBER and above) are trusted scorers: their entry is
+    APPROVED and applied to standings immediately. A plain club member's entry
+    stays PENDING until an admin approves it. Either way the running score shows
+    on the fixture right away."""
     f = db.query(Fixture).filter(
         Fixture.id == fixture_id,
         Fixture.organization_id == current_user.organization_id,
     ).first()
     if not f:
         raise HTTPException(404, "Fixture not found")
+
+    is_manager = current_user.role in ("EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN")
 
     entry = LiveScoreEntry(
         id=uuid.uuid4(),
@@ -655,16 +661,24 @@ def submit_live_entry(
         team_b_score=payload.team_b_score,
         winner_id=payload.winner_id,
         notes=payload.notes,
-        status="PENDING",
+        status="APPROVED" if is_manager else "PENDING",
     )
-    # Reflect live scores on the fixture immediately (unverified) so viewers see motion
-    if f.status == "SCHEDULED":
-        f.status = "LIVE"
-    if payload.team_a_score is not None:
-        f.team_a_score = payload.team_a_score
-    if payload.team_b_score is not None:
-        f.team_b_score = payload.team_b_score
     db.add(entry)
+
+    if is_manager:
+        # Trusted scorer → finalize the result and update standings now.
+        _apply_result(db, f, payload.team_a_score, payload.team_b_score,
+                      payload.winner_id, payload.notes)
+    else:
+        # Reflect the running score immediately (unverified) so viewers see motion,
+        # but leave the result unapplied until an admin approves.
+        if f.status == "SCHEDULED":
+            f.status = "LIVE"
+        if payload.team_a_score is not None:
+            f.team_a_score = payload.team_a_score
+        if payload.team_b_score is not None:
+            f.team_b_score = payload.team_b_score
+
     db.commit()
     db.refresh(entry)
     return _live_entry_out(entry, db)
