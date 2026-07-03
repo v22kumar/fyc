@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -34,10 +35,17 @@ def _init_firebase() -> None:
         if cred is not None:
             firebase_admin.initialize_app(cred)
             logger.info("Firebase Admin initialised — push notifications enabled.")
-        else:
-            # Fall back to application-default creds if the env var is set.
+        elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+            # Only use application-default creds when explicitly pointed at a key
+            # file; otherwise leave Firebase uninitialised so we don't attempt
+            # doomed sends on every notification.
             firebase_admin.initialize_app()
             logger.info("Firebase Admin initialised from application-default credentials.")
+        else:
+            logger.info(
+                "Firebase credentials not set — push disabled (in-app notifications "
+                "still work). Set FIREBASE_CREDENTIALS_JSON to enable tray pushes."
+            )
     except Exception as e:
         logger.warning(
             "Firebase Admin not initialised — push notifications disabled "

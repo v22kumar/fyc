@@ -8,6 +8,10 @@ from pydantic import BaseModel, Field
 class PostCreate(BaseModel):
     content: str = ""
     image_urls: List[str] = Field(default_factory=list)
+    # When true (and the post has an image), also publish to the org's
+    # Instagram feed. Honoured only for managers/admins and only when
+    # Instagram credentials are configured; otherwise silently ignored.
+    share_to_instagram: bool = False
 
 
 class PostAuthor(BaseModel):

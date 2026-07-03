@@ -217,7 +217,7 @@ class _FeedListState extends State<_FeedList>
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
+        padding: const EdgeInsets.only(bottom: 90),
         itemCount: posts.length,
         itemBuilder: (_, i) => _PostCard(post: posts[i]),
       ),
@@ -279,98 +279,95 @@ class _PostCardState extends State<_PostCard> {
     final ta = _ta;
     final initial =
         p.author.name.trim().isNotEmpty ? p.author.name.trim()[0].toUpperCase() : '?';
+    // Threads / Twitter-style row: avatar on the left, content flowing to the
+    // right, edge-to-edge with a hairline divider (no floating card).
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: context.cSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.cBorder),
-        boxShadow: context.isDark ? null : AppTheme.cardShadow,
+        color: context.cBackground,
+        border: Border(bottom: BorderSide(color: context.cBorder)),
       ),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-            child: Row(
+          CircleAvatar(
+            radius: 21,
+            backgroundColor: AppColors.primary.withOpacity(0.15),
+            backgroundImage:
+                (p.author.avatarUrl != null && p.author.avatarUrl!.isNotEmpty)
+                    ? NetworkImage(_fullUrl(p.author.avatarUrl!))
+                    : null,
+            child: (p.author.avatarUrl == null || p.author.avatarUrl!.isEmpty)
+                ? Text(initial,
+                    style: const TextStyle(
+                        color: AppColors.primary, fontWeight: FontWeight.w800))
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primary.withOpacity(0.15),
-                  backgroundImage: (p.author.avatarUrl != null &&
-                          p.author.avatarUrl!.isNotEmpty)
-                      ? NetworkImage(_fullUrl(p.author.avatarUrl!))
-                      : null,
-                  child: (p.author.avatarUrl == null ||
-                          p.author.avatarUrl!.isEmpty)
-                      ? Text(initial,
-                          style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w800))
-                      : null,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(p.author.name,
+                // Name · time on one line, threads-style.
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(p.author.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 14.5,
                               color: context.cText)),
-                      Text(_ago(p.createdAt, ta),
-                          style: TextStyle(
-                              fontSize: 11.5, color: context.cTextSecondary)),
-                    ],
+                    ),
+                    Text('  ·  ${_ago(p.createdAt, ta)}',
+                        style: TextStyle(
+                            fontSize: 12.5, color: context.cTextSecondary)),
+                  ],
+                ),
+                if (p.content.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(p.content,
+                      style: TextStyle(
+                          fontSize: 14.5, height: 1.35, color: context.cText)),
+                ],
+                if (p.imageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: _PostImages(urls: p.imageUrls),
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (p.content.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Text(p.content,
-                  style: TextStyle(
-                      fontSize: 14.5, height: 1.4, color: context.cText)),
-            ),
-          if (p.imageUrls.isNotEmpty) _PostImages(urls: p.imageUrls),
-          // Actions
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Row(
-              children: [
-                _action(
-                  icon: p.likedByMe
-                      ? Icons.favorite
-                      : Icons.favorite_border,
-                  color: p.likedByMe ? const Color(0xFFEF4444) : null,
-                  label: '${p.likeCount}',
-                  onTap: _toggleLike,
-                ),
-                _action(
-                  icon: Icons.mode_comment_outlined,
-                  label: '${p.commentCount}',
-                  onTap: _openComments,
-                ),
-                _action(
-                  icon: Icons.share_outlined,
-                  label: tr(
-                      en: 'Share',
-                      ta: 'பகிர்',
-                      hi: 'साझा करें',
-                      ml: 'പങ്കിടുക'),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(tr(
-                          en: 'Sharing coming soon',
-                          ta: 'பகிர்வு விரைவில் வரும்',
-                          hi: 'साझाकरण जल्द आ रहा है',
-                          ml: 'പങ്കിടൽ ഉടൻ വരുന്നു')),
-                    ));
-                  },
+                ],
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    _action(
+                      icon: p.likedByMe ? Icons.favorite : Icons.favorite_border,
+                      color: p.likedByMe ? const Color(0xFFEF4444) : null,
+                      label: '${p.likeCount}',
+                      onTap: _toggleLike,
+                    ),
+                    const SizedBox(width: 20),
+                    _action(
+                      icon: Icons.mode_comment_outlined,
+                      label: '${p.commentCount}',
+                      onTap: _openComments,
+                    ),
+                    const Spacer(),
+                    _action(
+                      icon: Icons.share_outlined,
+                      label: '',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(tr(
+                              en: 'Sharing coming soon',
+                              ta: 'பகிர்வு விரைவில் வரும்',
+                              hi: 'साझाकरण जल्द आ रहा है',
+                              ml: 'പങ്കിടൽ ഉടൻ വരുന്നു')),
+                        ));
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -385,18 +382,25 @@ class _PostCardState extends State<_PostCard> {
       required String label,
       Color? color,
       required VoidCallback onTap}) {
-    return Expanded(
-      child: TextButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 19, color: color ?? context.cTextSecondary),
-        label: Text(label,
-            style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: color ?? context.cTextSecondary)),
-        style: TextButton.styleFrom(
-            foregroundColor: context.cTextSecondary,
-            padding: const EdgeInsets.symmetric(vertical: 8)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 19, color: color ?? context.cTextSecondary),
+            if (label.isNotEmpty) ...[
+              const SizedBox(width: 5),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: color ?? context.cTextSecondary)),
+            ],
+          ],
+        ),
       ),
     );
   }
