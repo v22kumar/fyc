@@ -72,6 +72,7 @@ class _SportsTournamentDetailScreenState
       return;
     }
 
+    final sport = state is SportsDetailLoaded ? state.tournament.sport : 'other';
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -79,7 +80,11 @@ class _SportsTournamentDetailScreenState
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (_) => import_LiveScoreEntrySheet.LiveScoreEntrySheet(fixture: f),
+      builder: (_) => import_LiveScoreEntrySheet.LiveScoreEntrySheet(
+        fixture: f,
+        sport: sport,
+        isManager: _isAdmin, // EXECUTIVE_MEMBER+ → result applies immediately
+      ),
     );
     if (ok == true) _reload();
   }
