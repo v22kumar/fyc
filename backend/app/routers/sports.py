@@ -1,10 +1,11 @@
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.etag import etag_not_modified, set_etag
 from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveScoreEntry, Player
 from app.models.user import User
 from app.schemas.sports import (
@@ -116,6 +117,8 @@ def _fixture_out(f: Fixture) -> FixtureOut:
 
 @router.get("/tournaments", response_model=List[TournamentOut])
 def list_tournaments(
+    request: Request,
+    response: Response,
     sport: Optional[str] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -129,7 +132,13 @@ def list_tournaments(
     tournaments = q.order_by(Tournament.year.desc()).all()
     for t in tournaments:
         t.phase = _tournament_phase(db, t)
-    return tournaments
+    result = [TournamentOut.model_validate(t) for t in tournaments]
+
+    cached = etag_not_modified(request, result)
+    if cached is not None:
+        return cached
+    set_etag(response, result)
+    return result
 
 
 require_member_or_exec = RoleChecker(["CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])

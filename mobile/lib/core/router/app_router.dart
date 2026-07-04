@@ -98,6 +98,9 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/feed/feed_screen.dart';
 import '../../features/feed/create_post_screen.dart';
 
+// Design System v2 (Sprint 1)
+import '../design_system/design_system_gallery_screen.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
@@ -424,6 +427,14 @@ final appRouter = GoRouter(
           builder: (context, state) => const ChessTournamentListScreen(),
         ),
       ],
+    ),
+
+    // Design System v2 (Sprint 1) — component gallery + shell preview.
+    // Not linked from any production screen; reachable only via this direct
+    // route for design/QA review while the new system is built out.
+    GoRoute(
+      path: '/design-system',
+      builder: (context, state) => const DesignSystemGalleryScreen(),
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

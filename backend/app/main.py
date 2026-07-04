@@ -2,10 +2,12 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -360,6 +362,26 @@ app.add_middleware(
 
 # Multi-Tenant Middleware
 app.add_middleware(TenantMiddleware)
+
+# Compress list/feed responses (posts, events, tournaments, ...) — the single
+# biggest bandwidth win for users on slow/expensive connections. Small
+# responses (health checks, single-record reads) are left uncompressed via
+# minimum_size so gzip's own overhead never makes a tiny response bigger.
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    """Catch-all for bugs that aren't an intentional HTTPException (which
+    FastAPI already handles with its own status/detail). Logs the real
+    traceback server-side and returns one clean, human message client-side —
+    never a raw 500/traceback, matching the mobile app's error-mapping
+    ("Something went wrong on our end. Please try again.")."""
+    logger.exception(f"Unhandled exception on {request.method} {request.url.path}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong on our end. Please try again."},
+    )
 
 # Routers
 from app.routers import (

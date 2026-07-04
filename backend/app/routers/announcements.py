@@ -1,10 +1,11 @@
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.etag import etag_not_modified, set_etag
 from app.models.announcement import Announcement, AnnouncementCategory
 from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate, AnnouncementUpdate, AnnouncementOut
@@ -20,6 +21,8 @@ require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
 
 @router.get("", response_model=List[AnnouncementOut])
 def list_announcements(
+    request: Request,
+    response: Response,
     category: Optional[AnnouncementCategory] = None,
     include_expired: bool = False,
     db: Session = Depends(get_db),
@@ -43,7 +46,13 @@ def list_announcements(
         Announcement.is_pinned.desc(),
         Announcement.created_at.desc(),
     ).all()
-    return announcements
+    result = [AnnouncementOut.model_validate(a) for a in announcements]
+
+    cached = etag_not_modified(request, result)
+    if cached is not None:
+        return cached
+    set_etag(response, result)
+    return result
 
 
 @router.get("/{announcement_id}", response_model=AnnouncementOut)

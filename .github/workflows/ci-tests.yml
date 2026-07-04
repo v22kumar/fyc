@@ -1,0 +1,62 @@
+name: CI Tests
+
+# Sprint 1 CI hardening: before this workflow, nothing gated a merge to main —
+# flutter-build.yml and fly-deploy.yml both trigger only on push to main
+# (i.e. AFTER code is already merged), so a broken PR had no automated check
+# to catch it before landing. This workflow runs on every PR and every branch
+# push (not on main itself — main is already covered by the build/deploy
+# workflows) so backend pytest and Flutter widget tests actually gate merges.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    name: Backend — pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        working-directory: backend
+        run: pytest -v
+
+  mobile-tests:
+    name: Mobile — flutter analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: mobile
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        working-directory: mobile
+        run: flutter test

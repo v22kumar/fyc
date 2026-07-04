@@ -2,11 +2,12 @@ from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.core.database import get_db
+from app.core.etag import etag_not_modified, set_etag
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.user import User, VolunteerMetadata
 from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOut, EventCheckoutOut, EventRegistrationCreate, EventRegistrationOut
@@ -110,12 +111,21 @@ def update_event(
 
 @router.get("", response_model=List[EventOut])
 def list_events(
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
 ):
     """List published events for the current tenant (public)."""
     query = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True)
-    return _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
+    events = _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
+    result = [EventOut.model_validate(e) for e in events]
+
+    cached = etag_not_modified(request, result)
+    if cached is not None:
+        return cached
+    set_etag(response, result)
+    return result
 
 @router.get("/admin/all", response_model=List[EventOut])
 def list_all_events(

@@ -3,11 +3,12 @@ import re
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Query
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.etag import etag_not_modified, set_etag
 from app.models.post import Post, PostLike, PostRepost
 from app.models.core_services import Comment
 from app.models.user import User
@@ -118,6 +119,8 @@ def _serialize(db: Session, post: Post, current_user_id) -> PostOut:
 
 @router.get("", response_model=List[PostOut])
 def list_posts(
+    request: Request,
+    response: Response,
     scope: str = Query("all", pattern="^(all|mine)$"),
     feed: str = Query("recent", pattern="^(recent|popular|following)$"),
     category: Optional[str] = Query(None),
@@ -157,7 +160,13 @@ def list_posts(
 
     posts = q.offset(offset).limit(limit).all()
     cid = current_user.id if current_user else None
-    return [_serialize(db, p, cid) for p in posts]
+    result = [_serialize(db, p, cid) for p in posts]
+
+    cached = etag_not_modified(request, result)
+    if cached is not None:
+        return cached
+    set_etag(response, result)
+    return result
 
 
 @router.get("/hashtags", response_model=List[str])
