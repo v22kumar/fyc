@@ -260,61 +260,63 @@ async def lifespan(app: FastAPI):
 
     _seed_database()
 
-    # Pre-warm external API caches — run in a background thread so slow RSS
-    # feeds don't delay the server becoming ready to accept requests.
-    import threading as _threading
-    def _prewarm():
-        try:
-            from app.services.weather import get_weather
-            from app.services.gold_price import get_gold_price
-            from app.services import news as _news_svc
-            get_weather(8.1833, 77.4119)
-            get_gold_price()
-            _news_svc.get_top_tamil_news()
-            _news_svc.get_india_news()
-            _news_svc.get_kanyakumari_news()
-            _news_svc.get_tn_jobs_news()
-            _news_svc.get_central_jobs_news()
-            logger.info("[startup] All caches pre-warmed (weather, gold, news×5)")
-        except Exception as _e:
-            logger.warning(f"[startup] Cache pre-warm failed: {_e}")
-    _threading.Thread(target=_prewarm, daemon=True).start()
+    scheduler = None
+    if not settings.TESTING:
+        # Pre-warm external API caches — run in a background thread so slow RSS
+        # feeds don't delay the server becoming ready to accept requests.
+        import threading as _threading
+        def _prewarm():
+            try:
+                from app.services.weather import get_weather
+                from app.services.gold_price import get_gold_price
+                from app.services import news as _news_svc
+                get_weather(8.1833, 77.4119)
+                get_gold_price()
+                _news_svc.get_top_tamil_news()
+                _news_svc.get_india_news()
+                _news_svc.get_kanyakumari_news()
+                _news_svc.get_tn_jobs_news()
+                _news_svc.get_central_jobs_news()
+                logger.info("[startup] All caches pre-warmed (weather, gold, news×5)")
+            except Exception as _e:
+                logger.warning(f"[startup] Cache pre-warm failed: {_e}")
+        _threading.Thread(target=_prewarm, daemon=True).start()
 
-    # Schedulers — birthday always on; morning broadcast requires MORNING_BROADCAST_ENABLED
-    from apscheduler.schedulers.asyncio import AsyncIOScheduler
-    from app.services.birthdays import run_birthday_notifications
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
-                      id="birthday_notifications", replace_existing=True)
-    
-    from app.services.daily_digest import run_morning_digest, run_evening_digest
-    scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC", # 8:00 AM IST
-                      id="morning_digest", replace_existing=True)
-    scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC", # 8:00 PM IST
-                      id="evening_digest", replace_existing=True)
+        # Schedulers — birthday always on; morning broadcast requires MORNING_BROADCAST_ENABLED
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from app.services.birthdays import run_birthday_notifications
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
+                          id="birthday_notifications", replace_existing=True)
 
-    if settings.MORNING_BROADCAST_ENABLED:
-        from app.services.whatsapp_broadcast import run_morning_broadcast
-        scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
-                          id="morning_broadcast", replace_existing=True)
-        logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
+        from app.services.daily_digest import run_morning_digest, run_evening_digest
+        scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC", # 8:00 AM IST
+                          id="morning_digest", replace_existing=True)
+        scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC", # 8:00 PM IST
+                          id="evening_digest", replace_existing=True)
 
-    async def _keepalive():
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=5) as c:
-                await c.get("http://localhost:8000/api/health")
-        except Exception:
-            pass
+        if settings.MORNING_BROADCAST_ENABLED:
+            from app.services.whatsapp_broadcast import run_morning_broadcast
+            scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
+                              id="morning_broadcast", replace_existing=True)
+            logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
 
-    scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
-    scheduler.start()
-    logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
-    logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
+        async def _keepalive():
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5) as c:
+                    await c.get("http://localhost:8000/api/health")
+            except Exception:
+                pass
+
+        scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
+        scheduler.start()
+        logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
+        logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
 
     yield
 
-    if scheduler.running:
+    if scheduler is not None and scheduler.running:
         scheduler.shutdown(wait=False)
 
 

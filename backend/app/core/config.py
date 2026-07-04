@@ -12,6 +12,18 @@ class Settings(BaseSettings):
     # "development" | "staging" | "production" — gates the startup secret checks below.
     ENVIRONMENT: str = "development"
 
+    # Set by tests/conftest.py before app import. Gates the background cron
+    # scheduler (birthday/digest/broadcast/keepalive jobs) and the external
+    # cache pre-warm thread (weather/gold/news) out of the startup lifespan —
+    # tests should never spawn a live scheduler or make real external HTTP
+    # calls. The `client` pytest fixture is function-scoped, so every single
+    # test re-enters this lifespan; leaving these enabled meant every test
+    # function created and tore down its own AsyncIOScheduler (tied to a
+    # fresh event loop each time) and spawned a new outbound-network thread —
+    # a real, unbounded source of slowness/hangs across a full test run that
+    # a locally blocked-egress sandbox happened not to surface.
+    TESTING: bool = False
+
     SECRET_KEY: str = "supersecretdevkeyforfycconnect2026jwtencryptionkeys"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
