@@ -49,8 +49,7 @@ def db():
     
     with engine.connect() as drop_conn:
         drop_conn.execute(text("PRAGMA foreign_keys=OFF"))
-    Base.metadata.drop_all(bind=engine)
-    with engine.connect() as drop_conn:
+        Base.metadata.drop_all(bind=drop_conn)
         drop_conn.execute(text("PRAGMA foreign_keys=ON"))
 
 @pytest.fixture(scope="function")

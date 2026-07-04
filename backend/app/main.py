@@ -90,7 +90,7 @@ def _seed_database():
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
-        if donor_count < 1000:
+        if donor_count < 1000 and os.environ.get("DATABASE_URL") != "sqlite:///:memory:":
             print(f"Blood donors count is {donor_count} — seeding from friends2support CSV...")
             try:
                 import sys as _sys
@@ -174,6 +174,8 @@ async def lifespan(app: FastAPI):
     # maintain a hand-written ALTER list (which drifts), introspect every mapped
     # table and ADD any column the live DB is missing.
     try:
+        if os.environ.get("DATABASE_URL") == "sqlite:///:memory:":
+            raise Exception("Skip schema reconcile")
         from sqlalchemy import inspect as _sa_inspect, text as _sql_text
         insp = _sa_inspect(engine)
         live_tables = set(insp.get_table_names())
@@ -237,6 +239,8 @@ async def lifespan(app: FastAPI):
     # outside the CORS middleware). Backfill every model column that is missing from
     # its table and is safe to add on existing rows (nullable, no foreign key).
     try:
+        if os.environ.get("DATABASE_URL") == "sqlite:///:memory:":
+            raise Exception("Skip schema reconcile")
         from sqlalchemy import inspect as _sa_inspect, text as _drift_text
         insp = _sa_inspect(engine)
         with engine.begin() as conn:
@@ -264,6 +268,8 @@ async def lifespan(app: FastAPI):
     # feeds don't delay the server becoming ready to accept requests.
     import threading as _threading
     def _prewarm():
+        if os.environ.get("DATABASE_URL") == "sqlite:///:memory:":
+            return
         try:
             from app.services.weather import get_weather
             from app.services.gold_price import get_gold_price
