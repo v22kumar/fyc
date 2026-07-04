@@ -164,9 +164,9 @@ def _validate_production_secrets(s: "Settings") -> None:
     errors = []
     if s.OTP_BYPASS_CODE:
         errors.append("OTP_BYPASS_CODE must be unset in production")
-    if s.ALLOWED_ORIGINS == "*":
+    if any(origin == "*" for origin in s.allowed_origins_list):
         errors.append("ALLOWED_ORIGINS must not be '*' in production")
-    if s.FIRST_SUPERADMIN_PASSWORD.lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
+    if s.FIRST_SUPERADMIN_PASSWORD.strip().lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
         errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
 
     if errors:

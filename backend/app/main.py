@@ -312,8 +312,8 @@ async def lifespan(app: FastAPI):
                 import httpx
                 async with httpx.AsyncClient(timeout=5) as c:
                     await c.get("http://localhost:8000/api/health")
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("[scheduler] keepalive ping failed: %s", exc)
 
         scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
         scheduler.start()

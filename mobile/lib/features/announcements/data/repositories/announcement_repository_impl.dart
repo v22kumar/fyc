@@ -17,6 +17,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
   }) async* {
     final boxName = 'announcements_cache';
     Box? box;
+    bool servedCache = false;
     try {
       if (!Hive.isBoxOpen(boxName)) {
         box = await Hive.openBox(boxName);
@@ -27,21 +28,28 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
       if (cachedData != null) {
         final list = (json.decode(cachedData) as List).map((e) => AnnouncementModel.fromJson(e)).toList();
         yield Right(list);
+        servedCache = true;
       }
     } catch (_) {}
 
     try {
       final announcements =
           await _remote.fetchAnnouncements(category: category);
+      // Cache write is best-effort — a persistence failure must not turn a
+      // successful fetch into an error.
       if (box != null) {
-        final jsonString = json.encode(announcements.map((e) => e.toJson()).toList());
-        await box.put(category ?? 'ALL', jsonString);
+        try {
+          final jsonString = json.encode(announcements.map((e) => e.toJson()).toList());
+          await box.put(category ?? 'ALL', jsonString);
+        } catch (_) {}
       }
       yield Right(announcements);
     } on Failure catch (f) {
-      yield Left(f);
+      // Don't overwrite already-served cached data with a hard error when the
+      // background refresh fails (e.g. user went offline).
+      if (!servedCache) yield Left(f);
     } catch (e) {
-      yield Left(ServerFailure());
+      if (!servedCache) yield Left(ServerFailure());
     }
   }
 

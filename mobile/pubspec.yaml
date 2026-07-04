@@ -82,6 +82,9 @@ dependencies:
 
   # Performance — image caching & network awareness
   cached_network_image: ^3.4.1
+  # Imported directly by settings_screen (cache clear); declare it explicitly
+  # rather than relying on cached_network_image's transitive dependency.
+  flutter_cache_manager: ^3.4.1
   connectivity_plus: ^6.1.4
   battery_plus: ^6.2.1
   hive: ^2.2.3

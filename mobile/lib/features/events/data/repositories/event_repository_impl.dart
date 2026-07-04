@@ -15,6 +15,7 @@ class EventRepositoryImpl implements EventRepository {
   Stream<Either<Failure, List<EventEntity>>> fetchEventsStream() async* {
     final boxName = 'events_cache';
     Box? box;
+    bool servedCache = false;
     try {
       if (!Hive.isBoxOpen(boxName)) {
         box = await Hive.openBox(boxName);
@@ -25,20 +26,25 @@ class EventRepositoryImpl implements EventRepository {
       if (cachedData != null) {
         final list = (json.decode(cachedData) as List).map((e) => EventModel.fromJson(e)).toList();
         yield Right(list);
+        servedCache = true;
       }
     } catch (_) {}
 
     try {
       final events = await _remote.fetchEvents();
+      // Cache write is best-effort — a persistence failure must not turn a
+      // successful fetch into an error.
       if (box != null) {
-        final jsonString = json.encode(events.map((e) => e.toJson()).toList());
-        await box.put('events', jsonString);
+        try {
+          final jsonString = json.encode(events.map((e) => e.toJson()).toList());
+          await box.put('events', jsonString);
+        } catch (_) {}
       }
       yield Right(events);
     } on Failure catch (f) {
-      yield Left(f);
+      if (!servedCache) yield Left(f);
     } catch (e) {
-      yield Left(ServerFailure());
+      if (!servedCache) yield Left(ServerFailure());
     }
   }
 

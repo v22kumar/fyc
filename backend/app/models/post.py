@@ -25,7 +25,9 @@ class Post(Base, TimestampMixin, TenantModelMixin):
     # cross-posted to the club Instagram page).
     source = Column(String(20), nullable=True, default="thread")
     location = Column(String(200), nullable=True)
-    is_hidden = Column(Boolean(), default=False)
+    # server_default so newly-created rows are never NULL at the DB level; the
+    # feed query also treats NULL as not-hidden for rows that predate this column.
+    is_hidden = Column(Boolean(), nullable=False, default=False, server_default="0")
     idempotency_key = Column(String(100), nullable=True, index=True)
 
     author = relationship("User")
