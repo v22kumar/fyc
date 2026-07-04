@@ -146,28 +146,11 @@ class _SplashScreenState extends State<SplashScreen>
                           ],
                         );
                       },
-                      child: Container(
-                        width: 110,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.07),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  const Color(0xFF0F5132).withOpacity(0.40),
-                              blurRadius: 30,
-                              spreadRadius: 4,
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(18),
+                      child: SizedBox(
+                        width: 240,
                         child: Image.asset(
-                          'assets/images/fyc_logo.png',
+                          // Full brand lockup (eagle + CONNECT wordmark).
+                          'assets/images/fyc_logo_full.png',
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Text(
                             '🌱',

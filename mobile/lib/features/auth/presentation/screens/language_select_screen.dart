@@ -128,7 +128,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         ],
                       ),
                       child: Image.asset(
-                        'assets/images/fyc_logo.png',
+                        'assets/images/fyc_logo_icon.png',
                         width: 72,
                         height: 72,
                         errorBuilder: (_, __, ___) =>

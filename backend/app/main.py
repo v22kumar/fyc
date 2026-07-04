@@ -173,7 +173,13 @@ async def lifespan(app: FastAPI):
     # This is exactly what broke ALL logins (user_profiles.gender). Rather than
     # maintain a hand-written ALTER list (which drifts), introspect every mapped
     # table and ADD any column the live DB is missing.
-    try:
+    #
+    # Skipped entirely under TESTING: the pytest fixtures create the DB fresh
+    # from the current models (so there is never any drift to reconcile), and
+    # this per-table introspection ran on EVERY function-scoped test's lifespan,
+    # adding ~12s/test — ~32 minutes across the full suite in CI.
+    if not settings.TESTING:
+      try:
         from sqlalchemy import inspect as _sa_inspect, text as _sql_text
         insp = _sa_inspect(engine)
         live_tables = set(insp.get_table_names())
@@ -226,17 +232,17 @@ async def lifespan(app: FastAPI):
             logger.info(f"[schema-reconcile] added {len(added)} missing column(s): {added}")
         else:
             logger.info("[schema-reconcile] no drift — all model columns present")
-    except Exception as _me:
+      except Exception as _me:
         logger.warning(f"[schema-reconcile] block failed: {_me}")
 
-    # Reconcile schema drift: TimestampMixin gained `deleted_at` and `metadata_json`
-    # AFTER several tables were first created, and Base.metadata.create_all() never
-    # adds columns to EXISTING tables. The result was a 500 on any query touching a
-    # drifted table (e.g. /auth/google -> "no such column: organizations.deleted_at",
-    # which the browser surfaces as "Failed to fetch" because the 500 is emitted
-    # outside the CORS middleware). Backfill every model column that is missing from
-    # its table and is safe to add on existing rows (nullable, no foreign key).
-    try:
+      # Reconcile schema drift: TimestampMixin gained `deleted_at` and `metadata_json`
+      # AFTER several tables were first created, and Base.metadata.create_all() never
+      # adds columns to EXISTING tables. The result was a 500 on any query touching a
+      # drifted table (e.g. /auth/google -> "no such column: organizations.deleted_at",
+      # which the browser surfaces as "Failed to fetch" because the 500 is emitted
+      # outside the CORS middleware). Backfill every model column that is missing from
+      # its table and is safe to add on existing rows (nullable, no foreign key).
+      try:
         from sqlalchemy import inspect as _sa_inspect, text as _drift_text
         insp = _sa_inspect(engine)
         with engine.begin() as conn:
@@ -255,7 +261,7 @@ async def lifespan(app: FastAPI):
                         logger.info(f"[schema-drift] added {table.name}.{col.name} ({coltype})")
                     except Exception as _ce:
                         logger.warning(f"[schema-drift] could not add {table.name}.{col.name}: {_ce}")
-    except Exception as _de:
+      except Exception as _de:
         logger.warning(f"[schema-drift] reconciliation block: {_de}")
 
     _seed_database()

@@ -171,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                             ],
                           ),
                           child: Image.asset(
-                            'assets/images/fyc_logo.png',
+                            'assets/images/fyc_logo_icon.png',
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>
