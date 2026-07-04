@@ -32,7 +32,10 @@ class CachedImage extends StatelessWidget {
     if (optimizedUrl.contains('res.cloudinary.com') && optimizedUrl.contains('/upload/')) {
       final tier = sl<DeviceProfileService>().currentTier;
       String transform = 'f_webp,q_auto';
-      if (tier == DeviceTier.lite || tier == DeviceTier.offline) {
+      // Offline deliberately keeps the base transform (same cache key as the
+      // full tier) instead of switching to the eco variant — changing the URL
+      // while the device can't fetch would guarantee a cache miss.
+      if (tier == DeviceTier.lite) {
         transform += ',w_300,q_auto:eco';
       } else if (tier == DeviceTier.balanced) {
         transform += ',w_600';

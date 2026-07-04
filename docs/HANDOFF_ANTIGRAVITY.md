@@ -140,7 +140,7 @@ explicit about scope decisions, not silent about them).
 
 ## The literal prompt (paste this into Antigravity CLI)
 
-```
+```text
 You're picking up parallel work on FYC Connect, a Flutter + FastAPI app for a
 volunteer youth club in rural Tamil Nadu. Another AI session already
 delivered Sprint 1 (a design system + component library + a new CI gate at

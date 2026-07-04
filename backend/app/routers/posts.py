@@ -133,7 +133,11 @@ def list_posts(
     """Community feed. feed=recent (default, newest first), popular (most liked),
     following (official/admin voices). category filters by post category.
     scope=mine returns only my posts."""
-    q = db.query(Post).filter(Post.organization_id == tenant_id, Post.is_hidden == False)
+    # is_hidden was added after posts already existed; rows backfilled by the
+    # startup schema-reconcile can be NULL. Treat NULL as "not hidden" so
+    # pre-existing posts don't silently vanish from the feed — only rows
+    # explicitly flagged True are excluded.
+    q = db.query(Post).filter(Post.organization_id == tenant_id, Post.is_hidden.isnot(True))
     if scope == "mine":
         if not current_user:
             return []

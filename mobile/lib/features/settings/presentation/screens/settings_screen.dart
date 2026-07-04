@@ -50,9 +50,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadVersion();
-    _liteMode = sl<DeviceProfileService>().tierStream.isBroadcast 
-        ? sl<DeviceProfileService>().currentTier == DeviceTier.lite 
-        : false;
+    // Reflect the user's manual preference — not currentTier, which can be
+    // `lite` merely because of low battery / power-save mode.
+    _liteMode = sl<DeviceProfileService>().manualLiteMode;
   }
 
   Future<void> _loadVersion() async {
@@ -144,9 +144,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _toggleLiteMode(bool value) {
+  Future<void> _toggleLiteMode(bool value) async {
+    final previous = _liteMode;
     setState(() => _liteMode = value);
-    sl<DeviceProfileService>().setManualLiteMode(value);
+    try {
+      await sl<DeviceProfileService>().setManualLiteMode(value);
+    } catch (_) {
+      // Persistence failed — roll the switch back so the UI stays truthful.
+      if (mounted) setState(() => _liteMode = previous);
+    }
   }
 
   Future<void> _clearCache() async {

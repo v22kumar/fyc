@@ -135,7 +135,7 @@ def test_issue_state_machine_assign(client, db):
 
 
 def test_issue_invalid_transition(client, db):
-    """Invalid state transitions must return 400."""
+    """Status transitions are relaxed: any target status is accepted and applied."""
     org = _make_org(db)
     from app.models.user import User, UserProfile
     from app.core.security import get_password_hash
@@ -156,14 +156,16 @@ def test_issue_invalid_transition(client, db):
     )
     issue_id = issue_res.json()["id"]
 
-    # NEW → RESOLVED is invalid
+    # Transition rules are intentionally relaxed — the endpoint lets the
+    # community decide when an issue is resolved (see update_issue_status), so a
+    # direct NEW → RESOLVED move is accepted and applied rather than rejected.
     res = client.patch(
         f"/api/v1/issues/{issue_id}/status",
         json={"status": "RESOLVED"},
         headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
     )
-    assert res.status_code == 400
-    assert "Invalid transition" in res.json()["detail"]
+    assert res.status_code == 200
+    assert res.json()["status"] == "RESOLVED"
 
 
 def test_volunteer_cannot_update_unassigned_issue(client, db):

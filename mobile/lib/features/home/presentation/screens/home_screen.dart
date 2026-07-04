@@ -202,7 +202,7 @@ class _Header extends StatelessWidget {
                               border: Border.all(color: Colors.white.withOpacity(0.25)),
                             ),
                             child: Image.asset(
-                              'assets/images/fyc_logo.png',
+                              'assets/images/fyc_logo_icon.png',
                               width: 30,
                               height: 30,
                               errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 16)),

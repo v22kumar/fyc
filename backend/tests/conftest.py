@@ -4,6 +4,7 @@ import os
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ.setdefault("OTP_BYPASS_CODE", "123456")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
+os.environ["TESTING"] = "true"
 os.environ.setdefault("FIRST_SUPERADMIN_PASSWORD", "test-superadmin-password")
 
 import pytest

@@ -12,12 +12,31 @@ class Settings(BaseSettings):
     # "development" | "staging" | "production" — gates the startup secret checks below.
     ENVIRONMENT: str = "development"
 
-    SECRET_KEY: str
+    # Set by tests/conftest.py before app import. Gates the background cron
+    # scheduler (birthday/digest/broadcast/keepalive jobs) and the external
+    # cache pre-warm thread (weather/gold/news) out of the startup lifespan —
+    # tests should never spawn a live scheduler or make real external HTTP
+    # calls. The `client` pytest fixture is function-scoped, so every single
+    # test re-enters this lifespan; leaving these enabled meant every test
+    # function created and tore down its own AsyncIOScheduler (tied to a
+    # fresh event loop each time) and spawned a new outbound-network thread —
+    # a real, unbounded source of slowness/hangs across a full test run that
+    # a locally blocked-egress sandbox happened not to surface.
+    TESTING: bool = False
+
+    # Dev-safe placeholder default so the app (and the Fly release command, and
+    # CI/seed scripts) can always boot. Production is protected at runtime by
+    # _validate_production_secrets(), which REFUSES to start with this default
+    # when ENVIRONMENT=production — set a real secret via `flyctl secrets set`.
+    # A required-with-no-default field instead crashed boot everywhere with an
+    # opaque pydantic error, even in dev.
+    SECRET_KEY: str = "dev-insecure-secret-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
 
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
-    FIRST_SUPERADMIN_PASSWORD: str
+    # Same pattern as SECRET_KEY: dev-safe default, rejected in production below.
+    FIRST_SUPERADMIN_PASSWORD: str = "changeme_admin_password"
 
     # Comma-separated list of allowed CORS origins, e.g. "https://fycconnect.org,https://admin.fycconnect.org"
     ALLOWED_ORIGINS: str = "*"
@@ -149,9 +168,11 @@ def _validate_production_secrets(s: "Settings") -> None:
     errors = []
     if s.OTP_BYPASS_CODE:
         errors.append("OTP_BYPASS_CODE must be unset in production")
-    if s.ALLOWED_ORIGINS == "*":
+    if s.SECRET_KEY.strip() in ("", "dev-insecure-secret-change-in-production", "changeme"):
+        errors.append("SECRET_KEY must be set to a real secret in production")
+    if any(origin == "*" for origin in s.allowed_origins_list):
         errors.append("ALLOWED_ORIGINS must not be '*' in production")
-    if s.FIRST_SUPERADMIN_PASSWORD.lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
+    if s.FIRST_SUPERADMIN_PASSWORD.strip().lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
         errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
 
     if errors:

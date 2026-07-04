@@ -321,6 +321,7 @@ def block_user(
     ).first()
     
     if not existing:
+        from sqlalchemy.exc import IntegrityError
         block = UserBlock(
             id=uuid.uuid4(),
             organization_id=tenant_id,
@@ -328,5 +329,10 @@ def block_user(
             blocked_id=user_id,
         )
         db.add(block)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # Concurrent double-tap already inserted the same block — the
+            # UniqueConstraint(blocker_id, blocked_id) fired. Treat as success.
+            db.rollback()
     return {"status": "blocked"}

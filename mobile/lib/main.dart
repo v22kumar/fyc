@@ -44,7 +44,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await SyncService.init();
-  SyncService.triggerSync();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
   await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
@@ -54,6 +53,10 @@ void main() async {
     if (context != null && route.isNotEmpty) context.go(route);
   };
   await initServiceLocator();
+  // Drain the offline outbox only after the service locator is ready — the
+  // sync path resolves sl<ApiClient>() and would fail on an unregistered
+  // dependency if triggered earlier in startup.
+  SyncService.triggerSync();
   localeNotifier.value = Locale(sl<LocalStorage>().getLang());
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
   
@@ -97,7 +100,10 @@ class _FycAppState extends State<FycApp> {
         if (message != null && mounted) {
           // Delay to allow router to initialize
           Future.delayed(const Duration(milliseconds: 500), () {
-            _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
+            final navContext = appRouter.routerDelegate.navigatorKey.currentContext;
+            if (mounted && navContext != null) {
+              _handleNotificationClick(navContext, message);
+            }
           });
         }
       });
@@ -112,8 +118,9 @@ class _FycAppState extends State<FycApp> {
 
       // Background interaction handler
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        if (mounted) {
-          _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
+        final navContext = appRouter.routerDelegate.navigatorKey.currentContext;
+        if (mounted && navContext != null) {
+          _handleNotificationClick(navContext, message);
         }
       });
 

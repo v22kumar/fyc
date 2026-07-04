@@ -15,6 +15,7 @@ class CommunityFeedRepositoryImpl implements CommunityFeedRepository {
   Stream<Either<Failure, List<CommunityFeedItemEntity>>> fetchFeedStream() async* {
     final boxName = 'community_feed_cache';
     Box? box;
+    bool servedCache = false;
     try {
       if (!Hive.isBoxOpen(boxName)) {
         box = await Hive.openBox(boxName);
@@ -25,20 +26,25 @@ class CommunityFeedRepositoryImpl implements CommunityFeedRepository {
       if (cachedData != null) {
         final list = (json.decode(cachedData) as List).map((e) => CommunityFeedItemModel.fromJson(e)).toList();
         yield Right(list);
+        servedCache = true;
       }
     } catch (_) {}
 
     try {
       final feed = await _remote.fetchFeed();
+      // Cache write is best-effort — a persistence failure must not turn a
+      // successful fetch into an error.
       if (box != null) {
-        final jsonString = json.encode(feed.map((e) => e.toJson()).toList());
-        await box.put('feed', jsonString);
+        try {
+          final jsonString = json.encode(feed.map((e) => e.toJson()).toList());
+          await box.put('feed', jsonString);
+        } catch (_) {}
       }
       yield Right(feed);
     } on Failure catch (f) {
-      yield Left(f);
+      if (!servedCache) yield Left(f);
     } catch (e) {
-      yield Left(ServerFailure());
+      if (!servedCache) yield Left(ServerFailure());
     }
   }
 }

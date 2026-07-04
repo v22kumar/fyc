@@ -66,7 +66,8 @@ class _ChallengePageState extends State<ChallengePage>
       _refreshOutgoing();
       if (mounted && WidgetsBinding.instance.lifecycleState != AppLifecycleState.paused) {
         if (_pollIntervalSeconds < 60) {
-          _pollIntervalSeconds *= 2;
+          final next = _pollIntervalSeconds * 2;
+          _pollIntervalSeconds = next > 60 ? 60 : next;
         }
         _startPolling();
       }

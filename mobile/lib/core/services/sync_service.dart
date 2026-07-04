@@ -55,7 +55,15 @@ class SyncService {
       final box = Hive.box(_boxName);
       final keysToRemove = [];
       for (final key in box.keys) {
-        final data = json.decode(box.get(key));
+        dynamic data;
+        try {
+          data = json.decode(box.get(key) as String);
+        } catch (_) {
+          // Malformed outbox entry — quarantine it so it can't block every
+          // future sync pass, then move on to the next item.
+          keysToRemove.add(key);
+          continue;
+        }
         try {
           if (data['type'] == 'post') {
             await FeedApi.create(
