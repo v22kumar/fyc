@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Text, String, ForeignKey, JSON, UniqueConstraint
+from sqlalchemy import Column, Text, String, ForeignKey, JSON, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -25,6 +25,8 @@ class Post(Base, TimestampMixin, TenantModelMixin):
     # cross-posted to the club Instagram page).
     source = Column(String(20), nullable=True, default="thread")
     location = Column(String(200), nullable=True)
+    is_hidden = Column(Boolean(), default=False)
+    idempotency_key = Column(String(100), nullable=True, index=True)
 
     author = relationship("User")
 

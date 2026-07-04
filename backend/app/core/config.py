@@ -24,19 +24,22 @@ class Settings(BaseSettings):
     # a locally blocked-egress sandbox happened not to surface.
     TESTING: bool = False
 
-    SECRET_KEY: str = "supersecretdevkeyforfycconnect2026jwtencryptionkeys"
+    # No insecure default (Antigravity security hygiene): SECRET_KEY must be
+    # supplied via env/Fly secret in every environment. Tests set it in
+    # conftest.py before the app is imported.
+    SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
 
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
-    FIRST_SUPERADMIN_PASSWORD: str = "supersecureadminpassword123"
+    FIRST_SUPERADMIN_PASSWORD: str
 
     # Comma-separated list of allowed CORS origins, e.g. "https://fycconnect.org,https://admin.fycconnect.org"
     ALLOWED_ORIGINS: str = "*"
 
     # Set to a fixed value in tests/dev to skip random OTP generation.
     # Leave unset in production so real random OTPs are generated.
-    OTP_BYPASS_CODE: str = ""
+    OTP_BYPASS_CODE: str | None = None
 
     # Firebase Cloud Messaging — set in production .env to enable push notifications
     FCM_SERVER_KEY: str = ""  # legacy HTTP API (decommissioned) — do not use
@@ -149,10 +152,6 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
 
-_DEFAULT_SECRET_KEY = "supersecretdevkeyforfycconnect2026jwtencryptionkeys"
-_DEFAULT_SUPERADMIN_PASSWORD = "supersecureadminpassword123"
-
-
 def _validate_production_secrets(s: "Settings") -> None:
     """
     Refuse to boot with known-insecure defaults when ENVIRONMENT=production.
@@ -163,14 +162,12 @@ def _validate_production_secrets(s: "Settings") -> None:
         return
 
     errors = []
-    if s.SECRET_KEY == _DEFAULT_SECRET_KEY:
-        errors.append("SECRET_KEY is still the insecure default")
-    if s.FIRST_SUPERADMIN_PASSWORD == _DEFAULT_SUPERADMIN_PASSWORD:
-        errors.append("FIRST_SUPERADMIN_PASSWORD is still the insecure default")
     if s.OTP_BYPASS_CODE:
         errors.append("OTP_BYPASS_CODE must be unset in production")
     if s.ALLOWED_ORIGINS == "*":
         errors.append("ALLOWED_ORIGINS must not be '*' in production")
+    if s.FIRST_SUPERADMIN_PASSWORD.lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
+        errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
 
     if errors:
         raise RuntimeError(

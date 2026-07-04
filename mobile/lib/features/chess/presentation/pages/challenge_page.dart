@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
 import '../../data/models/chess_game_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ChallengePage extends StatefulWidget {
   const ChallengePage({super.key});
@@ -15,7 +16,7 @@ class ChallengePage extends StatefulWidget {
 }
 
 class _ChallengePageState extends State<ChallengePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final TabController _tabs;
   final _ds = sl<ChessRemoteDataSource>();
 
@@ -26,8 +27,10 @@ class _ChallengePageState extends State<ChallengePage>
   /// opponent accepts and route this (challenging) player into the game.
   List<ChessChallengeModel> _outgoing = [];
   Timer? _poll;
+  int _pollIntervalSeconds = 3;
   bool _navigating = false;
   final Set<String> _enteredGameIds = {};
+  StreamSubscription<RemoteMessage>? _fcmSub;
 
   String _selectedTime = 'untimed';
   bool _sending = false;
@@ -44,11 +47,41 @@ class _ChallengePageState extends State<ChallengePage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabs = TabController(length: 2, vsync: this);
     _reload();
-    // Poll so both sides move together: the challenger is auto-routed into the
-    // board the moment the opponent accepts, and the inbox stays fresh.
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _refreshOutgoing());
+    _startPolling();
+    
+    _fcmSub = FirebaseMessaging.onMessage.listen((msg) {
+      if (msg.data['type'] == 'chess_challenge' || msg.data['type'] == 'chess_accept') {
+        _pollIntervalSeconds = 3; // Reset backoff on push
+        _reload();
+      }
+    });
+  }
+
+  void _startPolling() {
+    _poll?.cancel();
+    _poll = Timer(Duration(seconds: _pollIntervalSeconds), () {
+      _refreshOutgoing();
+      if (mounted && WidgetsBinding.instance.lifecycleState != AppLifecycleState.paused) {
+        if (_pollIntervalSeconds < 60) {
+          _pollIntervalSeconds *= 2;
+        }
+        _startPolling();
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _pollIntervalSeconds = 3;
+      _reload();
+      _startPolling();
+    } else if (state == AppLifecycleState.paused) {
+      _poll?.cancel();
+    }
   }
 
   void _reload() {
@@ -103,6 +136,8 @@ class _ChallengePageState extends State<ChallengePage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _fcmSub?.cancel();
     _poll?.cancel();
     _tabs.dispose();
     super.dispose();

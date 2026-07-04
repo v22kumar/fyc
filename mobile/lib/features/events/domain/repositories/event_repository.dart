@@ -3,6 +3,6 @@ import '../../../../core/error/failures.dart';
 import '../entities/event_entity.dart';
 
 abstract class EventRepository {
-  Future<Either<Failure, List<EventEntity>>> fetchEvents();
+  Stream<Either<Failure, List<EventEntity>>> fetchEventsStream();
   Future<Either<Failure, String>> checkinEvent(String eventId);
 }

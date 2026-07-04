@@ -48,6 +48,7 @@ class Comment(Base, TimestampMixin, TenantModelMixin):
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(GUID(), nullable=False)
     content = Column(Text, nullable=False)
+    idempotency_key = Column(String(100), nullable=True, index=True)
 
     author = relationship("User")
 

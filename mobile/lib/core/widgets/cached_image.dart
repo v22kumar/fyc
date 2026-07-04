@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'shimmer_box.dart';
 import 'shimmer_loader.dart';
+import '../services/device_profile_service.dart';
+import '../../service_locator.dart';
 
 /// Drop-in replacement for Image.network with caching + shimmer placeholder.
 class CachedImage extends StatelessWidget {
@@ -26,8 +28,23 @@ class CachedImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (url == null || url!.isEmpty) return _fallback();
 
+    String optimizedUrl = url!;
+    if (optimizedUrl.contains('res.cloudinary.com') && optimizedUrl.contains('/upload/')) {
+      final tier = sl<DeviceProfileService>().currentTier;
+      String transform = 'f_webp,q_auto';
+      if (tier == DeviceTier.lite || tier == DeviceTier.offline) {
+        transform += ',w_300,q_auto:eco';
+      } else if (tier == DeviceTier.balanced) {
+        transform += ',w_600';
+      }
+      
+      if (!optimizedUrl.contains('/upload/$transform/')) {
+         optimizedUrl = optimizedUrl.replaceFirst('/upload/', '/upload/$transform/');
+      }
+    }
+
     Widget image = CachedNetworkImage(
-      imageUrl: url!,
+      imageUrl: optimizedUrl,
       width: width,
       height: height,
       fit: fit,

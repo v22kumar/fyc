@@ -28,4 +28,19 @@ class EventModel extends EventEntity {
       registrationCount: (json['registration_count'] as num?)?.toInt() ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title_ta': titleTa,
+      'title_en': titleEn,
+      'description_ta': descriptionTa,
+      'description_en': descriptionEn,
+      'event_start': eventStart.toIso8601String(),
+      'event_end': eventEnd.toIso8601String(),
+      'banner_url': bannerUrl,
+      'geography_id': geographyId,
+      'registration_count': registrationCount,
+    };
+  }
 }

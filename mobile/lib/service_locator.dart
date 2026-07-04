@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/network/api_client.dart';
 import 'core/storage/local_storage.dart';
+import 'core/services/device_profile_service.dart';
 
 // Auth
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
@@ -143,6 +144,10 @@ Future<void> initServiceLocator() async {
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorage(prefs);
   sl.registerSingleton<LocalStorage>(localStorage);
+
+  final deviceProfileService = DeviceProfileService();
+  await deviceProfileService.init();
+  sl.registerSingleton<DeviceProfileService>(deviceProfileService);
 
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(sl<LocalStorage>()),

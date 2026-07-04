@@ -11,6 +11,7 @@ import '../../service_locator.dart';
 import '../auth/presentation/bloc/auth_bloc.dart';
 import '../auth/presentation/bloc/auth_state.dart';
 import 'feed_api.dart';
+import '../../core/services/sync_service.dart';
 
 const _categories = ['All', 'Cricket', 'Events', 'Environment', 'Achievements', 'Announcement', 'Other'];
 
@@ -105,7 +106,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       for (final f in _images) {
         urls.add(await FeedApi.uploadImage(f.path));
       }
-      await FeedApi.create(
+      await SyncService.enqueuePost(
         content: text,
         imageUrls: urls,
         category: _category == 'All' ? null : _category,

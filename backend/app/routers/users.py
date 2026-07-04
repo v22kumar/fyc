@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from datetime import date
 from io import BytesIO
 from typing import List, Optional
@@ -9,7 +10,7 @@ from sqlalchemy import extract
 
 from app.core.database import get_db
 from app.dependencies import get_current_user, RoleChecker
-from app.models.user import User, UserProfile, VolunteerMetadata
+from app.models.user import User, UserProfile, VolunteerMetadata, UserBlock
 from app.models.tenant import Organization
 from app.schemas.auth import UserOut, _build_user_out
 from app.services.certificates import generate_volunteer_certificate
@@ -294,3 +295,38 @@ def get_my_community_journey(
         sports_matches_played=int(sports_matches),
         volunteer_hours=volunteer_hours
     )
+
+
+@router.post("/{user_id}/block")
+def block_user(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Block another user to stop seeing their posts."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+    target = db.query(User).filter(
+        User.id == user_id,
+        User.organization_id == tenant_id
+    ).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    existing = db.query(UserBlock).filter(
+        UserBlock.blocker_id == current_user.id,
+        UserBlock.blocked_id == user_id,
+        UserBlock.organization_id == tenant_id
+    ).first()
+    
+    if not existing:
+        block = UserBlock(
+            id=uuid.uuid4(),
+            organization_id=tenant_id,
+            blocker_id=current_user.id,
+            blocked_id=user_id,
+        )
+        db.add(block)
+        db.commit()
+    return {"status": "blocked"}

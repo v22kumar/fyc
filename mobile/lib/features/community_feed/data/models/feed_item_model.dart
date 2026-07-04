@@ -26,4 +26,18 @@ class CommunityFeedItemModel extends CommunityFeedItemEntity {
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'item_type': itemType,
+      'id': id,
+      'title_en': titleEn,
+      'title_ta': titleTa,
+      'subtitle_en': subtitleEn,
+      'subtitle_ta': subtitleTa,
+      'image_url': imageUrl,
+      'created_at': createdAt,
+      'metadata': metadata,
+    };
+  }
 }

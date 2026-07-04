@@ -36,6 +36,7 @@ class FeedApi {
     String? category,
     String? location,
     bool shareToInstagram = false,
+    String? idempotencyKey,
   }) async {
     final res = await _dio.post('/api/v1/posts', data: {
       'content': content,
@@ -43,6 +44,7 @@ class FeedApi {
       if (category != null && category.isNotEmpty) 'category': category,
       if (location != null && location.trim().isNotEmpty) 'location': location.trim(),
       'share_to_instagram': shareToInstagram,
+      if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
     });
     return Post.fromJson((res.data as Map).cast<String, dynamic>());
   }
@@ -75,8 +77,11 @@ class FeedApi {
         .toList();
   }
 
-  static Future<PostComment> addComment(String postId, String content) async {
-    final res = await _dio.post('/api/v1/posts/$postId/comments', data: {'content': content});
+  static Future<PostComment> addComment(String postId, String content, {String? idempotencyKey}) async {
+    final res = await _dio.post('/api/v1/posts/$postId/comments', data: {
+      'content': content,
+      if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
+    });
     return PostComment.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
