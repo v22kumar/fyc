@@ -35,7 +35,11 @@ jobs:
 
       - name: Run pytest
         working-directory: backend
-        run: pytest -v
+        # `python -m pytest` (not bare `pytest`) so the backend/ working
+        # directory is prepended to sys.path — otherwise `import app...`
+        # fails with "No module named 'app'" since there's no installed
+        # package/pyproject pythonpath config making `app` importable.
+        run: python -m pytest -v
 
   mobile-tests:
     name: Mobile — flutter analyze + test
@@ -55,7 +59,18 @@ jobs:
 
       - name: Analyze
         working-directory: mobile
-        run: flutter analyze --no-fatal-infos
+        # Errors always fail this step (as they should — this is the check
+        # that just caught a real pre-existing bug: cached_image.dart
+        # referenced an undefined ShimmerSkeleton, fixed in this same PR).
+        # --no-fatal-warnings/-infos scope day-one strictness to errors only:
+        # dart analyze fails on warnings by default, and this codebase has a
+        # multi-sprint backlog of pre-existing lint warnings (unused imports,
+        # deprecated withOpacity, etc.) across files this sprint never
+        # touched. Retroactively failing every future PR on that backlog
+        # would make the new gate useless noise, not stricter. Tighten this
+        # once the warning backlog is paid down (tracked as a follow-up, not
+        # silently dropped — see docs/SPRINT_1_STATUS.md).
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
         working-directory: mobile

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'shimmer_box.dart';
+import 'shimmer_loader.dart';
 
 /// Drop-in replacement for Image.network with caching + shimmer placeholder.
 class CachedImage extends StatelessWidget {
