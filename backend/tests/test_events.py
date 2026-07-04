@@ -47,7 +47,8 @@ def _event_payload(start_offset=1, duration=2):
         "description_ta": "நிகழ்வு விவரம்",
         "description_en": "Event description",
         "event_start": start.isoformat(),
-        "event_end": end.isoformat()
+        "event_end": end.isoformat(),
+        "is_published": True
     }
 
 

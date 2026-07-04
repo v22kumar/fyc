@@ -9,7 +9,7 @@ os.environ.setdefault("FIRST_SUPERADMIN_PASSWORD", "test-superadmin-password")
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -47,7 +47,11 @@ def db():
     session.close()
     transaction.rollback()
     connection.close()
-    Base.metadata.drop_all(bind=engine)
+    
+    with engine.connect() as drop_conn:
+        drop_conn.execute(text("PRAGMA foreign_keys=OFF"))
+        Base.metadata.drop_all(bind=drop_conn)
+        drop_conn.execute(text("PRAGMA foreign_keys=ON"))
 
 @pytest.fixture(scope="function")
 def client(db):

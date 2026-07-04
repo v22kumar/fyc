@@ -90,7 +90,7 @@ def _seed_database():
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
-        if donor_count < 1000:
+        if donor_count < 1000 and os.environ.get("DATABASE_URL") != "sqlite:///:memory:":
             print(f"Blood donors count is {donor_count} — seeding from friends2support CSV...")
             try:
                 import sys as _sys
@@ -166,110 +166,102 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    # Auto-reconcile schema drift. Base.metadata.create_all only creates missing
-    # TABLES — it never adds columns to a pre-existing table. On a long-lived DB
-    # (the persistent prod SQLite) any column added to a model after its table was
-    # first created is therefore missing, and every query that selects it 500s.
-    # This is exactly what broke ALL logins (user_profiles.gender). Rather than
-    # maintain a hand-written ALTER list (which drifts), introspect every mapped
-    # table and ADD any column the live DB is missing.
-    #
-    # Skipped entirely under TESTING: the pytest fixtures create the DB fresh
-    # from the current models (so there is never any drift to reconcile), and
-    # this per-table introspection ran on EVERY function-scoped test's lifespan,
-    # adding ~12s/test — ~32 minutes across the full suite in CI.
-    if not settings.TESTING:
-      try:
-        from sqlalchemy import inspect as _sa_inspect, text as _sql_text
-        insp = _sa_inspect(engine)
-        live_tables = set(insp.get_table_names())
-        added = []
-        for table_name, table in Base.metadata.tables.items():
-          # Per-table guard: a failure inspecting/altering ONE table must not
-          # abort the whole reconcile (that previously left later tables like
-          # cricket_balls undrifted -> scoring 500s).
-          try:
-            if table_name not in live_tables:
-                continue  # brand-new table — create_all already handled it
-            live_cols = {c["name"] for c in insp.get_columns(table_name)}
-            for col in table.columns:
-                if col.name in live_cols:
-                    continue
-                try:
-                    coltype = col.type.compile(dialect=engine.dialect)
-                except Exception:
-                    coltype = "VARCHAR"
-                ddl = f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}'
-                # Carry a server default ONLY when it is a simple constant literal.
-                # SQLite's ALTER TABLE ADD COLUMN rejects function/expression
-                # defaults (e.g. now() / CURRENT_TIMESTAMP -> "Cannot add a column
-                # with non-constant default"), which previously left created_at /
-                # updated_at unADDed on drifted tables — every INSERT then 500'd
-                # with "no such column: created_at". For such columns we add them
-                # nullable (no DEFAULT); new rows still populate the value via the
-                # ORM / server_default at insert time on a correctly-created table.
-                sd = getattr(col.server_default, "arg", None)
-                if sd is not None and isinstance(sd, (str, int, float)):
-                    ddl += f" DEFAULT {sd}"
-                for attempt in range(3):
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(_sql_text(ddl))
-                        added.append(f"{table_name}.{col.name}")
-                        break
-                    except Exception as _e:
-                        m = str(_e).lower()
-                        if "duplicate column" in m or "already exists" in m:
-                            break
-                        if "locked" in m and attempt < 2:
-                            continue  # retry SQLite write-lock from concurrent worker
-                        logger.warning(f"[schema-reconcile] {table_name}.{col.name}: {_e}")
-                        break
-          except Exception as _te:
-            logger.warning(f"[schema-reconcile] table {table_name} skipped: {_te}")
-            continue
-        if added:
-            logger.info(f"[schema-reconcile] added {len(added)} missing column(s): {added}")
-        else:
-            logger.info("[schema-reconcile] no drift — all model columns present")
-      except Exception as _me:
-        logger.warning(f"[schema-reconcile] block failed: {_me}")
-
-      # Reconcile schema drift: TimestampMixin gained `deleted_at` and `metadata_json`
-      # AFTER several tables were first created, and Base.metadata.create_all() never
-      # adds columns to EXISTING tables. The result was a 500 on any query touching a
-      # drifted table (e.g. /auth/google -> "no such column: organizations.deleted_at",
-      # which the browser surfaces as "Failed to fetch" because the 500 is emitted
-      # outside the CORS middleware). Backfill every model column that is missing from
-      # its table and is safe to add on existing rows (nullable, no foreign key).
-      try:
-        from sqlalchemy import inspect as _sa_inspect, text as _drift_text
-        insp = _sa_inspect(engine)
-        with engine.begin() as conn:
-            for table in Base.metadata.sorted_tables:
-                if not insp.has_table(table.name):
-                    continue
-                existing = {c["name"] for c in insp.get_columns(table.name)}
-                for col in table.columns:
-                    if col.name in existing or col.foreign_keys or not col.nullable:
-                        continue
-                    coltype = col.type.compile(dialect=engine.dialect)
-                    try:
-                        conn.execute(_drift_text(
-                            f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {coltype}'
-                        ))
-                        logger.info(f"[schema-drift] added {table.name}.{col.name} ({coltype})")
-                    except Exception as _ce:
-                        logger.warning(f"[schema-drift] could not add {table.name}.{col.name}: {_ce}")
-      except Exception as _de:
-        logger.warning(f"[schema-drift] reconciliation block: {_de}")
-
-    _seed_database()
-
     scheduler = None
+
+    # Everything below is real-deployment startup work: schema-drift
+    # reconciliation, superadmin/data seeding, external cache pre-warming, and
+    # the cron scheduler. It is ALL skipped under TESTING. The pytest fixtures
+    # build a fresh in-memory DB from the current models (so there is no drift to
+    # heal) and override every route onto that DB, so none of this is exercised
+    # by tests. Running it on every function-scoped test's lifespan added roughly
+    # 25s/test (~32 minutes across the CI suite).
     if not settings.TESTING:
-        # Pre-warm external API caches — run in a background thread so slow RSS
-        # feeds don't delay the server becoming ready to accept requests.
+        # Auto-reconcile schema drift. create_all only creates missing TABLES;
+        # it never adds columns to a pre-existing table. On the long-lived prod
+        # SQLite, any column added to a model after its table was first created
+        # is missing, and every query that selects it 500s (this is what broke
+        # ALL logins via user_profiles.gender). Introspect every mapped table and
+        # ADD any column the live DB is missing.
+        try:
+            from sqlalchemy import inspect as _sa_inspect, text as _sql_text
+            insp = _sa_inspect(engine)
+            live_tables = set(insp.get_table_names())
+            added = []
+            for table_name, table in Base.metadata.tables.items():
+                # Per-table guard: a failure inspecting/altering ONE table must
+                # not abort the whole reconcile (that previously left later
+                # tables like cricket_balls undrifted -> scoring 500s).
+                try:
+                    if table_name not in live_tables:
+                        continue  # brand-new table — create_all already made it
+                    live_cols = {c["name"] for c in insp.get_columns(table_name)}
+                    for col in table.columns:
+                        if col.name in live_cols:
+                            continue
+                        try:
+                            coltype = col.type.compile(dialect=engine.dialect)
+                        except Exception:
+                            coltype = "VARCHAR"
+                        ddl = f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}'
+                        # Carry a server default ONLY when it is a simple constant
+                        # literal; SQLite rejects function/expression defaults on
+                        # ADD COLUMN. Such columns are added nullable instead.
+                        sd = getattr(col.server_default, "arg", None)
+                        if sd is not None and isinstance(sd, (str, int, float)):
+                            ddl += f" DEFAULT {sd}"
+                        for attempt in range(3):
+                            try:
+                                with engine.begin() as conn:
+                                    conn.execute(_sql_text(ddl))
+                                added.append(f"{table_name}.{col.name}")
+                                break
+                            except Exception as _e:
+                                m = str(_e).lower()
+                                if "duplicate column" in m or "already exists" in m:
+                                    break
+                                if "locked" in m and attempt < 2:
+                                    continue  # retry SQLite write-lock
+                                logger.warning(f"[schema-reconcile] {table_name}.{col.name}: {_e}")
+                                break
+                except Exception as _te:
+                    logger.warning(f"[schema-reconcile] table {table_name} skipped: {_te}")
+                    continue
+            if added:
+                logger.info(f"[schema-reconcile] added {len(added)} missing column(s): {added}")
+            else:
+                logger.info("[schema-reconcile] no drift — all model columns present")
+        except Exception as _me:
+            logger.warning(f"[schema-reconcile] block failed: {_me}")
+
+        # Reconcile TimestampMixin drift: deleted_at / metadata_json were added
+        # AFTER several tables were created; backfill every nullable, non-FK model
+        # column missing from its table.
+        try:
+            from sqlalchemy import inspect as _sa_inspect, text as _drift_text
+            insp = _sa_inspect(engine)
+            with engine.begin() as conn:
+                for table in Base.metadata.sorted_tables:
+                    if not insp.has_table(table.name):
+                        continue
+                    existing = {c["name"] for c in insp.get_columns(table.name)}
+                    for col in table.columns:
+                        if col.name in existing or col.foreign_keys or not col.nullable:
+                            continue
+                        coltype = col.type.compile(dialect=engine.dialect)
+                        try:
+                            conn.execute(_drift_text(
+                                f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {coltype}'
+                            ))
+                            logger.info(f"[schema-drift] added {table.name}.{col.name} ({coltype})")
+                        except Exception as _ce:
+                            logger.warning(f"[schema-drift] could not add {table.name}.{col.name}: {_ce}")
+        except Exception as _de:
+            logger.warning(f"[schema-drift] reconciliation block: {_de}")
+
+        _seed_database()
+
+        # Pre-warm external API caches in a background thread so slow RSS feeds
+        # don't delay the server becoming ready.
         import threading as _threading
         def _prewarm():
             try:
@@ -288,7 +280,7 @@ async def lifespan(app: FastAPI):
                 logger.warning(f"[startup] Cache pre-warm failed: {_e}")
         _threading.Thread(target=_prewarm, daemon=True).start()
 
-        # Schedulers — birthday always on; morning broadcast requires MORNING_BROADCAST_ENABLED
+        # Schedulers — birthday always on; morning broadcast requires the flag.
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from app.services.birthdays import run_birthday_notifications
         scheduler = AsyncIOScheduler()
@@ -296,9 +288,9 @@ async def lifespan(app: FastAPI):
                           id="birthday_notifications", replace_existing=True)
 
         from app.services.daily_digest import run_morning_digest, run_evening_digest
-        scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC", # 8:00 AM IST
+        scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC",  # 8:00 AM IST
                           id="morning_digest", replace_existing=True)
-        scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC", # 8:00 PM IST
+        scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC",  # 8:00 PM IST
                           id="evening_digest", replace_existing=True)
 
         if settings.MORNING_BROADCAST_ENABLED:
@@ -324,7 +316,6 @@ async def lifespan(app: FastAPI):
 
     if scheduler is not None and scheduler.running:
         scheduler.shutdown(wait=False)
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
