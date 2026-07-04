@@ -79,35 +79,46 @@ class _FycAppState extends State<FycApp> {
   }
 
   Future<void> _setupFCM() async {
-    // Background message interaction
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null && mounted) {
-        // Delay to allow router to initialize
-        Future.delayed(const Duration(milliseconds: 500), () {
+    // Every FirebaseMessaging access below can throw SYNCHRONOUSLY if
+    // Firebase failed to initialize (missing/outdated Play Services on a
+    // real device; always true in widget tests, which never call
+    // Firebase.initializeApp()). This is called fire-and-forget from
+    // initState, so an uncaught throw here would surface as an unhandled
+    // async exception and crash app startup — guard the whole thing so a
+    // broken push stack never blocks the app from opening.
+    try {
+      // Background message interaction
+      FirebaseMessaging.instance.getInitialMessage().then((message) {
+        if (message != null && mounted) {
+          // Delay to allow router to initialize
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
+          });
+        }
+      });
+
+      // Foreground message handler — post to the system tray (FCM only auto-posts
+      // to the tray when the app is backgrounded) so the user sees it everywhere.
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.notification != null) {
+          LocalNotifications.showFromMessage(message);
+        }
+      });
+
+      // Background interaction handler
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        if (mounted) {
           _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
-        });
-      }
-    });
+        }
+      });
 
-    // Foreground message handler — post to the system tray (FCM only auto-posts
-    // to the tray when the app is backgrounded) so the user sees it everywhere.
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
-        LocalNotifications.showFromMessage(message);
-      }
-    });
-
-    // Background interaction handler
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      if (mounted) {
-        _handleNotificationClick(appRouter.routerDelegate.navigatorKey.currentContext!, message);
-      }
-    });
-
-    // Token Sync
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token != null) _syncToken(token);
-    FirebaseMessaging.instance.onTokenRefresh.listen(_syncToken);
+      // Token Sync
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) _syncToken(token);
+      FirebaseMessaging.instance.onTokenRefresh.listen(_syncToken);
+    } catch (_) {
+      // Best-effort: push setup should never block the app from starting.
+    }
   }
 
   Future<void> _syncToken(String token) async {

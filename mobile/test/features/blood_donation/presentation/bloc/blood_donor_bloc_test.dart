@@ -78,7 +78,9 @@ void main() {
       act: (b) => b.add(const BloodDonorSearchRequested()),
       expect: () => [
         const BloodDonorLoading(),
-        const BloodDonorFailure('No internet connection'),
+        const BloodDonorFailure(
+          "We couldn't reach the network. Please check your internet connection.",
+        ),
       ],
     );
 

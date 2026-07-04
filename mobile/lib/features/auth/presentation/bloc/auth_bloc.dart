@@ -137,13 +137,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   /// Fire-and-forget: register device FCM token with backend after login.
   void _registerFcmToken() {
-    FirebaseMessaging.instance.getToken().then((token) async {
-      if (token == null) return;
-      final client = sl<ApiClient>();
-      try {
-        await client.dio.post(ApiConstants.fcmToken, data: {'token': token});
-      } catch (_) {}
-    }).catchError((_) {});
+    // `FirebaseMessaging.instance` throws SYNCHRONOUSLY if Firebase failed to
+    // initialize (missing/outdated Play Services — not uncommon on cheap
+    // village phones, and always true in this file's unit tests), before
+    // .getToken() ever runs — so a synchronous try/catch is required; the
+    // async .catchError() below only covers errors after that point.
+    try {
+      FirebaseMessaging.instance.getToken().then((token) async {
+        if (token == null) return;
+        final client = sl<ApiClient>();
+        try {
+          await client.dio.post(ApiConstants.fcmToken, data: {'token': token});
+        } catch (_) {}
+      }).catchError((_) {});
+    } catch (_) {
+      // Best-effort: push registration should never block login.
+    }
   }
 
   Future<void> _onLogout(

@@ -152,6 +152,32 @@ This sequence — ship the gate, watch it run for real on this very PR, fix
 what it finds — is the intended validation loop, and it worked exactly as
 designed on the first try.
 
+**Round 2, after the fixes above:** `flutter analyze` passed cleanly and all
+7 new Sprint 1 test files passed with zero failures. `flutter test` then
+surfaced 3 more pre-existing, unrelated failures — the same pattern as
+`cached_image.dart`, since this is the first time `flutter test` has ever run
+in CI:
+- `auth_bloc.dart._registerFcmToken` and `main.dart._setupFCM` both access
+  `FirebaseMessaging.instance`, a getter that throws **synchronously** if
+  Firebase failed to initialize. Neither call site's error handling could
+  catch that (a `.catchError()` only covers the async chain *after* the
+  synchronous getter access; an un-awaited `async` call's synchronous throw
+  becomes an unhandled zone exception). This isn't only a test artifact —
+  on a real device with missing/outdated Play Services (plausible on a cheap
+  village phone), the same throw would have crashed login and app startup.
+  Wrapped both in `try/catch` so push setup degrades gracefully instead of
+  taking down the feature it's attached to.
+- `blood_donor_bloc_test.dart` asserted the old default `NetworkFailure`
+  message (`'No internet connection'`); the production code's default was
+  updated to the friendlier `"We couldn't reach the network. Please check
+  your internet connection."` in an earlier sprint, and this test was never
+  updated to match (nothing ran it in CI to notice). Updated the test's
+  expectation to the current, intentional copy.
+
+All three are now fixed, and the underlying issue in each case (an
+unguarded synchronous Firebase access, and one stale test string) predates
+this sprint entirely.
+
 ## Other sprint-scoped decisions
 
 - **`google_fonts` API safety:** built on `GoogleFonts.getFont('Family Name')`
