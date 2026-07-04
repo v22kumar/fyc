@@ -1,4 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dartz/dartz.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/event_entity.dart';
 import '../../domain/usecases/fetch_events_usecase.dart';
 import '../../domain/repositories/event_repository.dart';
 import 'event_event.dart';
@@ -23,10 +26,15 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     Emitter<EventState> emit,
   ) async {
     emit(const EventLoading());
-    final result = await _fetchEvents();
-    result.fold(
-      (f) => emit(EventFailure(f.message)),
-      (events) => emit(EventLoaded(events)),
+    await emit.forEach(
+      _fetchEvents(),
+      onData: (Either<Failure, List<EventEntity>> result) {
+        return result.fold(
+          (f) => EventFailure(f.message),
+          (events) => EventLoaded(events),
+        );
+      },
+      onError: (_, __) => const EventFailure('Unknown error'),
     );
   }
 

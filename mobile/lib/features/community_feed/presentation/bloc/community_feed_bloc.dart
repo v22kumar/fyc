@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dartz/dartz.dart';
 import '../../domain/entities/feed_item_entity.dart';
 import '../../domain/usecases/fetch_community_feed_usecase.dart';
+import '../../../../core/error/failures.dart';
 
 // Events
 abstract class CommunityFeedEvent extends Equatable {
@@ -54,10 +56,15 @@ class CommunityFeedBloc extends Bloc<CommunityFeedEvent, CommunityFeedState> {
     Emitter<CommunityFeedState> emit,
   ) async {
     emit(CommunityFeedLoading());
-    final result = await _fetchFeed();
-    result.fold(
-      (f) => emit(CommunityFeedFailure(f.message)),
-      (feed) => emit(CommunityFeedLoaded(feed)),
+    await emit.forEach(
+      _fetchFeed(),
+      onData: (Either<Failure, List<CommunityFeedItemEntity>> result) {
+        return result.fold(
+          (f) => CommunityFeedFailure(f.message),
+          (feed) => CommunityFeedLoaded(feed),
+        );
+      },
+      onError: (_, __) => const CommunityFeedFailure('Unknown error'),
     );
   }
 }

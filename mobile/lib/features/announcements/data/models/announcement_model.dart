@@ -38,4 +38,23 @@ class AnnouncementModel extends AnnouncementEntity {
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title_ta': titleTa,
+      'title_en': titleEn,
+      'body_ta': bodyTa,
+      'body_en': bodyEn,
+      'category': category,
+      'is_pinned': isPinned,
+      'expires_at': expiresAt?.toIso8601String(),
+      'banner_url': bannerUrl,
+      'created_by_user_id': createdByUserId,
+      'geography_id': geographyId,
+      'organization_id': organizationId,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
 }

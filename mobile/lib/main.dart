@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'core/services/sync_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/router/app_router.dart';
@@ -40,6 +42,9 @@ void _handleNotificationClick(BuildContext context, RemoteMessage message) {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await SyncService.init();
+  SyncService.triggerSync();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
   await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);

@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../service_locator.dart';
 import 'feed_api.dart';
 import 'feed_models.dart';
+import '../../core/services/sync_service.dart';
 
 String _fullUrl(String url) =>
     url.startsWith('http') ? url : '${ApiConstants.baseUrl}$url';
@@ -819,10 +820,18 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
     try {
-      final c = await FeedApi.addComment(widget.post.id, text);
+      await SyncService.enqueueComment(widget.post.id, text);
       if (!mounted) return;
+      
+      final tempComment = PostComment(
+        id: 'temp',
+        authorName: 'You',
+        content: text,
+        createdAt: DateTime.now(),
+      );
+      
       setState(() {
-        _comments = [...?_comments, c];
+        _comments = [...?_comments, tempComment];
         _sending = false;
         _controller.clear();
       });

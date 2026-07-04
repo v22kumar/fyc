@@ -84,4 +84,9 @@ __all__ = [
     "FormSubmission",
     "OrganizationSettings",
     "FeatureFlag",
+    "Post",
+    "PostLike",
+    "ChessTournament",
+    "ChessTournamentEntry",
+    "ChessTournamentMatch",
 ]

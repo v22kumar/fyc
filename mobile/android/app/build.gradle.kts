@@ -52,13 +52,9 @@ android {
             else
                 signingConfigs.getByName("debug")
 
-            // TEMPORARILY DISABLED for free testing on real devices.
-            // R8/resource shrinking can strip the Stockfish JNI bridge or Flutter
-            // plugin classes, causing a release-only crash on launch that does NOT
-            // reproduce in the debug emulator build. Re-enable (set both to true)
-            // before the final Play Store upload, and verify on a physical device.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // R8/resource shrinking re-enabled for Play Store upload.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

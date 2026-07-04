@@ -81,3 +81,17 @@ class VolunteerMetadata(Base):
 
     # Relationships
     user = relationship("User", back_populates="volunteer_metadata")
+
+class UserBlock(Base, TimestampMixin, TenantModelMixin):
+    """
+    Tracks which user blocked whom. Blocking prevents the blocker from seeing the blocked user's content.
+    """
+    __tablename__ = "user_blocks"
+
+    __table_args__ = (
+        UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
+    )
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    blocker_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    blocked_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

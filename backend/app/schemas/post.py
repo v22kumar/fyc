@@ -14,6 +14,7 @@ class PostCreate(BaseModel):
     # Instagram feed. Honoured only for managers/admins and only when
     # Instagram credentials are configured; otherwise silently ignored.
     share_to_instagram: bool = False
+    idempotency_key: Optional[str] = None
 
 
 class PostAuthor(BaseModel):
@@ -42,6 +43,7 @@ class PostOut(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str
+    idempotency_key: Optional[str] = None
 
 
 class CommentOut(BaseModel):

@@ -4,9 +4,10 @@ import '../entities/announcement_entity.dart';
 import '../repositories/announcement_repository.dart';
 
 class FetchAnnouncementsUseCase {
-  final AnnouncementRepository repository;
-  FetchAnnouncementsUseCase(this.repository);
+  final AnnouncementRepository _repository;
+  FetchAnnouncementsUseCase(this._repository);
 
-  Future<Either<Failure, List<AnnouncementEntity>>> call({String? category}) =>
-      repository.fetchAnnouncements(category: category);
+  Stream<Either<Failure, List<AnnouncementEntity>>> call({String? category}) {
+    return _repository.fetchAnnouncementsStream(category: category);
+  }
 }
