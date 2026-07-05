@@ -232,3 +232,58 @@ user need appears.
 *Cadence: 10 sprints × 15 working days ≈ 30 weeks with 5 developers. Adjust scope
 per sprint at planning; protect S1–S3 (the foundation) from being cut — everything
 above them depends on it.*
+
+---
+
+## 7. Mockup compliance audit (v2.0 UI) — ✅ done / ⬜ pending
+
+Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
+⬜ pending; 🟡 partial.
+
+### Home
+- ✅ Header: logo + "FYC CONNECT" + tagline, notification bell (badge), avatar
+- ✅ Tamil greeting + subtitle
+- ✅ Search bar (→ Universal Search)
+- ✅ 4 stat cards: Members · Blood Donors · Events · Tournaments
+- ✅ Important Update strip
+- ✅ Discover bento (Home · Play · Feed · Serve) with sub-items
+- ✅ Upcoming Events row
+- ✅ Bottom nav (Home · Play · + · Serve · Me)
+- ⬜ **Quick Actions row** — Blood Request · Report Issue · Create Event · Weekly Game · Emergency Contacts (5 shortcut tiles under Upcoming Events) — not built
+
+### Feed · Community
+- 🟡 Feed screen exists (threads-style + Instagram cross-post from earlier work)
+- ⬜ **Source tabs**: All · Instagram · Threads · Green FYC — not present
+- ⬜ **Post card parity**: source badge + handle + timestamp, media grid, like/comment/share counts as in mockup — verify/align
+- (Sprint 4 territory)
+
+### Play
+- ✅ Chess Arena entry + Tournaments reachable (pill), auto-scoring, SF/final app-or-in-person
+- ⬜ **Tab bar**: All · Tournaments · Weekly Games · Chess (current shows sport filters instead)
+- ⬜ **Weekly Member Games** — the "Sunday Match · Any Members" live card (organizer, LIVE badge, live score) + create/score flow — not built (large feature)
+- 🟡 Upcoming Tournaments card (Registration Open, reg-closes date, trophy) — exists but not styled to mockup
+
+### Serve / Help
+- ✅ 4-icon row: Blood Donation · Report Issue · Volunteer · Opportunities
+- ✅ Emergency Numbers (Police 100 · Ambulance 108 · Fire 101 · Electricity 1912) + View All — matches mockup
+
+### Report an Issue
+- ✅ Category chips, Use My Location, Description, Add Photo, Submit
+- 🟡 **Categories**: has Road/Water (+others) — align to mockup set (Road/Traffic · Power Cut · Water · Other)
+
+### Me
+- ✅ Profile + QR card and list (My Profile · Membership Card · Member Directory · My Event Registrations · Settings · Help & Support)
+- ⬜ Card fields to mockup: **Member ID**, **Member Since**, **Valid Till** (currently shows role/phone)
+
+### Safety Center / SOS
+- ✅ SOS trigger, Share Live Location (SMS), Alert Trusted Contacts, offline SMS fallback, emergency dial
+- ⬜ **Notify Nearby Members** (broadcast alert to nearby FYC members)
+- ⬜ **Loud Siren / Silent Mode** toggle
+- ⬜ Branded **Safety Center** panel (feature list UI) + **Safety Settings** screen
+
+### Priority order for the pending items
+1. Home **Quick Actions row** (small, high-visibility)
+2. **Me** card fields (Member ID / Since / Valid Till — small)
+3. Feed **source tabs** + card parity (Sprint 4)
+4. Play **tab bar** + **Weekly Member Games** (Sprint 5 — the big one)
+5. **Safety Center** — Notify Nearby + Siren/Silent + settings (Sprint 6 depth)
