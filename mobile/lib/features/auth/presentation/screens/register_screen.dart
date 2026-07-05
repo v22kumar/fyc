@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -72,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          context.go('/home');
+          context.go(ApiConstants.useAppShellV2 ? '/app' : '/home');
         } else if (state is AuthFailureState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: AppColors.accent),

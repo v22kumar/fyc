@@ -16,7 +16,11 @@ class AppShellV2 extends StatefulWidget {
   /// Defaults to placeholders so the shell can be previewed standalone today.
   final List<Widget>? tabs;
 
-  const AppShellV2({super.key, this.tabs});
+  /// Tapped from the center Create FAB (the yellow "+" in the mockup). The
+  /// router wires this to the Home create-actions sheet.
+  final VoidCallback? onCreate;
+
+  const AppShellV2({super.key, this.tabs, this.onCreate});
 
   @override
   State<AppShellV2> createState() => _AppShellV2State();
@@ -54,6 +58,19 @@ class _AppShellV2State extends State<AppShellV2> {
           ),
         ],
       ),
+      // Center Create FAB (the yellow "+" in the mockup), docked over the nav
+      // bar between Play and Serve. Only shown once a create handler is wired.
+      floatingActionButton: widget.onCreate == null
+          ? null
+          : FloatingActionButton(
+              onPressed: widget.onCreate,
+              backgroundColor: DSColors.amber500,
+              foregroundColor: Colors.white,
+              elevation: DSElevation.floating,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add_rounded, size: 30),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../service_locator.dart';
+import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/pressable.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -22,12 +24,47 @@ class _SearchScreenState extends State<SearchScreen> {
   String _error = '';
   Map<String, List<dynamic>> _results = {};
   Timer? _debounce;
+  List<String> _recent = [];
+
+  static const _recentKey = 'recent_searches';
+
+  // Suggested quick searches shown before the user types.
+  static const _suggested = ['Blood', 'Events', 'Tournaments', 'Announcements'];
 
   @override
   void initState() {
     super.initState();
     _focusNode.requestFocus();
     _searchController.addListener(_onSearchChanged);
+    _recent = (sl<LocalStorage>().getString(_recentKey) ?? '')
+        .split('|')
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
+  void _rememberQuery(String query) {
+    _recent.remove(query);
+    _recent.insert(0, query);
+    if (_recent.length > 6) _recent = _recent.sublist(0, 6);
+    sl<LocalStorage>().saveString(_recentKey, _recent.join('|'));
+  }
+
+  /// Route a tapped result to the relevant screen by its type. Result taps
+  /// were previously a no-op.
+  void _openResult(String category, dynamic item) {
+    const routeByType = {
+      'USER': '/directory',
+      'PEOPLE': '/directory',
+      'EVENT': '/events',
+      'TOURNAMENT': '/sports',
+      'TEAM': '/sports',
+      'ISSUE': '/issues',
+      'BLOOD_DONOR': '/blood-donation',
+      'ANNOUNCEMENT': '/announcements',
+      'NEWS': '/announcements',
+    };
+    final route = routeByType[category.toUpperCase()];
+    if (route != null) context.push(route);
   }
 
   @override
@@ -85,6 +122,7 @@ class _SearchScreenState extends State<SearchScreen> {
         }
       }
       
+      if (newResults.isNotEmpty) _rememberQuery(query);
       if (mounted) {
         setState(() {
           _results = newResults;
@@ -136,7 +174,9 @@ class _SearchScreenState extends State<SearchScreen> {
         iconColor = const Color(0xFF6366F1);
     }
 
-    return Pressable(
+    return GestureDetector(
+      onTap: () => _openResult(category, item),
+      child: Pressable(
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
@@ -191,6 +231,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -217,6 +258,68 @@ class _SearchScreenState extends State<SearchScreen> {
       ],
     );
   }
+
+  Widget _buildEmptyState() {
+    void run(String q) {
+      _searchController.text = q;
+      _searchController.selection = TextSelection.collapsed(offset: q.length);
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (_recent.isNotEmpty) ...[
+          _sectionLabel(tr(en: 'RECENT', ta: 'சமீபத்தியவை', hi: 'हाल के', ml: 'സമീപകാലം')),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _recent.map((q) => _chip(q, () => run(q))).toList(),
+          ),
+          const SizedBox(height: 24),
+        ],
+        _sectionLabel(tr(en: 'SUGGESTED', ta: 'பரிந்துரைகள்', hi: 'सुझाव', ml: 'നിർദ്ദേശങ്ങൾ')),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _suggested.map((q) => _chip(q, () => run(q))).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionLabel(String text) => Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 12),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            color: context.cTextSecondary,
+          ),
+        ),
+      );
+
+  Widget _chip(String label, VoidCallback onTap) => InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: context.cSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.cBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search, size: 15, color: context.cTextSecondary),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(color: context.cText, fontSize: 13)),
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -254,16 +357,7 @@ class _SearchScreenState extends State<SearchScreen> {
           : _error.isNotEmpty
               ? Center(child: Text(_error, style: TextStyle(color: Colors.red)))
               : _searchController.text.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search, size: 64, color: context.cTextSecondary.withOpacity(0.2)),
-                          const SizedBox(height: 16),
-                          Text('Type to search', style: TextStyle(color: context.cTextSecondary, fontSize: 16)),
-                        ],
-                      ),
-                    )
+                  ? _buildEmptyState()
                   : _results.isEmpty
                       ? Center(
                           child: Text('No results found.', style: TextStyle(color: context.cTextSecondary, fontSize: 16)),

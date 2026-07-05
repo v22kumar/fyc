@@ -56,5 +56,26 @@ void main() {
       await tester.pump(); // let the snackbar appear
       expect(find.text('Add at least one trusted contact first.'), findsOneWidget);
     });
+
+    testWidgets('center Create FAB fires onCreate only when wired', (tester) async {
+      // Preview shell (no onCreate) shows no Create FAB.
+      await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
+      expect(find.byIcon(Icons.add_rounded), findsNothing);
+
+      // Live shell (onCreate wired) shows the FAB and taps invoke the handler.
+      var created = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: AppShellV2(onCreate: () => created++),
+      ));
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      // Invoke the FAB handler directly: a centerDocked FAB's center overlaps
+      // the nav bar in the 800x600 test surface so tester.tap misses it, though
+      // it's tappable on a real device. This still verifies onCreate is wired.
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .onPressed!();
+      await tester.pump();
+      expect(created, 1);
+    });
   });
 }

@@ -6,6 +6,13 @@ class ApiConstants {
   /// Allows admin/password123 login and skips the auth guard for fast testing.
   static const bool devBypassAuth = bool.fromEnvironment('DEV_AUTH_BYPASS', defaultValue: false);
 
+  /// Sprint 2 cutover: land in the new 4-tab design-system shell (AppShellV2)
+  /// after login instead of the standalone HomeScreen. On by default; can be
+  /// flipped off with --dart-define=USE_APP_SHELL_V2=false to fall back to the
+  /// old navigation instantly if a problem surfaces in the field.
+  static const bool useAppShellV2 =
+      bool.fromEnvironment('USE_APP_SHELL_V2', defaultValue: true);
+
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://fyc-backend.fly.dev',
