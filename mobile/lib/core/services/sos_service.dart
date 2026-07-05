@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,11 +77,14 @@ class SosService {
   /// Open the SMS composer pre-filled with [message] to [numbers]. Returns
   /// false if there is nothing to send to or the composer can't be opened.
   static Future<bool> sendSms(List<String> numbers, String message) async {
-    final recipients = numbers
-        .map((n) => n.trim())
-        .where((n) => n.isNotEmpty)
-        .join(',');
-    if (recipients.isEmpty) return false;
+    final cleaned =
+        numbers.map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
+    if (cleaned.isEmpty) return false;
+    // iOS doesn't reliably honour comma-separated recipients in an sms: URL
+    // (it often opens only the first, or fails), so target just the primary
+    // contact there — better to reach one than none in an emergency. Android
+    // handles the comma-separated list fine.
+    final recipients = Platform.isIOS ? cleaned.first : cleaned.join(',');
     final uri = Uri(
       scheme: 'sms',
       path: recipients,

@@ -44,5 +44,17 @@ void main() {
       expect(find.text('Emergency SOS'), findsOneWidget);
       expect(find.text('Send SOS to my contacts'), findsOneWidget);
     });
+
+    testWidgets('SOS with no trusted contacts prompts to add one', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
+      await tester.tap(find.byIcon(Icons.sos_rounded));
+      await tester.pumpAndSettle();
+
+      // No contacts configured (mock prefs are empty) → tapping send must warn
+      // rather than silently doing nothing on a safety feature.
+      await tester.tap(find.text('Send SOS to my contacts'));
+      await tester.pump(); // let the snackbar appear
+      expect(find.text('Add at least one trusted contact first.'), findsOneWidget);
+    });
   });
 }
