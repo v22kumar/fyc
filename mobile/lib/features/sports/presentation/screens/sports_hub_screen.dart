@@ -136,6 +136,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               ],
             ),
           ),
+          const _ChessEntryCard(),
           _SportTabs(
             filters: _sportFilters,
             selected: _selectedSport,
@@ -406,4 +407,65 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// Removed _EmptyTournaments
+/// Chess Arena entry — surfaces chess inside the Play tab (Sprint 5 D1), so it
+/// isn't stranded on a route no one browses to.
+class _ChessEntryCard extends StatelessWidget {
+  const _ChessEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/chess'),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text('♚', style: TextStyle(color: Colors.white, fontSize: 26, height: 1)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tr(en: 'Chess Arena', ta: 'சதுரங்க அரங்கம்', hi: 'शतरंज अखाड़ा', ml: 'ചെസ്സ് അരീന'),
+                        style: const TextStyle(color: Colors.white, fontSize: 15.5, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tr(en: 'Play & challenge members', ta: 'உறுப்பினர்களுடன் விளையாடு', hi: 'सदस्यों को चुनौती दें', ml: 'അംഗങ്ങളെ വെല്ലുവിളിക്കൂ'),
+                        style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
