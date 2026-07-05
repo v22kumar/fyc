@@ -483,7 +483,22 @@ def create_fixture(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec),
 ):
-    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    # Same gate as generate-fixtures: no fixtures (manual or auto) until
+    # registration has closed. This closes the reported bug where a manager could
+    # create fixtures — and start scoring — while teams were still registering.
+    if not _registration_closed(t):
+        close = t.registration_close_date
+        when = ""
+        if close is not None:
+            if close.tzinfo is None:
+                close = close.replace(tzinfo=timezone.utc)
+            when = f" until {close.date().isoformat()}"
+        raise HTTPException(
+            400,
+            f"Registration is still open{when}. Close registration before "
+            "creating fixtures.",
+        )
     for team_id in [payload.team_a_id, payload.team_b_id]:
         if not db.query(Team).filter(Team.id == str(team_id), Team.tournament_id == tournament_id).first():
             raise HTTPException(400, f"Team {team_id} not found in this tournament")
