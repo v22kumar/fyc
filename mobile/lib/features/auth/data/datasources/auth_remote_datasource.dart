@@ -138,13 +138,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<TokenModel> signInWithGoogle({required String organizationId}) async {
-    // serverClientId is the Web OAuth client ID from Firebase Console.
-    // Passed at build time via --dart-define=GOOGLE_SERVER_CLIENT_ID=...
-    // Without it, auth.idToken is null and backend verification fails.
-    const _serverClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+    // serverClientId MUST be the *Web* OAuth client ID (client_type 3) of this
+    // Firebase project — passing the Android client, or leaving it unset, makes
+    // Google return a null idToken and login fails with "couldn't get id token".
+    //
+    // This value is NOT a secret: it already ships in google-services.json and
+    // inside every APK, so we hardcode the project's Web client as the default
+    // rather than depending on a GOOGLE_SERVER_CLIENT_ID build secret that can
+    // be empty or misconfigured. A build may still override it via
+    // --dart-define=GOOGLE_SERVER_CLIENT_ID=... for a different environment.
+    const _webClientId =
+        '986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com';
+    const _override = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
     final googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
-      serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
+      serverClientId: _override.isNotEmpty ? _override : _webClientId,
     );
     try {
       // Clear any cached Google session first so the account chooser always
