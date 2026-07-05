@@ -8,6 +8,7 @@ import '../../../../core/services/update_service.dart';
 import '../../../../core/widgets/update_sheet.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/services/device_profile_service.dart';
+import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -252,6 +253,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _LinkRow(icon: Icons.info_outline, label: 'About FYC Connect', onTap: () => context.push('/about'), context: context),
                 _Divider(context),
                 _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
+                _Divider(context),
+                _LinkRow(icon: Icons.sos_rounded, label: 'Emergency SOS', onTap: () => showSosSheet(context), context: context),
                 _Divider(context),
                 _LinkRow(icon: Icons.auto_awesome, label: 'Preview new design (beta)', onTap: () => context.push('/v2'), context: context),
               ],
