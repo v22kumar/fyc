@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/journey_bloc.dart';
+import '../../domain/entities/journey_entity.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
@@ -100,6 +101,8 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 28),
+                    _MilestonesSection(j: j),
                   ],
                 ),
               );
@@ -230,4 +233,105 @@ class _ImpactCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Milestones — the "rewarding, not statistics" layer: badges that unlock as
+/// the member contributes. Derived entirely from the journey stats (no backend
+/// call), so locked badges gently show what's next.
+class _MilestonesSection extends StatelessWidget {
+  final JourneyEntity j;
+  const _MilestonesSection({required this.j});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = j.eventsAttended +
+        j.issuesHelped +
+        j.bloodDonations +
+        j.treesPlanted +
+        j.sportsMatchesPlayed;
+    final milestones = <_Milestone>[
+      _Milestone(Icons.emoji_events_rounded,
+          tr(en: 'First Steps', ta: 'முதல் அடி', hi: 'पहला कदम', ml: 'ആദ്യ ചുവട്'), total >= 1),
+      _Milestone(Icons.event_available_rounded,
+          tr(en: 'Event Regular', ta: 'நிகழ்வு வழக்கம்', hi: 'नियमित', ml: 'സ്ഥിരം'), j.eventsAttended >= 5),
+      _Milestone(Icons.bloodtype_rounded,
+          tr(en: 'Life Saver', ta: 'உயிர் காப்பாளர்', hi: 'जीवनरक्षक', ml: 'ജീവൻ രക്ഷകൻ'), j.bloodDonations >= 1),
+      _Milestone(Icons.park_rounded,
+          tr(en: 'Green Thumb', ta: 'பசுமைக் கரம்', hi: 'हरित', ml: 'ഹരിതം'), j.treesPlanted >= 5),
+      _Milestone(Icons.timer_rounded,
+          tr(en: 'Dedicated', ta: 'அர்ப்பணிப்பு', hi: 'समर्पित', ml: 'അർപ്പണം'), j.volunteerHours >= 25),
+      _Milestone(Icons.verified_rounded,
+          tr(en: 'Problem Solver', ta: 'தீர்வாளர்', hi: 'समाधानकर्ता', ml: 'പരിഹാരകൻ'), j.issuesHelped >= 3),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          tr(en: 'Milestones', ta: 'மைல்கற்கள்', hi: 'उपलब्धियां', ml: 'നാഴികക്കല്ലുകൾ'),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          tr(
+              en: 'Badges you unlock as you contribute.',
+              ta: 'நீங்கள் பங்களிக்கும்போது திறக்கும் பதக்கங்கள்.',
+              hi: 'योगदान करते ही अनलॉक होने वाले बैज।',
+              ml: 'സംഭാവന ചെയ്യുമ്പോൾ അൺലോക്ക് ചെയ്യുന്ന ബാഡ്ജുകൾ.'),
+          style: TextStyle(fontSize: 13, color: context.cTextSecondary),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [for (final m in milestones) _MilestoneBadge(m: m)],
+        ),
+      ],
+    );
+  }
+}
+
+class _MilestoneBadge extends StatelessWidget {
+  final _Milestone m;
+  const _MilestoneBadge({required this.m});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = m.unlocked ? AppColors.primary : context.cTextSecondary;
+    return Opacity(
+      opacity: m.unlocked ? 1 : 0.5,
+      child: SizedBox(
+        width: 92,
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(m.unlocked ? 0.14 : 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withOpacity(0.4)),
+              ),
+              child: Icon(m.unlocked ? m.icon : Icons.lock_outline_rounded, color: accent, size: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              m.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.cText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Milestone {
+  final IconData icon;
+  final String label;
+  final bool unlocked;
+  const _Milestone(this.icon, this.label, this.unlocked);
 }
