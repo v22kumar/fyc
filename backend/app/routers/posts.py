@@ -374,8 +374,6 @@ def report_post(
     Idempotent: a second report from the same user updates the reason rather
     than creating a duplicate row, so admins get one entry per flagged post.
     """
-    from sqlalchemy.exc import IntegrityError
-
     post = (
         db.query(Post)
         .filter(Post.id == post_id, Post.organization_id == tenant_id)
@@ -412,9 +410,21 @@ def report_post(
     try:
         db.commit()
     except IntegrityError:
-        # Concurrent duplicate report — the unique constraint fired; treat as
-        # already reported (idempotent).
+        # Only swallow the error if it's the expected duplicate-report race
+        # (the unique constraint fired). Re-check after rollback and re-raise
+        # anything else so a genuine DB failure isn't masked as success.
         db.rollback()
+        dup = (
+            db.query(PostReport)
+            .filter(
+                PostReport.post_id == post_id,
+                PostReport.reporter_id == current_user.id,
+                PostReport.organization_id == tenant_id,
+            )
+            .first()
+        )
+        if dup is None:
+            raise
     return {"status": "reported"}
 
 

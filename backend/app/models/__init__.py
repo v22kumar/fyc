@@ -86,6 +86,8 @@ __all__ = [
     "FeatureFlag",
     "Post",
     "PostLike",
+    "PostRepost",
+    "PostReport",
     "ChessTournament",
     "ChessTournamentEntry",
     "ChessTournamentMatch",

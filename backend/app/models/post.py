@@ -20,6 +20,7 @@ class Post(Base, TimestampMixin, TenantModelMixin):
             "organization_id", "author_id", "idempotency_key",
             unique=True,
             sqlite_where=text("idempotency_key IS NOT NULL"),
+            postgresql_where=text("idempotency_key IS NOT NULL"),
         ),
     )
 
