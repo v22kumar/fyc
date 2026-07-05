@@ -14,15 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "986299606001-orcgegist5cimo04k116qsihptgelelq.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.fyc_connect",
-            "certificate_hash": "bf7a9c253288937f3e9a0779d57e9163a4f17f17"
-          }
-        },
-        {
-          "client_id": "986299606001-releasecimo04k116qsihptgelelq.apps.googleusercontent.com",
+          "client_id": "986299606001-oh67pthinjmt9b16r0ohqr9jphf41kdl.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.fyc_connect",
