@@ -252,6 +252,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _LinkRow(icon: Icons.info_outline, label: 'About FYC Connect', onTap: () => context.push('/about'), context: context),
                 _Divider(context),
                 _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
+                _Divider(context),
+                _LinkRow(icon: Icons.auto_awesome, label: 'Preview new design (beta)', onTap: () => context.push('/v2'), context: context),
               ],
             ),
           ),
