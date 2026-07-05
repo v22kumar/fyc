@@ -57,6 +57,14 @@ DRAFT/OPEN → REGISTRATION_OPEN → (deadline) → IN_PROGRESS → COMPLETED
   online chess game between them.
 - After a game finishes, the result is recorded for that match (see D-note).
 
+> **Semi-final & final — App or In Person (organizer choice).** On the last two
+> rounds (semi-final and final), the organizer sees a **Conduct: In App / In
+> Person** toggle on each match:
+> - **In App** — the two players play the online Arena game as usual.
+> - **In Person** — the match is played physically (at a venue, on a real
+>   board); there is **no Play button** for players, and the **organizer records
+>   the winner** on the match. Use this for a final held on stage / at an event.
+
 > **D-note (current limitation):** the match result is **reported** on the
 > tournament screen ("Player A won" / "Player B won"), not yet auto-pulled from
 > the played game. Keep this honest and simple: the organizer (or the players by

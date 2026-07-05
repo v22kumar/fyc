@@ -51,6 +51,7 @@ class BracketMatch {
   final String? winnerId;
   final String? gameId;
   final String status; // PENDING/READY/LIVE/DONE/BYE
+  final String conductMode; // APP (online) or PHYSICAL (in person)
 
   const BracketMatch({
     required this.id,
@@ -61,7 +62,10 @@ class BracketMatch {
     this.winnerId,
     this.gameId,
     required this.status,
+    this.conductMode = 'APP',
   });
+
+  bool get isPhysical => conductMode == 'PHYSICAL';
 
   factory BracketMatch.fromJson(Map<String, dynamic> j) => BracketMatch(
         id: (j['id'] ?? '').toString(),
@@ -76,6 +80,7 @@ class BracketMatch {
         winnerId: j['winner_id']?.toString(),
         gameId: j['game_id']?.toString(),
         status: (j['status'] as String?) ?? 'PENDING',
+        conductMode: (j['conduct_mode'] as String?) ?? 'APP',
       );
 }
 

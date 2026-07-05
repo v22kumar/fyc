@@ -181,8 +181,11 @@ class _State extends State<ChessTournamentDetailScreen> {
 
   Widget _matchCard(ChessTournamentDetail t, BracketMatch m) {
     final iAmIn = _uid != null && (m.playerA?.id == _uid || m.playerB?.id == _uid);
-    final canPlay = iAmIn && (m.status == 'READY' || m.status == 'LIVE') && m.winnerId == null;
+    // Physical matches are played in person, so no online Play button.
+    final canPlay = iAmIn && !m.isPhysical && (m.status == 'READY' || m.status == 'LIVE') && m.winnerId == null;
     final adminCanDecide = _isAdmin && m.playerA != null && m.playerB != null && m.winnerId == null;
+    // Organizer can choose app vs in-person for the last two rounds (SF/final).
+    final showConductToggle = _isAdmin && m.playerA != null && m.playerB != null && m.winnerId == null && m.round >= t.rounds - 1;
 
     Widget side(PlayerRef? p, bool isWinner) => Expanded(
           child: Row(children: [
@@ -202,6 +205,27 @@ class _State extends State<ChessTournamentDetailScreen> {
           Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(tr(en: 'vs', ta: 'எதிராக', hi: 'बनाम', ml: 'vs'), style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
           side(m.playerB, m.winnerId != null && m.winnerId == m.playerB?.id),
         ]),
+        if (showConductToggle) ...[
+          const SizedBox(height: 10),
+          Row(children: [
+            Text('${tr(en: 'Conduct', ta: 'நடத்தை', hi: 'संचालन', ml: 'നടത്തിപ്പ്')}:',
+                style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
+            const SizedBox(width: 8),
+            _conductChip(tr(en: 'In App', ta: 'ஆப்பில்', hi: 'ऐप में', ml: 'ആപ്പിൽ'), !m.isPhysical,
+                () => _run(() => ChessTournamentApi.setConduct(t.id, m.id, 'APP'))),
+            const SizedBox(width: 6),
+            _conductChip(tr(en: 'In Person', ta: 'நேரில்', hi: 'व्यक्तिगत', ml: 'നേരിട്ട്'), m.isPhysical,
+                () => _run(() => ChessTournamentApi.setConduct(t.id, m.id, 'PHYSICAL'))),
+          ]),
+        ] else if (m.isPhysical && m.winnerId == null) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            Icon(Icons.groups_rounded, size: 15, color: context.cTextSecondary),
+            const SizedBox(width: 6),
+            Text(tr(en: 'Played in person', ta: 'நேரில் விளையாடப்படுகிறது', hi: 'व्यक्तिगत रूप से खेला गया', ml: 'നേരിട്ട് കളിക്കുന്നു'),
+                style: TextStyle(fontSize: 11.5, color: context.cTextSecondary, fontStyle: FontStyle.italic)),
+          ]),
+        ],
         if (canPlay) ...[
           const SizedBox(height: 10),
           SizedBox(width: double.infinity, child: ElevatedButton.icon(
@@ -227,6 +251,29 @@ class _State extends State<ChessTournamentDetailScreen> {
           ]),
         ],
       ]),
+    );
+  }
+
+  Widget _conductChip(String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: _busy ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? AppColors.primary : context.cBorder),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : context.cTextSecondary,
+          ),
+        ),
+      ),
     );
   }
 }
