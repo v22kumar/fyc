@@ -102,16 +102,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (text.isEmpty && _images.isEmpty) return;
     setState(() => _posting = true);
     try {
-      final urls = <String>[];
-      for (final f in _images) {
-        urls.add(await FeedApi.uploadImage(f.path));
-      }
+      // Queue the post with LOCAL image paths — SyncService uploads them when
+      // the network is available. This is what lets a media post survive being
+      // composed offline instead of failing at the upload step.
       await SyncService.enqueuePost(
         content: text,
-        imageUrls: urls,
+        localImagePaths: _images.map((f) => f.path).toList(),
         category: _category == 'All' ? null : _category,
         location: _showLocation ? _locationCtrl.text : null,
-        shareToInstagram: _shareToInstagram && urls.isNotEmpty,
+        shareToInstagram: _shareToInstagram && _images.isNotEmpty,
       );
       if (!mounted) return;
       Navigator.of(context).pop(true);

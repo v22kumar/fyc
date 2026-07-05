@@ -14,7 +14,8 @@ class SyncService {
 
   static Future<void> enqueuePost({
     required String content,
-    required List<String> imageUrls,
+    List<String> imageUrls = const [],
+    List<String> localImagePaths = const [],
     String? category,
     String? location,
     bool shareToInstagram = false,
@@ -25,7 +26,11 @@ class SyncService {
       'type': 'post',
       'idempotencyKey': key,
       'content': content,
+      // Already-uploaded URLs (if any) plus local file paths that still need
+      // uploading — the sync pass uploads the latter when the network is back,
+      // so media posts survive offline instead of failing at compose time.
       'imageUrls': imageUrls,
+      'localImagePaths': localImagePaths,
       'category': category,
       'location': location,
       'shareToInstagram': shareToInstagram,
@@ -66,12 +71,25 @@ class SyncService {
         }
         try {
           if (data['type'] == 'post') {
+            // Upload any queued local images now that we (presumably) have the
+            // network. A failure here throws and the item stays queued for the
+            // next pass — the post is never lost.
+            final localPaths =
+                List<String>.from(data['localImagePaths'] ?? const []);
+            final uploaded = <String>[];
+            for (final p in localPaths) {
+              uploaded.add(await FeedApi.uploadImage(p));
+            }
+            final allUrls = <String>[
+              ...List<String>.from(data['imageUrls'] ?? const []),
+              ...uploaded,
+            ];
             await FeedApi.create(
               content: data['content'],
-              imageUrls: List<String>.from(data['imageUrls']),
+              imageUrls: allUrls,
               category: data['category'],
               location: data['location'],
-              shareToInstagram: data['shareToInstagram'] ?? false,
+              shareToInstagram: (data['shareToInstagram'] ?? false) && allUrls.isNotEmpty,
               idempotencyKey: data['idempotencyKey'],
             );
           } else if (data['type'] == 'comment') {
