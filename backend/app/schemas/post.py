@@ -17,6 +17,11 @@ class PostCreate(BaseModel):
     idempotency_key: Optional[str] = None
 
 
+class PostReportIn(BaseModel):
+    """Optional body for POST /posts/{id}/report."""
+    reason: Optional[str] = Field(default=None, max_length=300)
+
+
 class PostAuthor(BaseModel):
     id: UUID
     name: str

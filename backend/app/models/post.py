@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Text, String, ForeignKey, JSON, UniqueConstraint, Boolean
+from sqlalchemy import Column, Text, String, ForeignKey, JSON, UniqueConstraint, Boolean, Index, text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -11,6 +11,17 @@ class Post(Base, TimestampMixin, TenantModelMixin):
     """A user-authored community post: text and/or images."""
 
     __tablename__ = "posts"
+    __table_args__ = (
+        # Enforce idempotency at the DB boundary: at most one post per
+        # (org, author, idempotency_key). Partial (WHERE key IS NOT NULL) so the
+        # many NULL-key rows (posts created without a key) are unconstrained.
+        Index(
+            "uq_post_idempotency",
+            "organization_id", "author_id", "idempotency_key",
+            unique=True,
+            sqlite_where=text("idempotency_key IS NOT NULL"),
+        ),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     author_id = Column(
@@ -65,3 +76,25 @@ class PostLike(Base, TimestampMixin, TenantModelMixin):
     user_id = Column(
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+
+
+class PostReport(Base, TimestampMixin, TenantModelMixin):
+    """A user flagging a post for admin moderation review.
+
+    One report per user per post (a second report from the same user is a no-op
+    rather than a duplicate row), so admins see a distinct list of flagged posts.
+    """
+
+    __tablename__ = "post_reports"
+    __table_args__ = (
+        UniqueConstraint("post_id", "reporter_id", name="uq_post_report"),
+    )
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    post_id = Column(
+        GUID(), ForeignKey("posts.id", ondelete="CASCADE"), nullable=False
+    )
+    reporter_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    reason = Column(String(300), nullable=True)
