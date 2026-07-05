@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fyc_connect/core/design_system/shell/app_shell_v2.dart';
 
 void main() {
+  setUp(() {
+    // The SOS sheet reads trusted contacts from SharedPreferences on open.
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('AppShellV2', () {
     testWidgets('renders exactly 4 tabs: Home, Play, Serve, Me', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
@@ -34,8 +40,9 @@ void main() {
 
       await tester.tap(sos);
       await tester.pumpAndSettle();
-      expect(find.text('SOS'), findsOneWidget);
-      expect(find.byType(AlertDialog), findsOneWidget);
+      // Opens the real SOS action sheet (location SMS + emergency dial).
+      expect(find.text('Emergency SOS'), findsOneWidget);
+      expect(find.text('Send SOS to my contacts'), findsOneWidget);
     });
   });
 }
