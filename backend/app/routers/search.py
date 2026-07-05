@@ -11,6 +11,7 @@ from app.models.event import Event
 from app.models.sports import Tournament, Team, Player
 from app.models.issue import PublicIssue
 from app.models.blood_donor import BloodDonor
+from app.models.announcement import Announcement
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/search", tags=["Search"])
@@ -114,6 +115,42 @@ def global_search(
                 title="Public Issue",
                 subtitle=i.description_en[:50] if i.description_en else "",
                 image_url=i.photo_url
+            ))
+
+    # Blood donors — matched by donor name (join to profile) or blood group,
+    # so a query like "O+" or a member's name both surface available donors.
+    if should_search("BLOOD_DONOR"):
+        donors = db.query(BloodDonor, UserProfile).join(
+            UserProfile, UserProfile.user_id == BloodDonor.user_id
+        ).filter(
+            BloodDonor.organization_id == tenant_id,
+            (BloodDonor.blood_group.ilike(q_like)
+             | UserProfile.full_name_en.ilike(q_like)
+             | UserProfile.full_name_ta.ilike(q_like))
+        ).limit(10).all()
+        for d, p in donors:
+            results.append(SearchResult(
+                id=d.id,
+                type="BLOOD_DONOR",
+                title=p.full_name_en or p.full_name_ta or "Donor",
+                subtitle=f"Blood Donor · {d.blood_group}",
+                image_url=p.profile_image_url,
+            ))
+
+    # Announcements
+    if should_search("ANNOUNCEMENT"):
+        anns = db.query(Announcement).filter(
+            Announcement.organization_id == tenant_id,
+            (Announcement.title_en.ilike(q_like)
+             | Announcement.title_ta.ilike(q_like)
+             | Announcement.body_en.ilike(q_like))
+        ).limit(10).all()
+        for a in anns:
+            results.append(SearchResult(
+                id=a.id,
+                type="ANNOUNCEMENT",
+                title=a.title_en or a.title_ta,
+                subtitle="Announcement",
             ))
 
     return results
