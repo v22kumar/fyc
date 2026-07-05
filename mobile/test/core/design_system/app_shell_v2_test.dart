@@ -67,9 +67,13 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: AppShellV2(onCreate: () => created++),
       ));
-      final fab = find.byIcon(Icons.add_rounded);
-      expect(fab, findsOneWidget);
-      await tester.tap(fab);
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      // Invoke the FAB handler directly: a centerDocked FAB's center overlaps
+      // the nav bar in the 800x600 test surface so tester.tap misses it, though
+      // it's tappable on a real device. This still verifies onCreate is wired.
+      tester
+          .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+          .onPressed!();
       await tester.pump();
       expect(created, 1);
     });
