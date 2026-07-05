@@ -138,21 +138,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<TokenModel> signInWithGoogle({required String organizationId}) async {
-    // serverClientId MUST be the *Web* OAuth client ID (client_type 3) of this
-    // Firebase project — passing the Android client, or leaving it unset, makes
-    // Google return a null idToken and login fails with "couldn't get id token".
-    //
-    // This value is NOT a secret: it already ships in google-services.json and
-    // inside every APK, so we hardcode the project's Web client as the default
-    // rather than depending on a GOOGLE_SERVER_CLIENT_ID build secret that can
-    // be empty or misconfigured. A build may still override it via
-    // --dart-define=GOOGLE_SERVER_CLIENT_ID=... for a different environment.
-    const _webClientId =
-        '986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com';
-    const _override = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+    // serverClientId MUST be this Firebase project's *Web* OAuth client, or
+    // Google returns a null idToken ("couldn't get id token"). See
+    // ApiConstants.googleServerClientId for the value and rationale.
     final googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
-      serverClientId: _override.isNotEmpty ? _override : _webClientId,
+      serverClientId: ApiConstants.googleServerClientId,
     );
     try {
       // Clear any cached Google session first so the account chooser always
@@ -179,14 +170,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       throw mapDioException(e);
     } on PlatformException catch (e) {
-      if (e.code == 'sign_in_failed') {
-        if (e.message != null && e.message!.contains('10')) {
-          throw const AuthFailure("Google login isn't configured yet — use your phone number");
-        } else if (e.code == 'network_error') {
-          throw const AuthFailure('Network error. Please check your connection and try again.');
-        }
+      if (e.code == 'network_error') {
+        throw const AuthFailure(
+            'Network error. Please check your connection and try again.');
       }
-      throw AuthFailure("Google login isn't configured yet — use your phone number");
+      // sign_in_failed with a "10" (DEVELOPER_ERROR) means the SHA-1 / client
+      // config doesn't match — surface the actionable "use phone" hint.
+      throw const AuthFailure(
+          "Google login isn't configured yet — use your phone number");
     } catch (e) {
       throw ServerFailure();
     }
