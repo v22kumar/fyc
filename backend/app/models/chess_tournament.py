@@ -79,3 +79,8 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
     )
     # PENDING (waiting for players) / READY (both set) / LIVE / DONE / BYE
     status = Column(String(20), nullable=False, default="PENDING")
+    # APP = played online in the Arena; PHYSICAL = played in person and an admin
+    # records the result. Organizers switch this for semi-final / final matches.
+    # Nullable so the startup schema-reconcile can add it to existing rows;
+    # treated as "APP" when null.
+    conduct_mode = Column(String(10), default="APP")

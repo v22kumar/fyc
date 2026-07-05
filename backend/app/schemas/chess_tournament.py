@@ -37,6 +37,9 @@ class MatchOut(BaseModel):
     winner_id: Optional[UUID]
     game_id: Optional[UUID]
     status: str
+    # APP = played online in the Arena; PHYSICAL = played in person, organizer
+    # records the result. Defaults to APP.
+    conduct_mode: str = "APP"
 
 
 class ChessTournamentDetailOut(ChessTournamentOut):
@@ -47,3 +50,7 @@ class ChessTournamentDetailOut(ChessTournamentOut):
 
 class ReportResultIn(BaseModel):
     winner_id: UUID
+
+
+class ConductModeIn(BaseModel):
+    mode: str  # 'APP' or 'PHYSICAL'

@@ -23,6 +23,7 @@ from app.schemas.chess_tournament import (
     MatchOut,
     PlayerRef,
     ReportResultIn,
+    ConductModeIn,
 )
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
@@ -340,6 +341,11 @@ def play_match(
         raise HTTPException(status_code=400, detail="Match already decided")
     if not (m.player_a_id and m.player_b_id):
         raise HTTPException(status_code=400, detail="Match is not ready")
+    if (m.conduct_mode or "APP") == "PHYSICAL":
+        raise HTTPException(
+            status_code=400,
+            detail="This match is played in person; the organizer records the result",
+        )
     if current_user.id not in (m.player_a_id, m.player_b_id):
         raise HTTPException(status_code=403, detail="You are not in this match")
 
@@ -392,6 +398,46 @@ def report_result(
     return _detail(db, tour, current_user.id)
 
 
+@router.post("/{tour_id}/matches/{match_id}/conduct", response_model=ChessTournamentDetailOut)
+def set_conduct_mode(
+    tour_id: uuid.UUID,
+    match_id: uuid.UUID,
+    payload: ConductModeIn,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(require_exec),
+):
+    """Organizer chooses how a match is conducted — APP (online Arena game) or
+    PHYSICAL (played in person, organizer records the result). Used mainly for
+    semi-final / final matches."""
+    mode = (payload.mode or "").strip().upper()
+    if mode not in ("APP", "PHYSICAL"):
+        raise HTTPException(status_code=400, detail="mode must be APP or PHYSICAL")
+    tour = (
+        db.query(ChessTournament)
+        .filter(ChessTournament.id == tour_id, ChessTournament.organization_id == tenant_id)
+        .first()
+    )
+    if not tour:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    m = (
+        db.query(ChessTournamentMatch)
+        .filter(
+            ChessTournamentMatch.id == match_id,
+            ChessTournamentMatch.tournament_id == tour_id,
+            ChessTournamentMatch.organization_id == tenant_id,
+        )
+        .first()
+    )
+    if not m:
+        raise HTTPException(status_code=404, detail="Match not found")
+    if m.winner_id:
+        raise HTTPException(status_code=400, detail="Match already decided")
+    m.conduct_mode = mode
+    db.commit()
+    return _detail(db, tour, current_user.id)
+
+
 def _detail(db: Session, tour: ChessTournament, user_id) -> ChessTournamentDetailOut:
     base = _serialize(db, tour, user_id)
     entries = (
@@ -417,6 +463,7 @@ def _detail(db: Session, tour: ChessTournament, user_id) -> ChessTournamentDetai
             winner_id=m.winner_id,
             game_id=m.game_id,
             status=m.status,
+            conduct_mode=m.conduct_mode or "APP",
         )
         for m in matches
     ]

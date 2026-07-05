@@ -52,4 +52,12 @@ class ChessTournamentApi {
         data: {'winner_id': winnerId});
     return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
   }
+
+  /// Organizer sets how a match is conducted: 'APP' (online) or 'PHYSICAL'.
+  static Future<ChessTournamentDetail> setConduct(
+      String tourId, String matchId, String mode) async {
+    final res = await _dio.post('$_base/$tourId/matches/$matchId/conduct',
+        data: {'mode': mode});
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
 }
