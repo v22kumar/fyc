@@ -258,6 +258,30 @@ async def lifespan(app: FastAPI):
         except Exception as _de:
             logger.warning(f"[schema-drift] reconciliation block: {_de}")
 
+        # Idempotency unique indexes. create_all only adds these to brand-new
+        # tables, so the long-lived prod posts/comments tables need them created
+        # explicitly. Partial (WHERE key IS NOT NULL) so historical NULL-key rows
+        # are unconstrained. Best-effort: if pre-existing duplicate keys make the
+        # unique index fail, log and continue rather than blocking startup.
+        try:
+            from sqlalchemy import text as _idx_text
+            _idem_indexes = [
+                'CREATE UNIQUE INDEX IF NOT EXISTS uq_post_idempotency '
+                'ON posts (organization_id, author_id, idempotency_key) '
+                'WHERE idempotency_key IS NOT NULL',
+                'CREATE UNIQUE INDEX IF NOT EXISTS uq_comment_idempotency '
+                'ON comments (organization_id, author_id, entity_id, idempotency_key) '
+                'WHERE idempotency_key IS NOT NULL',
+            ]
+            with engine.begin() as conn:
+                for _ddl in _idem_indexes:
+                    try:
+                        conn.execute(_idx_text(_ddl))
+                    except Exception as _ie:
+                        logger.warning(f"[idempotency-index] could not create: {_ie}")
+        except Exception as _ide:
+            logger.warning(f"[idempotency-index] block failed: {_ide}")
+
         _seed_database()
 
         # Pre-warm external API caches in a background thread so slow RSS feeds

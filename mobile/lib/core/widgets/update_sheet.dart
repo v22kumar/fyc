@@ -145,7 +145,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                         offset: const Offset(0, 6)),
                   ],
                 ),
-                child: Image.asset('assets/images/fyc_logo_icon.png',
+                child: Image.asset('assets/images/fyc_mark.png',
                     errorBuilder: (_, __, ___) =>
                         const Icon(Icons.system_update, color: Colors.white)),
               ),

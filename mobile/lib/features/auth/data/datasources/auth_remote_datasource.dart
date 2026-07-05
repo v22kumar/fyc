@@ -138,13 +138,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<TokenModel> signInWithGoogle({required String organizationId}) async {
-    // serverClientId is the Web OAuth client ID from Firebase Console.
-    // Passed at build time via --dart-define=GOOGLE_SERVER_CLIENT_ID=...
-    // Without it, auth.idToken is null and backend verification fails.
-    const _serverClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+    // serverClientId MUST be this Firebase project's *Web* OAuth client, or
+    // Google returns a null idToken ("couldn't get id token"). See
+    // ApiConstants.googleServerClientId for the value and rationale.
     final googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
-      serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
+      serverClientId: ApiConstants.googleServerClientId,
     );
     try {
       // Clear any cached Google session first so the account chooser always
@@ -171,14 +170,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       throw mapDioException(e);
     } on PlatformException catch (e) {
-      if (e.code == 'sign_in_failed') {
-        if (e.message != null && e.message!.contains('10')) {
-          throw const AuthFailure("Google login isn't configured yet — use your phone number");
-        } else if (e.code == 'network_error') {
-          throw const AuthFailure('Network error. Please check your connection and try again.');
-        }
+      if (e.code == 'network_error') {
+        throw const AuthFailure(
+            'Network error. Please check your connection and try again.');
       }
-      throw AuthFailure("Google login isn't configured yet — use your phone number");
+      // sign_in_failed with a "10" (DEVELOPER_ERROR) means the SHA-1 / client
+      // config doesn't match — surface the actionable "use phone" hint.
+      throw const AuthFailure(
+          "Google login isn't configured yet — use your phone number");
     } catch (e) {
       throw ServerFailure();
     }

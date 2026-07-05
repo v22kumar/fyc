@@ -21,6 +21,18 @@ class ApiConstants {
     defaultValue: '717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com',
   );
 
+  // serverClientId for the *mobile* app's Google Sign-In. This is the Web OAuth
+  // client of THIS app's Firebase project (fyc-connect-25ab0 / 986299606001) —
+  // distinct from googleWebClientId above, which is the website's project. It
+  // must be the project whose SHA-1 is registered in Firebase, or Google returns
+  // a null idToken. Not a secret (ships in google-services.json + every APK);
+  // a build may override it via --dart-define=GOOGLE_SERVER_CLIENT_ID=... .
+  static const String googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com',
+  );
+
   // Auth
   static const String otpSend = '/api/v1/auth/otp/send';
   static const String otpVerify = '/api/v1/auth/otp/verify';

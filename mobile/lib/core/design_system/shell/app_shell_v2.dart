@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens.dart';
+import 'sos_sheet.dart';
 
 /// The v2 navigation shell: 4 tabs (Home · Play · Serve · Me) + a persistent
 /// SOS control reachable from every tab, per the locked IA decision (no
@@ -34,19 +35,8 @@ class _AppShellV2State extends State<AppShellV2> {
   List<Widget> get _bodies => widget.tabs ?? List.generate(4, (i) => _PlaceholderTab(label: _tabMeta[i].$1));
 
   void _onSosTap() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.sos_rounded, color: DSColors.danger, size: 36),
-        title: const Text('SOS'),
-        content: const Text(
-          'This is a shell preview. The real SOS flow (live location + '
-          'trusted contacts + SMS fallback) ships in a later sprint — this '
-          'slot only proves the control is reachable from every tab.',
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-      ),
-    );
+    // Real SOS: location SMS to trusted contacts + emergency dial.
+    showSosSheet(context);
   }
 
   @override

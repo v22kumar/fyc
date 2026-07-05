@@ -22,7 +22,7 @@ from app.models.core_services import CommunityActivity, Follow, Comment, Attachm
 from app.models.workflow import WorkflowState, ApprovalRequest
 from app.models.dynamic_forms import FormDefinition, FormSubmission
 from app.models.platform_settings import OrganizationSettings, FeatureFlag
-from app.models.post import Post, PostLike
+from app.models.post import Post, PostLike, PostRepost, PostReport
 from app.models.chess_tournament import ChessTournament, ChessTournamentEntry, ChessTournamentMatch
 
 __all__ = [
@@ -86,6 +86,8 @@ __all__ = [
     "FeatureFlag",
     "Post",
     "PostLike",
+    "PostRepost",
+    "PostReport",
     "ChessTournament",
     "ChessTournamentEntry",
     "ChessTournamentMatch",

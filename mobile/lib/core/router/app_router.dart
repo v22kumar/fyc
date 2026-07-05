@@ -100,6 +100,7 @@ import '../../features/feed/create_post_screen.dart';
 
 // Design System v2 (Sprint 1)
 import '../design_system/design_system_gallery_screen.dart';
+import '../design_system/shell/app_shell_v2.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -435,6 +436,25 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/design-system',
       builder: (context, state) => const DesignSystemGalleryScreen(),
+    ),
+
+    // Sprint 2 preview — the real 4-tab design-system shell wired to live
+    // feature screens (Home · Play · Serve · Me). Reachable only via this direct
+    // route so it can be reviewed on a device before it replaces the current
+    // navigation; the shipping app is untouched until that cutover is approved.
+    GoRoute(
+      path: '/v2',
+      builder: (context, state) => AppShellV2(
+        tabs: [
+          const HomeScreen(),
+          BlocProvider(
+            create: (_) => sl<SportsBloc>(),
+            child: const SportsHubScreen(),
+          ),
+          const OpportunitiesScreen(),
+          const ProfileScreen(),
+        ],
+      ),
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

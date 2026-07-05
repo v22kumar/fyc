@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fyc_connect/core/design_system/shell/app_shell_v2.dart';
 
 void main() {
+  setUp(() {
+    // The SOS sheet reads trusted contacts from SharedPreferences on open.
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('AppShellV2', () {
     testWidgets('renders exactly 4 tabs: Home, Play, Serve, Me', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
@@ -34,8 +40,21 @@ void main() {
 
       await tester.tap(sos);
       await tester.pumpAndSettle();
-      expect(find.text('SOS'), findsOneWidget);
-      expect(find.byType(AlertDialog), findsOneWidget);
+      // Opens the real SOS action sheet (location SMS + emergency dial).
+      expect(find.text('Emergency SOS'), findsOneWidget);
+      expect(find.text('Send SOS to my contacts'), findsOneWidget);
+    });
+
+    testWidgets('SOS with no trusted contacts prompts to add one', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
+      await tester.tap(find.byIcon(Icons.sos_rounded));
+      await tester.pumpAndSettle();
+
+      // No contacts configured (mock prefs are empty) → tapping send must warn
+      // rather than silently doing nothing on a safety feature.
+      await tester.tap(find.text('Send SOS to my contacts'));
+      await tester.pump(); // let the snackbar appear
+      expect(find.text('Add at least one trusted contact first.'), findsOneWidget);
     });
   });
 }

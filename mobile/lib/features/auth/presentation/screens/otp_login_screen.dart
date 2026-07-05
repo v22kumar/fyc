@@ -253,7 +253,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             ],
                           ),
                           child: Image.asset(
-                            'assets/images/fyc_logo_icon.png',
+                            'assets/images/fyc_mark.png',
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>

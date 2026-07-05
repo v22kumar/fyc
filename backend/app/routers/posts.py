@@ -5,11 +5,12 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Query
 from sqlalchemy import func, desc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
-from app.models.post import Post, PostLike, PostRepost
+from app.models.post import Post, PostLike, PostRepost, PostReport
 from app.models.core_services import Comment
 from app.models.user import User, UserBlock
 from app.schemas.post import (
@@ -18,6 +19,7 @@ from app.schemas.post import (
     PostAuthor,
     CommentCreate,
     CommentOut,
+    PostReportIn,
 )
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
@@ -245,7 +247,25 @@ def create_post(
         idempotency_key=payload.idempotency_key,
     )
     db.add(post)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # A concurrent retry with the same idempotency_key won the race and the
+        # unique index fired. Return the row that landed instead of erroring.
+        db.rollback()
+        if payload.idempotency_key:
+            dup = (
+                db.query(Post)
+                .filter(
+                    Post.author_id == current_user.id,
+                    Post.idempotency_key == payload.idempotency_key,
+                    Post.organization_id == tenant_id,
+                )
+                .first()
+            )
+            if dup:
+                return _serialize(db, dup, current_user.id)
+        raise
     db.refresh(post)
 
     # Optional cross-post to the org's Instagram feed. Gated to managers/admins
@@ -344,11 +364,16 @@ def delete_post(
 @router.post("/{post_id}/report")
 def report_post(
     post_id: uuid.UUID,
+    payload: Optional[PostReportIn] = None,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
     current_user: User = Depends(get_current_user),
 ):
-    """Flags a post for admin review."""
+    """Flag a post for admin review and persist the report.
+
+    Idempotent: a second report from the same user updates the reason rather
+    than creating a duplicate row, so admins get one entry per flagged post.
+    """
     post = (
         db.query(Post)
         .filter(Post.id == post_id, Post.organization_id == tenant_id)
@@ -356,8 +381,50 @@ def report_post(
     )
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    # In a full system, we'd log this to a reports table.
-    # For now, we return success as per the spec for basic moderation.
+
+    reason = payload.reason if payload else None
+
+    existing = (
+        db.query(PostReport)
+        .filter(
+            PostReport.post_id == post_id,
+            PostReport.reporter_id == current_user.id,
+            PostReport.organization_id == tenant_id,
+        )
+        .first()
+    )
+    if existing:
+        if reason:
+            existing.reason = reason
+            db.commit()
+        return {"status": "reported"}
+
+    report = PostReport(
+        id=uuid.uuid4(),
+        organization_id=tenant_id,
+        post_id=post_id,
+        reporter_id=current_user.id,
+        reason=reason,
+    )
+    db.add(report)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Only swallow the error if it's the expected duplicate-report race
+        # (the unique constraint fired). Re-check after rollback and re-raise
+        # anything else so a genuine DB failure isn't masked as success.
+        db.rollback()
+        dup = (
+            db.query(PostReport)
+            .filter(
+                PostReport.post_id == post_id,
+                PostReport.reporter_id == current_user.id,
+                PostReport.organization_id == tenant_id,
+            )
+            .first()
+        )
+        if dup is None:
+            raise
     return {"status": "reported"}
 
 
@@ -502,7 +569,30 @@ def add_comment(
         idempotency_key=payload.idempotency_key,
     )
     db.add(c)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Concurrent retry with the same idempotency_key — return the row that won.
+        db.rollback()
+        if payload.idempotency_key:
+            dup = (
+                db.query(Comment)
+                .filter(
+                    Comment.author_id == current_user.id,
+                    Comment.idempotency_key == payload.idempotency_key,
+                    Comment.organization_id == tenant_id,
+                    Comment.entity_id == post_id,
+                )
+                .first()
+            )
+            if dup:
+                return CommentOut(
+                    id=dup.id,
+                    author_name=_name(current_user),
+                    content=dup.content,
+                    created_at=dup.created_at,
+                )
+        raise
     db.refresh(c)
     return CommentOut(
         id=c.id,

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, String, Text, ForeignKey, JSON, Boolean, Index, text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -42,6 +42,18 @@ class Comment(Base, TimestampMixin, TenantModelMixin):
     Lightweight commenting system attached to any entity.
     """
     __tablename__ = "comments"
+    __table_args__ = (
+        # Idempotency at the DB boundary: at most one comment per
+        # (org, author, entity, idempotency_key). Partial so NULL-key rows are
+        # unconstrained.
+        Index(
+            "uq_comment_idempotency",
+            "organization_id", "author_id", "entity_id", "idempotency_key",
+            unique=True,
+            sqlite_where=text("idempotency_key IS NOT NULL"),
+            postgresql_where=text("idempotency_key IS NOT NULL"),
+        ),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     author_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

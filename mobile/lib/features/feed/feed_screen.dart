@@ -224,7 +224,7 @@ class _Header extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.asset('assets/images/fyc_logo_icon.png',
+                child: Image.asset('assets/images/fyc_mark.png',
                     width: 40, height: 40,
                     errorBuilder: (_, __, ___) => const Icon(Icons.shield,
                         color: Colors.white, size: 36)),

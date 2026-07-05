@@ -180,6 +180,13 @@ def test_list_teams_public(client, db):
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+def _close_registration(client, org_id, token, tournament_id):
+    return client.post(
+        f"/api/v1/sports/tournaments/{tournament_id}/close-registration",
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org_id)},
+    )
+
+
 def test_create_and_list_fixtures(client, db):
     org = _make_org(db)
     _make_executive(db, org.id, "+919444444528")
@@ -189,6 +196,9 @@ def test_create_and_list_fixtures(client, db):
     team_a_id = _create_team(client, org.id, token, tournament_id, name="Alpha")
     team_b_id = _create_team(client, org.id, token, tournament_id, name="Beta")
 
+    # Fixtures require registration to be closed first.
+    _close_registration(client, org.id, token, tournament_id)
+
     fix_res = client.post(
         f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
         json={"team_a_id": team_a_id, "team_b_id": team_b_id, "match_number": 1},
@@ -196,6 +206,37 @@ def test_create_and_list_fixtures(client, db):
     )
     assert fix_res.status_code == 201
     assert fix_res.json()["status"] == "SCHEDULED"
+
+
+def test_cannot_create_fixture_while_registration_open(client, db):
+    """Regression: fixtures must not be creatable before registration closes
+    (reported bug: 'fixtures ready before registration ends and can enter
+    scoring')."""
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919444444540")
+    token = _login(client, org.id, "+919444444540")
+    tournament_id = _create_tournament(client, org.id, token)
+
+    team_a_id = _create_team(client, org.id, token, tournament_id, name="Alpha")
+    team_b_id = _create_team(client, org.id, token, tournament_id, name="Beta")
+
+    # Registration still OPEN — creating a fixture must be rejected.
+    fix_res = client.post(
+        f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
+        json={"team_a_id": team_a_id, "team_b_id": team_b_id, "match_number": 1},
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)},
+    )
+    assert fix_res.status_code == 400
+    assert "Registration is still open" in fix_res.json()["detail"]
+
+    # After closing registration, the same request succeeds.
+    _close_registration(client, org.id, token, tournament_id)
+    ok = client.post(
+        f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
+        json={"team_a_id": team_a_id, "team_b_id": team_b_id, "match_number": 1},
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)},
+    )
+    assert ok.status_code == 201
 
     list_res = client.get(
         f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
@@ -213,6 +254,8 @@ def test_submit_fixture_result(client, db):
 
     team_a_id = _create_team(client, org.id, token, tournament_id, name="Winners")
     team_b_id = _create_team(client, org.id, token, tournament_id, name="Losers")
+
+    _close_registration(client, org.id, token, tournament_id)
 
     fixture_id = client.post(
         f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
