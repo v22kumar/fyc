@@ -454,13 +454,35 @@ class _ChessEntryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tr(en: 'Play & challenge members', ta: 'உறுப்பினர்களுடன் விளையாடு', hi: 'सदस्यों को चुनौती दें', ml: 'അംഗങ്ങളെ വെല്ലുവിളിക്കൂ'),
+                        tr(en: 'Play, or join a tournament', ta: 'விளையாடு அல்லது போட்டியில் சேரு', hi: 'खेलें या टूर्नामेंट में शामिल हों', ml: 'കളിക്കൂ അല്ലെങ്കിൽ ടൂർണമെന്റിൽ ചേരൂ'),
                         style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                // First-class Tournaments affordance (own tap target).
+                Material(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () => context.push('/chess/tournaments'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 15),
+                          const SizedBox(width: 5),
+                          Text(
+                            tr(en: 'Tournaments', ta: 'போட்டிகள்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റുകൾ'),
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
