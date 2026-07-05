@@ -147,10 +147,10 @@ class _SplashScreenState extends State<SplashScreen>
                         );
                       },
                       child: SizedBox(
-                        width: 240,
+                        width: 118,
                         child: Image.asset(
-                          // Full brand lockup (eagle + CONNECT wordmark).
-                          'assets/images/fyc_logo_full.png',
+                          // Transparent eagle mark — sits inside the pulsing ring.
+                          'assets/images/fyc_mark.png',
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Text(
                             '🌱',
