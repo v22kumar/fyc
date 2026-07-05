@@ -529,21 +529,21 @@ class _BloodBagPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Service Bento (rich, web-parity cards) ───────────────────────────────────
+// ── Discover bento (the mockup's "What are you looking for?" 4-category grid) ──
 
-class _BentoService {
-  final IconData? icon;
-  final String? glyph;
-  final String title, desc, badge, route;
-  final Color color;
-  const _BentoService({
-    this.icon,
-    this.glyph,
-    required this.title,
-    required this.desc,
-    required this.badge,
+class _Bucket {
+  final String ta, en;
+  final IconData icon;
+  final List<String> items; // sub-item labels (display only)
+  final String route; // primary tap destination
+  final List<Color> gradient;
+  const _Bucket({
+    required this.ta,
+    required this.en,
+    required this.icon,
+    required this.items,
     required this.route,
-    required this.color,
+    required this.gradient,
   });
 }
 
@@ -552,23 +552,72 @@ class _ServiceBento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const items = <_BentoService>[
-      _BentoService(icon: Icons.water_drop, title: 'Blood Donation', desc: 'Find verified donors nearby and connect securely in emergencies.', badge: 'URGENT', route: '/blood-donation', color: Color(0xFFEF4444)),
-      _BentoService(icon: Icons.event, title: 'Events', desc: 'Upcoming community events, festivals and meetings. Register and attend.', badge: 'LIVE', route: '/events', color: Color(0xFF8B5CF6)),
-      _BentoService(icon: Icons.emoji_events, title: 'Sports Hub', desc: 'Track local tournaments, teams, fixtures and live scores.', badge: 'NEW', route: '/sports', color: Color(0xFFF97316)),
-      _BentoService(icon: Icons.campaign, title: 'Report Issue', desc: 'Raise civic complaints like water or street lights and track resolution.', badge: 'ACTIVE', route: '/issues', color: Color(0xFFEAB308)),
-      _BentoService(icon: Icons.eco, title: 'Green FYC', desc: 'Tree-planting drives, eco initiatives and environmental activities.', badge: 'ECO', route: '/green', color: Color(0xFF16A34A)),
-      _BentoService(icon: Icons.contacts, title: 'Skills Directory', desc: 'Find local carpenters, electricians, tutors and verified profiles.', badge: 'NEW', route: '/directory', color: Color(0xFF2563EB)),
-      _BentoService(glyph: '♚', title: 'Chess Arena', desc: 'Play, challenge friends and climb the club leaderboard.', badge: 'PLAY', route: '/chess', color: Color(0xFF0F172A)),
-      _BentoService(icon: Icons.work, title: 'Opportunities', desc: 'TN & Central govt jobs, scholarships and community openings.', badge: 'JOBS', route: '/opportunities', color: Color(0xFFD97706)),
-      _BentoService(icon: Icons.verified_user, title: 'Verify Card', desc: 'Scan and verify FYC membership cards using a QR code.', badge: 'OFFICIAL', route: '/membership', color: Color(0xFF14B8A6)),
-      _BentoService(icon: Icons.map, title: 'My Journey', desc: 'Your contributions, impact and volunteer milestones.', badge: 'IMPACT', route: '/journey', color: Color(0xFFEC4899)),
+    final buckets = <_Bucket>[
+      _Bucket(
+        ta: 'ஊர்',
+        en: 'Home',
+        icon: Icons.home_rounded,
+        route: '/announcements',
+        gradient: const [Color(0xFF0F5132), Color(0xFF198754)],
+        items: [
+          tr(en: 'Announcements', ta: 'அறிவிப்புகள்', hi: 'घोषणाएं', ml: 'അറിയിപ്പുകൾ'),
+          tr(en: 'Incident Alerts', ta: 'எச்சரிக்கைகள்', hi: 'अलर्ट', ml: 'മുന്നറിയിപ്പുകൾ'),
+          tr(en: "Today's Info", ta: 'இன்றைய தகவல்', hi: 'आज की जानकारी', ml: 'ഇന്നത്തെ വിവരം'),
+          tr(en: 'Upcoming Events', ta: 'வரவிருக்கும் நிகழ்வுகள்', hi: 'आगामी कार्यक्रम', ml: 'വരാനിരിക്കുന്ന പരിപാടികൾ'),
+        ],
+      ),
+      _Bucket(
+        ta: 'விளையாட்டு',
+        en: 'Play',
+        icon: Icons.sports_cricket_rounded,
+        route: '/sports',
+        gradient: const [Color(0xFFD97706), Color(0xFFB45309)],
+        items: [
+          tr(en: 'Tournaments', ta: 'போட்டிகள்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റുകൾ'),
+          tr(en: 'Weekly Games', ta: 'வார விளையாட்டு', hi: 'साप्ताहिक खेल', ml: 'പ്രതിവാര ഗെയിമുകൾ'),
+          tr(en: 'Chess', ta: 'சதுரங்கம்', hi: 'शतरंज', ml: 'ചെസ്സ്'),
+          tr(en: 'Live Scores', ta: 'நேரடி மதிப்பெண்', hi: 'लाइव स्कोर', ml: 'തത്സമയ സ്കോർ'),
+        ],
+      ),
+      _Bucket(
+        ta: 'சமூகம்',
+        en: 'Feed',
+        icon: Icons.people_alt_rounded,
+        route: '/feed',
+        gradient: const [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+        items: [
+          tr(en: 'FYC Instagram', ta: 'இன்ஸ்டாகிராம்', hi: 'इंस्टाग्राम', ml: 'ഇൻസ്റ്റാഗ്രാം'),
+          tr(en: 'Threads', ta: 'இழைகள்', hi: 'थ्रेड्स', ml: 'ത്രെഡ്‌സ്'),
+          tr(en: 'Green Initiatives', ta: 'பசுமை முயற்சிகள்', hi: 'हरित पहल', ml: 'ഹരിത സംരംഭങ്ങൾ'),
+          tr(en: 'Gallery', ta: 'படத்தொகுப்பு', hi: 'गैलरी', ml: 'ഗാലറി'),
+        ],
+      ),
+      _Bucket(
+        ta: 'சேவை',
+        en: 'Serve',
+        icon: Icons.volunteer_activism_rounded,
+        route: '/opportunities',
+        gradient: const [Color(0xFF0F766E), Color(0xFF115E59)],
+        items: [
+          tr(en: 'Blood Donation', ta: 'இரத்த தானம்', hi: 'रक्तदान', ml: 'രക്തദാനം'),
+          tr(en: 'Report an Issue', ta: 'புகார் அளி', hi: 'समस्या दर्ज करें', ml: 'പ്രശ്നം രേഖപ്പെടുത്തുക'),
+          tr(en: 'Volunteer', ta: 'தொண்டு', hi: 'स्वयंसेवक', ml: 'സന്നദ്ധസേവനം'),
+          tr(en: 'Opportunities', ta: 'வாய்ப்புகள்', hi: 'अवसर', ml: 'അവസരങ്ങൾ'),
+        ],
+      ),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'Explore', onViewAll: () => _showMoreSheet(context)),
+        _SectionHeader(
+          title: tr(
+              en: 'What are you looking for?',
+              ta: 'எதை தேடுகிறீர்கள்?',
+              hi: 'आप क्या ढूंढ रहे हैं?',
+              ml: 'നിങ്ങൾ എന്താണ് തിരയുന്നത്?'),
+          onViewAll: () => _showMoreSheet(context),
+        ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -577,94 +626,99 @@ class _ServiceBento extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.96,
+            childAspectRatio: 0.78,
           ),
-          itemCount: items.length,
-          itemBuilder: (_, i) => _BentoCard(s: items[i]),
+          itemCount: buckets.length,
+          itemBuilder: (_, i) => _BucketCard(b: buckets[i]),
         ),
       ],
     );
   }
 }
 
-class _BentoCard extends StatelessWidget {
-  final _BentoService s;
-  const _BentoCard({required this.s});
+class _BucketCard extends StatelessWidget {
+  final _Bucket b;
+  const _BucketCard({required this.b});
 
   @override
   Widget build(BuildContext context) {
-    final dark = context.isDark;
     return Pressable(
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => context.push(s.route),
+          onTap: () => context.push(b.route),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: dark ? s.color.withOpacity(0.14) : s.color.withOpacity(0.07),
+              gradient: LinearGradient(
+                colors: b.gradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: s.color.withOpacity(dark ? 0.30 : 0.16)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: dark ? s.color.withOpacity(0.22) : Colors.white,
-                        borderRadius: BorderRadius.circular(13),
-                        boxShadow: dark ? null : AppTheme.cardShadow,
-                      ),
-                      child: Center(
-                        child: s.glyph != null
-                            ? Text(s.glyph!, style: TextStyle(fontSize: 22, color: dark ? Colors.white : s.color, height: 1))
-                            : Icon(s.icon, color: s.color, size: 22),
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: dark ? Colors.white.withOpacity(0.10) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: s.color.withOpacity(0.25)),
-                      ),
-                      child: Text(
-                        s.badge,
-                        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: s.color),
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(b.icon, color: Colors.white, size: 22),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
-                  s.title,
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: context.cText, height: 1.1),
+                  '${b.ta} · ${b.en}',
+                  style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 8),
                 Expanded(
-                  child: Text(
-                    s.desc,
-                    style: TextStyle(fontSize: 11, height: 1.32, color: context.cTextSecondary),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final item in b.items)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 5, right: 6),
+                                width: 4,
+                                height: 4,
+                                decoration: const BoxDecoration(color: Colors.white70, shape: BoxShape.circle),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, height: 1.25),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text('Open', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: s.color)),
-                    const SizedBox(width: 3),
-                    Icon(Icons.arrow_forward, size: 13, color: s.color),
-                  ],
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.20),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_forward, color: Colors.white, size: 15),
+                  ),
                 ),
               ],
             ),
