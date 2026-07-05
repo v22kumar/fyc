@@ -275,6 +275,38 @@ def get_game(
     )
 
 
+def _maybe_advance_tournament(db: Session, game: ChessGame) -> None:
+    """If this just-finished online game backs a chess-tournament match, record
+    the winner and advance the bracket automatically — no manual report needed.
+    Decisive results only; a draw is left for the organizer to break. Imports are
+    local to avoid a router-level import cycle."""
+    if game.result not in ("white_wins", "black_wins"):
+        return
+    from app.models.chess_tournament import ChessTournament, ChessTournamentMatch
+    from app.routers.chess_tournaments import _advance
+
+    m = (
+        db.query(ChessTournamentMatch)
+        .filter(
+            ChessTournamentMatch.game_id == game.id,
+            ChessTournamentMatch.winner_id.is_(None),
+        )
+        .first()
+    )
+    if not m:
+        return
+    winner_id = game.white_id if game.result == "white_wins" else game.black_id
+    if winner_id not in (m.player_a_id, m.player_b_id):
+        return
+    tour = (
+        db.query(ChessTournament)
+        .filter(ChessTournament.id == m.tournament_id)
+        .first()
+    )
+    if tour:
+        _advance(db, tour, m, winner_id)
+
+
 @router.patch("/games/{game_id}", response_model=ChessGameOut)
 def patch_game(
     game_id: uuid.UUID,
@@ -295,6 +327,7 @@ def patch_game(
         setattr(game, field, val)
     if payload.result and not already_had_result:
         _update_stats(db, game, tenant_id)
+        _maybe_advance_tournament(db, game)
     db.commit()
     db.refresh(game)
     return _game_out(db, game)

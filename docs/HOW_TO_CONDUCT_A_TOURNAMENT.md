@@ -65,11 +65,11 @@ DRAFT/OPEN → REGISTRATION_OPEN → (deadline) → IN_PROGRESS → COMPLETED
 >   board); there is **no Play button** for players, and the **organizer records
 >   the winner** on the match. Use this for a final held on stage / at an event.
 
-> **D-note (current limitation):** the match result is **reported** on the
-> tournament screen ("Player A won" / "Player B won"), not yet auto-pulled from
-> the played game. Keep this honest and simple: the organizer (or the players by
-> agreement) reports the winner. Auto-scoring from the live game is a planned
-> improvement.
+> **D-note — auto-scoring:** for **In App** matches, when the online game ends
+> with a decisive result the tournament **advances automatically** — no manual
+> report needed. The organizer's "Player A won / Player B won" buttons remain as
+> an **override** and are the way to record **In Person** results and to break a
+> **draw** (a knockout can't advance on a draw).
 
 **E. Advancing & the champion** *(automatic)*
 - Reporting a winner advances them to the next round automatically.
@@ -137,8 +137,9 @@ registration + live scoring + standings.
 **Known limitations (and the plan):**
 - **Chess is knockout-only.** No round-robin or Swiss yet. Fine for a single
   champion; add formats when league-style play is needed.
-- **Results are reported, not auto-scored** from the played game. Plan: derive
-  the match result from the online game so no manual reporting is needed.
+- **Draws & in-person still need a manual report.** In-app games now auto-score
+  (decisive results advance the bracket automatically); draws and physical
+  matches are recorded by the organizer.
 - **No seeding by rating.** Pairings are random. Plan: seed by Glicko/rating once
   ratings are live so strong players don't meet in round 1.
 - **No capacity cap / explicit "close registration" button.** Registration is
