@@ -438,26 +438,31 @@ final appRouter = GoRouter(
       builder: (context, state) => const DesignSystemGalleryScreen(),
     ),
 
-    // Sprint 2 preview — the real 4-tab design-system shell wired to live
-    // feature screens (Home · Play · Serve · Me). Reachable only via this direct
-    // route so it can be reviewed on a device before it replaces the current
-    // navigation; the shipping app is untouched until that cutover is approved.
-    GoRoute(
-      path: '/v2',
-      builder: (context, state) => AppShellV2(
-        tabs: [
-          const HomeScreen(),
-          BlocProvider(
-            create: (_) => sl<SportsBloc>(),
-            child: const SportsHubScreen(),
-          ),
-          const OpportunitiesScreen(),
-          const ProfileScreen(),
-        ],
-      ),
-    ),
+    // Sprint 2 cutover — the real 4-tab design-system shell wired to live
+    // feature screens (Home · Play · Serve · Me) with the center Create FAB.
+    // `/app` is the live post-login entry point (behind ApiConstants
+    // .useAppShellV2); `/v2` stays as an explicit review alias. Home is
+    // embedded so the shell owns the bottom nav.
+    GoRoute(path: '/app', builder: _appShellBuilder),
+    GoRoute(path: '/v2', builder: _appShellBuilder),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(child: Text('Page not found: ${state.error}')),
   ),
 );
+
+/// Builds the live 4-tab shell: Home (embedded) · Play · Serve · Me, with the
+/// center Create FAB wired to Home's create-actions sheet. Shared by `/app`
+/// (the post-login entry point) and `/v2` (review alias).
+Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
+      onCreate: () => showHomeCreateSheet(context),
+      tabs: [
+        const HomeScreen(embedded: true),
+        BlocProvider(
+          create: (_) => sl<SportsBloc>(),
+          child: const SportsHubScreen(),
+        ),
+        const OpportunitiesScreen(),
+        const ProfileScreen(),
+      ],
+    );

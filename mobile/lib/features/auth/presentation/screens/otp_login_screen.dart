@@ -129,7 +129,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
             _phoneNumber = state.phoneNumber;
           });
         } else if (state is AuthAuthenticated) {
-          context.go('/home');
+          context.go(ApiConstants.useAppShellV2 ? '/app' : '/home');
         } else if (state is AuthNeedsRegistration) {
           context.go('/register', extra: {
             'organizationId': _orgId,

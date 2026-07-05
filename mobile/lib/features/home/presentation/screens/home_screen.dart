@@ -22,11 +22,20 @@ import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  /// When hosted inside [AppShellV2] as the Home tab, the shell provides the
+  /// bottom navigation + center Create FAB, so Home must not draw its own
+  /// `_BottomBar` (that would stack two navigation bars).
+  final bool embedded;
+
+  const HomeScreen({super.key, this.embedded = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
+
+/// Opens the Home create-actions sheet from outside this file (e.g. the shell's
+/// center Create FAB). Kept as a thin public wrapper over the private sheet.
+void showHomeCreateSheet(BuildContext context) => _showCreateSheet(context);
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _aurora;
@@ -106,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        bottomNavigationBar: const _BottomBar(),
+        bottomNavigationBar: widget.embedded ? null : const _BottomBar(),
       ),
     );
   }

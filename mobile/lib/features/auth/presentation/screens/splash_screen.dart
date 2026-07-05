@@ -55,11 +55,12 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        final home = ApiConstants.useAppShellV2 ? '/app' : '/home';
         if (state is AuthAuthenticated) {
-          context.go('/home');
+          context.go(home);
         } else if (state is AuthUnauthenticated) {
           // DEV ONLY — skip the language/login flow and go straight to home.
-          context.go(ApiConstants.devBypassAuth ? '/home' : '/lang-select');
+          context.go(ApiConstants.devBypassAuth ? home : '/lang-select');
         }
       },
       child: Scaffold(
