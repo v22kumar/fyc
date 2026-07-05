@@ -7,6 +7,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../../service_locator.dart';
+import '../../../membership/domain/entities/membership_entity.dart';
+import '../../../membership/domain/usecases/get_my_card_usecase.dart';
 
 /// The Me tab — identity hub per the v2 mockup: a profile/QR card over a list
 /// of account destinations. Theme-aware + 4-language.
@@ -78,9 +81,31 @@ class MeHubScreen extends StatelessWidget {
   }
 }
 
-class _ProfileCard extends StatelessWidget {
+class _ProfileCard extends StatefulWidget {
   final UserEntity? user;
   const _ProfileCard({required this.user});
+
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  MembershipEntity? _card;
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Best-effort: enrich the card with Member ID / since / valid-till. Silent
+    // on failure (a member without a card just sees name + role).
+    sl<GetMyCardUseCase>()().then((res) {
+      res.fold((_) {}, (card) {
+        if (mounted) setState(() => _card = card);
+      });
+    }).catchError((_) {});
+  }
+
+  UserEntity? get user => widget.user;
 
   String get _name => user?.fullNameEn ?? user?.fullNameTa ?? 'FYC Member';
   String get _initials {
@@ -96,8 +121,19 @@ class _ProfileCard extends StatelessWidget {
     return tr(en: 'Member', ta: 'உறுப்பினர்');
   }
 
+  String _monthYear(DateTime d) => '${_months[d.month - 1]} ${d.year}';
+  String _dmy(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+
+  Widget _line(String text) => Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(text,
+            style: TextStyle(color: Colors.white.withOpacity(0.82), fontSize: 11.5),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final card = _card;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -109,13 +145,14 @@ class _ProfileCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 30,
+            radius: 28,
             backgroundColor: Colors.white.withOpacity(0.2),
             child: Text(
               _initials,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 19),
             ),
           ),
           const SizedBox(width: 14),
@@ -129,34 +166,42 @@ class _ProfileCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  _roleLabel,
-                  style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13),
-                ),
-                if (user?.phoneNumber != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    user!.phoneNumber!,
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
-                  ),
+                if (card != null) ...[
+                  _line('${tr(en: 'Member ID', ta: 'உறுப்பினர் எண்', hi: 'सदस्य आईडी', ml: 'അംഗ ഐഡി')}: ${card.membershipNumber}'),
+                  if (card.issuedAt != null)
+                    _line('${tr(en: 'Member Since', ta: 'உறுப்பினரானது', hi: 'सदस्य से', ml: 'അംഗമായത്')}: ${_monthYear(card.issuedAt!)}'),
+                ] else ...[
+                  const SizedBox(height: 3),
+                  Text(_roleLabel, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
+                  if (user?.phoneNumber != null) _line(user!.phoneNumber!),
                 ],
               ],
             ),
           ),
-          if (user != null)
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+          const SizedBox(width: 10),
+          Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: QrImageView(
+                  data: card?.qrCodePayload ?? user?.id ?? 'FYC',
+                  version: QrVersions.auto,
+                  size: 56,
+                ),
               ),
-              child: QrImageView(
-                data: user!.id,
-                version: QrVersions.auto,
-                size: 60,
-              ),
-            ),
+              if (card != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${tr(en: 'Valid till', ta: 'செல்லுபடி', hi: 'मान्य', ml: 'സാധുത')} ${_dmy(card.expiresAt)}',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 8.5),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

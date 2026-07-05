@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -725,6 +726,75 @@ class _BucketCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Quick Actions row (mockup: Blood Request · Report · Create · Weekly · SOS) ──
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = <(IconData, Color, String, VoidCallback)>[
+      (Icons.bloodtype_rounded, const Color(0xFFEF4444),
+          tr(en: 'Blood\nRequest', ta: 'இரத்தம்', hi: 'रक्त', ml: 'രക്തം'),
+          () => context.push('/blood-donation')),
+      (Icons.report_problem_rounded, const Color(0xFFF59E0B),
+          tr(en: 'Report\nIssue', ta: 'புகார்', hi: 'शिकायत', ml: 'റിപ്പോർട്ട്'),
+          () => context.push('/issues')),
+      (Icons.event_rounded, const Color(0xFF16A34A),
+          tr(en: 'Create\nEvent', ta: 'நிகழ்வு', hi: 'कार्यक्रम', ml: 'ഇവന്റ്'),
+          () => showHomeCreateSheet(context)),
+      (Icons.emoji_events_rounded, const Color(0xFFD97706),
+          tr(en: 'Weekly\nGame', ta: 'விளையாட்டு', hi: 'खेल', ml: 'ഗെയിം'),
+          () => context.push('/sports')),
+      (Icons.emergency_share_rounded, const Color(0xFFDC2626),
+          tr(en: 'Emergency\nContacts', ta: 'அவசரம்', hi: 'आपातकाल', ml: 'അടിയന്തരം'),
+          () => showSosSheet(context)),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: tr(en: 'Quick Actions', ta: 'விரைவு செயல்கள்', hi: 'त्वरित कार्य', ml: 'ദ്രുത പ്രവർത്തനങ്ങൾ')),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (icon, color, label, onTap) in actions)
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(context.isDark ? 0.20 : 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(icon, color: color, size: 24),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: TextStyle(fontSize: 10.5, height: 1.15, color: context.cTextSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -2207,6 +2277,8 @@ class _CitizenDashboard extends StatelessWidget {
         const _BeAHeroCard(),
         const SizedBox(height: 22),
         const _ServiceBento(),
+        const SizedBox(height: 22),
+        const _QuickActions(),
         const SizedBox(height: 10),
         const _AnnouncementsBar(),
         const SizedBox(height: 22),

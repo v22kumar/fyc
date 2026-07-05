@@ -249,7 +249,7 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 - ✅ Discover bento (Home · Play · Feed · Serve) with sub-items
 - ✅ Upcoming Events row
 - ✅ Bottom nav (Home · Play · + · Serve · Me)
-- ⬜ **Quick Actions row** — Blood Request · Report Issue · Create Event · Weekly Game · Emergency Contacts (5 shortcut tiles under Upcoming Events) — not built
+- ✅ **Quick Actions row** — Blood Request · Report Issue · Create Event · Weekly Game · Emergency Contacts (5 shortcut tiles)
 
 ### Feed · Community
 - 🟡 Feed screen exists (threads-style + Instagram cross-post from earlier work)
@@ -273,7 +273,7 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 
 ### Me
 - ✅ Profile + QR card and list (My Profile · Membership Card · Member Directory · My Event Registrations · Settings · Help & Support)
-- ⬜ Card fields to mockup: **Member ID**, **Member Since**, **Valid Till** (currently shows role/phone)
+- ✅ Card fields to mockup: **Member ID · Member Since · Valid Till** (fetched from the membership card; QR uses the card payload)
 
 ### Safety Center / SOS
 - ✅ SOS trigger, Share Live Location (SMS), Alert Trusted Contacts, offline SMS fallback, emergency dial
@@ -281,9 +281,9 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 - ⬜ **Loud Siren / Silent Mode** toggle
 - ⬜ Branded **Safety Center** panel (feature list UI) + **Safety Settings** screen
 
-### Priority order for the pending items
-1. Home **Quick Actions row** (small, high-visibility)
-2. **Me** card fields (Member ID / Since / Valid Till — small)
-3. Feed **source tabs** + card parity (Sprint 4)
-4. Play **tab bar** + **Weekly Member Games** (Sprint 5 — the big one)
-5. **Safety Center** — Notify Nearby + Siren/Silent + settings (Sprint 6 depth)
+### Priority order for the remaining pending items
+1. ~~Home Quick Actions row~~ ✅ · ~~Me card fields~~ ✅
+2. Feed **source tabs** + card parity (Sprint 4)
+3. Play **tab bar** + **Weekly Member Games** (Sprint 5 — the big one)
+4. **Safety Center** — Notify Nearby + Siren/Silent + settings (Sprint 6 depth)
+5. Report Issue — align category set (Power Cut / Traffic / Other)
