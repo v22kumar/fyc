@@ -102,6 +102,7 @@ import '../../features/feed/create_post_screen.dart';
 import '../design_system/design_system_gallery_screen.dart';
 import '../design_system/shell/app_shell_v2.dart';
 import '../../features/serve/presentation/screens/serve_hub_screen.dart';
+import '../../features/profile/presentation/screens/me_hub_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -464,6 +465,6 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
           child: const SportsHubScreen(),
         ),
         const ServeHubScreen(),
-        const ProfileScreen(),
+        const MeHubScreen(),
       ],
     );
