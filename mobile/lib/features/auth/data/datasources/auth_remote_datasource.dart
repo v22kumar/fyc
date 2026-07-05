@@ -159,7 +159,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) throw const AuthFailure('Could not get Google ID token');
+      if (idToken == null) throw const AuthFailure("Google login isn't configured yet — use your phone number");
 
       final response = await _client.dio.post(
         ApiConstants.googleSignIn,
@@ -173,12 +173,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on PlatformException catch (e) {
       if (e.code == 'sign_in_failed') {
         if (e.message != null && e.message!.contains('10')) {
-          throw const AuthFailure('Google Sign-In is not configured correctly in Firebase (Missing SHA-1 fingerprint). Please contact support.');
+          throw const AuthFailure("Google login isn't configured yet — use your phone number");
         } else if (e.code == 'network_error') {
           throw const AuthFailure('Network error. Please check your connection and try again.');
         }
       }
-      throw AuthFailure('Google sign-in failed. Please try again later.');
+      throw AuthFailure("Google login isn't configured yet — use your phone number");
     } catch (e) {
       throw ServerFailure();
     }
