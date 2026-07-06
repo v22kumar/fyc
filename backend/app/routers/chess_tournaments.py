@@ -400,6 +400,16 @@ def start_tournament(
     if tour.status not in ("REGISTRATION_OPEN", "REGISTRATION_CLOSED"):
         raise HTTPException(status_code=400, detail="Tournament already started")
 
+    # Optimistic lock: ensure we are the only ones starting it
+    updated = db.query(ChessTournament).filter(
+        ChessTournament.id == tour_id,
+        ChessTournament.status.in_(["REGISTRATION_OPEN", "REGISTRATION_CLOSED"])
+    ).update({"status": "STARTING_LOCK"})
+    
+    if updated == 0:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Tournament already starting or started")
+
     entries = _entries(db, tour_id)
     players = [e.user_id for e in entries if _estatus(e) == "APPROVED"]
     if len(players) < 2:
@@ -622,8 +632,20 @@ def play_match(
             time_control="untimed",
         )
         db.add(game)
-        m.game_id = game.id
-        m.status = "LIVE"
+        db.flush()
+        
+        # Optimistic concurrency: ensure no other thread just created the game
+        updated = db.query(ChessTournamentMatch).filter(
+            ChessTournamentMatch.id == match_id,
+            ChessTournamentMatch.game_id.is_(None)
+        ).update({"game_id": game.id, "status": "LIVE"})
+        
+        if updated == 0:
+            db.rollback()
+            m = db.query(ChessTournamentMatch).filter(ChessTournamentMatch.id == match_id).first()
+        else:
+            m.game_id = game.id
+
     db.commit()
     return {"game_id": str(m.game_id)}
 
