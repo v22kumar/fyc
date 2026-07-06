@@ -136,7 +136,8 @@ class _SosSheetState extends State<_SosSheet> {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: SafeArea(
           top: false,
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -310,6 +311,7 @@ class _SosSheetState extends State<_SosSheet> {
                 ],
               ),
             ],
+          ),
           ),
         ),
       ),
