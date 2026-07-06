@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/constants/api_constants.dart';
 import '../../service_locator.dart';
 import 'feed_models.dart';
 
@@ -12,6 +13,7 @@ class FeedApi {
     String scope = 'all',
     String feed = 'recent', // recent | popular | following
     String? category, // null/All = no filter
+    String? source, // null = all; 'instagram' | 'thread'
     int limit = 20,
     int offset = 0,
   }) async {
@@ -20,6 +22,7 @@ class FeedApi {
       'feed': feed,
       if (category != null && category.isNotEmpty && category != 'All')
         'category': category,
+      if (source != null && source.isNotEmpty) 'source': source,
       'limit': limit,
       'offset': offset,
     });
@@ -28,6 +31,15 @@ class FeedApi {
         .whereType<Map>()
         .map((e) => Post.fromJson(e.cast<String, dynamic>()))
         .toList();
+  }
+
+  /// The community *activity* feed (events, tournaments, issues, green) — used
+  /// by the Feed screen's "Activity" tab. Returns raw items to keep this hub
+  /// decoupled from the community_feed feature.
+  static Future<List<Map<String, dynamic>>> activityFeed() async {
+    final res = await _dio.get('${ApiConstants.community}/feed');
+    final list = (res.data as List?) ?? const [];
+    return list.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
   }
 
   static Future<Post> create({
