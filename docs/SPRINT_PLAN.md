@@ -277,9 +277,10 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 
 ### Safety Center / SOS
 - ✅ SOS trigger, Share Live Location (SMS), Alert Trusted Contacts, offline SMS fallback, emergency dial
-- ⬜ **Notify Nearby Members** (broadcast alert to nearby FYC members)
-- ⬜ **Loud Siren / Silent Mode** toggle
-- ⬜ Branded **Safety Center** panel (feature list UI) + **Safety Settings** screen
+- ✅ **Notify Nearby Members** — `POST /notifications/sos-alert` broadcasts an SOS (with maps link) to org members
+- ✅ **Loud Siren / Silent Mode** — persisted toggle; haptic alarm on trigger (audio-siren asset is a follow-up)
+- ✅ Branded **Safety Center** panel (feature list UI); trusted-contacts + siren editable in-sheet
+- 🟡 A dedicated **Safety Settings** screen (contacts + siren live in the sheet today)
 
 ### Priority order for the remaining pending items
 1. ~~Home Quick Actions row~~ ✅ · ~~Me card fields~~ ✅

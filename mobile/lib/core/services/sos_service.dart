@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../network/api_client.dart';
+import '../../service_locator.dart';
 
 /// SOS emergency helper.
 ///
@@ -35,6 +39,43 @@ class SosService {
         .where((n) => n.isNotEmpty)
         .toList();
     await prefs.setString(_contactsKey, json.encode(cleaned));
+  }
+
+  // ── Loud Siren / Silent Mode ────────────────────────────────────────────────
+  static const _sirenKey = 'sos_loud_siren';
+
+  static Future<bool> getLoudSiren() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_sirenKey) ?? true;
+  }
+
+  static Future<void> setLoudSiren(bool on) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_sirenKey, on);
+  }
+
+  /// A dependency-free "siren": a burst of heavy haptic pulses. No-op in Silent
+  /// mode. (An audio siren asset is a planned upgrade.)
+  static Future<void> triggerSiren() async {
+    if (!await getLoudSiren()) return;
+    for (var i = 0; i < 6; i++) {
+      HapticFeedback.heavyImpact();
+      await Future.delayed(const Duration(milliseconds: 350));
+    }
+  }
+
+  /// Broadcast an SOS to fellow FYC members in the org (Notify Nearby Members).
+  /// Best-effort; returns false on any failure.
+  static Future<bool> alertMembers({Position? pos}) async {
+    try {
+      await sl<ApiClient>().dio.post('/api/v1/notifications/sos-alert', data: {
+        if (pos != null) 'latitude': pos.latitude,
+        if (pos != null) 'longitude': pos.longitude,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Best-effort current location. Returns null (never throws) if location is

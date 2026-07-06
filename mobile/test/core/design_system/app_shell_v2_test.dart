@@ -40,8 +40,8 @@ void main() {
 
       await tester.tap(sos);
       await tester.pumpAndSettle();
-      // Opens the real SOS action sheet (location SMS + emergency dial).
-      expect(find.text('Emergency SOS'), findsOneWidget);
+      // Opens the real Safety Center sheet (location SMS + emergency dial + alert).
+      expect(find.text('Safety Center'), findsOneWidget);
       expect(find.text('Send SOS to my contacts'), findsOneWidget);
     });
 

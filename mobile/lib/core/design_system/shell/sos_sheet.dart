@@ -23,6 +23,7 @@ class _SosSheet extends StatefulWidget {
 
 class _SosSheetState extends State<_SosSheet> {
   List<String> _contacts = [];
+  bool _loudSiren = true;
   bool _loading = true;
   bool _busy = false;
   final _addCtrl = TextEditingController();
@@ -41,11 +42,25 @@ class _SosSheetState extends State<_SosSheet> {
 
   Future<void> _load() async {
     final c = await SosService.getContacts();
+    final siren = await SosService.getLoudSiren();
     if (!mounted) return;
     setState(() {
       _contacts = c;
+      _loudSiren = siren;
       _loading = false;
     });
+  }
+
+  Future<void> _alertMembers() async {
+    setState(() => _busy = true);
+    final pos = await SosService.currentLocation();
+    SosService.triggerSiren();
+    final ok = await SosService.alertMembers(pos: pos);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    _snack(ok
+        ? 'FYC members have been alerted.'
+        : "Couldn't reach members — try SMS or call.");
   }
 
   Future<void> _addContact() async {
@@ -72,6 +87,7 @@ class _SosSheetState extends State<_SosSheet> {
     }
     setState(() => _busy = true);
     final pos = await SosService.currentLocation();
+    SosService.triggerSiren();
     final msg = SosService.buildMessage(name: widget.memberName, pos: pos);
     final ok = await SosService.sendSms(_contacts, msg);
     if (!mounted) return;
@@ -94,6 +110,19 @@ class _SosSheetState extends State<_SosSheet> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
   }
 
+  List<Widget> _feature(IconData icon, String text) => [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(children: [
+            Icon(icon, color: const Color(0xFF16A34A), size: 16),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(text,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12.5))),
+          ]),
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
@@ -107,7 +136,10 @@ class _SosSheetState extends State<_SosSheet> {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: SafeArea(
           top: false,
-          child: Column(
+          child: SingleChildScrollView(
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -123,19 +155,23 @@ class _SosSheetState extends State<_SosSheet> {
                 ),
               ),
               Row(
-                children: const [
-                  Icon(Icons.sos_rounded, color: Color(0xFFDC2626), size: 28),
-                  SizedBox(width: 10),
-                  Text('Emergency SOS',
+                children: [
+                  const Icon(Icons.health_and_safety_rounded, color: Color(0xFFDC2626), size: 26),
+                  const SizedBox(width: 10),
+                  const Text('Safety Center',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                  ),
                 ],
               ),
-              const SizedBox(height: 6),
               const Text(
-                'Send your live location to your trusted contacts, or call the '
+                'Alert your trusted contacts and nearby FYC members, or call the '
                 'emergency number.',
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
@@ -176,8 +212,44 @@ class _SosSheetState extends State<_SosSheet> {
                   label: const Text('Call ${SosService.emergencyNumber}'),
                 ),
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 50,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: _busy ? null : _alertMembers,
+                  icon: const Icon(Icons.campaign_rounded),
+                  label: const Text('Alert nearby FYC members'),
+                ),
+              ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+              ..._feature(Icons.location_on_rounded, 'Share live location'),
+              ..._feature(Icons.contacts_rounded, 'Alert trusted contacts'),
+              ..._feature(Icons.groups_rounded, 'Notify nearby FYC members'),
+              ..._feature(Icons.sms_rounded, 'Works offline (SMS fallback)'),
+
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _loudSiren,
+                activeColor: const Color(0xFFDC2626),
+                onChanged: (v) async {
+                  await SosService.setLoudSiren(v);
+                  if (mounted) setState(() => _loudSiren = v);
+                },
+                title: const Text('Loud Siren',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                    _loudSiren ? 'Vibrating alarm when you trigger SOS' : 'Silent mode',
+                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              ),
+
+              const SizedBox(height: 8),
               const Text('Trusted contacts',
                   style: TextStyle(
                       color: Colors.white,
@@ -241,6 +313,8 @@ class _SosSheetState extends State<_SosSheet> {
                 ],
               ),
             ],
+          ),
+          ),
           ),
         ),
       ),
