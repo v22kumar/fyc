@@ -35,8 +35,40 @@ class ChessTournamentApi {
     await _dio.post('$_base/$id/register');
   }
 
+  /// Manager approves or rejects a pending registration.
+  static Future<ChessTournamentDetail> decide(
+      String tourId, String userId, bool approve) async {
+    final res = await _dio.post('$_base/$tourId/registrations/$userId/decision',
+        data: {'approve': approve});
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// Manager manually closes registration (no more sign-ups).
+  static Future<ChessTournamentDetail> closeRegistration(String id) async {
+    final res = await _dio.post('$_base/$id/close');
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// Manager reopens a prematurely-closed registration.
+  static Future<ChessTournamentDetail> reopenRegistration(String id) async {
+    final res = await _dio.post('$_base/$id/reopen');
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
   static Future<ChessTournamentDetail> start(String id) async {
     final res = await _dio.post('$_base/$id/start');
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// Manager activates the next round once the current one is fully decided.
+  static Future<ChessTournamentDetail> nextRound(String id) async {
+    final res = await _dio.post('$_base/$id/next-round');
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// A player marks themselves ready for their activated online match.
+  static Future<ChessTournamentDetail> markReady(String tourId, String matchId) async {
+    final res = await _dio.post('$_base/$tourId/matches/$matchId/ready');
     return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
@@ -54,10 +86,16 @@ class ChessTournamentApi {
   }
 
   /// Organizer sets how a match is conducted: 'APP' (online) or 'PHYSICAL'.
+  /// For a physical match an optional venue + reporting time is attached and
+  /// both players are notified.
   static Future<ChessTournamentDetail> setConduct(
-      String tourId, String matchId, String mode) async {
-    final res = await _dio.post('$_base/$tourId/matches/$matchId/conduct',
-        data: {'mode': mode});
+      String tourId, String matchId, String mode,
+      {String? venue, String? reportingTime}) async {
+    final res = await _dio.post('$_base/$tourId/matches/$matchId/conduct', data: {
+      'mode': mode,
+      if (venue != null && venue.isNotEmpty) 'venue': venue,
+      if (reportingTime != null) 'reporting_time': reportingTime,
+    });
     return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
   }
 }

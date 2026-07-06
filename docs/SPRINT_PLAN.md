@@ -259,6 +259,7 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 
 ### Play
 - ✅ Chess Arena entry + Tournaments reachable (pill), auto-scoring, SF/final app-or-in-person
+- ✅ **Chess knockout flow (full)**: register → **manager approve/reject** → **manual close** (+ reopen) → draw bracket (fair byes) → **manual Start Next Round** per round → per-player **Ready** gate → auto-record winner + notify organizer → **In Person** venue + push notifications throughout. Backend tests in `test_chess_tournaments.py`; runbook updated.
 - ⬜ **Tab bar**: All · Tournaments · Weekly Games · Chess (current shows sport filters instead)
 - ⬜ **Weekly Member Games** — the "Sunday Match · Any Members" live card (organizer, LIVE badge, live score) + create/score flow — not built (large feature)
 - 🟡 Upcoming Tournaments card (Registration Open, reg-closes date, trophy) — exists but not styled to mockup

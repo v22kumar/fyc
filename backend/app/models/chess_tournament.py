@@ -6,6 +6,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Integer,
+    Boolean,
     DateTime,
     UniqueConstraint,
 )
@@ -22,9 +23,13 @@ class ChessTournament(Base, TimestampMixin, TenantModelMixin):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
     description = Column(Text, nullable=True)
-    # REGISTRATION_OPEN → IN_PROGRESS → COMPLETED
+    # REGISTRATION_OPEN → REGISTRATION_CLOSED → IN_PROGRESS → COMPLETED
     status = Column(String(20), nullable=False, default="REGISTRATION_OPEN")
     registration_deadline = Column(DateTime(timezone=True), nullable=True)
+    # Highest round the manager has activated ("Start Next Round"). 0 until the
+    # tournament starts, 1 once round 1 is live, etc. Nullable so the startup
+    # schema-reconcile can add it to existing rows; treated as 0 when null.
+    current_round = Column(Integer, default=0)
     created_by_user_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
@@ -50,6 +55,10 @@ class ChessTournamentEntry(Base, TimestampMixin, TenantModelMixin):
     user_id = Column(
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+    # PENDING (awaiting manager decision) / APPROVED / REJECTED. Nullable so the
+    # startup schema-reconcile can add it to legacy rows; a null status is
+    # treated as APPROVED so pre-existing entries are never stranded.
+    status = Column(String(20), default="PENDING")
 
 
 class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
@@ -77,10 +86,23 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
     winner_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    # PENDING (waiting for players) / READY (both set) / LIVE / DONE / BYE
+    # PENDING (waiting for players / round not started) / READY (both set and
+    # round activated) / LIVE / DONE / BYE
     status = Column(String(20), nullable=False, default="PENDING")
     # APP = played online in the Arena; PHYSICAL = played in person and an admin
     # records the result. Organizers switch this for semi-final / final matches.
     # Nullable so the startup schema-reconcile can add it to existing rows;
     # treated as "APP" when null.
     conduct_mode = Column(String(10), default="APP")
+    # Round activation: a match only becomes playable once the manager starts its
+    # round ("Start Next Round"). Round 1 is activated when the tournament starts.
+    activated = Column(Boolean, default=False)
+    # Per-player "Ready" acknowledgement before an online match can begin. Both
+    # players must be ready to open the board. Nullable → treated as False.
+    a_ready = Column(Boolean, default=False)
+    b_ready = Column(Boolean, default=False)
+    # Physical-match logistics (venue + reporting time) shown to both players.
+    venue = Column(String(200), nullable=True)
+    reporting_time = Column(DateTime(timezone=True), nullable=True)
+    # When the winner was recorded (auto on Arena finish, or manager override).
+    completed_at = Column(DateTime(timezone=True), nullable=True)

@@ -46,6 +46,8 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
         return tr(en: 'Live', ta: 'நேரலை', hi: 'लाइव', ml: 'ലൈവ്');
       case 'COMPLETED':
         return tr(en: 'Completed', ta: 'முடிந்தது', hi: 'समाप्त', ml: 'പൂർത്തിയായി');
+      case 'REGISTRATION_CLOSED':
+        return tr(en: 'Registration Closed', ta: 'பதிவு மூடப்பட்டது', hi: 'पंजीकरण बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു');
       default:
         return tr(en: 'Registration Open', ta: 'பதிவு திறந்துள்ளது', hi: 'पंजीकरण खुला', ml: 'രജിസ്ട്രേഷൻ തുറന്നു');
     }
@@ -57,6 +59,8 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
         return const Color(0xFFEF4444);
       case 'COMPLETED':
         return const Color(0xFF64748B);
+      case 'REGISTRATION_CLOSED':
+        return const Color(0xFFF59E0B);
       default:
         return const Color(0xFF16A34A);
     }
