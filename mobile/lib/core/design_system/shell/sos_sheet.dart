@@ -137,7 +137,9 @@ class _SosSheetState extends State<_SosSheet> {
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            child: Column(
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -311,6 +313,7 @@ class _SosSheetState extends State<_SosSheet> {
                 ],
               ),
             ],
+          ),
           ),
           ),
         ),
