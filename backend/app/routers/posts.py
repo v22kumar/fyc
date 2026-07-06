@@ -126,6 +126,7 @@ def list_posts(
     scope: str = Query("all", pattern="^(all|mine)$"),
     feed: str = Query("recent", pattern="^(recent|popular|following)$"),
     category: Optional[str] = Query(None),
+    source: Optional[str] = Query(None, description="Filter by source: thread | instagram"),
     limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -154,6 +155,8 @@ def list_posts(
 
     if category and category.lower() != "all":
         q = q.filter(func.lower(Post.category) == category.lower())
+    if source and source.lower() != "all":
+        q = q.filter(func.lower(Post.source) == source.lower())
     if feed == "following":
         # No follow graph yet → show the club's official voice (admin authors).
         q = q.join(User, User.id == Post.author_id).filter(

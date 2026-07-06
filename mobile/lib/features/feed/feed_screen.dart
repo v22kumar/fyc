@@ -24,12 +24,14 @@ String _ago(DateTime d, bool ta) {
   return '${(diff.inDays / 7).floor()}w';
 }
 
-// Category tabs → backend category filter.
-const _tabs = <(String, IconData, String?)>[
-  ('All Posts', Icons.dynamic_feed, null),
-  ('Club Updates', Icons.campaign_outlined, 'Announcement'),
-  ('Events', Icons.event_outlined, 'Events'),
-  ('Achievements', Icons.emoji_events_outlined, 'Achievements'),
+// Source tabs (v2 mockup): All · Instagram · Threads · Green FYC + Activity.
+// Fields: (label, icon, source, category, isActivity).
+const _tabs = <(String, IconData, String?, String?, bool)>[
+  ('All', Icons.dynamic_feed, null, null, false),
+  ('Instagram', Icons.camera_alt_outlined, 'instagram', null, false),
+  ('Threads', Icons.forum_outlined, 'thread', null, false),
+  ('Green FYC', Icons.eco_outlined, null, 'Green', false),
+  ('Activity', Icons.bolt_outlined, null, null, true),
 ];
 
 // Filter chips → backend feed sort.
@@ -54,8 +56,11 @@ class _FeedScreenState extends State<FeedScreen> {
   int _filter = 0;
 
   List<Post>? _posts;
+  List<Map<String, dynamic>>? _activity;
   bool _loading = false;
   bool _error = false;
+
+  bool get _isActivity => _tabs[_tab].$5;
 
   @override
   void initState() {
@@ -68,16 +73,27 @@ class _FeedScreenState extends State<FeedScreen> {
       _loading = true;
       _error = false;
     });
+    final t = _tabs[_tab];
     try {
-      final posts = await FeedApi.list(
-        feed: _filters[_filter].$3,
-        category: _tabs[_tab].$3,
-      );
-      if (!mounted) return;
-      setState(() {
-        _posts = posts;
-        _loading = false;
-      });
+      if (t.$5) {
+        final acts = await FeedApi.activityFeed();
+        if (!mounted) return;
+        setState(() {
+          _activity = acts;
+          _loading = false;
+        });
+      } else {
+        final posts = await FeedApi.list(
+          feed: _filters[_filter].$3,
+          category: t.$4,
+          source: t.$3,
+        );
+        if (!mounted) return;
+        setState(() {
+          _posts = posts;
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -122,9 +138,10 @@ class _FeedScreenState extends State<FeedScreen> {
             SliverToBoxAdapter(
               child: _TabsBar(active: _tab, onSelect: _selectTab),
             ),
-            SliverToBoxAdapter(
-              child: _FilterChips(active: _filter, onSelect: _selectFilter),
-            ),
+            if (!_isActivity)
+              SliverToBoxAdapter(
+                child: _FilterChips(active: _filter, onSelect: _selectFilter),
+              ),
             _buildBody(),
             const SliverToBoxAdapter(child: SizedBox(height: 90)),
           ],
@@ -134,6 +151,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildBody() {
+    if (_isActivity) return _buildActivityBody();
     if (_loading && _posts == null) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -193,6 +211,127 @@ class _FeedScreenState extends State<FeedScreen> {
           (_, i) => _PostCard(post: posts[i], ta: _ta),
           childCount: posts.length,
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivityBody() {
+    if (_loading && _activity == null) {
+      return const SliverToBoxAdapter(
+        child: Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator())),
+      );
+    }
+    final acts = _activity ?? const [];
+    if ((_error && _activity == null) || acts.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 70),
+          child: Center(
+            child: Column(
+              children: [
+                const Text('📣', style: TextStyle(fontSize: 44)),
+                const SizedBox(height: 12),
+                Text(
+                  _error
+                      ? tr(en: "Couldn't load activity", ta: 'ஏற்ற முடியவில்லை', hi: 'लोड नहीं हुआ', ml: 'ലോഡ് ചെയ്യാനായില്ല')
+                      : tr(en: 'No recent activity', ta: 'சமீபத்திய செயல்பாடு இல்லை', hi: 'कोई हालिया गतिविधि नहीं', ml: 'സമീപകാല പ്രവർത്തനങ്ങളില്ല'),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: context.cText),
+                ),
+                if (_error) ...[
+                  const SizedBox(height: 12),
+                  ElevatedButton(onPressed: _load, child: Text(tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः', ml: 'വീണ്ടും'))),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (_, i) => _ActivityCard(item: acts[i], ta: _ta),
+          childCount: acts.length,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final bool ta;
+  const _ActivityCard({required this.item, required this.ta});
+
+  (IconData, Color, String) get _meta {
+    switch ((item['item_type'] ?? '').toString().toUpperCase()) {
+      case 'EVENT':
+        return (Icons.event, const Color(0xFF8B5CF6), ta ? 'நிகழ்வு' : 'Event');
+      case 'TOURNAMENT':
+        return (Icons.emoji_events, const Color(0xFFF59E0B), ta ? 'போட்டி' : 'Tournament');
+      case 'ISSUE':
+        return (Icons.campaign, const Color(0xFFEAB308), ta ? 'புகார்' : 'Issue');
+      case 'GREEN':
+      case 'TREE':
+        return (Icons.eco, const Color(0xFF16A34A), ta ? 'பசுமை' : 'Green');
+      default:
+        return (Icons.bolt, const Color(0xFF6366F1), ta ? 'செயல்பாடு' : 'Activity');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, color, label) = _meta;
+    final title = ((ta ? item['title_ta'] : item['title_en']) ?? item['title_en'] ?? '').toString();
+    final subtitle = ((ta ? item['subtitle_ta'] : item['subtitle_en']) ?? '').toString();
+    final image = item['image_url']?.toString();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.cSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.cBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: color.withOpacity(0.14), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label.toUpperCase(),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: color)),
+                const SizedBox(height: 2),
+                Text(title,
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: context.cText),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: TextStyle(fontSize: 12.5, color: context.cTextSecondary),
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                ],
+              ],
+            ),
+          ),
+          if (image != null && image.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(image, width: 54, height: 54, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -325,10 +464,10 @@ class _TabsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String label(String en) => switch (en) {
-          'All Posts' => tr(en: 'All Posts', ta: 'எல்லாம்', hi: 'सभी', ml: 'എല്ലാം'),
-          'Club Updates' => tr(en: 'Club Updates', ta: 'கிளப்', hi: 'क्लब', ml: 'ക്ലബ്'),
-          'Events' => tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'इवेंट', ml: 'ഇവന്റുകൾ'),
-          _ => tr(en: 'Achievements', ta: 'சாதனைகள்', hi: 'उपलब्धियां', ml: 'നേട്ടങ്ങൾ'),
+          'All' => tr(en: 'All', ta: 'எல்லாம்', hi: 'सभी', ml: 'എല്ലാം'),
+          'Green FYC' => tr(en: 'Green FYC', ta: 'பசுமை FYC', hi: 'ग्रीन FYC', ml: 'ഗ്രീൻ FYC'),
+          'Activity' => tr(en: 'Activity', ta: 'செயல்பாடு', hi: 'गतिविधि', ml: 'പ്രവർത്തനം'),
+          _ => en, // Instagram / Threads — brand names, keep as-is
         };
     return Padding(
       padding: const EdgeInsets.only(top: 38),
