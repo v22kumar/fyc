@@ -406,7 +406,7 @@ class _ScoreHeader extends StatelessWidget {
                 'Target ${ms.target}',
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
-            ]
+            ],
             if (ms.recentBalls.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Divider(),
@@ -434,7 +434,7 @@ class _ScoreHeader extends StatelessWidget {
                   ),
                 )).toList(),
               ),
-            ],,
+            ],
           ],
         ),
       ),
