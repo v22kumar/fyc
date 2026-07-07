@@ -352,8 +352,9 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                       bowlerName: _bowler.text,
                     )
                 : null,
-            child: Text(tr(en: 'Start scoring', ta: 'ஸ்கோரிங் தொடங்கு',
-                hi: 'स्कोरिंग शुरू करें', ml: 'സ്കോറിംഗ് ആരംഭിക്കുക')),
+              child: Text(tr(en: 'Start scoring', ta: 'ஸ்கோரிங் தொடங்கு',
+                  hi: 'स्कोरिंग शुरू करें', ml: 'സ്കോറിംഗ് ആരംഭിക്കുക')),
+            ),
           ),
         ],
       ),
@@ -676,7 +677,8 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               child: Text(tr(en: 'Start 2nd innings', ta: '2-வது இன்னிங்ஸ் தொடங்கு',
                   hi: 'दूसरी पारी शुरू करें', ml: 'രണ്ടാം ഇന്നിംഗ്സ് ആരംഭിക്കുക')),
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );
@@ -865,7 +867,8 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
               child: Text(tr(en: 'Continue scoring', ta: 'ஸ்கோரிங் தொடர்க',
                   hi: 'स्कोरिंग जारी रखें', ml: 'സ്കോറിംഗ് തുടരുക')),
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );
