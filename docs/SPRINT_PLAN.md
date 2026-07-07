@@ -252,10 +252,10 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 - ✅ **Quick Actions row** — Blood Request · Report Issue · Create Event · Weekly Game · Emergency Contacts (5 shortcut tiles)
 
 ### Feed · Community
-- 🟡 Feed screen exists (threads-style + Instagram cross-post from earlier work)
+- ✅ Feed screen exists (threads-style + Instagram cross-post from earlier work)
 - ✅ **Source tabs** (option c): All · Instagram · Threads · Green FYC · **Activity** — social posts filtered by source, plus an Activity tab showing the community activity feed (events/tournaments/issues/green). Backend `/posts?source=` filter added.
-- 🟡 **Green FYC** tab filters by category `Green` (graceful-empty until green posts are tagged)
-- 🟡 **Post card parity**: verify source badge/handle/timestamp, media grid, counts vs mockup
+- ✅ **Green FYC** tab filters by category `Green` (graceful-empty until green posts are tagged)
+- ✅ **Post card parity**: verify source badge/handle/timestamp, media grid, counts vs mockup
 
 ### Play
 - ✅ Chess Arena entry + Tournaments reachable (pill), auto-scoring, SF/final app-or-in-person
@@ -285,7 +285,7 @@ Point-by-point against the v2.0 requirements mockup. ✅ shipped to `main`;
 
 ### Priority order for the remaining pending items
 1. ~~Home Quick Actions row~~ ✅ · ~~Me card fields~~ ✅
-2. Feed **source tabs** + card parity (Sprint 4)
+2. ~~Feed **source tabs** + card parity (Sprint 4)~~ ✅
 3. Play **tab bar** + **Weekly Member Games** (Sprint 5 — the big one)
 4. **Safety Center** — Notify Nearby + Siren/Silent + settings (Sprint 6 depth)
 5. Report Issue — align category set (Power Cut / Traffic / Other)

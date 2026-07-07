@@ -82,8 +82,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<void> _pickImage() async {
     if (_images.length >= 4) return;
     try {
-      final x = await _picker.pickImage(
-          source: ImageSource.gallery, imageQuality: 70, maxWidth: 1600);
+      // Support both images and videos (D1 requirement)
+      final x = await _picker.pickMedia(imageQuality: 70, maxWidth: 1600);
       if (x != null) setState(() => _images.add(File(x.path)));
     } catch (_) {}
   }
@@ -291,8 +291,52 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
               ),
-            ),
           ],
+          const SizedBox(height: 16),
+
+          // Quick actions (Sprint 4: Poll, Event, Tournament, Volunteer)
+          Text('Quick Actions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _QuickActionBtn(
+                  icon: Icons.poll_outlined,
+                  color: const Color(0xFF3B82F6),
+                  label: 'Poll',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon: Create Poll'))),
+                ),
+                _QuickActionBtn(
+                  icon: Icons.event_outlined,
+                  color: const Color(0xFF8B5CF6),
+                  label: 'Event',
+                  onTap: () {
+                    Navigator.pop(context); // Close create post sheet
+                    context.push('/events'); // Or wherever event creation is
+                  },
+                ),
+                _QuickActionBtn(
+                  icon: Icons.emoji_events_outlined,
+                  color: const Color(0xFFD97706),
+                  label: 'Tournament',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/sports/tournament/create');
+                  },
+                ),
+                _QuickActionBtn(
+                  icon: Icons.volunteer_activism_outlined,
+                  color: const Color(0xFFEF4444),
+                  label: 'Volunteer',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/opportunities');
+                  },
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Instagram toggle (managers only)

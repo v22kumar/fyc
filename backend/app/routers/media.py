@@ -21,8 +21,8 @@ except ImportError:
 router = APIRouter(prefix="/media", tags=["Media"])
 
 UPLOAD_DIR = Path("uploads")
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-MAX_SIZE_MB = 10
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/quicktime"}
+MAX_SIZE_MB = 20
 
 
 def _cloudinary_configured() -> bool:
@@ -79,8 +79,7 @@ async def upload_file(
             io.BytesIO(content),
             folder=f"fyc/{org_id}",
             public_id=uuid.uuid4().hex,
-            resource_type="image",
-            format=ext,
+            resource_type="auto",
         )
 
         secure_url: str = result["secure_url"]

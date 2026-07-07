@@ -639,6 +639,78 @@ class _PostCardState extends State<_PostCard> {
     );
   }
 
+  void _showMoreOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: context.cBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.cBorder,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+              title: const Text('Report Post'),
+              onTap: () async {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reporting post...')));
+                try {
+                  await FeedApi.report(p.id, reason: 'Inappropriate content');
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post reported.')));
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to report.')));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.block, color: Colors.red),
+              title: Text('Block ${p.author.name}'),
+              onTap: () async {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Blocking ${p.author.name}...')));
+                try {
+                  await FeedApi.blockUser(p.author.id);
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User blocked. Refresh to hide their posts.')));
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to block user.')));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete Post (Admin/Author)'),
+              onTap: () async {
+                Navigator.pop(context);
+                try {
+                  await FeedApi.delete(p.id);
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted. Refresh feed.')));
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete. You may not have permission.')));
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final initial =
@@ -714,7 +786,7 @@ class _PostCardState extends State<_PostCard> {
                 ),
                 IconButton(
                   icon: Icon(Icons.more_horiz, color: context.cTextSecondary),
-                  onPressed: () {},
+                  onPressed: _showMoreOptions,
                 ),
               ],
             ),
@@ -839,16 +911,38 @@ class _PostImages extends StatelessWidget {
   final bool isInstagram;
   const _PostImages({required this.urls, this.isInstagram = false});
 
-  Widget _img(BuildContext context, String u, {double? h}) => Image.network(
-        _fullUrl(u),
-        fit: BoxFit.cover,
-        height: h,
-        width: double.infinity,
-        errorBuilder: (_, __, ___) => Container(
-          height: h ?? 180, color: context.cBorder,
-          child: Icon(Icons.broken_image_outlined, color: context.cTextSecondary),
-        ),
-      );
+  Widget _img(BuildContext context, String u, {double? h}) {
+    final isVideo = u.endsWith('.mp4') || u.endsWith('.mov') || u.endsWith('.webm');
+    final thumbUrl = isVideo && u.contains('cloudinary.com')
+        ? u.replaceAll(RegExp(r'\.mp4$|\.mov$|\.webm$'), '.jpg')
+        : u;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (isVideo && !u.contains('cloudinary.com'))
+          Container(
+            color: Colors.black87,
+            child: const Icon(Icons.videocam, color: Colors.white54, size: 40),
+          )
+        else
+          Image.network(
+            _fullUrl(thumbUrl),
+            fit: BoxFit.cover,
+            height: h,
+            width: double.infinity,
+            errorBuilder: (_, __, ___) => Container(
+              height: h ?? 180,
+              color: context.cBorder,
+              child: Icon(isVideo ? Icons.videocam : Icons.broken_image_outlined, color: context.cTextSecondary),
+            ),
+          ),
+        if (isVideo)
+          const Center(
+            child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 48),
+          ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -101,6 +101,16 @@ class FeedApi {
     await _dio.delete('/api/v1/posts/$postId');
   }
 
+  static Future<void> report(String postId, {String? reason}) async {
+    await _dio.post('/api/v1/posts/$postId/report', data: {
+      if (reason != null) 'reason': reason,
+    });
+  }
+
+  static Future<void> blockUser(String userId) async {
+    await _dio.post('/api/v1/users/$userId/block');
+  }
+
   /// Uploads an image file and returns its URL (Cloudinary or local).
   static Future<String> uploadImage(String filePath) async {
     final form = FormData.fromMap({

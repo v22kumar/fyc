@@ -92,6 +92,11 @@ class ApiConstants {
       '/api/v1/fixtures/$fid/cricket/undo';
   static String sportsFixtureCricketSecondInnings(String fid) =>
       '/api/v1/fixtures/$fid/cricket/second-innings';
+      
+  // Weekly Games
+  static const String weeklyGames = '/api/v1/weekly-games';
+  static String weeklyGameJoin(String gid) => '/api/v1/weekly-games/$gid/join';
+  static String weeklyGameStart(String gid) => '/api/v1/weekly-games/$gid/start';
 
   // Announcements
   static const String announcements = '/api/v1/announcements';
