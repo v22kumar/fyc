@@ -25,12 +25,10 @@ class _Cat {
 }
 
 const _categories = [
-  _Cat('ROAD',         '🛣️',  'சாலை பிரச்சனை',   'Road Issue',    'Potholes, Damage, etc.',   Color(0xFF16A34A)),
-  _Cat('WATER',        '💧',  'தண்ணீர் பிரச்சனை', 'Water Issue',   'Leakages, Supply, etc.',   Color(0xFF2563EB)),
-  _Cat('STREET_LIGHT', '💡',  'தெரு விளக்கு',      'Street Light',  'Not working, Flickering',  Color(0xFFD97706)),
-  _Cat('GARBAGE',      '🗑️', 'குப்பை',           'Garbage',       'Overflow, Not cleaned',    Color(0xFFEA580C)),
-  _Cat('SAFETY',       '🚨',  'பாதுகாப்பு',         'Safety',        'Hazard, Accident, etc.',   Color(0xFFDC2626)),
-  _Cat('OTHER',        '📋',  'மற்றவை',           'Other',         'Other general issues',     Color(0xFF6B7280)),
+  _Cat('ROAD_TRAFFIC', '🛣️', 'சாலை / போக்குவரத்து', 'Road/Traffic', 'Potholes, Blockages, etc.', Color(0xFF16A34A)),
+  _Cat('POWER_CUT',    '⚡',  'மின் தடை',          'Power Cut',    'Outages, Broken wires',    Color(0xFFD97706)),
+  _Cat('WATER',        '💧',  'தண்ணீர் பிரச்சனை',    'Water',        'Leakages, Supply, etc.',   Color(0xFF2563EB)),
+  _Cat('OTHER',        '📋',  'மற்றவை',             'Other',        'Other general issues',     Color(0xFF6B7280)),
 ];
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -43,7 +41,7 @@ class SubmitIssueScreen extends StatefulWidget {
 }
 
 class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
-  String _selectedCategory = 'ROAD';
+  String _selectedCategory = 'ROAD_TRAFFIC';
   bool _isEmergency = false;
   final _descTaCtrl = TextEditingController();
   final _descEnCtrl = TextEditingController();

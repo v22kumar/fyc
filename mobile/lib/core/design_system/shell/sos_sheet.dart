@@ -23,10 +23,8 @@ class _SosSheet extends StatefulWidget {
 
 class _SosSheetState extends State<_SosSheet> {
   List<String> _contacts = [];
-  bool _loudSiren = true;
   bool _loading = true;
   bool _busy = false;
-  final _addCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -36,17 +34,14 @@ class _SosSheetState extends State<_SosSheet> {
 
   @override
   void dispose() {
-    _addCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     final c = await SosService.getContacts();
-    final siren = await SosService.getLoudSiren();
     if (!mounted) return;
     setState(() {
       _contacts = c;
-      _loudSiren = siren;
       _loading = false;
     });
   }
@@ -61,23 +56,6 @@ class _SosSheetState extends State<_SosSheet> {
     _snack(ok
         ? 'FYC members have been alerted.'
         : "Couldn't reach members — try SMS or call.");
-  }
-
-  Future<void> _addContact() async {
-    final n = _addCtrl.text.trim();
-    if (n.isEmpty) return;
-    final next = [..._contacts, n];
-    await SosService.saveContacts(next);
-    _addCtrl.clear();
-    if (!mounted) return;
-    setState(() => _contacts = next);
-  }
-
-  Future<void> _removeContact(String n) async {
-    final next = _contacts.where((c) => c != n).toList();
-    await SosService.saveContacts(next);
-    if (!mounted) return;
-    setState(() => _contacts = next);
   }
 
   Future<void> _sendSos() async {
@@ -234,85 +212,7 @@ class _SosSheetState extends State<_SosSheet> {
               ..._feature(Icons.groups_rounded, 'Notify nearby FYC members'),
               ..._feature(Icons.sms_rounded, 'Works offline (SMS fallback)'),
 
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _loudSiren,
-                activeColor: const Color(0xFFDC2626),
-                onChanged: (v) async {
-                  await SosService.setLoudSiren(v);
-                  if (mounted) setState(() => _loudSiren = v);
-                },
-                title: const Text('Loud Siren',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                    _loudSiren ? 'Vibrating alarm when you trigger SOS' : 'Silent mode',
-                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
-              ),
-
-              const SizedBox(height: 8),
-              const Text('Trusted contacts',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Loading…', style: TextStyle(color: Colors.white54)),
-                )
-              else if (_contacts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Text('No contacts yet — add a phone number below.',
-                      style: TextStyle(color: Colors.white54, fontSize: 13)),
-                )
-              else
-                ..._contacts.map((c) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      leading: const Icon(Icons.person_rounded,
-                          color: Colors.white70, size: 20),
-                      title: Text(c,
-                          style: const TextStyle(color: Colors.white)),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: Colors.white38, size: 20),
-                        onPressed: () => _removeContact(c),
-                      ),
-                    )),
-
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _addCtrl,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Add phone number',
-                        hintStyle: const TextStyle(color: Colors.white38),
-                        filled: true,
-                        fillColor: Colors.white10,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _addContact,
-                    icon: const Icon(Icons.add_circle_rounded,
-                        color: Color(0xFF16A34A), size: 32),
-                  ),
-                ],
-              ),
-            ],
+              ],
           ),
           ),
           ),

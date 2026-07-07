@@ -6,11 +6,10 @@ from app.models.base import GUID, TimestampMixin, TenantModelMixin
 import enum
 
 class IssueCategory(str, enum.Enum):
-    ROAD = "ROAD"
+    ROAD_TRAFFIC = "ROAD_TRAFFIC"
+    POWER_CUT = "POWER_CUT"
     WATER = "WATER"
-    STREET_LIGHT = "STREET_LIGHT"
-    GARBAGE = "GARBAGE"
-    SAFETY = "SAFETY"
+    
     OTHER = "OTHER"
 
 class IssueStatus(str, enum.Enum):

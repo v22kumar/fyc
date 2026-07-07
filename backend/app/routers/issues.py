@@ -21,7 +21,8 @@ require_executive = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 # Category → department label mapping (used in notifications)
 _DEPT_MAP = {
-    "ROAD":         "Municipal Engineering / PWD",
+    "ROAD_TRAFFIC": "Traffic Police / PWD",
+    "POWER_CUT": "TNEB",
     "WATER":        "Water Supply Board",
     "STREET_LIGHT": "Electricity Board / Municipality",
     "GARBAGE":      "Sanitation Department",

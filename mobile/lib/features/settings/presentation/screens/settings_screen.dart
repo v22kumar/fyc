@@ -254,7 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _Divider(context),
                 _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
                 _Divider(context),
-                _LinkRow(icon: Icons.sos_rounded, label: 'Emergency SOS', onTap: () => showSosSheet(context), context: context),
+                _LinkRow(icon: Icons.health_and_safety_rounded, label: 'Safety Center', onTap: () => context.push('/settings/safety'), context: context),
                 _Divider(context),
                 _LinkRow(icon: Icons.auto_awesome, label: 'Preview new design (beta)', onTap: () => context.push('/v2'), context: context),
               ],

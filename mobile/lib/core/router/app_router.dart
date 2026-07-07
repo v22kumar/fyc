@@ -18,6 +18,8 @@ import '../../features/membership/presentation/screens/membership_card_screen.da
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
 import '../../service_locator.dart';
+import '../../features/settings/presentation/screens/safety_settings_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
@@ -80,7 +82,6 @@ import '../../features/issues/presentation/screens/issues_track_screen.dart';
 
 // About
 import '../../features/about/presentation/screens/about_screen.dart';
-import '../../features/settings/presentation/screens/settings_screen.dart';
 
 // Volunteer certificate
 import '../../features/volunteers/presentation/screens/certificate_screen.dart';
@@ -319,6 +320,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/safety',
+      builder: (context, state) => const SafetySettingsScreen(),
     ),
     GoRoute(
       path: '/certificate',

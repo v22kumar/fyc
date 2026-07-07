@@ -40,34 +40,26 @@ class IssueEntity extends Equatable {
   // ── Category helpers ──────────────────────────────────────────────────────
   String get categoryEmoji {
     switch (category) {
-      case 'ROAD':
+      case 'ROAD_TRAFFIC':
         return '🛣️';
+      case 'POWER_CUT':
+        return '⚡';
       case 'WATER':
         return '💧';
-      case 'STREET_LIGHT':
-        return '💡';
-      case 'GARBAGE':
-        return '🗑️';
-      case 'SAFETY':
-        return '🛡️';
       case 'OTHER':
       default:
-        return '📌';
+        return '📋';
     }
   }
 
   String categoryLabel(String lang) {
     switch (category) {
-      case 'ROAD':
-        return lang == 'ta' ? 'சாலை' : 'Road';
+      case 'ROAD_TRAFFIC':
+        return lang == 'ta' ? 'சாலை / போக்குவரத்து' : 'Road/Traffic';
+      case 'POWER_CUT':
+        return lang == 'ta' ? 'மின் தடை' : 'Power Cut';
       case 'WATER':
         return lang == 'ta' ? 'நீர்' : 'Water';
-      case 'STREET_LIGHT':
-        return lang == 'ta' ? 'தெரு விளக்கு' : 'Street Light';
-      case 'GARBAGE':
-        return lang == 'ta' ? 'குப்பை' : 'Garbage';
-      case 'SAFETY':
-        return lang == 'ta' ? 'பாதுகாப்பு' : 'Safety';
       case 'OTHER':
       default:
         return lang == 'ta' ? 'மற்றவை' : 'Other';

@@ -8,11 +8,9 @@ export type IssueStatus =
   | 'REJECTED';
 
 export type IssueCategory =
-  | 'ROAD'
+  | 'ROAD_TRAFFIC'
+  | 'POWER_CUT'
   | 'WATER'
-  | 'STREET_LIGHT'
-  | 'GARBAGE'
-  | 'SAFETY'
   | 'OTHER';
 
 export interface Issue {
@@ -84,12 +82,10 @@ export const STATUS_LABELS: Record<IssueStatus, string> = {
 };
 
 export const CATEGORY_LABELS: Record<IssueCategory, string> = {
-  ROAD:         'Road',
-  WATER:        'Water',
-  STREET_LIGHT: 'Street Light',
-  GARBAGE:      'Garbage',
-  SAFETY:       'Safety',
-  OTHER:        'Other',
+  ROAD_TRAFFIC: 'Road / Traffic',
+  POWER_CUT: 'Power Cut',
+  WATER: 'Water',
+  OTHER: 'Other',
 };
 
 export interface CommunityProfile {
