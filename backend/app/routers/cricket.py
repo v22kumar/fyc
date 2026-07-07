@@ -403,7 +403,7 @@ def start_second_innings(
     state["batting_team_id"] = batting_team
     state["bowling_team_id"] = bowling_team
     state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
-            state["recent_balls"] = []
+    state["recent_balls"] = []
     state["status"] = "SECOND_INNINGS"
 
     match.match_state = state
