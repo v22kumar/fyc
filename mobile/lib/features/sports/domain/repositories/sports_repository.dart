@@ -6,6 +6,7 @@ import '../entities/team_entity.dart';
 import '../entities/challenge_entity.dart';
 import '../entities/player_entity.dart';
 import '../entities/cricket_match_state_entity.dart';
+import '../entities/weekly_game_entity.dart';
 
 abstract class SportsRepository {
   Future<Either<Failure, List<TournamentEntity>>> fetchTournaments({
@@ -35,4 +36,9 @@ abstract class SportsRepository {
       String fixtureId, Map<String, dynamic> data);
   Future<Either<Failure, (CricketMatchStateEntity, CricketPlayersEntity?)>> startCricketSecondInnings(
       String fixtureId, Map<String, dynamic> data);
+      
+  Future<Either<Failure, List<WeeklyGameEntity>>> fetchWeeklyGames();
+  Future<Either<Failure, WeeklyGameEntity>> createWeeklyGame(Map<String, dynamic> data);
+  Future<Either<Failure, WeeklyGameEntity>> joinWeeklyGame(String gameId);
+  Future<Either<Failure, WeeklyGameEntity>> startWeeklyGame(String gameId);
 }

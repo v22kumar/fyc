@@ -7,6 +7,7 @@ import '../../domain/entities/challenge_entity.dart';
 import '../../domain/entities/player_entity.dart';
 import '../../domain/entities/cricket_match_state_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
+import '../../domain/entities/weekly_game_entity.dart';
 import '../datasources/sports_datasource.dart';
 
 class SportsRepositoryImpl implements SportsRepository {
@@ -161,6 +162,54 @@ class SportsRepositoryImpl implements SportsRepository {
       String fixtureId, Map<String, dynamic> data) async {
     try {
       final result = await _remote.startCricketSecondInnings(fixtureId, data);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<WeeklyGameEntity>>> fetchWeeklyGames() async {
+    try {
+      final result = await _remote.fetchWeeklyGames();
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, WeeklyGameEntity>> createWeeklyGame(Map<String, dynamic> data) async {
+    try {
+      final result = await _remote.createWeeklyGame(data);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, WeeklyGameEntity>> joinWeeklyGame(String gameId) async {
+    try {
+      final result = await _remote.joinWeeklyGame(gameId);
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, WeeklyGameEntity>> startWeeklyGame(String gameId) async {
+    try {
+      final result = await _remote.startWeeklyGame(gameId);
       return Right(result);
     } on Failure catch (f) {
       return Left(f);

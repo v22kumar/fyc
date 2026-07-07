@@ -13,6 +13,8 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../widgets/weekly_game_card.dart';
+import '../widgets/create_weekly_game_sheet.dart';
 
 class _SportFilter {
   final String value; // empty == all
@@ -62,15 +64,29 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
       return;
     }
     setState(() => _selectedSport = sport);
-    if (sport == 'weekly_games') return;
     context.read<SportsBloc>().add(
-          const SportsFetchRequested(sport: null),
+          SportsFetchRequested(
+            sport: sport == 'weekly_games' ? null : sport,
+            filter: sport == 'weekly_games' ? 'weekly_games' : null,
+          ),
         );
   }
 
   bool get _isAdmin {
     final s = context.read<AuthBloc>().state;
     return s is AuthAuthenticated && s.user.isAdmin;
+  }
+
+  void _showCreateWeeklyGameSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: context.read<SportsBloc>(),
+        child: const CreateWeeklyGameSheet(),
+      ),
+    );
   }
 
   @override
@@ -88,17 +104,27 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
             ),
         ],
       ),
-      floatingActionButton: isAdmin
+      floatingActionButton: _selectedSport == 'weekly_games'
           ? FloatingActionButton.extended(
-              onPressed: () => context.push('/sports/create'),
+              onPressed: () => _showCreateWeeklyGameSheet(context),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
-                tr(en: 'Create', ta: 'போட்டி உருவாக்கு', hi: 'बनाएं', ml: 'സൃഷ്ടിക്കുക'),
+                tr(en: 'Schedule Game', ta: 'விளையாட்டு உருவாக்கு', hi: 'गेम शेड्यूल करें', ml: 'ഗെയിം ഷെഡ്യൂൾ ചെയ്യുക'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             )
-          : null,
+          : isAdmin
+              ? FloatingActionButton.extended(
+                  onPressed: () => context.push('/sports/create'),
+                  backgroundColor: AppColors.primary,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: Text(
+                    tr(en: 'Create', ta: 'போட்டி உருவாக்கு', hi: 'बनाएं', ml: 'സൃഷ്ടിക്കുക'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                )
+              : null,
       body: Column(
         children: [
           // Hero banner (street cricket at golden hour)
@@ -158,16 +184,37 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                 if (state is SportsLoading) {
                   return const ShimmerCardList();
                 }
-                if (_selectedSport == 'weekly_games') {
-                  return EmptyState(
-                    emoji: '🔥',
-                    title: tr(en: 'Coming Soon', ta: 'விரைவில்', hi: 'जल्द आ रहा है', ml: 'ഉടൻ വരുന്നു'),
-                    message: tr(en: 'Weekly member games are currently in development.', ta: 'வாராந்திர விளையாட்டுகள் விரைவில் அறிமுகப்படுத்தப்படும்.', hi: 'साप्ताहिक खेल जल्द आ रहे हैं।', ml: 'പ്രതിവാര ഗെയിമുകൾ ഉടൻ വരുന്നു.'),
-                    buttonText: tr(en: 'View Tournaments', ta: 'போட்டிகளைப் பார்க்கவும்', hi: 'टूर्नामेंट देखें', ml: 'ടൂർണമെന്റുകൾ കാണുക'),
-                    onAction: () => _selectSport('tournaments'),
-                  );
-                }
                 if (state is SportsLoaded) {
+                  if (_selectedSport == 'weekly_games') {
+                    if (state.weeklyGames.isEmpty) {
+                      return EmptyState(
+                        emoji: '🔥',
+                        title: tr(en: 'No Weekly Games', ta: 'வாராந்திர விளையாட்டுகள் இல்லை', hi: 'कोई साप्ताहिक खेल नहीं', ml: 'പ്രതിവാര ഗെയിമുകളൊന്നുമില്ല'),
+                        message: tr(en: 'There are no weekly games scheduled at the moment.', ta: 'தற்போது வாராந்திர விளையாட்டுகள் எதுவும் திட்டமிடப்படவில்லை.', hi: 'इस समय कोई साप्ताहिक खेल निर्धारित नहीं है।', ml: 'ഇപ്പോൾ പ്രതിവാര ഗെയിമുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.'),
+                        buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
+                        onAction: () => _selectSport(_selectedSport),
+                      );
+                    }
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<SportsBloc>().add(const SportsFetchRequested(filter: 'weekly_games'));
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: state.weeklyGames.length,
+                        itemBuilder: (context, i) {
+                          final g = state.weeklyGames[i];
+                          final currentUserId = (context.read<AuthBloc>().state as AuthAuthenticated).user.id;
+                          return WeeklyGameCard(
+                            game: g,
+                            lang: _lang,
+                            currentUserId: currentUserId,
+                          );
+                        },
+                      ),
+                    );
+                  }
+
                   if (state.tournaments.isEmpty) {
                     return EmptyState(
                       emoji: '🏅',

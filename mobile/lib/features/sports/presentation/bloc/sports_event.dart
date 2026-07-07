@@ -8,9 +8,31 @@ abstract class SportsEvent extends Equatable {
 
 class SportsFetchRequested extends SportsEvent {
   final String? sport;
-  const SportsFetchRequested({this.sport});
+  final String? filter; // e.g. "tournaments", "weekly_games"
+  const SportsFetchRequested({this.sport, this.filter});
   @override
-  List<Object?> get props => [sport];
+  List<Object?> get props => [sport, filter];
+}
+
+class SportsWeeklyGameJoinRequested extends SportsEvent {
+  final String gameId;
+  const SportsWeeklyGameJoinRequested(this.gameId);
+  @override
+  List<Object?> get props => [gameId];
+}
+
+class SportsWeeklyGameStartRequested extends SportsEvent {
+  final String gameId;
+  const SportsWeeklyGameStartRequested(this.gameId);
+  @override
+  List<Object?> get props => [gameId];
+}
+
+class SportsWeeklyGameCreateRequested extends SportsEvent {
+  final Map<String, dynamic> data;
+  const SportsWeeklyGameCreateRequested(this.data);
+  @override
+  List<Object?> get props => [data];
 }
 
 class SportsTournamentSelected extends SportsEvent {

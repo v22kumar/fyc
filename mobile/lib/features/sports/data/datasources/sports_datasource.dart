@@ -8,6 +8,7 @@ import '../models/team_model.dart';
 import '../models/challenge_model.dart';
 import '../models/player_model.dart';
 import '../models/cricket_match_state_model.dart';
+import '../models/weekly_game_model.dart';
 
 abstract class SportsDataSource {
   Future<List<TournamentModel>> fetchTournaments({String? sport});
@@ -31,6 +32,11 @@ abstract class SportsDataSource {
       String fixtureId, Map<String, dynamic> data);
   Future<(CricketMatchStateModel, CricketPlayersModel?)> startCricketSecondInnings(
       String fixtureId, Map<String, dynamic> data);
+      
+  Future<List<WeeklyGameModel>> fetchWeeklyGames();
+  Future<WeeklyGameModel> createWeeklyGame(Map<String, dynamic> data);
+  Future<WeeklyGameModel> joinWeeklyGame(String gameId);
+  Future<WeeklyGameModel> startWeeklyGame(String gameId);
 }
 
 class SportsDataSourceImpl implements SportsDataSource {
@@ -209,6 +215,47 @@ class SportsDataSourceImpl implements SportsDataSource {
         CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {}),
         playersJson != null ? CricketPlayersModel.fromJson(playersJson) : null,
       );
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<WeeklyGameModel>> fetchWeeklyGames() async {
+    try {
+      final response = await _client.dio.get(ApiConstants.weeklyGames);
+      final list = response.data as List<dynamic>;
+      return list.map((e) => WeeklyGameModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<WeeklyGameModel> createWeeklyGame(Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.post(ApiConstants.weeklyGames, data: data);
+      return WeeklyGameModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<WeeklyGameModel> joinWeeklyGame(String gameId) async {
+    try {
+      final response = await _client.dio.post(ApiConstants.weeklyGameJoin(gameId));
+      return WeeklyGameModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<WeeklyGameModel> startWeeklyGame(String gameId) async {
+    try {
+      final response = await _client.dio.post(ApiConstants.weeklyGameStart(gameId));
+      return WeeklyGameModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/tournament_entity.dart';
 import '../../domain/entities/fixture_entity.dart';
 import '../../domain/entities/team_entity.dart';
+import '../../domain/entities/weekly_game_entity.dart';
 
 abstract class SportsState extends Equatable {
   const SportsState();
@@ -19,9 +20,15 @@ class SportsLoading extends SportsState {
 
 class SportsLoaded extends SportsState {
   final List<TournamentEntity> tournaments;
-  const SportsLoaded(this.tournaments);
+  final List<WeeklyGameEntity> weeklyGames;
+  
+  const SportsLoaded({
+    this.tournaments = const [],
+    this.weeklyGames = const [],
+  });
+  
   @override
-  List<Object?> get props => [tournaments];
+  List<Object?> get props => [tournaments, weeklyGames];
 }
 
 class SportsDetailLoaded extends SportsState {

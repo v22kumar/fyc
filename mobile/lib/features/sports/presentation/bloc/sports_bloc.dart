@@ -22,6 +22,9 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
     on<SportsFetchRequested>(_onFetch);
     on<SportsTournamentSelected>(_onTournamentSelected);
     on<SportsChallengeSubmitted>(_onChallengeSubmitted);
+    on<SportsWeeklyGameCreateRequested>(_onCreateWeeklyGame);
+    on<SportsWeeklyGameJoinRequested>(_onJoinWeeklyGame);
+    on<SportsWeeklyGameStartRequested>(_onStartWeeklyGame);
   }
 
   Future<void> _onFetch(
@@ -29,11 +32,19 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
     Emitter<SportsState> emit,
   ) async {
     emit(const SportsLoading());
-    final result = await _fetchTournaments(sport: event.sport);
-    result.fold(
-      (f) => emit(SportsFailure(f.message)),
-      (tournaments) => emit(SportsLoaded(tournaments)),
-    );
+    if (event.filter == 'weekly_games') {
+      final result = await _repository.fetchWeeklyGames();
+      result.fold(
+        (f) => emit(SportsFailure(f.message)),
+        (games) => emit(SportsLoaded(weeklyGames: games)),
+      );
+    } else {
+      final result = await _fetchTournaments(sport: event.sport);
+      result.fold(
+        (f) => emit(SportsFailure(f.message)),
+        (tournaments) => emit(SportsLoaded(tournaments: tournaments)),
+      );
+    }
   }
 
   Future<void> _onTournamentSelected(
@@ -101,5 +112,63 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
       (f) => emit(SportsFailure(f.message)),
       (challenge) => emit(SportsChallengeSuccess(challenge.status)),
     );
+  }
+
+  Future<void> _onJoinWeeklyGame(
+    SportsWeeklyGameJoinRequested event,
+    Emitter<SportsState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is SportsLoaded) {
+      emit(const SportsLoading());
+      final result = await _repository.joinWeeklyGame(event.gameId);
+      result.fold(
+        (f) => emit(SportsFailure(f.message)),
+        (updatedGame) {
+          final updatedList = currentState.weeklyGames.map((g) {
+            return g.id == updatedGame.id ? updatedGame : g;
+          }).toList();
+          emit(SportsLoaded(tournaments: currentState.tournaments, weeklyGames: updatedList));
+        },
+      );
+    }
+  }
+
+  Future<void> _onStartWeeklyGame(
+    SportsWeeklyGameStartRequested event,
+    Emitter<SportsState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is SportsLoaded) {
+      emit(const SportsLoading());
+      final result = await _repository.startWeeklyGame(event.gameId);
+      result.fold(
+        (f) => emit(SportsFailure(f.message)),
+        (updatedGame) {
+          final updatedList = currentState.weeklyGames.map((g) {
+            return g.id == updatedGame.id ? updatedGame : g;
+          }).toList();
+          emit(SportsLoaded(tournaments: currentState.tournaments, weeklyGames: updatedList));
+        },
+      );
+    }
+  }
+
+  Future<void> _onCreateWeeklyGame(
+    SportsWeeklyGameCreateRequested event,
+    Emitter<SportsState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is SportsLoaded) {
+      emit(const SportsLoading());
+      final result = await _repository.createWeeklyGame(event.data);
+      result.fold(
+        (f) => emit(SportsFailure(f.message)),
+        (newGame) {
+          final updatedList = [newGame, ...currentState.weeklyGames];
+          emit(SportsLoaded(tournaments: currentState.tournaments, weeklyGames: updatedList));
+        },
+      );
+    }
   }
 }
