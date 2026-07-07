@@ -34,7 +34,7 @@ class WeeklyGameCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: context.cTextPrimary.withOpacity(0.05),
+            color: context.cText.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           )
@@ -56,7 +56,7 @@ class WeeklyGameCard extends StatelessWidget {
                   ],
                 ),
                 border: Border(
-                  bottom: BorderString(color: context.cBorder.withOpacity(0.3)),
+                  bottom: BorderSide(color: context.cBorder.withOpacity(0.3)),
                 ),
               ),
               child: Row(
@@ -122,7 +122,7 @@ class WeeklyGameCard extends StatelessWidget {
                       Text(
                         DateFormat('EEE, MMM d • h:mm a').format(game.scheduledAt),
                         style: TextStyle(
-                          color: context.cTextPrimary,
+                          color: context.cText,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -169,7 +169,7 @@ class WeeklyGameCard extends StatelessWidget {
                         ),
                         child: Text(
                           p.userName,
-                          style: TextStyle(fontSize: 12, color: context.cTextPrimary),
+                          style: TextStyle(fontSize: 12, color: context.cText),
                         ),
                       )).toList(),
                     ),
@@ -213,7 +213,7 @@ class WeeklyGameCard extends StatelessWidget {
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.secondary,
+                              backgroundColor: AppColors.accent,
                               foregroundColor: Colors.white,
                               elevation: 4,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
