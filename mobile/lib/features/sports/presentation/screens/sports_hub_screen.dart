@@ -24,18 +24,19 @@ class _SportFilter {
 
 const _sportFilters = <_SportFilter>[
   _SportFilter('', '🏅', 'All', 'அனைத்தும்'),
-  _SportFilter('cricket', '🏏', 'Cricket', 'கிரிக்கெட்'),
-  _SportFilter('kabaddi', '🤼', 'Kabaddi', 'கபடி'),
-  _SportFilter('volleyball', '🏐', 'Volleyball', 'கைப்பந்து'),
-  _SportFilter('football', '⚽', 'Football', 'கால்பந்து'),
-  _SportFilter('other', '🎯', 'Other', 'மற்றவை'),
+  _SportFilter('tournaments', '🏆', 'Tournaments', 'போட்டிகள்'),
+  _SportFilter('weekly_games', '🔥', 'Weekly Games', 'வாராந்திர விளையாட்டுகள்'),
+  _SportFilter('chess', '♚', 'Chess', 'சதுரங்கம்'),
 ];
 
 String sportEmoji(String sport) {
-  for (final f in _sportFilters) {
-    if (f.value == sport.toLowerCase()) return f.emoji;
-  }
-  return '🎯';
+  final s = sport.toLowerCase();
+  if (s.contains('cricket')) return '🏏';
+  if (s.contains('kabaddi')) return '🤼';
+  if (s.contains('volleyball')) return '🏐';
+  if (s.contains('football')) return '⚽';
+  if (s.contains('chess')) return '♚';
+  return '🏆';
 }
 
 class SportsHubScreen extends StatefulWidget {
@@ -56,9 +57,14 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
   }
 
   void _selectSport(String sport) {
+    if (sport == 'chess') {
+      context.push('/chess');
+      return;
+    }
     setState(() => _selectedSport = sport);
+    if (sport == 'weekly_games') return;
     context.read<SportsBloc>().add(
-          SportsFetchRequested(sport: sport.isEmpty ? null : sport),
+          const SportsFetchRequested(sport: null),
         );
   }
 
@@ -136,7 +142,6 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               ],
             ),
           ),
-          const _ChessEntryCard(),
           _SportTabs(
             filters: _sportFilters,
             selected: _selectedSport,
@@ -152,6 +157,15 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               builder: (context, state) {
                 if (state is SportsLoading) {
                   return const ShimmerCardList();
+                }
+                if (_selectedSport == 'weekly_games') {
+                  return EmptyState(
+                    emoji: '🔥',
+                    title: tr(en: 'Coming Soon', ta: 'விரைவில்', hi: 'जल्द आ रहा है', ml: 'ഉടൻ വരുന്നു'),
+                    message: tr(en: 'Weekly member games are currently in development.', ta: 'வாராந்திர விளையாட்டுகள் விரைவில் அறிமுகப்படுத்தப்படும்.', hi: 'साप्ताहिक खेल जल्द आ रहे हैं।', ml: 'പ്രതിവാര ഗെയിമുകൾ ഉടൻ വരുന്നു.'),
+                    buttonText: tr(en: 'View Tournaments', ta: 'போட்டிகளைப் பார்க்கவும்', hi: 'टूर्नामेंट देखें', ml: 'ടൂർണമെന്റുകൾ കാണുക'),
+                    onAction: () => _selectSport('tournaments'),
+                  );
                 }
                 if (state is SportsLoaded) {
                   if (state.tournaments.isEmpty) {
@@ -331,41 +345,107 @@ class _TournamentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOpen = tournament.isRegistrationOpen;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        side: isOpen
+            ? BorderSide(color: AppColors.primary.withOpacity(0.3), width: 1.5)
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                sportEmoji(tournament.sport),
-                style: const TextStyle(fontSize: 30),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tournament.displayName(lang),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: context.cBackground,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
+                    alignment: Alignment.center,
+                    child: Text(
+                      sportEmoji(tournament.sport),
+                      style: const TextStyle(fontSize: 26),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tournament.displayName(lang),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.emoji_events_rounded, size: 14, color: AppColors.accent),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${tournament.sport} · ${tournament.year}',
+                              style: TextStyle(
+                                  color: context.cTextSecondary, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (isOpen) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        tr(en: 'Registration Open', ta: 'பதிவு திறக்கப்பட்டுள்ளது', hi: 'पंजीकरण खुला है', ml: 'രജിസ്ട്രേഷൻ തുറന്നിരിക്കുന്നു'),
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (tournament.isOngoing) ...[
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.play_circle_fill, size: 16, color: AppColors.success),
+                    const SizedBox(width: 8),
                     Text(
-                      '${tournament.sport} · ${tournament.year}',
-                      style:
-                          TextStyle(color: context.cTextSecondary, fontSize: 13),
+                      tr(en: 'Tournament is Live', ta: 'போட்டி நடக்கிறது', hi: 'टूर्नामेंट लाइव है', ml: 'ടൂർണമെന്റ് നടക്കുന്നു'),
+                      style: const TextStyle(
+                        color: AppColors.success,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              _StatusBadge(status: tournament.status),
+              ],
             ],
           ),
         ),
@@ -374,120 +454,4 @@ class _TournamentCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final String status;
-  const _StatusBadge({required this.status});
 
-  @override
-  Widget build(BuildContext context) {
-    final s = status.toLowerCase();
-    Color color;
-    if (s == 'live' || s == 'ongoing') {
-      color = AppColors.success;
-    } else if (s == 'completed') {
-      color = AppColors.textSecondary;
-    } else {
-      color = AppColors.accent;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-/// Chess Arena entry — surfaces chess inside the Play tab (Sprint 5 D1), so it
-/// isn't stranded on a route no one browses to.
-class _ChessEntryCard extends StatelessWidget {
-  const _ChessEntryCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => context.push('/chess'),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('♚', style: TextStyle(color: Colors.white, fontSize: 26, height: 1)),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tr(en: 'Chess Arena', ta: 'சதுரங்க அரங்கம்', hi: 'शतरंज अखाड़ा', ml: 'ചെസ്സ് അരീന'),
-                        style: const TextStyle(color: Colors.white, fontSize: 15.5, fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        tr(en: 'Play, or join a tournament', ta: 'விளையாடு அல்லது போட்டியில் சேரு', hi: 'खेलें या टूर्नामेंट में शामिल हों', ml: 'കളിക്കൂ അല്ലെങ്കിൽ ടൂർണമെന്റിൽ ചേരൂ'),
-                        style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5),
-                      ),
-                    ],
-                  ),
-                ),
-                // First-class Tournaments affordance (own tap target).
-                Material(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () => context.push('/chess/tournaments'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 15),
-                          const SizedBox(width: 5),
-                          Text(
-                            tr(en: 'Tournaments', ta: 'போட்டிகள்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റുകൾ'),
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
