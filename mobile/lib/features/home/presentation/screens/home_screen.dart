@@ -658,6 +658,19 @@ class _BucketCard extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.15)),
+              boxShadow: [
+                BoxShadow(
+                  color: b.gradient.last.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -767,25 +780,42 @@ class _QuickActions extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: onTap,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: context.cSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.cBorder.withOpacity(0.5)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     child: Column(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: color.withOpacity(context.isDark ? 0.20 : 0.12),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(icon, color: color, size: 24),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           label,
                           textAlign: TextAlign.center,
                           maxLines: 2,
-                          style: TextStyle(fontSize: 10.5, height: 1.15, color: context.cTextSecondary),
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            height: 1.15,
+                            fontWeight: FontWeight.w600,
+                            color: context.cTextSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -876,6 +906,13 @@ class _ImpactStats extends StatelessWidget {
                   color: context.isDark ? s.$3.withOpacity(0.16) : s.$4,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: s.$3.withOpacity(context.isDark ? 0.30 : 0.18)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: s.$3.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
