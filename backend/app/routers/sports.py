@@ -124,7 +124,7 @@ def list_tournaments(
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    q = db.query(Tournament).filter(Tournament.organization_id == tenant_id)
+    q = db.query(Tournament).filter(Tournament.organization_id == tenant_id, Tournament.format != "WEEKLY_GAME")
     if sport:
         q = q.filter(Tournament.sport == sport.lower())
     if status:

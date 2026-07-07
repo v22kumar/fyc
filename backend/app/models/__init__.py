@@ -24,6 +24,7 @@ from app.models.dynamic_forms import FormDefinition, FormSubmission
 from app.models.platform_settings import OrganizationSettings, FeatureFlag
 from app.models.post import Post, PostLike, PostRepost, PostReport
 from app.models.chess_tournament import ChessTournament, ChessTournamentEntry, ChessTournamentMatch
+from app.models.weekly_games import WeeklyGame, WeeklyGamePlayer
 
 __all__ = [
     "Base",
@@ -91,4 +92,6 @@ __all__ = [
     "ChessTournament",
     "ChessTournamentEntry",
     "ChessTournamentMatch",
+    "WeeklyGame",
+    "WeeklyGamePlayer",
 ]

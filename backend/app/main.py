@@ -38,6 +38,7 @@ from app.routers import broadcasts as broadcasts_router
 from app.routers import app_meta as app_meta_router
 from app.routers import chess as chess_router
 from app.routers import awards as awards_router
+from app.routers import weekly_games as weekly_games_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -450,6 +451,7 @@ app.include_router(broadcasts_router.router, prefix="/api/v1")
 app.include_router(app_meta_router.router, prefix="/api/v1")
 app.include_router(chess_router.router, prefix="/api/v1")
 app.include_router(awards_router.router, prefix="/api/v1")
+app.include_router(weekly_games_router.router, prefix="/api/v1")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
