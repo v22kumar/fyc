@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../domain/entities/tournament_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
@@ -462,6 +463,7 @@ class _TournamentCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
                       const SizedBox(width: 8),
@@ -473,6 +475,16 @@ class _TournamentCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (tournament.registrationCloseDate != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '• closes ${DateFormat('MMM d').format(tournament.registrationCloseDate!.toLocal())}',
+                          style: TextStyle(
+                            color: AppColors.primary.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

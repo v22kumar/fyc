@@ -114,6 +114,7 @@ class CricketMatchStateEntity extends Equatable {
   final List<CricketBowlerEntity> bowlers;
   final Map<String, int> extras;
   final List<String> recentBalls;
+  final List<CricketOverHistoryEntity> oversHistory;
 
   const CricketMatchStateEntity({
     required this.innings,
@@ -129,6 +130,7 @@ class CricketMatchStateEntity extends Equatable {
     this.bowlers = const [],
     this.extras = const {},
     this.recentBalls = const [],
+    this.oversHistory = const [],
   });
 
   bool get isLive => status == 'FIRST_INNINGS' || status == 'SECOND_INNINGS';
@@ -153,5 +155,83 @@ class CricketMatchStateEntity extends Equatable {
         bowlers,
         extras,
         recentBalls,
+        oversHistory,
       ];
+}
+
+class CricketBallEntity extends Equatable {
+  final String id;
+  final int ballIndex;
+  final String strikerId;
+  final String strikerName;
+  final String nonStrikerId;
+  final String nonStrikerName;
+  final String bowlerId;
+  final String bowlerName;
+  final int runsBatter;
+  final String? extrasType;
+  final int extrasRuns;
+  final bool isWicket;
+  final String? wicketType;
+  final String? playerDismissedId;
+  final String ballStr;
+  final bool isLegal;
+  final String? notes;
+  final bool hasEditHistory;
+
+  const CricketBallEntity({
+    required this.id,
+    required this.ballIndex,
+    required this.strikerId,
+    required this.strikerName,
+    required this.nonStrikerId,
+    required this.nonStrikerName,
+    required this.bowlerId,
+    required this.bowlerName,
+    required this.runsBatter,
+    this.extrasType,
+    required this.extrasRuns,
+    required this.isWicket,
+    this.wicketType,
+    this.playerDismissedId,
+    required this.ballStr,
+    required this.isLegal,
+    this.notes,
+    this.hasEditHistory = false,
+  });
+
+  @override
+  List<Object?> get props => [
+        id,
+        ballIndex,
+        strikerId,
+        strikerName,
+        nonStrikerId,
+        nonStrikerName,
+        bowlerId,
+        bowlerName,
+        runsBatter,
+        extrasType,
+        extrasRuns,
+        isWicket,
+        wicketType,
+        playerDismissedId,
+        ballStr,
+        isLegal,
+        notes,
+        hasEditHistory,
+      ];
+}
+
+class CricketOverHistoryEntity extends Equatable {
+  final int overIndex;
+  final List<CricketBallEntity> balls;
+
+  const CricketOverHistoryEntity({
+    required this.overIndex,
+    required this.balls,
+  });
+
+  @override
+  List<Object?> get props => [overIndex, balls];
 }

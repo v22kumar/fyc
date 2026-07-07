@@ -12,6 +12,7 @@ class TournamentModel extends TournamentEntity {
     super.phase,
     super.descriptionTa,
     super.descriptionEn,
+    super.registrationCloseDate,
   });
 
   factory TournamentModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +27,9 @@ class TournamentModel extends TournamentEntity {
       phase: json['phase'] as String?,
       descriptionTa: json['description_ta'] as String?,
       descriptionEn: json['description_en'] as String?,
+      registrationCloseDate: json['registration_close_date'] != null
+          ? DateTime.tryParse(json['registration_close_date'] as String)
+          : null,
     );
   }
 }

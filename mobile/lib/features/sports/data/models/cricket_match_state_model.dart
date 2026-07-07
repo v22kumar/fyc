@@ -37,6 +37,7 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
     super.bowlers,
     super.extras,
     super.recentBalls,
+    super.oversHistory,
   });
 
   factory CricketMatchStateModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +45,7 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
     final bowlersJson = json['bowlers'] as Map<String, dynamic>? ?? {};
     final extrasJson = json['extras'] as Map<String, dynamic>? ?? {};
     final recentBallsJson = json['recent_balls'] as List<dynamic>? ?? [];
+    final oversHistoryJson = json['overs_history'] as List<dynamic>? ?? [];
 
     return CricketMatchStateModel(
       innings: (json['innings'] as num?)?.toInt() ?? 1,
@@ -79,6 +81,36 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
       }).toList(),
       extras: extrasJson.map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
       recentBalls: recentBallsJson.map((e) => e.toString()).toList(),
+      oversHistory: oversHistoryJson.map((o) {
+        final over = o as Map<String, dynamic>;
+        final balls = over['balls'] as List<dynamic>? ?? [];
+        return CricketOverHistoryEntity(
+          overIndex: (over['over_index'] as num?)?.toInt() ?? 0,
+          balls: balls.map((b) {
+            final ball = b as Map<String, dynamic>;
+            return CricketBallEntity(
+              id: ball['id'] as String? ?? '',
+              ballIndex: (ball['ball_index'] as num?)?.toInt() ?? 0,
+              strikerId: ball['striker_id'] as String? ?? '',
+              strikerName: ball['striker_name'] as String? ?? '',
+              nonStrikerId: ball['non_striker_id'] as String? ?? '',
+              nonStrikerName: ball['non_striker_name'] as String? ?? '',
+              bowlerId: ball['bowler_id'] as String? ?? '',
+              bowlerName: ball['bowler_name'] as String? ?? '',
+              runsBatter: (ball['runs_batter'] as num?)?.toInt() ?? 0,
+              extrasType: ball['extras_type'] as String?,
+              extrasRuns: (ball['extras_runs'] as num?)?.toInt() ?? 0,
+              isWicket: ball['is_wicket'] as bool? ?? false,
+              wicketType: ball['wicket_type'] as String?,
+              playerDismissedId: ball['player_dismissed_id'] as String?,
+              ballStr: ball['ball_str'] as String? ?? '',
+              isLegal: ball['is_legal'] as bool? ?? true,
+              notes: ball['notes'] as String?,
+              hasEditHistory: (ball['edit_history'] as List<dynamic>? ?? []).isNotEmpty,
+            );
+          }).toList(),
+        );
+      }).toList(),
     );
   }
 }

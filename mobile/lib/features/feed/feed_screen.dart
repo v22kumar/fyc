@@ -6,6 +6,9 @@ import '../../core/constants/api_constants.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/app_theme.dart';
 import '../../service_locator.dart';
+import '../auth/presentation/bloc/auth_bloc.dart';
+import '../auth/presentation/bloc/auth_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'feed_api.dart';
 import 'feed_models.dart';
 import '../../core/services/sync_service.dart';
@@ -640,6 +643,10 @@ class _PostCardState extends State<_PostCard> {
   }
 
   void _showMoreOptions() {
+    final authState = context.read<AuthBloc>().state;
+    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
+    final isAuthor = authState is AuthAuthenticated && authState.user.id == p.author.id;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -692,19 +699,34 @@ class _PostCardState extends State<_PostCard> {
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete Post (Admin/Author)'),
-              onTap: () async {
-                Navigator.pop(context);
-                try {
-                  await FeedApi.delete(p.id);
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted. Refresh feed.')));
-                } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete. You may not have permission.')));
-                }
-              },
-            ),
+            if (isAdmin)
+              ListTile(
+                leading: const Icon(Icons.visibility_off, color: Colors.orange),
+                title: const Text('Hide Post (Admin)'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    await FeedApi.hide(p.id);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post hidden.')));
+                  } catch (e) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to hide.')));
+                  }
+                },
+              ),
+            if (isAdmin || isAuthor)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('Delete Post (Admin/Author)'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    await FeedApi.delete(p.id);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted. Refresh feed.')));
+                  } catch (e) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete. You may not have permission.')));
+                  }
+                },
+              ),
           ],
         ),
       ),

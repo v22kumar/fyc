@@ -15,6 +15,7 @@ class TournamentEntity extends Equatable {
   final String? phase;
   final String? descriptionTa;
   final String? descriptionEn;
+  final DateTime? registrationCloseDate;
 
   const TournamentEntity({
     required this.id,
@@ -27,6 +28,7 @@ class TournamentEntity extends Equatable {
     this.phase,
     this.descriptionTa,
     this.descriptionEn,
+    this.registrationCloseDate,
   });
 
   String get effectivePhase => phase ?? status;
@@ -40,5 +42,5 @@ class TournamentEntity extends Equatable {
       lang == 'ta' ? descriptionTa : descriptionEn;
 
   @override
-  List<Object?> get props => [id, nameTa, nameEn, sport, year, format, status, phase];
+  List<Object?> get props => [id, nameTa, nameEn, sport, year, format, status, phase, registrationCloseDate];
 }

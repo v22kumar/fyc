@@ -15,6 +15,8 @@ class CricketMatch(Base, TimestampMixin, TenantModelMixin):
     status = Column(String(20), default="NOT_STARTED") # NOT_STARTED, FIRST_INNINGS, INNINGS_BREAK, SECOND_INNINGS, COMPLETED
     overs_per_innings = Column(Integer, default=20)
     scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    edit_history = Column(JSON, nullable=True)
+    notes = Column(String(500), nullable=True)
 
     # We will store the full calculated real-time state as JSON for ultra-fast reads.
     # Every time a ball is scored, we rebuild this JSON.
@@ -56,6 +58,8 @@ class CricketBall(Base, TimestampMixin, TenantModelMixin):
     
     # Audit
     scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    edit_history = Column(JSON, nullable=True)
+    notes = Column(String(500), nullable=True)
     
     match = relationship("CricketMatch")
     striker = relationship("Player", foreign_keys=[striker_id])

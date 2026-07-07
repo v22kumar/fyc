@@ -123,11 +123,32 @@ class SportsRepositoryImpl implements SportsRepository {
   @override
   Future<Either<Failure, CricketMatchStateEntity>> scoreCricketBall(String fixtureId, Map<String, dynamic> data) async {
     try {
-      final result = await _remote.scoreCricketBall(fixtureId, data);
-      return Right(result);
-    } on Failure catch (f) {
-      return Left(f);
+      final res = await _remote.scoreCricketBall(fixtureId, data);
+      return Right(res);
     } catch (e) {
+      if (e is Failure) return Left(e);
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, CricketMatchStateEntity>> editCricketBall(String fixtureId, String ballId, Map<String, dynamic> data) async {
+    try {
+      final res = await _remote.editCricketBall(fixtureId, ballId, data);
+      return Right(res);
+    } catch (e) {
+      if (e is Failure) return Left(e);
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, CricketMatchStateEntity>> undoEditBall(String fixtureId, String ballId) async {
+    try {
+      final res = await _remote.undoEditBall(fixtureId, ballId);
+      return Right(res);
+    } catch (e) {
+      if (e is Failure) return Left(e);
       return Left(ServerFailure());
     }
   }

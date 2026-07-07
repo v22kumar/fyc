@@ -7,6 +7,7 @@ import '../../domain/entities/fixture_entity.dart';
 import '../../domain/entities/player_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
 import '../bloc/cricket_scoring_cubit.dart';
+import '../widgets/cricket_overs_history.dart';
 
 /// Full ball-by-ball cricket scorer for admins/managers.
 ///
@@ -118,9 +119,10 @@ class _CricketScoringView extends StatelessWidget {
                         else if (state.players == null)
                           _ConfirmPlayersPanel(ms: ms)
                         else
-                          const SizedBox.shrink(),
                         const SizedBox(height: 16),
                         _Scorecard(ms: ms),
+                        const SizedBox(height: 16),
+                        CricketOversHistory(ms: ms),
                       ],
                     ),
                   ),
@@ -300,9 +302,47 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
+
           const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _valid
+          if (!_valid)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Theme.of(context).colorScheme.error),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Complete match setup first',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_tossWinnerId == null) const Text('• Select toss winner', style: TextStyle(fontSize: 13)),
+                  if (int.tryParse(_overs.text) == null || int.parse(_overs.text) <= 0) const Text('• Enter valid overs', style: TextStyle(fontSize: 13)),
+                  if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
+                  if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
+                  if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _valid
+
                 ? () => context.read<CricketScoringCubit>().initMatch(
                       tossWinnerId: _tossWinnerId!,
                       tossDecision: _decision,
@@ -587,9 +627,45 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               ),
               onChanged: (_) => setState(() {}),
             ),
+
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _valid
+            if (!_valid)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.error),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Complete match setup first',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
+                    if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
+                    if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _valid
+
                   ? () => context.read<CricketScoringCubit>().startSecondInnings(
                         strikerName: _striker.text,
                         nonStrikerName: _nonStriker.text,
@@ -732,9 +808,46 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
             Text(tr(en: 'Bowler', ta: 'பந்துவீச்சாளர்', hi: 'गेंदबाज़', ml: 'ബൗളർ')),
             const SizedBox(height: 4),
             chips(bowlingOptions, _bowlerId, (id) => _bowlerId = id),
+
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: (_strikerId != null &&
+            if (_strikerId == null || _nonStrikerId == null || _bowlerId == null || _strikerId == _nonStrikerId)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.error),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Complete match setup first',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_strikerId == null) const Text('• Select striker', style: TextStyle(fontSize: 13)),
+                    if (_nonStrikerId == null) const Text('• Select non-striker', style: TextStyle(fontSize: 13)),
+                    if (_strikerId != null && _strikerId == _nonStrikerId) const Text('• Striker and non-striker must be different', style: TextStyle(fontSize: 13)),
+                    if (_bowlerId == null) const Text('• Select bowler', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: (_strikerId != null &&
+
                       _nonStrikerId != null &&
                       _bowlerId != null &&
                       _strikerId != _nonStrikerId)

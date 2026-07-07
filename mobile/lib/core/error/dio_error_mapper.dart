@@ -22,7 +22,10 @@ Failure mapDioException(DioException e) {
   // can leak internals — for those we ALWAYS use a friendly canned message so a
   // user never sees "422", "500", "ValidationError" or "SocketException".
   final rawDetail = data is Map ? data['detail'] : null;
-  final serverMsg = rawDetail is String && rawDetail.trim().isNotEmpty ? rawDetail : null;
+  final rawMessage = data is Map ? data['message'] : null;
+  final serverMsg = (rawDetail is String && rawDetail.trim().isNotEmpty)
+      ? rawDetail
+      : ((rawMessage is String && rawMessage.trim().isNotEmpty) ? rawMessage : null);
 
   switch (e.response?.statusCode) {
     case 401:

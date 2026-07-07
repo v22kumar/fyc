@@ -2,6 +2,7 @@ import logging
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -27,6 +28,18 @@ class CricketInitRequest(BaseModel):
     striker_name: str
     non_striker_name: str
     bowler_name: str
+
+class CricketBallEditRequest(BaseModel):
+    runs_batter: Optional[int] = None
+    extras_type: Optional[str] = None
+    extras_runs: Optional[int] = None
+    is_wicket: Optional[bool] = None
+    wicket_type: Optional[str] = None
+    player_dismissed_id: Optional[str] = None
+    striker_id: Optional[str] = None
+    non_striker_id: Optional[str] = None
+    bowler_id: Optional[str] = None
+    notes: Optional[str] = None
 
 class CricketBallRequest(BaseModel):
     striker_id: str
@@ -68,10 +81,11 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         "overs": 0,
         "balls": 0,
         "target": None,
-        "batters": {}, # {id: {name, runs, balls, 4s, 6s, out}}
-        "bowlers": {}, # {id: {name, overs, balls, runs, wickets, maidens}}
+        "batters": {},
+        "bowlers": {},
         "extras": {"w": 0, "nb": 0, "b": 0, "lb": 0},
-        "recent_balls": []
+        "recent_balls": [],
+        "overs_history": []
     }
     
     if match.toss_decision == "BAT":
@@ -103,6 +117,7 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["batting_team_id"], state["bowling_team_id"] = state["bowling_team_id"], state["batting_team_id"]
             state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
             state["recent_balls"] = []
+            state["overs_history"] = []
 
         ensure_batter(b.striker_id, b.striker.name)
         ensure_batter(b.non_striker_id, b.non_striker.name)
@@ -168,6 +183,37 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             ball_str = str(b.runs_batter) if b.runs_batter > 0 else "•"
         
         state["recent_balls"].append(ball_str)
+        
+        # Build over history
+        over_num = state["overs"]
+        # If a ball completes an over, state["overs"] is already incremented.
+        # But this ball belongs to the PREVIOUS over index.
+        # However, wait! If state["balls"] == 0, then we just incremented overs.
+        actual_over_idx = state["overs"] - 1 if state["balls"] == 0 and is_legal else state["overs"]
+        
+        while len(state["overs_history"]) <= actual_over_idx:
+            state["overs_history"].append({"over_index": len(state["overs_history"]), "balls": []})
+            
+        state["overs_history"][actual_over_idx]["balls"].append({
+            "id": str(b.id),
+            "ball_index": b.ball_index,
+            "striker_id": str(b.striker_id),
+            "striker_name": b.striker.name,
+            "non_striker_id": str(b.non_striker_id),
+            "non_striker_name": b.non_striker.name,
+            "bowler_id": str(b.bowler_id),
+            "bowler_name": b.bowler.name,
+            "runs_batter": b.runs_batter,
+            "extras_type": b.extras_type,
+            "extras_runs": b.extras_runs,
+            "is_wicket": b.is_wicket,
+            "wicket_type": b.wicket_type,
+            "player_dismissed_id": str(b.player_dismissed_id) if b.player_dismissed_id else None,
+            "ball_str": ball_str,
+            "is_legal": is_legal,
+            "notes": b.notes,
+            "edit_history": b.edit_history
+        })
 
     innings_over = state["wickets"] >= 10 or (
         state["overs"] == match.overs_per_innings and state["balls"] == 0 and state["overs"] > 0
@@ -280,21 +326,29 @@ def score_ball(
 ):
     match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
     if not match:
-        raise HTTPException(404, "Match not initialized")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match not initialized"})
         
     if match.scorer_id and str(match.scorer_id) != str(current_user.id) and current_user.role != "SUPER_ADMIN":
         raise HTTPException(403, "Only the assigned scorer can update this match")
 
+    if match.fixture.status not in ["LIVE", "IN_PROGRESS"]:
+        return JSONResponse(status_code=400, content={"code": "MATCH_NOT_LIVE", "message": "Match is not in LIVE state."})
+
     state = match.match_state or {}
     innings_num = state.get("innings")
     if not innings_num:
-        raise HTTPException(400, "Match setup incomplete: innings not initialized.")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: innings not initialized."})
     
     batting_team_id = state.get("batting_team_id")
     bowling_team_id = state.get("bowling_team_id")
     if not batting_team_id or not bowling_team_id:
-        raise HTTPException(400, "Match setup incomplete: batting and bowling teams must be assigned.")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: batting and bowling teams must be assigned."})
     
+    batting_team = db.query(Team).filter(Team.id == batting_team_id).first()
+    bowling_team = db.query(Team).filter(Team.id == bowling_team_id).first()
+    if not batting_team or not bowling_team:
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: Batting or bowling team does not exist."})
+
     striker_id = payload.striker_id
     if payload.new_batter_name and payload.player_dismissed_id == payload.striker_id:
         p = _get_or_create_player(db, batting_team_id, payload.new_batter_name, org_id=current_user.organization_id)
@@ -311,9 +365,25 @@ def score_ball(
         bowler_id = str(p.id)
 
     if not striker_id or not non_striker_id:
-        raise HTTPException(400, "Match setup incomplete: opening batters must be selected.")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: opening batters must be selected."})
     if not bowler_id:
-        raise HTTPException(400, "Match setup incomplete: current bowler must be selected.")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: current bowler must be selected."})
+
+    striker = db.query(Player).filter(Player.id == striker_id).first()
+    non_striker = db.query(Player).filter(Player.id == non_striker_id).first()
+    bowler = db.query(Player).filter(Player.id == bowler_id).first()
+
+    if not striker or not non_striker or not bowler:
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: One or more players do not exist."})
+
+    if str(striker.team_id) != str(batting_team_id) or str(non_striker.team_id) != str(batting_team_id):
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Batters do not belong to the batting team."})
+    
+    if str(bowler.team_id) != str(bowling_team_id):
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Bowler does not belong to the bowling team."})
+
+    if str(striker.organization_id) != str(current_user.organization_id) or str(bowler.organization_id) != str(current_user.organization_id):
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Players do not belong to your organization."})
 
     ball_index = db.query(CricketBall).filter(CricketBall.match_id == match.id).count() + 1
 
@@ -341,9 +411,7 @@ def score_ball(
     except Exception as e:
         db.rollback()
         logger.exception("cricket score_ball failed")
-        if "IntegrityError" in type(e).__name__:
-            raise HTTPException(400, "Unable to record this ball. Please verify match setup, players, and try again.")
-        raise HTTPException(400, "An unexpected error occurred while scoring.")
+        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Unable to record this ball. Database constraint failed."})
     return {"status": "success", "match_state": new_state}
 
 
@@ -421,3 +489,129 @@ def start_second_innings(
             "bowler_name": b.name
         }
     }
+
+from datetime import datetime
+
+@router.put("/fixtures/{fixture_id}/cricket/ball/{ball_id}")
+def edit_cricket_ball(
+    fixture_id: str,
+    ball_id: str,
+    payload: CricketBallEditRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec)
+):
+    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    if not match:
+        raise HTTPException(404, "Match not initialized")
+    
+    if match.scorer_id and str(match.scorer_id) != str(current_user.id) and current_user.role != "SUPER_ADMIN":
+        raise HTTPException(403, "Only the assigned scorer can update this match")
+
+    ball = db.query(CricketBall).filter(CricketBall.id == ball_id, CricketBall.match_id == match.id).first()
+    if not ball:
+        raise HTTPException(404, "Ball not found")
+
+    old_state = {
+        "runs_batter": ball.runs_batter,
+        "extras_type": ball.extras_type,
+        "extras_runs": ball.extras_runs,
+        "is_wicket": ball.is_wicket,
+        "wicket_type": ball.wicket_type,
+        "player_dismissed_id": str(ball.player_dismissed_id) if ball.player_dismissed_id else None,
+        "striker_id": str(ball.striker_id),
+        "non_striker_id": str(ball.non_striker_id),
+        "bowler_id": str(ball.bowler_id),
+        "notes": ball.notes
+    }
+
+    if payload.runs_batter is not None: ball.runs_batter = payload.runs_batter
+    if payload.extras_type is not None: ball.extras_type = payload.extras_type
+    if payload.extras_runs is not None: ball.extras_runs = payload.extras_runs
+    if payload.is_wicket is not None: ball.is_wicket = payload.is_wicket
+    if payload.wicket_type is not None: ball.wicket_type = payload.wicket_type
+    if payload.player_dismissed_id is not None: ball.player_dismissed_id = payload.player_dismissed_id
+    if payload.striker_id is not None: ball.striker_id = payload.striker_id
+    if payload.non_striker_id is not None: ball.non_striker_id = payload.non_striker_id
+    if payload.bowler_id is not None: ball.bowler_id = payload.bowler_id
+    if payload.notes is not None: ball.notes = payload.notes
+
+    new_state = {
+        "runs_batter": ball.runs_batter,
+        "extras_type": ball.extras_type,
+        "extras_runs": ball.extras_runs,
+        "is_wicket": ball.is_wicket,
+        "wicket_type": ball.wicket_type,
+        "player_dismissed_id": str(ball.player_dismissed_id) if ball.player_dismissed_id else None,
+        "striker_id": str(ball.striker_id),
+        "non_striker_id": str(ball.non_striker_id),
+        "bowler_id": str(ball.bowler_id),
+        "notes": ball.notes
+    }
+
+    history = ball.edit_history or []
+    history.append({
+        "timestamp": datetime.utcnow().isoformat(),
+        "editor_id": str(current_user.id),
+        "editor_name": current_user.full_name,
+        "old": old_state,
+        "new": new_state,
+        "notes": payload.notes
+    })
+    ball.edit_history = history
+
+    db.commit()
+    
+    new_match_state = recalculate_match_state(db, match)
+    return {"status": "success", "match_state": new_match_state}
+
+@router.post("/fixtures/{fixture_id}/cricket/ball/{ball_id}/undo-edit")
+def undo_ball_edit(
+    fixture_id: str,
+    ball_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec)
+):
+    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    if not match:
+        raise HTTPException(404, "Match not initialized")
+    
+    if match.scorer_id and str(match.scorer_id) != str(current_user.id) and current_user.role != "SUPER_ADMIN":
+        raise HTTPException(403, "Only the assigned scorer can update this match")
+
+    ball = db.query(CricketBall).filter(CricketBall.id == ball_id, CricketBall.match_id == match.id).first()
+    if not ball:
+        raise HTTPException(404, "Ball not found")
+
+    history = ball.edit_history or []
+    if not history:
+        raise HTTPException(400, "No edit history to undo for this ball.")
+
+    last_edit = history.pop()
+    old_state = last_edit["old"]
+
+    ball.runs_batter = old_state.get("runs_batter", ball.runs_batter)
+    ball.extras_type = old_state.get("extras_type", ball.extras_type)
+    ball.extras_runs = old_state.get("extras_runs", ball.extras_runs)
+    ball.is_wicket = old_state.get("is_wicket", ball.is_wicket)
+    ball.wicket_type = old_state.get("wicket_type", ball.wicket_type)
+    ball.player_dismissed_id = old_state.get("player_dismissed_id", ball.player_dismissed_id)
+    ball.striker_id = old_state.get("striker_id", ball.striker_id)
+    ball.non_striker_id = old_state.get("non_striker_id", ball.non_striker_id)
+    ball.bowler_id = old_state.get("bowler_id", ball.bowler_id)
+    ball.notes = old_state.get("notes", ball.notes)
+
+    # We append a new record about the undo
+    history.append({
+        "timestamp": datetime.utcnow().isoformat(),
+        "editor_id": str(current_user.id),
+        "editor_name": current_user.full_name,
+        "old": last_edit["new"],
+        "new": old_state,
+        "notes": "Undo last edit"
+    })
+    
+    ball.edit_history = history
+    db.commit()
+    
+    new_match_state = recalculate_match_state(db, match)
+    return {"status": "success", "match_state": new_match_state}

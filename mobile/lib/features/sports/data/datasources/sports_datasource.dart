@@ -27,6 +27,8 @@ abstract class SportsDataSource {
   Future<PlayerModel> registerPlayer(String teamId, Map<String, dynamic> data);
   Future<CricketMatchStateModel> fetchCricketMatchState(String fixtureId);
   Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data);
+  Future<CricketMatchStateModel> editCricketBall(String fixtureId, String ballId, Map<String, dynamic> data);
+  Future<CricketMatchStateModel> undoEditBall(String fixtureId, String ballId);
   Future<CricketMatchStateModel> undoCricketBall(String fixtureId);
   Future<(CricketMatchStateModel, CricketPlayersModel?)> initCricketMatch(
       String fixtureId, Map<String, dynamic> data);
@@ -157,10 +159,29 @@ class SportsDataSourceImpl implements SportsDataSource {
   @override
   Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data) async {
     try {
-      final response = await _client.dio.post(
-        ApiConstants.sportsFixtureCricketBall(fixtureId),
-        data: data,
-      );
+      final response = await _client.dio.post(ApiConstants.sportsFixtureCricketBall(fixtureId), data: data);
+      final resData = response.data as Map<String, dynamic>;
+      return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<CricketMatchStateModel> editCricketBall(String fixtureId, String ballId, Map<String, dynamic> data) async {
+    try {
+      final response = await _client.dio.put('${ApiConstants.sportsFixtureCricket(fixtureId)}/ball/$ballId', data: data);
+      final resData = response.data as Map<String, dynamic>;
+      return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<CricketMatchStateModel> undoEditBall(String fixtureId, String ballId) async {
+    try {
+      final response = await _client.dio.post('${ApiConstants.sportsFixtureCricket(fixtureId)}/ball/$ballId/undo-edit');
       final resData = response.data as Map<String, dynamic>;
       return CricketMatchStateModel.fromJson(resData['match_state'] as Map<String, dynamic>? ?? {});
     } on DioException catch (e) {

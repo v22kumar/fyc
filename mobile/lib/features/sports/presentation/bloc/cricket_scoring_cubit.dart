@@ -207,6 +207,69 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     );
   }
 
+  Future<void> editBall({
+    required String ballId,
+    int? runsBatter,
+    String? extrasType,
+    int? extrasRuns,
+    bool? isWicket,
+    String? wicketType,
+    String? playerDismissedId,
+    String? strikerId,
+    String? nonStrikerId,
+    String? bowlerId,
+    String? notes,
+  }) async {
+    final s = state;
+    if (s is! CricketScoringLoaded) return;
+
+    emit(CricketScoringLoading());
+    final result = await _repository.editCricketBall(fixtureId, ballId, {
+      if (runsBatter != null) 'runs_batter': runsBatter,
+      if (extrasType != null) 'extras_type': extrasType,
+      if (extrasRuns != null) 'extras_runs': extrasRuns,
+      if (isWicket != null) 'is_wicket': isWicket,
+      if (wicketType != null) 'wicket_type': wicketType,
+      if (playerDismissedId != null) 'player_dismissed_id': playerDismissedId,
+      if (strikerId != null) 'striker_id': strikerId,
+      if (nonStrikerId != null) 'non_striker_id': nonStrikerId,
+      if (bowlerId != null) 'bowler_id': bowlerId,
+      if (notes != null) 'notes': notes,
+    });
+
+    result.fold(
+      (failure) {
+        emit(CricketScoringLoaded(s.matchState,
+            players: s.players,
+            needsNewBowler: s.needsNewBowler,
+            errorMessage: failure.message));
+      },
+      (newState) {
+        emit(CricketScoringLoaded(newState, players: s.players, needsNewBowler: s.needsNewBowler));
+      },
+    );
+  }
+
+  Future<void> undoEditBall(String ballId) async {
+    final s = state;
+    if (s is! CricketScoringLoaded) return;
+
+    emit(CricketScoringLoading());
+    final result = await _repository.undoEditBall(fixtureId, ballId);
+
+    result.fold(
+      (failure) {
+        emit(CricketScoringLoaded(s.matchState,
+            players: s.players,
+            needsNewBowler: s.needsNewBowler,
+            errorMessage: failure.message));
+      },
+      (newState) {
+        emit(CricketScoringLoaded(newState, players: s.players, needsNewBowler: s.needsNewBowler));
+      },
+    );
+  }
+
   Future<void> undoBall() async {
     final s = state;
     emit(CricketScoringLoading());
