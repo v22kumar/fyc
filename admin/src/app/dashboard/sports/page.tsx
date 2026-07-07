@@ -401,7 +401,7 @@ export default function SportsPage() {
                                     <button onClick={() => handleTeamStatus(t.id, 'APPROVED')} className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" title="Approve">✓ Approve</button>
                                     <button onClick={() => handleTeamStatus(t.id, 'REJECTED')} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" title="Reject">✕ Reject</button>
                                   </>
-                                )}}
+                                )}
                                 <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">🗑️</button>
                               </div>
                             </td>
