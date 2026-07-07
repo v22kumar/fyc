@@ -125,24 +125,36 @@ class _State extends State<ChessTournamentDetailScreen> {
     }
 
     // Bracket
-    final byRound = <int, List<BracketMatch>>{};
-    for (final m in t.matches) {
-      byRound.putIfAbsent(m.round, () => []).add(m);
-    }
-    final rounds = byRound.keys.toList()..sort();
-    for (final r in rounds) {
-      children.add(Padding(
-        padding: const EdgeInsets.only(top: 18, bottom: 8),
-        child: Row(children: [
-          Text(_roundName(r, t.rounds), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.cText)),
-          const SizedBox(width: 8),
-          if (r <= t.currentRound) _roundBadge(tr(en: 'Live', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം'), const Color(0xFF16A34A))
-          else _roundBadge(tr(en: 'Not started', ta: 'தொடங்கவில்லை', hi: 'शुरू नहीं', ml: 'ആരംഭിച്ചില്ല'), context.cTextSecondary),
-        ]),
-      ));
-      for (final m in byRound[r]!) {
-        children.add(_matchCard(t, m));
-      }
+    if (t.matches.isNotEmpty) {
+      children.add(const SizedBox(height: 16));
+      children.add(Text(tr(en: 'Tournament Bracket', ta: 'போட்டி வரைபடம்', hi: 'टूर्नामेंट ब्रैकेट', ml: 'ടൂർണമെന്റ് ബ്രാക്കറ്റ്'),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)));
+      children.add(const SizedBox(height: 16));
+      
+      final bracketWidget = SizedBox(
+        height: 600, // Fixed height for panning area
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.cBackground,
+              border: Border.all(color: context.cBorder),
+            ),
+            child: InteractiveViewer(
+              constrained: false,
+              boundaryMargin: const EdgeInsets.all(120),
+              minScale: 0.3,
+              maxScale: 2.0,
+              // We could use a TransformationController to auto-focus on t.currentRound here
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: _buildHorizontalBracketGraph(t),
+              ),
+            ),
+          ),
+        ),
+      );
+      children.add(bracketWidget);
     }
 
     // Manager: Start Next Round
@@ -328,7 +340,7 @@ class _State extends State<ChessTournamentDetailScreen> {
         );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      // Removing bottom margin so it centers perfectly in the bracket graph
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -489,6 +501,67 @@ class _State extends State<ChessTournamentDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHorizontalBracketGraph(ChessTournamentDetail t) {
+    final byRound = <int, List<BracketMatch>>{};
+    for (final m in t.matches) {
+      byRound.putIfAbsent(m.round, () => []).add(m);
+    }
+    final rounds = byRound.keys.toList()..sort();
+    
+    const double cardWidth = 280;
+    const double horizontalSpacing = 60;
+    const double verticalSpacing = 20;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rounds.map((r) {
+        final matches = byRound[r]!..sort((a, b) => a.slot.compareTo(b.slot));
+        
+        final double baseCellHeight = 160 + verticalSpacing;
+        final double cellHeight = baseCellHeight * (1 << (r - 1));
+
+        return Container(
+          width: cardWidth,
+          margin: EdgeInsets.only(right: r == rounds.last ? 0 : horizontalSpacing),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                height: 40,
+                alignment: Alignment.center,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: r <= t.currentRound ? AppColors.primary.withOpacity(0.1) : context.cBackground,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: r <= t.currentRound ? AppColors.primary : context.cBorder),
+                ),
+                child: Text(
+                  _roundName(r, t.rounds),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: r <= t.currentRound ? AppColors.primary : context.cTextSecondary,
+                  ),
+                ),
+              ),
+              ...matches.map((m) {
+                return SizedBox(
+                  height: cellHeight,
+                  child: Center(
+                    child: SizedBox(
+                      width: cardWidth,
+                      child: _matchCard(t, m),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
