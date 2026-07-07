@@ -120,6 +120,12 @@ export interface Tournament {
   status: string;
   description_ta: string | null;
   description_en: string | null;
+  num_teams: number | null;
+  registration_close_date: string | null;
+  registration_closed_at: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  venue: string | null;
 }
 
 export interface Team {

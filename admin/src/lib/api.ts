@@ -20,9 +20,20 @@ async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { ...headers(), ...(init?.headers ?? {}) },
   });
+  
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      import('./auth').then(({ clearAuth }) => {
+        clearAuth();
+        window.location.href = '/login?expired=true';
+      });
+    }
+    throw new Error('Your session has expired. Please sign in again.');
+  }
+  
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(body.detail ?? 'Request failed');
+    throw new Error(body.message ?? body.detail ?? 'Request failed');
   }
   return res.json() as Promise<T>;
 }

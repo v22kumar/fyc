@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_token
+import jwt
 from app.middleware.tenant import get_current_tenant_id
 from app.models.user import User
 
@@ -36,10 +37,22 @@ def get_current_token_payload(
     try:
         payload = decode_token(token)
         return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "TOKEN_EXPIRED", "message": "Your session has expired. Please sign in again."},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "INVALID_TOKEN", "message": "Invalid authentication token."},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials / Token expired",
+            detail={"error": "AUTH_ERROR", "message": "Could not validate credentials."},
             headers={"WWW-Authenticate": "Bearer"},
         )
 

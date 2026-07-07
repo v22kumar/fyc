@@ -24,7 +24,7 @@ export default function SportsPage() {
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [showQuickComplete, setShowQuickComplete] = useState(false);
   const [quickCompleteForm, setQuickCompleteForm] = useState({ winner_id: '', runner_up_id: '' });
-  const [submitting, setSubmitting] = useState({ tournament: false, team: false, result: false, quick: false });
+  const [submitting, setSubmitting] = useState({ tournament: false, team: false, result: false, quick: false, fixtures: false });
 
   // Create tournament form
   const [form, setForm] = useState({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
@@ -75,6 +75,9 @@ export default function SportsPage() {
   }
 
   async function updateStatus(id: string, status: string) {
+    if (['PUBLISHED', 'COMPLETED', 'ARCHIVED'].includes(status)) {
+      if (!confirm(`Are you sure you want to change status to ${status}?`)) return;
+    }
     await api.updateTournamentStatus(id, status);
     setTournaments(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     if (selectedTournament?.id === id) {
@@ -171,12 +174,15 @@ export default function SportsPage() {
   async function generateFixtures() {
     if (!selectedTournament) return;
     if (!confirm('Are you sure you want to generate round-robin fixtures?')) return;
+    setSubmitting(s => ({ ...s, fixtures: true }));
     try {
       const generated = await api.generateFixtures(selectedTournament.id);
       setFixtures(generated);
       toast.success('Fixtures generated successfully');
     } catch (err: any) {
       toast.error(err.message || 'Failed to generate fixtures');
+    } finally {
+      setSubmitting(s => ({ ...s, fixtures: false }));
     }
   }
 
@@ -288,28 +294,54 @@ export default function SportsPage() {
           {selectedTournament ? (
             <div className="lg:col-span-2 space-y-5">
               
-              {/* Manage Tournament */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-2 overflow-x-auto">
-                <span className="text-sm font-semibold text-gray-700 mr-2 self-center">Manage:</span>
-                {selectedTournament.status === 'DRAFT' && (
-                  <button onClick={() => updateStatus(selectedTournament.id, 'UPCOMING')} className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 font-medium">Approve Draft</button>
-                )}
-                {['DRAFT', 'UPCOMING'].includes(selectedTournament.status) && (
-                  <button onClick={() => updateStatus(selectedTournament.id, 'PUBLISHED')} className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 font-medium">Publish</button>
-                )}
-                {selectedTournament.status === 'PUBLISHED' && (
-                  <button onClick={() => updateStatus(selectedTournament.id, 'ONGOING')} className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 font-medium">Start (Ongoing)</button>
-                )}
-                {selectedTournament.status === 'ONGOING' && (
-                  <button onClick={() => updateStatus(selectedTournament.id, 'COMPLETED')} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Mark Completed</button>
-                )}
-                {selectedTournament.status === 'COMPLETED' && (
-                  <button onClick={() => updateStatus(selectedTournament.id, 'ARCHIVED')} className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg hover:bg-orange-200 font-medium">Archive</button>
-                )}
-                {selectedTournament.status !== 'COMPLETED' && selectedTournament.status !== 'ARCHIVED' && (
-                  <button onClick={() => setShowQuickComplete(!showQuickComplete)} className="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 font-medium">Quick Complete</button>
-                )}
-                <button onClick={() => deleteTournament(selectedTournament.id)} className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 font-medium ml-auto">Delete</button>
+              {/* Tournament Header Info */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{selectedTournament.name_en}</h2>
+                    <p className="text-sm text-gray-500 mt-1">{selectedTournament.sport} • {selectedTournament.year} • {selectedTournament.format}</p>
+                    
+                    <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                      {selectedTournament.registration_close_date && (
+                        <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                          <span className="text-gray-500 mr-2">Reg Closes:</span>
+                          <span className="font-medium text-gray-900">{new Date(selectedTournament.registration_close_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      
+                      <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                        <span className="text-gray-500 mr-2">Teams:</span>
+                        <span className="font-medium text-gray-900">
+                          {teams.filter(t => t.status === 'APPROVED').length} 
+                          {selectedTournament.num_teams ? ` / ${selectedTournament.num_teams}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Action Bar */}
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    {selectedTournament.status === 'DRAFT' && (
+                      <button onClick={() => updateStatus(selectedTournament.id, 'UPCOMING')} className="text-sm bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 font-medium transition-colors">Approve Draft</button>
+                    )}
+                    {['DRAFT', 'UPCOMING'].includes(selectedTournament.status) && (
+                      <button onClick={() => updateStatus(selectedTournament.id, 'PUBLISHED')} className="text-sm bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 font-medium transition-colors">Publish</button>
+                    )}
+                    {selectedTournament.status === 'PUBLISHED' && (
+                      <button onClick={() => updateStatus(selectedTournament.id, 'ONGOING')} className="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition-colors">Start Tournament</button>
+                    )}
+                    {selectedTournament.status === 'ONGOING' && (
+                      <button onClick={() => updateStatus(selectedTournament.id, 'COMPLETED')} className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium transition-colors">Mark Completed</button>
+                    )}
+                    
+                    <div className="flex gap-2 ml-4 pl-4 border-l border-gray-200">
+                      {selectedTournament.status !== 'COMPLETED' && selectedTournament.status !== 'ARCHIVED' && (
+                        <button onClick={() => setShowQuickComplete(!showQuickComplete)} className="text-sm border border-purple-200 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-50 font-medium transition-colors">Quick Complete</button>
+                      )}
+                      <button onClick={() => deleteTournament(selectedTournament.id)} className="text-sm border border-red-200 text-red-700 px-3 py-2 rounded-lg hover:bg-red-50 font-medium transition-colors">Delete</button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Quick Complete Form */}
@@ -361,15 +393,15 @@ export default function SportsPage() {
                             <td className="py-2 font-medium flex items-center gap-2">
                               <span>{i + 1}. {t.name}</span>
                               {t.is_fyc_team && <span className="text-xs bg-primary/10 text-primary px-1 rounded">FYC</span>}
-                              {t.status === 'PENDING' && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-medium">Pending</span>}
+                              {t.status === 'PENDING' && <span className="text-xs bg-yellow-100 border border-yellow-300 text-yellow-800 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1"><span className="animate-pulse">⏳</span> Pending Approval</span>}
                               
-                              <div className="flex gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex gap-2 ml-auto opacity-100 group-hover:opacity-100 transition-opacity items-center">
                                 {t.status === 'PENDING' && (
                                   <>
-                                    <button onClick={() => handleTeamStatus(t.id, 'APPROVED')} className="text-green-600 hover:bg-green-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Approve">✓ Approve</button>
-                                    <button onClick={() => handleTeamStatus(t.id, 'REJECTED')} className="text-orange-600 hover:bg-orange-100 px-1.5 py-0.5 rounded text-xs font-medium" title="Reject">✕ Reject</button>
+                                    <button onClick={() => handleTeamStatus(t.id, 'APPROVED')} className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" title="Approve">✓ Approve</button>
+                                    <button onClick={() => handleTeamStatus(t.id, 'REJECTED')} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" title="Reject">✕ Reject</button>
                                   </>
-                                )}
+                                )}}
                                 <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">🗑️</button>
                               </div>
                             </td>
@@ -403,11 +435,22 @@ export default function SportsPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-gray-800">Fixtures</h3>
-                  {teams.length > 1 && (
-                    <button onClick={generateFixtures} className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium">
-                      {fixtures.length === 0 ? 'Generate Fixtures' : 'Regenerate Fixtures'}
-                    </button>
-                  )}
+                  {(() => {
+                    const approvedTeams = teams.filter(t => t.status === 'APPROVED');
+                    const hasEnoughTeams = selectedTournament.num_teams ? approvedTeams.length >= selectedTournament.num_teams : approvedTeams.length > 1;
+                    const canGenerate = ['PUBLISHED', 'UPCOMING', 'DRAFT'].includes(selectedTournament.status);
+                    
+                    return (teams.length > 1 && canGenerate) ? (
+                      <button 
+                        onClick={generateFixtures} 
+                        disabled={!hasEnoughTeams || submitting.fixtures}
+                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        title={!hasEnoughTeams ? `Need ${selectedTournament.num_teams || 2} approved teams` : ''}
+                      >
+                        {submitting.fixtures ? 'Generating...' : (fixtures.length === 0 ? 'Generate Fixtures' : 'Regenerate Fixtures')}
+                      </button>
+                    ) : null;
+                  })()}
                 </div>
                 {fixtures.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">

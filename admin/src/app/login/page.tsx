@@ -1,18 +1,21 @@
 'use client';
-import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { FormEvent, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { saveAuth } from '@/lib/auth';
 
 const DEFAULT_ORG = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orgId, setOrgId] = useState(DEFAULT_ORG);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isExpired = searchParams?.get('expired') === 'true';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -41,6 +44,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-primary-900">FYC Admin Portal</h1>
           <p className="text-sm text-gray-500 mt-1">Friends Youth Club — Nagercoil</p>
         </div>
+
+        {isExpired && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm font-medium text-center">
+            Your session has expired. Please sign in again.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -99,5 +108,13 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-primary-900" />}>
+      <LoginContent />
+    </Suspense>
   );
 }
