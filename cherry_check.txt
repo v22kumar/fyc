@@ -1,0 +1,98 @@
+--- origin ---
+--- origin/chore/home-cleanup ---
+- e2eefdb4b977606cc1841140fc403929abd84042
+--- origin/chore/loadtest ---
+- 0d4f5102b4fb62f2dfea45618201c028481bfb35
+--- origin/claude/deep-health-check ---
+- 04518329b265336cf74a1ed04fd9ee0c743c987b
+--- origin/claude/end-to-end-readiness-b531n1 ---
++ 9ab20178b7a9dbcb11c9deeb65c311d706223d83
+--- origin/claude/fix-google-signin-schema-drift ---
++ 7d21b8944c7ba622da54fa32f8d6a0132192f9a0
+--- origin/claude/phase-d1-security-cutover ---
++ b915acb1db72c6784548da5f7075d71f9c2ce4a4
+--- origin/feat/blood-location-filter ---
+- cf724b065ef45524fbdc0e10779e72a22929589c
+--- origin/feat/chess-tournaments-backend ---
+- ecf3c790756bb179a37552f99c60be2f576d18e4
+--- origin/feat/chess-tournaments-mobile ---
+- 6a81d16eb2370272e231bbab99814d14888c152d
+--- origin/feat/content-home-all-roles ---
+- 9f2acfab8a5342e1a4824a8ab7a831d1592da752
+--- origin/feat/event-registration-count ---
+- af6b4b625f4805537e5380699a9e2280a7aa4c2e
+--- origin/feat/home-bento ---
+- 780c4203f683e83fa81d16d4ce01bb7ae60ac2d4
+--- origin/feat/home-impact-hub ---
+- 84e2998151fcade8db6405ca64ab73534e68938d
+--- origin/feat/i18n-4lang-rest ---
+- b5f7b279400e21d9bd3921db825a2f08a8cd9d9b
+--- origin/feat/i18n-4lang-sweep ---
+- 254a64a55a915b66d1f300517d99e166e7f90b3e
+--- origin/feat/i18n-final5 ---
+- 230bbd182a75829a5f7fd0f10b724fb5db94060e
+--- origin/feat/in-app-updater ---
+- 9482dc116dfcc30f011ffcb1f184e2d64b6bb7cd
+--- origin/feat/inapp-installer-cleanup ---
+- e8ebc1f75f33527be8bdb39fe105ffe020ee8ae0
+--- origin/feat/integrate-images ---
+- 1b31e783aa7fdbfad2294406b84ada495be1955f
+--- origin/feat/new-brand-logo ---
+- f33bbfc3688bc0a4318f4db168dd3f20c66fb0e2
+--- origin/feat/phone1-3-parity ---
+- 99e4d7e33de918f47324a9fd39e98f263dfc008d
+--- origin/feat/profile-screen ---
+- 85ec9c5c4182dfbb270eeee2508c0116ebecd6e7
+--- origin/feat/settings-check-updates ---
+- 5a50c8c1e12a8a1e65c45f925c09a603a9da03d1
+--- origin/feat/social-feed-backend ---
+- 62b5bc4474a1aa65166a73cde20039cc63f27098
+--- origin/feat/social-feed-mobile ---
+- 780acd1f938d779cf8933bbe668e201b24d0cc16
+--- origin/feat/sprint3-offline-performance-core ---
+--- origin/fix/android-compilesdk-34 ---
+- 3471a461fa2f72aea96dc5664f35558f9da3da78
+--- origin/fix/auth-500-schema-drift ---
+- 4b6c8e896fd56e8219be29b3f36738f8b8e3cf09
+--- origin/fix/auto-schema-reconcile ---
+- 87d3e6123eedb3dd52fa87bec7641b3fcb02bc76
+--- origin/fix/blood-donor-ui ---
+- 8d5becc16dcfae71ffe363094556b7543f3167a4
+--- origin/fix/community-directory-available ---
+- e31cbca1493019dcac97505de1ee7f78136ebed4
+--- origin/fix/compilesdk-36 ---
+- e1e75d127ca52f7d09f7a0f13e9d5646751de3a8
+--- origin/fix/cors-firstparty ---
+- 1f923d7fc92f3818586e2e7198babbd975566146
+--- origin/fix/flutter-ci-fly-nonfatal ---
+- 565a9389c0518e4973058ac1cf1d0176ee7e9c00
+--- origin/fix/google-account-switch ---
+- a9616d87e03313bda8b047d359ce3db10cfb2fcf
+--- origin/fix/google-audience ---
+- 4e5d7fe9f12039b5459818c6851005a3638d10c4
+--- origin/fix/health-grace ---
+- 000f47da1ba0ad5b79e9bca10f8f162bd9bf11f2
+--- origin/fix/inapp-cricket-scoring ---
+- 2ca585ddcd697550d7171f916bedecef2275dbf3
+--- origin/fix/lenient-bool-settings ---
+- 472c7a9bdc928d2e1477b00bd72a634c97d81194
+--- origin/fix/load-hardening ---
+- 128e1e2f3e24b9e3d7ecb0e5633c6c858f4065b9
+--- origin/fix/non-english-localizations ---
+- 8d6dee8d1b7fc02c768c28ffe4c4b9cb84a12014
+--- origin/fix/notifications-compile ---
+- 6400ba742da453cfc9ce75455870329b046aa120
+--- origin/fix/pubspec-dup-imagepicker ---
+- 1892fb92a133ae3be5cd42faa1c5d7e4779c345c
+--- origin/fix/reliable-autoupdate ---
+- f238285808a1ed6b5e0535954833578d9d10102a
+--- origin/fix/remove-geocoding-unblock-build ---
+- e49b311a81a8df54b18b706a0d3bc9ff192b48d2
+--- origin/fix/search-and-issue-email ---
+- eb962bfe44027b64320ab342febdba24d4947d58
+--- origin/fix/stabilization-sprint ---
+- e516dd00a0fdd2602759789257943e1aaa935f95
+--- origin/fix/tournament-detail-empty ---
+- 7e8f1baa88f9b714040cf2cce288d97ccab5366f
+--- origin/fix/versioncode-monotonic ---
+- 31e7598aba45210804a272edbb6e36e14e576bc0

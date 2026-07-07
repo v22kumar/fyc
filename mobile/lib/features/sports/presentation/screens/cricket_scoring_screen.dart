@@ -51,11 +51,29 @@ class _CricketScoringView extends StatelessWidget {
           BlocBuilder<CricketScoringCubit, CricketScoringState>(
             builder: (context, state) {
               if (state is CricketScoringLoaded && !state.matchState.isCompleted) {
-                return IconButton(
+                return TextButton.icon(
                   icon: const Icon(Icons.undo),
-                  tooltip: tr(en: 'Undo last ball', ta: 'கடைசி பந்தை ரத்து',
-                      hi: 'पिछली गेंद रद्द करें', ml: 'അവസാന പന്ത് പിൻവലിക്കുക'),
-                  onPressed: () => context.read<CricketScoringCubit>().undoBall(),
+                  label: const Text('Undo Last Ball', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Undo Last Ball?'),
+                        content: const Text('Are you sure you want to revert the last scored ball?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Undo')),
+                        ],
+                      ),
+                    );
+                    if (confirm == true && context.mounted) {
+                      context.read<CricketScoringCubit>().undoBall();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Ball reverted')),
+                      );
+                    }
+                  },
                 );
               }
               return const SizedBox.shrink();
@@ -82,27 +100,48 @@ class _CricketScoringView extends StatelessWidget {
           }
           if (state is CricketScoringLoaded) {
             final ms = state.matchState;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ScoreHeader(ms: ms, teamName: _teamName),
-                  const SizedBox(height: 12),
-                  if (ms.isCompleted)
-                    _ResultCard(ms: ms, teamName: _teamName)
-                  else if (ms.isInningsBreak)
-                    _SecondInningsForm(fixture: fixture, ms: ms, teamName: _teamName)
-                  else if (state.players == null)
-                    _ConfirmPlayersPanel(ms: ms)
-                  else
-                    _ScoringPad(state: state),
-                  const SizedBox(height: 16),
-                  _Scorecard(ms: ms),
-                ],
-              ),
-            );
-          }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _ScoreHeader(ms: ms, teamName: _teamName),
+                        const SizedBox(height: 12),
+                        if (ms.isCompleted)
+                          _ResultCard(ms: ms, teamName: _teamName)
+                        else if (ms.isInningsBreak)
+                          _SecondInningsForm(fixture: fixture, ms: ms, teamName: _teamName)
+                        else if (state.players == null)
+                          _ConfirmPlayersPanel(ms: ms)
+                        else
+                          const SizedBox.shrink(),
+                        const SizedBox(height: 16),
+                        _Scorecard(ms: ms),
+                      ],
+                    ),
+                  ),
+                ),
+                if (!ms.isCompleted && !ms.isInningsBreak && state.players != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24, top: 12),
+                    child: _ScoringPad(state: state),
+                  ),
+              ],
+            );}
           return const SizedBox.shrink();
         },
       ),
@@ -293,37 +332,109 @@ class _ScoreHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final needed = ms.target != null ? ms.target! - ms.score : null;
+    final ballsFaced = (ms.overs * 6) + ms.balls;
+    final rr = ballsFaced > 0 ? (ms.score / ballsFaced) * 6 : 0.0;
+    
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         child: Column(
           children: [
-            Text(
-              teamName(ms.battingTeamId),
-              style: theme.textTheme.titleMedium,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.shield, size: 28, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  teamName(ms.battingTeamId).toUpperCase(),
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
             Text(
               '${ms.score}/${ms.wickets}',
-              style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.displayLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                fontSize: 72,
+                height: 1.0,
+                color: theme.colorScheme.primary,
+              ),
             ),
-            Text(
-              '${tr(en: 'Overs', ta: 'ஓவர்கள்', hi: 'ओवर', ml: 'ഓവറുകൾ')}: ${ms.oversText}'
-              '   ·   ${tr(en: 'Innings', ta: 'இன்னிங்ஸ்', hi: 'पारी', ml: 'ഇന്നിംഗ്സ്')} ${ms.innings}',
-              style: theme.textTheme.bodyMedium,
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Overs ${ms.oversText}',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  'CRR ${rr.toStringAsFixed(1)}',
+                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Innings ${ms.innings}',
+                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
             ),
             if (ms.target != null && !ms.isCompleted) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              Text(
+                'Need ${needed! > 0 ? needed : 0} runs',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
-                tr(
-                  en: 'Target ${ms.target} · Need ${needed! > 0 ? needed : 0} runs',
-                  ta: 'இலக்கு ${ms.target} · தேவை ${needed! > 0 ? needed : 0} ரன்கள்',
-                  hi: 'लक्ष्य ${ms.target} · चाहिए ${needed! > 0 ? needed : 0} रन',
-                  ml: 'ലക്ഷ്യം ${ms.target} · വേണം ${needed! > 0 ? needed : 0} റൺസ്',
-                ),
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary),
+                'Target ${ms.target}',
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
-            ],
+            ]
+            if (ms.recentBalls.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: ms.recentBalls.skip(ms.recentBalls.length > 8 ? ms.recentBalls.length - 8 : 0).map((b) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: b == 'W' ? theme.colorScheme.error : (b.contains('w') || b.contains('n') ? theme.colorScheme.tertiary : theme.colorScheme.surface),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                    ),
+                    child: Text(
+                      b,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: b == 'W' ? theme.colorScheme.onError : (b.contains('w') || b.contains('n') ? theme.colorScheme.onTertiary : theme.colorScheme.onSurface),
+                      ),
+                    ),
+                  ),
+                )).toList(),
+              ),
+            ],,
           ],
         ),
       ),
@@ -658,119 +769,127 @@ class _ScoringPad extends StatelessWidget {
   Widget build(BuildContext context) {
     final players = state.players!;
     final cubit = context.read<CricketScoringCubit>();
+    final theme = Theme.of(context);
+
+    // Find stats
+    final strikerStats = state.matchState.batters.firstWhere((b) => b.id == players.strikerId, orElse: () => CricketBatterEntity(id: '', name: players.strikerName, runs: 0, balls: 0, fours: 0, sixes: 0, out: false));
+    final nonStrikerStats = state.matchState.batters.firstWhere((b) => b.id == players.nonStrikerId, orElse: () => CricketBatterEntity(id: '', name: players.nonStrikerName, runs: 0, balls: 0, fours: 0, sixes: 0, out: false));
+    final bowlerStats = state.matchState.bowlers.firstWhere((b) => b.id == players.bowlerId, orElse: () => CricketBowlerEntity(id: '', name: players.bowlerName, legalBalls: 0, runs: 0, wickets: 0));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('🏏 ${players.strikerName} *',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(players.nonStrikerName),
-                      Text(
-                        '⚾ ${players.bowlerName}',
-                        style: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.swap_vert),
-                  tooltip: tr(en: 'Swap strike', ta: 'ஸ்ட்ரைக் மாற்று',
-                      hi: 'स्ट्राइक बदलें', ml: 'സ്ട്രൈക്ക് മാറ്റുക'),
-                  onPressed: cubit.swapStrike,
-                ),
-              ],
+        // Batter Card Row
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('🏏 ${strikerStats.name} *    ${strikerStats.runs}(${strikerStats.balls})',
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                  const SizedBox(height: 4),
+                  Text('🏏 ${nonStrikerStats.name}      ${nonStrikerStats.runs}(${nonStrikerStats.balls})',
+                      style: theme.textTheme.bodyMedium),
+                ],
+              ),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.swap_vert, size: 28),
+              onPressed: cubit.swapStrike,
+              style: IconButton.styleFrom(backgroundColor: theme.colorScheme.secondaryContainer),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('🎯 ${bowlerStats.name}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('${bowlerStats.oversText}-${bowlerStats.runs}-${bowlerStats.wickets}',
+                      style: theme.textTheme.bodyMedium),
+                ],
+              ),
+            ),
+          ],
         ),
         if (state.needsNewBowler)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Card(
-              color: Theme.of(context).colorScheme.tertiaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  tr(
-                    en: 'Over complete — the next ball will ask for the new bowler.',
-                    ta: 'ஓவர் முடிந்தது — அடுத்த பந்தில் புதிய பந்துவீச்சாளர் கேட்கப்படும்.',
-                    hi: 'ओवर समाप्त — अगली गेंद पर नया गेंदबाज़ चुनें।',
-                    ml: 'ഓവർ പൂർത്തിയായി — അടുത്ത പന്തിൽ പുതിയ ബൗളറെ തിരഞ്ഞെടുക്കും.',
-                  ),
-                ),
-              ),
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: theme.colorScheme.tertiaryContainer, borderRadius: BorderRadius.circular(12)),
+              child: const Text('Over complete — the next ball will ask for the new bowler.', style: TextStyle(fontWeight: FontWeight.w500)),
             ),
           ),
-        const SizedBox(height: 12),
-        Text(tr(en: 'Runs', ta: 'ரன்கள்', hi: 'रन', ml: 'റൺസ്'),
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [0, 1, 2, 3, 4, 6]
-              .map((runs) => SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: ElevatedButton(
-                      style: runs == 4 || runs == 6
-                          ? ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                            )
-                          : null,
-                      onPressed: () => _withBowlerIfNeeded(
-                          context, (newBowlerName) => cubit.scoreBall(
-                              runsBatter: runs, newBowlerName: newBowlerName)),
-                      child: Text('$runs'),
-                    ),
-                  ))
-              .toList(),
+        const SizedBox(height: 16),
+        // Ball controls
+        Row(
+          children: [0, 1, 2, 3, 4, 6].map((runs) {
+            final isBoundary = runs == 4 || runs == 6;
+            final isDot = runs == 0;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: isBoundary ? theme.colorScheme.primary : (isDot ? theme.colorScheme.surfaceVariant : theme.colorScheme.secondary),
+                    foregroundColor: isBoundary ? theme.colorScheme.onPrimary : (isDot ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSecondary),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size(0, 56),
+                  ),
+                  onPressed: () => _withBowlerIfNeeded(context, (newBowlerName) => cubit.scoreBall(runsBatter: runs, newBowlerName: newBowlerName)),
+                  child: Text('$runs', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
           children: [
-            OutlinedButton(
-              onPressed: () => _withBowlerIfNeeded(
-                  context,
-                  (nb) => cubit.scoreBall(extrasType: 'WIDE', newBowlerName: nb)),
-              child: Text(tr(en: 'Wide', ta: 'வைடு', hi: 'वाइड', ml: 'വൈഡ്')),
-            ),
-            OutlinedButton(
-              onPressed: () => _withBowlerIfNeeded(
-                  context,
-                  (nb) => cubit.scoreBall(extrasType: 'NO_BALL', newBowlerName: nb)),
-              child: Text(tr(en: 'No ball', ta: 'நோ பால்', hi: 'नो बॉल', ml: 'നോ ബോൾ')),
-            ),
-            OutlinedButton(
-              onPressed: () => _extrasDialog(context),
-              child: Text(tr(en: 'Extras…', ta: 'எக்ஸ்ட்ராஸ்…', hi: 'अतिरिक्त…', ml: 'എക്സ്ട്രാസ്…')),
-            ),
-            FilledButton.tonal(
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
-              ),
-              onPressed: () => _wicketDialog(context),
-              child: Text(tr(en: 'Wicket', ta: 'விக்கெட்', hi: 'विकेट', ml: 'വിക്കറ്റ്')),
-            ),
+            _actionBtn(context, 'Wide', () => _extrasDialog(context, 'WIDE')),
+            const SizedBox(width: 8),
+            _actionBtn(context, 'No Ball', () => _extrasDialog(context, 'NO_BALL')),
+            const SizedBox(width: 8),
+            _actionBtn(context, 'Bye', () => _extrasDialog(context, 'BYE')),
+            const SizedBox(width: 8),
+            _actionBtn(context, 'Leg Bye', () => _extrasDialog(context, 'LEG_BYE')),
           ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 56,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            onPressed: () => _wicketDialog(context),
+            child: const Text('WICKET', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+          ),
         ),
       ],
     );
   }
 
-  /// If the over just ended, ask who bowls next before sending the ball.
+  Widget _actionBtn(BuildContext context, String label, VoidCallback onTap) {
+    return Expanded(
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onPressed: onTap,
+        child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
   Future<void> _withBowlerIfNeeded(
       BuildContext context, Future<void> Function(String?) send) async {
     final cubit = context.read<CricketScoringCubit>();
@@ -786,8 +905,7 @@ class _ScoringPad extends StatelessWidget {
     final choice = await showDialog<(String?, String?)>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr(en: 'Next bowler', ta: 'அடுத்த பந்துவீச்சாளர்',
-            hi: 'अगला गेंदबाज़', ml: 'അടുത്ത ബൗളർ')),
+        title: Text(tr(en: 'Next bowler', ta: 'அடுத்த பந்துவீச்சாளர்', hi: 'अगला गेंदबाज़', ml: 'അടുത്ത ബൗളർ')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,8 +923,7 @@ class _ScoringPad extends StatelessWidget {
             TextField(
               controller: nameCtrl,
               decoration: InputDecoration(
-                labelText: tr(en: 'Or new bowler name', ta: 'அல்லது புதிய பெயர்',
-                    hi: 'या नया नाम', ml: 'അല്ലെങ്കിൽ പുതിയ പേര്'),
+                labelText: tr(en: 'Or new bowler name', ta: 'அல்லது புதிய பெயர்', hi: 'या नया नाम', ml: 'അല്ലെങ്കിൽ പുതിയ പേര്'),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -838,74 +955,56 @@ class _ScoringPad extends StatelessWidget {
     }
   }
 
-  Future<void> _extrasDialog(BuildContext context) async {
+  Future<void> _extrasDialog(BuildContext context, String type) async {
     final cubit = context.read<CricketScoringCubit>();
-    String type = 'BYE';
+    
+    // Instead of nested dialog, we just show a quick bottom sheet or inline dialog for number of runs
     int runs = 1;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(tr(en: 'Extras', ta: 'எக்ஸ்ட்ராஸ்', hi: 'अतिरिक्त रन', ml: 'എക്സ്ട്രാസ്')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final t in const [
-                    ('BYE', 'Bye'),
-                    ('LEG_BYE', 'Leg bye'),
-                    ('WIDE', 'Wide + runs'),
-                    ('NO_BALL', 'No ball + runs'),
-                  ])
-                    ChoiceChip(
-                      label: Text(t.$2),
-                      selected: type == t.$1,
-                      onSelected: (_) => setDialogState(() => type = t.$1),
-                    ),
-                ],
+          title: Text('$type Runs'),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [1, 2, 3, 4, 5].map((r) => InkWell(
+              onTap: () {
+                setDialogState(() => runs = r);
+              },
+              child: Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: runs == r ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant,
+                  shape: BoxShape.circle,
+                ),
+                child: Text('$r', style: TextStyle(
+                  color: runs == r ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 18, fontWeight: FontWeight.bold
+                )),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [1, 2, 3, 4]
-                    .map((r) => ChoiceChip(
-                          label: Text('$r'),
-                          selected: runs == r,
-                          onSelected: (_) => setDialogState(() => runs = r),
-                        ))
-                    .toList(),
-              ),
-            ],
+            )).toList(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(tr(en: 'Score', ta: 'பதிவு', hi: 'दर्ज करें', ml: 'രേഖപ്പെടുത്തുക')),
+              child: const Text('Confirm'),
             ),
           ],
         ),
       ),
     );
     if (confirmed != true) return;
-    // For no-balls the runs are off the bat; for the rest they're extras.
-    if (type == 'NO_BALL') {
-      await _withBowlerIfNeeded(
-          context,
-          (nb) => cubit.scoreBall(
-              extrasType: 'NO_BALL', runsBatter: runs, newBowlerName: nb));
-    } else {
+    if (type == 'NO_BALL' || type == 'WIDE') {
       final extraRuns = type == 'WIDE' ? runs - 1 : runs;
-      await _withBowlerIfNeeded(
-          context,
-          (nb) => cubit.scoreBall(
-              extrasType: type, extrasRuns: extraRuns, newBowlerName: nb));
+      await _withBowlerIfNeeded(context, (nb) => cubit.scoreBall(extrasType: type, extrasRuns: extraRuns, newBowlerName: nb));
+    } else {
+      await _withBowlerIfNeeded(context, (nb) => cubit.scoreBall(extrasType: type, extrasRuns: runs, newBowlerName: nb));
     }
   }
 
@@ -929,6 +1028,7 @@ class _ScoringPad extends StatelessWidget {
               children: [
                 DropdownButtonFormField<String>(
                   value: wicketType,
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'BOWLED', child: Text('Bowled')),
                     DropdownMenuItem(value: 'CAUGHT', child: Text('Caught')),
@@ -939,8 +1039,8 @@ class _ScoringPad extends StatelessWidget {
                   ],
                   onChanged: (v) => setDialogState(() => wicketType = v ?? 'BOWLED'),
                 ),
-                const SizedBox(height: 12),
-                Text(tr(en: 'Who is out?', ta: 'யார் அவுட்?', hi: 'कौन आउट?', ml: 'ആരാണ് ഔട്ട്?')),
+                const SizedBox(height: 16),
+                const Text('Who is out?', style: TextStyle(fontWeight: FontWeight.bold)),
                 RadioListTile<String>(
                   dense: true,
                   title: Text('${players.strikerName} *'),
@@ -955,26 +1055,28 @@ class _ScoringPad extends StatelessWidget {
                   groupValue: dismissedId,
                   onChanged: (v) => setDialogState(() => dismissedId = v!),
                 ),
-                if (!lastWicket)
+                if (!lastWicket) ...[
+                  const SizedBox(height: 16),
                   TextField(
                     controller: newBatter,
-                    decoration: InputDecoration(
-                      labelText: tr(en: 'New batter name', ta: 'புதிய பேட்ஸ்மேன்',
-                          hi: 'नया बल्लेबाज़', ml: 'പുതിയ ബാറ്റർ'),
-                      border: const OutlineInputBorder(),
+                    decoration: const InputDecoration(
+                      labelText: 'New batter name',
+                      border: OutlineInputBorder(),
                     ),
                   ),
+                ],
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+              child: const Text('Cancel'),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(tr(en: 'Confirm', ta: 'உறுதிசெய்', hi: 'पुष्टि करें', ml: 'സ്ഥിരീകരിക്കുക')),
+              child: const Text('Confirm Wicket'),
             ),
           ],
         ),

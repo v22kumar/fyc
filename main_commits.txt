@@ -1,0 +1,294 @@
+6a0cfca chore: force rebuild for secret
+b9d9d9a chore: trigger release build for new Google Web Client ID secret
+e931cef chore: sync google-services.json with latest Firebase configuration
+3e41274 feat(auth): improve UX for unconfigured Google sign in by suggesting OTP
+a8c3bbc Sprint 1 + Sprint 3 + logo refresh + go-live hardening (#73)
+0735c29 fix: speed up test suite runtime by skipping lifespan tasks and correctly bind SQLite PRAGMA
+afbcedb fix: resolve OperationalError due to SQLite foreign key constraints in test suite teardown and fix events test payload
+924d746 feat: sprint 3 offline performance and security hygiene
+82a1920 docs: hand-off brief for Sprint 3 + go-live security hygiene (parallel work)
+e584e42 fix(mobile): guard synchronous Firebase throws; fix stale test expectation
+d9a8b34 fix(ci): correct pytest invocation, scope analyze gate, fix pre-existing bug it caught
+6307f8b feat(design-system): Sprint 1 — design tokens, component library, nav shell, API hardening
+608ae6a feat(feed): rebuild Community Feed + Create Post to match reference design (#72)
+ce8ed93 fix(sports): bulletproof cricket-scoring schema repair + require registration close date (#71)
+85276e3 feat(sports): every sport scores in its own terms; managers finalize directly (#70)
+7f3dacd fix(sports): show cricket scoring only to managers (#69)
+641217c feat(sports): coherent tournament lifecycle — register → close → fixtures → live (#68)
+b9d1397 fix(schema): heal timestamp columns on drifted tables — cricket scoring 500 (#67)
+ef68595 Fix reported breakages + community feed (updates, search, chess, posting, FCM, fixtures) (#66)
+615fed1 fix(cricket): working in-app scorer + dead-button fixes + QA use-case matrix (#20)
+6a00ad4 chore(loadtest): pre-event load-test script (#65)
+3a48a08 perf(backend): harden for live-event load (SQLite WAL + single WS worker) (#64)
+b816d06 feat(chess): chess tournament mobile UI — list, bracket, register, play (#63)
+32d7493 feat(chess): knockout chess-tournament backend (bracket + Arena matches) (#62)
+91a001b fix(sports): score cricket fixtures in-app (admin + manager), not via web (#61)
+1b7b083 feat(i18n): 4-language coverage for the final 5 screens (#60)
+05c2c70 feat(i18n): 4-language coverage for profile, membership, certificate (#59)
+c453dd5 feat(i18n): 4-language coverage (en/ta/hi/ml) across 23 screens (#58)
+8faf6ec fix(i18n): add Global*Localizations delegates so non-English doesn't break (#57)
+0d8a20e fix(auth): can't switch accounts — clear Google session on logout + sign-in (#56)
+447ef0c fix(pubspec): remove duplicate image_picker key (broke pub get) (#55)
+e6f10fc feat(feed): social community feed UI — posts, like, comment, create post (#54)
+2b4c5fc feat(posts): social feed backend — Post model + CRUD + likes + comments (#53)
+5f9375e fix(updater): versionCode must exceed legacy field builds (100000 + run) (#52)
+10e6174 fix(sports): tournament detail showed "No details" + hid Register Team (#51)
+03a751a feat(updater): in-app download + one-tap install + auto-cleanup of old APK (#50)
+a6f882d fix(updater): reliable + mandatory auto-update (GitHub Release as source of truth) (#49)
+f7a8b76 feat(brand): adopt new green/gold "D" logo across app + launcher icon (#48)
+db14bab feat(settings): manual "Check for Updates" button + real version display (#47)
+3ab8c89 fix(notifications): repair latent compile errors that broke the release build (#46)
+251aae6 feat(mobile): bring Home (Phone 1) and Events (Phone 3) to mockup parity (#45)
+c944293 feat(events): expose registration_count on EventOut for "N Going" (#44)
+f5676a1 feat(mobile/home): Today's Impact hub — live community stats + quick actions (#43)
+ba32703 feat(mobile): integrate brand photography & illustrations across the app (#42)
+acf8d09 feat(mobile): Profile screen + Community/Profile bottom-nav tabs (#41)
+7cd675c fix(android): drop geocoding to unblock the APK build (#40)
+f9887e1 fix(android): bump compileSdk to 36 (androidx.core 1.18.0 requires it) (#39)
+b76b7f5 fix: search 1-char error + issue log-email 422 (#38)
+2cbe5c0 fix(android): pin compileSdk=35 — geocoding needs API 34+ (build was failing) (#37)
+6f23f4b feat(mobile/home): content-rich home for admin & volunteer (not service-only) (#36)
+37c41d1 fix(mobile/community): show all directory profiles (not just available) (#35)
+4fc812f fix: Journey 500 + tournament registration close date + human error messages (#34)
+44fefa9 fix(ci): don't fail the APK build on Fly secret/lease errors (#33)
+7c5abb2 chore(mobile/home): remove dead service classes after bento redesign (#32)
+9d7c4c1 feat(mobile/home): rich bento services grid (web parity, fixes empty feel) (#31)
+4ac370d feat(mobile/blood): location filter + GPS auto-detect + call/message (web parity) (#30)
+06eea38 fix(config): tolerate malformed boolean env vars (don't crash the app) (#29)
+cda33b0 fix(deploy): raise health-check grace_period to 120s (#28)
+d75b28d feat(app): in-app update check for sideloaded APK (#27)
+8ffc0d8 fix(mobile/blood): show place name instead of raw UUID + improve readability (#26)
+5bc6182 fix(auth): accept Android Google client ID (fixes "Token has wrong audience") (#25)
+632c1a3 feat(backend): deep readiness health check to gate deploys on real DB health (#24)
+582da04 fix(backend): heal schema drift causing /auth/google 500 ("Failed to fetch") (#19)
+bba3528 fix(db): auto-reconcile all schema drift at startup (robust login-500 fix) (#23)
+f1767ab fix(auth): heal schema drift 500-ing all logins (missing user_profiles.gender) (#22)
+47f36fd fix(cors): web Google sign-in — always allow first-party origins (#21)
+82c79c5 fix: web Google sign-in (CORS) + broken APK download link (#18)
+f4df1e3 fix(backend): Add missing get_current_user import in auth.py
+5b72aed fix(sports): resolve ambiguous Team.tournament mapper (was 500-ing every ORM query) (#16)
+459867f Phase A — Stabilization: restore backend boot + source-level security fixes (#15)
+c5184f5 fix(backend): Auto-format phone numbers to E.164 for Twilio OTP delivery
+8c2e4b5 ci: Remove --local-only to fix Docker Hub rate limiting on GitHub Actions
+dd2ac1c fix(backend): Remove deleted VALID_TRANSITIONS import from models/__init__.py
+0286090 fix(flutter): resolve compilation errors in issues and journey features
+1f18ea8 fix(devops): use local github runner for fly deployments to prevent timeouts
+2fda501 refactor: cleanup and production preparation
+3b2ee9e chore(devops): add production deployment pipeline
+4d81301 feat(admin): improve operations dashboard and management tools
+2b0d5e5 feat(flutter): implement community experience and UX improvements
+ef937d7 feat(backend): implement community platform foundation
+6c9e636 feat(sports): complete milestone 2 production implementation
+4ca882b feat(notifications): complete milestone 1 validation requirements (fcm, whatsapp, digests, analytics)
+ecd031d feat(notifications): implement milestone 1 foundation (backend + flutter)
+f31fefb fix(auth): add release SHA-1 to google-services.json for production Google Sign-In
+88b9785 fix(sports): import TournamentEntity in sports_bloc.dart
+44b668f fix(sports): fix undefined getter tournament and ApiConstants.sportsTeams
+91e4609 fix(auth): resolve Google Sign-In ApiException: 10, align package name, and enforce super admin
+2dcd120 docs: Add final product transformation deliverables report
+461ff33 docs: Add product review and feature audit reports
+c3d8e71 docs: Update comprehensive repository README
+1f6f101 feat: Add url_launcher for cricket live scoring
+333d768 feat: Full tournament lifecycle UI and mobile registration
+c6303b0 feat: Add tournament edit, delete and additional statuses
+240635a fix: Resolve import error in cricket router
+526f2f2 feat: Add markdown templates for tournament creation
+dda64bb fix: Admin UI, Web App Role, API Base URL, APK Download and Draft Tournaments
+3a22b4f feat: Add markdown description and admin tools for tournaments
+9be3c39 feat: add team approval workflow
+6c3fc48 feat: add markdown description for tournaments and complete tournament workflow
+e3050f3 fix: gracefully handle expired tokens by prompting user to log in again
+c1bc41f feat: enforce admin username and password
+9889541 fix: match admin deployment port to package.json start script (3001)
+d371ea9 feat: setup CI/CD deployment for admin portal to Fly.io
+990833a chore: remove redundant next_admin folder
+937f444 feat: migrate events and sports UI to main web app
+e180013 fix: add Events and Sports to public navigation menu
+aa63bdf feat: Auto-elevate vrn2252@gmail.com to SUPER_ADMIN on startup
+20330be fix: import Optional in events router
+2077581 feat: Add event management, sports tournaments, team registrations and UI
+dd1f728 fix: sports hub 500 error + language-mode greying + better error messages
+aeaed16 fix: Fly.io cold-start latency + news stuck grey + pull-to-refresh broken
+61f0a71 feat(sports): multi-sport tournaments + club-member live scoring with admin approval
+316addc feat(issues): full Report an Issue redesign — GPS, emergency, stats, department routing
+ab7c6cf fix(home): offline-first kural, news timeout+retry, backend warm-up
+215b08a feat(chess): premium vs-Stockfish UI — arena glow, clocks, ratings, 3D toolbar
+e0c0b78 fix(chess): correct bishop undo() API to fix CI build
+dae9ea4 feat(chess): Lichess-quality redesign + Chess Arena home page
+8d32da9 fix: add missing ApiConstants import in auth_repository_impl
+544ca0e fix(auth): restore dev bypass via build flag, add SHA-1 print to CI
+f5d29a4 feat(home): real search, 4-language picker, Thirukkural redesign, gap fix
+d548ceb security: remove all auth bypasses and hardcoded credentials
+707a731 ci: remove stale fat APK from release, clarify download instructions
+ddcaac0 merge: dark-mode aware core screens (blood, events, directory, etc.)
+a2b62ba feat(theme): make core screens dark-mode aware
+1bbdabf feat(theme): system-wide dark mode + Settings screen + Today section
+1cd2e03 feat(home): rebuild homepage to match premium mockup
+fd027d4 fix(chess): use glickoRating field — ChessStatsModel has no .rating getter
+6710c69 feat(i18n+ux): Hindi+Malayalam, letter language icons, tree photo fix, pull-to-refresh
+e0cdbf8 feat(perf+ux): cached image widget, offline banner, connectivity awareness
+8e0455d feat(chess): premium dark arena redesign — Chess.com-level UI
+44300ae feat(home+opportunities+blood): community pulse, sample content, emergency banner
+402f07d fix(ci): split APK per ABI to fix install failure on real devices
+5e3e02b chore(android): remove stale committed APK, trigger signed release build
+5572f9c build: rebuild clean release APK
+a63ab0a Merge pull request #6 from v22kumar/claude/end-to-end-readiness-b531n1
+44ac5e8 build: clean build release APK
+b79eb20 fix(android): make release APK installable on real devices + dev login bypass
+2d66adb build: compile chess modules, integrate credentials bypass and build release APK
+036ac38 feat: FYC Chess — full 10-sprint implementation merged to main
+372a2ca merge: resolve conflicts with main (flutter-build.yml, proguard-rules.pro)
+25a0bbc fix: gap review — CI, time controls, WS keepalive, type annotations
+ef235f5 feat: Sprint 10 — AI Legends gallery + APK hardening
+04db68e feat: Sprint 9 — Recognition & Legacy (weekly awards, Hall of Fame leaderboard)
+4191a28 feat: Sprint 8 — Prestige Integration
+b523cc2 feat: Sprint 7 — game replay + PGN sharing
+1b6300a feat: Sprint 6 — Stockfish AI opponent (vs Computer mode)
+2753d75 feat: Sprint 5 complete — spectator mode UI + routing
+0321d11 feat: Sprint 5 (partial) — spectator mode backend + BLoC
+17d1472 feat: Sprint 4 — chess clocks, time controls, flag enforcement
+d3a5cac feat: Sprint 3 — real-time multiplayer chess via WebSocket
+a41cc00 Sprint 2: Backend game model + auto-submit + history screen
+288d33d Sprint 1: Chess core — local game (squares + bishop)
+dca330d Add 10-sprint build plan (0 to 100) for prestige network
+082dcd5 Add community prestige network design doc
+6e06624 docs: add FYC Chess community ecosystem design (v0.1, draft)
+ed60d57 fix(ci): replace secrets in if: conditions with shell guards
+110fa38 fix(ci): replace secrets in if: conditions with shell guards
+7ecd12f fix(mobile): no-internet + Google Sign-In DEVELOPER_ERROR on real device
+e46146d ci: add Flutter build workflow — APK/AAB on push to mobile/**
+d9f80a2 fix(mobile): no-internet + Google Sign-In DEVELOPER_ERROR on real device
+44c184f fix(mobile): pass serverClientId to GoogleSignIn & permit local cleartext traffic
+36d7e63 fix(mobile): resolve release build compile & R8 minification errors
+bc458ab ci: add Flutter build workflow — APK/AAB on push to mobile/**
+d1ef0a0 feat: end-to-end readiness — aurora UI, auth guards, i18n, app download, Play Store prep
+9f6bdb8 fix(web): restore download link in Footer (lost during MCP push sync)
+b2e3022 fix: move app download to /api/v1/app/download (own router, correct path)
+fa4323e Merge pull request #3 from v22kumar/claude/end-to-end-readiness-b531n1
+acf243f Merge branch 'main' into claude/end-to-end-readiness-b531n1
+5042f56 fix: re-author commits as noreply@anthropic.com for verified status
+26ef130 feat: add APK download link across web + backend download endpoint
+4f309fc fix(android): add network_security_config.xml required by AndroidManifest
+7a91e4d chore(android): Play Store release prep + network security config
+cfede6e chore(mobile): rebuild release APK with merged changes
+a82ca9b merge: merge branch 'claude/end-to-end-readiness-b531n1' into main
+e755289 fix(mobile): resolve UserEntity profile compile error and rebuild release APK
+b6d51db feat(web): aurora hero + auth guard + 4-lang i18n on blood-donors page
+7704c3b feat(web): add /green and /opportunities pages with aurora heroes + auth guards
+b8242bd feat(web): aurora hero on about page + 4-lang i18n
+772fb6c feat(mobile): aurora dark background on register screen
+a5fe194 feat(web): aurora heroes + auth guards on submit-issue, verify, complete-profile pages
+98ff73c feat(web): aurora heroes + auth guards on events, sports, directory pages
+bb21499 feat(mobile): 5-phase premium Android UI — aurora theme, dark screens, 8-module grid
+3ec62ea fix(web): mobile language + logout dropdowns, glass header, premium dashboard
+3904778 feat(web): major UI overhaul — auth gate, 4-language i18n, aurora hero, One Tap
+33e4294 feat(web): expand home page to show all 8 service modules
+9f8bbc2 feat: differentiate home page for logged-in vs guest users
+fb4ea79 chore(mobile): resolve compiler warnings, permit cleartext traffic for local emulators, and rebuild release APK
+a9eab8f fix: add X-Organization-ID header to complete-profile PATCH request
+45c9c8b fix: isolate each DB column migration to prevent worker race condition crash
+ed58bb8 fix: pass PUBLIC_GOOGLE_CLIENT_ID build arg into Astro Docker build
+8e0497a feat: web login/register flow + Android profile fields + Firebase FCM
+1db50da feat: use Twilio Verify (SMS) as primary OTP channel
+4ff6507 feat: add Firebase FCM to Flutter Android app
+05fc7ae config: set Google Web OAuth client ID for web app Sign-In button
+aa59541 feat: user profiles, birthday wishes, FCM tokens, and admin role promotion
+dc4d2c1 feat: Google Sign-In + phone/OTP login on web app
+912e00c perf: two-layer caching — HTTP Cache-Control + in-process TTLCache
+27fca40 perf: eliminate N+1 queries, add DB indexes, paginate donors, pre-warm caches
+5065daf fix: seed blood donors when count < 1000; move weather+gold to header
+8d61378 fix: blood donor seeding path — use seeds/donors.csv not scripts/ (not in Docker image)
+e931a61 feat: daily 6 AM WhatsApp broadcast — Thirukkural + Kanyakumari news
+d854f8e fix: Indian retail gold price + friends2support donor seeding on deploy
+b5fd70b temp: hardcode GOLD_API_KEY default until Fly.io secret is configured
+139b70a feat: split jobs into TN Govt Jobs and Central Govt tabs across all platforms
+d9afbea fix: GPS city name via Nominatim reverse geocoding + move weather/gold to header
+9a3c0f7 feat: GPS weather, Kanyakumari news tab, and web geolocation support
+bad1e35 fix(gold-price): extend cache to 12h to stay within 100 req/month goldapi.io plan
+99d71a6 fix(weather): switch to Open-Meteo, free API, no key needed, better India coverage
+bb787da chore: merge main into feature branch — resolve conflicts
+00e59b2 feat(web): add tabbed news (Tamil/India/Jobs), weather & gold price widgets
+19ce363 feat: Instagram auto-post, club approval flow, weather/gold widgets, news tabs
+da34b0e Add backend .gitignore to exclude uploads/ and build artifacts
+54fef84 Fix all pending app gaps across backend, Flutter, and web
+4995c30 Enrich Flutter app visual depth to match web app
+64c9b7c fix(mobile): declare INTERNET permission and url_launcher queries in AndroidManifest.xml
+2aa48e9 feat(mobile): audit visual richness with premium card shadows, tap animations, shimmer loaders, and styled opportunities cards
+983e716 Fix mobile nav menu clipping and make blood donor contact public
+ffa0008 feat(web): daily Thirukkural + Tamil news on Astro homepage, deploy to Fly
+d903454 ci: bump Flutter to 3.32.0 for intl ^0.20.2 compatibility
+12d4e56 feat: Flutter web build + GitHub Pages auto-deploy
+b4a51af feat: Tamil news headlines on home screen + minimal nav redesign
+7c09a9a feat: daily Thirukkural couplet in Tamil and English
+c0f60ac Sprint 1: tenant isolation hardening, secret validation, mobile error-handling consolidation
+4d2cc7c fix(mobile): prevent donor name from wrapping one character per line
+2028168 Merge origin/main: keep backend-connected Gallery/Directory and restore About tile
+4b5dc8f Merge origin/main: reconcile Gallery/Directory routes with backend-connected versions
+2fec1a4 build: compile and update release APK for new merged features
+b9b5291 Merge pull request #2 from v22kumar/claude/end-to-end-readiness-b531n1
+1f75097 Merge branch 'main' into claude/end-to-end-readiness-b531n1
+9e33170 Merge branch 'claude/end-to-end-readiness-b531n1'
+d164852 feat(mobile): wire all new features into DI, router, and home grid
+91d1922 feat(mobile): Community directory — member/service profiles
+8195c6c feat(mobile): Volunteer certificate download screen
+070a973 feat(mobile): About FYC — history timeline, mission, values
+5cf0dd0 feat(mobile): Issue tracking — list submitted issues with status filter
+bca2382 feat(mobile): Gallery — event photo grid + full-screen viewer
+7eca677 feat(mobile): Announcements notice board feed + detail
+c62f250 feat(mobile): Public Directory — categorized contacts with call/WhatsApp
+e30177b feat(mobile): Green FYC — plantation drives, tree registration, stats
+cd4b528 feat(mobile): Sports Hub — tournaments, fixtures, standings, challenge form
+6c0d0bf feat(mobile): Issue tracking — list submitted issues with status filter
+31c10fb feat(mobile): Gallery — event photo grid + full-screen viewer
+091670e feat(mobile): Announcements notice board feed + detail
+17365d5 feat(mobile): Public Directory — categorized contacts with call/WhatsApp
+87586b4 feat(mobile): Green FYC — plantation drives, tree registration, stats
+29fd30a feat(mobile): Sports Hub — tournaments, fixtures, standings, challenge form
+94cab55 Perform expert UI audit, add real interactive content for Gallery and Opportunities, apply Google-standard brand logo integrations, and rebuild release APK
+213b237 Fix database seeding, add member directory, implement official password login, support post-login language selection, and update release APK
+fc33761 feat(mobile): Compile release APK targeting live Fly.io backend URL
+e3ebb7d feat(deploy): Configure OTP_BYPASS_CODE=123456 for free testing on Fly.io
+2afd448 fix(deploy): Use cd backend instead of --working-dir flag in flyctl
+7308ba2 fix(deploy): Set volume creation region to sin in GitHub Actions
+b55a62e merge: Merge remote branch origin/main and resolve fly.toml conflict
+b9b482a feat: merge Google Sign-In + add Fly.io deployment config
+d44d004 feat(deploy): Add Fly.io config and GitHub Actions deployment workflow
+ae3ab0c chore: ignore .claude/ agent scratch space
+33e2ebc feat: Google Sign-In — OTP-free authentication
+543f9a3 feat: real OTP delivery via WhatsApp (Twilio) and email (SMTP)
+3bd1a6f feat(mobile): Compile release APK and resolve SSL truststore & compiler errors
+7fb4ef6 feat: wire all new modules + fix volunteer assignment, event checkout, certificates
+6c15ee6 chore: ignore .claude/ agent worktree scratch space
+0fd98ae feat: Public Directory, Announcements, and Event Gallery modules
+d2f6ec2 feat: Green FYC tree plantation module
+542b29f Add FCM push notification service and FCM_SERVER_KEY config
+74ecb9b feat: add location filters and nearby area search on blood donors directory page, fix admin type compiler error
+18daac1 Merge claude/end-to-end-readiness-b531n1 into main
+0f78cb3 Add taluk/district grouping and nearby search to blood donor API
+fa8c3bb Fix import_donors_csv.py field mismatches against actual User/UserProfile models
+2586ea4 feat: scrape and import blood donors for Kanyakumari and Thiruvananthapuram
+abcf367 fix: resolve model mismatches and DB paths in import_donors_csv.py
+760aba1 Merge remote-tracking branch 'origin/main'
+146b233 chore: merge scraper scripts into main, resolve Makefile conflict
+58f3a59 design: reflect color palette and branding updates in mobile app
+1eed314 design: Redesign homepage and header to look like a modern community platform
+9950fd8 fix: implement missing /directory/register Astro page
+8231705 feat: add Friends2Support blood donor scraper and CSV importer
+72bcfe5 feat: Milestone 8 — Community Directory & Sports Hub
+1e8fab3 feat: use official FYC phoenix logo with matching dark-green background
+34663d0 feat: replace PNG logo with transparent SVG phoenix mark across web and admin
+4c00cb1 feat: add seed_donors script with 29 initial blood donor contacts
+6a9b2b2 Merge remote-tracking branch 'origin/main'
+36e9d10 feat: FYC Connect MVP — complete Phase 1 (Milestones 1-7)
+51d4c18 feat: Milestone 7 — production Docker deployment, nginx reverse proxy, VPS deployment guide
+79bd9ae chore: add Next.js generated files and package-lock from demo setup
+764ac41 feat: Milestone 6 — Bilingual configuration, translation sync, and integration testing
+b22226d feat: Milestone 5 — Digital Membership ID, QR scanner, and FYC logo integration
+e0758a4 feat: implement frontend clients (Astro public website, Next.js admin portal, and Flutter mobile application) for Milestones 2-5
+981fc03 feat: Milestone 4 — Next.js Admin triage board, media upload, camera integration
+76c82fd fix: close all audit gaps across backend, mobile, and web
+72753b7 feat(mobile): complete Milestone 3 — Flutter app with BLoC, OTP login, Blood Donation Hub
+0dde4d3 feat(web): Milestone 2 — Astro public website with bilingual SSG and anonymous search
+86490d8 Merge pull request #1 from v22kumar/claude/end-to-end-readiness-b531n1
+d42c9ed feat: complete MVP end-to-end backend — all Phase 1 modules implemented and tested
+2365a70 feat: implement backend core scaffolding, multi-tenant middleware, database models, security utilities, and verification tests

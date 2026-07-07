@@ -70,7 +70,8 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         "target": None,
         "batters": {}, # {id: {name, runs, balls, 4s, 6s, out}}
         "bowlers": {}, # {id: {name, overs, balls, runs, wickets, maidens}}
-        "extras": {"w": 0, "nb": 0, "b": 0, "lb": 0}
+        "extras": {"w": 0, "nb": 0, "b": 0, "lb": 0},
+        "recent_balls": []
     }
     
     if match.toss_decision == "BAT":
@@ -101,6 +102,7 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["balls"] = 0
             state["batting_team_id"], state["bowling_team_id"] = state["bowling_team_id"], state["batting_team_id"]
             state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
+            state["recent_balls"] = []
 
         ensure_batter(b.striker_id, b.striker.name)
         ensure_batter(b.non_striker_id, b.non_striker.name)
@@ -150,6 +152,22 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["batters"][str(b.player_dismissed_id)]["out"] = True
             if b.wicket_type in ["BOWLED", "CAUGHT", "LBW", "STUMPED", "HIT_WICKET"]:
                 state["bowlers"][str(b.bowler_id)]["wickets"] += 1
+
+        ball_str = ""
+        if b.is_wicket:
+            ball_str = "W"
+        elif b.extras_type == "WIDE":
+            ball_str = f"{1 + b.extras_runs}wd"
+        elif b.extras_type == "NO_BALL":
+            ball_str = f"{1 + b.extras_runs}nb"
+        elif b.extras_type == "BYE":
+            ball_str = f"{b.extras_runs}b"
+        elif b.extras_type == "LEG_BYE":
+            ball_str = f"{b.extras_runs}lb"
+        else:
+            ball_str = str(b.runs_batter) if b.runs_batter > 0 else "•"
+        
+        state["recent_balls"].append(ball_str)
 
     innings_over = state["wickets"] >= 10 or (
         state["overs"] == match.overs_per_innings and state["balls"] == 0 and state["overs"] > 0
@@ -268,10 +286,14 @@ def score_ball(
         raise HTTPException(403, "Only the assigned scorer can update this match")
 
     state = match.match_state or {}
-    innings_num = state.get("innings", 1)
+    innings_num = state.get("innings")
+    if not innings_num:
+        raise HTTPException(400, "Match setup incomplete: innings not initialized.")
     
     batting_team_id = state.get("batting_team_id")
     bowling_team_id = state.get("bowling_team_id")
+    if not batting_team_id or not bowling_team_id:
+        raise HTTPException(400, "Match setup incomplete: batting and bowling teams must be assigned.")
     
     striker_id = payload.striker_id
     if payload.new_batter_name and payload.player_dismissed_id == payload.striker_id:
@@ -287,6 +309,11 @@ def score_ball(
     if payload.new_bowler_name:
         p = _get_or_create_player(db, bowling_team_id, payload.new_bowler_name, org_id=current_user.organization_id)
         bowler_id = str(p.id)
+
+    if not striker_id or not non_striker_id:
+        raise HTTPException(400, "Match setup incomplete: opening batters must be selected.")
+    if not bowler_id:
+        raise HTTPException(400, "Match setup incomplete: current bowler must be selected.")
 
     ball_index = db.query(CricketBall).filter(CricketBall.match_id == match.id).count() + 1
 
@@ -314,9 +341,9 @@ def score_ball(
     except Exception as e:
         db.rollback()
         logger.exception("cricket score_ball failed")
-        # Surface the concrete reason to the scorer (returned as 400 so the app
-        # shows it) instead of a generic 500 — critical while stabilising live.
-        raise HTTPException(400, f"Scoring failed: {type(e).__name__}: {str(e)[:400]}")
+        if "IntegrityError" in type(e).__name__:
+            raise HTTPException(400, "Unable to record this ball. Please verify match setup, players, and try again.")
+        raise HTTPException(400, "An unexpected error occurred while scoring.")
     return {"status": "success", "match_state": new_state}
 
 
@@ -376,6 +403,7 @@ def start_second_innings(
     state["batting_team_id"] = batting_team
     state["bowling_team_id"] = bowling_team
     state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
+            state["recent_balls"] = []
     state["status"] = "SECOND_INNINGS"
 
     match.match_state = state

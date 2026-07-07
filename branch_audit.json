@@ -1,0 +1,990 @@
+[
+  {
+    "name": "claude/deep-health-check",
+    "type": "Local",
+    "sha": "04518329b265336cf74a1ed04fd9ee0c743c987b",
+    "message": "feat(backend): deep readiness health check to gate deploys on real DB health",
+    "author": "AI Bot",
+    "date": "2026-06-28 23:28:50 +0000",
+    "ahead": 1,
+    "behind": 74,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py",
+      "backend/fly.toml"
+    ],
+    "total_files": 2,
+    "todos": 30
+  },
+  {
+    "name": "claude/fix-google-signin-schema-drift",
+    "type": "Local",
+    "sha": "7d21b8944c7ba622da54fa32f8d6a0132192f9a0",
+    "message": "fix(backend): heal schema drift causing /auth/google 500 (\"Failed to fetch\")",
+    "author": "AI Bot",
+    "date": "2026-06-28 06:26:50 +0000",
+    "ahead": 1,
+    "behind": 78,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "claude/phase-d1-security-cutover",
+    "type": "Local",
+    "sha": "b915acb1db72c6784548da5f7075d71f9c2ce4a4",
+    "message": "fix(security): D1 cutover \u2014 enforce production, drop OTP bypass, add healthcheck",
+    "author": "AI Bot",
+    "date": "2026-06-28 03:15:07 +0000",
+    "ahead": 1,
+    "behind": 79,
+    "is_merged": false,
+    "files": [
+      "backend/app/core/config.py",
+      "backend/app/main.py",
+      "backend/fly.toml"
+    ],
+    "total_files": 3,
+    "todos": 30
+  },
+  {
+    "name": "feat/sprint3-offline-performance-core",
+    "type": "Local",
+    "sha": "afbcedbb8b1ca4e2b09054b27aa70fd0f7f14865",
+    "message": "fix: resolve OperationalError due to SQLite foreign key constraints in test suite teardown and fix events test payload",
+    "author": "AI Bot",
+    "date": "2026-07-04 13:09:27 +0000",
+    "ahead": 0,
+    "behind": 18,
+    "is_merged": true,
+    "files": [],
+    "total_files": 0,
+    "todos": 31
+  },
+  {
+    "name": "origin",
+    "type": "Local",
+    "sha": "d8a14cfa1fe391d82e622941065f8fb55e99090e",
+    "message": "Safety Center: notify nearby members + siren + feature panel (#85)",
+    "author": "Varun SV Kumar",
+    "date": "2026-07-06 07:40:33 +0530",
+    "ahead": 0,
+    "behind": 0,
+    "is_merged": false,
+    "files": [],
+    "total_files": 0,
+    "todos": 31
+  },
+  {
+    "name": "origin/chore/home-cleanup",
+    "type": "Remote",
+    "sha": "e2eefdb4b977606cc1841140fc403929abd84042",
+    "message": "chore(mobile/home): remove dead _QuickServices/_ServiceTile/_Service",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 02:27:17 +0000",
+    "ahead": 1,
+    "behind": 66,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/home/presentation/screens/home_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/chore/loadtest",
+    "type": "Remote",
+    "sha": "0d4f5102b4fb62f2dfea45618201c028481bfb35",
+    "message": "chore(loadtest): pre-event load-test script (run from laptop vs prod)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 10:14:15 +0000",
+    "ahead": 1,
+    "behind": 34,
+    "is_merged": false,
+    "files": [
+      "backend/loadtest/loadtest.py"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/claude/deep-health-check",
+    "type": "Remote",
+    "sha": "04518329b265336cf74a1ed04fd9ee0c743c987b",
+    "message": "feat(backend): deep readiness health check to gate deploys on real DB health",
+    "author": "AI Bot",
+    "date": "2026-06-28 23:28:50 +0000",
+    "ahead": 1,
+    "behind": 74,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py",
+      "backend/fly.toml"
+    ],
+    "total_files": 2,
+    "todos": 30
+  },
+  {
+    "name": "origin/claude/end-to-end-readiness-b531n1",
+    "type": "Remote",
+    "sha": "9ab20178b7a9dbcb11c9deeb65c311d706223d83",
+    "message": "Chess tournaments: full knockout flow \u2014 approval, manual rounds, ready gate",
+    "author": "Claude",
+    "date": "2026-07-06 02:36:43 +0000",
+    "ahead": 1,
+    "behind": 0,
+    "is_merged": false,
+    "files": [
+      "backend/app/models/chess_tournament.py",
+      "backend/app/routers/chess_tournaments.py",
+      "backend/app/schemas/chess_tournament.py",
+      "backend/tests/test_chess_tournaments.py",
+      "docs/HOW_TO_CONDUCT_A_TOURNAMENT.md",
+      "docs/SPRINT_PLAN.md",
+      "mobile/lib/features/chess_tournament/chess_tournament_api.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_detail_screen.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_list_screen.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_models.dart"
+    ],
+    "total_files": 10,
+    "todos": 31
+  },
+  {
+    "name": "origin/claude/fix-google-signin-schema-drift",
+    "type": "Remote",
+    "sha": "7d21b8944c7ba622da54fa32f8d6a0132192f9a0",
+    "message": "fix(backend): heal schema drift causing /auth/google 500 (\"Failed to fetch\")",
+    "author": "AI Bot",
+    "date": "2026-06-28 06:26:50 +0000",
+    "ahead": 1,
+    "behind": 78,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/claude/phase-d1-security-cutover",
+    "type": "Remote",
+    "sha": "b915acb1db72c6784548da5f7075d71f9c2ce4a4",
+    "message": "fix(security): D1 cutover \u2014 enforce production, drop OTP bypass, add healthcheck",
+    "author": "AI Bot",
+    "date": "2026-06-28 03:15:07 +0000",
+    "ahead": 1,
+    "behind": 79,
+    "is_merged": false,
+    "files": [
+      "backend/app/core/config.py",
+      "backend/app/main.py",
+      "backend/fly.toml"
+    ],
+    "total_files": 3,
+    "todos": 30
+  },
+  {
+    "name": "origin/feat/blood-location-filter",
+    "type": "Remote",
+    "sha": "cf724b065ef45524fbdc0e10779e72a22929589c",
+    "message": "feat(mobile/blood): location filter, GPS auto-detect, call+message (web parity)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 01:03:14 +0000",
+    "ahead": 1,
+    "behind": 68,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/src/main/AndroidManifest.xml",
+      "mobile/lib/core/constants/api_constants.dart",
+      "mobile/lib/features/blood_donation/data/datasources/blood_donor_datasource.dart",
+      "mobile/lib/features/blood_donation/data/repositories/blood_donor_repository_impl.dart",
+      "mobile/lib/features/blood_donation/domain/repositories/blood_donor_repository.dart",
+      "mobile/lib/features/blood_donation/domain/usecases/search_donors_usecase.dart",
+      "mobile/lib/features/blood_donation/presentation/bloc/blood_donor_bloc.dart",
+      "mobile/lib/features/blood_donation/presentation/bloc/blood_donor_event.dart",
+      "mobile/lib/features/blood_donation/presentation/screens/blood_donation_hub_screen.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 10,
+    "todos": 30
+  },
+  {
+    "name": "origin/feat/chess-tournaments-backend",
+    "type": "Remote",
+    "sha": "ecf3c790756bb179a37552f99c60be2f576d18e4",
+    "message": "feat(chess): knockout chess-tournament backend (bracket + Arena matches)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 09:54:32 +0000",
+    "ahead": 1,
+    "behind": 36,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py",
+      "backend/app/models/__init__.py",
+      "backend/app/models/chess_tournament.py",
+      "backend/app/routers/chess_tournaments.py",
+      "backend/app/schemas/chess_tournament.py"
+    ],
+    "total_files": 5,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/chess-tournaments-mobile",
+    "type": "Remote",
+    "sha": "6a81d16eb2370272e231bbab99814d14888c152d",
+    "message": "feat(chess): chess tournament mobile UI \u2014 list, bracket, register, play",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 10:04:50 +0000",
+    "ahead": 1,
+    "behind": 35,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/router/app_router.dart",
+      "mobile/lib/features/chess/presentation/pages/chess_home_page.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_api.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_detail_screen.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_list_screen.dart",
+      "mobile/lib/features/chess_tournament/chess_tournament_models.dart"
+    ],
+    "total_files": 6,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/content-home-all-roles",
+    "type": "Remote",
+    "sha": "9f2acfab8a5342e1a4824a8ab7a831d1592da752",
+    "message": "feat(mobile/home): content-rich home for admin & volunteer (not service-only)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 07:59:34 +0000",
+    "ahead": 1,
+    "behind": 62,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/home/presentation/screens/home_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/feat/event-registration-count",
+    "type": "Remote",
+    "sha": "af6b4b625f4805537e5380699a9e2280a7aa4c2e",
+    "message": "feat(events): expose registration_count on EventOut for \"N Going\"",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 18:16:26 +0000",
+    "ahead": 1,
+    "behind": 54,
+    "is_merged": false,
+    "files": [
+      "backend/app/routers/events.py",
+      "backend/app/schemas/event.py"
+    ],
+    "total_files": 2,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/home-bento",
+    "type": "Remote",
+    "sha": "780c4203f683e83fa81d16d4ce01bb7ae60ac2d4",
+    "message": "feat(mobile/home): rich bento services grid (web parity, fixes empty feel)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 02:16:01 +0000",
+    "ahead": 1,
+    "behind": 67,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/home/presentation/screens/home_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/feat/home-impact-hub",
+    "type": "Remote",
+    "sha": "84e2998151fcade8db6405ca64ab73534e68938d",
+    "message": "feat(mobile/home): Today's Impact hub \u2014 live community stats + quick actions",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 17:48:12 +0000",
+    "ahead": 1,
+    "behind": 55,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/home/presentation/screens/home_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/i18n-4lang-rest",
+    "type": "Remote",
+    "sha": "b5f7b279400e21d9bd3921db825a2f08a8cd9d9b",
+    "message": "feat(i18n): 4-language coverage for profile, membership, certificate",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 09:23:47 +0000",
+    "ahead": 1,
+    "behind": 39,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/membership/presentation/screens/membership_card_screen.dart",
+      "mobile/lib/features/profile/presentation/screens/profile_screen.dart",
+      "mobile/lib/features/volunteers/presentation/screens/certificate_screen.dart"
+    ],
+    "total_files": 3,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/i18n-4lang-sweep",
+    "type": "Remote",
+    "sha": "254a64a55a915b66d1f300517d99e166e7f90b3e",
+    "message": "feat(i18n): 4-language coverage (en/ta/hi/ml) across 23 screens",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 05:58:55 +0000",
+    "ahead": 1,
+    "behind": 40,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/l10n/tr.dart",
+      "mobile/lib/core/widgets/update_sheet.dart",
+      "mobile/lib/features/about/presentation/screens/about_screen.dart",
+      "mobile/lib/features/announcements/presentation/screens/announcement_detail_screen.dart",
+      "mobile/lib/features/announcements/presentation/screens/announcements_screen.dart",
+      "mobile/lib/features/auth/presentation/screens/otp_login_screen.dart",
+      "mobile/lib/features/auth/presentation/screens/register_screen.dart",
+      "mobile/lib/features/blood_donation/presentation/screens/blood_donation_hub_screen.dart",
+      "mobile/lib/features/blood_donation/presentation/screens/donor_registration_screen.dart",
+      "mobile/lib/features/common/screens/opportunities_screen.dart",
+      "mobile/lib/features/community/presentation/screens/community_directory_screen.dart",
+      "mobile/lib/features/community_feed/presentation/screens/community_feed_screen.dart",
+      "mobile/lib/features/directory/presentation/screens/directory_screen.dart",
+      "mobile/lib/features/events/presentation/screens/events_list_screen.dart",
+      "mobile/lib/features/events/presentation/screens/qr_scan_screen.dart",
+      "mobile/lib/features/feed/create_post_screen.dart",
+      "mobile/lib/features/feed/feed_screen.dart",
+      "mobile/lib/features/gallery/presentation/screens/gallery_screen.dart",
+      "mobile/lib/features/green_fyc/presentation/screens/green_fyc_screen.dart",
+      "mobile/lib/features/green_fyc/presentation/screens/tree_registration_screen.dart"
+    ],
+    "total_files": 23,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/i18n-final5",
+    "type": "Remote",
+    "sha": "230bbd182a75829a5f7fd0f10b724fb5db94060e",
+    "message": "feat(i18n): 4-language coverage for the final 5 screens",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 09:33:34 +0000",
+    "ahead": 1,
+    "behind": 38,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/issues/presentation/screens/submit_issue_screen.dart",
+      "mobile/lib/features/journey/presentation/screens/journey_screen.dart",
+      "mobile/lib/features/sports/presentation/screens/challenge_form_screen.dart",
+      "mobile/lib/features/sports/presentation/screens/sports_hub_screen.dart",
+      "mobile/lib/features/sports/presentation/screens/sports_tournament_detail_screen.dart"
+    ],
+    "total_files": 5,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/in-app-updater",
+    "type": "Remote",
+    "sha": "9482dc116dfcc30f011ffcb1f184e2d64b6bb7cd",
+    "message": "feat(app): in-app update check for sideloaded APK (no Play Store needed)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 00:09:36 +0000",
+    "ahead": 1,
+    "behind": 71,
+    "is_merged": false,
+    "files": [
+      ".github/workflows/flutter-build.yml",
+      "backend/app/core/config.py",
+      "backend/app/routers/app_meta.py",
+      "mobile/android/app/src/main/AndroidManifest.xml",
+      "mobile/lib/core/constants/api_constants.dart",
+      "mobile/lib/core/services/update_service.dart",
+      "mobile/lib/core/storage/local_storage.dart",
+      "mobile/lib/core/widgets/update_dialog.dart",
+      "mobile/lib/features/home/presentation/screens/home_screen.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 10,
+    "todos": 30
+  },
+  {
+    "name": "origin/feat/inapp-installer-cleanup",
+    "type": "Remote",
+    "sha": "e8ebc1f75f33527be8bdb39fe105ffe020ee8ae0",
+    "message": "feat(updater): in-app download + one-tap install + auto-cleanup of old APK",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 03:16:11 +0000",
+    "ahead": 1,
+    "behind": 48,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/services/update_installer.dart",
+      "mobile/lib/core/widgets/update_dialog.dart",
+      "mobile/lib/core/widgets/update_sheet.dart",
+      "mobile/lib/features/home/presentation/screens/home_screen.dart",
+      "mobile/lib/features/settings/presentation/screens/settings_screen.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 6,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/integrate-images",
+    "type": "Remote",
+    "sha": "1b31e783aa7fdbfad2294406b84ada495be1955f",
+    "message": "feat(mobile): integrate brand photography & illustrations across the app",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 17:38:11 +0000",
+    "ahead": 1,
+    "behind": 56,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "mobile/assets/illustrations/empty_donors.png",
+      "mobile/assets/illustrations/empty_events.png",
+      "mobile/assets/illustrations/empty_feed.png",
+      "mobile/assets/images/app_icon.png",
+      "mobile/assets/images/auth_bg.png",
+      "mobile/assets/images/beach_clean.png",
+      "mobile/assets/images/blood_drive.png",
+      "mobile/assets/images/event_placeholder.png",
+      "mobile/assets/images/hero_community.png",
+      "mobile/assets/images/impact_sapling.png",
+      "mobile/assets/images/sports_cricket.png",
+      "mobile/lib/core/widgets/empty_state.dart",
+      "mobile/lib/features/auth/presentation/screens/otp_login_screen.dart",
+      "mobile/lib/features/blood_donation/presentation/screens/blood_donation_hub_screen.dart",
+      "mobile/lib/features/events/presentation/screens/events_list_screen.dart"
+    ],
+    "total_files": 24,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/new-brand-logo",
+    "type": "Remote",
+    "sha": "f33bbfc3688bc0a4318f4db168dd3f20c66fb0e2",
+    "message": "feat(brand): adopt new green/gold \"D\" logo across app + launcher icon",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 02:47:07 +0000",
+    "ahead": 1,
+    "behind": 50,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "mobile/assets/images/app_icon.png",
+      "mobile/assets/images/fyc_logo.png"
+    ],
+    "total_files": 7,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/phone1-3-parity",
+    "type": "Remote",
+    "sha": "99e4d7e33de918f47324a9fd39e98f263dfc008d",
+    "message": "feat(mobile): bring Home (Phone 1) and Events (Phone 3) to mockup parity",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 18:26:21 +0000",
+    "ahead": 1,
+    "behind": 53,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/router/app_router.dart",
+      "mobile/lib/features/events/data/models/event_model.dart",
+      "mobile/lib/features/events/domain/entities/event_entity.dart",
+      "mobile/lib/features/events/presentation/screens/events_list_screen.dart",
+      "mobile/lib/features/home/presentation/screens/home_screen.dart",
+      "mobile/lib/features/notifications/data/datasources/notification_remote_data_source.dart",
+      "mobile/lib/service_locator.dart"
+    ],
+    "total_files": 7,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/profile-screen",
+    "type": "Remote",
+    "sha": "85ec9c5c4182dfbb270eeee2508c0116ebecd6e7",
+    "message": "feat(mobile): Profile screen + Community/Profile bottom-nav tabs (mockup parity)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 16:30:19 +0000",
+    "ahead": 1,
+    "behind": 57,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/router/app_router.dart",
+      "mobile/lib/features/home/presentation/screens/home_screen.dart",
+      "mobile/lib/features/profile/presentation/screens/profile_screen.dart"
+    ],
+    "total_files": 3,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/settings-check-updates",
+    "type": "Remote",
+    "sha": "5a50c8c1e12a8a1e65c45f925c09a603a9da03d1",
+    "message": "feat(settings): manual \"Check for Updates\" button + real version display",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 23:28:40 +0000",
+    "ahead": 1,
+    "behind": 51,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/settings/presentation/screens/settings_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/social-feed-backend",
+    "type": "Remote",
+    "sha": "62b5bc4474a1aa65166a73cde20039cc63f27098",
+    "message": "feat(posts): social feed backend \u2014 Post model + CRUD + likes + comments",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 04:18:16 +0000",
+    "ahead": 1,
+    "behind": 45,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py",
+      "backend/app/models/__init__.py",
+      "backend/app/models/post.py",
+      "backend/app/routers/posts.py",
+      "backend/app/schemas/post.py"
+    ],
+    "total_files": 5,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/social-feed-mobile",
+    "type": "Remote",
+    "sha": "780acd1f938d779cf8933bbe668e201b24d0cc16",
+    "message": "feat(feed): social community feed UI \u2014 posts, like, comment, create post",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 04:23:33 +0000",
+    "ahead": 1,
+    "behind": 44,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/router/app_router.dart",
+      "mobile/lib/features/feed/create_post_screen.dart",
+      "mobile/lib/features/feed/feed_api.dart",
+      "mobile/lib/features/feed/feed_models.dart",
+      "mobile/lib/features/feed/feed_screen.dart",
+      "mobile/lib/features/home/presentation/screens/home_screen.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 7,
+    "todos": 31
+  },
+  {
+    "name": "origin/feat/sprint3-offline-performance-core",
+    "type": "Remote",
+    "sha": "924d74652f3793a87a800f2e059ed5bac1a57ba0",
+    "message": "feat: sprint 3 offline performance and security hygiene",
+    "author": "AI Bot",
+    "date": "2026-07-04 11:33:01 +0000",
+    "ahead": 0,
+    "behind": 19,
+    "is_merged": true,
+    "files": [],
+    "total_files": 0,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/android-compilesdk-34",
+    "type": "Remote",
+    "sha": "3471a461fa2f72aea96dc5664f35558f9da3da78",
+    "message": "fix(android): pin compileSdk=35 \u2014 geocoding needs API 34+ (build was failing)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 08:02:32 +0000",
+    "ahead": 1,
+    "behind": 61,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/build.gradle.kts"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/auth-500-schema-drift",
+    "type": "Remote",
+    "sha": "4b6c8e896fd56e8219be29b3f36738f8b8e3cf09",
+    "message": "fix(auth): heal schema drift that 500'd all logins (missing user_profiles.gender)",
+    "author": "Varun Kumar",
+    "date": "2026-06-28 16:43:27 +0000",
+    "ahead": 1,
+    "behind": 77,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/auto-schema-reconcile",
+    "type": "Remote",
+    "sha": "87d3e6123eedb3dd52fa87bec7641b3fcb02bc76",
+    "message": "fix(db): auto-reconcile ALL schema drift at startup (fixes login 500s robustly)",
+    "author": "Varun Kumar",
+    "date": "2026-06-28 16:53:03 +0000",
+    "ahead": 1,
+    "behind": 76,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/blood-donor-ui",
+    "type": "Remote",
+    "sha": "8d5becc16dcfae71ffe363094556b7543f3167a4",
+    "message": "fix(mobile/blood): show place name instead of raw UUID + improve readability",
+    "author": "Varun Kumar",
+    "date": "2026-06-28 23:59:06 +0000",
+    "ahead": 1,
+    "behind": 72,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/blood_donation/data/models/blood_donor_model.dart",
+      "mobile/lib/features/blood_donation/domain/entities/blood_donor_entity.dart",
+      "mobile/lib/features/blood_donation/presentation/screens/blood_donation_hub_screen.dart"
+    ],
+    "total_files": 3,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/community-directory-available",
+    "type": "Remote",
+    "sha": "e31cbca1493019dcac97505de1ee7f78136ebed4",
+    "message": "fix(mobile/community): show all directory profiles, not just \"available\"",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 07:54:41 +0000",
+    "ahead": 1,
+    "behind": 63,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/community/data/datasources/community_datasource.dart"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/compilesdk-36",
+    "type": "Remote",
+    "sha": "e1e75d127ca52f7d09f7a0f13e9d5646751de3a8",
+    "message": "fix(android): bump compileSdk 35 -> 36 (androidx.core 1.18.0 requires it)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 08:17:21 +0000",
+    "ahead": 1,
+    "behind": 59,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/build.gradle.kts"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/cors-firstparty",
+    "type": "Remote",
+    "sha": "1f923d7fc92f3818586e2e7198babbd975566146",
+    "message": "fix(cors): always allow first-party frontends so web Google sign-in can't be CORS-blocked",
+    "author": "Varun Kumar",
+    "date": "2026-06-28 15:29:02 +0000",
+    "ahead": 1,
+    "behind": 78,
+    "is_merged": false,
+    "files": [
+      "backend/app/main.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/flutter-ci-fly-nonfatal",
+    "type": "Remote",
+    "sha": "565a9389c0518e4973058ac1cf1d0176ee7e9c00",
+    "message": "fix(ci): don't fail the APK build on Fly secret/lease errors",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 02:30:15 +0000",
+    "ahead": 1,
+    "behind": 65,
+    "is_merged": false,
+    "files": [
+      ".github/workflows/flutter-build.yml"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/google-account-switch",
+    "type": "Remote",
+    "sha": "a9616d87e03313bda8b047d359ce3db10cfb2fcf",
+    "message": "fix(auth): can't switch accounts \u2014 clear Google session on logout + sign-in",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 05:00:52 +0000",
+    "ahead": 1,
+    "behind": 42,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/auth/data/datasources/auth_remote_datasource.dart",
+      "mobile/lib/features/auth/data/repositories/auth_repository_impl.dart"
+    ],
+    "total_files": 2,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/google-audience",
+    "type": "Remote",
+    "sha": "4e5d7fe9f12039b5459818c6851005a3638d10c4",
+    "message": "fix(auth): accept Android Google client ID \u2014 fixes \"Token has wrong audience\"",
+    "author": "Varun Kumar",
+    "date": "2026-06-28 23:41:15 +0000",
+    "ahead": 1,
+    "behind": 73,
+    "is_merged": false,
+    "files": [
+      "backend/app/routers/auth.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/health-grace",
+    "type": "Remote",
+    "sha": "000f47da1ba0ad5b79e9bca10f8f162bd9bf11f2",
+    "message": "fix(deploy): raise health-check grace_period to 120s (startup needs it)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 00:25:48 +0000",
+    "ahead": 1,
+    "behind": 70,
+    "is_merged": false,
+    "files": [
+      "backend/fly.toml"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/inapp-cricket-scoring",
+    "type": "Remote",
+    "sha": "2ca585ddcd697550d7171f916bedecef2275dbf3",
+    "message": "fix(sports): score cricket fixtures in-app (admin + manager), not via web",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 09:48:07 +0000",
+    "ahead": 1,
+    "behind": 37,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/sports/presentation/screens/sports_tournament_detail_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/lenient-bool-settings",
+    "type": "Remote",
+    "sha": "472c7a9bdc928d2e1477b00bd72a634c97d81194",
+    "message": "fix(config): tolerate malformed boolean env vars (don't crash the whole app)",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 00:41:34 +0000",
+    "ahead": 1,
+    "behind": 69,
+    "is_merged": false,
+    "files": [
+      "backend/app/core/config.py"
+    ],
+    "total_files": 1,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/load-hardening",
+    "type": "Remote",
+    "sha": "128e1e2f3e24b9e3d7ecb0e5633c6c858f4065b9",
+    "message": "perf(backend): harden for live-event load (SQLite WAL + single WS worker)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 10:11:16 +0000",
+    "ahead": 1,
+    "behind": 34,
+    "is_merged": false,
+    "files": [
+      "backend/Dockerfile",
+      "backend/app/core/database.py",
+      "backend/fly.toml"
+    ],
+    "total_files": 3,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/non-english-localizations",
+    "type": "Remote",
+    "sha": "8d6dee8d1b7fc02c768c28ffe4c4b9cb84a12014",
+    "message": "fix(i18n): add Global*Localizations delegates so non-English doesn't break",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 05:17:53 +0000",
+    "ahead": 1,
+    "behind": 41,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/core/l10n/app_localizations.dart"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/notifications-compile",
+    "type": "Remote",
+    "sha": "6400ba742da453cfc9ce75455870329b046aa120",
+    "message": "fix(notifications): repair latent compile errors exposed by wiring the feature",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 23:19:53 +0000",
+    "ahead": 1,
+    "behind": 52,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/notifications/data/datasources/notification_remote_data_source.dart",
+      "mobile/lib/features/notifications/presentation/pages/notification_screen.dart"
+    ],
+    "total_files": 2,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/pubspec-dup-imagepicker",
+    "type": "Remote",
+    "sha": "1892fb92a133ae3be5cd42faa1c5d7e4779c345c",
+    "message": "fix(pubspec): remove duplicate image_picker key (broke pub get)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 04:29:17 +0000",
+    "ahead": 1,
+    "behind": 43,
+    "is_merged": false,
+    "files": [
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/reliable-autoupdate",
+    "type": "Remote",
+    "sha": "f238285808a1ed6b5e0535954833578d9d10102a",
+    "message": "fix(updater): make auto-update reliable + mandatory (Release is source of truth)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 03:03:53 +0000",
+    "ahead": 1,
+    "behind": 49,
+    "is_merged": false,
+    "files": [
+      ".github/workflows/flutter-build.yml",
+      "backend/app/routers/app_meta.py"
+    ],
+    "total_files": 2,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/remove-geocoding-unblock-build",
+    "type": "Remote",
+    "sha": "e49b311a81a8df54b18b706a0d3bc9ff192b48d2",
+    "message": "fix(android): drop geocoding to unblock the APK build",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 08:32:02 +0000",
+    "ahead": 1,
+    "behind": 58,
+    "is_merged": false,
+    "files": [
+      "mobile/android/app/build.gradle.kts",
+      "mobile/lib/features/blood_donation/presentation/screens/blood_donation_hub_screen.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "total_files": 3,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/search-and-issue-email",
+    "type": "Remote",
+    "sha": "eb962bfe44027b64320ab342febdba24d4947d58",
+    "message": "fix: search 1-char error + issue \"log email sent\" 422",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 08:15:22 +0000",
+    "ahead": 1,
+    "behind": 60,
+    "is_merged": false,
+    "files": [
+      "backend/app/routers/issues.py",
+      "backend/app/schemas/issue.py",
+      "mobile/lib/features/search/presentation/screens/search_screen.dart"
+    ],
+    "total_files": 3,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/stabilization-sprint",
+    "type": "Remote",
+    "sha": "e516dd00a0fdd2602759789257943e1aaa935f95",
+    "message": "fix: Journey 500, tournament registration close date, human error messages",
+    "author": "Varun Kumar",
+    "date": "2026-06-29 07:52:50 +0000",
+    "ahead": 1,
+    "behind": 64,
+    "is_merged": false,
+    "files": [
+      "backend/app/models/sports.py",
+      "backend/app/routers/users.py",
+      "backend/app/schemas/sports.py",
+      "mobile/lib/core/error/dio_error_mapper.dart"
+    ],
+    "total_files": 4,
+    "todos": 30
+  },
+  {
+    "name": "origin/fix/tournament-detail-empty",
+    "type": "Remote",
+    "sha": "7e8f1baa88f9b714040cf2cce288d97ccab5366f",
+    "message": "fix(sports): tournament detail showed \"No details\" + hid Register Team",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 03:28:24 +0000",
+    "ahead": 1,
+    "behind": 47,
+    "is_merged": false,
+    "files": [
+      "mobile/lib/features/sports/presentation/screens/sports_tournament_detail_screen.dart"
+    ],
+    "total_files": 1,
+    "todos": 31
+  },
+  {
+    "name": "origin/fix/versioncode-monotonic",
+    "type": "Remote",
+    "sha": "31e7598aba45210804a272edbb6e36e14e576bc0",
+    "message": "fix(updater): versionCode must exceed legacy field builds (100000 + run)",
+    "author": "Varun Kumar",
+    "date": "2026-06-30 03:35:30 +0000",
+    "ahead": 1,
+    "behind": 46,
+    "is_merged": false,
+    "files": [
+      ".github/workflows/flutter-build.yml"
+    ],
+    "total_files": 1,
+    "todos": 31
+  }
+]

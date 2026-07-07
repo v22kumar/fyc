@@ -112,7 +112,8 @@ class CricketMatchStateEntity extends Equatable {
   final String status;
   final List<CricketBatterEntity> batters;
   final List<CricketBowlerEntity> bowlers;
-  final Map<String, int> extras; // {w, nb, b, lb}
+  final Map<String, int> extras;
+  final List<String> recentBalls;
 
   const CricketMatchStateEntity({
     required this.innings,
@@ -127,6 +128,7 @@ class CricketMatchStateEntity extends Equatable {
     this.batters = const [],
     this.bowlers = const [],
     this.extras = const {},
+    this.recentBalls = const [],
   });
 
   bool get isLive => status == 'FIRST_INNINGS' || status == 'SECOND_INNINGS';
@@ -150,5 +152,6 @@ class CricketMatchStateEntity extends Equatable {
         batters,
         bowlers,
         extras,
+        recentBalls,
       ];
 }

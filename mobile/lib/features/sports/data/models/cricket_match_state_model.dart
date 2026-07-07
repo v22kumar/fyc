@@ -36,12 +36,14 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
     super.batters,
     super.bowlers,
     super.extras,
+    super.recentBalls,
   });
 
   factory CricketMatchStateModel.fromJson(Map<String, dynamic> json) {
     final battersJson = json['batters'] as Map<String, dynamic>? ?? {};
     final bowlersJson = json['bowlers'] as Map<String, dynamic>? ?? {};
     final extrasJson = json['extras'] as Map<String, dynamic>? ?? {};
+    final recentBallsJson = json['recent_balls'] as List<dynamic>? ?? [];
 
     return CricketMatchStateModel(
       innings: (json['innings'] as num?)?.toInt() ?? 1,
@@ -76,6 +78,7 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
         );
       }).toList(),
       extras: extrasJson.map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
+      recentBalls: recentBallsJson.map((e) => e.toString()).toList(),
     );
   }
 }
