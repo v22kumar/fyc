@@ -400,20 +400,20 @@ def start_tournament(
     if tour.status not in ("REGISTRATION_OPEN", "REGISTRATION_CLOSED"):
         raise HTTPException(status_code=400, detail="Tournament already started")
 
-    # Optimistic lock: ensure we are the only ones starting it
-    updated = db.query(ChessTournament).filter(
-        ChessTournament.id == tour_id,
-        ChessTournament.status.in_(["REGISTRATION_OPEN", "REGISTRATION_CLOSED"])
-    ).update({"status": "STARTING_LOCK"})
-    
-    if updated == 0:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Tournament already starting or started")
-
     entries = _entries(db, tour_id)
     players = [e.user_id for e in entries if _estatus(e) == "APPROVED"]
     if len(players) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 approved players")
+
+    # Optimistic lock: ensure we are the only ones starting it
+    updated = db.query(ChessTournament).filter(
+        ChessTournament.id == tour_id,
+        ChessTournament.status.in_(["REGISTRATION_OPEN", "REGISTRATION_CLOSED"])
+    ).update({"status": "STARTING_LOCK"}, synchronize_session=False)
+    
+    if updated == 0:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Tournament already starting or started")
 
     random.shuffle(players)
     n = len(players)
