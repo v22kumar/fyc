@@ -35,3 +35,19 @@ Thumbs.db
 
 # Claude Code agent scratch space
 .claude/
+
+# Agent scratch / one-off tooling — keep the repo root clean. Real code lives
+# under backend/ and mobile/; ad-hoc audit and patch scripts must not be committed.
+/audit_script.py
+/branch_audit*.json
+/categorize*.py
+/cherry_check.txt
+/clean_imports.py
+/fix_*.py
+/generate_report.py
+/git_audit_report.md
+/main_commits.txt
+/patch*.py
+/update_categories.py
+/update_sos_sheet.py
+*.zip
