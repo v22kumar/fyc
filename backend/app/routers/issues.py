@@ -22,6 +22,7 @@ require_executive = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 # Category → department label mapping (used in notifications)
 _DEPT_MAP = {
     "ROAD_TRAFFIC": "Traffic Police / PWD",
+    "ROAD":         "Traffic Police / PWD",  # legacy alias (pre-v2.0 rows)
     "POWER_CUT": "TNEB",
     "WATER":        "Water Supply Board",
     "STREET_LIGHT": "Electricity Board / Municipality",
@@ -115,7 +116,8 @@ def submit_issue(
     issue = PublicIssue(
         organization_id=tenant_id,
         reported_by_user_id=reported_by_user_id,
-        category=payload.category,
+        # Store the plain string value (column is String now, not an enum).
+        category=payload.category.value,
         description_ta=payload.description_ta,
         description_en=payload.description_en,
         latitude=float(payload.latitude),
@@ -132,7 +134,7 @@ def submit_issue(
     # Notify reporter: issue received
     if reporter_fcm_token:
         try:
-            dept = _DEPT_MAP.get(payload.category.value if hasattr(payload.category, 'value') else payload.category, "the relevant department")
+            dept = _DEPT_MAP.get(payload.category.value, "the relevant department")
             notify_issue_assigned(
                 fcm_token=reporter_fcm_token,
                 issue_id=str(issue.id),

@@ -23,7 +23,10 @@ class IssueOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    category: IssueCategory
+    # Plain string, not the enum: historical rows may hold a retired category
+    # (ROAD, STREET_LIGHT, GARBAGE, SAFETY) that is no longer an enum member, and
+    # serializing those must not 500. New reports are validated via IssueCreate.
+    category: str
     description_ta: str
     description_en: str
     latitude: float

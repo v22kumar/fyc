@@ -6,10 +6,13 @@ from app.models.base import GUID, TimestampMixin, TenantModelMixin
 import enum
 
 class IssueCategory(str, enum.Enum):
+    """Allowed categories for NEW reports (enforced at the API layer). The column
+    itself is a plain String, so historical rows with retired categories
+    (ROAD, STREET_LIGHT, GARBAGE, SAFETY) remain readable and future category
+    changes never require a DB/enum migration."""
     ROAD_TRAFFIC = "ROAD_TRAFFIC"
     POWER_CUT = "POWER_CUT"
     WATER = "WATER"
-    
     OTHER = "OTHER"
 
 class IssueStatus(str, enum.Enum):
@@ -31,7 +34,10 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     reported_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    category = Column(SAEnum(IssueCategory, name="issue_category"), nullable=False)
+    # Stored as a plain string (not a DB enum) so retired categories on old rows
+    # stay readable and adding/renaming a category never needs an enum migration.
+    # New submissions are still validated against IssueCategory at the API layer.
+    category = Column(String(50), nullable=False)
     description_ta = Column(Text, nullable=False)
     description_en = Column(Text, nullable=False)
     latitude = Column(Numeric(10, 8), nullable=False)
