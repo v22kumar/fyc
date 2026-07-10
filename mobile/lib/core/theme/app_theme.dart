@@ -4,39 +4,42 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
-  // FYC Brand — Forest Green
-  static const Color primary = Color(0xFF0F5132);       // FYC Forest Green
-  static const Color primaryLight = Color(0xFF16A34A);  // Green 600
-  static const Color primarySurface = Color(0xFFF0FDF4); // Green 50
+  // FYC Brand — Deep Navy + Live Mint (unified design system v2).
+  // These are aliases of the DSColors token scale (core/design_system/tokens.dart)
+  // so the whole shipping app renders in one palette instead of the old
+  // forest-green theme. Change these five and every legacy screen re-skins.
+  static const Color primary = Color(0xFF16255A);       // Deep Navy (navy700)
+  static const Color primaryLight = Color(0xFF14B891);  // Live Mint (mint600) — action accent
+  static const Color primarySurface = Color(0xFFF0FDF9); // Mint 50 tint
 
-  static const Color accent = Color(0xFFF43F5E);        // Rose 500 - Blood Donation
+  static const Color accent = Color(0xFFF43F5E);        // Rose 500 - Blood Donation / danger
   static const Color accentLight = Color(0xFFFFF1F2);   // Rose 50
   static const Color accentSurface = Color(0xFFFFE4E6); // Rose 100
 
-  // Gold accent
+  // Gold accent (championships, logos)
   static const Color gold = Color(0xFFD4AF37);
   static const Color goldLight = Color(0xFFFBF3C7);
 
-  // Aurora dark surfaces
-  static const Color darkBg = Color(0xFF030C06);        // Very dark green — aurora background
-  static const Color darkSurface = Color(0xFF0C3F27);   // Dark emerald surface
+  // Aurora dark surfaces (now navy, feeding gradientAurora)
+  static const Color darkBg = Color(0xFF0A1128);        // navy900 — aurora base
+  static const Color darkSurface = Color(0xFF16255A);   // navy700 — aurora mid
 
-  static const Color background = Color(0xFFF8FAFC);    // Slate 50
+  static const Color background = Color(0xFFF7F8FC);    // cool navy-tinted paper
   static const Color surface = Color(0xFFFFFFFF);
 
-  static const Color textPrimary = Color(0xFF0F172A);    // Slate 900
-  static const Color textSecondary = Color(0xFF64748B);  // Slate 500
-  static const Color border = Color(0xFFE2E8F0);         // Slate 200
+  static const Color textPrimary = Color(0xFF0A1128);    // navy900 ink
+  static const Color textSecondary = Color(0xFF5B6478);  // slate
+  static const Color border = Color(0xFFE3E7F0);         // navy-tinted line
 
-  static const Color success = Color(0xFF10B981);       // Emerald 500
+  static const Color success = Color(0xFF16A34A);
   static const Color warning = Color(0xFFF59E0B);       // Amber 500
 
-  // ── Dark theme palette ─────────────────────────────────────────────────────
-  static const Color darkBackground = Color(0xFF0B0F0D); // near-black green
-  static const Color darkCard = Color(0xFF161B22);       // elevated surface
-  static const Color darkBorder = Color(0xFF222B33);     // subtle divider
-  static const Color darkText = Color(0xFFF1F5F9);        // off-white
-  static const Color darkTextSecondary = Color(0xFF94A3B8); // slate 400
+  // ── Dark theme palette (navy-black, matches DSColors dark) ──────────────────
+  static const Color darkBackground = Color(0xFF080B14); // navy-black
+  static const Color darkCard = Color(0xFF141A2B);       // elevated surface
+  static const Color darkBorder = Color(0xFF242B3D);     // subtle divider
+  static const Color darkText = Color(0xFFF1F3FA);        // off-white
+  static const Color darkTextSecondary = Color(0xFF9AA3B8); // slate
 }
 
 /// Theme-aware colour getters — use `context.cSurface` etc. so a widget renders
