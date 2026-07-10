@@ -12,8 +12,10 @@ class AppConstants {
     'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-',
   ];
 
+  // Must match backend IssueCategory (v2.0). The Report-an-Issue screen carries
+  // its own labelled list; this is kept in sync so nothing sends a retired value.
   static const List<String> issueCategories = [
-    'ROAD', 'WATER', 'STREET_LIGHT', 'GARBAGE', 'SAFETY', 'OTHER',
+    'ROAD_TRAFFIC', 'POWER_CUT', 'WATER', 'OTHER',
   ];
 
   static const List<String> volunteerRoles = [

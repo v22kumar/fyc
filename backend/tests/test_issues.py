@@ -22,7 +22,7 @@ def _register(client, org_id, phone, role="PUBLIC_CITIZEN"):
 
 
 ISSUE_PAYLOAD = {
-    "category": "ROAD",
+    "category": "ROAD_TRAFFIC",
     "description_ta": "சாலையில் பள்ளம் உள்ளது",
     "description_en": "There is a pothole on the road",
     "latitude": 8.1833,
@@ -41,7 +41,7 @@ def test_submit_issue_anonymous(client, db):
     )
     assert res.status_code == 201
     data = res.json()
-    assert data["category"] == "ROAD"
+    assert data["category"] == "ROAD_TRAFFIC"
     assert data["status"] == "NEW"
     assert data["reported_by_user_id"] is None
 
@@ -75,6 +75,29 @@ def test_list_issues(client, db):
     res = client.get("/api/v1/issues", headers={"X-Organization-ID": str(org.id)})
     assert res.status_code == 200
     assert len(res.json()) == 2
+
+
+def test_legacy_retired_category_is_still_readable(client, db):
+    """A row saved under a since-retired category (e.g. GARBAGE) must still list
+    without a 500 — the category column is a plain string, and IssueOut returns
+    it as-is rather than coercing to the IssueCategory enum."""
+    from app.models.issue import PublicIssue, IssueStatus
+
+    org = _make_org(db)
+    db.add(PublicIssue(
+        id=uuid.uuid4(),
+        organization_id=org.id,
+        category="GARBAGE",  # retired from IssueCategory
+        description_ta="குப்பை", description_en="Garbage pile",
+        latitude=8.1, longitude=77.4,
+        status=IssueStatus.NEW,
+    ))
+    db.commit()
+
+    res = client.get("/api/v1/issues", headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    cats = [i["category"] for i in res.json()]
+    assert "GARBAGE" in cats
 
 
 def test_get_issue_by_id(client, db):

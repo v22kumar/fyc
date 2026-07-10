@@ -115,7 +115,8 @@ def submit_issue(
     issue = PublicIssue(
         organization_id=tenant_id,
         reported_by_user_id=reported_by_user_id,
-        category=payload.category,
+        # Store the plain string value (column is String now, not an enum).
+        category=payload.category.value,
         description_ta=payload.description_ta,
         description_en=payload.description_en,
         latitude=float(payload.latitude),
