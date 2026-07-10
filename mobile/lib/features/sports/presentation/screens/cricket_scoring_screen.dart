@@ -8,6 +8,7 @@ import '../../domain/entities/player_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
 import '../bloc/cricket_scoring_cubit.dart';
 import '../widgets/cricket_overs_history.dart';
+import '../../../../core/widgets/pressable.dart';
 
 /// Full ball-by-ball cricket scorer for admins/managers.
 ///
@@ -371,113 +372,102 @@ class _ScoreHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final needed = ms.target != null ? ms.target! - ms.score : null;
     final ballsFaced = (ms.overs * 6) + ms.balls;
     final rr = ballsFaced > 0 ? (ms.score / ballsFaced) * 6 : 0.0;
     
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.shield, size: 28, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  teamName(ms.battingTeamId).toUpperCase(),
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '${ms.score}/${ms.wickets}',
-              style: theme.textTheme.displayLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-                fontSize: 72,
-                height: 1.0,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Overs ${ms.oversText}',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'CRR ${rr.toStringAsFixed(1)}',
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Innings ${ms.innings}',
-                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            if (ms.target != null && !ms.isCompleted) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              Text(
-                'Need ${needed! > 0 ? needed : 0} runs',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Target ${ms.target}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
-            if (ms.recentBalls.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: ms.recentBalls.skip(ms.recentBalls.length > 8 ? ms.recentBalls.length - 8 : 0).map((b) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: b == 'W' ? theme.colorScheme.error : (b.contains('w') || b.contains('n') ? theme.colorScheme.tertiary : theme.colorScheme.surface),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: theme.colorScheme.outlineVariant),
-                    ),
-                    child: Text(
-                      b,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: b == 'W' ? theme.colorScheme.onError : (b.contains('w') || b.contains('n') ? theme.colorScheme.onTertiary : theme.colorScheme.onSurface),
-                      ),
-                    ),
-                  ),
-                )).toList(),
-              ),
-            ],
-          ],
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF16255A), Color(0xFF1E7C86), Color(0xFF14C79E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF16255A).withOpacity(0.32), blurRadius: 26, offset: const Offset(0, 12)),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(color: Color(0xFF7DF3D2), shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 9),
+              Text(
+                teamName(ms.battingTeamId).toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.4),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '${ms.score}/${ms.wickets}',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 72, height: 1.0, letterSpacing: -1.5),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Overs ${ms.oversText}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
+              const SizedBox(width: 16),
+              Text('CRR ${rr.toStringAsFixed(1)}',
+                  style: TextStyle(color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.w600, fontSize: 15)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text('Innings ${ms.innings}',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          ),
+          if (ms.target != null && !ms.isCompleted) ...[
+            const SizedBox(height: 16),
+            Divider(color: Colors.white.withOpacity(0.2)),
+            const SizedBox(height: 8),
+            Text('Need ${needed! > 0 ? needed : 0} runs',
+                style: const TextStyle(color: Color(0xFFFFD37A), fontWeight: FontWeight.bold, fontSize: 20)),
+            const SizedBox(height: 4),
+            Text('Target ${ms.target}',
+                style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13.5)),
+          ],
+          if (ms.recentBalls.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Divider(color: Colors.white.withOpacity(0.2)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: ms.recentBalls.skip(ms.recentBalls.length > 8 ? ms.recentBalls.length - 8 : 0).map((b) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: b == 'W'
+                        ? const Color(0xFFF43F5E)
+                        : (b.contains('w') || b.contains('n') ? const Color(0xFFF59E0B) : Colors.white.withOpacity(0.16)),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(b,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12.5)),
+                ),
+              )).toList(),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -945,19 +935,34 @@ class _ScoringPad extends StatelessWidget {
           children: [0, 1, 2, 3, 4, 6].map((runs) {
             final isBoundary = runs == 4 || runs == 6;
             final isDot = runs == 0;
+            final grad = isDot
+                ? const [Color(0xFF334155), Color(0xFF1E293B)]
+                : runs == 6
+                    ? const [Color(0xFFF59E0B), Color(0xFFB45309)]
+                    : isBoundary
+                        ? const [Color(0xFF16255A), Color(0xFF14C79E)]
+                        : const [Color(0xFF14B891), Color(0xFF0F9B7E)];
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: isBoundary ? theme.colorScheme.primary : (isDot ? theme.colorScheme.surfaceVariant : theme.colorScheme.secondary),
-                    foregroundColor: isBoundary ? theme.colorScheme.onPrimary : (isDot ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSecondary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    minimumSize: const Size(0, 56),
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Pressable(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => _withBowlerIfNeeded(context, (newBowlerName) => cubit.scoreBall(runsBatter: runs, newBowlerName: newBowlerName)),
+                      child: Container(
+                        height: 58,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: grad, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [BoxShadow(color: grad.last.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: Text('$runs', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white)),
+                      ),
+                    ),
                   ),
-                  onPressed: () => _withBowlerIfNeeded(context, (newBowlerName) => cubit.scoreBall(runsBatter: runs, newBowlerName: newBowlerName)),
-                  child: Text('$runs', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 ),
               ),
             );
@@ -978,14 +983,17 @@ class _ScoringPad extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           height: 56,
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Pressable(
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () => _wicketDialog(context),
+              child: const Text('WICKET', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
-            onPressed: () => _wicketDialog(context),
-            child: const Text('WICKET', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           ),
         ),
       ],
@@ -994,14 +1002,16 @@ class _ScoringPad extends StatelessWidget {
 
   Widget _actionBtn(BuildContext context, String label, VoidCallback onTap) {
     return Expanded(
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size(0, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Pressable(
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 48),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: onTap,
+          child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         ),
-        onPressed: onTap,
-        child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       ),
     );
   }
