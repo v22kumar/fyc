@@ -1532,7 +1532,8 @@ void _showMoreSheet(BuildContext context) {
 }
 
 class _MenuItem {
-  final String icon, label, route;
+  final IconData icon;
+  final String label, route;
   final Color color;
   const _MenuItem(this.icon, this.label, this.route, this.color);
 }
@@ -1549,32 +1550,32 @@ class _MoreSheet extends StatelessWidget {
       (
         ta ? 'சேவைகள்' : 'Services',
         [
-          _MenuItem('🩸', ta ? 'இரத்த தானம்' : 'Blood Donors', '/blood-donation', const Color(0xFFEF4444)),
-          _MenuItem('🎉', l.events, '/events', const Color(0xFF8B5CF6)),
-          _MenuItem('♟', ta ? 'சதுரங்கம்' : 'Chess', '/chess', const Color(0xFF0F172A)),
-          _MenuItem('🏆', ta ? 'விளையாட்டு' : 'Sports Hub', '/sports', const Color(0xFFF97316)),
-          _MenuItem('🚧', l.publicIssues, '/issues', AppColors.warning),
-          _MenuItem('🔍', ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track', const Color(0xFF14B8A6)),
-          _MenuItem('🪪', l.membership, '/membership', AppColors.primary),
-          _MenuItem('📋', l.directory, '/directory', const Color(0xFF2563EB)),
-          _MenuItem('💼', ta ? 'வாய்ப்புகள்' : 'Opportunities', '/opportunities', const Color(0xFFD97706)),
+          _MenuItem(Icons.water_drop_rounded, ta ? 'இரத்த தானம்' : 'Blood Donors', '/blood-donation', const Color(0xFFEF4444)),
+          _MenuItem(Icons.celebration_rounded, l.events, '/events', const Color(0xFF8B5CF6)),
+          _MenuItem(Icons.castle_rounded, ta ? 'சதுரங்கம்' : 'Chess', '/chess', const Color(0xFF334155)),
+          _MenuItem(Icons.emoji_events_rounded, ta ? 'விளையாட்டு' : 'Sports Hub', '/sports', const Color(0xFFF97316)),
+          _MenuItem(Icons.report_problem_rounded, l.publicIssues, '/issues', AppColors.warning),
+          _MenuItem(Icons.travel_explore_rounded, ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track', const Color(0xFF14B8A6)),
+          _MenuItem(Icons.badge_rounded, l.membership, '/membership', AppColors.primary),
+          _MenuItem(Icons.contacts_rounded, l.directory, '/directory', const Color(0xFF2563EB)),
+          _MenuItem(Icons.work_rounded, ta ? 'வாய்ப்புகள்' : 'Opportunities', '/opportunities', const Color(0xFFD97706)),
         ],
       ),
       (
         ta ? 'சமூகம்' : 'Community',
         [
-          _MenuItem('🌱', ta ? 'பசுமை FYC' : 'Green FYC', '/green', const Color(0xFF047857)),
-          _MenuItem('📢', ta ? 'அறிவிப்புகள்' : 'Announcements', '/announcements', const Color(0xFFF59E0B)),
-          _MenuItem('📷', ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery', const Color(0xFFD97706)),
-          _MenuItem('🤝', ta ? 'சமூகம்' : 'Community', '/community', const Color(0xFFEC4899)),
+          _MenuItem(Icons.eco_rounded, ta ? 'பசுமை FYC' : 'Green FYC', '/green', const Color(0xFF047857)),
+          _MenuItem(Icons.campaign_rounded, ta ? 'அறிவிப்புகள்' : 'Announcements', '/announcements', const Color(0xFFF59E0B)),
+          _MenuItem(Icons.photo_library_rounded, ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery', const Color(0xFFD97706)),
+          _MenuItem(Icons.groups_rounded, ta ? 'சமூகம்' : 'Community', '/community', const Color(0xFFEC4899)),
         ],
       ),
       (
         ta ? 'கணக்கு' : 'Account',
         [
-          _MenuItem('⚙️', ta ? 'அமைப்புகள்' : 'Settings', '/settings', const Color(0xFF475569)),
-          _MenuItem('🎓', ta ? 'சான்றிதழ்' : 'Certificates', '/certificate', const Color(0xFF6366F1)),
-          _MenuItem('ℹ️', ta ? 'எங்களைப் பற்றி' : 'About', '/about', AppColors.textSecondary),
+          _MenuItem(Icons.settings_rounded, ta ? 'அமைப்புகள்' : 'Settings', '/settings', const Color(0xFF475569)),
+          _MenuItem(Icons.school_rounded, ta ? 'சான்றிதழ்' : 'Certificates', '/certificate', const Color(0xFF6366F1)),
+          _MenuItem(Icons.info_rounded, ta ? 'எங்களைப் பற்றி' : 'About', '/about', AppColors.textSecondary),
         ],
       ),
     ];
@@ -1675,13 +1676,28 @@ class _BentoTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(color: item.color.withOpacity(context.isDark ? 0.18 : 0.08), shape: BoxShape.circle),
-                    child: Text(item.icon, style: const TextStyle(fontSize: 22)),
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [item.color, Color.lerp(item.color, Colors.black, 0.30)!],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: item.color.withOpacity(context.isDark ? 0.35 : 0.30),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Icon(item.icon, color: Colors.white, size: 22),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(item.label,
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.cText),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cText, height: 1.15),
                       textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
