@@ -10,6 +10,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/pressable.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/update_sheet.dart';
 import '../../../../core/services/update_installer.dart';
 import '../../../../service_locator.dart';
@@ -1608,7 +1609,14 @@ class _MoreSheet extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                children: section.$2.map((item) => _BentoTile(item: item)).toList(),
+                children: section.$2
+                    .asMap()
+                    .entries
+                    .map((e) => FadeSlideIn(
+                          delay: Duration(milliseconds: e.key * 45),
+                          child: _BentoTile(item: e.value),
+                        ))
+                    .toList(),
               ),
               const SizedBox(height: 24),
             ],
