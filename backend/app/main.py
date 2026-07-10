@@ -283,6 +283,15 @@ async def lifespan(app: FastAPI):
         except Exception as _ide:
             logger.warning(f"[idempotency-index] block failed: {_ide}")
 
+        # Repair the cricket_balls FK: the live prod table was created with player
+        # FKs pointing at the since-removed cricket_players table, so with FK
+        # enforcement on, every ball insert fails ("Unable to record this ball").
+        try:
+            from app.db_repairs import repair_cricket_balls_fk
+            repair_cricket_balls_fk(engine)
+        except Exception as _cbe:
+            logger.warning(f"[schema-repair] cricket_balls rebuild skipped: {_cbe}")
+
         _seed_database()
 
         # Pre-warm external API caches in a background thread so slow RSS feeds
