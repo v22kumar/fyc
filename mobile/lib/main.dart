@@ -16,6 +16,7 @@ import 'core/widgets/offline_banner.dart';
 import 'core/network/api_client.dart';
 import 'core/constants/api_constants.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth_event.dart';
 import 'service_locator.dart';
 
 final localeNotifier = ValueNotifier<Locale>(const Locale('ta'));
@@ -56,6 +57,17 @@ void main() async {
     if (context != null && route.isNotEmpty) context.go(route);
   };
   await initServiceLocator();
+  // A mid-session 401 (the 60-minute access token expired, no refresh
+  // mechanism) previously failed silently — every request kept breaking
+  // until the user force-closed and reopened the app. Reset auth state via
+  // the bloc (consistent with the Logout button's own path) and bounce them
+  // back to login. Wired here, not in ApiClient itself, so the networking
+  // layer never has to import the router/feature layer directly.
+  ApiClient.onSessionExpired = () {
+    sl<AuthBloc>().add(const AuthLogoutRequested());
+    final context = appRouter.routerDelegate.navigatorKey.currentContext;
+    if (context != null) context.go('/lang-select');
+  };
   // Drain the offline outbox only after the service locator is ready — the
   // sync path resolves sl<ApiClient>() and would fail on an unregistered
   // dependency if triggered earlier in startup.
