@@ -458,13 +458,14 @@ final appRouter = GoRouter(
   ),
 );
 
-/// Builds the live 4-tab shell: Home (embedded) · Play · Serve · Me, with the
-/// center Create FAB wired to Home's create-actions sheet. Shared by `/app`
-/// (the post-login entry point) and `/v2` (review alias).
+/// Builds the live 5-tab shell: Home (embedded) · Feed · Play · Serve · Me,
+/// with the center Create FAB wired to Home's create-actions sheet. Shared by
+/// `/app` (the post-login entry point) and `/v2` (review alias).
 Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
       onCreate: () => showHomeCreateSheet(context),
       tabs: [
         const HomeScreen(embedded: true),
+        const FeedScreen(),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),
           child: const SportsHubScreen(),

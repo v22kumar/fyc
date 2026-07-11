@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
 
-/// The v2 navigation shell: 4 tabs (Home · Play · Serve · Me) + a persistent
-/// SOS control reachable from every tab, per the locked IA decision (no
-/// separate Community tab — community lives inside Home).
-///
-/// This widget is NOT wired as the app's live entry point yet. Cutting over
-/// production navigation happens in Sprint 2, once Home/Play/Serve/Me each
-/// have real migrated content — switching today would orphan every screen
-/// that hasn't been sorted into a bucket yet (chess, green, gallery,
-/// directory, …), which would be a regression, not a foundation.
+/// The live navigation shell (mounted at `/app`): 5 tabs (Home · Feed · Play ·
+/// Serve · Me) + a persistent SOS control reachable from every tab. Feed and
+/// Community remain distinct destinations — Community (member directory) is
+/// still reached via Home's Services sheet, not a bottom-nav tab.
 class AppShellV2 extends StatefulWidget {
-  /// Real screens plug in here once each bucket has content (Sprint 2+).
-  /// Defaults to placeholders so the shell can be previewed standalone today.
+  /// The 5 tab bodies, index-aligned with `_tabMeta` (Home/Feed/Play/Serve/Me).
+  /// Wired to real screens by `_appShellBuilder` in app_router.dart. Defaults
+  /// to placeholders so the shell can be previewed standalone (design-system
+  /// gallery, widget tests) without a full app context.
   final List<Widget>? tabs;
 
   /// Tapped from the center Create FAB (the yellow "+" in the mockup). The
@@ -31,12 +28,14 @@ class _AppShellV2State extends State<AppShellV2> {
 
   static const _tabMeta = [
     ('Home', 'ஊர்', Icons.home_rounded),
+    ('Feed', 'செய்திகள்', Icons.dynamic_feed_rounded),
     ('Play', 'விளையாட்டு', Icons.sports_cricket_rounded),
     ('Serve', 'சேவை', Icons.volunteer_activism_rounded),
     ('Me', 'என்', Icons.person_rounded),
   ];
 
-  List<Widget> get _bodies => widget.tabs ?? List.generate(4, (i) => _PlaceholderTab(label: _tabMeta[i].$1));
+  List<Widget> get _bodies =>
+      widget.tabs ?? List.generate(_tabMeta.length, (i) => _PlaceholderTab(label: _tabMeta[i].$1));
 
   void _onSosTap() {
     // Real SOS: location SMS to trusted contacts + emergency dial.
