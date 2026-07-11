@@ -34,7 +34,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Community', ta: 'சமூக அடைவு', hi: 'समुदाय', ml: 'കമ്മ്യൂണിറ്റി')),
+        title: Text(tr(en: 'Local Services', ta: 'சமூக கடை', hi: 'स्थानीय सेवाएं', ml: 'പ്രാദേശിക സേവനങ്ങൾ')),
       ),
       body: BlocBuilder<CommunityBloc, CommunityState>(
         builder: (context, state) {

@@ -66,6 +66,63 @@ def list_users(
     ]
 
 
+class MemberRosterOut(BaseModel):
+    """Safe, member-facing roster row — names, role and photo only. Never
+    exposes phone, email, DOB or address."""
+    id: UUID
+    full_name_ta: Optional[str] = None
+    full_name_en: Optional[str] = None
+    role: str
+    profile_image_url: Optional[str] = None
+
+
+# Seniority order for display (most senior first); anything unlisted sorts last.
+_ROLE_RANK = {
+    "SUPER_ADMIN": 0,
+    "ADMIN": 1,
+    "EXECUTIVE_MEMBER": 2,
+    "CLUB_MEMBER": 3,
+    "VOLUNTEER": 4,
+}
+
+
+@router.get("/roster", response_model=List[MemberRosterOut])
+def member_roster(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Club member roster visible to any signed-in member: names, role and
+    photo only (no contact details). Lists verified club members and excludes
+    plain app users (PUBLIC_CITIZEN), ordered by seniority then name.
+    """
+    rows = (
+        db.query(User, UserProfile)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .filter(
+            User.organization_id == tenant_id,
+            User.is_verified == True,  # noqa: E712
+            User.role != "PUBLIC_CITIZEN",
+        )
+        .all()
+    )
+    members = [
+        MemberRosterOut(
+            id=user.id,
+            full_name_ta=profile.full_name_ta if profile else None,
+            full_name_en=profile.full_name_en if profile else None,
+            role=user.role,
+            profile_image_url=profile.profile_image_url if profile else None,
+        )
+        for user, profile in rows
+    ]
+    members.sort(key=lambda m: (
+        _ROLE_RANK.get(m.role, 99),
+        (m.full_name_en or m.full_name_ta or "").lower(),
+    ))
+    return members
+
+
 @router.get("/volunteers/my-certificate")
 def get_my_volunteer_certificate(
     db: Session = Depends(get_db),
