@@ -26,10 +26,11 @@ void main() {
 
     testWidgets('a single back press warns instead of exiting immediately', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
-      final popScope = tester.widget<PopScope>(find.byType(PopScope));
-      expect(popScope.canPop, isFalse);
-
-      popScope.onPopInvokedWithResult!(false, null);
+      // Simulate the system/hardware back button: with the shell's PopScope
+      // set to canPop: false, this must be intercepted (no route to pop to)
+      // rather than closing the app outright.
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      await navigator.maybePop();
       await tester.pump();
       expect(find.text('Press back again to exit'), findsOneWidget);
     });
