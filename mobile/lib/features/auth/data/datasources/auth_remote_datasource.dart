@@ -14,7 +14,7 @@ abstract class AuthRemoteDataSource {
     required String phoneNumber,
   });
 
-  Future<TokenModel> signInWithGoogle({required String organizationId});
+  Future<GoogleAuthResult> signInWithGoogle({required String organizationId});
 
   Future<void> signOutGoogle();
 
@@ -143,7 +143,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<TokenModel> signInWithGoogle({required String organizationId}) async {
+  Future<GoogleAuthResult> signInWithGoogle({required String organizationId}) async {
     // serverClientId MUST be this Firebase project's *Web* OAuth client, or
     // Google returns a null idToken ("couldn't get id token"). See
     // ApiConstants.googleServerClientId for the value and rationale.
@@ -170,7 +170,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ApiConstants.googleSignIn,
         data: {'organization_id': organizationId, 'id_token': idToken},
       );
-      return TokenModel.fromJson(response.data as Map<String, dynamic>);
+      return GoogleAuthResult.fromJson(response.data as Map<String, dynamic>);
     } on AuthFailure {
       rethrow;
     } on DioException catch (e) {

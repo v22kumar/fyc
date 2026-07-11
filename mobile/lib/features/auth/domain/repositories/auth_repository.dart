@@ -2,6 +2,22 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/user_entity.dart';
 
+/// Result of a Google sign-in: either the member is logged in, or they're a
+/// new account that must complete registration (phone + DOB) with their
+/// Google name/email pre-filled.
+sealed class GoogleAuthOutcome {}
+
+class GoogleAuthSuccess extends GoogleAuthOutcome {
+  final UserEntity user;
+  GoogleAuthSuccess(this.user);
+}
+
+class GoogleAuthNeedsProfile extends GoogleAuthOutcome {
+  final String email;
+  final String fullName;
+  GoogleAuthNeedsProfile({required this.email, required this.fullName});
+}
+
 abstract class AuthRepository {
   Future<Either<Failure, String>> sendOtp({
     required String organizationId,
@@ -30,7 +46,7 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<Either<Failure, UserEntity>> signInWithGoogle({
+  Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
   });
 

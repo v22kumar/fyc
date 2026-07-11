@@ -133,7 +133,11 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
         } else if (state is AuthNeedsRegistration) {
           context.go('/register', extra: {
             'organizationId': _orgId,
-            'phoneNumber': _phoneNumber,
+            // Google sign-in has no phone yet (collected in the form); OTP has
+            // the verified number. Prefer the state's phone when present.
+            'phoneNumber': state.phoneNumber.isNotEmpty ? state.phoneNumber : _phoneNumber,
+            'email': state.email,
+            'fullName': state.fullName,
           });
         } else if (state is AuthFailureState) {
           ScaffoldMessenger.of(context).showSnackBar(

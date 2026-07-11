@@ -16,11 +16,17 @@ import '../bloc/auth_state.dart';
 class RegisterScreen extends StatefulWidget {
   final String organizationId;
   final String phoneNumber;
+  // Pre-filled from Google sign-in (null for the OTP path). When phoneNumber is
+  // empty (Google), the form shows an editable phone field to collect it.
+  final String? prefillEmail;
+  final String? prefillName;
 
   const RegisterScreen({
     super.key,
     required this.organizationId,
     required this.phoneNumber,
+    this.prefillEmail,
+    this.prefillName,
   });
 
   @override
@@ -33,16 +39,24 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _nameTaCtrl = TextEditingController();
   final _nameEnCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   DateTime? _dob;
   String _role = 'PUBLIC_CITIZEN';
 
   static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  /// Google sign-ups arrive without a verified phone — collect it in the form.
+  /// OTP sign-ups already have a verified number, shown read-only.
+  bool get _phoneEditable => widget.phoneNumber.trim().isEmpty;
 
   late AnimationController _aurora;
 
   @override
   void initState() {
     super.initState();
+    // Pre-fill whatever Google gave us; the user completes the rest.
+    _emailCtrl.text = widget.prefillEmail ?? '';
+    _nameEnCtrl.text = widget.prefillName ?? '';
     _aurora = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 14),
@@ -54,6 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _nameTaCtrl.dispose();
     _nameEnCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _aurora.dispose();
     super.dispose();
   }
@@ -89,9 +104,10 @@ class _RegisterScreenState extends State<RegisterScreen>
     }
     if (!formOk) return;
     final lang = sl<LocalStorage>().getLang();
+    final phone = _phoneEditable ? _phoneCtrl.text.trim() : widget.phoneNumber;
     context.read<AuthBloc>().add(AuthRegisterRequested(
           organizationId: widget.organizationId,
-          phoneNumber: widget.phoneNumber,
+          phoneNumber: phone,
           email: _emailCtrl.text.trim(),
           dateOfBirth: _fmtDob(_dob!),
           role: _role,
@@ -275,12 +291,38 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      widget.phoneNumber,
-                                      style: const TextStyle(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 13),
-                                    ),
+                                    if (_phoneEditable)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: TextFormField(
+                                          controller: _phoneCtrl,
+                                          keyboardType: TextInputType.phone,
+                                          autofillHints: const [AutofillHints.telephoneNumber],
+                                          decoration: InputDecoration(
+                                            label: Text(tr(en: 'Phone Number', ta: 'தொலைபேசி எண்', hi: 'फ़ोन नंबर', ml: 'ഫോൺ നമ്പർ')),
+                                            hintText: '9876543210',
+                                            prefixIcon: const Icon(Icons.phone_outlined),
+                                          ),
+                                          validator: (v) {
+                                            final t = (v ?? '').replaceAll(RegExp(r'\s'), '');
+                                            if (t.isEmpty) {
+                                              return tr(en: 'Phone number is required', ta: 'தொலைபேசி எண் தேவை', hi: 'फ़ोन नंबर आवश्यक है', ml: 'ഫോൺ നമ്പർ ആവശ്യമാണ്');
+                                            }
+                                            final digits = t.replaceAll(RegExp(r'\D'), '');
+                                            if (digits.length < 10) {
+                                              return tr(en: 'Enter a valid phone number', ta: 'சரியான தொலைபேசி எண்ணை உள்ளிடவும்', hi: 'मान्य फ़ोन नंबर दर्ज करें', ml: 'സാധുവായ ഫോൺ നമ്പർ നൽകുക');
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      )
+                                    else
+                                      Text(
+                                        widget.phoneNumber,
+                                        style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13),
+                                      ),
                                     const SizedBox(height: 20),
 
                                     // Tamil name

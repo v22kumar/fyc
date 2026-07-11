@@ -264,3 +264,47 @@ def test_register_rejects_duplicate_email_in_org(client, db):
                       json=_reg_payload(org.id, phone_number="+919000000002", email="MEMBER@example.com"))
     assert dup.status_code == 400, dup.text
     assert "Email already registered" in dup.json()["detail"]
+
+
+def test_google_new_user_needs_registration(client, db, monkeypatch):
+    """A brand-new Google account is routed into registration (to collect the
+    mandatory phone + DOB) instead of being silently created."""
+    import app.routers.auth as auth_router
+    org = _reg_org(db)
+
+    monkeypatch.setattr(
+        auth_router.id_token, "verify_oauth2_token",
+        lambda *a, **k: {"email": "newbie@gmail.com", "sub": "g-sub-1", "name": "New Bie"},
+    )
+
+    r = client.post("/api/v1/auth/google",
+                    json={"organization_id": str(org.id), "id_token": "fake"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body.get("needs_registration") is True
+    assert body["email"] == "newbie@gmail.com"
+    assert body["full_name"] == "New Bie"
+    # No token issued, no account created yet.
+    assert "access_token" not in body
+    assert db.query(User).filter(User.email == "newbie@gmail.com").first() is None
+
+
+def test_google_existing_user_logs_in(client, db, monkeypatch):
+    """An existing member signing in with Google still gets a normal token."""
+    import app.routers.auth as auth_router
+    org = _reg_org(db)
+
+    # Register a member the normal way, then attach their email via Google.
+    reg = client.post("/api/v1/auth/register", json=_reg_payload(org.id, email="existing@gmail.com"))
+    assert reg.status_code == 200, reg.text
+
+    monkeypatch.setattr(
+        auth_router.id_token, "verify_oauth2_token",
+        lambda *a, **k: {"email": "existing@gmail.com", "sub": "g-sub-2", "name": "Existing"},
+    )
+    r = client.post("/api/v1/auth/google",
+                    json={"organization_id": str(org.id), "id_token": "fake"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert "access_token" in body
+    assert body.get("needs_registration") is not True
