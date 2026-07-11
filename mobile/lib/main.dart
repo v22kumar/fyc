@@ -19,12 +19,15 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'service_locator.dart';
 
 final localeNotifier = ValueNotifier<Locale>(const Locale('ta'));
-final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
+// The app follows the OS light/dark setting automatically — there is no
+// manual toggle in Settings. 'light'/'dark' remain valid stored values (in
+// case a device/QA build ever needs to force one) but default to 'system'.
+final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.system);
 
 ThemeMode themeModeFromString(String s) => switch (s) {
       'dark' => ThemeMode.dark,
-      'system' => ThemeMode.system,
-      _ => ThemeMode.light,
+      'light' => ThemeMode.light,
+      _ => ThemeMode.system,
     };
 
 
