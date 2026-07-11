@@ -119,13 +119,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> signInWithGoogle({
+  Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
   }) async {
     try {
-      final token = await _remote.signInWithGoogle(organizationId: organizationId);
-      await _storage.saveToken(token.accessToken);
-      return Right(token.user);
+      final result = await _remote.signInWithGoogle(organizationId: organizationId);
+      if (result.needsRegistration) {
+        return Right(GoogleAuthNeedsProfile(
+          email: result.email ?? '',
+          fullName: result.fullName ?? '',
+        ));
+      }
+      await _storage.saveToken(result.token!.accessToken);
+      return Right(GoogleAuthSuccess(result.token!.user));
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {

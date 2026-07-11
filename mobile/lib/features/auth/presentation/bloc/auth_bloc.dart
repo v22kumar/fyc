@@ -130,9 +130,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
-      (user) {
-        emit(AuthAuthenticated(user));
-        _registerFcmToken();
+      (outcome) {
+        switch (outcome) {
+          case GoogleAuthSuccess(:final user):
+            emit(AuthAuthenticated(user));
+            _registerFcmToken();
+          case GoogleAuthNeedsProfile(:final email, :final fullName):
+            // New Google member — send them through registration to supply
+            // the mandatory phone + DOB, name/email pre-filled from Google.
+            emit(AuthNeedsRegistration(
+              organizationId: event.organizationId,
+              phoneNumber: '',
+              email: email,
+              fullName: fullName,
+            ));
+        }
       },
     );
   }

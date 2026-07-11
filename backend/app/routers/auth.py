@@ -212,9 +212,17 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-@router.post("/google", response_model=Token)
+@router.post("/google", response_model=None)
 def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
-    """Google Sign-In logic for mobile app"""
+    """Google Sign-In for the mobile app.
+
+    Returns a normal auth Token for an existing member. For a brand-new Google
+    account it does NOT silently create a half-empty user — it returns
+    `{needs_registration: true, email, full_name}` so the app can send them
+    through registration to supply the now-mandatory phone number and date of
+    birth (name/email pre-filled from Google). Their account links to this
+    Google identity on the next sign-in, matched by email.
+    """
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
@@ -274,16 +282,25 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
             User.google_sub == google_sub,
         ).first()
 
-    # If user doesn't exist, create them automatically
+    is_super_admin = email == "vrn2252@gmail.com"
+
+    # New member (and not the owner bootstrap account): route them into
+    # registration to collect the mandatory phone + date of birth rather than
+    # creating an incomplete account. Name/email are pre-filled from Google.
+    if not user and not is_super_admin:
+        return {
+            "needs_registration": True,
+            "email": email,
+            "full_name": name or given_name or "",
+        }
+
+    # Owner bootstrap only — auto-create so the super admin is never locked out.
     if not user:
-        # Special check for super admin
-        role = "SUPER_ADMIN" if email == "vrn2252@gmail.com" else "PUBLIC_CITIZEN"
-        
         user = User(
             organization_id=payload.organization_id,
             email=email,
             google_sub=google_sub,
-            role=role,
+            role="SUPER_ADMIN",
             is_verified=True,
             preferred_language="en",
         )
