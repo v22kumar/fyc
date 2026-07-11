@@ -109,6 +109,37 @@ class AppTheme {
         ),
       ];
 
+  /// The app-wide type scale, shared by light and dark (only `primary`/
+  /// `secondary` text color differs between them — previously they didn't
+  /// share a scale at all: light hand-overrode 7 of 12 TextTheme slots while
+  /// dark fell through to Material's stock sizes, so the two themes actually
+  /// rendered text at different sizes). Mirrors DSTypography's hierarchy
+  /// (core/design_system/typography.dart) — nothing below 14sp — while
+  /// keeping the Outfit font already in use everywhere; adopting DSTypography's
+  /// own per-language font families (Plus Jakarta Sans / Noto Sans Tamil etc.)
+  /// is a separate follow-up, since the theme doesn't currently rebuild on
+  /// language change.
+  static TextTheme _textTheme({required Color primary, required Color secondary}) {
+    TextStyle s(double size, FontWeight w, {double? ls, double? h, Color? c}) =>
+        GoogleFonts.outfit(fontSize: size, fontWeight: w, letterSpacing: ls, height: h, color: c ?? primary);
+
+    return TextTheme(
+      displayLarge: s(34, FontWeight.w800, ls: -0.6, h: 1.15),
+      displayMedium: s(28, FontWeight.w800, ls: -0.4, h: 1.2),
+      headlineLarge: s(24, FontWeight.w700, ls: -0.3, h: 1.25),
+      headlineMedium: s(24, FontWeight.w700, ls: -0.4),
+      titleLarge: s(18, FontWeight.w700, h: 1.3),
+      titleMedium: s(16, FontWeight.w600, h: 1.35),
+      titleSmall: s(14, FontWeight.w600, h: 1.35),
+      bodyLarge: s(16, FontWeight.w400, h: 1.5),
+      bodyMedium: s(15, FontWeight.w400, h: 1.5, c: secondary),
+      bodySmall: s(14, FontWeight.w400, h: 1.45, c: secondary),
+      labelLarge: s(15, FontWeight.w700, ls: 0.2),
+      labelMedium: s(14, FontWeight.w700, ls: 0.2),
+      labelSmall: s(14, FontWeight.w600, ls: 0.2, c: secondary),
+    );
+  }
+
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -120,48 +151,7 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.background,
-        textTheme: GoogleFonts.outfitTextTheme().copyWith(
-          displayLarge: GoogleFonts.outfit(
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.6,
-            color: AppColors.textPrimary,
-          ),
-          headlineMedium: GoogleFonts.outfit(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.4,
-            color: AppColors.textPrimary,
-          ),
-          titleLarge: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          titleMedium: GoogleFonts.outfit(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          bodyLarge: GoogleFonts.outfit(
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            height: 1.5,
-            color: AppColors.textPrimary,
-          ),
-          bodyMedium: GoogleFonts.outfit(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w300,
-            height: 1.5,
-            color: AppColors.textSecondary,
-          ),
-          labelLarge: GoogleFonts.outfit(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.4,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        textTheme: _textTheme(primary: AppColors.textPrimary, secondary: AppColors.textSecondary),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -248,7 +238,7 @@ class AppTheme {
         chipTheme: ChipThemeData(
           backgroundColor: AppColors.background,
           selectedColor: AppColors.primary,
-          labelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold),
+          labelStyle: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
@@ -269,10 +259,7 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.darkBackground,
-        textTheme: GoogleFonts.outfitTextTheme(ThemeData(brightness: Brightness.dark).textTheme).apply(
-          bodyColor: AppColors.darkText,
-          displayColor: AppColors.darkText,
-        ),
+        textTheme: _textTheme(primary: AppColors.darkText, secondary: AppColors.darkTextSecondary),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.darkBackground,
           foregroundColor: AppColors.darkText,
