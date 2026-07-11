@@ -12,6 +12,7 @@ class SafetySettingsScreen extends StatefulWidget {
 class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
   List<String> _contacts = [];
   bool _loudSiren = true;
+  bool _shakeToTrigger = true;
   bool _loading = true;
   final _addCtrl = TextEditingController();
 
@@ -30,10 +31,12 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
   Future<void> _load() async {
     final c = await SosService.getContacts();
     final siren = await SosService.getLoudSiren();
+    final shake = await SosService.getShakeToTrigger();
     if (!mounted) return;
     setState(() {
       _contacts = c;
       _loudSiren = siren;
+      _shakeToTrigger = shake;
       _loading = false;
     });
   }
@@ -89,6 +92,22 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                             style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
                         subtitle: Text(
                             _loudSiren ? 'Vibrating alarm when you trigger SOS' : 'Silent mode',
+                            style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
+                      ),
+                      Divider(height: 1, thickness: 1, color: context.cBorder),
+                      SwitchListTile(
+                        value: _shakeToTrigger,
+                        activeColor: const Color(0xFFDC2626),
+                        onChanged: (v) async {
+                          await SosService.setShakeToTrigger(v);
+                          if (mounted) setState(() => _shakeToTrigger = v);
+                        },
+                        title: Text('Shake to Trigger',
+                            style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
+                        subtitle: Text(
+                            _shakeToTrigger
+                                ? 'Shake your phone hard to open the SOS sheet'
+                                : 'Off — use the SOS button instead',
                             style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
                       ),
                     ],

@@ -54,12 +54,39 @@ class SosService {
     await prefs.setBool(_sirenKey, on);
   }
 
-  /// A dependency-free "siren": a burst of heavy haptic pulses. No-op in Silent
-  /// mode. (An audio siren asset is a planned upgrade.)
+  // ── Shake to trigger ─────────────────────────────────────────────────────
+  static const _shakeKey = 'sos_shake_to_trigger';
+
+  static Future<bool> getShakeToTrigger() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_shakeKey) ?? true;
+  }
+
+  static Future<void> setShakeToTrigger(bool on) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_shakeKey, on);
+  }
+
+  /// A burst of heavy haptic pulses layered with the device's built-in system
+  /// alert tone (SystemSoundType.alert — no bundled audio asset required).
+  /// No-op in Silent mode.
+  ///
+  /// This is NOT a bundled siren sound file: the repo has no licensed audio
+  /// asset to ship, and one shouldn't be fabricated. SystemSound.play gives a
+  /// real, audible component (not just vibration) using only what Flutter
+  /// already provides. Swapping in a proper siren asset (via a real audio
+  /// player) remains a genuine upgrade if/when a licensed sound file is
+  /// available — see the audioplayers-based siren note in this file's history
+  /// if revisiting this.
   static Future<void> triggerSiren() async {
     if (!await getLoudSiren()) return;
     for (var i = 0; i < 6; i++) {
       HapticFeedback.heavyImpact();
+      try {
+        await SystemSound.play(SystemSoundType.alert);
+      } catch (_) {
+        // Unsupported platform/build (e.g. widget tests) — haptics still fire.
+      }
       await Future.delayed(const Duration(milliseconds: 350));
     }
   }
