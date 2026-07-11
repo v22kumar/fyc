@@ -37,6 +37,47 @@ def _display_name(db: Session, user: Optional[User]) -> Optional[str]:
     return None
 
 
+def _notify_chess(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    org_id: uuid.UUID,
+    title_en: str,
+    body_en: str,
+    title_ta: str,
+    body_ta: str,
+    data: dict,
+) -> None:
+    """Best-effort push to the opponent about a challenge / acceptance.
+
+    Online-chess challenges are otherwise only surfaced by the recipient
+    polling the inbox, so a player who isn't already sitting on that screen
+    never sees the request. A push (data type `chess_challenge`/`chess_accept`,
+    which the mobile ChallengePage already listens for) wakes the app to
+    reload and also posts a tray notification when it's backgrounded. Never
+    raises into the caller — delivery must not break creating the challenge.
+    """
+    try:
+        # Imported lazily so the chess router has no hard dependency on the
+        # notification stack (and firebase init) at import time.
+        from app.services.notification_service import NotificationService
+
+        # Push-only: a game challenge should ping the opponent's device, not
+        # fan out to WhatsApp/email (both default-on) like a broadcast would.
+        NotificationService(db).send_push_only(
+            user_id=user_id,
+            organization_id=org_id,
+            title_en=title_en,
+            title_ta=title_ta,
+            body_en=body_en,
+            body_ta=body_ta,
+            notification_type="CHESS",
+            data=data,
+        )
+    except Exception as e:  # pragma: no cover - best-effort delivery
+        logger.warning(f"chess notify failed (non-fatal): {e}")
+
+
 def _game_out(db: Session, g: ChessGame) -> ChessGameOut:
     return ChessGameOut(
         id=g.id,
@@ -536,6 +577,18 @@ def create_challenge(
     db.add(c)
     db.commit()
     db.refresh(c)
+
+    challenger_name = _display_name(db, current_user) or "A member"
+    _notify_chess(
+        db,
+        user_id=challenged.id,
+        org_id=tenant_id,
+        title_en="♟️ Chess challenge",
+        body_en=f"{challenger_name} challenged you to a game.",
+        title_ta="♟️ சதுரங்க அழைப்பு",
+        body_ta=f"{challenger_name} உங்களை விளையாட அழைத்துள்ளார்.",
+        data={"type": "chess_challenge", "route": "/chess/challenge"},
+    )
     return _challenge_out(db, c)
 
 
@@ -612,6 +665,21 @@ def accept_challenge(
     db.refresh(game)
 
     challenger_name = _display_name(db, c.challenger) or "Opponent"
+    accepter_name = _display_name(db, current_user) or "Your opponent"
+    _notify_chess(
+        db,
+        user_id=c.challenger_id,
+        org_id=tenant_id,
+        title_en="♟️ Challenge accepted",
+        body_en=f"{accepter_name} accepted — the game is starting.",
+        title_ta="♟️ அழைப்பு ஏற்கப்பட்டது",
+        body_ta=f"{accepter_name} ஏற்றுக்கொண்டார் — விளையாட்டு தொடங்குகிறது.",
+        data={
+            "type": "chess_accept",
+            "route": f"/chess/online/{game.id}",
+            "game_id": str(game.id),
+        },
+    )
     return ChallengeAcceptOut(
         game_id=game.id,
         color="black",  # accepting player is black

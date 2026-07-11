@@ -154,6 +154,50 @@ class NotificationService:
         notification.delivery_channel = ",".join(channels)
         self.db.commit()
 
+    def send_push_only(self,
+                       user_id: UUID,
+                       organization_id: UUID,
+                       title_en: str,
+                       title_ta: str,
+                       body_en: str,
+                       body_ta: str,
+                       notification_type: str,
+                       data: Optional[Dict[str, Any]] = None):
+        """Push + in-app record only — no WhatsApp / SMS / email fan-out.
+
+        For transient, real-time alerts (e.g. a live chess challenge) where
+        blasting WhatsApp or email on every event would be spammy and
+        inappropriate. Still respects the user's push_enabled preference and
+        requires an fcm_token; falls back to just the in-app record if push
+        isn't available.
+        """
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return
+
+        pref = self.get_preferences(user_id, organization_id)
+
+        notification = Notification(
+            user_id=user_id,
+            organization_id=organization_id,
+            title_en=title_en,
+            title_ta=title_ta,
+            body_en=body_en,
+            body_ta=body_ta,
+            notification_type=notification_type,
+            data=data,
+            sent_at=datetime.now(timezone.utc),
+        )
+        self.db.add(notification)
+        self.db.commit()
+        self.db.refresh(notification)
+
+        if pref.push_enabled and user.fcm_token:
+            if self._dispatch_push(user.fcm_token, title_en, body_en, data):
+                notification.delivered_at = datetime.now(timezone.utc)
+                notification.delivery_channel = "FCM"
+                self.db.commit()
+
     def _dispatch_push(self, token: str, title: str, body: str, data: dict = None) -> bool:
         if not firebase_admin._apps:
             logger.warning("FCM skipped (firebase not initialized).")
