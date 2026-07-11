@@ -64,10 +64,19 @@ class _ChallengePageState extends State<ChallengePage>
     _poll?.cancel();
     _poll = Timer(Duration(seconds: _pollIntervalSeconds), () {
       _refreshOutgoing();
+      // Also re-fetch INCOMING challenges: without an FCM push (which only
+      // fires when Firebase creds are configured), this poll is the only way
+      // a waiting player sees a request arrive. Previously only outgoing was
+      // refreshed, so an incoming challenge never appeared unless the user
+      // manually hit Refresh.
+      _refreshIncoming();
       if (mounted && WidgetsBinding.instance.lifecycleState != AppLifecycleState.paused) {
-        if (_pollIntervalSeconds < 60) {
+        // Cap the backoff at 15s (not 60s): this is an active "waiting for a
+        // game" screen, so a minute-long gap before a challenge shows up reads
+        // as broken. 15s keeps it responsive without hammering the backend.
+        if (_pollIntervalSeconds < 15) {
           final next = _pollIntervalSeconds * 2;
-          _pollIntervalSeconds = next > 60 ? 60 : next;
+          _pollIntervalSeconds = next > 15 ? 15 : next;
         }
         _startPolling();
       }
@@ -91,6 +100,20 @@ class _ChallengePageState extends State<ChallengePage>
       _incomingFuture = _ds.incomingChallenges();
     });
     _refreshOutgoing();
+  }
+
+  Future<void> _refreshIncoming() async {
+    try {
+      final incoming = await _ds.incomingChallenges();
+      if (!mounted) return;
+      // Replace with an already-completed future so the inbox FutureBuilder
+      // updates in place instead of flashing its loading spinner on every
+      // poll (a fresh _ds.incomingChallenges() future would re-enter the
+      // `waiting` state each tick).
+      setState(() => _incomingFuture = Future.value(incoming));
+    } catch (_) {
+      // best-effort poll; ignore transient errors
+    }
   }
 
   Future<void> _refreshOutgoing() async {
