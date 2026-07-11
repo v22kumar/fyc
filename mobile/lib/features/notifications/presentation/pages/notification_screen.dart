@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../bloc/notification_bloc.dart';
 import '../../domain/entities/notification_entity.dart';
 
@@ -78,7 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const DSSkeletonList();
           } else if (state is NotificationError) {
             return Center(
               child: Text(state.message, style: TextStyle(color: context.cTextSecondary)),
@@ -101,28 +103,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
     // time the day-bucket changes.
     final children = <Widget>[];
     String? current;
+    var tileIndex = 0;
     for (final n in items) {
       final bucket = _bucketOf(n.createdAt);
       if (bucket != current) {
         current = bucket;
         children.add(_SectionHeader(label: _bucketLabel(bucket)));
       }
-      children.add(_NotificationTile(
-        notif: n,
-        onDismiss: () {
-          setState(() => _dismissed.add(n.id));
-          if (!n.isRead) {
-            context.read<NotificationBloc>().add(MarkNotificationAsRead(n.id));
-          }
-        },
-        onTap: () {
-          context.read<NotificationBloc>().add(TrackNotificationClick(n.id));
-          if (!n.isRead) {
-            context.read<NotificationBloc>().add(MarkNotificationAsRead(n.id));
-          }
-          final route = n.data?['route'];
-          if (route is String && route.isNotEmpty) context.go(route);
-        },
+      children.add(FadeSlideIn(
+        delay: Duration(milliseconds: (tileIndex++ * 40).clamp(0, 400)),
+        child: _NotificationTile(
+          notif: n,
+          onDismiss: () {
+            setState(() => _dismissed.add(n.id));
+            if (!n.isRead) {
+              context.read<NotificationBloc>().add(MarkNotificationAsRead(n.id));
+            }
+          },
+          onTap: () {
+            context.read<NotificationBloc>().add(TrackNotificationClick(n.id));
+            if (!n.isRead) {
+              context.read<NotificationBloc>().add(MarkNotificationAsRead(n.id));
+            }
+            final route = n.data?['route'];
+            if (route is String && route.isNotEmpty) context.go(route);
+          },
+        ),
       ));
     }
     return ListView(padding: const EdgeInsets.only(bottom: 24), children: children);

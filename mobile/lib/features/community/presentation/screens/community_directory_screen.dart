@@ -5,8 +5,10 @@ import '../../domain/entities/community_profile_entity.dart';
 import '../bloc/community_bloc.dart';
 import '../bloc/community_event.dart';
 import '../bloc/community_state.dart';
+import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -37,7 +39,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
       body: BlocBuilder<CommunityBloc, CommunityState>(
         builder: (context, state) {
           if (state is CommunityLoading || state is CommunityInitial) {
-            return const Center(child: CircularProgressIndicator());
+            return const DSSkeletonList();
           }
           if (state is CommunityLoaded) {
             if (state.profiles.isEmpty) {
@@ -52,7 +54,12 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: state.profiles
-                    .map((p) => _ProfileCard(profile: p, lang: lang))
+                    .asMap()
+                    .entries
+                    .map((entry) => FadeSlideIn(
+                          delay: Duration(milliseconds: (entry.key * 45).clamp(0, 400)),
+                          child: _ProfileCard(profile: entry.value, lang: lang),
+                        ))
                     .toList(),
               ),
             );

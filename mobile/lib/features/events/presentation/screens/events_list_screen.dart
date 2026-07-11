@@ -14,6 +14,7 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/success_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -164,17 +165,20 @@ class _EventsListScreenState extends State<EventsListScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          ...events.map((e) => _EventCard(
-                event: e,
-                lang: _lang,
-                onCheckin: e.isOngoing
-                    ? () => context
-                        .read<EventBloc>()
-                        .add(EventCheckinRequested(e.id))
-                    : null,
-                onRegister: e.isUpcoming
-                    ? () => _openRegister(e)
-                    : null,
+          ...events.asMap().entries.map((entry) => FadeSlideIn(
+                delay: Duration(milliseconds: (entry.key * 45).clamp(0, 400)),
+                child: _EventCard(
+                  event: entry.value,
+                  lang: _lang,
+                  onCheckin: entry.value.isOngoing
+                      ? () => context
+                          .read<EventBloc>()
+                          .add(EventCheckinRequested(entry.value.id))
+                      : null,
+                  onRegister: entry.value.isUpcoming
+                      ? () => _openRegister(entry.value)
+                      : null,
+                ),
               )),
         ],
       ),
