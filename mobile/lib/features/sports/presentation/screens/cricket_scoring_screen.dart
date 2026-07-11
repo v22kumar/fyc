@@ -10,6 +10,13 @@ import '../bloc/cricket_scoring_cubit.dart';
 import '../widgets/cricket_overs_history.dart';
 import '../../../../core/widgets/pressable.dart';
 
+/// Brand colors shared across this screen's gradients (scoreboard hero, run
+/// buttons, chips, CTAs) — defined once so a brand-color change never has to
+/// hunt down repeated literals.
+const Color _kNavy = Color(0xFF16255A);
+const Color _kTeal = Color(0xFF1E7C86);
+const Color _kMint = Color(0xFF14C79E);
+
 /// Two people at the crease (or two openers) must be distinct — names are
 /// compared trimmed + case-insensitive because that's how the backend
 /// resolves player identity (by team + name). If two different physical
@@ -19,8 +26,10 @@ bool _sameName(String a, String b) => a.trim().toLowerCase() == b.trim().toLower
 
 /// A themed choice chip with explicit, always-legible colors (selected =
 /// solid navy→mint fill + white label; unselected = tinted surface + navy
-/// label) — the stock ChipThemeData left unselected labels nearly invisible.
+/// label; disabled = muted so it visibly differs from a selectable chip) —
+/// the stock ChipThemeData left unselected labels nearly invisible.
 Widget _themedChip(BuildContext context, {required String label, required bool selected, required VoidCallback? onSelected}) {
+  final disabled = onSelected == null;
   return Pressable(
     child: InkWell(
       borderRadius: BorderRadius.circular(999),
@@ -29,19 +38,17 @@ Widget _themedChip(BuildContext context, {required String label, required bool s
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: selected
-              ? const LinearGradient(colors: [Color(0xFF16255A), Color(0xFF14C79E)])
-              : null,
-          color: selected ? null : const Color(0xFFEFF2FA),
+          gradient: selected ? const LinearGradient(colors: [_kNavy, _kMint]) : null,
+          color: selected ? null : (disabled ? const Color(0xFFF5F6FA) : const Color(0xFFEFF2FA)),
           borderRadius: BorderRadius.circular(999),
-          border: selected ? null : Border.all(color: const Color(0xFFD7DCEA)),
+          border: selected ? null : Border.all(color: disabled ? const Color(0xFFE8EBF2) : const Color(0xFFD7DCEA)),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : const Color(0xFF0A1128),
+            color: selected ? Colors.white : (disabled ? const Color(0xFFB4B9C8) : const Color(0xFF0A1128)),
           ),
         ),
       ),
@@ -66,14 +73,14 @@ Widget _gradientCTA({required String label, required VoidCallback? onPressed, Ic
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: enabled
-                  ? const [Color(0xFF16255A), Color(0xFF1E7C86), Color(0xFF14C79E)]
+                  ? const [_kNavy, _kTeal, _kMint]
                   : const [Color(0xFFAEB4C4), Color(0xFFAEB4C4)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: enabled
-                ? [BoxShadow(color: const Color(0xFF16255A).withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))]
+                ? [BoxShadow(color: _kNavy.withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))]
                 : null,
           ),
           child: Row(
@@ -455,13 +462,13 @@ class _ScoreHeader extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF16255A), Color(0xFF1E7C86), Color(0xFF14C79E)],
+          colors: [_kNavy, _kTeal, _kMint],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF16255A).withOpacity(0.32), blurRadius: 26, offset: const Offset(0, 12)),
+          BoxShadow(color: _kNavy.withOpacity(0.32), blurRadius: 26, offset: const Offset(0, 12)),
         ],
       ),
       padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
@@ -882,7 +889,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF16255A), Color(0xFF14C79E)]),
+                  gradient: const LinearGradient(colors: [_kNavy, _kMint]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.sports_cricket_rounded, color: Colors.white, size: 18),
@@ -1051,7 +1058,7 @@ class _ScoringPad extends StatelessWidget {
                 : runs == 6
                     ? const [Color(0xFFF59E0B), Color(0xFFB45309)]
                     : isBoundary
-                        ? const [Color(0xFF16255A), Color(0xFF14C79E)]
+                        ? const [_kNavy, _kMint]
                         : const [Color(0xFF14B891), Color(0xFF0F9B7E)];
             return Expanded(
               child: Padding(
