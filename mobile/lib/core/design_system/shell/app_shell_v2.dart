@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/shake_detector.dart';
+import '../../services/sos_service.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
 
@@ -25,6 +27,7 @@ class AppShellV2 extends StatefulWidget {
 
 class _AppShellV2State extends State<AppShellV2> {
   int _index = 0;
+  ShakeDetector? _shake;
 
   static const _tabMeta = [
     ('Home', 'ஊர்', Icons.home_rounded),
@@ -36,6 +39,34 @@ class _AppShellV2State extends State<AppShellV2> {
 
   List<Widget> get _bodies =>
       widget.tabs ?? List.generate(_tabMeta.length, (i) => _PlaceholderTab(label: _tabMeta[i].$1));
+
+  @override
+  void initState() {
+    super.initState();
+    _initShake();
+  }
+
+  // Shake-to-trigger opens the same Safety Center sheet as the SOS button —
+  // it never fires an alert by itself, just gives a fast, no-look way to
+  // reach the sheet so the user can confirm/send. Best-effort: a missing
+  // accelerometer plugin (e.g. widget tests, unsupported platform) must
+  // never crash the shell, only silently skip the feature.
+  Future<void> _initShake() async {
+    try {
+      final enabled = await SosService.getShakeToTrigger();
+      if (!mounted || !enabled) return;
+      _shake = ShakeDetector(onShake: () {
+        if (mounted) showSosSheet(context);
+      });
+      _shake!.start();
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _shake?.stop();
+    super.dispose();
+  }
 
   void _onSosTap() {
     // Real SOS: location SMS to trusted contacts + emergency dial.
