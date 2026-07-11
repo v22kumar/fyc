@@ -241,7 +241,7 @@ class _Header extends StatelessWidget {
                           const _NotificationBell(),
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: () => context.push('/settings'),
+                            onTap: () => context.push('/me'),
                             child: CircleAvatar(
                               radius: 18,
                               backgroundColor: Colors.white.withOpacity(0.15),
@@ -1293,7 +1293,7 @@ const _allSearchEntries = [
   _SearchEntry('Membership Card', 'Your FYC digital card', '/membership', Icons.verified_user, Color(0xFF14B8A6)),
   _SearchEntry('Announcements', 'Latest club updates', '/announcements', Icons.notifications, Color(0xFFF59E0B)),
   _SearchEntry('Gallery', 'Event photos', '/gallery', Icons.photo_library, Color(0xFFD97706)),
-  _SearchEntry('Community', 'Member directory', '/community', Icons.people, Color(0xFFEC4899)),
+  _SearchEntry('Community', 'Find local tradespeople & services', '/community', Icons.people, Color(0xFFEC4899)),
   _SearchEntry('Opportunities', 'Jobs, volunteer & skills', '/opportunities', Icons.work, Color(0xFFD97706)),
   _SearchEntry('Certificate', 'Volunteer certificates', '/certificate', Icons.school, Color(0xFF6366F1)),
   _SearchEntry('Settings', 'App preferences', '/settings', Icons.settings, Color(0xFF475569)),

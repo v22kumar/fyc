@@ -10,16 +10,29 @@ void main() {
   });
 
   group('AppShellV2', () {
-    testWidgets('renders exactly 5 tabs: Home, Feed, Play, Serve, Me', (tester) async {
+    testWidgets('renders exactly 4 tabs: Home, Feed, Play, Serve', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
       expect(find.text('Home'), findsOneWidget);
       expect(find.text('Feed'), findsOneWidget);
       expect(find.text('Play'), findsOneWidget);
       expect(find.text('Serve'), findsOneWidget);
-      expect(find.text('Me'), findsOneWidget);
+      // Me is reached via the avatar in Home's top-right corner (route
+      // `/me`), not a bottom-nav tab.
+      expect(find.text('Me'), findsNothing);
       // Feed and Community remain distinct — Community (member directory) is
       // still reached via Home's Services sheet, not a bottom-nav tab.
       expect(find.text('Community'), findsNothing);
+    });
+
+    testWidgets('a single back press warns instead of exiting immediately', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
+      // Simulate the system/hardware back button: with the shell's PopScope
+      // set to canPop: false, this must be intercepted (no route to pop to)
+      // rather than closing the app outright.
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      await navigator.maybePop();
+      await tester.pump();
+      expect(find.text('Press back again to exit'), findsOneWidget);
     });
 
     testWidgets('switching tabs updates the visible placeholder', (tester) async {

@@ -250,20 +250,34 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('👥', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            tr(
-                en: 'No profiles yet',
-                ta: 'சுயவிவரங்கள் இல்லை',
-                hi: 'अभी तक कोई प्रोफ़ाइल नहीं',
-                ml: 'ഇതുവരെ പ്രൊഫൈലുകൾ ഇല്ല'),
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('👥', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text(
+              tr(
+                  en: 'No local services listed yet',
+                  ta: 'உள்ளூர் சேவைகள் எதுவும் பதிவு செய்யப்படவில்லை',
+                  hi: 'अभी तक कोई स्थानीय सेवा सूचीबद्ध नहीं है',
+                  ml: 'ഇതുവരെ പ്രാദേശിക സേവനങ്ങളൊന്നും ലിസ്റ്റ് ചെയ്തിട്ടില്ല'),
+              style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              tr(
+                  en: 'This is a directory of tradespeople and service providers (carpenters, electricians, plumbers & more) run by the community — not a member roster.',
+                  ta: 'இது சமூகத்தால் நடத்தப்படும் தொழிலாளர்கள் மற்றும் சேவை வழங்குநர்களின் (தச்சர், மின்சாரம், குழாய் பணி மற்றும் பல) பட்டியல் — உறுப்பினர் பட்டியல் அல்ல.',
+                  hi: 'यह समुदाय द्वारा चलाई जाने वाली कारीगरों और सेवा प्रदाताओं (बढ़ई, इलेक्ट्रीशियन, प्लंबर आदि) की सूची है — सदस्य सूची नहीं।',
+                  ml: 'ഇത് സമൂഹം നടത്തുന്ന ആശാരിമാർ, ഇലക്ട്രീഷ്യൻമാർ, പ്ലംബർമാർ തുടങ്ങിയ സേവനദാതാക്കളുടെ പട്ടികയാണ് — അംഗങ്ങളുടെ പട്ടികയല്ല.'),
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

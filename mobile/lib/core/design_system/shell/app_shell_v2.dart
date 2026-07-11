@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
 
-/// The live navigation shell (mounted at `/app`): 5 tabs (Home · Feed · Play ·
-/// Serve · Me) + a persistent SOS control reachable from every tab. Feed and
-/// Community remain distinct destinations — Community (member directory) is
-/// still reached via Home's Services sheet, not a bottom-nav tab.
+/// The live navigation shell (mounted at `/app`): 4 tabs (Home · Feed · Play ·
+/// Serve) + a persistent SOS control reachable from every tab. Account/profile
+/// access ("Me") lives behind the avatar in Home's top-right corner instead of
+/// a fifth tab — that spot already existed and was previously wired straight
+/// to Settings, skipping the richer Me hub (profile card, membership,
+/// directory). Feed and Community remain distinct destinations — Community
+/// (member directory) is still reached via Home's Services sheet, not a
+/// bottom-nav tab.
 class AppShellV2 extends StatefulWidget {
-  /// The 5 tab bodies, index-aligned with `_tabMeta` (Home/Feed/Play/Serve/Me).
+  /// The 4 tab bodies, index-aligned with `_tabMeta` (Home/Feed/Play/Serve).
   /// Wired to real screens by `_appShellBuilder` in app_router.dart. Defaults
   /// to placeholders so the shell can be previewed standalone (design-system
   /// gallery, widget tests) without a full app context.
@@ -28,13 +33,13 @@ class AppShellV2 extends StatefulWidget {
 class _AppShellV2State extends State<AppShellV2> {
   int _index = 0;
   ShakeDetector? _shake;
+  DateTime? _lastBackPress;
 
   static const _tabMeta = [
     ('Home', 'ஊர்', Icons.home_rounded),
     ('Feed', 'செய்திகள்', Icons.dynamic_feed_rounded),
     ('Play', 'விளையாட்டு', Icons.sports_cricket_rounded),
     ('Serve', 'சேவை', Icons.volunteer_activism_rounded),
-    ('Me', 'என்', Icons.person_rounded),
   ];
 
   List<Widget> get _bodies =>
@@ -69,52 +74,77 @@ class _AppShellV2State extends State<AppShellV2> {
   }
 
   void _onSosTap() {
-    // Real SOS: location SMS to trusted contacts + emergency dial.
+    // Real SOS: location SMS to trusted contacts & emergency dial.
     showSosSheet(context);
+  }
+
+  // The shell sits at the bottom of the GoRouter stack (reached via
+  // context.go(), which replaces history), so a system back press here has
+  // nothing left to pop and Flutter's default behaviour closes the app
+  // instantly. Require a second press within 2s instead, with a toast on the
+  // first one — the standard Android "press back again to exit" pattern.
+  void _onBackInvoked(bool didPop, Object? result) {
+    if (didPop) return;
+    final now = DateTime.now();
+    if (_lastBackPress != null && now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackPress = now;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(
+        content: Text('Press back again to exit'),
+        duration: Duration(seconds: 2),
+      ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.dsBackground,
-      body: Stack(
-        children: [
-          IndexedStack(index: _index, children: _bodies),
-          // Persistent SOS control — reachable from every tab, never buried.
-          Positioned(
-            right: DSSpacing.sm,
-            bottom: 90,
-            child: _SosButton(onTap: _onSosTap),
-          ),
-        ],
-      ),
-      // Center Create FAB (the yellow "+" in the mockup), docked over the nav
-      // bar between Play and Serve. Only shown once a create handler is wired.
-      floatingActionButton: widget.onCreate == null
-          ? null
-          : FloatingActionButton(
-              onPressed: widget.onCreate,
-              backgroundColor: DSColors.amber500,
-              foregroundColor: Colors.white,
-              elevation: DSElevation.floating,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add_rounded, size: 30),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onBackInvoked,
+      child: Scaffold(
+        backgroundColor: context.dsBackground,
+        body: Stack(
+          children: [
+            IndexedStack(index: _index, children: _bodies),
+            // Persistent SOS control — reachable from every tab, never buried.
+            Positioned(
+              right: DSSpacing.sm,
+              bottom: 90,
+              child: _SosButton(onTap: _onSosTap),
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: context.dsSurface,
-        indicatorColor: context.dsAccent.withOpacity(0.15),
-        destinations: [
-          for (final (en, ta, icon) in _tabMeta)
-            NavigationDestination(
-              icon: Icon(icon, color: context.dsTextSecondary),
-              selectedIcon: Icon(icon, color: context.dsAccent),
-              label: en,
-              tooltip: ta,
-            ),
-        ],
+          ],
+        ),
+        // Center Create FAB (the yellow "+" in the mockup), docked over the nav
+        // bar between Play and Serve. Only shown once a create handler is wired.
+        floatingActionButton: widget.onCreate == null
+            ? null
+            : FloatingActionButton(
+                onPressed: widget.onCreate,
+                backgroundColor: DSColors.amber500,
+                foregroundColor: Colors.white,
+                elevation: DSElevation.floating,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add_rounded, size: 30),
+              ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          backgroundColor: context.dsSurface,
+          indicatorColor: context.dsAccent.withOpacity(0.15),
+          destinations: [
+            for (final (en, ta, icon) in _tabMeta)
+              NavigationDestination(
+                icon: Icon(icon, color: context.dsTextSecondary),
+                selectedIcon: Icon(icon, color: context.dsAccent),
+                label: en,
+                tooltip: ta,
+              ),
+          ],
+        ),
       ),
     );
   }
