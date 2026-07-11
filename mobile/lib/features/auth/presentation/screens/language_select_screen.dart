@@ -15,6 +15,24 @@ const _kLangs = [
   ('ml', 'അ',  Color(0xFFEDE9FE), Color(0xFF7C3AED), 'മലയാളം', 'Malayalam'),
 ];
 
+// Keyed on _selectedLang (the language being previewed, not yet saved) so the
+// identity copy live-updates as the user taps each language card — tr() would
+// read the last-saved language from storage instead, not this screen's local
+// selection, so it can't be used here.
+const _kAppSubtitle = {
+  'ta': 'நாகர்கோவில் Friends Youth Club-இன் அதிகாரப்பூர்வ செயலி — நிகழ்வுகள், விளையாட்டு, தன்னார்வலர் பணி, இரத்த தானம் & பாதுகாப்பு',
+  'en': 'The official app for Friends Youth Club Nagercoil — events, sports, volunteering, blood donation & safety, all in one place',
+  'hi': 'नागरकोइल Friends Youth Club की आधिकारिक ऐप — कार्यक्रम, खेल, स्वयंसेवा, रक्तदान और सुरक्षा',
+  'ml': 'നാഗർകോവിൽ Friends Youth Club-ന്റെ ഔദ്യോഗിക ആപ്പ് — പരിപാടികൾ, കായികം, വൊളന്റിയർ, രക്തദാനം മാത്രമല്ല സുരക്ഷ',
+};
+
+const _kWhatIsThis = {
+  'ta': 'இது என்ன செயலி?',
+  'en': 'What is this app?',
+  'hi': 'यह ऐप किस लिए है?',
+  'ml': 'ഇതെന്ത് ആപ്പാണ്?',
+};
+
 class LanguageSelectScreen extends StatefulWidget {
   const LanguageSelectScreen({super.key});
 
@@ -147,9 +165,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isTa
-                          ? 'நாகர்கோவில் Friends Youth Club-இன் அதிகாரப்பூர்வ செயலி — நிகழ்வுகள், விளையாட்டு, தன்னார்வலர் பணி, இரத்த தானம் & பாதுகாப்பு'
-                          : 'The official app for Friends Youth Club Nagercoil — events, sports, volunteering, blood donation & safety, all in one place',
+                      _kAppSubtitle[_selectedLang] ?? _kAppSubtitle['en']!,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.65),
@@ -167,7 +183,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
-                        isTa ? 'இது என்ன செயலி?' : 'What is this app?',
+                        _kWhatIsThis[_selectedLang] ?? _kWhatIsThis['en']!,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 12,
