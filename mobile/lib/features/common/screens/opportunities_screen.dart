@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/local_storage.dart';
@@ -48,36 +49,6 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
       context.read<OpportunityBloc>().add(const OpportunityFetchRequested());
     }
   }
-
-  static const _samples = [
-    {
-      'title': 'Tree Plantation Drive Volunteer',
-      'org': 'FYC Green Team',
-      'type': 'VOLUNTEER',
-      'category': 'Environment',
-      'location': 'Kanyakumari District',
-      'desc': 'Help plant 500 trees across village schools. No experience needed.',
-      'hours': '6 hrs',
-    },
-    {
-      'title': 'Blood Donation Camp Helper',
-      'org': 'FYC Blood Wing',
-      'type': 'VOLUNTEER',
-      'category': 'Healthcare',
-      'location': 'Nagercoil',
-      'desc': 'Assist in organizing our monthly blood donation camp.',
-      'hours': '4 hrs',
-    },
-    {
-      'title': 'Tamil Language Skill Exchange',
-      'org': 'FYC Members',
-      'type': 'SKILL',
-      'category': 'Education',
-      'location': 'Online',
-      'desc': 'Exchange skills — teach what you know, learn what you need.',
-      'hours': 'Flexible',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -150,10 +121,6 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
               ? items
               : items.where((o) => o.type == _selectedTab).toList();
 
-          final visibleSamples = _selectedTab == 'ALL'
-              ? _samples
-              : _samples.where((s) => s['type'] == _selectedTab).toList();
-
           return RefreshIndicator(
             onRefresh: () async => context.read<OpportunityBloc>().add(const OpportunityFetchRequested()),
             child: Column(
@@ -175,38 +142,13 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   children: [
-                    if (visibleSamples.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          tr(en: 'Sample Opportunities', ta: 'மாதிரி வாய்ப்புகள்', hi: 'नमूना अवसर', ml: 'സാമ്പിൾ അവസരങ്ങൾ'),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: context.cTextSecondary,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
-                      ...visibleSamples.map((s) => _SampleOpportunityCard(data: s, isTa: isTa)),
-                    ],
-                    if (filtered.isNotEmpty) ...[
-                      if (visibleSamples.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8, bottom: 12),
-                          child: Text(
-                            tr(en: 'Available Opportunities', ta: 'கிடைக்கும் வாய்ப்புகள்', hi: 'उपलब्ध अवसर', ml: 'ലഭ്യമായ അവസരങ്ങൾ'),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: context.cTextSecondary,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-                      ...filtered.map((opp) => _OpportunityCard(opp: opp, isTa: isTa)),
-                    ],
-                    if (filtered.isEmpty)
+                    // Local trade / service-provider directory lives under
+                    // Opportunities (carpenters, electricians, tutors…).
+                    _LocalServicesBanner(onTap: () => context.push('/community')),
+                    const SizedBox(height: 14),
+                    if (filtered.isNotEmpty)
+                      ...filtered.map((opp) => _OpportunityCard(opp: opp, isTa: isTa))
+                    else
                       _PremiumEmptyState(isTa: isTa, onPost: _canPost ? _openCreate : null),
                   ],
                 ),
@@ -282,115 +224,54 @@ class _PremiumEmptyState extends StatelessWidget {
   }
 }
 
-class _SampleOpportunityCard extends StatelessWidget {
-  final Map<String, String> data;
-  final bool isTa;
-  const _SampleOpportunityCard({required this.data, required this.isTa});
+class _LocalServicesBanner extends StatelessWidget {
+  final VoidCallback onTap;
+  const _LocalServicesBanner({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final isVolunteer = data['type'] == 'VOLUNTEER';
-    final typeColor = isVolunteer ? AppColors.primary : const Color(0xFF8B5CF6);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: context.cSurface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: context.cBorder),
-        boxShadow: context.isDark ? null : AppTheme.cardShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFD97706).withOpacity(0.10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFD97706).withOpacity(0.35)),
+        ),
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: typeColor.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isVolunteer
-                            ? tr(en: 'VOLUNTEERING', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवा', ml: 'വളണ്ടിയറിംഗ്')
-                            : tr(en: 'SKILL EXCHANGE', ta: 'திறன் பரிமாற்றம்', hi: 'कौशल विनिमय', ml: 'നൈപുണ്യ കൈമാറ്റം'),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: typeColor),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        tr(en: 'Sample', ta: 'மாதிரி', hi: 'नमूना', ml: 'സാമ്പിൾ'),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.cTextSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-                if ((data['hours'] ?? '').isNotEmpty)
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD97706).withOpacity(0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.handyman_rounded, color: Color(0xFFB45309)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    data['hours']!,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent),
+                    tr(en: 'Local Services', ta: 'சமூக கடை', hi: 'स्थानीय सेवाएं', ml: 'പ്രാദേശിക സേവനങ്ങൾ'),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.cText),
                   ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              data['title'] ?? '',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.cText),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${data['org'] ?? ''} • ${data['category'] ?? ''}',
-              style: TextStyle(fontSize: 12, color: context.cTextSecondary, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined, size: 14, color: context.cTextSecondary),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    data['location'] ?? '',
-                    style: TextStyle(fontSize: 12, color: context.cTextSecondary),
+                  const SizedBox(height: 2),
+                  Text(
+                    tr(en: 'Carpenters, electricians, tutors & more',
+                        ta: 'தச்சர், மின்சாரி, ஆசிரியர் & பலர்',
+                        hi: 'बढ़ई, इलेक्ट्रीशियन, शिक्षक और अधिक',
+                        ml: 'ആശാരി, ഇലക്ട്രീഷ്യൻ, ട്യൂട്ടർ എന്നിവർ'),
+                    style: TextStyle(fontSize: 12.5, color: context.cTextSecondary),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              data['desc'] ?? '',
-              style: TextStyle(fontSize: 13, color: context.cTextSecondary, height: 1.4),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: typeColor.withOpacity(0.5),
-                  disabledBackgroundColor: typeColor.withOpacity(0.5),
-                  disabledForegroundColor: Colors.white,
-                ),
-                child: Text(
-                  isVolunteer
-                      ? tr(en: 'Apply to Volunteer', ta: 'தன்னார்வலராக விண்ணப்பி', hi: 'स्वयंसेवा के लिए आवेदन करें', ml: 'വളണ്ടിയർ ചെയ്യാൻ അപേക്ഷിക്കുക')
-                      : tr(en: 'Exchange Skills', ta: 'திறன் பரிமாறவும்', hi: 'कौशल का आदान-प्रदान करें', ml: 'നൈപുണ്യങ്ങൾ കൈമാറുക'),
-                  style: const TextStyle(fontSize: 14),
-                ),
+                ],
               ),
             ),
+            Icon(Icons.chevron_right_rounded, color: context.cTextSecondary),
           ],
         ),
       ),

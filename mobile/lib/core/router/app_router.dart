@@ -90,6 +90,7 @@ import '../../features/volunteers/presentation/screens/certificate_screen.dart';
 // Community
 import '../../features/community/presentation/bloc/community_bloc.dart';
 import '../../features/community/presentation/screens/community_directory_screen.dart';
+import '../../features/community/presentation/screens/members_roster_screen.dart';
 
 // Journey
 import '../../features/journey/presentation/screens/journey_screen.dart';
@@ -333,11 +334,18 @@ final appRouter = GoRouter(
       builder: (context, state) => const CertificateScreen(),
     ),
     GoRoute(
+      // Local-trade / service-provider directory (carpenter, electrician…).
+      // Reached from Opportunities, not the Members nav.
       path: '/community',
       builder: (context, state) => BlocProvider(
         create: (_) => sl<CommunityBloc>(),
         child: const CommunityDirectoryScreen(),
       ),
+    ),
+    GoRoute(
+      // Real club-member roster (names/role/photo).
+      path: '/members',
+      builder: (context, state) => const MembersRosterScreen(),
     ),
     GoRoute(
       path: '/opportunities',

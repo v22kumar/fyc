@@ -167,3 +167,34 @@ def test_get_certificate_volunteer_with_hours(client, db):
     )
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
+
+
+# ── Member roster ───────────────────────────────────────────────────────────
+
+def test_member_roster_lists_members_excludes_citizens(client, db):
+    org = _make_org(db)
+    admin = _make_admin(db, org.id, "+919555000001")
+    admin_tok = _login(client, org.id, "+919555000001")
+
+    # A volunteer (member) and a plain citizen (app user, not a club member).
+    _register(client, org.id, "+919555000002", role="VOLUNTEER")
+    _register(client, org.id, "+919555000003", role="PUBLIC_CITIZEN")
+
+    r = client.get("/api/v1/users/roster",
+                   headers={"Authorization": f"Bearer {admin_tok}",
+                            "X-Organization-ID": str(org.id)})
+    assert r.status_code == 200, r.text
+    roster = r.json()
+    roles = {m["role"] for m in roster}
+    assert "PUBLIC_CITIZEN" not in roles, "plain app users must not appear in the club roster"
+    assert "ADMIN" in roles and "VOLUNTEER" in roles
+    # Admin sorts before volunteer (seniority order).
+    assert roster[0]["role"] == "ADMIN"
+    # Safe fields only — no phone/email/DOB leaked.
+    assert set(roster[0].keys()) == {"id", "full_name_ta", "full_name_en", "role", "profile_image_url"}
+
+
+def test_member_roster_requires_auth(client, db):
+    org = _make_org(db)
+    r = client.get("/api/v1/users/roster", headers={"X-Organization-ID": str(org.id)})
+    assert r.status_code in (401, 403), r.text

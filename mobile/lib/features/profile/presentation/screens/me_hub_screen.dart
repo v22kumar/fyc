@@ -56,7 +56,7 @@ class MeHubScreen extends StatelessWidget {
               _MeTile(
                 icon: Icons.groups_rounded,
                 label: tr(en: 'Member Directory', ta: 'உறுப்பினர் பட்டியல்', hi: 'सदस्य निर्देशिका', ml: 'അംഗ ഡയറക്ടറി'),
-                onTap: () => context.push('/directory'),
+                onTap: () => context.push('/members'),
               ),
               _MeTile(
                 icon: Icons.event_available_rounded,
