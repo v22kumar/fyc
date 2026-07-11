@@ -104,6 +104,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _registerUser(
       organizationId: event.organizationId,
       phoneNumber: event.phoneNumber,
+      email: event.email,
+      dateOfBirth: event.dateOfBirth,
       role: event.role,
       fullNameTa: event.fullNameTa,
       fullNameEn: event.fullNameEn,

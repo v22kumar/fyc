@@ -32,7 +32,11 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameTaCtrl = TextEditingController();
   final _nameEnCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  DateTime? _dob;
   String _role = 'PUBLIC_CITIZEN';
+
+  static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   late AnimationController _aurora;
 
@@ -49,16 +53,47 @@ class _RegisterScreenState extends State<RegisterScreen>
   void dispose() {
     _nameTaCtrl.dispose();
     _nameEnCtrl.dispose();
+    _emailCtrl.dispose();
     _aurora.dispose();
     super.dispose();
   }
 
+  String _fmtDob(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dob ?? DateTime(now.year - 18, now.month, now.day),
+      firstDate: DateTime(now.year - 120),
+      lastDate: now,
+      helpText: tr(en: 'Select date of birth', ta: 'பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்'),
+    );
+    if (picked != null) setState(() => _dob = picked);
+  }
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    final formOk = _formKey.currentState!.validate();
+    if (_dob == null) {
+      // A tap-to-pick field can't use a normal validator; surface it explicitly.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr(
+              en: 'Please select your date of birth',
+              ta: 'உங்கள் பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்')),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+      return;
+    }
+    if (!formOk) return;
     final lang = sl<LocalStorage>().getLang();
     context.read<AuthBloc>().add(AuthRegisterRequested(
           organizationId: widget.organizationId,
           phoneNumber: widget.phoneNumber,
+          email: _emailCtrl.text.trim(),
+          dateOfBirth: _fmtDob(_dob!),
           role: _role,
           fullNameTa: _nameTaCtrl.text.trim(),
           fullNameEn: _nameEnCtrl.text.trim(),
@@ -281,6 +316,51 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       ),
                                       validator: (v) =>
                                           v == null || v.trim().isEmpty ? l.nameInEnglish : null,
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Email (mandatory)
+                                    TextFormField(
+                                      controller: _emailCtrl,
+                                      keyboardType: TextInputType.emailAddress,
+                                      autofillHints: const [AutofillHints.email],
+                                      decoration: InputDecoration(
+                                        label: Text(tr(en: 'Email', ta: 'மின்னஞ்சல்', hi: 'ईमेल', ml: 'ഇമെയിൽ')),
+                                        hintText: 'name@example.com',
+                                        prefixIcon: const Icon(Icons.email_outlined),
+                                      ),
+                                      validator: (v) {
+                                        final t = (v ?? '').trim();
+                                        if (t.isEmpty) {
+                                          return tr(en: 'Email is required', ta: 'மின்னஞ்சல் தேவை', hi: 'ईमेल आवश्यक है', ml: 'ഇമെയിൽ ആവശ്യമാണ്');
+                                        }
+                                        if (!_emailRe.hasMatch(t)) {
+                                          return tr(en: 'Enter a valid email', ta: 'சரியான மின்னஞ்சலை உள்ளிடவும்', hi: 'मान्य ईमेल दर्ज करें', ml: 'സാധുവായ ഇമെയിൽ നൽകുക');
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Date of birth (mandatory) — tap to pick.
+                                    InkWell(
+                                      onTap: _pickDob,
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: InputDecorator(
+                                        decoration: InputDecoration(
+                                          label: Text(tr(en: 'Date of Birth', ta: 'பிறந்த தேதி', hi: 'जन्म तिथि', ml: 'ജനന തീയതി')),
+                                          prefixIcon: const Icon(Icons.cake_outlined),
+                                        ),
+                                        child: Text(
+                                          _dob == null
+                                              ? tr(en: 'Select your date of birth', ta: 'பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்', hi: 'अपनी जन्म तिथि चुनें', ml: 'ജനന തീയതി തിരഞ്ഞെടുക്കുക')
+                                              : _fmtDob(_dob!),
+                                          style: TextStyle(
+                                            color: _dob == null ? AppColors.textSecondary : AppColors.textPrimary,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(height: 24),
 

@@ -93,6 +93,8 @@ def test_create_organization_non_admin_denied(client, db):
     res = client.post(
         "/api/v1/auth/register",
         json={"organization_id": str(org.id), "phone_number": "+919000000001",
+        "email": "+919000000001" + "@test.fyc",
+        "date_of_birth": "1990-01-01",
               "role": "PUBLIC_CITIZEN", "full_name_ta": "மக்கள்", "full_name_en": "Citizen"}
     )
     token = res.json()["access_token"]

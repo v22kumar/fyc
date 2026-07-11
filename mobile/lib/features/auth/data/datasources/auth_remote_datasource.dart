@@ -26,6 +26,8 @@ abstract class AuthRemoteDataSource {
   Future<TokenModel> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String email,
+    required String dateOfBirth,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -82,6 +84,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<TokenModel> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String email,
+    required String dateOfBirth,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -93,6 +97,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {
           'organization_id': organizationId,
           'phone_number': phoneNumber,
+          'email': email,
+          'date_of_birth': dateOfBirth,
           'role': role,
           'full_name_ta': fullNameTa,
           'full_name_en': fullNameEn,

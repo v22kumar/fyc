@@ -1,7 +1,13 @@
+import re
 from datetime import date
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 from typing import Optional
+
+# Pragmatic email check (email-validator / EmailStr isn't installed, and adding
+# it is an unnecessary dependency for a single field). Good enough to reject
+# obvious typos; real deliverability is verified out of band.
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class OTPRequest(BaseModel):
@@ -23,10 +29,38 @@ class OTPVerify(BaseModel):
 class UserRegister(BaseModel):
     organization_id: UUID
     phone_number: str
+    email: str = Field(..., description="Required — member contact email")
+    date_of_birth: date = Field(..., description="Required — used for age")
     role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$")
     full_name_ta: str
     full_name_en: str
     preferred_language: Optional[str] = "ta"
+
+    @field_validator("email")
+    @classmethod
+    def _email_valid(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _EMAIL_RE.match(v):
+            raise ValueError("Enter a valid email address")
+        return v
+
+    @field_validator("full_name_ta", "full_name_en")
+    @classmethod
+    def _name_required(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Name is required")
+        return v.strip()
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def _dob_sane(cls, v: date) -> date:
+        today = date.today()
+        age = today.year - v.year - ((today.month, today.day) < (v.month, v.day))
+        if v > today:
+            raise ValueError("Date of birth cannot be in the future")
+        if age > 120:
+            raise ValueError("Enter a valid date of birth")
+        return v
 
 
 class UserOut(BaseModel):

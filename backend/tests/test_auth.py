@@ -101,6 +101,8 @@ def test_registration_and_login_flow(client, db):
         json={
             "organization_id": str(org.id),
             "phone_number": "+919876543210",
+            "email": "Karthik@Example.com",
+            "date_of_birth": "2000-05-15",
             "role": "VOLUNTEER",
             "full_name_ta": "கார்த்திக் ஜே",
             "full_name_en": "Karthik J"
@@ -111,6 +113,9 @@ def test_registration_and_login_flow(client, db):
     assert "access_token" in reg_data
     assert reg_data["user"]["phone_number"] == "+919876543210"
     assert reg_data["user"]["role"] == "VOLUNTEER"
+    # Email is stored normalised (trimmed + lowercased); DOB is captured.
+    assert reg_data["user"]["email"] == "karthik@example.com"
+    assert reg_data["user"]["date_of_birth"] == "2000-05-15"
 
     # Send OTP again for login
     send_response = client.post(
@@ -198,3 +203,64 @@ def test_admin_password_login_failure(client, db):
     assert login_response.status_code == 400
     assert login_response.json()["detail"] == "Invalid username or password"
 
+
+
+def _reg_org(db):
+    org = Organization(id=uuid.uuid4(), slug=f"reg-{uuid.uuid4().hex[:6]}",
+                       name_ta="கிளப்", name_en="Club")
+    db.add(org)
+    db.commit()
+    return org
+
+
+def _reg_payload(org_id, **overrides):
+    payload = {
+        "organization_id": str(org_id),
+        "phone_number": "+919000000001",
+        "email": "member@example.com",
+        "date_of_birth": "1995-03-10",
+        "role": "VOLUNTEER",
+        "full_name_ta": "பெயர்",
+        "full_name_en": "Name",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_register_requires_email(client, db):
+    org = _reg_org(db)
+    body = _reg_payload(org.id)
+    body.pop("email")
+    r = client.post("/api/v1/auth/register", json=body)
+    assert r.status_code == 422, r.text
+
+
+def test_register_rejects_invalid_email(client, db):
+    org = _reg_org(db)
+    r = client.post("/api/v1/auth/register", json=_reg_payload(org.id, email="not-an-email"))
+    assert r.status_code == 422, r.text
+
+
+def test_register_requires_date_of_birth(client, db):
+    org = _reg_org(db)
+    body = _reg_payload(org.id)
+    body.pop("date_of_birth")
+    r = client.post("/api/v1/auth/register", json=body)
+    assert r.status_code == 422, r.text
+
+
+def test_register_rejects_future_date_of_birth(client, db):
+    org = _reg_org(db)
+    r = client.post("/api/v1/auth/register", json=_reg_payload(org.id, date_of_birth="2999-01-01"))
+    assert r.status_code == 422, r.text
+
+
+def test_register_rejects_duplicate_email_in_org(client, db):
+    org = _reg_org(db)
+    first = client.post("/api/v1/auth/register", json=_reg_payload(org.id))
+    assert first.status_code == 200, first.text
+    # Same email (case-insensitive), different phone → rejected.
+    dup = client.post("/api/v1/auth/register",
+                      json=_reg_payload(org.id, phone_number="+919000000002", email="MEMBER@example.com"))
+    assert dup.status_code == 400, dup.text
+    assert "Email already registered" in dup.json()["detail"]
