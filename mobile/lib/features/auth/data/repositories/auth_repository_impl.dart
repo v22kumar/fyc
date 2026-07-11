@@ -53,6 +53,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String email,
+    required String dateOfBirth,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -62,6 +64,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await _remote.registerUser(
         organizationId: organizationId,
         phoneNumber: phoneNumber,
+        email: email,
+        dateOfBirth: dateOfBirth,
         role: role,
         fullNameTa: fullNameTa,
         fullNameEn: fullNameEn,

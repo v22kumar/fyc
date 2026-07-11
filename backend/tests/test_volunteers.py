@@ -31,6 +31,8 @@ def _login(client, org_id, phone, password="pass"):
 def _register(client, org_id, phone, role="VOLUNTEER"):
     res = client.post("/api/v1/auth/register", json={
         "organization_id": str(org_id), "phone_number": phone,
+        "email": phone + "@test.fyc",
+        "date_of_birth": "1990-01-01",
         "role": role, "full_name_ta": "தன்னார்வலர்", "full_name_en": "Volunteer"
     })
     return res.json()["access_token"]

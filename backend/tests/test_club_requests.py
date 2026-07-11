@@ -71,6 +71,8 @@ def _register_club_member(client, org_id, phone):
         json={
             "organization_id": str(org_id),
             "phone_number": phone,
+            "email": phone + "@test.fyc",
+            "date_of_birth": "1990-01-01",
             "role": "CLUB_MEMBER",
             "full_name_ta": "உறுப்பினர்",
             "full_name_en": "Member",

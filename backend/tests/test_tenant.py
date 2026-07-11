@@ -18,6 +18,8 @@ def test_tenant_isolation_success(client, db):
         json={
             "organization_id": str(org.id),
             "phone_number": "+919876543210",
+            "email": "+919876543210" + "@test.fyc",
+            "date_of_birth": "1990-01-01",
             "role": "PUBLIC_CITIZEN",
             "full_name_ta": "அன்பு",
             "full_name_en": "Anbu"
@@ -59,6 +61,8 @@ def test_tenant_isolation_forbidden_mismatch(client, db):
         json={
             "organization_id": str(org_a.id),
             "phone_number": "+919876543210",
+            "email": "+919876543210" + "@test.fyc",
+            "date_of_birth": "1990-01-01",
             "role": "PUBLIC_CITIZEN",
             "full_name_ta": "அன்பு",
             "full_name_en": "Anbu"
@@ -94,6 +98,8 @@ def test_tenant_isolation_missing_header(client, db):
         json={
             "organization_id": str(org.id),
             "phone_number": "+919876543210",
+            "email": "+919876543210" + "@test.fyc",
+            "date_of_birth": "1990-01-01",
             "role": "PUBLIC_CITIZEN",
             "full_name_ta": "அன்பு",
             "full_name_en": "Anbu"

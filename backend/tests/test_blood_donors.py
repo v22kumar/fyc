@@ -15,6 +15,8 @@ def _register(client, org_id, phone, role="VOLUNTEER"):
     res = client.post("/api/v1/auth/register", json={
         "organization_id": str(org_id),
         "phone_number": phone,
+        "email": phone + "@test.fyc",
+        "date_of_birth": "1990-01-01",
         "role": role,
         "full_name_ta": "தானியம்",
         "full_name_en": "Donor Test"
