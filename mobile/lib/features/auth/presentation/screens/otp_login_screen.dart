@@ -284,7 +284,31 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 6),
+                        TextButton(
+                          onPressed: () => context.push('/about'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            tr(
+                              en: 'What is this app?',
+                              ta: 'இது என்ன செயலி?',
+                              hi: 'यह ऐप किस लिए है?',
+                              ml: 'ഇതെന്ത് ആപ്പാണ്?',
+                            ),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white.withOpacity(0.4),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
 
                         // Glass card
                         ClipRRect(

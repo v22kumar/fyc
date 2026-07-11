@@ -112,7 +112,7 @@ final appRouter = GoRouter(
     if (ApiConstants.devBypassAuth) return null;
     final authState = sl<AuthBloc>().state;
     final isAuth = authState is AuthAuthenticated;
-    final publicRoutes = {'/', '/lang-select', '/login', '/register'};
+    final publicRoutes = {'/', '/lang-select', '/login', '/register', '/about'};
     if (!isAuth && !publicRoutes.contains(state.matchedLocation)) {
       return '/lang-select';
     }

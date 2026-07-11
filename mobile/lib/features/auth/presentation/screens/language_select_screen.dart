@@ -147,6 +147,38 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
+                      isTa
+                          ? 'நாகர்கோவில் Friends Youth Club-இன் அதிகாரப்பூர்வ செயலி — நிகழ்வுகள், விளையாட்டு, தன்னார்வலர் பணி, இரத்த தானம் & பாதுகாப்பு'
+                          : 'The official app for Friends Youth Club Nagercoil — events, sports, volunteering, blood donation & safety, all in one place',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.65),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: () => context.push('/about'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        isTa ? 'இது என்ன செயலி?' : 'What is this app?',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white.withOpacity(0.4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
                       isTa ? 'மொழியை தேர்ந்தெடுக்கவும்' : 'Select your language',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.55),
@@ -154,7 +186,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
 
                     // Language cards
                     for (final lang in _kLangs) ...[
