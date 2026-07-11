@@ -5,9 +5,13 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// The Serve tab — the "do good / get help" bucket from the v2 mockup.
-/// A row of quick actions (Blood · Report Issue · Volunteer · Opportunities)
-/// over a list of emergency numbers. Theme-aware and 4-language; the SOS
-/// control lives in the shell, not here.
+/// A row of quick actions (Blood · Report Issue · Volunteer) over a list of
+/// emergency numbers. Theme-aware and 4-language; the SOS control lives in
+/// the shell, not here.
+///
+/// "Opportunities" (business/service listings) deliberately does NOT live
+/// here — Serve is civic service, not business networking. It's still
+/// reachable via Home's Services sheet (route: /opportunities).
 class ServeHubScreen extends StatelessWidget {
   const ServeHubScreen({super.key});
 
@@ -65,12 +69,6 @@ class ServeHubScreen extends StatelessWidget {
                 tint: const Color(0xFF14B891),
                 label: tr(en: 'Volunteer', ta: 'தொண்டு', hi: 'स्वयंसेवक', ml: 'സന്നദ്ധം'),
                 onTap: () => context.push('/events'),
-              ),
-              _Action(
-                icon: Icons.work_outline_rounded,
-                tint: const Color(0xFF2B4494),
-                label: tr(en: 'Opportunities', ta: 'வாய்ப்புகள்', hi: 'अवसर', ml: 'അവസരങ്ങൾ'),
-                onTap: () => context.push('/opportunities'),
               ),
             ],
           ),
