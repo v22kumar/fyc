@@ -7,12 +7,10 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/services/update_service.dart';
 import '../../../../core/widgets/update_sheet.dart';
 import '../../../../service_locator.dart';
-import '../../../../core/services/device_profile_service.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -39,15 +37,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _version = 'v1.0.0';
   bool _checking = false;
-  bool _liteMode = false;
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
-    // Reflect the user's manual preference — not currentTier, which can be
-    // `lite` merely because of low battery / power-save mode.
-    _liteMode = sl<DeviceProfileService>().manualLiteMode;
   }
 
   Future<void> _loadVersion() async {
@@ -139,26 +133,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _toggleLiteMode(bool value) async {
-    final previous = _liteMode;
-    setState(() => _liteMode = value);
-    try {
-      await sl<DeviceProfileService>().setManualLiteMode(value);
-    } catch (_) {
-      // Persistence failed — roll the switch back so the UI stays truthful.
-      if (mounted) setState(() => _liteMode = previous);
-    }
-  }
-
-  Future<void> _clearCache() async {
-    // Basic cache clearing (e.g. image cache, network). Full Hive clearing in separate step.
-    await DefaultCacheManager().emptyCache();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cache cleared'), backgroundColor: AppColors.primary),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final currentLang = _storage.getLang();
@@ -192,25 +166,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: _setLang,
                   ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _SectionLabel('Performance', context),
-          const SizedBox(height: 10),
-          _Card(
-            context: context,
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: Text('Lite Mode', style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
-                  subtitle: Text('Reduces data usage and disables autoplay', style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
-                  value: _liteMode,
-                  onChanged: _toggleLiteMode,
-                  activeColor: AppColors.primary,
-                ),
-                _Divider(context),
-                _LinkRow(icon: Icons.cleaning_services, label: 'Clear Cache', onTap: _clearCache, context: context),
               ],
             ),
           ),

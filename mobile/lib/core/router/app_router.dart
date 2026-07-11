@@ -43,6 +43,7 @@ import '../../features/chess/presentation/bloc/spectator_event.dart';
 import '../../features/chess/presentation/bloc/ai_game_bloc.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
 import '../../features/chess_tournament/chess_tournament_list_screen.dart';
+import '../../features/chess_tournament/chess_tournament_detail_screen.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
 import '../../features/chess/presentation/pages/game_history_page.dart';
 import '../../features/chess/presentation/pages/challenge_page.dart';
@@ -433,6 +434,18 @@ final appRouter = GoRouter(
         GoRoute(
           path: 'tournaments',
           builder: (context, state) => const ChessTournamentListScreen(),
+          routes: [
+            // Deep-linked from push notifications (backend sends
+            // /chess/tournaments/<id> as the tap route) — was previously
+            // unregistered, so tapping a tournament notification crashed to
+            // the router's error screen instead of opening the tournament.
+            GoRoute(
+              path: ':id',
+              builder: (context, state) => ChessTournamentDetailScreen(
+                tournamentId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
         ),
       ],
     ),
@@ -446,20 +459,26 @@ final appRouter = GoRouter(
     ),
 
     // Sprint 2 cutover — the real 4-tab design-system shell wired to live
-    // feature screens (Home · Play · Serve · Me) with the center Create FAB.
+    // feature screens (Home · Feed · Play · Serve) with the center Create FAB.
     // `/app` is the live post-login entry point (behind ApiConstants
     // .useAppShellV2); `/v2` stays as an explicit review alias. Home is
     // embedded so the shell owns the bottom nav.
     GoRoute(path: '/app', builder: _appShellBuilder),
     GoRoute(path: '/v2', builder: _appShellBuilder),
+    // Account/profile hub — reached from the avatar in Home's top-right
+    // corner, not a bottom-nav tab (see AppShellV2's doc comment).
+    GoRoute(
+      path: '/me',
+      builder: (context, state) => const MeHubScreen(),
+    ),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(child: Text('Page not found: ${state.error}')),
   ),
 );
 
-/// Builds the live 5-tab shell: Home (embedded) · Feed · Play · Serve · Me,
-/// with the center Create FAB wired to Home's create-actions sheet. Shared by
+/// Builds the live 4-tab shell: Home (embedded) · Feed · Play · Serve, with
+/// the center Create FAB wired to Home's create-actions sheet. Shared by
 /// `/app` (the post-login entry point) and `/v2` (review alias).
 Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
       onCreate: () => showHomeCreateSheet(context),
@@ -471,6 +490,5 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
           child: const SportsHubScreen(),
         ),
         const ServeHubScreen(),
-        const MeHubScreen(),
       ],
     );
