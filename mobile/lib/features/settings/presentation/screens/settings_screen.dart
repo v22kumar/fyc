@@ -31,12 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ('ml', 'അ', 'മലയാളം', 'Malayalam', Color(0xFF7C3AED)),
   ];
 
-  void _setTheme(String mode) {
-    _storage.saveTheme(mode);
-    themeModeNotifier.value = themeModeFromString(mode);
-    setState(() {});
-  }
-
   void _setLang(String code) {
     _storage.saveLang(code);
     localeNotifier.value = Locale(code);
@@ -167,7 +161,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = _storage.getTheme();
     final currentLang = _storage.getLang();
 
     return Scaffold(
@@ -181,21 +174,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionLabel('Appearance', context),
-          const SizedBox(height: 10),
-          _Card(
-            context: context,
-            child: Column(
-              children: [
-                _ThemeOption(label: 'Light', icon: Icons.light_mode, value: 'light', current: currentTheme, onTap: _setTheme),
-                _Divider(context),
-                _ThemeOption(label: 'Dark', icon: Icons.dark_mode, value: 'dark', current: currentTheme, onTap: _setTheme),
-                _Divider(context),
-                _ThemeOption(label: 'System Default', icon: Icons.settings_suggest, value: 'system', current: currentTheme, onTap: _setTheme),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
           _SectionLabel('Language', context),
           const SizedBox(height: 10),
           _Card(
@@ -255,8 +233,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
                 _Divider(context),
                 _LinkRow(icon: Icons.health_and_safety_rounded, label: 'Safety Center', onTap: () => context.push('/settings/safety'), context: context),
-                _Divider(context),
-                _LinkRow(icon: Icons.auto_awesome, label: 'Preview new design (beta)', onTap: () => context.push('/v2'), context: context),
               ],
             ),
           ),
@@ -335,24 +311,6 @@ class _Card extends StatelessWidget {
 
 Widget _Divider(BuildContext context) =>
     Divider(height: 1, thickness: 1, color: context.cBorder, indent: 56);
-
-class _ThemeOption extends StatelessWidget {
-  final String label, value, current;
-  final IconData icon;
-  final ValueChanged<String> onTap;
-  const _ThemeOption({required this.label, required this.value, required this.current, required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = current == value;
-    return ListTile(
-      onTap: () => onTap(value),
-      leading: Icon(icon, color: selected ? AppColors.primaryLight : context.cTextSecondary),
-      title: Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
-      trailing: selected ? const Icon(Icons.check_circle, color: AppColors.primaryLight) : null,
-    );
-  }
-}
 
 class _LangOption extends StatelessWidget {
   final String code, letter, native, english, current;
