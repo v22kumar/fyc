@@ -10,6 +10,85 @@ import '../bloc/cricket_scoring_cubit.dart';
 import '../widgets/cricket_overs_history.dart';
 import '../../../../core/widgets/pressable.dart';
 
+/// Two people at the crease (or two openers) must be distinct — names are
+/// compared trimmed + case-insensitive because that's how the backend
+/// resolves player identity (by team + name). If two different physical
+/// players are typed with the same name, the backend would silently merge
+/// them into one Player row and their stats would mirror each other.
+bool _sameName(String a, String b) => a.trim().toLowerCase() == b.trim().toLowerCase();
+
+/// A themed choice chip with explicit, always-legible colors (selected =
+/// solid navy→mint fill + white label; unselected = tinted surface + navy
+/// label) — the stock ChipThemeData left unselected labels nearly invisible.
+Widget _themedChip(BuildContext context, {required String label, required bool selected, required VoidCallback? onSelected}) {
+  return Pressable(
+    child: InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onSelected,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? const LinearGradient(colors: [Color(0xFF16255A), Color(0xFF14C79E)])
+              : null,
+          color: selected ? null : const Color(0xFFEFF2FA),
+          borderRadius: BorderRadius.circular(999),
+          border: selected ? null : Border.all(color: const Color(0xFFD7DCEA)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : const Color(0xFF0A1128),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// The primary call-to-action for the setup/resume flows: a gradient,
+/// press-responsive button matching the scoreboard/run-button language
+/// shipped elsewhere in this screen, instead of a flat stock FilledButton.
+Widget _gradientCTA({required String label, required VoidCallback? onPressed, IconData? icon}) {
+  final enabled = onPressed != null;
+  return Pressable(
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onPressed,
+        child: Container(
+          height: 54,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: enabled
+                  ? const [Color(0xFF16255A), Color(0xFF1E7C86), Color(0xFF14C79E)]
+                  : const [Color(0xFFAEB4C4), Color(0xFFAEB4C4)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: enabled
+                ? [BoxShadow(color: const Color(0xFF16255A).withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[Icon(icon, color: Colors.white, size: 19), const SizedBox(width: 8)],
+              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15.5)),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Full ball-by-ball cricket scorer for admins/managers.
 ///
 /// Lifecycle: toss + openers form → live scoring pad (runs, extras, wickets,
@@ -210,7 +289,8 @@ class _TossSetupFormState extends State<_TossSetupForm> {
       (int.tryParse(_overs.text) ?? 0) > 0 &&
       _striker.text.trim().isNotEmpty &&
       _nonStriker.text.trim().isNotEmpty &&
-      _bowler.text.trim().isNotEmpty;
+      _bowler.text.trim().isNotEmpty &&
+      !_sameName(_striker.text, _nonStriker.text);
 
   @override
   Widget build(BuildContext context) {
@@ -223,43 +303,39 @@ class _TossSetupFormState extends State<_TossSetupForm> {
           Text(
             tr(en: 'Start match', ta: 'போட்டியைத் தொடங்கு',
                 hi: 'मैच शुरू करें', ml: 'മത്സരം ആരംഭിക്കുക'),
-            style: Theme.of(context).textTheme.titleLarge,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Text(tr(en: 'Toss won by', ta: 'டாஸ் வென்றது',
-              hi: 'टॉस जीता', ml: 'ടോസ് നേടിയത്')),
+              hi: 'टॉस जीता', ml: 'ടോസ് നേടിയത്'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              ChoiceChip(
-                label: Text(f.teamAName ?? 'Team A'),
-                selected: _tossWinnerId == f.teamAId,
-                onSelected: (_) => setState(() => _tossWinnerId = f.teamAId),
-              ),
-              ChoiceChip(
-                label: Text(f.teamBName ?? 'Team B'),
-                selected: _tossWinnerId == f.teamBId,
-                onSelected: (_) => setState(() => _tossWinnerId = f.teamBId),
-              ),
+              _themedChip(context,
+                  label: f.teamAName ?? 'Team A',
+                  selected: _tossWinnerId == f.teamAId,
+                  onSelected: () => setState(() => _tossWinnerId = f.teamAId)),
+              _themedChip(context,
+                  label: f.teamBName ?? 'Team B',
+                  selected: _tossWinnerId == f.teamBId,
+                  onSelected: () => setState(() => _tossWinnerId = f.teamBId)),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(tr(en: 'Decision', ta: 'முடிவு', hi: 'निर्णय', ml: 'തീരുമാനം')),
+          const SizedBox(height: 18),
+          Text(tr(en: 'Decision', ta: 'முடிவு', hi: 'निर्णय', ml: 'തീരുമാനം'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              ChoiceChip(
-                label: Text(tr(en: 'Bat', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്')),
-                selected: _decision == 'BAT',
-                onSelected: (_) => setState(() => _decision = 'BAT'),
-              ),
-              ChoiceChip(
-                label: Text(tr(en: 'Bowl', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്')),
-                selected: _decision == 'BOWL',
-                onSelected: (_) => setState(() => _decision = 'BOWL'),
-              ),
+              _themedChip(context,
+                  label: tr(en: 'Bat', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്'),
+                  selected: _decision == 'BAT',
+                  onSelected: () => setState(() => _decision = 'BAT')),
+              _themedChip(context,
+                  label: tr(en: 'Bowl', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്'),
+                  selected: _decision == 'BOWL',
+                  onSelected: () => setState(() => _decision = 'BOWL')),
             ],
           ),
           const SizedBox(height: 16),
@@ -336,14 +412,16 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                   if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
                   if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
                   if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                  if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
+                    const Text('• Striker and non-striker must be different players', style: TextStyle(fontSize: 13)),
                 ],
               ),
             ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _valid
-
+          _gradientCTA(
+            label: tr(en: 'Start scoring', ta: 'ஸ்கோரிங் தொடங்கு',
+                hi: 'स्कोरिंग शुरू करें', ml: 'സ്കോറിംഗ് ആരംഭിക്കുക'),
+            icon: Icons.sports_cricket_rounded,
+            onPressed: _valid
                 ? () => context.read<CricketScoringCubit>().initMatch(
                       tossWinnerId: _tossWinnerId!,
                       tossDecision: _decision,
@@ -353,9 +431,6 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                       bowlerName: _bowler.text,
                     )
                 : null,
-              child: Text(tr(en: 'Start scoring', ta: 'ஸ்கோரிங் தொடங்கு',
-                  hi: 'स्कोरिंग शुरू करें', ml: 'സ്കോറിംഗ് ആരംഭിക്കുക')),
-            ),
           ),
         ],
       ),
@@ -559,7 +634,8 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
   bool get _valid =>
       _striker.text.trim().isNotEmpty &&
       _nonStriker.text.trim().isNotEmpty &&
-      _bowler.text.trim().isNotEmpty;
+      _bowler.text.trim().isNotEmpty &&
+      !_sameName(_striker.text, _nonStriker.text);
 
   @override
   Widget build(BuildContext context) {
@@ -649,14 +725,16 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                     if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
                     if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
                     if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                    if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
+                      const Text('• Striker and non-striker must be different players', style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _valid
-
+            _gradientCTA(
+              label: tr(en: 'Start 2nd innings', ta: '2-வது இன்னிங்ஸ் தொடங்கு',
+                  hi: 'दूसरी पारी शुरू करें', ml: 'രണ്ടാം ഇന്നിംഗ്സ് ആരംഭിക്കുക'),
+              icon: Icons.sports_cricket_rounded,
+              onPressed: _valid
                   ? () => context.read<CricketScoringCubit>().startSecondInnings(
                         strikerName: _striker.text,
                         nonStrikerName: _nonStriker.text,
@@ -664,10 +742,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                         anyTeamId: widget.fixture.teamAId,
                       )
                   : null,
-              child: Text(tr(en: 'Start 2nd innings', ta: '2-வது இன்னிங்ஸ் தொடங்கு',
-                  hi: 'दूसरी पारी शुरू करें', ml: 'രണ്ടാം ഇന്നിംഗ്സ് ആരംഭിക്കുക')),
             ),
-          ),
         ],
         ),
       ),
@@ -738,67 +813,106 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
     }
 
     final ms = widget.ms;
-    // Batting options: not-out batters first, then rest of the squad.
+    // Batting options: not-out batters first, then rest of the squad. Blank
+    // names (a ghost/incomplete Player row) are filtered out — they used to
+    // render as an unlabeled, unusable chip that blocked resuming the match.
     final outIds = ms.batters.where((b) => b.out).map((b) => b.id).toSet();
     final seen = <String>{};
     final battingOptions = <MapEntry<String, String>>[];
     for (final b in ms.batters.where((b) => !b.out)) {
-      if (seen.add(b.id)) battingOptions.add(MapEntry(b.id, b.name));
+      if (b.name.trim().isNotEmpty && seen.add(b.id)) battingOptions.add(MapEntry(b.id, b.name));
     }
     for (final p in _battingSquad) {
-      if (!outIds.contains(p.id) && seen.add(p.id)) {
+      if (!outIds.contains(p.id) && p.name.trim().isNotEmpty && seen.add(p.id)) {
         battingOptions.add(MapEntry(p.id, p.name));
       }
     }
     final bowlerSeen = <String>{};
     final bowlingOptions = <MapEntry<String, String>>[];
     for (final b in ms.bowlers) {
-      if (bowlerSeen.add(b.id)) bowlingOptions.add(MapEntry(b.id, b.name));
+      if (b.name.trim().isNotEmpty && bowlerSeen.add(b.id)) bowlingOptions.add(MapEntry(b.id, b.name));
     }
     for (final p in _bowlingSquad) {
-      if (bowlerSeen.add(p.id)) bowlingOptions.add(MapEntry(p.id, p.name));
+      if (p.name.trim().isNotEmpty && bowlerSeen.add(p.id)) bowlingOptions.add(MapEntry(p.id, p.name));
     }
 
     Widget chips(List<MapEntry<String, String>> options, String? selected,
         void Function(String) onPick, {Set<String> disabled = const {}}) {
+      if (options.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(10)),
+          child: Row(children: [
+            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFB45309)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                tr(en: 'No player found. Tap "Undo Last Ball" above to fix the previous delivery.',
+                    ta: 'வீரர் இல்லை. மேலே "Undo Last Ball" தட்டி முந்தைய பந்தை சரிசெய்யவும்.',
+                    hi: 'खिलाड़ी नहीं मिला। ऊपर "Undo Last Ball" दबाकर पिछली गेंद ठीक करें।',
+                    ml: 'കളിക്കാരനെ കണ്ടെത്തിയില്ല. മുകളിലെ "Undo Last Ball" അമർത്തി മുൻ ബോൾ ശരിയാക്കുക.'),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
+              ),
+            ),
+          ]),
+        );
+      }
       return Wrap(
         spacing: 8,
-        runSpacing: 4,
+        runSpacing: 8,
         children: options
-            .map((o) => ChoiceChip(
-                  label: Text(o.value),
+            .map((o) => _themedChip(context,
+                  label: o.value,
                   selected: selected == o.key,
-                  onSelected: disabled.contains(o.key) ? null : (_) => setState(() => onPick(o.key)),
+                  onSelected: disabled.contains(o.key) ? null : () => setState(() => onPick(o.key)),
                 ))
             .toList(),
       );
     }
 
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              tr(en: 'Confirm current players', ta: 'தற்போதைய வீரர்களை உறுதிசெய்க',
-                  hi: 'वर्तमान खिलाड़ी चुनें', ml: 'നിലവിലെ കളിക്കാരെ സ്ഥിരീകരിക്കുക'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(tr(en: 'Striker', ta: 'ஸ்ட்ரைக்கர்', hi: 'स्ट्राइकर', ml: 'സ്ട്രൈക്കർ')),
-            const SizedBox(height: 4),
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF16255A), Color(0xFF14C79E)]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.sports_cricket_rounded, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  tr(en: 'Confirm current players', ta: 'தற்போதைய வீரர்களை உறுதிசெய்க',
+                      hi: 'वर्तमान खिलाड़ी चुनें', ml: 'നിലവിലെ കളിക്കാരെ സ്ഥിരീകരിക്കുക'),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            Text(tr(en: 'Striker', ta: 'ஸ்ட்ரைக்கர்', hi: 'स्ट्राइकर', ml: 'സ്ട്രൈക്കർ'),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(battingOptions, _strikerId, (id) => _strikerId = id,
                 disabled: {if (_nonStrikerId != null) _nonStrikerId!}),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(tr(en: 'Non-striker', ta: 'நான்-ஸ்ட்ரைக்கர்',
-                hi: 'नॉन-स्ट्राइकर', ml: 'നോൺ-സ്ട്രൈക്കർ')),
-            const SizedBox(height: 4),
+                hi: 'नॉन-स्ट्राइकर', ml: 'നോൺ-സ്ട്രൈക്കർ'),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(battingOptions, _nonStrikerId, (id) => _nonStrikerId = id,
                 disabled: {if (_strikerId != null) _strikerId!}),
-            const SizedBox(height: 12),
-            Text(tr(en: 'Bowler', ta: 'பந்துவீச்சாளர்', hi: 'गेंदबाज़', ml: 'ബൗളർ')),
-            const SizedBox(height: 4),
+            const SizedBox(height: 14),
+            Text(tr(en: 'Bowler', ta: 'பந்துவீச்சாளர்', hi: 'गेंदबाज़', ml: 'ബൗളർ'),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(bowlingOptions, _bowlerId, (id) => _bowlerId = id),
 
             const SizedBox(height: 16),
@@ -835,11 +949,11 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                   ],
                 ),
               ),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: (_strikerId != null &&
-
+            _gradientCTA(
+              label: tr(en: 'Continue scoring', ta: 'ஸ்கோரிங் தொடர்க',
+                  hi: 'स्कोरिंग जारी रखें', ml: 'സ്കോറിംഗ് തുടരുക'),
+              icon: Icons.check_circle_rounded,
+              onPressed: (_strikerId != null &&
                       _nonStrikerId != null &&
                       _bowlerId != null &&
                       _strikerId != _nonStrikerId)
@@ -854,10 +968,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                         ),
                       )
                   : null,
-              child: Text(tr(en: 'Continue scoring', ta: 'ஸ்கோரிங் தொடர்க',
-                  hi: 'स्कोरिंग जारी रखें', ml: 'സ്കോറിംഗ് തുടരുക')),
             ),
-          ),
         ],
         ),
       ),
@@ -1189,7 +1300,33 @@ class _ScoringPad extends StatelessWidget {
                       labelText: 'New batter name',
                       border: OutlineInputBorder(),
                     ),
+                    // Live-revalidate so Confirm enables/disables as they type —
+                    // a blank name here used to be accepted silently, leaving
+                    // the dismissed player's id on the crease for the next ball
+                    // and corrupting the batting order.
+                    onChanged: (_) => setDialogState(() {}),
                   ),
+                  Builder(builder: (_) {
+                    final survivingName = dismissedId == players.strikerId
+                        ? players.nonStrikerName
+                        : players.strikerName;
+                    final typed = newBatter.text.trim();
+                    if (typed.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Text('Required — who is replacing them?',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF92400E))),
+                      );
+                    }
+                    if (_sameName(typed, survivingName)) {
+                      return const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Text('Must be different from the other batter on the crease',
+                            style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
                 ],
               ],
             ),
@@ -1201,7 +1338,13 @@ class _ScoringPad extends StatelessWidget {
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-              onPressed: () => Navigator.pop(ctx, true),
+              onPressed: (lastWicket ||
+                      (newBatter.text.trim().isNotEmpty &&
+                          !_sameName(
+                              newBatter.text,
+                              dismissedId == players.strikerId ? players.nonStrikerName : players.strikerName)))
+                  ? () => Navigator.pop(ctx, true)
+                  : null,
               child: const Text('Confirm Wicket'),
             ),
           ],
