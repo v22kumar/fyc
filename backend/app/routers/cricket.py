@@ -68,6 +68,23 @@ def _get_or_create_player(db: Session, team_id: str, name: str, org_id=None) -> 
         db.commit()
     return player
 
+
+def _reject_if_same_name(a: Optional[str], b: Optional[str]) -> None:
+    """Two people at the crease (or two openers) must be distinct players.
+    Names are matched case-insensitively/trimmed because that's how
+    _get_or_create_player resolves identity — if two different physical
+    players are given the same name on the same team, the lookup silently
+    collapses them into one Player row and their stats merge (each shows the
+    other's runs/balls). Reject the request instead of corrupting the match."""
+    if a is None or b is None:
+        return
+    if a.strip().lower() == b.strip().lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Striker and non-striker must be different players — "
+                   "they can't share the same name.",
+        )
+
 def recalculate_match_state(db: Session, match: CricketMatch):
     balls = db.query(CricketBall).filter(CricketBall.match_id == match.id).order_by(CricketBall.ball_index).all()
     
@@ -268,6 +285,8 @@ def init_cricket_match(
         # init so the client has a single contract to parse.
         return {"match": match, "current_players": None}
 
+    _reject_if_same_name(payload.striker_name, payload.non_striker_name)
+
     match = CricketMatch(
         id=uuid.uuid4(),
         fixture_id=fixture_id,
@@ -348,6 +367,41 @@ def score_ball(
     bowling_team = db.query(Team).filter(Team.id == bowling_team_id).first()
     if not batting_team or not bowling_team:
         return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match setup incomplete: Batting or bowling team does not exist."})
+
+    # A wicket requires a genuine replacement batter (unless the innings ends
+    # with this dismissal). Without this, the dismissed player's id silently
+    # carries over to the next ball — the batting order gets corrupted and the
+    # resume screen is later left with no valid non-striker to pick from.
+    if payload.is_wicket:
+        current_wickets = state.get("wickets", 0)
+        # A wicket on the innings' final legal ball ends play immediately (the
+        # over limit closes the innings just like a 10th wicket) — mirror
+        # recalculate_match_state's own innings_over predicate so that case
+        # doesn't wrongly demand a replacement batter who'll never bat.
+        is_legal_ball = payload.extras_type not in ("WIDE", "NO_BALL")
+        overs_after, balls_after = state.get("overs", 0), state.get("balls", 0)
+        if is_legal_ball:
+            balls_after += 1
+            if balls_after == 6:
+                overs_after += 1
+                balls_after = 0
+        over_limit_reached = overs_after == match.overs_per_innings and balls_after == 0 and overs_after > 0
+        innings_continues = (current_wickets + 1) < 10 and not over_limit_reached
+        new_batter_name = (payload.new_batter_name or "").strip()
+        if innings_continues and not new_batter_name:
+            raise HTTPException(
+                status_code=400,
+                detail="A new batter name is required to continue this innings.",
+            )
+        if new_batter_name:
+            surviving_id = (
+                payload.non_striker_id
+                if payload.player_dismissed_id == payload.striker_id
+                else payload.striker_id
+            )
+            surviving = db.query(Player).filter(Player.id == surviving_id).first()
+            if surviving:
+                _reject_if_same_name(new_batter_name, surviving.name)
 
     striker_id = payload.striker_id
     if payload.new_batter_name and payload.player_dismissed_id == payload.striker_id:
@@ -450,7 +504,9 @@ def start_second_innings(
         raise HTTPException(404, "Match not initialized")
     if match.status != "INNINGS_BREAK":
         raise HTTPException(400, "Match is not in innings break")
-        
+
+    _reject_if_same_name(payload.striker_name, payload.non_striker_name)
+
     match.status = "SECOND_INNINGS"
     db.commit()
 

@@ -324,7 +324,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   label: 'Tournament',
                   onTap: () {
                     Navigator.pop(context);
-                    context.push('/sports/tournament/create');
+                    context.push('/sports/create');
                   },
                 ),
                 _QuickActionBtn(
