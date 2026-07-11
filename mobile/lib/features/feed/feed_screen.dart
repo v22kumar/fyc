@@ -3,8 +3,10 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../core/design_system/components/ds_skeleton.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/entrance.dart';
 import '../../service_locator.dart';
 import '../auth/presentation/bloc/auth_bloc.dart';
 import '../auth/presentation/bloc/auth_state.dart';
@@ -156,12 +158,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget _buildBody() {
     if (_isActivity) return _buildActivityBody();
     if (_loading && _posts == null) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.only(top: 60),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
+      return const SliverToBoxAdapter(child: DSSkeletonList());
     }
     if (_error && _posts == null) {
       return SliverToBoxAdapter(
@@ -211,7 +208,10 @@ class _FeedScreenState extends State<FeedScreen> {
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, i) => _PostCard(post: posts[i], ta: _ta),
+          (_, i) => FadeSlideIn(
+            delay: Duration(milliseconds: (i * 45).clamp(0, 400)),
+            child: _PostCard(post: posts[i], ta: _ta),
+          ),
           childCount: posts.length,
         ),
       ),
@@ -220,9 +220,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildActivityBody() {
     if (_loading && _activity == null) {
-      return const SliverToBoxAdapter(
-        child: Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator())),
-      );
+      return const SliverToBoxAdapter(child: DSSkeletonList());
     }
     final acts = _activity ?? const [];
     if ((_error && _activity == null) || acts.isEmpty) {

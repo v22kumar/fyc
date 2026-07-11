@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/design_system/components/ds_skeleton.dart';
 import '../../core/l10n/tr.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/entrance.dart';
 import '../auth/presentation/bloc/auth_bloc.dart';
 import '../auth/presentation/bloc/auth_state.dart';
 import 'chess_tournament_api.dart';
@@ -153,7 +155,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
             )
           : null,
       body: _items == null && !_error
-          ? const Center(child: CircularProgressIndicator())
+          ? const DSSkeletonList()
           : _error
               ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                   const Icon(Icons.wifi_off_rounded, size: 40, color: Colors.grey),
@@ -174,7 +176,9 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
                           itemCount: _items!.length,
                           itemBuilder: (_, i) {
                             final t = _items![i];
-                            return Container(
+                            return FadeSlideIn(
+                              delay: Duration(milliseconds: (i * 45).clamp(0, 400)),
+                              child: Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 color: context.cSurface,
@@ -209,6 +213,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
                                   ));
                                   _load();
                                 },
+                              ),
                               ),
                             );
                           },
