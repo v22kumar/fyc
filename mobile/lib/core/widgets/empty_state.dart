@@ -8,18 +8,27 @@ class EmptyState extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onAction;
 
-  /// Optional illustration asset shown instead of the emoji bubble.
+  /// Optional Material Symbol shown in the bubble instead of the emoji — the
+  /// preferred path (emoji render inconsistently across OEM font stacks).
+  final IconData? icon;
+
+  /// Optional illustration asset shown instead of the emoji/icon bubble.
   final String? imageAsset;
 
   const EmptyState({
     super.key,
-    required this.emoji,
+    this.emoji = '',
     required this.title,
     required this.message,
     this.buttonText,
     this.onAction,
+    this.icon,
     this.imageAsset,
   });
+
+  Widget _glyph(BuildContext context) => icon != null
+      ? Icon(icon, size: 56, color: AppColors.primary)
+      : Text(emoji, style: const TextStyle(fontSize: 64));
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +51,7 @@ class EmptyState extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: AppTheme.glowShadow,
                   ),
-                  child: Text(emoji, style: const TextStyle(fontSize: 64)),
+                  child: _glyph(context),
                 ),
               )
             else
@@ -53,10 +62,7 @@ class EmptyState extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: AppTheme.glowShadow,
                 ),
-                child: Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 64),
-                ),
+                child: _glyph(context),
               ),
             const SizedBox(height: 24),
             Text(
