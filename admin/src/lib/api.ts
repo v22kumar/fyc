@@ -171,6 +171,11 @@ export const api = {
   createTeam: (tournamentId: string, data: object) => request(`/api/v1/sports/tournaments/${tournamentId}/teams`, { method: 'POST', body: JSON.stringify(data) }),
   deleteTeam: (tournamentId: string, teamId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}`, { method: 'DELETE' }),
   updateTeamStatus: (tournamentId: string, teamId: string, status: string) => request(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  updateTeam: (tournamentId: string, teamId: string, data: object) =>
+    request<import('@/types').Team>(`/api/v1/sports/tournaments/${tournamentId}/teams/${teamId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
   listFixtures: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/fixtures`),
   generateFixtures: (tournamentId: string) => request(`/api/v1/sports/tournaments/${tournamentId}/generate-fixtures`, { method: 'POST' }),
   submitFixtureResult: (tournamentId: string, fixtureId: string, data: object) =>

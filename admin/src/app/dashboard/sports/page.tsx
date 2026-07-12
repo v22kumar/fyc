@@ -32,6 +32,19 @@ export default function SportsPage() {
   // Add team form
   const [teamForm, setTeamForm] = useState({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
 
+  // Edit team form states
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [editTeamForm, setEditTeamForm] = useState({
+    name: '',
+    captain_name: '',
+    contact_phone: '',
+    is_fyc_team: false,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    points: 0,
+  });
+
   // Result form
   const [resultFixture, setResultFixture] = useState<Fixture | null>(null);
   const [resultForm, setResultForm] = useState({ team_a_score: '', team_b_score: '', winner_id: '', result_notes: '' });
@@ -160,6 +173,19 @@ export default function SportsPage() {
       toast.success(`Team ${status.toLowerCase()}`);
     } catch (err: any) {
       toast.error(err.message || `Failed to ${status.toLowerCase()} team`);
+    }
+  }
+
+  async function handleSaveTeam(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedTournament || !editingTeam) return;
+    try {
+      const updated = await api.updateTeam(selectedTournament.id, editingTeam.id, editTeamForm);
+      setTeams(prev => prev.map(t => t.id === updated.id ? updated : t));
+      toast.success('Team updated successfully');
+      setEditingTeam(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update team');
     }
   }
 
@@ -374,19 +400,22 @@ export default function SportsPage() {
                   </div>
                   
                   {/* Action Bar */}
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    {selectedTournament.status === 'DRAFT' && (
-                      <button onClick={() => updateStatus(selectedTournament.id, 'UPCOMING')} className="text-sm bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 font-medium transition-colors">Approve Draft</button>
-                    )}
-                    {['DRAFT', 'UPCOMING'].includes(selectedTournament.status) && (
-                      <button onClick={() => updateStatus(selectedTournament.id, 'PUBLISHED')} className="text-sm bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 font-medium transition-colors">Publish</button>
-                    )}
-                    {selectedTournament.status === 'PUBLISHED' && (
-                      <button onClick={() => updateStatus(selectedTournament.id, 'ONGOING')} className="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition-colors">Start Tournament</button>
-                    )}
-                    {selectedTournament.status === 'ONGOING' && (
-                      <button onClick={() => updateStatus(selectedTournament.id, 'COMPLETED')} className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium transition-colors">Mark Completed</button>
-                    )}
+                  <div className="flex flex-wrap gap-2 justify-end items-center">
+                    <div className="flex items-center gap-2 mr-2">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tournament Stage:</span>
+                      <select
+                        value={selectedTournament.status}
+                        onChange={(e) => updateStatus(selectedTournament.id, e.target.value)}
+                        className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 focus:outline-none"
+                      >
+                        <option value="DRAFT">DRAFT</option>
+                        <option value="UPCOMING">UPCOMING</option>
+                        <option value="PUBLISHED">PUBLISHED</option>
+                        <option value="ONGOING">ONGOING</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="ARCHIVED">ARCHIVED</option>
+                      </select>
+                    </div>
                     
                     <div className="flex gap-2 ml-4 pl-4 border-l border-gray-200">
                       {selectedTournament.status !== 'COMPLETED' && selectedTournament.status !== 'ARCHIVED' && (
@@ -456,6 +485,25 @@ export default function SportsPage() {
                                     <button onClick={() => handleTeamStatus(t.id, 'REJECTED')} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center gap-1" title="Reject">✕ Reject</button>
                                   </>
                                 )}
+                                <button
+                                  onClick={() => {
+                                    setEditingTeam(t);
+                                    setEditTeamForm({
+                                      name: t.name,
+                                      captain_name: t.captain_name || '',
+                                      contact_phone: t.contact_phone || '',
+                                      is_fyc_team: t.is_fyc_team || false,
+                                      wins: t.wins || 0,
+                                      losses: t.losses || 0,
+                                      draws: t.draws || 0,
+                                      points: t.points || 0,
+                                    });
+                                  }}
+                                  className="text-gray-500 hover:bg-gray-50 px-1.5 py-0.5 rounded text-xs"
+                                  title="Edit Team Details & Stats"
+                                >
+                                  ✏️
+                                </button>
                                 <button onClick={() => deleteTeam(t.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded text-xs" title="Remove Team">🗑️</button>
                               </div>
                             </td>
@@ -734,6 +782,114 @@ export default function SportsPage() {
                 <button
                   type="button"
                   onClick={() => setShowFixtureModal(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingTeam && selectedTournament && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 font-sans text-gray-800">Edit Team details & standings</h3>
+            
+            <form onSubmit={handleSaveTeam} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Team Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editTeamForm.name}
+                  onChange={e => setEditTeamForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Captain Name</label>
+                <input
+                  type="text"
+                  value={editTeamForm.captain_name}
+                  onChange={e => setEditTeamForm(f => ({ ...f, captain_name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Contact Phone</label>
+                <input
+                  type="text"
+                  value={editTeamForm.contact_phone}
+                  onChange={e => setEditTeamForm(f => ({ ...f, contact_phone: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Wins</label>
+                  <input
+                    type="number"
+                    value={editTeamForm.wins}
+                    onChange={e => setEditTeamForm(f => ({ ...f, wins: parseInt(e.target.value) || 0 }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Losses</label>
+                  <input
+                    type="number"
+                    value={editTeamForm.losses}
+                    onChange={e => setEditTeamForm(f => ({ ...f, losses: parseInt(e.target.value) || 0 }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Draws</label>
+                  <input
+                    type="number"
+                    value={editTeamForm.draws}
+                    onChange={e => setEditTeamForm(f => ({ ...f, draws: parseInt(e.target.value) || 0 }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Points</label>
+                  <input
+                    type="number"
+                    value={editTeamForm.points}
+                    onChange={e => setEditTeamForm(f => ({ ...f, points: parseInt(e.target.value) || 0 }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-gray-600 pt-2">
+                <input
+                  type="checkbox"
+                  checked={editTeamForm.is_fyc_team}
+                  onChange={e => setEditTeamForm(f => ({ ...f, is_fyc_team: e.target.checked }))}
+                />
+                FYC Team
+              </label>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingTeam(null)}
                   className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600"
                 >
                   Cancel

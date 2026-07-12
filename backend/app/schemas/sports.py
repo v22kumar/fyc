@@ -87,6 +87,17 @@ class TeamStatusUpdate(BaseModel):
     status: str  # PENDING, APPROVED, REJECTED
 
 
+class TeamUpdate(BaseModel):
+    name: Optional[str] = None
+    captain_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    is_fyc_team: Optional[bool] = None
+    wins: Optional[int] = None
+    losses: Optional[int] = None
+    draws: Optional[int] = None
+    points: Optional[int] = None
+
+
 class PlayerCreate(BaseModel):
     user_id: Optional[UUID] = None
     name: str

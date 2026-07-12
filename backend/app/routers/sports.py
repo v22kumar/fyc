@@ -10,7 +10,7 @@ from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveSco
 from app.models.user import User
 from app.schemas.sports import (
     TournamentCreate, TournamentOut,
-    TeamCreate, TeamOut, TeamStatusUpdate,
+    TeamCreate, TeamOut, TeamStatusUpdate, TeamUpdate,
     PlayerCreate, PlayerOut,
     FixtureCreate, FixtureResultUpdate, FixtureOut, FixtureUpdate,
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
@@ -428,6 +428,31 @@ def update_team_status(
         )
         
     return team
+
+
+@router.patch("/tournaments/{tournament_id}/teams/{team_id}", response_model=TeamOut)
+def update_team(
+    tournament_id: str,
+    team_id: str,
+    payload: TeamUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.tournament_id == tournament_id
+    ).first()
+    if not team:
+        raise HTTPException(404, "Team not found")
+        
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(team, field, value)
+        
+    db.commit()
+    db.refresh(team)
+    return team
+
 
 # ── Players ───────────────────────────────────────────────────────────────────
 
