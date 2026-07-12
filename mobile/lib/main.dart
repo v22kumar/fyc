@@ -170,8 +170,11 @@ class _FycAppState extends State<FycApp> {
               return MaterialApp.router(
                 title: 'FYC',
                 debugShowCheckedModeBanner: false,
-                theme: AppTheme.light,
-                darkTheme: AppTheme.dark,
+                // Theme is rebuilt per language so the correct script font
+                // (Plus Jakarta / Noto Sans Tamil-Devanagari-Malayalam) is
+                // always active — Outfit had no Tamil glyphs.
+                theme: AppTheme.lightFor(locale.languageCode),
+                darkTheme: AppTheme.darkFor(locale.languageCode),
                 themeMode: themeMode,
                 routerConfig: appRouter,
                 locale: locale,

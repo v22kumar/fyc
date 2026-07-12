@@ -415,7 +415,7 @@ class _SportsTournamentDetailScreenState
                           lang: _lang,
                           onEnterScore:
                               (canScore && !f.isCompleted) ? () => _enterScore(f) : null,
-                          onEditFixture: isAdmin ? () => _editFixture(f, state.teams) : null,
+                          onEditFixture: isAdmin ? () => _editFixture(f, state.standings) : null,
                           onDeleteFixture: isAdmin ? () => _deleteFixture(f) : null,
                         );
                       },
@@ -535,7 +535,12 @@ class _SportsTournamentDetailScreenState
                       ),
                     )
                   else
-                    _StandingsTable(teams: state.standings, lang: _lang),
+                    _StandingsTable(
+                      teams: state.standings,
+                      lang: _lang,
+                      tournamentId: widget.tournamentId,
+                      onTeamUpdated: _reload,
+                    ),
                 ],
               ),
             );
@@ -799,8 +804,15 @@ class _FixtureStatusBadge extends StatelessWidget {
 class _StandingsTable extends StatelessWidget {
   final List<TeamEntity> teams;
   final String lang;
+  final String tournamentId;
+  final VoidCallback onTeamUpdated;
 
-  const _StandingsTable({required this.teams, required this.lang});
+  const _StandingsTable({
+    required this.teams,
+    required this.lang,
+    required this.tournamentId,
+    required this.onTeamUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -832,8 +844,8 @@ class _StandingsTable extends StatelessWidget {
             ...teams.map((t) => _StandingsRow(
                   team: t,
                   lang: lang,
-                  tournamentId: widget.tournamentId,
-                  onTeamUpdated: _reload,
+                  tournamentId: tournamentId,
+                  onTeamUpdated: onTeamUpdated,
                 )),
           ],
         ),
