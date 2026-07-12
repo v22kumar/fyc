@@ -189,7 +189,7 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Center(
             child: Column(
               children: [
-                const Text('🗞️', style: TextStyle(fontSize: 44)),
+                Icon(Icons.dynamic_feed_rounded, size: 44, color: context.cTextSecondary),
                 const SizedBox(height: 12),
                 Text(tr(en: 'No posts yet', ta: 'இன்னும் இடுகைகள் இல்லை',
                     hi: 'अभी कोई पोस्ट नहीं', ml: 'ഇതുവരെ പോസ്റ്റുകളില്ല'),
@@ -231,7 +231,7 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Center(
             child: Column(
               children: [
-                const Text('📣', style: TextStyle(fontSize: 44)),
+                Icon(Icons.campaign_rounded, size: 44, color: context.cTextSecondary),
                 const SizedBox(height: 12),
                 Text(
                   _error
@@ -807,7 +807,8 @@ class _PostCardState extends State<_PostCard> {
                           if (p.isInstagram) const SizedBox(width: 3),
                           Text(sourceLabel,
                               style: TextStyle(fontSize: 11.5, color: context.cTextSecondary)),
-                          Text('  ·  🌐', style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
+                          Text('  ·  ', style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
+                          Icon(Icons.public, size: 11, color: context.cTextSecondary),
                         ],
                       ),
                     ],

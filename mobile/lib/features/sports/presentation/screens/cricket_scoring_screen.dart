@@ -1009,10 +1009,16 @@ class _ScoringPad extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('🏏 ${strikerStats.name} *    ${strikerStats.runs}(${strikerStats.balls})',
+                  Text.rich(TextSpan(children: [
+                    WidgetSpan(alignment: PlaceholderAlignment.middle, child: Icon(Icons.sports_cricket_rounded, size: 15, color: theme.colorScheme.primary)),
+                    TextSpan(text: ' ${strikerStats.name} *    ${strikerStats.runs}(${strikerStats.balls})'),
+                  ]),
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
                   const SizedBox(height: 4),
-                  Text('🏏 ${nonStrikerStats.name}      ${nonStrikerStats.runs}(${nonStrikerStats.balls})',
+                  Text.rich(TextSpan(children: [
+                    WidgetSpan(alignment: PlaceholderAlignment.middle, child: Icon(Icons.sports_cricket_rounded, size: 15, color: theme.colorScheme.onSurfaceVariant)),
+                    TextSpan(text: ' ${nonStrikerStats.name}      ${nonStrikerStats.runs}(${nonStrikerStats.balls})'),
+                  ]),
                       style: theme.textTheme.bodyMedium),
                 ],
               ),
@@ -1027,7 +1033,10 @@ class _ScoringPad extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('🎯 ${bowlerStats.name}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text.rich(TextSpan(children: [
+                    WidgetSpan(alignment: PlaceholderAlignment.middle, child: Icon(Icons.my_location_rounded, size: 15, color: theme.colorScheme.primary)),
+                    TextSpan(text: ' ${bowlerStats.name}'),
+                  ]), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text('${bowlerStats.oversText}-${bowlerStats.runs}-${bowlerStats.wickets}',
                       style: theme.textTheme.bodyMedium),
