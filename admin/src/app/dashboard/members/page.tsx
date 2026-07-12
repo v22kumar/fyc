@@ -26,6 +26,7 @@ const PROMOTABLE_ROLES = ["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTI
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [filter, setFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [promotingId, setPromotingId] = useState<string | null>(null);
 
@@ -97,9 +98,18 @@ export default function MembersPage() {
     }
   }
 
-  const shown = filter
-    ? members.filter((m) => m.role === filter)
-    : members;
+  const shown = members.filter((m) => {
+    if (filter && m.role !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const nameEn = (m.full_name_en || '').toLowerCase();
+      const nameTa = (m.full_name_ta || '').toLowerCase();
+      const phone = (m.phone_number || '').toLowerCase();
+      const email = (m.email || '').toLowerCase();
+      return nameEn.includes(q) || nameTa.includes(q) || phone.includes(q) || email.includes(q);
+    }
+    return true;
+  });
 
   return (
     <div>
@@ -119,21 +129,33 @@ export default function MembersPage() {
         </button>
       </div>
 
-      {/* Filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {['', 'VOLUNTEER', 'EXECUTIVE_MEMBER', 'ADMIN', 'PUBLIC_CITIZEN'].map((role) => (
-          <button
-            key={role}
-            onClick={() => setFilter(role)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-              filter === role
-                ? 'bg-primary-900 text-white border-primary-900'
-                : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary-900'
-            }`}
-          >
-            {role ? ROLE_LABELS[role] : 'All Roles'}
-          </button>
-        ))}
+      {/* Filter and Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        {/* Role Filter Buttons */}
+        <div className="flex gap-2 flex-wrap">
+          {['', 'VOLUNTEER', 'EXECUTIVE_MEMBER', 'ADMIN', 'PUBLIC_CITIZEN'].map((role) => (
+            <button
+              key={role}
+              onClick={() => setFilter(role)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                filter === role
+                  ? 'bg-primary-900 text-white border-primary-900'
+                  : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary-900'
+              }`}
+            >
+              {role ? ROLE_LABELS[role] : 'All Roles'}
+            </button>
+          ))}
+        </div>
+
+        {/* Text Search Box */}
+        <input
+          type="text"
+          placeholder="Search by name, phone, or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full md:w-80 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+        />
       </div>
 
       {loading ? (
