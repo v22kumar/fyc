@@ -195,6 +195,70 @@ def test_second_innings_rejects_identical_names(client, db):
     assert "different players" in r.json()["detail"]
 
 
+def _wide(client, H, fid, p, extras_runs=0):
+    return client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+        "striker_id": p["striker_id"], "non_striker_id": p["non_striker_id"],
+        "bowler_id": p["bowler_id"], "runs_batter": 0,
+        "extras_type": "WIDE", "extras_runs": extras_runs,
+    }, headers=H)
+
+
+def test_village_wides_first_two_free_then_penalty(client, db):
+    """Village rule: the first two wides of an over add no run but are still
+    re-bowled (illegal); the 3rd wide reverts to a normal 1-run wide."""
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0], village_wides=True), headers=H)
+    assert init.status_code == 200, init.text
+    p = init.json()["current_players"]
+
+    s1 = _wide(client, H, fid, p).json()["match_state"]
+    assert s1["score"] == 0           # free wide — no penalty run
+    assert s1["balls"] == 0           # re-bowled, not a legal delivery
+    assert s1["wides_this_over"] == 1
+    assert s1["village_wides"] is True
+
+    s2 = _wide(client, H, fid, p).json()["match_state"]
+    assert s2["score"] == 0           # second wide still free
+    assert s2["wides_this_over"] == 2
+
+    s3 = _wide(client, H, fid, p).json()["match_state"]
+    assert s3["score"] == 1           # third wide is a normal wide
+    assert s3["extras"]["w"] == 1
+
+
+def test_village_wides_counter_resets_each_over(client, db):
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0], village_wides=True), headers=H)
+    p = init.json()["current_players"]
+
+    _wide(client, H, fid, p)
+    _wide(client, H, fid, p)
+    # A full legal over (6 dots) completes the over and resets the counter.
+    for _ in range(6):
+        client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+            "striker_id": p["striker_id"], "non_striker_id": p["non_striker_id"],
+            "bowler_id": p["bowler_id"], "runs_batter": 0,
+        }, headers=H)
+
+    st = client.get(f"/api/v1/fixtures/{fid}/cricket", headers=H).json()["match_state"]
+    assert st["overs"] == 1
+    assert st["wides_this_over"] == 0
+    # First wide of the fresh over is free again.
+    assert _wide(client, H, fid, p).json()["match_state"]["score"] == 0
+
+
+def test_wides_are_normal_when_rule_disabled(client, db):
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0]), headers=H)  # village_wides defaults False
+    p = init.json()["current_players"]
+    st = _wide(client, H, fid, p).json()["match_state"]
+    assert st["score"] == 1
+    assert st["village_wides"] is False
+
+
 def test_wicket_on_final_legal_ball_of_innings_does_not_require_new_batter(client, db):
     """A wicket that also completes the innings' last over ends play right
     there — the over limit closes the innings just like a 10th wicket does, so

@@ -116,6 +116,12 @@ class CricketMatchStateEntity extends Equatable {
   final List<String> recentBalls;
   final List<CricketOverHistoryEntity> oversHistory;
 
+  /// Village house-rule: first two wides per over carry no penalty run.
+  final bool villageWides;
+  /// Wides landed in the over currently in progress (drives whether the next
+  /// wide is still "free" under the village rule).
+  final int widesThisOver;
+
   const CricketMatchStateEntity({
     required this.innings,
     this.battingTeamId,
@@ -131,11 +137,16 @@ class CricketMatchStateEntity extends Equatable {
     this.extras = const {},
     this.recentBalls = const [],
     this.oversHistory = const [],
+    this.villageWides = false,
+    this.widesThisOver = 0,
   });
 
   bool get isLive => status == 'FIRST_INNINGS' || status == 'SECOND_INNINGS';
   bool get isInningsBreak => status == 'INNINGS_BREAK';
   bool get isCompleted => status == 'COMPLETED';
+
+  /// True when the next wide would be free under the village rule.
+  bool get nextWideIsFree => villageWides && widesThisOver < 2;
 
   String get oversText => '$overs.$balls';
   int get extrasTotal => extras.values.fold(0, (a, b) => a + b);
@@ -156,6 +167,8 @@ class CricketMatchStateEntity extends Equatable {
         extras,
         recentBalls,
         oversHistory,
+        villageWides,
+        widesThisOver,
       ];
 }
 

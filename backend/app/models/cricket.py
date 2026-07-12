@@ -14,6 +14,10 @@ class CricketMatch(Base, TimestampMixin, TenantModelMixin):
     toss_decision = Column(String(20), nullable=True) # "BAT" or "BOWL"
     status = Column(String(20), default="NOT_STARTED") # NOT_STARTED, FIRST_INNINGS, INNINGS_BREAK, SECOND_INNINGS, COMPLETED
     overs_per_innings = Column(Integer, default=20)
+    # Village house-rule: when true, the first two wides in each over carry no
+    # penalty run (but are still re-bowled). The 3rd+ wide reverts to a normal
+    # wide. Counter resets every over. See recalculate_match_state.
+    village_wides = Column(Boolean, default=False, nullable=False)
     scorer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     edit_history = Column(JSON, nullable=True)
     notes = Column(String(500), nullable=True)
