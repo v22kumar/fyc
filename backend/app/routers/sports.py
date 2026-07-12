@@ -12,7 +12,7 @@ from app.schemas.sports import (
     TournamentCreate, TournamentOut,
     TeamCreate, TeamOut, TeamStatusUpdate,
     PlayerCreate, PlayerOut,
-    FixtureCreate, FixtureResultUpdate, FixtureOut,
+    FixtureCreate, FixtureResultUpdate, FixtureOut, FixtureUpdate,
     ChallengeCreate, ChallengeOut, ChallengeStatusUpdate,
     LiveScoreEntryCreate, LiveScoreReview, LiveScoreEntryOut,
     TournamentQuickComplete,
@@ -354,7 +354,8 @@ def register_team(
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
 
     # Registration must be open — no new teams once it's closed or fixtures exist.
-    if _tournament_phase(db, t) != "REGISTRATION_OPEN":
+    is_admin = current_user.role in ["ADMIN", "SUPER_ADMIN", "EXECUTIVE_MEMBER"]
+    if not is_admin and _tournament_phase(db, t) != "REGISTRATION_OPEN":
         raise HTTPException(400, "Registration is closed for this tournament.")
 
     # Auto-approve if OPEN, else PENDING
@@ -502,21 +503,7 @@ def create_fixture(
     current_user: User = Depends(require_exec),
 ):
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
-    # Same gate as generate-fixtures: no fixtures (manual or auto) until
-    # registration has closed. This closes the reported bug where a manager could
-    # create fixtures — and start scoring — while teams were still registering.
-    if not _registration_closed(t):
-        close = t.registration_close_date
-        when = ""
-        if close is not None:
-            if close.tzinfo is None:
-                close = close.replace(tzinfo=timezone.utc)
-            when = f" until {close.date().isoformat()}"
-        raise HTTPException(
-            400,
-            f"Registration is still open{when}. Close registration before "
-            "creating fixtures.",
-        )
+    # Allow creating fixtures at any time by admin
     for team_id in [payload.team_a_id, payload.team_b_id]:
         if not db.query(Team).filter(Team.id == str(team_id), Team.tournament_id == tournament_id).first():
             raise HTTPException(400, f"Team {team_id} not found in this tournament")
@@ -550,6 +537,63 @@ def submit_result(
     return _fixture_out(f)
 
 
+@router.patch("/tournaments/{tournament_id}/fixtures/{fixture_id}", response_model=FixtureOut)
+def update_fixture(
+    tournament_id: str,
+    fixture_id: str,
+    payload: FixtureUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    """Admin: update a fixture's details, schedule, teams, or status/results."""
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    f = db.query(Fixture).filter(Fixture.id == fixture_id, Fixture.tournament_id == tournament_id).first()
+    if not f:
+        raise HTTPException(404, "Fixture not found")
+
+    if payload.team_a_id is not None:
+        f.team_a_id = payload.team_a_id
+    if payload.team_b_id is not None:
+        f.team_b_id = payload.team_b_id
+    if payload.match_number is not None:
+        f.match_number = payload.match_number
+    if payload.scheduled_at is not None:
+        f.scheduled_at = payload.scheduled_at
+    if payload.venue is not None:
+        f.venue = payload.venue
+    if payload.status is not None:
+        f.status = payload.status
+    if payload.team_a_score is not None:
+        f.team_a_score = payload.team_a_score
+    if payload.team_b_score is not None:
+        f.team_b_score = payload.team_b_score
+    if payload.winner_id is not None:
+        f.winner_id = payload.winner_id
+    if payload.result_notes is not None:
+        f.result_notes = payload.result_notes
+
+    db.commit()
+    db.refresh(f)
+    return _fixture_out(f)
+
+
+@router.delete("/tournaments/{tournament_id}/fixtures/{fixture_id}", status_code=204)
+def delete_fixture(
+    tournament_id: str,
+    fixture_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_exec),
+):
+    """Admin: delete a fixture entirely."""
+    _get_tenant_tournament(db, tournament_id, current_user.organization_id)
+    f = db.query(Fixture).filter(Fixture.id == fixture_id, Fixture.tournament_id == tournament_id).first()
+    if not f:
+        raise HTTPException(404, "Fixture not found")
+    db.delete(f)
+    db.commit()
+    return None
+
+
 @router.get("/tournaments/{tournament_id}/standings", response_model=List[TeamOut])
 def get_standings(
     tournament_id: str,
@@ -579,20 +623,8 @@ def generate_fixtures(
     generates in one step."""
     t = _get_tenant_tournament(db, tournament_id, current_user.organization_id)
 
+    # Auto-close registration if open when generating fixtures, without raising errors
     if _tournament_phase(db, t) == "REGISTRATION_OPEN":
-        if not force:
-            close = t.registration_close_date
-            when = ""
-            if close is not None:
-                if close.tzinfo is None:
-                    close = close.replace(tzinfo=timezone.utc)
-                when = f" until {close.date().isoformat()}"
-            raise HTTPException(
-                400,
-                f"Registration is still open{when}. Close registration first "
-                "(or pass force=true to close it now and generate fixtures).",
-            )
-        # force → close registration now, then generate.
         if t.registration_closed_at is None:
             t.registration_closed_at = datetime.now(timezone.utc)
             db.commit()

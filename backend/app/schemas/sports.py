@@ -152,6 +152,19 @@ class FixtureOut(BaseModel):
         from_attributes = True
 
 
+class FixtureUpdate(BaseModel):
+    team_a_id: Optional[UUID] = None
+    team_b_id: Optional[UUID] = None
+    match_number: Optional[int] = None
+    scheduled_at: Optional[datetime] = None
+    venue: Optional[str] = None
+    status: Optional[str] = None
+    team_a_score: Optional[str] = None
+    team_b_score: Optional[str] = None
+    winner_id: Optional[UUID] = None
+    result_notes: Optional[str] = None
+
+
 class ChallengeCreate(BaseModel):
     challenger_team_name: str
     challenger_captain: str

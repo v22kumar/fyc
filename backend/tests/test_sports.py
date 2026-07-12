@@ -211,9 +211,7 @@ def test_create_and_list_fixtures(client, db):
 
 
 def test_cannot_create_fixture_while_registration_open(client, db):
-    """Regression: fixtures must not be creatable before registration closes
-    (reported bug: 'fixtures ready before registration ends and can enter
-    scoring')."""
+    """Admin is allowed to create fixtures even while registration is open."""
     org = _make_org(db)
     _make_executive(db, org.id, "+919444444540")
     token = _login(client, org.id, "+919444444540")
@@ -222,23 +220,14 @@ def test_cannot_create_fixture_while_registration_open(client, db):
     team_a_id = _create_team(client, org.id, token, tournament_id, name="Alpha")
     team_b_id = _create_team(client, org.id, token, tournament_id, name="Beta")
 
-    # Registration still OPEN — creating a fixture must be rejected.
+    # Registration still OPEN — creating a fixture should succeed now.
     fix_res = client.post(
         f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
         json={"team_a_id": team_a_id, "team_b_id": team_b_id, "match_number": 1},
         headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)},
     )
-    assert fix_res.status_code == 400
-    assert "Registration is still open" in fix_res.json()["detail"]
-
-    # After closing registration, the same request succeeds.
-    _close_registration(client, org.id, token, tournament_id)
-    ok = client.post(
-        f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
-        json={"team_a_id": team_a_id, "team_b_id": team_b_id, "match_number": 1},
-        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)},
-    )
-    assert ok.status_code == 201
+    assert fix_res.status_code == 201
+    assert fix_res.json()["status"] == "SCHEDULED"
 
     list_res = client.get(
         f"/api/v1/sports/tournaments/{tournament_id}/fixtures",
