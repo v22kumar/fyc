@@ -36,6 +36,17 @@ export default function SportsPage() {
   const [resultFixture, setResultFixture] = useState<Fixture | null>(null);
   const [resultForm, setResultForm] = useState({ team_a_score: '', team_b_score: '', winner_id: '', result_notes: '' });
 
+  // Manual fixture states
+  const [showFixtureModal, setShowFixtureModal] = useState(false);
+  const [editingFixture, setEditingFixture] = useState<Fixture | null>(null);
+  const [fixtureForm, setFixtureForm] = useState({
+    team_a_id: '',
+    team_b_id: '',
+    match_number: '',
+    scheduled_at: '',
+    venue: '',
+  });
+
   async function loadTournaments() {
     const data = await api.listTournaments();
     setTournaments(data);
@@ -183,6 +194,49 @@ export default function SportsPage() {
       toast.error(err.message || 'Failed to generate fixtures');
     } finally {
       setSubmitting(s => ({ ...s, fixtures: false }));
+    }
+  }
+
+  async function handleSaveFixture(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedTournament) return;
+    if (fixtureForm.team_a_id === fixtureForm.team_b_id) {
+      toast.error('Team A and Team B cannot be the same');
+      return;
+    }
+    const payload = {
+      team_a_id: fixtureForm.team_a_id,
+      team_b_id: fixtureForm.team_b_id,
+      match_number: fixtureForm.match_number ? parseInt(fixtureForm.match_number) : undefined,
+      scheduled_at: fixtureForm.scheduled_at ? new Date(fixtureForm.scheduled_at).toISOString() : undefined,
+      venue: fixtureForm.venue || undefined,
+    };
+
+    try {
+      if (editingFixture) {
+        const updated = await api.updateFixture(selectedTournament.id, editingFixture.id, payload);
+        setFixtures(prev => prev.map(f => f.id === updated.id ? updated : f));
+        toast.success('Fixture updated successfully');
+      } else {
+        const created = await api.createFixture(selectedTournament.id, payload);
+        setFixtures(prev => [...prev, created]);
+        toast.success('Fixture added successfully');
+      }
+      setShowFixtureModal(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save fixture');
+    }
+  }
+
+  async function handleDeleteFixture(fixtureId: string) {
+    if (!selectedTournament) return;
+    if (!confirm('Are you sure you want to delete this fixture?')) return;
+    try {
+      await api.deleteFixture(selectedTournament.id, fixtureId);
+      setFixtures(prev => prev.filter(f => f.id !== fixtureId));
+      toast.success('Fixture deleted successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete fixture');
     }
   }
 
@@ -440,16 +494,36 @@ export default function SportsPage() {
                     const hasEnoughTeams = selectedTournament.num_teams ? approvedTeams.length >= selectedTournament.num_teams : approvedTeams.length > 1;
                     const canGenerate = ['PUBLISHED', 'UPCOMING', 'DRAFT'].includes(selectedTournament.status);
                     
-                    return (teams.length > 1 && canGenerate) ? (
-                      <button 
-                        onClick={generateFixtures} 
-                        disabled={!hasEnoughTeams || submitting.fixtures}
-                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                        title={!hasEnoughTeams ? `Need ${selectedTournament.num_teams || 2} approved teams` : ''}
-                      >
-                        {submitting.fixtures ? 'Generating...' : (fixtures.length === 0 ? 'Generate Fixtures' : 'Regenerate Fixtures')}
-                      </button>
-                    ) : null;
+                    return (
+                      <div className="flex gap-2">
+                        {teams.length > 1 && canGenerate && (
+                          <button 
+                            onClick={generateFixtures} 
+                            disabled={!hasEnoughTeams || submitting.fixtures}
+                            className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            title={!hasEnoughTeams ? `Need ${selectedTournament.num_teams || 2} approved teams` : ''}
+                          >
+                            {submitting.fixtures ? 'Generating...' : (fixtures.length === 0 ? 'Generate Fixtures' : 'Regenerate Fixtures')}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditingFixture(null);
+                            setFixtureForm({
+                              team_a_id: '',
+                              team_b_id: '',
+                              match_number: '',
+                              scheduled_at: '',
+                              venue: '',
+                            });
+                            setShowFixtureModal(true);
+                          }}
+                          className="text-xs border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                        >
+                          + Add Fixture
+                        </button>
+                      </div>
+                    );
                   })()}
                 </div>
                 {fixtures.length === 0 ? (
@@ -477,14 +551,36 @@ export default function SportsPage() {
                             {f.result_notes && <span className="ml-2 text-gray-500">({f.result_notes})</span>}
                           </div>
                         )}
-                        {f.status !== 'COMPLETED' && (
-                          <div className="flex gap-4 mt-2">
+                        <div className="flex gap-4 mt-2 items-center">
+                          {f.status !== 'COMPLETED' && (
                             <button onClick={() => { setResultFixture(f); setResultForm({ team_a_score: '', team_b_score: '', winner_id: '', result_notes: '' }); }} className="text-xs text-primary underline">Enter Result</button>
-                            {selectedTournament?.sport === 'cricket' && (
-                              <button onClick={() => router.push(`/dashboard/sports/cricket/${f.id}`)} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Score Live Match 🏏</button>
-                            )}
-                          </div>
-                        )}
+                          )}
+                          {f.status !== 'COMPLETED' && selectedTournament?.sport === 'cricket' && (
+                            <button onClick={() => router.push(`/dashboard/sports/cricket/${f.id}`)} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Score Live Match 🏏</button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setEditingFixture(f);
+                              setFixtureForm({
+                                team_a_id: f.team_a_id,
+                                team_b_id: f.team_b_id,
+                                match_number: f.match_number ? String(f.match_number) : '',
+                                scheduled_at: f.scheduled_at ? f.scheduled_at.substring(0, 16) : '',
+                                venue: f.venue || '',
+                              });
+                              setShowFixtureModal(true);
+                            }}
+                            className="text-xs text-gray-500 underline ml-auto font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFixture(f.id)}
+                            className="text-xs text-red-600 underline font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -560,6 +656,96 @@ export default function SportsPage() {
               </button>
               <button onClick={() => setResultFixture(null)} disabled={submitting.result} className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600 disabled:opacity-70 disabled:cursor-not-allowed">Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showFixtureModal && selectedTournament && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold mb-4">{editingFixture ? 'Edit Fixture' : 'Add Fixture'}</h3>
+            
+            <form onSubmit={handleSaveFixture} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Team A *</label>
+                <select
+                  required
+                  value={fixtureForm.team_a_id}
+                  onChange={e => setFixtureForm(f => ({ ...f, team_a_id: e.target.value }))}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                >
+                  <option value="">Select Team A</option>
+                  {teams.filter(t => t.status === 'APPROVED').map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Team B *</label>
+                <select
+                  required
+                  value={fixtureForm.team_b_id}
+                  onChange={e => setFixtureForm(f => ({ ...f, team_b_id: e.target.value }))}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                >
+                  <option value="">Select Team B</option>
+                  {teams.filter(t => t.status === 'APPROVED').map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Match Number</label>
+                  <input
+                    type="number"
+                    value={fixtureForm.match_number}
+                    onChange={e => setFixtureForm(f => ({ ...f, match_number: e.target.value }))}
+                    placeholder="e.g. 1"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Scheduled At</label>
+                  <input
+                    type="datetime-local"
+                    value={fixtureForm.scheduled_at}
+                    onChange={e => setFixtureForm(f => ({ ...f, scheduled_at: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Venue</label>
+                <input
+                  type="text"
+                  value={fixtureForm.venue}
+                  onChange={e => setFixtureForm(f => ({ ...f, venue: e.target.value }))}
+                  placeholder="e.g. Ground A"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowFixtureModal(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

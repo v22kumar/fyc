@@ -365,34 +365,59 @@ class _SportsTournamentDetailScreenState
                     ),
 
                   // Admin lifecycle actions: close registration → generate fixtures.
-                  if (isAdmin && state.tournament.isRegistrationOpen)
+                  if (isAdmin)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: _closeRegistration,
-                          icon: const Icon(Icons.lock_clock_outlined),
-                          label: Text(tr(en: 'Close registration now', ta: 'இப்போது பதிவை மூடு',
-                              hi: 'रजिस्ट्रेशन अभी बंद करें', ml: 'ഇപ്പോൾ രജിസ്ട്രേഷൻ അടയ്ക്കുക')),
-                        ),
-                      ),
-                    ),
-                  if (isAdmin && state.tournament.isRegistrationClosed)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _generateFixtures,
-                          icon: const Icon(Icons.auto_awesome_motion_outlined, color: Colors.white),
-                          label: Text(tr(en: 'Generate fixtures', ta: 'அட்டவணை உருவாக்கு',
-                              hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
-                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                        ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _generateFixtures,
+                                  icon: const Icon(Icons.auto_awesome_motion_outlined, color: Colors.white),
+                                  label: Text(
+                                    tr(en: 'Generate fixtures', ta: 'அட்டவணை உருவாக்கு', hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFD97706),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _showAddFixtureSheet,
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  label: Text(
+                                    tr(en: 'Add Fixture', ta: 'அட்டவணை சேர்', hi: 'फ़िक्स्चर जोड़ें', ml: 'ഫിക്സ്ചർ ചേർക്കുക'),
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (state.tournament.isRegistrationOpen) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton.icon(
+                                onPressed: _closeRegistration,
+                                icon: const Icon(Icons.lock_clock_outlined),
+                                label: Text(tr(en: 'Close registration now', ta: 'இப்போது பதிவை மூடு',
+                                    hi: 'रजिस्ट्रेशन अभी बंद करें', ml: 'ഇപ്പോൾ രജിസ്ട്രേഷൻ അടയ്ക്കുക')),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   
