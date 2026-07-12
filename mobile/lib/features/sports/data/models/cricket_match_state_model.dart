@@ -38,6 +38,8 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
     super.extras,
     super.recentBalls,
     super.oversHistory,
+    super.villageWides,
+    super.widesThisOver,
   });
 
   factory CricketMatchStateModel.fromJson(Map<String, dynamic> json) {
@@ -111,6 +113,8 @@ class CricketMatchStateModel extends CricketMatchStateEntity {
           }).toList(),
         );
       }).toList(),
+      villageWides: json['village_wides'] as bool? ?? false,
+      widesThisOver: (json['wides_this_over'] as num?)?.toInt() ?? 0,
     );
   }
 }

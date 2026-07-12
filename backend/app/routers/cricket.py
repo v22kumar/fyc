@@ -25,6 +25,7 @@ class CricketInitRequest(BaseModel):
     toss_winner_id: str
     toss_decision: str  # "BAT" or "BOWL"
     overs: int = 20
+    village_wides: bool = False  # first two wides per over carry no penalty run
     striker_name: str
     non_striker_name: str
     bowler_name: str
@@ -113,7 +114,12 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         state["batting_team_id"] = str(match.fixture.team_a_id if str(match.fixture.team_b_id) == str(match.toss_winner_id) else match.fixture.team_b_id)
 
     current_innings = 1
-    
+    # Village house-rule: the first two wides in each over carry no penalty
+    # run (still re-bowled). Tracks wides in the over currently in progress;
+    # reset on over completion and at the innings change.
+    village_wides = bool(getattr(match, "village_wides", False))
+    wides_this_over = 0
+
     def ensure_batter(pid, name):
         if str(pid) not in state["batters"]:
             state["batters"][str(pid)] = {"name": name, "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "out": False}
@@ -135,6 +141,7 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
             state["recent_balls"] = []
             state["overs_history"] = []
+            wides_this_over = 0
 
         striker_name = b.striker.name if b.striker else "Unknown striker"
         non_striker_name = b.non_striker.name if b.non_striker else "Unknown non-striker"
@@ -144,14 +151,20 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         ensure_bowler(b.bowler_id, bowler_name)
 
         is_legal = b.extras_type not in ["WIDE", "NO_BALL"]
-        
+
         ball_runs = b.runs_batter
         bowler_runs = b.runs_batter
-        
+
+        free_wide = False
         if b.extras_type == "WIDE":
-            ball_runs += 1 + b.extras_runs
-            bowler_runs += 1 + b.extras_runs
-            state["extras"]["w"] += 1 + b.extras_runs
+            wides_this_over += 1
+            # First two wides of the over are free under the village rule:
+            # no penalty run added, but still an illegal (re-bowled) delivery.
+            free_wide = village_wides and wides_this_over <= 2
+            if not free_wide:
+                ball_runs += 1 + b.extras_runs
+                bowler_runs += 1 + b.extras_runs
+                state["extras"]["w"] += 1 + b.extras_runs
         elif b.extras_type == "NO_BALL":
             ball_runs += 1 + b.extras_runs
             bowler_runs += 1 + b.runs_batter
@@ -181,6 +194,7 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             if state["balls"] == 6:
                 state["overs"] += 1
                 state["balls"] = 0
+                wides_this_over = 0
 
         if b.is_wicket:
             state["wickets"] += 1
@@ -195,7 +209,8 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         if b.is_wicket:
             ball_str = "W"
         elif b.extras_type == "WIDE":
-            ball_str = f"{1 + b.extras_runs}wd"
+            # A free (village-rule) wide adds no run, so show a bare "wd".
+            ball_str = "wd" if free_wide else f"{1 + b.extras_runs}wd"
         elif b.extras_type == "NO_BALL":
             ball_str = f"{1 + b.extras_runs}nb"
         elif b.extras_type == "BYE":
@@ -267,6 +282,10 @@ def recalculate_match_state(db: Session, match: CricketMatch):
     # Surface lifecycle status inside match_state so the mobile scorer sees
     # INNINGS_BREAK / COMPLETED without a second request.
     state["status"] = match.status
+    # Surface the village-wides rule + how many wides have landed in the over
+    # in progress, so the scorer knows when the next wide is still "free".
+    state["village_wides"] = village_wides
+    state["wides_this_over"] = wides_this_over
     match.match_state = dict(state)
 
     db.commit()
@@ -299,6 +318,7 @@ def init_cricket_match(
         toss_winner_id=payload.toss_winner_id,
         toss_decision=payload.toss_decision,
         overs_per_innings=payload.overs,
+        village_wides=payload.village_wides,
         scorer_id=current_user.id,
         status="FIRST_INNINGS",
         organization_id=current_user.organization_id,

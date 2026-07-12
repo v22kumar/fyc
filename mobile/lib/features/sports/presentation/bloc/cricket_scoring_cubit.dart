@@ -80,12 +80,14 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     required String strikerName,
     required String nonStrikerName,
     required String bowlerName,
+    bool villageWides = false,
   }) async {
     emit(CricketScoringLoading());
     final result = await _repository.initCricketMatch(fixtureId, {
       'toss_winner_id': tossWinnerId,
       'toss_decision': tossDecision,
       'overs': overs,
+      'village_wides': villageWides,
       'striker_name': strikerName.trim(),
       'non_striker_name': nonStrikerName.trim(),
       'bowler_name': bowlerName.trim(),

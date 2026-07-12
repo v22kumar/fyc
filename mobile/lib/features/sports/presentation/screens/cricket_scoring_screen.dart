@@ -275,6 +275,7 @@ class _TossSetupForm extends StatefulWidget {
 class _TossSetupFormState extends State<_TossSetupForm> {
   String? _tossWinnerId;
   String _decision = 'BAT';
+  bool _villageWides = false;
   final _overs = TextEditingController(text: '20');
   final _striker = TextEditingController();
   final _nonStriker = TextEditingController();
@@ -384,6 +385,30 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
+          const SizedBox(height: 4),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFCBD2E0)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: SwitchListTile(
+              value: _villageWides,
+              onChanged: (v) => setState(() => _villageWides = v),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              title: Text(
+                tr(en: '2 free wides per over', ta: 'ஓவருக்கு 2 இலவச வைடுகள்',
+                    hi: 'प्रति ओवर 2 फ्री वाइड', ml: 'ഓവറിന് 2 ഫ്രീ വൈഡുകൾ'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              subtitle: Text(
+                tr(en: 'Village rule: first two wides in an over add no run (still re-bowled)',
+                    ta: 'கிராம விதி: ஓவரின் முதல் இரண்டு வைடுகளுக்கு ரன் இல்லை (மீண்டும் வீசவும்)',
+                    hi: 'गाँव नियम: ओवर की पहली दो वाइड पर रन नहीं (फिर भी दोबारा फेंकें)',
+                    ml: 'ഗ്രാമ നിയമം: ഓവറിലെ ആദ്യ രണ്ട് വൈഡിന് റൺ ഇല്ല (വീണ്ടും എറിയണം)'),
+                style: const TextStyle(fontSize: 11.5),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 20),
           if (!_valid)
@@ -434,6 +459,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                       strikerName: _striker.text,
                       nonStrikerName: _nonStriker.text,
                       bowlerName: _bowler.text,
+                      villageWides: _villageWides,
                     )
                 : null,
           ),
@@ -1096,7 +1122,17 @@ class _ScoringPad extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            _actionBtn(context, 'Wide', () => _extrasDialog(context, 'WIDE')),
+            // Under the village rule the first two wides of the over are free:
+            // record them immediately (no run picker); the 3rd+ opens the dialog.
+            _actionBtn(
+              context,
+              state.matchState.nextWideIsFree ? 'Wide (free)' : 'Wide',
+              () => state.matchState.nextWideIsFree
+                  ? _withBowlerIfNeeded(context, (nb) => context
+                      .read<CricketScoringCubit>()
+                      .scoreBall(extrasType: 'WIDE', extrasRuns: 0, newBowlerName: nb))
+                  : _extrasDialog(context, 'WIDE'),
+            ),
             const SizedBox(width: 8),
             _actionBtn(context, 'No Ball', () => _extrasDialog(context, 'NO_BALL')),
             const SizedBox(width: 8),
