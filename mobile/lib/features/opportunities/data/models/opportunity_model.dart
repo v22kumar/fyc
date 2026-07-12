@@ -15,6 +15,9 @@ class OpportunityModel extends OpportunityEntity {
     required super.locationEn,
     required super.descriptionTa,
     required super.descriptionEn,
+    super.budget,
+    super.contactPhone,
+    super.postedBy,
     required super.isActive,
   });
 
@@ -33,6 +36,10 @@ class OpportunityModel extends OpportunityEntity {
       locationEn: (json['location_en'] as String?) ?? '',
       descriptionTa: (json['description_ta'] as String?) ?? '',
       descriptionEn: (json['description_en'] as String?) ?? '',
+      budget: (json['budget'] as String?) ?? '',
+      // contact_phone is only present on the authenticated detail response.
+      contactPhone: (json['contact_phone'] as String?) ?? '',
+      postedBy: (json['posted_by'] as String?) ?? '',
       isActive: (json['is_active'] as bool?) ?? true,
     );
   }

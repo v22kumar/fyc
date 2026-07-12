@@ -14,6 +14,9 @@ class OpportunityEntity extends Equatable {
   final String locationEn;
   final String descriptionTa;
   final String descriptionEn;
+  final String budget;
+  final String contactPhone;
+  final String postedBy;
   final bool isActive;
 
   const OpportunityEntity({
@@ -30,8 +33,13 @@ class OpportunityEntity extends Equatable {
     required this.locationEn,
     required this.descriptionTa,
     required this.descriptionEn,
+    this.budget = '',
+    this.contactPhone = '',
+    this.postedBy = '',
     required this.isActive,
   });
+
+  bool get isVolunteer => type == 'VOLUNTEER';
 
   String displayTitle(String lang) => lang == 'ta' ? titleTa : titleEn;
   String displayOrganizer(String lang) =>
@@ -58,6 +66,9 @@ class OpportunityEntity extends Equatable {
         locationEn,
         descriptionTa,
         descriptionEn,
+        budget,
+        contactPhone,
+        postedBy,
         isActive,
       ];
 }

@@ -5,8 +5,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/opportunity_datasource.dart';
 
-/// Create-opportunity form for managers/admins. Pops with `true` on success
-/// so the list can refresh.
+/// Post-a-job form, open to any signed-in member. Pops with `true` on success
+/// so the list can refresh. A Job carries a budget; a Volunteer drive does not.
 class OpportunityCreateScreen extends StatefulWidget {
   const OpportunityCreateScreen({super.key});
 
@@ -16,13 +16,15 @@ class OpportunityCreateScreen extends StatefulWidget {
 
 class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _type = 'VOLUNTEER';
+  String _type = 'JOB';
   final _titleEn = TextEditingController();
   final _titleTa = TextEditingController();
   final _organizer = TextEditingController();
   final _category = TextEditingController();
   final _location = TextEditingController();
   final _hours = TextEditingController();
+  final _budget = TextEditingController();
+  final _contact = TextEditingController();
   final _descEn = TextEditingController();
   bool _saving = false;
 
@@ -34,6 +36,8 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
     _category.dispose();
     _location.dispose();
     _hours.dispose();
+    _budget.dispose();
+    _contact.dispose();
     _descEn.dispose();
     super.dispose();
   }
@@ -51,6 +55,8 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
       if (_category.text.trim().isNotEmpty) 'category_en': _category.text.trim(),
       if (_location.text.trim().isNotEmpty) 'location_en': _location.text.trim(),
       if (_hours.text.trim().isNotEmpty) 'hours': _hours.text.trim(),
+      if (_type == 'JOB' && _budget.text.trim().isNotEmpty) 'budget': _budget.text.trim(),
+      if (_contact.text.trim().isNotEmpty) 'contact_phone': _contact.text.trim(),
       if (_descEn.text.trim().isNotEmpty) 'description_en': _descEn.text.trim(),
       'is_active': true,
     };
@@ -83,8 +89,8 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Post Opportunity', ta: 'வாய்ப்பை பதிவிடு',
-            hi: 'अवसर पोस्ट करें', ml: 'അവസരം പോസ്റ്റ് ചെയ്യൂ')),
+        title: Text(tr(en: 'Post a Job', ta: 'வேலையை பதிவிடு',
+            hi: 'नौकरी पोस्ट करें', ml: 'ജോലി പോസ്റ്റ് ചെയ്യൂ')),
       ),
       body: Form(
         key: _formKey,
@@ -98,14 +104,14 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
               spacing: 8,
               children: [
                 ChoiceChip(
+                  label: Text(tr(en: 'Job', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി')),
+                  selected: _type == 'JOB',
+                  onSelected: (_) => setState(() => _type = 'JOB'),
+                ),
+                ChoiceChip(
                   label: Text(tr(en: 'Volunteer', ta: 'தன்னார்வ', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ')),
                   selected: _type == 'VOLUNTEER',
                   onSelected: (_) => setState(() => _type = 'VOLUNTEER'),
-                ),
-                ChoiceChip(
-                  label: Text(tr(en: 'Course', ta: 'பயிற்சி', hi: 'पाठ्यक्रम', ml: 'കോഴ്സ്')),
-                  selected: _type == 'COURSE',
-                  onSelected: (_) => setState(() => _type = 'COURSE'),
                 ),
               ],
             ),
@@ -121,8 +127,16 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
                 tr(en: 'Category', ta: 'வகை', hi: 'श्रेणी', ml: 'വിഭാഗം')),
             _field(_location,
                 tr(en: 'Location', ta: 'இடம்', hi: 'स्थान', ml: 'സ്ഥലം')),
+            if (_type == 'JOB')
+              _field(_budget,
+                  tr(en: 'Budget / pay (e.g. ₹500/day)', ta: 'ஊதியம் (எ.கா. ₹500/நாள்)',
+                      hi: 'बजट / वेतन (जैसे ₹500/दिन)', ml: 'ബജറ്റ് / വേതനം (ഉദാ. ₹500/ദിവസം)')),
             _field(_hours,
                 tr(en: 'Hours / commitment', ta: 'நேரம்', hi: 'समय', ml: 'സമയം')),
+            _field(_contact,
+                tr(en: 'Contact phone (shown to applicants)', ta: 'தொடர்பு எண்',
+                    hi: 'संपर्क फ़ोन', ml: 'ബന്ധപ്പെടാനുള്ള ഫോൺ'),
+                keyboardType: TextInputType.phone),
             _field(_descEn,
                 tr(en: 'Description', ta: 'விவரம்', hi: 'विवरण', ml: 'വിവരണം'),
                 maxLines: 4),
@@ -141,12 +155,13 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
   }
 
   Widget _field(TextEditingController c, String label,
-      {bool required = false, int maxLines = 1}) {
+      {bool required = false, int maxLines = 1, TextInputType? keyboardType}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: c,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
         validator: required
             ? (v) => (v == null || v.trim().isEmpty)
