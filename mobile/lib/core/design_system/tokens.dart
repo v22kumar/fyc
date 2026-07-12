@@ -45,9 +45,10 @@ class DSColors {
   static const Color info = Color(0xFF2563EB);
   static const Color infoSurface = Color(0xFFEFF6FF);
 
-  // ── Neutrals ──────────────────────────────────────────────────────────
-  static const Color backgroundLight = Color(0xFFF7F8FC);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
+  // ── Neutrals — MD3 tonal ladder, zero pure white ─────────────────────
+  // (docs/design/md3-elite-redesign.md §3.1)
+  static const Color backgroundLight = Color(0xFFF2F4FA);
+  static const Color surfaceLight = Color(0xFFF9FAFE);
   static const Color borderLight = Color(0xFFE3E7F0);
   static const Color textPrimaryLight = navy900;
   static const Color textSecondaryLight = Color(0xFF5B6478);

@@ -8,6 +8,7 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/design_system/patterns/kolam_background.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -227,6 +228,14 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
               filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
               child: Container(color: Colors.transparent),
             ),
+          // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: KolamPattern(color: Colors.white.withOpacity(0.04)),
+              ),
+            ),
+          ),
 
             // ── Form card ─────────────────────────────────────────────
             BlocBuilder<AuthBloc, AuthState>(

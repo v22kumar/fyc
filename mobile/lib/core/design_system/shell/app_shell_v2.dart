@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
+import '../patterns/kolam_background.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
 
@@ -106,16 +107,21 @@ class _AppShellV2State extends State<AppShellV2> {
       onPopInvokedWithResult: _onBackInvoked,
       child: Scaffold(
         backgroundColor: context.dsBackground,
-        body: Stack(
-          children: [
-            IndexedStack(index: _index, children: _bodies),
-            // Persistent SOS control — reachable from every tab, never buried.
-            Positioned(
-              right: DSSpacing.sm,
-              bottom: 90,
-              child: _SosButton(onTap: _onSosTap),
-            ),
-          ],
+        // Kolam texture sits between the scaffold color and the tabs —
+        // visible wherever a tab leaves its background transparent
+        // (docs/design/md3-elite-redesign.md §3.4).
+        body: KolamBackground(
+          child: Stack(
+            children: [
+              IndexedStack(index: _index, children: _bodies),
+              // Persistent SOS control — reachable from every tab, never buried.
+              Positioned(
+                right: DSSpacing.sm,
+                bottom: 90,
+                child: _SosButton(onTap: _onSosTap),
+              ),
+            ],
+          ),
         ),
         // Center Create FAB (the yellow "+" in the mockup), docked over the nav
         // bar between Play and Serve. Only shown once a create handler is wired.

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/design_system/components/ds_skeleton.dart';
+import '../../core/design_system/patterns/kolam_background.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/entrance.dart';
@@ -350,17 +351,23 @@ class _Header extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 12,
-              left: 16, right: 16, bottom: 44),
+          // Navy brand gradient (was the retired forest-green palette) with
+          // the kolam texture inside the hero (MD3 redesign §3.4).
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0A3D2A), Color(0xFF0F5132)],
+              colors: [AppColors.darkBg, AppColors.primary],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
-          child: Row(
+          child: KolamBackground(
+            color: Colors.white,
+            opacity: 0.06,
+            child: Padding(
+              padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 12,
+                  left: 16, right: 16, bottom: 44),
+              child: Row(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -395,6 +402,8 @@ class _Header extends StatelessWidget {
                 onPressed: () => context.push('/notifications'),
               ),
             ],
+              ),
+            ),
           ),
         ),
         // Composer bar overlapping the header bottom.
