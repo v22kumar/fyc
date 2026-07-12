@@ -96,6 +96,18 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ role }),
     }),
+  createUser: (payload: {
+    phone_number?: string;
+    email?: string;
+    role: string;
+    full_name_ta: string;
+    full_name_en: string;
+    preferred_language: string;
+  }) =>
+    request<import('@/types').Member>('/api/v1/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   // Membership
   listMembershipCards: () =>

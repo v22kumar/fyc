@@ -46,6 +46,7 @@ export interface Event {
 export interface Member {
   id: string;
   phone_number: string;
+  email?: string | null;
   role: string;
   is_verified: boolean;
   preferred_language: string;

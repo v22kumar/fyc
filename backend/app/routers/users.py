@@ -29,6 +29,7 @@ class UserWithProfile(BaseModel):
 
     id: UUID
     phone_number: Optional[str] = None
+    email: Optional[str] = None
     role: str
     is_verified: bool
     preferred_language: str
@@ -56,6 +57,7 @@ def list_users(
         UserWithProfile(
             id=user.id,
             phone_number=user.phone_number or "",
+            email=user.email or "",
             role=user.role,
             is_verified=user.is_verified,
             preferred_language=user.preferred_language,
@@ -264,6 +266,83 @@ def todays_birthdays(
 
 
 PROMOTABLE_ROLES = ["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN"]
+
+
+class CreateUserPayload(BaseModel):
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    role: str
+    full_name_ta: str
+    full_name_en: str
+    preferred_language: Optional[str] = "en"
+
+
+@router.post("", response_model=UserWithProfile, status_code=status.HTTP_201_CREATED)
+def create_user_by_admin(
+    payload: CreateUserPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Admin: directly create a new user and profile."""
+    if payload.role not in PROMOTABLE_ROLES and payload.role != "SUPER_ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid role. Must be one of: {', '.join(PROMOTABLE_ROLES)}",
+        )
+
+    if payload.phone_number:
+        # Check if phone number is unique within organization
+        existing = db.query(User).filter(
+            User.organization_id == current_user.organization_id,
+            User.phone_number == payload.phone_number,
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this phone number already exists in the organization.",
+            )
+
+    new_user = User(
+        phone_number=payload.phone_number,
+        email=payload.email,
+        role=payload.role,
+        organization_id=current_user.organization_id,
+        is_verified=True,
+        preferred_language=payload.preferred_language or "en",
+    )
+    db.add(new_user)
+    db.flush()
+
+    profile = UserProfile(
+        user_id=new_user.id,
+        full_name_ta=payload.full_name_ta,
+        full_name_en=payload.full_name_en,
+    )
+    db.add(profile)
+
+    if payload.role == "VOLUNTEER":
+        volunteer_meta = VolunteerMetadata(
+            user_id=new_user.id,
+            skills=[],
+            availability_status="AVAILABLE",
+            total_hours_accrued=0.00,
+        )
+        db.add(volunteer_meta)
+
+    db.commit()
+    db.refresh(new_user)
+    db.refresh(profile)
+
+    return UserWithProfile(
+        id=new_user.id,
+        phone_number=new_user.phone_number or "",
+        email=new_user.email or "",
+        role=new_user.role,
+        is_verified=new_user.is_verified,
+        preferred_language=new_user.preferred_language,
+        full_name_ta=profile.full_name_ta,
+        full_name_en=profile.full_name_en,
+    )
 
 
 class PromotePayload(_BaseModel):
