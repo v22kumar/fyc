@@ -19,27 +19,27 @@ import '../widgets/create_weekly_game_sheet.dart';
 
 class _SportFilter {
   final String value; // empty == all
-  final String emoji;
+  final IconData icon;
   final String labelEn;
   final String labelTa;
-  const _SportFilter(this.value, this.emoji, this.labelEn, this.labelTa);
+  const _SportFilter(this.value, this.icon, this.labelEn, this.labelTa);
 }
 
 const _sportFilters = <_SportFilter>[
-  _SportFilter('', '🏅', 'All', 'அனைத்தும்'),
-  _SportFilter('tournaments', '🏆', 'Tournaments', 'போட்டிகள்'),
-  _SportFilter('weekly_games', '🔥', 'Weekly Games', 'வாராந்திர விளையாட்டுகள்'),
-  _SportFilter('chess', '♚', 'Chess', 'சதுரங்கம்'),
+  _SportFilter('', Icons.workspace_premium_rounded, 'All', 'அனைத்தும்'),
+  _SportFilter('tournaments', Icons.emoji_events_rounded, 'Tournaments', 'போட்டிகள்'),
+  _SportFilter('weekly_games', Icons.local_fire_department_rounded, 'Weekly Games', 'வாராந்திர விளையாட்டுகள்'),
+  _SportFilter('chess', Icons.castle_rounded, 'Chess', 'சதுரங்கம்'),
 ];
 
-String sportEmoji(String sport) {
+IconData sportIcon(String sport) {
   final s = sport.toLowerCase();
-  if (s.contains('cricket')) return '🏏';
-  if (s.contains('kabaddi')) return '🤼';
-  if (s.contains('volleyball')) return '🏐';
-  if (s.contains('football')) return '⚽';
-  if (s.contains('chess')) return '♚';
-  return '🏆';
+  if (s.contains('cricket')) return Icons.sports_cricket_rounded;
+  if (s.contains('kabaddi')) return Icons.sports_kabaddi_rounded;
+  if (s.contains('volleyball')) return Icons.sports_volleyball_rounded;
+  if (s.contains('football')) return Icons.sports_soccer_rounded;
+  if (s.contains('chess')) return Icons.castle_rounded;
+  return Icons.emoji_events_rounded;
 }
 
 class SportsHubScreen extends StatefulWidget {
@@ -185,7 +185,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   if (_selectedSport == 'weekly_games') {
                     if (state.weeklyGames.isEmpty) {
                       return EmptyState(
-                        emoji: '🔥',
+                        icon: Icons.local_fire_department_rounded,
                         title: tr(en: 'No Weekly Games', ta: 'வாராந்திர விளையாட்டுகள் இல்லை', hi: 'कोई साप्ताहिक खेल नहीं', ml: 'പ്രതിവാര ഗെയിമുകളൊന്നുമില്ല'),
                         message: tr(en: 'There are no weekly games scheduled at the moment.', ta: 'தற்போது வாராந்திர விளையாட்டுகள் எதுவும் திட்டமிடப்படவில்லை.', hi: 'इस समय कोई साप्ताहिक खेल निर्धारित नहीं है।', ml: 'ഇപ്പോൾ പ്രതിവാര ഗെയിമുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.'),
                         buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
@@ -214,7 +214,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
 
                   if (state.tournaments.isEmpty) {
                     return EmptyState(
-                      emoji: '🏅',
+                      icon: Icons.emoji_events_rounded,
                       title: tr(en: 'No Tournaments', ta: 'போட்டிகள் இல்லை', hi: 'कोई टूर्नामेंट नहीं', ml: 'ടൂർണമെന്റുകളൊന്നുമില്ല'),
                       message: tr(en: 'There are no active sports tournaments at the moment.', ta: 'தற்போது விளையாட்டுப் போட்டிகள் எதுவும் இல்லை.', hi: 'इस समय कोई सक्रिय खेल टूर्नामेंट नहीं है।', ml: 'ഇപ്പോൾ സജീവമായ കായിക ടൂർണമെന്റുകളൊന്നുമില്ല.'),
                       buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
@@ -305,10 +305,12 @@ class _SportTabs extends StatelessWidget {
               child: ChoiceChip(
                 selected: isSelected,
                 onSelected: (_) => onSelect(f.value),
-                label: Text('${f.emoji} ${lang == 'ta' ? f.labelTa : f.labelEn}'),
+                avatar: Icon(f.icon, size: 16,
+                    color: isSelected ? Colors.white : context.cTextSecondary),
+                label: Text(lang == 'ta' ? f.labelTa : f.labelEn),
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : context.cText,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 selectedColor: AppColors.primary,
                 backgroundColor: context.cBackground,
@@ -357,13 +359,14 @@ class _TournamentCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: context.cBackground,
+                      color: AppColors.primary.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      sportEmoji(tournament.sport),
-                      style: const TextStyle(fontSize: 26),
+                    child: Icon(
+                      sportIcon(tournament.sport),
+                      size: 24,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(width: 14),
