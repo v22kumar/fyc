@@ -38,7 +38,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/green/register'),
         backgroundColor: AppColors.primary,
-        icon: const Text('🌳', style: TextStyle(fontSize: 18)),
+        icon: const Icon(Icons.park_rounded),
         label: Text(tr(en: 'Register a Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'ഒരു മരം രജിസ്റ്റർ ചെയ്യുക')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
@@ -179,27 +179,27 @@ class _StatsHeader extends StatelessWidget {
       childAspectRatio: 1.6,
       children: [
         _StatCard(
-          emoji: '🌱',
+          icon: Icons.eco_rounded,
           value: stats.totalPlanted,
           label: tr(en: 'Total Planted', ta: 'மொத்தம் நடப்பட்டது', hi: 'कुल रोपित', ml: 'ആകെ നട്ടത്'),
         ),
         _StatCard(
-          emoji: '🌿',
+          icon: Icons.grass_rounded,
           value: stats.growing,
           label: tr(en: 'Growing', ta: 'வளர்கிறது', hi: 'बढ़ रहे हैं', ml: 'വളരുന്നു'),
         ),
         _StatCard(
-          emoji: '🌳',
+          icon: Icons.park_rounded,
           value: stats.mature,
           label: tr(en: 'Mature', ta: 'முதிர்ந்தது', hi: 'परिपक्व', ml: 'പക്വമായത്'),
         ),
         _StatCard(
-          emoji: '🥀',
+          icon: Icons.local_florist_rounded,
           value: stats.dead,
           label: tr(en: 'Dead', ta: 'அழிந்தது', hi: 'मृत', ml: 'നശിച്ചത്'),
         ),
         _StatCard(
-          emoji: '📋',
+          icon: Icons.assignment_rounded,
           value: stats.drivesCount,
           label: tr(en: 'Drives', ta: 'இயக்கங்கள்', hi: 'अभियान', ml: 'യജ്ഞങ്ങൾ'),
         ),
@@ -209,11 +209,11 @@ class _StatsHeader extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final int value;
   final String label;
   const _StatCard({
-    required this.emoji,
+    required this.icon,
     required this.value,
     required this.label,
   });
@@ -233,7 +233,7 @@ class _StatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 22)),
+              Icon(icon, size: 22, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(
                 '$value',
@@ -309,7 +309,7 @@ class _DriveCard extends StatelessWidget {
                   height: 140,
                   color: AppColors.primarySurface,
                   child: const Center(
-                    child: Text('🌳', style: TextStyle(fontSize: 40)),
+                    child: Icon(Icons.park_rounded, size: 40, color: AppColors.primary),
                   ),
                 ),
               ),
@@ -402,7 +402,7 @@ class _EmptyDrives extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🌳', style: TextStyle(fontSize: 64)),
+            Icon(Icons.park_rounded, size: 64, color: AppColors.primary.withOpacity(0.6)),
             const SizedBox(height: 16),
             Text(
               tr(
