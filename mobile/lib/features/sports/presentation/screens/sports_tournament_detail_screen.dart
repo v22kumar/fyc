@@ -10,6 +10,7 @@ import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
 import '../widgets/live_score_entry_sheet.dart' as import_LiveScoreEntrySheet;
 import '../widgets/register_team_sheet.dart' as import_RegisterTeamSheet;
+import '../widgets/add_fixture_sheet.dart' as import_AddFixtureSheet;
 import 'cricket_scoring_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -182,6 +183,22 @@ class _SportsTournamentDetailScreenState
         backgroundColor: AppColors.accent,
       ));
     }
+  }
+
+  Future<void> _showAddFixtureSheet() async {
+    final s = context.read<SportsBloc>().state;
+    if (s is! SportsDetailLoaded) return;
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.cBackground,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => import_AddFixtureSheet.AddFixtureSheet(
+        tournamentId: widget.tournamentId,
+        teams: s.standings,
+      ),
+    );
+    if (ok == true) _reload();
   }
 
   /// Friendly, localized label + color for the tournament's lifecycle phase.
