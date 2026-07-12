@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE, ORG_ID } from '@/lib/api';
 import { getToken } from '@/lib/auth';
+import toast from 'react-hot-toast';
 
 // Auth + tenant headers for the raw fetches in this scorer (mirrors lib/api).
 function cricketHeaders(json = true): HeadersInit {
@@ -127,6 +128,7 @@ export default function CricketScorer({ params }: { params: { id: string } }) {
 
 function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fixtureId: string }) {
   const [match, setMatch] = useState(initialMatch);
+  const [submittingBall, setSubmittingBall] = useState(false);
   const state = match.match_state;
   
   // We need to track the active players in the UI so the scorer doesn't have to input them
@@ -145,45 +147,66 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
   const [scoringAction, setScoringAction] = useState<any>(null); // For wickets, extras, etc.
   
   async function postBall(payload: any) {
+    if (submittingBall) return;
+    setSubmittingBall(true);
     let finalPayload = { ...payload };
     if (scoringAction?.type === 'PENDING_NEW_BOWLER') {
       finalPayload.new_bowler_name = scoringAction.name;
     }
 
-    const res = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/ball`, {
-      method: 'POST',
-      headers: cricketHeaders(),
-      body: JSON.stringify({
-        striker_id: strikerId,
-        non_striker_id: nonStrikerId,
-        bowler_id: bowlerId,
-        ...finalPayload
-      })
-    });
-    if (!res.ok) {
-      alert("Error scoring ball");
-      return;
-    }
-    const data = await res.json();
-    setMatch({ ...match, match_state: data.match_state });
-    
-    if (scoringAction?.type === 'PENDING_NEW_BOWLER') {
-        // Need to reload to get new bowler ID, or we can just fetch it from data
-        window.location.reload();
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/ball`, {
+        method: 'POST',
+        headers: cricketHeaders(),
+        body: JSON.stringify({
+          striker_id: strikerId,
+          non_striker_id: nonStrikerId,
+          bowler_id: bowlerId,
+          ...finalPayload
+        })
+      });
+      if (!res.ok) {
+        let msg = "Error scoring ball";
+        try {
+          const errData = await res.json();
+          if (errData.message) msg = errData.message;
+        } catch {}
+        toast.error(msg);
+        console.error("Score ball failed:", {
+          fixtureId,
+          strikerId,
+          nonStrikerId,
+          bowlerId,
+          payload: finalPayload,
+          status: res.status
+        });
         return;
-    }
+      }
+      const data = await res.json();
+      setMatch({ ...match, match_state: data.match_state });
+      
+      if (scoringAction?.type === 'PENDING_NEW_BOWLER') {
+          window.location.reload();
+          return;
+      }
 
-    // Auto-swap strike on 1, 3 runs
-    const runs = payload.runs_batter || 0;
-    if (runs === 1 || runs === 3) {
-      swapStrike();
-    }
-    
-    // Auto-swap on over end is tricky if we don't know if the ball completed an over.
-    // The match_state has state.balls. If data.match_state.balls === 0, over is done!
-    if (data.match_state.balls === 0 && data.match_state.overs > 0 && !payload.is_wicket) {
-      swapStrike();
-      setScoringAction({ type: 'NEW_BOWLER' }); // Prompt for next bowler
+      // Auto-swap strike on 1, 3 runs
+      const runs = payload.runs_batter || 0;
+      if (runs === 1 || runs === 3) {
+        swapStrike();
+      }
+      
+      // Auto-swap on over end is tricky if we don't know if the ball completed an over.
+      // The match_state has state.balls. If data.match_state.balls === 0, over is done!
+      if (data.match_state.balls === 0 && data.match_state.overs > 0 && !payload.is_wicket) {
+        swapStrike();
+        setScoringAction({ type: 'NEW_BOWLER' }); // Prompt for next bowler
+      }
+    } catch (err: any) {
+      toast.error("Network error: Failed to score ball");
+      console.error("Score ball error:", err);
+    } finally {
+      setSubmittingBall(false);
     }
   }
 
@@ -276,16 +299,16 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
 
       {/* Controls */}
       <div className="p-4 grid grid-cols-3 gap-3">
-        <button className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 0 })}>0</button>
-        <button className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 1 })}>1</button>
-        <button className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 2 })}>2</button>
-        <button className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 3 })}>3</button>
-        <button className="bg-indigo-100 border-2 border-indigo-300 text-indigo-700 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 4 })}>4</button>
-        <button className="bg-indigo-600 border-2 border-indigo-700 text-white text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform" onClick={() => postBall({ runs_batter: 6 })}>6</button>
+        <button disabled={submittingBall} className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 0 })}>0</button>
+        <button disabled={submittingBall} className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 1 })}>1</button>
+        <button disabled={submittingBall} className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 2 })}>2</button>
+        <button disabled={submittingBall} className="bg-white border-2 border-gray-200 text-gray-800 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 3 })}>3</button>
+        <button disabled={submittingBall} className="bg-indigo-100 border-2 border-indigo-300 text-indigo-700 text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 4 })}>4</button>
+        <button disabled={submittingBall} className="bg-indigo-600 border-2 border-indigo-700 text-white text-xl font-bold p-4 rounded-xl shadow-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => postBall({ runs_batter: 6 })}>6</button>
         
-        <button className="col-span-1 bg-yellow-100 text-yellow-800 font-bold p-3 rounded-xl shadow-sm" onClick={() => setScoringAction({ type: 'WIDE' })}>WIDE</button>
-        <button className="col-span-1 bg-yellow-100 text-yellow-800 font-bold p-3 rounded-xl shadow-sm" onClick={() => setScoringAction({ type: 'NO_BALL' })}>NB</button>
-        <button className="col-span-1 bg-red-100 text-red-700 font-bold p-3 rounded-xl shadow-sm" onClick={() => setScoringAction({ type: 'WICKET' })}>WICKET</button>
+        <button disabled={submittingBall} className="col-span-1 bg-yellow-100 text-yellow-800 font-bold p-3 rounded-xl shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setScoringAction({ type: 'WIDE' })}>WIDE</button>
+        <button disabled={submittingBall} className="col-span-1 bg-yellow-100 text-yellow-800 font-bold p-3 rounded-xl shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setScoringAction({ type: 'NO_BALL' })}>NB</button>
+        <button disabled={submittingBall} className="col-span-1 bg-red-100 text-red-700 font-bold p-3 rounded-xl shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setScoringAction({ type: 'WICKET' })}>WICKET</button>
       </div>
 
       {/* Modals */}
@@ -307,7 +330,7 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
             <input id="w_new" placeholder="New Batter Name" className="w-full border p-2 rounded mb-4" />
             <div className="flex gap-2">
               <button className="flex-1 bg-gray-200 p-2 rounded" onClick={() => setScoringAction(null)}>Cancel</button>
-              <button className="flex-1 bg-red-600 text-white p-2 rounded font-bold" onClick={async () => {
+              <button disabled={submittingBall} className="flex-1 bg-red-600 text-white p-2 rounded font-bold disabled:opacity-50 disabled:cursor-not-allowed" onClick={async () => {
                 const wWho = (document.getElementById('w_who') as HTMLSelectElement).value;
                 const newB = (document.getElementById('w_new') as HTMLInputElement).value;
                 await postBall({

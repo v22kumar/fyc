@@ -136,9 +136,12 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["recent_balls"] = []
             state["overs_history"] = []
 
-        ensure_batter(b.striker_id, b.striker.name)
-        ensure_batter(b.non_striker_id, b.non_striker.name)
-        ensure_bowler(b.bowler_id, b.bowler.name)
+        striker_name = b.striker.name if b.striker else "Unknown striker"
+        non_striker_name = b.non_striker.name if b.non_striker else "Unknown non-striker"
+        bowler_name = b.bowler.name if b.bowler else "Unknown bowler"
+        ensure_batter(b.striker_id, striker_name)
+        ensure_batter(b.non_striker_id, non_striker_name)
+        ensure_bowler(b.bowler_id, bowler_name)
 
         is_legal = b.extras_type not in ["WIDE", "NO_BALL"]
         
@@ -181,7 +184,10 @@ def recalculate_match_state(db: Session, match: CricketMatch):
 
         if b.is_wicket:
             state["wickets"] += 1
-            state["batters"][str(b.player_dismissed_id)]["out"] = True
+            if b.player_dismissed_id:
+                pid_str = str(b.player_dismissed_id)
+                if pid_str in state["batters"]:
+                    state["batters"][pid_str]["out"] = True
             if b.wicket_type in ["BOWLED", "CAUGHT", "LBW", "STUMPED", "HIT_WICKET"]:
                 state["bowlers"][str(b.bowler_id)]["wickets"] += 1
 
@@ -460,12 +466,13 @@ def score_ball(
     )
     try:
         db.add(ball)
-        db.commit()
+        db.flush()
         new_state = recalculate_match_state(db, match)
+        db.commit()
     except Exception as e:
         db.rollback()
-        logger.exception("cricket score_ball failed")
-        return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Unable to record this ball. Database constraint failed."})
+        logger.exception(f"cricket score_ball failed. Match ID: {match.id}, payload: {payload.model_dump()}")
+        return JSONResponse(status_code=400, content={"code": "BALL_SCORING_FAILED", "message": f"Unable to record this ball. Reason: {str(e)}"})
     return {"status": "success", "match_state": new_state}
 
 
