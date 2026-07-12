@@ -72,8 +72,22 @@ def create_event(
     db.refresh(event)
 
     # Notify the tenant only when the event is actually published (drafts stay
-    # silent). Best-effort — never fails the create.
+    # silent). Best-effort — never fails the create. Published events also go
+    # onto the notice board automatically.
     if payload.is_published:
+        from app.services.auto_announce import auto_announce
+        from app.models.announcement import AnnouncementCategory
+        auto_announce(
+            db,
+            org_id=current_user.organization_id,
+            category=AnnouncementCategory.EVENT,
+            title_ta=f"📅 {payload.title_ta}",
+            title_en=f"📅 {payload.title_en}",
+            body_ta=payload.description_ta or payload.title_ta,
+            body_en=payload.description_en or payload.title_en,
+            expires_at=payload.event_end,
+            created_by_user_id=current_user.id,
+        )
         NotificationService.broadcast_to_tenant(
             db=db,
             tenant_id=current_user.organization_id,

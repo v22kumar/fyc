@@ -229,13 +229,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
               child: Container(color: Colors.transparent),
             ),
           // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: CustomPaint(
-                painter: KolamPattern(color: Colors.white.withOpacity(0.04)),
-              ),
-            ),
-          ),
+          const KolamTextureLayer(color: Colors.white),
 
             // ── Form card ─────────────────────────────────────────────
             BlocBuilder<AuthBloc, AuthState>(
