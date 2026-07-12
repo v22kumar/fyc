@@ -17,6 +17,19 @@ class TournamentEntity extends Equatable {
   final String? descriptionEn;
   final DateTime? registrationCloseDate;
 
+  // Rich config (used by the create/edit tournament form). All optional; the
+  // backend TournamentOut supplies them and defaults are applied on parse.
+  final String? venue;
+  final String? prizeDetails;
+  final int? numTeams;
+  final String? matchConfig;
+  final String registrationMode;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final bool showPointsTable;
+  final bool showLiveScores;
+  final bool showPrizeDetails;
+
   const TournamentEntity({
     required this.id,
     required this.nameTa,
@@ -29,6 +42,16 @@ class TournamentEntity extends Equatable {
     this.descriptionTa,
     this.descriptionEn,
     this.registrationCloseDate,
+    this.venue,
+    this.prizeDetails,
+    this.numTeams,
+    this.matchConfig,
+    this.registrationMode = 'MANUAL_APPROVAL',
+    this.startDate,
+    this.endDate,
+    this.showPointsTable = true,
+    this.showLiveScores = true,
+    this.showPrizeDetails = false,
   });
 
   String get effectivePhase => phase ?? status;
