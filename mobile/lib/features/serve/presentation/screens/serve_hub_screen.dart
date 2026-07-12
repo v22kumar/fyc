@@ -73,6 +73,30 @@ class ServeHubScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 28),
+          // ── Marketplace: two first-class peers ───────────────────────────
+          Text(
+            tr(en: 'Marketplace', ta: 'சந்தை', hi: 'बाज़ार', ml: 'മാർക്കറ്റ്'),
+            style: TextStyle(color: context.cText, fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          _PeerCard(
+            icon: Icons.work_rounded,
+            tint: const Color(0xFF16255A),
+            title: tr(en: 'Jobs & Gigs', ta: 'வேலைகள் & பணிகள்', hi: 'नौकरियाँ और काम', ml: 'ജോലികളും ഗിഗുകളും'),
+            subtitle: tr(en: 'Find work · post a job', ta: 'வேலை தேடு · பதிவிடு',
+                hi: 'काम खोजें · नौकरी पोस्ट करें', ml: 'ജോലി കണ്ടെത്തൂ · പോസ്റ്റ് ചെയ്യൂ'),
+            onTap: () => context.push('/opportunities'),
+          ),
+          const SizedBox(height: 12),
+          _PeerCard(
+            icon: Icons.handyman_rounded,
+            tint: const Color(0xFF14B891),
+            title: tr(en: 'Skills Directory', ta: 'திறன் அடைவு', hi: 'कौशल निर्देशिका', ml: 'നൈപുണ്യ ഡയറക്ടറി'),
+            subtitle: tr(en: 'Hire local skills · offer yours', ta: 'திறன்களை பாருங்கள் · வழங்குங்கள்',
+                hi: 'स्थानीय कौशल किराए पर लें', ml: 'പ്രാദേശിക നൈപുണ്യം · നിങ്ങളുടേത് നൽകൂ'),
+            onTap: () => context.push('/community'),
+          ),
+          const SizedBox(height: 28),
           // ── Emergency numbers ────────────────────────────────────────────
           Text(
             tr(en: 'Emergency Numbers', ta: 'அவசர எண்கள்', hi: 'आपातकालीन नंबर', ml: 'അടിയന്തര നമ്പറുകൾ'),
@@ -139,6 +163,64 @@ class _Action extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PeerCard extends StatelessWidget {
+  final IconData icon;
+  final Color tint;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _PeerCard({
+    required this.icon,
+    required this.tint,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: context.cSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.cBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: tint.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: tint, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(color: context.cText, fontSize: 15, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: TextStyle(color: context.cTextSecondary, fontSize: 12.5)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: context.cTextSecondary),
+          ],
         ),
       ),
     );
