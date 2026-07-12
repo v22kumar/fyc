@@ -148,7 +148,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
     final ta = _lang == 'ta';
     if (events.isEmpty) {
       return EmptyState(
-        emoji: '🎗️',
+        icon: Icons.event_rounded,
         imageAsset: 'assets/illustrations/empty_events.png',
         title: tr(en: 'No Events Right Now', ta: 'தற்போது நிகழ்வுகள் இல்லை', hi: 'अभी कोई कार्यक्रम नहीं', ml: 'ഇപ്പോൾ പരിപാടികളൊന്നുമില്ല'),
         message: tr(
@@ -188,7 +188,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
   Widget _myEvents() {
     final ta = _lang == 'ta';
     return EmptyState(
-      emoji: '🎟️',
+      icon: Icons.confirmation_number_rounded,
       title: tr(en: 'Your registrations appear here', ta: 'பதிவுகள் இங்கே தோன்றும்', hi: 'आपके पंजीकरण यहाँ दिखेंगे', ml: 'നിങ്ങളുടെ രജിസ്ട്രേഷനുകൾ ഇവിടെ കാണാം'),
       message: tr(
           en: 'Events you register for or check in to will show up here.',

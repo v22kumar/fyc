@@ -65,8 +65,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(ta
-              ? 'நீங்கள் சமீபத்திய பதிப்பைப் பயன்படுத்துகிறீர்கள் ✅'
-              : "You're on the latest version ✅"),
+              ? 'நீங்கள் சமீபத்திய பதிப்பைப் பயன்படுத்துகிறீர்கள்'
+              : "You're on the latest version"),
           backgroundColor: AppColors.primary,
         ),
       );

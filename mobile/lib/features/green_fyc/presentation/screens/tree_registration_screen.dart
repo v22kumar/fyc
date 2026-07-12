@@ -135,10 +135,10 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
               context,
               title: tr(en: 'Success', ta: 'வெற்றி', hi: 'सफलता', ml: 'വിജയം'),
               message: tr(
-                en: 'Tree registered successfully! 🌳',
-                ta: 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது! 🌳',
-                hi: 'पेड़ सफलतापूर्वक पंजीकृत हो गया! 🌳',
-                ml: 'മരം വിജയകരമായി രജിസ്റ്റർ ചെയ്തു! 🌳',
+                en: 'Tree registered successfully!',
+                ta: 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது!',
+                hi: 'पेड़ सफलतापूर्वक पंजीकृत हो गया!',
+                ml: 'മരം വിജയകരമായി രജിസ്റ്റർ ചെയ്തു!',
               ),
             );
             context.pop();
@@ -337,7 +337,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                     child: isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            tr(en: 'Register Tree 🌳', ta: 'மரம் பதிவு செய்க 🌳', hi: 'पेड़ पंजीकृत करें 🌳', ml: 'മരം രജിസ്റ്റർ ചെയ്യുക 🌳'),
+                            tr(en: 'Register Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'മരം രജിസ്റ്റർ ചെയ്യുക'),
                             style: const TextStyle(fontSize: 16),
                           ),
                   ),
