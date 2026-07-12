@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/design_system/patterns/kolam_background.dart';
 import '../../../../service_locator.dart';
 import '../../../../main.dart';
 
@@ -116,6 +117,14 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
             child: Container(color: Colors.transparent),
+          ),
+          // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: KolamPattern(color: Colors.white.withOpacity(0.04)),
+              ),
+            ),
           ),
 
           // Content

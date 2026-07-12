@@ -24,8 +24,14 @@ class AppColors {
   static const Color darkBg = Color(0xFF0A1128);        // navy900 — aurora base
   static const Color darkSurface = Color(0xFF16255A);   // navy700 — aurora mid
 
-  static const Color background = Color(0xFFF7F8FC);    // cool navy-tinted paper
-  static const Color surface = Color(0xFFFFFFFF);
+  // MD3 tonal ladder (docs/design/md3-elite-redesign.md §3.1) — no pure
+  // white anywhere: cards are tinted "paper", the scaffold sits one tone
+  // deeper, and hierarchy reads through tone instead of borders/shadows.
+  static const Color background = Color(0xFFF2F4FA);    // surface (scaffold)
+  static const Color surface = Color(0xFFF9FAFE);       // surfaceBright (cards/sheets)
+  static const Color surfaceContainerLow = Color(0xFFECEFF7);
+  static const Color surfaceContainer = Color(0xFFE6EAF4);
+  static const Color surfaceContainerHigh = Color(0xFFE0E5F1);
 
   static const Color textPrimary = Color(0xFF0A1128);    // navy900 ink
   static const Color textSecondary = Color(0xFF5B6478);  // slate
@@ -198,7 +204,7 @@ class AppTheme {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFFF1F5F9),
+          fillColor: AppColors.surfaceContainer,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide.none,
