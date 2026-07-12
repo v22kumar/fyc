@@ -4,16 +4,24 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.opportunity import Opportunity, OpportunityApplication
+from app.models.opportunity import Opportunity, OpportunityApplication, MARKETPLACE_TYPES
 from app.models.user import User
 from app.models.audit import AuditLog
-from app.schemas.opportunity import OpportunityCreate, OpportunityUpdate, OpportunityOut
+from app.schemas.opportunity import (
+    OpportunityCreate,
+    OpportunityUpdate,
+    OpportunityOut,
+    OpportunityDetailOut,
+)
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
 
 require_manager = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
+# Posting is a member marketplace, not a noticeboard: any signed-in member
+# (CLUB_MEMBER and above) can post a job or volunteer drive.
+require_member = RoleChecker(["CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 
 @router.get("", response_model=List[OpportunityOut])
@@ -22,23 +30,59 @@ def list_opportunities(
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
 ):
-    """Public list of active opportunities. Filter by ?type=VOLUNTEER or ?type=COURSE."""
+    """Public Jobs feed. Returns active JOB + VOLUNTEER postings; filter with
+    ?type=JOB or ?type=VOLUNTEER. Legacy COURSE rows are never surfaced — a
+    ?type=COURSE (or any unknown type) request is rejected. `contact_phone` is
+    withheld here; fetch the authenticated detail endpoint to reveal it."""
     query = db.query(Opportunity).filter(
         Opportunity.organization_id == tenant_id,
         Opportunity.is_active == True,
     )
     if type:
-        query = query.filter(Opportunity.type == type.upper())
+        wanted = type.upper()
+        if wanted not in MARKETPLACE_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid type. Use JOB or VOLUNTEER.",
+            )
+        query = query.filter(Opportunity.type == wanted)
+    else:
+        query = query.filter(Opportunity.type.in_(MARKETPLACE_TYPES))
     return query.order_by(Opportunity.created_at.desc()).all()
+
+
+@router.get("/{opp_id}", response_model=OpportunityDetailOut)
+def get_opportunity(
+    opp_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Authenticated detail view. Unlike the public list, this includes the
+    poster's `contact_phone` so a signed-in member can reach out to apply."""
+    opp = db.query(Opportunity).filter(
+        Opportunity.id == opp_id,
+        Opportunity.organization_id == tenant_id,
+        Opportunity.type.in_(MARKETPLACE_TYPES),
+    ).first()
+    if not opp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Opportunity not found")
+    return opp
 
 
 @router.post("", response_model=OpportunityOut, status_code=status.HTTP_201_CREATED)
 def create_opportunity(
     payload: OpportunityCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_manager),
+    current_user: User = Depends(require_member),
 ):
-    """Create a new opportunity (EXECUTIVE_MEMBER, ADMIN, SUPER_ADMIN only)."""
+    """Post a job or volunteer drive. Open to any signed-in member (CLUB_MEMBER+);
+    the poster is stamped as `posted_by`."""
+    if payload.type not in MARKETPLACE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid type. Use JOB or VOLUNTEER.",
+        )
     opp = Opportunity(
         organization_id=current_user.organization_id,
         type=payload.type,
@@ -53,6 +97,9 @@ def create_opportunity(
         location_en=payload.location_en,
         description_ta=payload.description_ta,
         description_en=payload.description_en,
+        budget=payload.budget,
+        contact_phone=payload.contact_phone,
+        posted_by=current_user.id,
         is_active=payload.is_active,
     )
     db.add(opp)

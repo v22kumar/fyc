@@ -6,12 +6,18 @@ from app.models.base import GUID, TimestampMixin, TenantModelMixin
 
 
 class OpportunityType(str, enum.Enum):
-    VOLUNTEER = "VOLUNTEER"
-    COURSE = "COURSE"
+    JOB = "JOB"              # a paid gig — carries a budget
+    VOLUNTEER = "VOLUNTEER"  # unpaid community work
+    COURSE = "COURSE"        # legacy only — retained so old rows parse; not posted or listed
+
+
+# Types surfaced in the Jobs marketplace. COURSE is deliberately excluded — it is
+# a retired concept folded into the Skills directory (see the re-architecture spec).
+MARKETPLACE_TYPES = {OpportunityType.JOB.value, OpportunityType.VOLUNTEER.value}
 
 
 class Opportunity(Base, TimestampMixin, TenantModelMixin):
-    """Volunteer opportunities and skill courses published by the organization."""
+    """A marketplace posting members apply to — a paid job or a volunteer drive."""
     __tablename__ = "opportunities"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -27,6 +33,14 @@ class Opportunity(Base, TimestampMixin, TenantModelMixin):
     location_en = Column(String(200), nullable=True)
     description_ta = Column(String(1000), nullable=True)
     description_en = Column(String(1000), nullable=True)
+    # Pay/budget display, e.g. "₹500/day" or "₹2,000 fixed". Null ⇒ unspecified
+    # (volunteer drives leave this empty). Informational only — no in-app payments.
+    budget = Column(String(60), nullable=True)
+    # How an applicant reaches the poster. Member-only: never returned on the
+    # public list, only via the authenticated detail endpoint.
+    contact_phone = Column(String(15), nullable=True)
+    # The member who posted this (marketplace authorship). Null for legacy rows.
+    posted_by = Column(GUID(), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
 
 

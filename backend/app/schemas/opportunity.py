@@ -17,6 +17,8 @@ class OpportunityCreate(BaseModel):
     location_en: Optional[str] = None
     description_ta: Optional[str] = None
     description_en: Optional[str] = None
+    budget: Optional[str] = None
+    contact_phone: Optional[str] = None
     is_active: bool = True
 
 
@@ -32,10 +34,14 @@ class OpportunityUpdate(BaseModel):
     location_en: Optional[str] = None
     description_ta: Optional[str] = None
     description_en: Optional[str] = None
+    budget: Optional[str] = None
+    contact_phone: Optional[str] = None
     is_active: Optional[bool] = None
 
 
 class OpportunityOut(BaseModel):
+    """Public list shape. Deliberately omits `contact_phone` — the poster's
+    number is member-only and served solely by the authenticated detail path."""
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -52,4 +58,12 @@ class OpportunityOut(BaseModel):
     location_en: Optional[str]
     description_ta: Optional[str]
     description_en: Optional[str]
+    budget: Optional[str]
+    posted_by: Optional[UUID]
     is_active: bool
+
+
+class OpportunityDetailOut(OpportunityOut):
+    """Authenticated detail shape — adds the poster's `contact_phone`. Returned
+    only from the auth-gated GET /opportunities/{id}, never from the public list."""
+    contact_phone: Optional[str]
