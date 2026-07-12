@@ -19,16 +19,17 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 // ── Category definitions ──────────────────────────────────────────────────────
 
 class _Cat {
-  final String id, emoji, labelTa, labelEn, subtitleEn;
+  final String id, labelTa, labelEn, subtitleEn;
+  final IconData icon;
   final Color color;
-  const _Cat(this.id, this.emoji, this.labelTa, this.labelEn, this.subtitleEn, this.color);
+  const _Cat(this.id, this.icon, this.labelTa, this.labelEn, this.subtitleEn, this.color);
 }
 
 const _categories = [
-  _Cat('ROAD_TRAFFIC', '🛣️', 'சாலை / போக்குவரத்து', 'Road/Traffic', 'Potholes, Blockages, etc.', Color(0xFF16A34A)),
-  _Cat('POWER_CUT',    '⚡',  'மின் தடை',          'Power Cut',    'Outages, Broken wires',    Color(0xFFD97706)),
-  _Cat('WATER',        '💧',  'தண்ணீர் பிரச்சனை',    'Water',        'Leakages, Supply, etc.',   Color(0xFF2563EB)),
-  _Cat('OTHER',        '📋',  'மற்றவை',             'Other',        'Other general issues',     Color(0xFF6B7280)),
+  _Cat('ROAD_TRAFFIC', Icons.add_road_rounded, 'சாலை / போக்குவரத்து', 'Road/Traffic', 'Potholes, Blockages, etc.', Color(0xFF16A34A)),
+  _Cat('POWER_CUT',    Icons.bolt_rounded,     'மின் தடை',          'Power Cut',    'Outages, Broken wires',    Color(0xFFD97706)),
+  _Cat('WATER',        Icons.water_drop_rounded, 'தண்ணீர் பிரச்சனை',  'Water',        'Leakages, Supply, etc.',   Color(0xFF2563EB)),
+  _Cat('OTHER',        Icons.more_horiz_rounded, 'மற்றவை',           'Other',        'Other general issues',     Color(0xFF6B7280)),
 ];
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -216,7 +217,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
-                        Text(c.emoji, style: const TextStyle(fontSize: 20)),
+                        Icon(c.icon, size: 20, color: c.color),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -467,7 +468,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             const SizedBox(height: 10),
             Center(
               child: Text(
-                tr(en: '🔒 Your data is safe with us. We never share your personal info.', ta: '🔒 உங்கள் தகவல் பாதுகாக்கப்படும். யாரிடமும் பகிர்வதில்லை.', hi: '🔒 आपका डेटा हमारे पास सुरक्षित है। हम आपकी निजी जानकारी कभी साझा नहीं करते।', ml: '🔒 നിങ്ങളുടെ വിവരങ്ങൾ ഞങ്ങളുടെ പക്കൽ സുരക്ഷിതമാണ്. നിങ്ങളുടെ വ്യക്തിവിവരം ഞങ്ങൾ പങ്കിടില്ല.'),
+                tr(en: 'Your data is safe with us. We never share your personal info.', ta: 'உங்கள் தகவல் பாதுகாக்கப்படும். யாரிடமும் பகிர்வதில்லை.', hi: 'आपका डेटा हमारे पास सुरक्षित है। हम आपकी निजी जानकारी कभी साझा नहीं करते।', ml: 'നിങ്ങളുടെ വിവരങ്ങൾ ഞങ്ങളുടെ പക്കൽ സുരക്ഷിതമാണ്. നിങ്ങളുടെ വ്യക്തിവിവരം ഞങ്ങൾ പങ്കിടില്ല.'),
                 style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -765,7 +766,7 @@ class _CategoryGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(cat.emoji, style: const TextStyle(fontSize: 26)),
+                Icon(cat.icon, size: 26, color: cat.color),
                 const SizedBox(height: 4),
                 Text(
                   isTa ? cat.labelTa : cat.labelEn,

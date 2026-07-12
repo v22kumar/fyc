@@ -62,7 +62,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           if (state is AnnouncementLoaded) {
             if (state.announcements.isEmpty) {
               return EmptyState(
-                emoji: '📢',
+                icon: Icons.campaign_rounded,
                 title: tr(en: 'No Announcements', ta: 'அறிவிப்புகள் இல்லை', hi: 'कोई घोषणा नहीं', ml: 'അറിയിപ്പുകളൊന്നുമില്ല'),
                 message: tr(en: 'You\'re all caught up! There are no new announcements from FYC.', ta: 'FYC இலிருந்து புதிய அறிவிப்புகள் எதுவும் இல்லை.', hi: 'आप पूरी तरह अपडेट हैं! FYC से कोई नई घोषणा नहीं है।', ml: 'നിങ്ങൾ എല്ലാം കണ്ടുകഴിഞ്ഞു! FYC-യിൽ നിന്ന് പുതിയ അറിയിപ്പുകളൊന്നുമില്ല.'),
                 buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'रिफ्रेश करें', ml: 'പുതുക്കുക'),
@@ -170,7 +170,7 @@ class _AnnouncementCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (announcement.isPinned)
-                    const Text('📌', style: TextStyle(fontSize: 16)),
+                    const Icon(Icons.push_pin_rounded, size: 16, color: AppColors.warning),
                 ],
               ),
               const SizedBox(height: 10),
