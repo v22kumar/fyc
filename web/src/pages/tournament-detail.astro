@@ -187,16 +187,17 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 document.getElementById('t-description').innerHTML = sanitizeHtml(marked.parse(tournament.description_en));
             }
 
+            const token = localStorage.getItem('fyc_token');
+            const role = localStorage.getItem('fyc_role');
+            const isAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'EXECUTIVE_MEMBER';
+
             const submitBtn = document.getElementById('submitBtn');
-            if (tournament.status !== 'UPCOMING') {
+            if (tournament.status !== 'UPCOMING' && !isAdmin) {
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Registration Closed';
             }
-
-            const token = localStorage.getItem('fyc_token');
-            const role = localStorage.getItem('fyc_role');
             
-            if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'EXECUTIVE_MEMBER') {
+            if (isAdmin) {
                 document.getElementById('admin-tools').classList.remove('hidden');
                 loadAdminTeams(tournament.id, token);
             }
@@ -292,7 +293,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         const adminUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://fyc-admin.fly.dev';
 
         container.innerHTML = `<div class="flex flex-col gap-4">` + fixtures.map((f) => {
-            const showAdminControls = isAdmin && f.status !== 'COMPLETED';
+            const showAdminControls = isAdmin;
             const adminControlsHtml = showAdminControls ? `
                 <div class="mt-4 flex gap-2 justify-end border-t border-gray-100 pt-3">
                     <button onclick="openResultModal('${f.id}', '${escapeHtml(f.team_a_name || 'Team A')}', '${escapeHtml(f.team_b_name || 'Team B')}', '${escapeHtml(f.team_a_id)}', '${escapeHtml(f.team_b_id)}')" class="bg-white border border-[#064e3b] text-[#064e3b] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-50 transition-colors shadow-sm">Enter Score</button>
