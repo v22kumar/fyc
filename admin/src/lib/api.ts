@@ -91,6 +91,11 @@ export const api = {
     request<import('@/types').Member[]>(
       `/api/v1/users${role ? `?role=${role}` : ''}`,
     ),
+  promoteUser: (userId: string, role: string) =>
+    request<{ ok: boolean; user_id: string; new_role: string }>(`/api/v1/users/${userId}/promote`, {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    }),
 
   // Membership
   listMembershipCards: () =>

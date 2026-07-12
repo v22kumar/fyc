@@ -21,14 +21,31 @@ const ROLE_COLORS: Record<string, string> = {
   SUPER_ADMIN:      'bg-red-100    text-red-700',
 };
 
+const PROMOTABLE_ROLES = ["PUBLIC_CITIZEN", "VOLUNTEER", "CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN"];
+
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
 
   useEffect(() => {
     api.listMembers().then(setMembers).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  async function handlePromote(userId: string, newRole: string) {
+    setPromotingId(userId);
+    try {
+      await api.promoteUser(userId, newRole);
+      setMembers((prev) =>
+        prev.map((m) => (m.id === userId ? { ...m, role: newRole } : m))
+      );
+    } catch (err: any) {
+      alert(err.message ?? 'Failed to promote user');
+    } finally {
+      setPromotingId(null);
+    }
+  }
 
   const shown = filter
     ? members.filter((m) => m.role === filter)
@@ -72,6 +89,7 @@ export default function MembersPage() {
                 <th className="text-left px-5 py-3">Role</th>
                 <th className="text-left px-5 py-3">Lang</th>
                 <th className="text-left px-5 py-3">Verified</th>
+                <th className="text-left px-5 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -96,6 +114,29 @@ export default function MembersPage() {
                     <span className={m.is_verified ? 'text-green-600' : 'text-gray-400'}>
                       {m.is_verified ? '✓' : '–'}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {m.role === 'SUPER_ADMIN' ? (
+                      <span className="text-xs text-gray-400 italic font-medium">No Actions</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={m.role}
+                          disabled={promotingId === m.id}
+                          onChange={(e) => handlePromote(m.id, e.target.value)}
+                          className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
+                        >
+                          {PROMOTABLE_ROLES.map((role) => (
+                            <option key={role} value={role}>
+                              Change to {ROLE_LABELS[role] || role}
+                            </option>
+                          ))}
+                        </select>
+                        {promotingId === m.id && (
+                          <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
