@@ -58,6 +58,20 @@ def create_opportunity(
     db.add(opp)
     db.commit()
     db.refresh(opp)
+
+    # A live opportunity is club news — surface it on the notice board too.
+    if payload.is_active:
+        from app.services.auto_announce import auto_announce
+        from app.models.announcement import AnnouncementCategory
+        auto_announce(
+            db,
+            org_id=current_user.organization_id,
+            category=AnnouncementCategory.OPPORTUNITY,
+            title_ta=f"💼 {payload.title_ta}",
+            title_en=f"💼 {payload.title_en}",
+            body_ta=payload.description_ta or payload.title_ta,
+            body_en=payload.description_en or payload.title_en,
+        )
     return opp
 
 

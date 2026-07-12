@@ -163,6 +163,24 @@ def create_tournament(
     db.add(t)
     db.commit()
     db.refresh(t)
+
+    # Official tournaments go straight onto the notice board; member DRAFTs
+    # stay silent until an admin publishes them.
+    if status == "UPCOMING":
+        from app.services.auto_announce import auto_announce
+        from app.models.announcement import AnnouncementCategory
+        sport = (payload.sport or "").title()
+        auto_announce(
+            db,
+            org_id=current_user.organization_id,
+            category=AnnouncementCategory.EVENT,
+            title_ta=f"🏆 {payload.name_ta} — பதிவு தொடங்கியது",
+            title_en=f"🏆 {payload.name_en} — registration open",
+            body_ta=f"{payload.name_ta} ({sport}) போட்டிக்கான பதிவு தொடங்கிவிட்டது. Play → Sports Hub-இல் அணியை பதிவு செய்யுங்கள்.",
+            body_en=f"Registration for {payload.name_en} ({sport}) has opened. Register your team in Play → Sports Hub.",
+            expires_at=payload.registration_close_date,
+            created_by_user_id=current_user.id,
+        )
     t.phase = _tournament_phase(db, t)
     return t
 

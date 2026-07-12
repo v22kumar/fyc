@@ -255,6 +255,22 @@ def create_tournament(
     db.add(tour)
     db.commit()
     db.refresh(tour)
+
+    # A tournament opening for registration IS club news — put it on the
+    # notice board automatically instead of relying on a separate admin post.
+    from app.services.auto_announce import auto_announce
+    from app.models.announcement import AnnouncementCategory
+    auto_announce(
+        db,
+        org_id=tenant_id,
+        category=AnnouncementCategory.EVENT,
+        title_ta=f"♟️ {name} — பதிவு தொடங்கியது",
+        title_en=f"♟️ {name} — registration open",
+        body_ta=f"{name} சதுரங்கப் போட்டிக்கான பதிவு இப்போது திறந்துள்ளது. Play → Chess → Tournaments-இல் பதிவு செய்யுங்கள்.",
+        body_en=f"Registration for the {name} chess tournament is now open. Register in Play → Chess → Tournaments.",
+        expires_at=payload.registration_deadline,
+        created_by_user_id=current_user.id,
+    )
     return _serialize(db, tour, current_user.id)
 
 

@@ -119,13 +119,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
             child: Container(color: Colors.transparent),
           ),
           // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: CustomPaint(
-                painter: KolamPattern(color: Colors.white.withOpacity(0.04)),
-              ),
-            ),
-          ),
+          const KolamTextureLayer(color: Colors.white),
 
           // Content
           FadeTransition(

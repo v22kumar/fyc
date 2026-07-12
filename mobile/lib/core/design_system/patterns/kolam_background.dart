@@ -45,6 +45,27 @@ class KolamPattern extends CustomPainter {
       oldDelegate.color != color || oldDelegate.spacing != spacing;
 }
 
+/// A single kolam texture layer for use inside an existing [Stack] — the
+/// aurora auth screens already manage their own Stacks, so they take just
+/// the layer instead of the wrapping [KolamBackground].
+class KolamTextureLayer extends StatelessWidget {
+  final Color color;
+  final double opacity;
+
+  const KolamTextureLayer({super.key, required this.color, this.opacity = 0.04});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: RepaintBoundary(
+        child: CustomPaint(
+          painter: KolamPattern(color: color.withOpacity(opacity)),
+        ),
+      ),
+    );
+  }
+}
+
 /// Layers the kolam texture between the scaffold color and [child].
 ///
 /// Defaults are theme-aware: 3% navy ink in light, 4% white in dark. Pass
