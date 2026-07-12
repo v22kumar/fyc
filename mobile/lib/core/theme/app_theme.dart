@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../design_system/typography.dart';
 
 class AppColors {
   AppColors._();
@@ -115,38 +115,31 @@ class AppTheme {
         ),
       ];
 
-  /// The app-wide type scale, shared by light and dark (only `primary`/
-  /// `secondary` text color differs between them — previously they didn't
-  /// share a scale at all: light hand-overrode 7 of 12 TextTheme slots while
-  /// dark fell through to Material's stock sizes, so the two themes actually
-  /// rendered text at different sizes). Mirrors DSTypography's hierarchy
-  /// (core/design_system/typography.dart) — nothing below 14sp — while
-  /// keeping the Outfit font already in use everywhere; adopting DSTypography's
-  /// own per-language font families (Plus Jakarta Sans / Noto Sans Tamil etc.)
-  /// is a separate follow-up, since the theme doesn't currently rebuild on
-  /// language change.
-  static TextTheme _textTheme({required Color primary, required Color secondary}) {
-    TextStyle s(double size, FontWeight w, {double? ls, double? h, Color? c}) =>
-        GoogleFonts.outfit(fontSize: size, fontWeight: w, letterSpacing: ls, height: h, color: c ?? primary);
+  /// The app-wide type scale is now the design system's own DSTypography
+  /// (core/design_system/typography.dart): Plus Jakarta Sans for Latin, the
+  /// matching Noto Sans family per script (Tamil/Hindi/Malayalam), nothing
+  /// below 14sp. This is the audit's Critical fix — Outfit ships no Tamil/
+  /// Devanagari/Malayalam glyphs, so the primary language silently fell back
+  /// to a system font. The theme is now built per-language and rebuilt on
+  /// language change (see AppTheme.lightFor / main.dart), so the correct
+  /// script font is always active.
+  static TextTheme _textTheme(String lang, {required Color primary, required Color secondary}) =>
+      DSTypography.textTheme(lang, color: primary, secondaryColor: secondary);
 
-    return TextTheme(
-      displayLarge: s(34, FontWeight.w800, ls: -0.6, h: 1.15),
-      displayMedium: s(28, FontWeight.w800, ls: -0.4, h: 1.2),
-      headlineLarge: s(24, FontWeight.w700, ls: -0.3, h: 1.25),
-      headlineMedium: s(24, FontWeight.w700, ls: -0.4),
-      titleLarge: s(18, FontWeight.w700, h: 1.3),
-      titleMedium: s(16, FontWeight.w600, h: 1.35),
-      titleSmall: s(14, FontWeight.w600, h: 1.35),
-      bodyLarge: s(16, FontWeight.w400, h: 1.5),
-      bodyMedium: s(15, FontWeight.w400, h: 1.5, c: secondary),
-      bodySmall: s(14, FontWeight.w400, h: 1.45, c: secondary),
-      labelLarge: s(15, FontWeight.w700, ls: 0.2),
-      labelMedium: s(14, FontWeight.w700, ls: 0.2),
-      labelSmall: s(14, FontWeight.w600, ls: 0.2, c: secondary),
-    );
-  }
+  /// The design-system font for a given language — used for the handful of
+  /// component text styles (app-bar title, buttons, inputs, chips) that sit
+  /// outside the TextTheme.
+  static TextStyle _font(String lang,
+          {required double fontSize, required FontWeight fontWeight, double? letterSpacing, Color? color}) =>
+      DSFonts.style(lang, fontSize: fontSize, fontWeight: fontWeight, letterSpacing: letterSpacing, color: color);
 
-  static ThemeData get light => ThemeData(
+  /// Backward-compatible getters — the app is Tamil-first, so a caller that
+  /// doesn't specify a language gets the Tamil-capable theme. The live app
+  /// passes the real language via [lightFor]/[darkFor] and rebuilds on change.
+  static ThemeData get light => lightFor('ta');
+  static ThemeData get dark => darkFor('ta');
+
+  static ThemeData lightFor(String lang) => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
@@ -157,18 +150,13 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.background,
-        textTheme: _textTheme(primary: AppColors.textPrimary, secondary: AppColors.textSecondary),
+        textTheme: _textTheme(lang, primary: AppColors.textPrimary, secondary: AppColors.textSecondary),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
+          titleTextStyle: _font(lang, color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -179,11 +167,7 @@ class AppTheme {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radiusBtn),
             ),
-            textStyle: GoogleFonts.outfit(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
+            textStyle: _font(lang, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
             elevation: 0,
           ),
         ),
@@ -195,11 +179,7 @@ class AppTheme {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radiusBtn),
             ),
-            textStyle: GoogleFonts.outfit(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
+            textStyle: _font(lang, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -222,8 +202,8 @@ class AppTheme {
             borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          hintStyle: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
-          labelStyle: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
+          hintStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
+          labelStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
         cardTheme: CardThemeData(
           color: AppColors.surface,
@@ -244,7 +224,7 @@ class AppTheme {
         chipTheme: ChipThemeData(
           backgroundColor: AppColors.background,
           selectedColor: AppColors.primary,
-          labelStyle: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold),
+          labelStyle: _font(lang, fontSize: 14, fontWeight: FontWeight.bold),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
@@ -252,7 +232,7 @@ class AppTheme {
         ),
       );
 
-  static ThemeData get dark => ThemeData(
+  static ThemeData darkFor(String lang) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
@@ -265,18 +245,13 @@ class AppTheme {
           error: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.darkBackground,
-        textTheme: _textTheme(primary: AppColors.darkText, secondary: AppColors.darkTextSecondary),
+        textTheme: _textTheme(lang, primary: AppColors.darkText, secondary: AppColors.darkTextSecondary),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.darkBackground,
           foregroundColor: AppColors.darkText,
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: GoogleFonts.outfit(
-            color: AppColors.darkText,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
+          titleTextStyle: _font(lang, color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           iconTheme: const IconThemeData(color: AppColors.darkText),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -285,7 +260,7 @@ class AppTheme {
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 54),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusBtn)),
-            textStyle: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            textStyle: _font(lang, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
             elevation: 0,
           ),
         ),
@@ -305,7 +280,7 @@ class AppTheme {
             borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          hintStyle: GoogleFonts.outfit(color: AppColors.darkTextSecondary, fontSize: 14),
+          hintStyle: _font(lang, color: AppColors.darkTextSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
         cardTheme: CardThemeData(
           color: AppColors.darkCard,
