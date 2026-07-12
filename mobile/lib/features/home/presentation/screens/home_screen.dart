@@ -24,12 +24,10 @@ import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  /// When hosted inside [AppShellV2] as the Home tab, the shell provides the
-  /// bottom navigation + center Create FAB, so Home must not draw its own
-  /// `_BottomBar` (that would stack two navigation bars).
-  final bool embedded;
-
-  const HomeScreen({super.key, this.embedded = false});
+  /// Home is always hosted inside [AppShellV2], which provides the single
+  /// bottom navigation + center Create FAB. It never draws its own nav bar
+  /// (audit #05: one navigation shell, not two divergent ones).
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -117,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        bottomNavigationBar: widget.embedded ? null : const _BottomBar(),
       ),
     );
   }
@@ -1068,113 +1065,6 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ── Bottom Bar with center Create FAB ────────────────────────────────────────
-
-class _BottomBar extends StatelessWidget {
-  const _BottomBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-      color: Colors.transparent,
-      child: SizedBox(
-        height: 76,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            // Bar
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(26),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: Container(
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: context.cSurface.withOpacity(0.96),
-                      borderRadius: BorderRadius.circular(26),
-                      border: Border.all(color: context.cBorder),
-                      boxShadow: context.isDark ? null : AppTheme.cardShadow,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _NavItem(icon: Icons.home_rounded, label: 'Home', active: true, onTap: () {}),
-                        _NavItem(icon: Icons.grid_view_rounded, label: 'Services', onTap: () => _showMoreSheet(context)),
-                        const SizedBox(width: 56),
-                        _NavItem(icon: Icons.people_alt_rounded, label: 'Community', onTap: () => context.push('/feed')),
-                        _NavItem(icon: Icons.person_rounded, label: 'Profile', onTap: () => context.push('/profile')),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Center Create FAB
-            Positioned(
-              top: 0,
-              child: GestureDetector(
-                onTap: () => _showCreateSheet(context),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.gradientPrimary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: context.cBackground, width: 3),
-                        boxShadow: [
-                          BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4)),
-                        ],
-                      ),
-                      child: const Icon(Icons.add, color: Colors.white, size: 28),
-                    ),
-                    const SizedBox(height: 2),
-                    Text('Create', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _NavItem({required this.icon, required this.label, required this.onTap, this.active = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active
-        ? (context.isDark ? AppColors.primaryLight : AppColors.primary)
-        : context.cTextSecondary;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── Language Picker ──────────────────────────────────────────────────────────
 

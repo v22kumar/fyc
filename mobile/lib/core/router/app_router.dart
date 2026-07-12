@@ -146,8 +146,12 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
+      // Home is only ever shown embedded in the one nav shell (AppShellV2) —
+      // there is no standalone Home with its own bottom bar. `/home` and the
+      // legacy fallback both resolve to the same shell as `/app` (audit #05:
+      // one navigation, one FAB, one information architecture).
       path: '/home',
-      builder: (context, state) => const HomeScreen(),
+      builder: _appShellBuilder,
     ),
     GoRoute(
       path: '/search',
@@ -493,7 +497,7 @@ final appRouter = GoRouter(
 Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
       onCreate: () => showHomeCreateSheet(context),
       tabs: [
-        const HomeScreen(embedded: true),
+        const HomeScreen(),
         const FeedScreen(),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),
