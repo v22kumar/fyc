@@ -317,13 +317,16 @@ class _EmergencyBanner extends StatelessWidget {
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          // Rose is the app's single blood/urgency (danger) role — the banner
+          // used off-palette #DC2626/#EF4444 while the chips used the rose
+          // accent, so this life-critical screen showed two different reds.
           gradient: const LinearGradient(
-            colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+            colors: [AppColors.accent, Color(0xFFFB7185)],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFDC2626).withOpacity(0.3),
+              color: AppColors.accent.withOpacity(0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -584,20 +587,23 @@ class _DonorCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.10),
+                  // Contact is the one action on a donor card — it reads as
+                  // the CTA in mint (the system's single call-to-action colour),
+                  // not navy structure.
+                  color: AppColors.primaryLight.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.call, size: 15, color: AppColors.primary),
+                    const Icon(Icons.call, size: 15, color: AppColors.primaryLight),
                     const SizedBox(width: 5),
                     Text(
                       tr(en: 'Contact', ta: 'தொடர்பு', hi: 'संपर्क', ml: 'ബന്ധപ്പെടുക'),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: AppColors.primaryLight,
                       ),
                     ),
                   ],
