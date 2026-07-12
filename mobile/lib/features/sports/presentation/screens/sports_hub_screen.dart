@@ -175,10 +175,6 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
             lang: _lang,
             onSelect: _selectSport,
           ),
-          _ChallengeBanner(
-            lang: _lang,
-            onTap: () => context.go('/sports/challenge'),
-          ),
           Expanded(
             child: BlocBuilder<SportsBloc, SportsState>(
               builder: (context, state) {
@@ -319,61 +315,6 @@ class _SportTabs extends StatelessWidget {
               ),
             );
           }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChallengeBanner extends StatelessWidget {
-  final String lang;
-  final VoidCallback onTap;
-
-  const _ChallengeBanner({required this.lang, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Material(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                const Text('⚔️', style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tr(en: 'Challenge FYC', ta: 'FYC ஐ சவால் விடுங்கள்', hi: 'FYC को चुनौती दें', ml: 'FYC-യെ വെല്ലുവിളിക്കൂ'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        tr(en: 'Send your team a match request', ta: 'உங்கள் அணியுடன் போட்டியிடுங்கள்', hi: 'अपनी टीम को मैच अनुरोध भेजें', ml: 'നിങ്ങളുടെ ടീമിന് ഒരു മത്സര അഭ്യർത്ഥന അയയ്ക്കൂ'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: Colors.white),
-              ],
-            ),
-          ),
         ),
       ),
     );

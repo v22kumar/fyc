@@ -1352,7 +1352,6 @@ void _showCreateSheet(BuildContext context) {
     (Icons.water_drop, 'Register as Donor', '/blood-donation/register', const Color(0xFFEF4444)),
     (Icons.campaign, 'Report an Issue', '/issues', const Color(0xFFEAB308)),
     (Icons.eco, 'Register a Tree', '/green/register', const Color(0xFF16A34A)),
-    (Icons.sports_kabaddi, 'Create Challenge', '/sports/challenge', const Color(0xFF8B5CF6)),
   ];
   showModalBottomSheet(
     context: context,
