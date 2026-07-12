@@ -339,8 +339,8 @@ class _SportsTournamentDetailScreenState
                       ),
                     ),
                   
-                  // Register: only while registration is open.
-                  if (state.tournament.isRegistrationOpen)
+                  // Register: only while registration is open, OR if admin.
+                  if (state.tournament.isRegistrationOpen || isAdmin)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: SizedBox(
