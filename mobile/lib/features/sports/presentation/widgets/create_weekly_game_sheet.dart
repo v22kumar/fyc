@@ -5,9 +5,14 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
+import '../../domain/entities/weekly_game_entity.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../service_locator.dart';
 
 class CreateWeeklyGameSheet extends StatefulWidget {
-  const CreateWeeklyGameSheet({super.key});
+  final WeeklyGameEntity? game;
+  const CreateWeeklyGameSheet({super.key, this.game});
 
   @override
   State<CreateWeeklyGameSheet> createState() => _CreateWeeklyGameSheetState();
@@ -23,7 +28,20 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
 
   bool _isLoading = false;
 
-  void _submit() {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.game != null) {
+      final g = widget.game!;
+      _title = g.title;
+      _sport = g.sport;
+      _venue = g.venue ?? '';
+      _scheduledAt = g.scheduledAt;
+      _scheduledTime = TimeOfDay.fromDateTime(g.scheduledAt.toLocal());
+    }
+  }
+
+  void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_scheduledAt == null || _scheduledTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -42,15 +60,38 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
     );
     
     setState(() => _isLoading = true);
-    
-    context.read<SportsBloc>().add(SportsWeeklyGameCreateRequested({
-      'title': _title,
-      'sport': _sport,
-      'venue': _venue,
-      'scheduled_at': finalDate.toUtc().toIso8601String(),
-    }));
-    
-    Navigator.pop(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final data = {
+        'title': _title,
+        'sport': _sport,
+        'venue': _venue,
+        'scheduled_at': finalDate.toUtc().toIso8601String(),
+      };
+      
+      if (widget.game != null) {
+        await sl<ApiClient>().dio.patch(
+          '${ApiConstants.weeklyGames}/${widget.game!.id}',
+          data: data,
+        );
+        if (!mounted) return;
+        context.read<SportsBloc>().add(const SportsFetchRequested());
+        Navigator.pop(context, true);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Weekly game updated successfully!'), backgroundColor: AppColors.success),
+        );
+      } else {
+        context.read<SportsBloc>().add(SportsWeeklyGameCreateRequested(data));
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to save game details'), backgroundColor: AppColors.accent),
+        );
+      }
+    }
   }
 
   @override
@@ -87,6 +128,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             ),
             const SizedBox(height: 24),
             TextFormField(
+              initialValue: _title,
               decoration: InputDecoration(
                 labelText: 'Match Title',
                 hintText: 'e.g. Sunday Morning Bash',
@@ -112,6 +154,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              initialValue: _venue,
               decoration: InputDecoration(
                 labelText: 'Venue',
                 hintText: 'e.g. FYC Ground',
@@ -178,7 +221,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
               ),
               child: _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Schedule Game', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  : Text(widget.game != null ? 'Save Changes' : 'Schedule Game', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

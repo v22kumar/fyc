@@ -1,0 +1,50 @@
+Created At: 2026-06-16T09:12:33Z
+Completed At: 2026-06-16T09:12:33Z
+File Path: `file:///c:/WorkStation/FYC_Connect/scratch/goal_details.txt`
+Total Lines: 48
+Total Bytes: 4167
+Showing lines 1 to 48
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: <USER_REQUEST>
+2: /goal  continue from sprint 2 : Sprint 1 — Security blockers (stop the bleeding)
+3: Goal: Nothing in this list can survive a single curious user. Close it before anything else.
+4: 
+5: Remove hardcoded defaults in backend/app/core/config.py (SECRET_KEY, FIRST_SUPERADMIN_PASSWORD) — make them required env vars that fail fast on boot if unset. Rotate all secrets; purge the demo values from backend/.env.
+6: Remove OTP_BYPASS_CODE=123456 from active config; allow it only when an explicit ENV=test flag is set.
+7: Replace CORS allow_origins=["*"] + allow_credentials=True in backend/app/main.py with an explicit origin allowlist from env.
+8: Enforce tenant isolation: make TenantMiddleware reject requests without a valid org context, and add the org filter to every get-by-ID endpoint (issues/{id}, announcements/{id}, community/{id}, etc.).
+9: Strip secrets/PII from logs: kill body logging and print() of tokens/OTPs (mobile/lib/core/network/api_client.dart, backend/app/services/otp_sender.py:108).
+10: Repo hygiene: delete flutter_mobile/ stub and the default counter mobile/test/widget_test.dart.
+11: Exit criteria: App refuses to boot without secrets; no endpoint returns cross-tenant data; no token/OTP appears in any log; a security smoke test passes in CI.
+12: 
+13: Sprint 2 — Auth, identity & legal foundation
+14: Goal: Real identity and lawful data handling — prerequisites for re-enabling sensitive features.
+15: 
+16: Move the in-memory OTP store to Redis (or a DB table) with TTL + hashed codes + per-phone rate limits; add attempt lockou
+<truncated 776 bytes>
+cs/health checks.
+25: Performance profiling (scroll/jank) and a backend load test.
+26: Exit criteria: Green CI gate enforced; crashes/errors visible in a dashboard; load test passes target concurrency.
+27: 
+28: Sprint 10 — Hardening & beta pilot
+29: Goal: Earn the right to call it Beta and put it in real hands.
+30: 
+31: Independent security review / pen test; fix findings; verify secrets management in prod (vault/secret store).
+32: Full DPDP compliance review (consent records, deletion, retention policy).
+33: Store readiness: privacy nutrition labels, screenshots, store listing, crash-free-rate baseline.
+34: Controlled beta with a few hundred real Nagercoil users; instrument funnels; triage feedback.
+35: Launch checklist sign-off (security, legal, a11y, performance, on-call/runbook).
+36: Exit criteria: No critical/high pen-test findings open; beta cohort live with monitoring; go/no-go checklist signed.
+37: </USER_REQUEST>
+38: <ADDITIONAL_METADATA>
+39: The current local time is: 2026-06-16T14:33:14+05:30.
+40: 
+41: The user has mentioned some items in the form @[ITEM]. Here is extra information about the items that were mentioned by the user, in the order that they appear:
+42: 
+43: /goal is a [Slash Command]:
+44: The user has marked this task with /goal, indicating that this task is intended to run for a long time without user input, e.g. overnight. You should be extra thorough and only stop when you are confident the goal has been completely fulfilled. The system will force you to continue execution, prompting you to audit your work until completion.
+45: </ADDITIONAL_METADATA>
+46: <USER_SETTINGS_CHANGE>
+47: The user changed setting `Model Selection` from Gemini 3.5 Flash (High) to Claude Opus 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+48: </USER_SETTINGS_CHANGE>
+The above content shows the entire, complete file contents of the requested file.

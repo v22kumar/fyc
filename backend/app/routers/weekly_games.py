@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.models.weekly_games import WeeklyGame, WeeklyGamePlayer
 from app.models.sports import Tournament, Team, Player, Fixture
 from app.models.user import User, UserProfile
-from app.schemas.weekly_games import WeeklyGameCreate, WeeklyGameOut, WeeklyGamePlayerOut
+from app.schemas.weekly_games import WeeklyGameCreate, WeeklyGameOut, WeeklyGamePlayerOut, WeeklyGameUpdate
 from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
 
@@ -171,3 +171,39 @@ def start_game(
     db.commit()
     db.refresh(game)
     return _serialize(db, game)
+
+
+@router.patch("/{game_id}", response_model=WeeklyGameOut)
+def update_game(
+    game_id: uuid.UUID,
+    payload: WeeklyGameUpdate,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user)
+):
+    game = db.query(WeeklyGame).filter(WeeklyGame.id == game_id, WeeklyGame.organization_id == tenant_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+        
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(game, k, v)
+        
+    db.commit()
+    db.refresh(game)
+    return _serialize(db, game)
+
+
+@router.delete("/{game_id}", status_code=204)
+def delete_game(
+    game_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user)
+):
+    game = db.query(WeeklyGame).filter(WeeklyGame.id == game_id, WeeklyGame.organization_id == tenant_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+        
+    db.delete(game)
+    db.commit()
+    return None

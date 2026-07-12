@@ -7,6 +7,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/weekly_game_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
+import 'create_weekly_game_sheet.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../service_locator.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class WeeklyGameCard extends StatelessWidget {
   final WeeklyGameEntity game;
@@ -19,6 +25,54 @@ class WeeklyGameCard extends StatelessWidget {
     required this.lang,
     required this.currentUserId,
   });
+
+  void _showEditGameSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CreateWeeklyGameSheet(game: game),
+    );
+  }
+
+  void _confirmDeleteGame(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Weekly Game'),
+        content: const Text('Are you sure you want to delete this weekly game match?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await sl<ApiClient>().dio.delete(
+          '${ApiConstants.weeklyGames}/${game.id}',
+        );
+        if (!context.mounted) return;
+        context.read<SportsBloc>().add(const SportsFetchRequested());
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Weekly game deleted successfully!'), backgroundColor: AppColors.success),
+        );
+      } catch (_) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to delete weekly game'), backgroundColor: AppColors.accent),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +159,53 @@ class WeeklyGameCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _StatusBadge(status: game.status),
+                  Builder(builder: (context) {
+                    final authState = sl<AuthBloc>().state;
+                    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _StatusBadge(status: game.status),
+                        if (isOrganizer || isAdmin) ...[
+                          const SizedBox(width: 4),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 20, color: Colors.grey),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onSelected: (val) {
+                              if (val == 'edit') {
+                                _showEditGameSheet(context);
+                              } else if (val == 'delete') {
+                                _confirmDeleteGame(context);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Edit Game', style: TextStyle(fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, color: Colors.red, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Delete', style: TextStyle(color: Colors.red, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),

@@ -20,6 +20,8 @@ import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import 'create_tournament_screen.dart';
+import '../widgets/edit_team_sheet.dart';
 
 class SportsTournamentDetailScreen extends StatefulWidget {
   final String tournamentId;
@@ -32,14 +34,13 @@ class SportsTournamentDetailScreen extends StatefulWidget {
 
 class _SportsTournamentDetailScreenState
     extends State<SportsTournamentDetailScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  late String _lang;
 
   @override
   void initState() {
     super.initState();
-    context
-        .read<SportsBloc>()
-        .add(SportsTournamentSelected(widget.tournamentId));
+    _lang = sl<LocalStorage>().getLang();
+    _reload();
   }
 
   void _reload() {
@@ -49,13 +50,13 @@ class _SportsTournamentDetailScreenState
   }
 
   bool get _isAdmin {
-    final s = context.read<AuthBloc>().state;
+    final s = sl<AuthBloc>().state;
     return s is AuthAuthenticated && s.user.isAdmin;
   }
 
   bool get _isMember {
-    final s = context.read<AuthBloc>().state;
-    return s is AuthAuthenticated && s.user.isMember;
+    final s = sl<AuthBloc>().state;
+    return s is AuthAuthenticated && s.user.role == 'MEMBER';
   }
 
   Future<void> _enterScore(FixtureEntity f) async {
@@ -201,6 +202,64 @@ class _SportsTournamentDetailScreenState
     if (ok == true) _reload();
   }
 
+  void _editFixture(FixtureEntity f, List<TeamEntity> teams) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => import_AddFixtureSheet.AddFixtureSheet(
+        tournamentId: widget.tournamentId,
+        teams: teams,
+        fixture: f,
+      ),
+    ).then((val) {
+      if (val == true) {
+        _reload();
+      }
+    });
+  }
+
+  Future<void> _deleteFixture(FixtureEntity f) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Fixture'),
+        content: const Text('Are you sure you want to delete this fixture?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await sl<ApiClient>().dio.delete(
+          '${ApiConstants.sportsTournaments}/${widget.tournamentId}/fixtures/${f.id}',
+        );
+        _reload();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Fixture deleted successfully!'), backgroundColor: AppColors.success),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete fixture'), backgroundColor: AppColors.accent),
+          );
+        }
+      }
+    }
+  }
+
   /// Friendly, localized label + color for the tournament's lifecycle phase.
   (String, Color) _phaseChip(TournamentEntity t) {
     switch (t.effectivePhase) {
@@ -228,6 +287,30 @@ class _SportsTournamentDetailScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(tr(en: 'Tournament', ta: 'போட்டி விவரம்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്')),
+        actions: [
+          if (isAdmin)
+            BlocBuilder<SportsBloc, SportsState>(
+              builder: (context, state) {
+                if (state is SportsDetailLoaded) {
+                  return IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      final res = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateTournamentScreen(tournament: state.tournament),
+                        ),
+                      );
+                      if (res == true) {
+                        _reload();
+                      }
+                    },
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+        ],
       ),
       body: BlocBuilder<SportsBloc, SportsState>(
         builder: (context, state) {
@@ -332,6 +415,8 @@ class _SportsTournamentDetailScreenState
                           lang: _lang,
                           onEnterScore:
                               (canScore && !f.isCompleted) ? () => _enterScore(f) : null,
+                          onEditFixture: isAdmin ? () => _editFixture(f, state.teams) : null,
+                          onDeleteFixture: isAdmin ? () => _deleteFixture(f) : null,
                         );
                       },
                     ),
@@ -505,8 +590,16 @@ class _FixtureCard extends StatelessWidget {
   final FixtureEntity fixture;
   final String lang;
   final VoidCallback? onEnterScore;
+  final VoidCallback? onEditFixture;
+  final VoidCallback? onDeleteFixture;
 
-  const _FixtureCard({required this.fixture, required this.lang, this.onEnterScore});
+  const _FixtureCard({
+    required this.fixture,
+    required this.lang,
+    this.onEnterScore,
+    this.onEditFixture,
+    this.onDeleteFixture,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -534,6 +627,43 @@ class _FixtureCard extends StatelessWidget {
                   ),
                 const Spacer(),
                 _FixtureStatusBadge(fixture: fixture, lang: lang),
+                if (onEditFixture != null || onDeleteFixture != null) ...[
+                  const SizedBox(width: 8),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onSelected: (val) {
+                      if (val == 'edit' && onEditFixture != null) {
+                        onEditFixture!();
+                      } else if (val == 'delete' && onDeleteFixture != null) {
+                        onDeleteFixture!();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 16),
+                            SizedBox(width: 8),
+                            Text('Edit Fixture', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red, size: 16),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red, fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 10),
@@ -699,7 +829,12 @@ class _StandingsTable extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            ...teams.map((t) => _StandingsRow(team: t, lang: lang)),
+            ...teams.map((t) => _StandingsRow(
+                  team: t,
+                  lang: lang,
+                  tournamentId: widget.tournamentId,
+                  onTeamUpdated: _reload,
+                )),
           ],
         ),
       ),
@@ -729,11 +864,22 @@ class _StandingsTable extends StatelessWidget {
 class _StandingsRow extends StatelessWidget {
   final TeamEntity team;
   final String lang;
-  const _StandingsRow({required this.team, required this.lang});
+  final String tournamentId;
+  final VoidCallback onTeamUpdated;
+
+  const _StandingsRow({
+    required this.team,
+    required this.lang,
+    required this.tournamentId,
+    required this.onTeamUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final authState = sl<AuthBloc>().state;
+    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
+
+    Widget content = Container(
       decoration: BoxDecoration(
         color: team.isFycTeam ? AppColors.primarySurface : null,
         borderRadius: BorderRadius.circular(8),
@@ -774,6 +920,25 @@ class _StandingsRow extends StatelessWidget {
         ],
       ),
     );
+
+    if (isAdmin) {
+      return InkWell(
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => EditTeamSheet(
+              tournamentId: tournamentId,
+              team: team,
+              onTeamUpdated: onTeamUpdated,
+            ),
+          );
+        },
+        child: content,
+      );
+    }
+    return content;
   }
 
   Widget _cell(String text, {bool bold = false}) {

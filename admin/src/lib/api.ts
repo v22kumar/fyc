@@ -141,6 +141,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateTournament: (id: string, payload: any) =>
+    request<import('@/types').Tournament>(`/api/v1/sports/tournaments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   deleteTournament: (id: string) =>
     request(`/api/v1/sports/tournaments/${id}`, { method: 'DELETE' }),
   updateTournamentStatus: (id: string, status: string) =>

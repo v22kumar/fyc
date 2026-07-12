@@ -29,6 +29,21 @@ export default function SportsPage() {
   // Create tournament form
   const [form, setForm] = useState({ name_en: '', name_ta: '', sport: 'cricket', year: new Date().getFullYear(), format: 'LEAGUE', description_en: '' });
 
+  // Edit tournament states
+  const [isEditingTournament, setIsEditingTournament] = useState(false);
+  const [editTournamentForm, setEditTournamentForm] = useState({
+    name_en: '',
+    name_ta: '',
+    sport: 'cricket',
+    year: new Date().getFullYear(),
+    format: 'LEAGUE',
+    description_en: '',
+    description_ta: '',
+    num_teams: '',
+    registration_close_date: '',
+    venue: '',
+  });
+
   // Add team form
   const [teamForm, setTeamForm] = useState({ name: '', captain_name: '', contact_phone: '', is_fyc_team: false });
 
@@ -119,6 +134,30 @@ export default function SportsPage() {
       toast.success('Tournament deleted');
     } catch (e: any) {
       toast.error(e.message || 'Failed to delete tournament');
+    }
+  }
+
+  async function handleUpdateTournament(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedTournament) return;
+    try {
+      setSubmitting(s => ({ ...s, tournament: true }));
+      const payload = {
+        ...editTournamentForm,
+        year: parseInt(editTournamentForm.year as any) || new Date().getFullYear(),
+        num_teams: editTournamentForm.num_teams ? parseInt(editTournamentForm.num_teams) : null,
+        registration_close_date: editTournamentForm.registration_close_date ? new Date(editTournamentForm.registration_close_date).toISOString() : null,
+      };
+      
+      const updated = await api.updateTournament(selectedTournament.id, payload);
+      setTournaments(prev => prev.map(t => t.id === updated.id ? updated : t));
+      setSelectedTournament(updated);
+      toast.success('Tournament updated successfully');
+      setIsEditingTournament(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update tournament');
+    } finally {
+      setSubmitting(s => ({ ...s, tournament: false }));
     }
   }
 
@@ -418,6 +457,26 @@ export default function SportsPage() {
                     </div>
                     
                     <div className="flex gap-2 ml-4 pl-4 border-l border-gray-200">
+                      <button
+                        onClick={() => {
+                          setEditTournamentForm({
+                            name_en: selectedTournament.name_en,
+                            name_ta: selectedTournament.name_ta || '',
+                            sport: selectedTournament.sport,
+                            year: selectedTournament.year,
+                            format: selectedTournament.format,
+                            description_en: selectedTournament.description_en || '',
+                            description_ta: selectedTournament.description_ta || '',
+                            num_teams: selectedTournament.num_teams?.toString() || '',
+                            registration_close_date: selectedTournament.registration_close_date ? new Date(selectedTournament.registration_close_date).toISOString().slice(0, 16) : '',
+                            venue: selectedTournament.venue || '',
+                          });
+                          setIsEditingTournament(true);
+                        }}
+                        className="text-sm border border-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                      >
+                        ✏️ Edit Details
+                      </button>
                       {selectedTournament.status !== 'COMPLETED' && selectedTournament.status !== 'ARCHIVED' && (
                         <button onClick={() => setShowQuickComplete(!showQuickComplete)} className="text-sm border border-purple-200 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-50 font-medium transition-colors">Quick Complete</button>
                       )}
@@ -899,6 +958,135 @@ export default function SportsPage() {
                   className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold"
                 >
                   Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {isEditingTournament && selectedTournament && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-gray-900 font-sans">Edit Tournament Details</h3>
+            
+            <form onSubmit={handleUpdateTournament} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Name (English) *</label>
+                <input
+                  type="text"
+                  required
+                  value={editTournamentForm.name_en}
+                  onChange={e => setEditTournamentForm(f => ({ ...f, name_en: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Name (Tamil)</label>
+                <input
+                  type="text"
+                  value={editTournamentForm.name_ta}
+                  onChange={e => setEditTournamentForm(f => ({ ...f, name_ta: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Sport</label>
+                  <select
+                    value={editTournamentForm.sport}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, sport: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  >
+                    {['cricket','kabaddi','volleyball','football','carrom','chess','other'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Format</label>
+                  <select
+                    value={editTournamentForm.format}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, format: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  >
+                    <option value="LEAGUE">League</option>
+                    <option value="KNOCKOUT">Knockout</option>
+                    <option value="GROUP_STAGE">Group Stage</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Year</label>
+                  <input
+                    type="number"
+                    required
+                    value={editTournamentForm.year}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, year: parseInt(e.target.value) || 2026 }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Max Teams</label>
+                  <input
+                    type="number"
+                    value={editTournamentForm.num_teams}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, num_teams: e.target.value }))}
+                    placeholder="Unlimited"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Registration Close Date</label>
+                  <input
+                    type="datetime-local"
+                    value={editTournamentForm.registration_close_date}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, registration_close_date: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Venue</label>
+                  <input
+                    type="text"
+                    value={editTournamentForm.venue}
+                    onChange={e => setEditTournamentForm(f => ({ ...f, venue: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description (English)</label>
+                <textarea
+                  rows={3}
+                  value={editTournamentForm.description_en}
+                  onChange={e => setEditTournamentForm(f => ({ ...f, description_en: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTournament(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting.tournament}
+                  className="flex-1 bg-primary text-white py-2 rounded-xl font-semibold disabled:opacity-75"
+                >
+                  {submitting.tournament ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>

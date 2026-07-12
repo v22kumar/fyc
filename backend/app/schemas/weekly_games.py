@@ -18,6 +18,13 @@ class WeeklyGameCreate(BaseModel):
     scheduled_at: datetime
     venue: Optional[str] = None
 
+
+class WeeklyGameUpdate(BaseModel):
+    title: Optional[str] = None
+    sport: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
+    venue: Optional[str] = None
+
 class WeeklyGameOut(BaseModel):
     id: uuid.UUID
     title: str

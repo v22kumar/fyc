@@ -6,6 +6,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
+import '../../domain/entities/tournament_entity.dart';
 
 // Per-sport match configuration options
 const _matchConfigBySport = <String, List<String>>{
@@ -53,7 +54,8 @@ const _formatLabels = {
 };
 
 class CreateTournamentScreen extends StatefulWidget {
-  const CreateTournamentScreen({super.key});
+  final TournamentEntity? tournament;
+  const CreateTournamentScreen({super.key, this.tournament});
 
   @override
   State<CreateTournamentScreen> createState() => _CreateTournamentScreenState();
@@ -86,12 +88,31 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDraft();
-    _nameCtrl.addListener(_saveDraft);
-    _venueCtrl.addListener(_saveDraft);
-    _prizeCtrl.addListener(_saveDraft);
-    _customTeamsCtrl.addListener(_saveDraft);
-    _descCtrl.addListener(_saveDraft);
+    if (widget.tournament != null) {
+      final t = widget.tournament!;
+      _nameCtrl.text = t.nameEn;
+      _venueCtrl.text = t.venue ?? '';
+      _prizeCtrl.text = t.prizeDetails ?? '';
+      _descCtrl.text = t.descriptionEn ?? '';
+      _sport = t.sport;
+      _numTeams = t.numTeams;
+      _format = t.format;
+      _matchConfig = t.matchConfig;
+      _registration = t.registrationMode;
+      _startDate = t.startDate;
+      _endDate = t.endDate;
+      _regCloseDate = t.registrationCloseDate;
+      _showPoints = t.showPointsTable;
+      _showLive = t.showLiveScores;
+      _showPrize = t.showPrizeDetails;
+    } else {
+      _loadDraft();
+      _nameCtrl.addListener(_saveDraft);
+      _venueCtrl.addListener(_saveDraft);
+      _prizeCtrl.addListener(_saveDraft);
+      _customTeamsCtrl.addListener(_saveDraft);
+      _descCtrl.addListener(_saveDraft);
+    }
   }
 
   void _loadDraft() {
@@ -201,18 +222,32 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           _regCloseDate!.year, _regCloseDate!.month, _regCloseDate!.day, 23, 59, 59,
         ).toUtc().toIso8601String(),
       };
-      final res = await sl<ApiClient>().dio.post(ApiConstants.sportsTournaments, data: body);
-      final id = res.data['id'] as String?;
-      if (!mounted) return;
-      final storage = sl<LocalStorage>();
-      storage.clearDraft('tournament_draft_name');
-      storage.clearDraft('tournament_draft_venue');
-      storage.clearDraft('tournament_draft_prize');
-      storage.clearDraft('tournament_draft_custom_teams');
-      storage.clearDraft('tournament_draft_desc');
-      _showCreatedSheet(id);
+      if (widget.tournament != null) {
+        await sl<ApiClient>().dio.put(
+          '${ApiConstants.sportsTournaments}/${widget.tournament!.id}',
+          data: body,
+        );
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      } else {
+        final res = await sl<ApiClient>().dio.post(ApiConstants.sportsTournaments, data: body);
+        final id = res.data['id'] as String?;
+        if (!mounted) return;
+        final storage = sl<LocalStorage>();
+        storage.clearDraft('tournament_draft_name');
+        storage.clearDraft('tournament_draft_venue');
+        storage.clearDraft('tournament_draft_prize');
+        storage.clearDraft('tournament_draft_custom_teams');
+        storage.clearDraft('tournament_draft_desc');
+        _showCreatedSheet(id);
+      }
     } catch (e) {
-      _snack('We couldn\'t create the tournament right now. Please check your connection and try again.', onRetry: _submit);
+      _snack(
+        widget.tournament != null
+            ? 'We couldn\'t update the tournament right now. Please check your connection and try again.'
+            : 'We couldn\'t create the tournament right now. Please check your connection and try again.',
+        onRetry: _submit,
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

@@ -4,11 +4,18 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/team_entity.dart';
+import '../../domain/entities/fixture_entity.dart';
 
 class AddFixtureSheet extends StatefulWidget {
   final String tournamentId;
   final List<TeamEntity> teams;
-  const AddFixtureSheet({super.key, required this.tournamentId, required this.teams});
+  final FixtureEntity? fixture;
+  const AddFixtureSheet({
+    super.key,
+    required this.tournamentId,
+    required this.teams,
+    this.fixture,
+  });
 
   @override
   State<AddFixtureSheet> createState() => _AddFixtureSheetState();
@@ -21,6 +28,19 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
   final _venueCtrl = TextEditingController();
   DateTime? _scheduledAt;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.fixture != null) {
+      final f = widget.fixture!;
+      _teamAId = f.teamAId;
+      _teamBId = f.teamBId;
+      _matchNumCtrl.text = f.matchNumber?.toString() ?? '';
+      _venueCtrl.text = f.venue ?? '';
+      _scheduledAt = f.scheduledAt;
+    }
+  }
 
   @override
   void dispose() {
@@ -59,26 +79,41 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
     setState(() => _submitting = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await sl<ApiClient>().dio.post(
-        ApiConstants.sportsTournamentFixtures(widget.tournamentId),
-        data: {
-          'team_a_id': _teamAId,
-          'team_b_id': _teamBId,
-          'match_number': _matchNumCtrl.text.isNotEmpty ? int.tryParse(_matchNumCtrl.text) : null,
-          'scheduled_at': _scheduledAt?.toUtc().toIso8601String(),
-          'venue': _venueCtrl.text.trim().isNotEmpty ? _venueCtrl.text.trim() : null,
-        },
-      );
+      final data = {
+        'team_a_id': _teamAId,
+        'team_b_id': _teamBId,
+        'match_number': _matchNumCtrl.text.isNotEmpty ? int.tryParse(_matchNumCtrl.text) : null,
+        'scheduled_at': _scheduledAt?.toUtc().toIso8601String(),
+        'venue': _venueCtrl.text.trim().isNotEmpty ? _venueCtrl.text.trim() : null,
+      };
+
+      if (widget.fixture != null) {
+        await sl<ApiClient>().dio.patch(
+          '${ApiConstants.sportsTournaments}/${widget.tournamentId}/fixtures/${widget.fixture!.id}',
+          data: data,
+        );
+      } else {
+        await sl<ApiClient>().dio.post(
+          ApiConstants.sportsTournamentFixtures(widget.tournamentId),
+          data: data,
+        );
+      }
       if (!mounted) return;
       Navigator.pop(context, true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Fixture Scheduled successfully!'), backgroundColor: AppColors.success),
+        SnackBar(
+          content: Text(widget.fixture != null ? 'Fixture updated successfully!' : 'Fixture Scheduled successfully!'),
+          backgroundColor: AppColors.success,
+        ),
       );
     } catch (_) {
       if (mounted) {
         setState(() => _submitting = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not schedule fixture'), backgroundColor: AppColors.accent),
+          SnackBar(
+            content: Text(widget.fixture != null ? 'Could not update fixture' : 'Could not schedule fixture'),
+            backgroundColor: AppColors.accent,
+          ),
         );
       }
     }
@@ -94,7 +129,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
         children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
           const SizedBox(height: 18),
-          const Text('Schedule Fixture', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(widget.fixture != null ? 'Edit Fixture' : 'Schedule Fixture', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           
           DropdownButtonFormField<String>(

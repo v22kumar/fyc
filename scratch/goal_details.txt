@@ -1,0 +1,48 @@
+<USER_REQUEST>
+/goal  continue from sprint 2 : Sprint 1 — Security blockers (stop the bleeding)
+Goal: Nothing in this list can survive a single curious user. Close it before anything else.
+
+Remove hardcoded defaults in backend/app/core/config.py (SECRET_KEY, FIRST_SUPERADMIN_PASSWORD) — make them required env vars that fail fast on boot if unset. Rotate all secrets; purge the demo values from backend/.env.
+Remove OTP_BYPASS_CODE=123456 from active config; allow it only when an explicit ENV=test flag is set.
+Replace CORS allow_origins=["*"] + allow_credentials=True in backend/app/main.py with an explicit origin allowlist from env.
+Enforce tenant isolation: make TenantMiddleware reject requests without a valid org context, and add the org filter to every get-by-ID endpoint (issues/{id}, announcements/{id}, community/{id}, etc.).
+Strip secrets/PII from logs: kill body logging and print() of tokens/OTPs (mobile/lib/core/network/api_client.dart, backend/app/services/otp_sender.py:108).
+Repo hygiene: delete flutter_mobile/ stub and the default counter mobile/test/widget_test.dart.
+Exit criteria: App refuses to boot without secrets; no endpoint returns cross-tenant data; no token/OTP appears in any log; a security smoke test passes in CI.
+
+Sprint 2 — Auth, identity & legal foundation
+Goal: Real identity and lawful data handling — prerequisites for re-enabling sensitive features.
+
+Move the in-memory OTP store to Redis (or a DB table) with TTL + hashed codes + per-phone rate limits; add attempt lockout.
+Add a token-refresh flow: refresh endpoint server-side + a 401 interceptor client-side (api_client.dart).
+Normalize RBAC: replace ad-hoc current_user.role == "VOLUNTEER" checks with RoleChecker; audit every route for the right guard.
+Legal/consent foundation (DPDP Act): ToS + Privacy Policy screens with explicit acceptance on first run, a per-feature consent record model, and a data-deletion / export request flow (client screen + backend endpoint + admin handling).
+Exit criteria: OTPs expire and a
+<truncated 5485 bytes>
+g. 60%+ on domain/data).
+CI pipeline: lint, test, build APK + backend on every PR; block merge on failure.
+Observability: error monitoring (Sentry) on client and server; structured logging; basic metrics/health checks.
+Performance profiling (scroll/jank) and a backend load test.
+Exit criteria: Green CI gate enforced; crashes/errors visible in a dashboard; load test passes target concurrency.
+
+Sprint 10 — Hardening & beta pilot
+Goal: Earn the right to call it Beta and put it in real hands.
+
+Independent security review / pen test; fix findings; verify secrets management in prod (vault/secret store).
+Full DPDP compliance review (consent records, deletion, retention policy).
+Store readiness: privacy nutrition labels, screenshots, store listing, crash-free-rate baseline.
+Controlled beta with a few hundred real Nagercoil users; instrument funnels; triage feedback.
+Launch checklist sign-off (security, legal, a11y, performance, on-call/runbook).
+Exit criteria: No critical/high pen-test findings open; beta cohort live with monitoring; go/no-go checklist signed.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T14:33:14+05:30.
+
+The user has mentioned some items in the form @[ITEM]. Here is extra information about the items that were mentioned by the user, in the order that they appear:
+
+/goal is a [Slash Command]:
+The user has marked this task with /goal, indicating that this task is intended to run for a long time without user input, e.g. overnight. You should be extra thorough and only stop when you are confident the goal has been completely fulfilled. The system will force you to continue execution, prompting you to audit your work until completion.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (High) to Claude Opus 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
