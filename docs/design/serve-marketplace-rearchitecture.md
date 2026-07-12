@@ -54,8 +54,11 @@ A feed of postings that members **apply** to. Two posting types:
 - `JOB` — a paid gig. Shows a **budget** string (e.g. `₹500/day`, `₹2,000 fixed`).
 - `VOLUNTEER` — unpaid community work. Budget renders as "Volunteer".
 
-`COURSE` is retained in the enum only so legacy rows keep parsing; it is not
-offered when posting and not shown as a filter.
+`COURSE` is retained in the enum only so legacy rows keep parsing. It is not
+offered when posting, and — critically — it is **hidden from the Jobs feed**:
+the default list (no `type` supplied) returns only `JOB` + `VOLUNTEER`, and a
+`type=COURSE` filter is rejected. No data migration runs; legacy course rows
+simply stop appearing (they can be re-listed under Skills by their owner).
 
 **No in-app payments.** Budget is informational; poster and applicant settle
 offline via the poster's contact. This keeps the community app free of payment
@@ -75,14 +78,26 @@ no destructive migration):
 | `contact_phone` | `String(15)` | how an applicant reaches the poster |
 | `posted_by` | `GUID` | the member who posted (for "my postings" + authorship) |
 
-Schemas (`OpportunityCreate/Update/Out`) gain `budget`, `contact_phone`. `Out`
-also exposes `posted_by`.
+Schema exposure is **split by audience** so a poster's phone is never published:
+
+- `OpportunityCreate` / `OpportunityUpdate` accept `budget`, `contact_phone`
+  (input from the poster).
+- `OpportunityOut` — the **public** list shape returned by the unauthenticated
+  `GET /opportunities` — gains `budget` and `posted_by` but **not**
+  `contact_phone`.
+- `contact_phone` is returned only through a **member-only path**: an
+  authenticated `GET /opportunities/{id}` (or the poster fetching their own).
+  Anonymous callers never receive it. This is the "sign in / apply to see
+  contact" pattern and keeps posters' numbers off the public web.
 
 The SQLite `type` column is a plain `VARCHAR` (SQLAlchemy does not emit a CHECK
 constraint here), so adding the `JOB` value needs no table rewrite.
 
 ### Backend — router
-- `GET /opportunities?type=JOB|VOLUNTEER` — filter unchanged mechanism, new values.
+- `GET /opportunities` — default (no `type`) returns only `JOB` + `VOLUNTEER`
+  (legacy `COURSE` excluded); accepts `?type=JOB|VOLUNTEER`; a `type=COURSE`
+  request is rejected (422). Public, `contact_phone` withheld.
+- `GET /opportunities/{id}` — authenticated; includes `contact_phone`.
 - `POST /opportunities` — **opened from admin-only to any signed-in member
   (CLUB_MEMBER+)**, stamping `posted_by` = current user. This is what makes it a
   member marketplace rather than a noticeboard. (Answers the earlier pending
@@ -93,7 +108,7 @@ No schema change. Already supports self-service listing and browse.
 
 ## 5. Mobile IA
 
-```
+```text
 Serve
  ├─ Jobs & Gigs         (Opportunity list)   "Find work · post work"
  │   ├─ filter: All · Jobs · Volunteer
