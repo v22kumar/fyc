@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
+import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -213,7 +214,7 @@ class _Header extends StatelessWidget {
                               'assets/images/fyc_mark.png',
                               width: 30,
                               height: 30,
-                              errorBuilder: (_, __, ___) => const Text('🌱', style: TextStyle(fontSize: 16)),
+                              errorBuilder: (_, __, ___) => const Icon(Icons.eco_rounded, size: 16, color: Colors.white70),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -251,7 +252,7 @@ class _Header extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      Text('$greetingEn, $firstName! 👋',
+                      Text('$greetingEn, $firstName!',
                           style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                       const SizedBox(height: 4),
                       Text(tr(en: 'Everything you need, all in one place.', ta: 'உங்களுக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.', hi: 'आपकी ज़रूरत की हर चीज़, एक ही जगह।', ml: 'നിങ്ങൾക്ക് വേണ്ടതെല്ലാം, ഒരിടത്ത്.'),
@@ -405,13 +406,13 @@ class _BeAHeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0B6E4F), Color(0xFF12A150)],
+          colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF12A150).withOpacity(0.30), blurRadius: 18, offset: const Offset(0, 8)),
+          BoxShadow(color: const Color(0xFFF43F5E).withOpacity(0.30), blurRadius: 18, offset: const Offset(0, 8)),
         ],
       ),
       child: Row(
@@ -422,7 +423,7 @@ class _BeAHeroCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(tr(en: '🩸 Be a Hero', ta: '🩸 ஒரு ஹீரோவாகுங்கள்', hi: '🩸 हीरो बनें', ml: '🩸 ഒരു ഹീറോ ആകൂ'),
+                    Text(tr(en: 'Be a Hero', ta: 'ஒரு ஹீரோவாகுங்கள்', hi: 'हीरो बनें', ml: 'ഒരു ഹീറോ ആകൂ'),
                         style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
                     const SizedBox(width: 6),
                     Icon(Icons.favorite, color: Colors.white.withOpacity(0.85), size: 15),
@@ -448,9 +449,9 @@ class _BeAHeroCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(tr(en: 'Find Blood Donors', ta: 'இரத்த தானம் செய்பவர்களைக் கண்டறியுங்கள்', hi: 'रक्तदाता खोजें', ml: 'രക്തദാതാക്കളെ കണ്ടെത്തുക'),
-                              style: const TextStyle(color: Color(0xFF0B6E4F), fontSize: 13, fontWeight: FontWeight.w700)),
+                              style: const TextStyle(color: Color(0xFFE11D48), fontSize: 13, fontWeight: FontWeight.w700)),
                           const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward, color: Color(0xFF0B6E4F), size: 16),
+                          const Icon(Icons.arrow_forward, color: Color(0xFFE11D48), size: 16),
                         ],
                       ),
                     ),
@@ -528,21 +529,24 @@ class _BloodBagPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Discover bento (the mockup's "What are you looking for?" 4-category grid) ──
+// ── Discover grid (the web-parity "Explore FYC" feature grid) ──
 
-class _Bucket {
-  final String ta, en;
+class _Service {
+  final String title;
+  final String subtitle;
   final IconData icon;
-  final List<String> items; // sub-item labels (display only)
-  final String route; // primary tap destination
-  final List<Color> gradient;
-  const _Bucket({
-    required this.ta,
-    required this.en,
+  final Color tint;
+  final String route;
+  final String? pill;
+  final Color? pillColor;
+  const _Service({
+    required this.title,
+    required this.subtitle,
     required this.icon,
-    required this.items,
+    required this.tint,
     required this.route,
-    required this.gradient,
+    this.pill,
+    this.pillColor,
   });
 }
 
@@ -551,58 +555,68 @@ class _ServiceBento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buckets = <_Bucket>[
-      _Bucket(
-        ta: 'ஊர்',
-        en: 'Home',
-        icon: Icons.home_rounded,
-        route: '/announcements',
-        gradient: const [Color(0xFF0F5132), Color(0xFF198754)],
-        items: [
-          tr(en: 'Announcements', ta: 'அறிவிப்புகள்', hi: 'घोषणाएं', ml: 'അറിയിപ്പുകൾ'),
-          tr(en: 'Incident Alerts', ta: 'எச்சரிக்கைகள்', hi: 'अलर्ट', ml: 'മുന്നറിയിപ്പുകൾ'),
-          tr(en: "Today's Info", ta: 'இன்றைய தகவல்', hi: 'आज की जानकारी', ml: 'ഇന്നത്തെ വിവരം'),
-          tr(en: 'Upcoming Events', ta: 'வரவிருக்கும் நிகழ்வுகள்', hi: 'आगामी कार्यक्रम', ml: 'വരാനിരിക്കുന്ന പരിപാടികൾ'),
-        ],
+    final services = <_Service>[
+      _Service(
+        title: tr(en: 'Blood Donation', ta: 'இரத்த தானம்', hi: 'रक्तदान', ml: 'രക്തദാനം'),
+        subtitle: tr(en: 'Verified donors near you', ta: 'அருகில் சரிபார்க்கப்பட்ட நன்கொடையாளர்கள்', hi: 'आस-पास सत्यापित दाता', ml: 'അടുത്തുള്ള സ്ഥിരീകരിച്ച ദാതാക്കൾ'),
+        icon: Icons.bloodtype_rounded,
+        tint: AppColors.accent,
+        route: '/blood-donation',
       ),
-      _Bucket(
-        ta: 'விளையாட்டு',
-        en: 'Play',
+      _Service(
+        title: tr(en: 'Sports Arena', ta: 'விளையாட்டு', hi: 'खेल', ml: 'സ്പോർട്സ്'),
+        subtitle: tr(en: 'Tournaments, chess & live scores', ta: 'போட்டிகள், சதுரங்கம் & நேரடி மதிப்பெண்', hi: 'टूर्नामेंट, शतरंज और लाइव स्कोर', ml: 'ടൂർണമെന്റുകൾ, ചെസ്സ്, തത്സമയ സ്കോർ'),
         icon: Icons.sports_cricket_rounded,
+        tint: AppColors.warning,
         route: '/sports',
-        gradient: const [Color(0xFFD97706), Color(0xFFB45309)],
-        items: [
-          tr(en: 'Tournaments', ta: 'போட்டிகள்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റുകൾ'),
-          tr(en: 'Weekly Games', ta: 'வார விளையாட்டு', hi: 'साप्ताहिक खेल', ml: 'പ്രതിവാര ഗെയിമുകൾ'),
-          tr(en: 'Chess', ta: 'சதுரங்கம்', hi: 'शतरंज', ml: 'ചെസ്സ്'),
-          tr(en: 'Live Scores', ta: 'நேரடி மதிப்பெண்', hi: 'लाइव स्कोर', ml: 'തത്സമയ സ്കോർ'),
-        ],
       ),
-      _Bucket(
-        ta: 'சமூகம்',
-        en: 'Feed',
-        icon: Icons.people_alt_rounded,
+      _Service(
+        title: tr(en: 'Community Feed', ta: 'சமூகம்', hi: 'समुदाय', ml: 'സമൂഹം'),
+        subtitle: tr(en: 'Threads, gallery & updates', ta: 'இழைகள், படத்தொகுப்பு & புதுப்பிப்புகள்', hi: 'थ्रेड्स, गैलरी और अपडेट', ml: 'ത്രെഡുകൾ, ഗാലറി, അപ്ഡേറ്റുകൾ'),
+        icon: Icons.dynamic_feed_rounded,
+        tint: AppColors.primaryLight,
         route: '/feed',
-        gradient: const [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-        items: [
-          tr(en: 'FYC Instagram', ta: 'இன்ஸ்டாகிராம்', hi: 'इंस्टाग्राम', ml: 'ഇൻസ്റ്റാഗ്രാം'),
-          tr(en: 'Threads', ta: 'இழைகள்', hi: 'थ्रेड्स', ml: 'ത്രെഡ്‌സ്'),
-          tr(en: 'Green Initiatives', ta: 'பசுமை முயற்சிகள்', hi: 'हरित पहल', ml: 'ഹരിത സംരംഭങ്ങൾ'),
-          tr(en: 'Gallery', ta: 'படத்தொகுப்பு', hi: 'गैलरी', ml: 'ഗാലറി'),
-        ],
       ),
-      _Bucket(
-        ta: 'சேவை',
-        en: 'Serve',
-        icon: Icons.volunteer_activism_rounded,
+      _Service(
+        title: tr(en: 'Report an Issue', ta: 'புகார் அளி', hi: 'समस्या दर्ज करें', ml: 'പ്രശ്നം രേഖപ്പെടുത്തുക'),
+        subtitle: tr(en: 'Civic complaints, tracked to fix', ta: 'குடிமை புகார்கள், தீர்வு வரை கண்காணிப்பு', hi: 'नागरिक शिकायतें, समाधान तक ट्रैक', ml: 'പൗര പരാതികൾ, പരിഹാരം വരെ'),
+        icon: Icons.campaign_rounded,
+        tint: AppColors.gold,
+        route: '/issues',
+      ),
+      _Service(
+        title: tr(en: 'Green FYC', ta: 'பசுமை', hi: 'हरित', ml: 'ഹരിതം'),
+        subtitle: tr(en: 'Tree drives & eco initiatives', ta: 'மரம் நடும் இயக்கம் & சூழல் முயற்சிகள்', hi: 'वृक्षारोपण और पर्यावरण पहल', ml: 'വൃക്ഷത്തൈ & പരിസ്ഥിതി സംരംഭങ്ങൾ'),
+        icon: Icons.eco_rounded,
+        tint: AppColors.success,
+        route: '/green',
+        pill: tr(en: 'Eco', ta: 'சூழல்', hi: 'इको', ml: 'ഇക്കോ'),
+        pillColor: AppColors.success,
+      ),
+      _Service(
+        title: tr(en: 'Skills Directory', ta: 'திறன் அடைவு', hi: 'कौशल निर्देशिका', ml: 'നൈപുണ്യ ഡയറക്ടറി'),
+        subtitle: tr(en: 'Carpenters, electricians, tutors', ta: 'தச்சர், மின்சாரி, ஆசிரியர்', hi: 'बढ़ई, इलेक्ट्रीशियन, शिक्षक', ml: 'ആശാരി, ഇലക്ട്രീഷ്യൻ, ട്യൂട്ടർ'),
+        icon: Icons.handyman_rounded,
+        tint: AppColors.primary,
+        route: '/community',
+        pill: tr(en: 'New', ta: 'புதியது', hi: 'नया', ml: 'പുതിയത്'),
+        pillColor: AppColors.primaryLight,
+      ),
+      _Service(
+        title: tr(en: 'Opportunities', ta: 'வாய்ப்புகள்', hi: 'अवसर', ml: 'അവസരങ്ങൾ'),
+        subtitle: tr(en: 'Jobs, scholarships & community gigs', ta: 'வேலை, உதவித்தொகை & பணிகள்', hi: 'नौकरियाँ, छात्रवृत्ति और काम', ml: 'ജോലി, സ്കോളർഷിപ്പ്, ഗിഗുകൾ'),
+        icon: Icons.work_rounded,
+        tint: AppColors.gold,
         route: '/opportunities',
-        gradient: const [Color(0xFF0F766E), Color(0xFF115E59)],
-        items: [
-          tr(en: 'Blood Donation', ta: 'இரத்த தானம்', hi: 'रक्तदान', ml: 'രക്തദാനം'),
-          tr(en: 'Report an Issue', ta: 'புகார் அளி', hi: 'समस्या दर्ज करें', ml: 'പ്രശ്നം രേഖപ്പെടുത്തുക'),
-          tr(en: 'Volunteer', ta: 'தொண்டு', hi: 'स्वयंसेवक', ml: 'സന്നദ്ധസേവനം'),
-          tr(en: 'Opportunities', ta: 'வாய்ப்புகள்', hi: 'अवसर', ml: 'അവസരങ്ങൾ'),
-        ],
+        pill: tr(en: 'Jobs', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി'),
+        pillColor: AppColors.gold,
+      ),
+      _Service(
+        title: tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ'),
+        subtitle: tr(en: 'Festivals & meetings — register', ta: 'விழாக்கள் & கூட்டங்கள் — பதிவு', hi: 'त्योहार और बैठकें — पंजीकरण', ml: 'ഉത്സവങ്ങൾ & മീറ്റിംഗുകൾ — രജിസ്റ്റർ'),
+        icon: Icons.event_rounded,
+        tint: AppColors.primaryLight,
+        route: '/events',
       ),
     ];
 
@@ -610,11 +624,7 @@ class _ServiceBento extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: tr(
-              en: 'What are you looking for?',
-              ta: 'எதை தேடுகிறீர்கள்?',
-              hi: 'आप क्या ढूंढ रहे हैं?',
-              ml: 'നിങ്ങൾ എന്താണ് തിരയുന്നത്?'),
+          title: tr(en: 'Explore FYC', ta: 'FYC ஐ ஆராயுங்கள்', hi: 'FYC एक्सप्लोर करें', ml: 'FYC പര്യവേക്ഷണം'),
           onViewAll: () => _showMoreSheet(context),
         ),
         const SizedBox(height: 12),
@@ -625,118 +635,24 @@ class _ServiceBento extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.78,
+            childAspectRatio: 0.82,
           ),
-          itemCount: buckets.length,
-          itemBuilder: (_, i) => _BucketCard(b: buckets[i]),
+          itemCount: services.length,
+          itemBuilder: (_, i) {
+            final s = services[i];
+            return DSFeatureCard(
+              icon: s.icon,
+              title: s.title,
+              subtitle: s.subtitle,
+              tint: s.tint,
+              pillLabel: s.pill,
+              pillColor: s.pillColor,
+              actionLabel: tr(en: 'Open', ta: 'திற', hi: 'खोलें', ml: 'തുറക്കുക'),
+              onTap: () => context.push(s.route),
+            );
+          },
         ),
       ],
-    );
-  }
-}
-
-class _BucketCard extends StatelessWidget {
-  final _Bucket b;
-  const _BucketCard({required this.b});
-
-  @override
-  Widget build(BuildContext context) {
-    return Pressable(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => context.push(b.route),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: b.gradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
-              boxShadow: [
-                BoxShadow(
-                  color: b.gradient.last.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(b.icon, color: Colors.white, size: 22),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '${b.ta} · ${b.en}',
-                  style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final item in b.items)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 5, right: 6),
-                                width: 4,
-                                height: 4,
-                                decoration: const BoxDecoration(color: Colors.white70, shape: BoxShape.circle),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  item,
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, height: 1.25),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.arrow_forward, color: Colors.white, size: 15),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -2073,7 +1989,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                 padding: const EdgeInsets.only(left: 4, bottom: 14),
                 child: Row(
                   children: [
-                    const Text('🌟', style: TextStyle(fontSize: 15)),
+                    const Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
                     const SizedBox(width: 6),
                     Text(
                       ta ? 'நமது சமூகத் தாக்கம்' : 'Our Community Impact',
