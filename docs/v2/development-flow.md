@@ -29,8 +29,10 @@ and unrelated).
 3. Self-verify: analyzer/tests locally where possible; bracket-balance every
    edited `.dart`; confirm no UI emoji.
 4. Commit (Conventional Commits), push, open a PR describing the slice.
-5. **Wait for CI green** — `flutter analyze` + `flutter test` (mobile) and
-   `python -m pytest` (backend). Fix red before anything else.
+5. **Wait for CI green.** CI runs **both** jobs on **every** PR regardless of
+   what changed — the mobile job (`flutter analyze` + `flutter test`) and the
+   backend job (`python -m pytest`) — and **both must be green to merge**. Fix
+   red before anything else.
 6. Squash-merge. Tick the box in `README.md` (part of the same or a trailing PR).
 7. Repeat.
 
@@ -42,8 +44,11 @@ flight at a time** — merge before starting the next.
 - Mobile: `flutter analyze` (no fatal infos/warnings config) + `flutter test`.
   This is the **only** automated Dart check — there is no local Flutter here, so
   treat CI as authoritative.
-- Backend: `python -m pytest` (runs locally too — run before pushing).
-- A PR does not merge until all checks are green.
+- Backend: `python -m pytest` — also runs locally; run it before pushing when
+  you touch backend.
+- **Both jobs run on every PR and both must be green** — a docs-only or
+  mobile-only change still needs the backend job green, and vice versa. A PR
+  does not merge until all checks pass.
 
 ## On-device gate (layout-sensitive slices)
 

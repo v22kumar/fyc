@@ -30,11 +30,11 @@ test per component/endpoint are defaults, not afterthoughts.
 | Home stats / feed / next-event | live endpoints wired | `GET /community/stats`, `/community/feed`, `/events` |
 | Hero carousel data | `Announcement` (`banner_url`, `is_pinned`, `category`, `expires_at`) | `backend/app/routers/announcements.py` |
 | Activity timeline | built but **dormant** — wire it | `CommunityActivity` + `ActivityEngine` (`services/activity_engine.py`) |
-| Search | `SearchScreen` + `/search` (+ recent, chips) | `features/search/…/search_screen.dart` |
-| Cards / chips / badges / skeletons | design system | `lib/core/design_system/components/*` (`DSFeatureCard`, `DSCard`, `DSChip`, `DSBadge` w/ LIVE pulse, `DSSkeleton`) |
-| Entrance motion (reduce-motion aware) | `FadeSlideIn` | `lib/core/widgets/entrance.dart` |
-| Image caching + Cloudinary tiering | `CachedImage` | `lib/core/widgets/cached_image.dart` |
-| Premium texture | `KolamBackground` | `lib/core/design_system/patterns/kolam_background.dart` |
+| Search | `SearchScreen` + `/search` (+ recent, chips) | `mobile/lib/features/search/…/search_screen.dart` |
+| Cards / chips / badges / skeletons | design system | `mobile/lib/core/design_system/components/*` (`DSFeatureCard`, `DSCard`, `DSChip`, `DSBadge` w/ LIVE pulse, `DSSkeleton`) |
+| Entrance motion (reduce-motion aware) | `FadeSlideIn` | `mobile/lib/core/widgets/entrance.dart` |
+| Image caching + Cloudinary tiering | `CachedImage` | `mobile/lib/core/widgets/cached_image.dart` |
+| Premium texture | `KolamBackground` | `mobile/lib/core/design_system/patterns/kolam_background.dart` |
 
 **Genuinely new:** compact collapsing header, hero carousel widget, animated
 counters, cross-tournament live endpoint, continue-where-you-left, recommendation

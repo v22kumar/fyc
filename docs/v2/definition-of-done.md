@@ -5,7 +5,9 @@ that keeps quality consistent without re-litigating it each time.
 
 ## Every slice
 - [ ] Builds clean; `flutter analyze` reports no errors (CI green).
-- [ ] `flutter test` green; `python -m pytest` green (if backend touched).
+- [ ] **Both CI jobs green** — mobile (`flutter analyze` + `flutter test`) and
+      backend (`python -m pytest`) run on every PR and both must pass, whatever
+      the change touched. Run pytest locally before pushing when backend changes.
 - [ ] Brackets balanced in every edited `.dart` file.
 - [ ] **No emoji in UI** — Material Symbols only. (Unicode chess piece glyphs are
       game data and exempt.)
@@ -15,7 +17,7 @@ that keeps quality consistent without re-litigating it each time.
 - [ ] Roadmap checkbox ticked in `docs/v2/README.md`.
 
 ## When it adds a component
-- [ ] Lives in `lib/core/design_system/components/` if reusable.
+- [ ] Lives in `mobile/lib/core/design_system/components/` if reusable.
 - [ ] Has a widget test (mirror `test/core/design_system/ds_feature_card_test.dart`).
 - [ ] Respects reduce-motion for any animation (see `FadeSlideIn`).
 - [ ] Overflow-safe: flexible children (`Expanded`/`Flexible`), tested at small
