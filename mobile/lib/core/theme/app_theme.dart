@@ -1,51 +1,53 @@
 import 'package:flutter/material.dart';
 import '../design_system/typography.dart';
+import '../design_system/tokens.dart';
 
+/// Semantic aliases over the raw [DSColors] token scale — the **single source
+/// of truth** for the palette. AppColors names the roles the shipping app uses;
+/// the values live in `tokens.dart` and are referenced here, so the two can
+/// never drift (v2 0.3 unification). Rose-tints and gold have no raw-scale
+/// equivalent yet and stay as literals.
 class AppColors {
   AppColors._();
 
-  // FYC Brand — Deep Navy + Live Mint (unified design system v2).
-  // These are aliases of the DSColors token scale (core/design_system/tokens.dart)
-  // so the whole shipping app renders in one palette instead of the old
-  // forest-green theme. Change these five and every legacy screen re-skins.
-  static const Color primary = Color(0xFF16255A);       // Deep Navy (navy700)
-  static const Color primaryLight = Color(0xFF14B891);  // Live Mint (mint600) — action accent
-  static const Color primarySurface = Color(0xFFF0FDF9); // Mint 50 tint
+  static const Color primary = DSColors.navy700;        // Deep Navy
+  static const Color primaryLight = DSColors.mint600;   // Live Mint — action accent
+  static const Color primarySurface = DSColors.mint50;  // Mint 50 tint
 
-  static const Color accent = Color(0xFFF43F5E);        // Rose 500 - Blood Donation / danger
-  static const Color accentLight = Color(0xFFFFF1F2);   // Rose 50
+  static const Color accent = DSColors.danger;          // Rose — Blood Donation / danger
+  static const Color accentLight = DSColors.dangerSurface; // Rose 50
   static const Color accentSurface = Color(0xFFFFE4E6); // Rose 100
 
   // Gold accent (championships, logos)
   static const Color gold = Color(0xFFD4AF37);
   static const Color goldLight = Color(0xFFFBF3C7);
 
-  // Aurora dark surfaces (now navy, feeding gradientAurora)
-  static const Color darkBg = Color(0xFF0A1128);        // navy900 — aurora base
-  static const Color darkSurface = Color(0xFF16255A);   // navy700 — aurora mid
+  // Aurora dark surfaces (navy, feeding gradientAurora)
+  static const Color darkBg = DSColors.navy900;         // aurora base
+  static const Color darkSurface = DSColors.navy700;    // aurora mid
 
   // MD3 tonal ladder (docs/design/md3-elite-redesign.md §3.1) — no pure
   // white anywhere: cards are tinted "paper", the scaffold sits one tone
   // deeper, and hierarchy reads through tone instead of borders/shadows.
-  static const Color background = Color(0xFFF2F4FA);    // surface (scaffold)
-  static const Color surface = Color(0xFFF9FAFE);       // surfaceBright (cards/sheets)
+  static const Color background = DSColors.backgroundLight; // scaffold
+  static const Color surface = DSColors.surfaceLight;       // cards/sheets
   static const Color surfaceContainerLow = Color(0xFFECEFF7);
   static const Color surfaceContainer = Color(0xFFE6EAF4);
   static const Color surfaceContainerHigh = Color(0xFFE0E5F1);
 
-  static const Color textPrimary = Color(0xFF0A1128);    // navy900 ink
-  static const Color textSecondary = Color(0xFF5B6478);  // slate
-  static const Color border = Color(0xFFE3E7F0);         // navy-tinted line
+  static const Color textPrimary = DSColors.textPrimaryLight;   // navy900 ink
+  static const Color textSecondary = DSColors.textSecondaryLight; // slate
+  static const Color border = DSColors.borderLight;              // navy-tinted line
 
-  static const Color success = Color(0xFF16A34A);
-  static const Color warning = Color(0xFFF59E0B);       // Amber 500
+  static const Color success = DSColors.success;
+  static const Color warning = DSColors.amber500;
 
-  // ── Dark theme palette (navy-black, matches DSColors dark) ──────────────────
-  static const Color darkBackground = Color(0xFF080B14); // navy-black
-  static const Color darkCard = Color(0xFF141A2B);       // elevated surface
-  static const Color darkBorder = Color(0xFF242B3D);     // subtle divider
-  static const Color darkText = Color(0xFFF1F3FA);        // off-white
-  static const Color darkTextSecondary = Color(0xFF9AA3B8); // slate
+  // ── Dark theme palette (mirrors DSColors dark) ──────────────────────────────
+  static const Color darkBackground = DSColors.backgroundDark;
+  static const Color darkCard = DSColors.surfaceDarkSolid;
+  static const Color darkBorder = DSColors.borderDark;
+  static const Color darkText = DSColors.textPrimaryDark;
+  static const Color darkTextSecondary = DSColors.textSecondaryDark;
 }
 
 /// Theme-aware colour getters — use `context.cSurface` etc. so a widget renders
@@ -62,7 +64,7 @@ extension AppColorsX on BuildContext {
 class AppTheme {
   AppTheme._();
 
-  static const double radiusCard = 20.0;
+  static const double radiusCard = DSRadius.card; // single-sourced (v2 0.3)
   static const double radiusBtn = 16.0;
   static const double paddingPage = 20.0;
 
