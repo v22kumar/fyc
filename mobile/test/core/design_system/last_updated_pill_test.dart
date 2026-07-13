@@ -8,14 +8,15 @@ import 'package:fyc_connect/core/design_system/components/last_updated_pill.dart
 Widget _wrap(Widget c) => MaterialApp(home: Scaffold(body: c));
 
 void main() {
-  // tr() reads the language from sl<LocalStorage>() — register a stub so the
-  // pill can build (defaults to English).
+  // tr() reads the language from sl<LocalStorage>(). The app is Tamil-first, so
+  // register a stub and pin the language to English for these assertions.
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     if (!sl.isRegistered<LocalStorage>()) {
       sl.registerSingleton<LocalStorage>(LocalStorage(prefs));
     }
+    await sl<LocalStorage>().saveLang('en');
   });
 
   testWidgets('LastUpdatedPill reads "just now" for a fresh timestamp', (tester) async {
