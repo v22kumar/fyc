@@ -12,6 +12,11 @@ class EventModel extends EventEntity {
     super.bannerUrl,
     super.geographyId,
     super.registrationCount,
+    super.registrationEnabled,
+    super.registrationType,
+    super.maxParticipants,
+    super.registrationDeadline,
+    super.status,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +31,13 @@ class EventModel extends EventEntity {
       bannerUrl: json['banner_url'] as String?,
       geographyId: json['geography_id'] as String?,
       registrationCount: (json['registration_count'] as num?)?.toInt() ?? 0,
+      registrationEnabled: json['registration_enabled'] as bool? ?? false,
+      registrationType: json['registration_type'] as String?,
+      maxParticipants: (json['max_participants'] as num?)?.toInt(),
+      registrationDeadline: json['registration_deadline'] != null 
+          ? DateTime.parse(json['registration_deadline'] as String) 
+          : null,
+      status: json['status'] as String? ?? 'active',
     );
   }
 
@@ -41,6 +53,11 @@ class EventModel extends EventEntity {
       'banner_url': bannerUrl,
       'geography_id': geographyId,
       'registration_count': registrationCount,
+      'registration_enabled': registrationEnabled,
+      'registration_type': registrationType,
+      'max_participants': maxParticipants,
+      'registration_deadline': registrationDeadline?.toIso8601String(),
+      'status': status,
     };
   }
 }

@@ -13,7 +13,8 @@ class EventCreate(BaseModel):
     banner_url: Optional[str] = None
     geography_id: Optional[UUID] = None
     is_published: Optional[bool] = False
-    requires_registration: Optional[bool] = True
+    registration_enabled: Optional[bool] = True
+    registration_type: Optional[str] = "General"
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
     competition_categories: Optional[List[str]] = None
@@ -28,7 +29,9 @@ class EventUpdate(BaseModel):
     banner_url: Optional[str] = None
     geography_id: Optional[UUID] = None
     is_published: Optional[bool] = None
-    requires_registration: Optional[bool] = None
+    registration_enabled: Optional[bool] = None
+    registration_type: Optional[str] = None
+    status: Optional[str] = None
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
     competition_categories: Optional[List[str]] = None
@@ -48,7 +51,9 @@ class EventOut(BaseModel):
     created_by_user_id: Optional[UUID]
     created_at: datetime
     is_published: Optional[bool]
-    requires_registration: Optional[bool]
+    registration_enabled: Optional[bool]
+    registration_type: str
+    status: str
     registration_deadline: Optional[datetime]
     max_participants: Optional[int]
     competition_categories: Optional[Any]
@@ -66,14 +71,15 @@ class EventCheckoutOut(BaseModel):
 
 class EventRegistrationCreate(BaseModel):
     name: str
-    age: int
+    dob: datetime
     gender: str
     mobile_number: str
     email: Optional[str] = None
     address: Optional[str] = None
-    school_college: Optional[str] = None
-    competition_category: List[str]
-    class_grade: Optional[str] = None
+    school_college: str
+    class_grade: str
+    member_id: Optional[str] = None
+    competition_category: Optional[List[str]] = None
     remarks: Optional[str] = None
 
 class EventRegistrationOut(BaseModel):
@@ -83,13 +89,15 @@ class EventRegistrationOut(BaseModel):
     event_id: UUID
     user_id: Optional[UUID]
     name: str
-    age: int
+    dob: datetime
     gender: str
     mobile_number: str
     email: Optional[str]
     address: Optional[str]
-    school_college: Optional[str]
+    school_college: str
+    class_grade: str
+    member_id: Optional[str]
     competition_category: Any
-    class_grade: Optional[str]
     remarks: Optional[str]
+    status: str
     created_at: datetime

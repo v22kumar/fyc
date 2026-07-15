@@ -61,9 +61,11 @@ def create_event(
         banner_url=payload.banner_url,
         geography_id=payload.geography_id,
         is_published=payload.is_published,
-        requires_registration=payload.requires_registration,
+        registration_enabled=payload.registration_enabled,
         registration_deadline=payload.registration_deadline,
         max_participants=payload.max_participants,
+        registration_type=payload.registration_type,
+        status="active",
         competition_categories=payload.competition_categories,
         created_by_user_id=current_user.id
     )
@@ -131,7 +133,7 @@ def list_events(
     tenant_id: UUID = Depends(require_tenant_id),
 ):
     """List published events for the current tenant (public)."""
-    query = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True)
+    query = db.query(Event).filter(Event.organization_id == tenant_id, Event.is_published == True, Event.status != "deleted")
     events = _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
     result = [EventOut.model_validate(e) for e in events]
 
@@ -147,7 +149,7 @@ def list_all_events(
     current_user: User = Depends(require_executive)
 ):
     """List all events (including drafts) for admin."""
-    query = db.query(Event).filter(Event.organization_id == current_user.organization_id)
+    query = db.query(Event).filter(Event.organization_id == current_user.organization_id, Event.status != "deleted")
     return _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
 
 @router.get("/{event_id}", response_model=EventOut)
@@ -160,6 +162,7 @@ def get_event(
     event = db.query(Event).filter(
         Event.id == event_id,
         Event.organization_id == tenant_id,
+        Event.status != "deleted"
     ).first()
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
@@ -185,7 +188,7 @@ def register_for_event(
     if not event.is_published:
         raise HTTPException(status_code=400, detail="Event is not open for registration")
         
-    if not event.requires_registration:
+    if not event.registration_enabled:
         raise HTTPException(status_code=400, detail="This event does not require registration. Anyone can join!")
         
     if event.registration_deadline and datetime.now(timezone.utc) > event.registration_deadline:
@@ -209,15 +212,17 @@ def register_for_event(
         event_id=event_id,
         user_id=current_user.id if current_user else None,
         name=payload.name,
-        age=payload.age,
+        dob=payload.dob,
         gender=payload.gender,
         mobile_number=payload.mobile_number,
         email=payload.email,
         address=payload.address,
         school_college=payload.school_college,
-        competition_category=payload.competition_category,
         class_grade=payload.class_grade,
-        remarks=payload.remarks
+        member_id=payload.member_id,
+        competition_category=payload.competition_category or [],
+        remarks=payload.remarks,
+        status="registered"
     )
     db.add(registration)
     db.commit()
@@ -380,3 +385,63 @@ def checkout_event(
     db.commit()
 
     return EventCheckoutOut(checked_out_at=now, hours_accrued=hours)
+
+
+@router.delete("/{event_id}")
+def delete_event(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_executive)
+):
+    """Soft delete an event (Admin only)."""
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == current_user.organization_id
+    ).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+        
+    event.status = "deleted"
+    db.commit()
+    return {"message": "Event deleted successfully"}
+
+@router.delete("/{event_id}/register")
+def cancel_registration(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Cancel registration for an event."""
+    registration = db.query(EventRegistration).filter(
+        EventRegistration.event_id == event_id,
+        EventRegistration.user_id == current_user.id
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+        
+    db.delete(registration)
+    db.commit()
+    return {"message": "Registration cancelled successfully"}
+
+@router.get("/{event_id}/registration-status")
+def get_registration_status(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Get registration status and total count."""
+    total = db.query(EventRegistration).filter(EventRegistration.event_id == event_id).count()
+    is_registered = False
+    
+    if current_user:
+        existing = db.query(EventRegistration).filter(
+            EventRegistration.event_id == event_id,
+            EventRegistration.user_id == current_user.id
+        ).first()
+        if existing:
+            is_registered = True
+            
+    return {
+        "is_registered": is_registered,
+        "total_registrations": total
+    }

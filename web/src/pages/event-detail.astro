@@ -43,8 +43,18 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             </div>
         </div>
 
-        <div class="registration-form-container lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 class="text-xl font-bold mb-6 pb-4 border-b border-gray-100">Register Now</h3>
+        <div class="registration-form-container lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
+            <div id="reg-status-badge" class="hidden absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                ✓ Registered
+            </div>
+            
+            <h3 class="text-xl font-bold mb-2">Register Now</h3>
+            <p id="reg-count" class="text-sm text-gray-500 mb-6 pb-4 border-b border-gray-100">0 Registered</p>
+            
+            <div id="reg-closed-msg" class="hidden p-4 bg-red-50 text-red-700 rounded-lg font-medium text-center mb-4">
+                Registration Closed
+            </div>
+
             <form id="regForm" class="reg-form flex flex-col gap-4">
             <input type="hidden" id="eventId" />
             
@@ -55,8 +65,8 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             
             <div class="grid grid-cols-2 gap-4">
                 <div class="form-group flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-gray-700">Age *</label>
-                    <input type="number" id="age" required min="5" max="100" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                    <label class="text-sm font-medium text-gray-700">Date of Birth *</label>
+                    <input type="date" id="dob" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
                 </div>
                 <div class="form-group flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-gray-700">Gender *</label>
@@ -76,42 +86,52 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 </div>
                 <div class="form-group flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                    <input type="email" id="email" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Optional" />
                 </div>
             </div>
 
-            <div class="form-group flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700">School / College</label>
-                <input type="text" id="school" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-            </div>
-            
-            <div class="form-group flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700">Class / Grade Category *</label>
-                <select id="grade" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
-                <option value="">Select Category</option>
-                <option value="1 முதல் 3 ஆம் வகுப்பு">1 முதல் 3 ஆம் வகுப்பு</option>
-                <option value="4 முதல் 5 ஆம் வகுப்பு">4 முதல் 5 ஆம் வகுப்பு</option>
-                <option value="6 முதல் 8 ஆம் வகுப்பு">6 முதல் 8 ஆம் வகுப்பு</option>
-                <option value="9 முதல் 10 ஆம் வகுப்பு">9 முதல் 10 ஆம் வகுப்பு</option>
-                <option value="11 மற்றும் 12 ஆம் வகுப்பு">11 மற்றும் 12 ஆம் வகுப்பு</option>
-                <option value="கல்லூரி மாணவர்கள்">கல்லூரி மாணவர்கள்</option>
-                <option value="திறந்த பிரிவு">திறந்த பிரிவு</option>
-                </select>
-            </div>
-
-            <div class="form-group hidden flex-col gap-1.5" id="competitions-container">
-                <label class="text-sm font-medium text-gray-700">Select Competitions & Topics *</label>
-                <div id="dynamic-competitions" class="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
-                <!-- Dynamically populated -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">School / College *</label>
+                    <input type="text" id="school" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-gray-700">Class / Grade *</label>
+                    <select id="grade" required class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
+                        <option value="">Select</option>
+                        <option value="1 முதல் 3 ஆம் வகுப்பு">1 முதல் 3 ஆம் வகுப்பு</option>
+                        <option value="4 முதல் 5 ஆம் வகுப்பு">4 முதல் 5 ஆம் வகுப்பு</option>
+                        <option value="6 முதல் 8 ஆம் வகுப்பு">6 முதல் 8 ஆம் வகுப்பு</option>
+                        <option value="9 முதல் 10 ஆம் வகுப்பு">9 முதல் 10 ஆம் வகுப்பு</option>
+                        <option value="11 மற்றும் 12 ஆம் வகுப்பு">11 மற்றும் 12 ஆம் வகுப்பு</option>
+                        <option value="கல்லூரி மாணவர்கள்">கல்லூரி மாணவர்கள்</option>
+                        <option value="திறந்த பிரிவு">திறந்த பிரிவு</option>
+                    </select>
                 </div>
             </div>
 
             <div class="form-group flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700">Address</label>
-                <textarea id="address" rows="2" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"></textarea>
+                <textarea id="address" rows="2" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Optional"></textarea>
             </div>
 
-            <button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-700 transition-colors mt-2 shadow-sm">Submit Registration</button>
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Member ID</label>
+                <input type="text" id="member_id" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Optional" />
+            </div>
+
+            <!-- Shown only for Submission type events -->
+            <div id="submission-topic-container" class="hidden form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Topic *</label>
+                <input type="text" id="topic" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Enter your submission topic" />
+            </div>
+
+            <div class="form-group flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-gray-700">Remarks</label>
+                <textarea id="remarks" rows="2" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Optional"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-700 transition-colors mt-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Submit Registration</button>
             <div id="msg" class="hidden mt-4 p-3 rounded-lg text-sm text-center"></div>
             </form>
         </div>
@@ -151,6 +171,40 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 document.getElementById('ev-deadline').textContent = new Date(event.registration_deadline).toLocaleDateString();
             }
 
+            document.getElementById('reg-count').textContent = `${event.registration_count || 0} Registered`;
+
+            if (event.registration_type === 'Submission') {
+                document.getElementById('submission-topic-container').classList.remove('hidden');
+                document.getElementById('topic').required = true;
+            }
+
+            // Check if registered
+            const token = localStorage.getItem('fyc_token');
+            if (token) {
+                try {
+                    const stRes = await fetch(`${API_BASE}/api/v1/events/${eventId}/registration-status`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (stRes.ok) {
+                        const stData = await stRes.json();
+                        if (stData.is_registered) {
+                            document.getElementById('reg-status-badge').classList.remove('hidden');
+                            const btn = document.getElementById('submitBtn');
+                            btn.disabled = true;
+                            btn.textContent = 'Already Registered';
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // Check if registration closed
+            const now = new Date();
+            const deadline = event.registration_deadline ? new Date(event.registration_deadline) : null;
+            if (!event.registration_enabled || (deadline && now > deadline) || (event.max_participants && event.registration_count >= event.max_participants)) {
+                document.getElementById('reg-closed-msg').classList.remove('hidden');
+                document.getElementById('regForm').classList.add('hidden');
+            }
+
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('event-content').classList.remove('hidden');
         } catch (e) {
@@ -161,101 +215,30 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
     loadEvent();
 
-    const compData = {
-      "1 முதல் 3 ஆம் வகுப்பு": {
-        "பேச்சுப் போட்டி": ["என் அம்மா என் முதல் ஆசிரியர்", "நான் பெரியவனாக / பெரியவளாக ஆன பிறகு", "என் செல்லப் பிராணி", "மரங்கள் ஏன் நண்பர்கள்?", "மகிழ்ச்சியான பள்ளி"],
-        "ஒப்பித்தல் போட்டி": ["தாய் பற்றிய கவிதை", "இயற்கை கவிதை", "குழந்தைகள் கவிதை", "நல்ல பழக்கங்கள்"],
-        "ஓவியப் போட்டி": ["என் குடும்பம்", "என் பள்ளி", "வண்ணத்துப்பூச்சி உலகம்"]
-      },
-      "4 முதல் 5 ஆம் வகுப்பு": {
-        "பேச்சுப் போட்டி": ["மொபைல் நல்ல நண்பனா?", "புத்தகம் VS மொபைல்", "நான் காப்பாற்ற விரும்பும் ஒரு உயிரினம்", "என் ஊர்", "எதிர்காலத்தில் நான் உருவாக்க விரும்பும் கண்டுபிடிப்பு"],
-        "ஒப்பித்தல் போட்டி": ["தேசபற்று கவிதை", "தமிழ் பற்றிய கவிதை", "உழைப்பு பற்றிய கவிதை"],
-        "கட்டுரைப் போட்டி": ["என் கனவு பள்ளி", "சுற்றுச்சூழலை நான் எப்படி காப்பாற்றுவேன்?"]
-      },
-      "6 முதல் 8 ஆம் வகுப்பு": {
-        "பேச்சுப் போட்டி": ["AI என் நண்பனா அல்லது போட்டியாளரா?", "சமூக ஊடகங்கள் நம்மை மாற்றுகிறதா?", "பிளாஸ்டிக் இல்லா உலகம் சாத்தியமா?", "விளையாட்டு மற்றும் வாழ்க்கை", "தோல்வி வெற்றியின் தாயா?"],
-        "ஒப்பித்தல் போட்டி": ["மனிதநேயம்", "இயற்கை பாதுகாப்பு", "இளைஞர் எழுச்சி"],
-        "கட்டுரைப் போட்டி": ["2050-ல் என் இந்தியா", "இணைய உலகில் பாதுகாப்பு", "விண்வெளி ஆராய்ச்சியின் எதிர்காலம்"]
-      },
-      "9 முதல் 10 ஆம் வகுப்பு": {
-        "பேச்சுப் போட்டி": ["செயற்கை நுண்ணறிவு மனிதனை மிஞ்சுமா?", "மதிப்பெண்களா? திறமைகளா?", "சமூக ஊடகங்கள்: வரமா சாபமா?", "காலநிலை மாற்றம் – இளைஞர்களின் பங்கு", "எதிர்கால வேலைகள் எப்படி இருக்கும்?"],
-        "ஒப்பித்தல் போட்டி": ["பாரதியார் கவிதைகள்", "பெண்கள் முன்னேற்றம்", "சுதந்திரம் மற்றும் பொறுப்பு"],
-        "கட்டுரைப் போட்டி": ["AI மற்றும் மனிதநேயம்", "டிஜிட்டல் இந்தியா", "நல்ல தலைமைத்துவம்"]
-      },
-      "11 மற்றும் 12 ஆம் வகுப்பு": {
-        "பேச்சுப் போட்டி": ["AI காலத்தில் கல்வி எப்படி மாற வேண்டும்?", "தொழில்நுட்பம் மனித உறவுகளை பாதிக்கிறதா?", "இந்தியா 2047", "இளைஞர்களும் தொழில்முனைவும்", "மனநலம் பற்றி பேச வேண்டிய நேரமா?"],
-        "ஒப்பித்தல் போட்டி": ["பாரதிதாசன் கவிதைகள்", "சமூக மாற்றக் கவிதைகள்", "பெண் விடுதலைக் கவிதைகள்"],
-        "கட்டுரைப் போட்டி": ["Start-up India", "செயற்கை நுண்ணறிவு மற்றும் வேலைவாய்ப்பு", "இந்தியாவின் உலகளாவிய பங்கு"]
-      },
-      "கல்லூரி மாணவர்கள்": {
-        "பேச்சுப் போட்டி": ["ChatGPT மற்றும் AI: கல்வியின் எதிர்காலம்", "Startup vs Job", "இந்தியா உலகின் AI தலைநகரமாக முடியுமா?", "சமூக ஊடகங்களில் உண்மை மற்றும் பொய்", "இன்றைய தலைமுறையின் மிகப்பெரிய சவால் என்ன?"],
-        "விவாதப் போட்டி": ["AI மனித வேலைகளை பறிக்குமா?", "ஆன்லைன் கல்வியா? நேரடி கல்வியா?", "அரசு வேலை vs தனியார் வேலை"],
-        "கட்டுரைப் போட்டி": ["2047 வளர்ந்த இந்தியா", "Climate Tech", "AI Ethics"]
-      },
-      "திறந்த பிரிவு": {
-        "திறந்த பிரிவு": ["3 நிமிடங்களில் ஒரு பிரச்சனைக்கு தீர்வு கூறு", "தமிழில் TED Talk", "ஒரு புதிய சமூக மாற்ற யோசனை", "என் ஊருக்கான ஒரு Startup Idea", "AI-ஐ பயன்படுத்தி கிராம வளர்ச்சி"]
-      }
-    };
-
-    const gradeSelect = document.getElementById('grade');
-    const compContainer = document.getElementById('competitions-container');
-    const dynComps = document.getElementById('dynamic-competitions');
-
-    gradeSelect?.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (!val || !compData[val]) {
-            if (compContainer) {
-                compContainer.classList.add('hidden');
-                compContainer.classList.remove('flex');
-            }
-            if (dynComps) dynComps.innerHTML = '';
-            return;
-        }
-
-        let html = '';
-        const types = compData[val];
-        for (const [type, topics] of Object.entries(types)) {
-            html += `<div class="mb-4"><strong class="block text-gray-800 text-sm mb-2">${type}</strong>`;
-            topics.forEach((topic) => {
-                html += `
-                <label class="flex items-start gap-2 mb-2 ml-2 cursor-pointer group">
-                    <input type="checkbox" name="competitions" value="${type}: ${topic}" class="mt-1 border-gray-300 rounded text-primary focus:ring-primary" />
-                    <span class="text-sm text-gray-600 group-hover:text-gray-900">${topic}</span>
-                </label>`;
-            });
-            html += `</div>`;
-        }
-        if (dynComps) dynComps.innerHTML = html;
-        if (compContainer) {
-            compContainer.classList.remove('hidden');
-            compContainer.classList.add('flex');
-        }
-    });
-
     const form = document.getElementById('regForm');
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const evId = document.getElementById('eventId').value;
         const msgEl = document.getElementById('msg');
         
-        const cbNodes = document.querySelectorAll('input[name="competitions"]:checked');
-        const competitions = Array.from(cbNodes).map((cb) => cb.value);
-
-        if (competitions.length === 0) {
-            alert("Please select at least one competition topic.");
-            return;
+        let categories = [];
+        const topicVal = document.getElementById('topic').value;
+        if (topicVal) {
+            categories.push(topicVal);
         }
 
         const payload = {
             name: document.getElementById('name').value,
-            age: parseInt(document.getElementById('age').value),
+            dob: new Date(document.getElementById('dob').value).toISOString(),
             gender: document.getElementById('gender').value,
             mobile_number: document.getElementById('mobile').value,
             email: document.getElementById('email').value || null,
-            school_college: document.getElementById('school').value || null,
-            class_grade: document.getElementById('grade').value,
             address: document.getElementById('address').value || null,
-            competition_category: competitions
+            school_college: document.getElementById('school').value,
+            class_grade: document.getElementById('grade').value,
+            member_id: document.getElementById('member_id').value || null,
+            competition_category: categories,
+            remarks: document.getElementById('remarks').value || null
         };
 
         try {
@@ -275,8 +258,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 msgEl.classList.add('block', 'bg-green-100', 'text-green-800');
                 msgEl.textContent = 'Registration successful!';
                 form.reset();
-                compContainer.classList.add('hidden');
-                compContainer.classList.remove('flex');
+                document.getElementById('reg-status-badge').classList.remove('hidden');
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.textContent = 'Registered';
             } else if (res.status === 401) {
                 localStorage.removeItem('fyc_token');
                 msgEl.classList.add('block', 'bg-amber-100', 'text-amber-800');

@@ -170,6 +170,10 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 child: _EventCard(
                   event: entry.value,
                   lang: _lang,
+                  isAdmin: _canCreate,
+                  onDelete: _canCreate
+                      ? () => _confirmDelete(context, entry.value.id)
+                      : null,
                   onCheckin: entry.value.isOngoing
                       ? () => context
                           .read<EventBloc>()
@@ -206,6 +210,33 @@ class _EventsListScreenState extends State<EventsListScreen> {
       builder: (_) => _EventRegisterSheet(event: event, lang: _lang),
     );
   }
+
+  Future<void> _confirmDelete(BuildContext context, String eventId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr(en: 'Delete Event?', ta: 'நிகழ்வை நீக்கவா?', hi: 'कार्यक्रम हटाएं?', ml: 'പരിപാടി ഇല്ലാതാക്കണോ?')),
+        content: Text(tr(
+            en: 'This will hide the event from all users.',
+            ta: 'இது அனைத்து பயனர்களிடமிருந்தும் நிகழ்வை மறைக்கும்.',
+            hi: 'यह सभी उपयोगकर्ताओं से कार्यक्रम छिपा देगा।',
+            ml: 'ഇത് എല്ലാ ഉപയോക്താക്കളിൽ നിന്നും പരിപാടി മറയ്ക്കും.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr(en: 'Delete', ta: 'நீக்கு', hi: 'हटाएं', ml: 'ഇല്ലാതാക്കുക'), style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && mounted) {
+      context.read<EventBloc>().add(EventDeleteRequested(eventId));
+    }
+  }
 }
 
 class _EventCard extends StatelessWidget {
@@ -213,12 +244,16 @@ class _EventCard extends StatelessWidget {
   final String lang;
   final VoidCallback? onCheckin;
   final VoidCallback? onRegister;
+  final VoidCallback? onDelete;
+  final bool isAdmin;
 
   const _EventCard({
     required this.event,
     required this.lang,
     this.onCheckin,
     this.onRegister,
+    this.onDelete,
+    this.isAdmin = false,
   });
 
   @override
@@ -226,6 +261,24 @@ class _EventCard extends StatelessWidget {
     final timeFmt = DateFormat('d MMM yyyy · h:mm a');
     final isPast = !event.isUpcoming && !event.isOngoing;
     final ta = lang == 'ta';
+    
+    final now = DateTime.now();
+    String statusText = tr(en: 'Upcoming', ta: 'வரவிருக்கிறது', hi: 'आगामी', ml: 'വരാനിരിക്കുന്ന');
+    Color statusColor = Colors.blue;
+    
+    if (now.isAfter(event.eventEnd)) {
+      statusText = tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूरा हो गया', ml: 'പൂർത്തിയായി');
+      statusColor = Colors.grey;
+    } else if (now.isAfter(event.eventStart) && now.isBefore(event.eventEnd)) {
+      statusText = tr(en: 'Live', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം');
+      statusColor = AppColors.success;
+    } else if (event.registrationDeadline != null && now.isAfter(event.registrationDeadline!)) {
+      statusText = tr(en: 'Closed', ta: 'மூடப்பட்டது', hi: 'बंद', ml: 'അടച്ചു');
+      statusColor = AppColors.accent;
+    } else if (event.maxParticipants != null && event.registrationCount >= event.maxParticipants!) {
+      statusText = tr(en: 'Closed', ta: 'மூடப்பட்டது', hi: 'बंद', ml: 'അടച്ചു');
+      statusColor = AppColors.accent;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -265,24 +318,23 @@ class _EventCard extends StatelessWidget {
                 ),
               ),
               Positioned(left: 12, top: 12, child: _DateBadge(date: event.eventStart)),
-              if (event.isOngoing)
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.success,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text('LIVE',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold)),
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(20),
                   ),
+                  child: Text(statusText,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
                 ),
+              ),
             ],
           ),
           Padding(
@@ -290,12 +342,27 @@ class _EventCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  event.displayTitle(lang),
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: context.cText),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.displayTitle(lang),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: context.cText),
+                      ),
+                    ),
+                    if (isAdmin && onDelete != null)
+                      GestureDetector(
+                        onTap: onDelete,
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -323,7 +390,7 @@ class _EventCard extends StatelessWidget {
                   children: [
                     _GoingRow(count: event.registrationCount, lang: lang),
                     const Spacer(),
-                    if (onRegister != null)
+                    if (statusText == tr(en: 'Upcoming', ta: 'வரவிருக்கிறது', hi: 'आगामी', ml: 'വരാനിരിക്കുന്ന') && onRegister != null)
                       ElevatedButton(
                         onPressed: onRegister,
                         style: ElevatedButton.styleFrom(
@@ -346,7 +413,7 @@ class _EventCard extends StatelessWidget {
                         label: Text(tr(en: 'Check In', ta: 'செக்-இன்', hi: 'चेक इन', ml: 'ചെക്ക് ഇൻ')),
                       )
                     else
-                      Text(tr(en: 'Event ended', ta: 'நிகழ்வு முடிந்தது', hi: 'कार्यक्रम समाप्त', ml: 'പരിപാടി അവസാനിച്ചു'),
+                      Text(statusText,
                           style: TextStyle(
                               color: context.cTextSecondary, fontSize: 12)),
                   ],
@@ -478,16 +545,29 @@ class _EventRegisterSheet extends StatefulWidget {
 class _EventRegisterSheetState extends State<_EventRegisterSheet> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
-  final _age = TextEditingController();
-  final _mobile = TextEditingController();
+  final _dob = TextEditingController();
   String _gender = 'Male';
+  final _mobile = TextEditingController();
+  final _email = TextEditingController();
+  final _address = TextEditingController();
+  final _school = TextEditingController();
+  String _grade = '1 முதல் 3 ஆம் வகுப்பு';
+  final _memberId = TextEditingController();
+  final _topic = TextEditingController();
+  final _remarks = TextEditingController();
   bool _submitting = false;
 
   @override
   void dispose() {
     _name.dispose();
-    _age.dispose();
+    _dob.dispose();
     _mobile.dispose();
+    _email.dispose();
+    _address.dispose();
+    _school.dispose();
+    _memberId.dispose();
+    _topic.dispose();
+    _remarks.dispose();
     super.dispose();
   }
 
@@ -496,14 +576,24 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
     setState(() => _submitting = true);
     final ta = widget.lang == 'ta';
     try {
+      final categories = <String>[];
+      if (widget.event.registrationType == 'Submission' && _topic.text.trim().isNotEmpty) {
+        categories.add(_topic.text.trim());
+      }
       await sl<ApiClient>().dio.post(
         '${ApiConstants.events}/${widget.event.id}/register',
         data: {
           'name': _name.text.trim(),
-          'age': int.tryParse(_age.text.trim()) ?? 0,
+          'dob': DateTime.parse(_dob.text.trim()).toIso8601String(),
           'gender': _gender,
           'mobile_number': _mobile.text.trim(),
-          'competition_category': <String>[],
+          'email': _email.text.trim().isEmpty ? null : _email.text.trim(),
+          'address': _address.text.trim().isEmpty ? null : _address.text.trim(),
+          'school_college': _school.text.trim(),
+          'class_grade': _grade,
+          'member_id': _memberId.text.trim().isEmpty ? null : _memberId.text.trim(),
+          'competition_category': categories,
+          'remarks': _remarks.text.trim().isEmpty ? null : _remarks.text.trim(),
         },
       );
       if (!mounted) return;
@@ -593,19 +683,24 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      controller: _age,
-                      keyboardType: TextInputType.number,
+                      controller: _dob,
+                      readOnly: true,
                       decoration: InputDecoration(
-                        labelText: tr(en: 'Age', ta: 'வயது', hi: 'आयु', ml: 'വയസ്സ്'),
-                        prefixIcon: const Icon(Icons.cake_outlined),
+                        labelText: tr(en: 'DOB', ta: 'பிறந்த தேதி', hi: 'जन्म की तारीख', ml: 'ജനനത്തീയതി'),
+                        prefixIcon: const Icon(Icons.calendar_today),
                       ),
-                      validator: (v) {
-                        final n = int.tryParse((v ?? '').trim());
-                        if (n == null || n <= 0) {
-                          return tr(en: 'Valid age', ta: 'சரியான வயது', hi: 'मान्य आयु', ml: 'സാധുവായ വയസ്സ്');
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (date != null) {
+                          _dob.text = DateFormat('yyyy-MM-dd').format(date);
                         }
-                        return null;
                       },
+                      validator: (v) => (v == null || v.trim().isEmpty) ? '*' : null,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -633,20 +728,107 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 ],
               ),
               const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _mobile,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        labelText: tr(en: 'Mobile', ta: 'கைபேசி', hi: 'मोबाइल', ml: 'മൊബൈൽ'),
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                      ),
+                      validator: (v) {
+                        final s = (v ?? '').trim();
+                        if (s.length < 10) return '*';
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _email,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: tr(en: 'Email (Optional)', ta: 'மின்னஞ்சல்', hi: 'ईमेल', ml: 'ഇമെയിൽ'),
+                        prefixIcon: const Icon(Icons.email_outlined),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               TextFormField(
-                controller: _mobile,
-                keyboardType: TextInputType.phone,
+                controller: _school,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Mobile Number', ta: 'கைபேசி எண்', hi: 'मोबाइल नंबर', ml: 'മൊബൈൽ നമ്പർ'),
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  labelText: tr(en: 'School / College *', ta: 'பள்ளி / கல்லூரி *', hi: 'स्कूल / कॉलेज *', ml: 'സ്കൂൾ / കോളേജ് *'),
+                  prefixIcon: const Icon(Icons.school_outlined),
                 ),
-                validator: (v) {
-                  final s = (v ?? '').trim();
-                  if (s.length < 10) {
-                    return tr(en: 'Valid mobile number', ta: 'சரியான எண்', hi: 'मान्य मोबाइल नंबर', ml: 'സാധുവായ മൊബൈൽ നമ്പർ');
-                  }
-                  return null;
-                },
+                validator: (v) => (v == null || v.trim().isEmpty) ? '*' : null,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _grade,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: tr(en: 'Class / Grade *', ta: 'வகுப்பு / தரம் *', hi: 'कक्षा / ग्रेड *', ml: 'ക്ലാസ് / ഗ്രേഡ് *'),
+                  prefixIcon: const Icon(Icons.grade_outlined),
+                ),
+                items: [
+                  '1 முதல் 3 ஆம் வகுப்பு',
+                  '4 முதல் 5 ஆம் வகுப்பு',
+                  '6 முதல் 8 ஆம் வகுப்பு',
+                  '9 முதல் 10 ஆம் வகுப்பு',
+                  '11 மற்றும் 12 ஆம் வகுப்பு',
+                  'கல்லூரி மாணவர்கள்',
+                  'திறந்த பிரிவு'
+                ].map((String val) {
+                  return DropdownMenuItem<String>(
+                    value: val,
+                    child: Text(val, overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _grade = v ?? _grade),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _address,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: tr(en: 'Address (Optional)', ta: 'முகவரி (விரும்பினால்)', hi: 'पता (वैकल्पिक)', ml: 'വിലാസം (ഓപ്ഷണൽ)'),
+                  prefixIcon: const Icon(Icons.location_on_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _memberId,
+                decoration: InputDecoration(
+                  labelText: tr(en: 'Member ID (Optional)', ta: 'உறுப்பினர் ஐடி (விரும்பினால்)', hi: 'सदस्य आईडी (वैकल्पिक)', ml: 'അംഗ ഐഡി (ഓപ്ഷണൽ)'),
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                ),
+              ),
+              if (widget.event.registrationType == 'Submission') ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _topic,
+                  decoration: InputDecoration(
+                    labelText: tr(en: 'Topic *', ta: 'தலைப்பு *', hi: 'विषय *', ml: 'വിഷയം *'),
+                    prefixIcon: const Icon(Icons.subject),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? tr(en: 'Enter topic', ta: 'தலைப்பை உள்ளிடவும்', hi: 'विषय दर्ज करें', ml: 'വിഷയം നൽകുക')
+                      : null,
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _remarks,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: tr(en: 'Remarks (Optional)', ta: 'குறிப்புகள் (விரும்பினால்)', hi: 'टिप्पणी (वैकल्पिक)', ml: 'പരാമർശങ്ങൾ (ഓപ്ഷണൽ)'),
+                  prefixIcon: const Icon(Icons.notes),
+                ),
               ),
               const SizedBox(height: 20),
               SizedBox(

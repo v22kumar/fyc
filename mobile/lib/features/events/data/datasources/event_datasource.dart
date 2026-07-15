@@ -8,6 +8,7 @@ abstract class EventDataSource {
   Future<List<EventModel>> fetchEvents();
   Future<Map<String, dynamic>> checkinEvent(String eventId);
   Future<EventModel> createEvent(Map<String, dynamic> body);
+  Future<void> deleteEvent(String eventId);
 }
 
 class EventDataSourceImpl implements EventDataSource {
@@ -43,6 +44,15 @@ class EventDataSourceImpl implements EventDataSource {
     try {
       final response = await _client.dio.post(ApiConstants.events, data: body);
       return EventModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteEvent(String eventId) async {
+    try {
+      await _client.dio.delete('${ApiConstants.events}/$eventId');
     } on DioException catch (e) {
       throw mapDioException(e);
     }

@@ -29,6 +29,13 @@ class EventCheckinSuccess extends EventState {
   List<Object?> get props => [message];
 }
 
+class EventDeleteSuccess extends EventState {
+  final String message;
+  const EventDeleteSuccess(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
 class EventFailure extends EventState {
   final String message;
   const EventFailure(this.message);

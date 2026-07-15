@@ -22,9 +22,11 @@ class Event(Base, TimestampMixin, TenantModelMixin):
     created_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     is_published = Column(Boolean, default=False)
-    requires_registration = Column(Boolean, default=True)
+    registration_enabled = Column(Boolean, default=True)
     registration_deadline = Column(DateTime(timezone=True), nullable=True)
     max_participants = Column(Integer, nullable=True)
+    registration_type = Column(String(50), nullable=False, default="General") # e.g., "General", "Submission"
+    status = Column(String(50), nullable=False, default="active") # "active", "deleted"
     competition_categories = Column(JSON, nullable=True)
 
     attendances = relationship("EventAttendance", back_populates="event", cascade="all, delete-orphan")
@@ -63,15 +65,21 @@ class EventRegistration(Base, TimestampMixin):
     user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     name = Column(String(150), nullable=False)
-    age = Column(Integer, nullable=False)
+    dob = Column(DateTime, nullable=False)
     gender = Column(String(20), nullable=False)
     mobile_number = Column(String(15), nullable=False)
-    email = Column(String(100), nullable=True)
+    email = Column(String(150), nullable=True)
     address = Column(Text, nullable=True)
-    school_college = Column(String(200), nullable=True)
-    competition_category = Column(JSON, nullable=False, default=list) # List of chosen categories
-    class_grade = Column(String(50), nullable=True)
+    school_college = Column(String(200), nullable=False)
+    class_grade = Column(String(50), nullable=False)
+    member_id = Column(String(50), nullable=True)
+    competition_category = Column(JSON, nullable=False, default=list) # List of chosen categories (Topics)
     remarks = Column(Text, nullable=True)
+    status = Column(String(50), nullable=False, default="registered")
     
     event = relationship("Event", back_populates="registrations")
     user = relationship("User", foreign_keys=[user_id])
+
+    __table_args__ = (
+        UniqueConstraint("event_id", "user_id", name="uq_event_registration"),
+    )

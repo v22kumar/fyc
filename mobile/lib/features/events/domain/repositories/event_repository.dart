@@ -5,4 +5,5 @@ import '../entities/event_entity.dart';
 abstract class EventRepository {
   Stream<Either<Failure, List<EventEntity>>> fetchEventsStream();
   Future<Either<Failure, String>> checkinEvent(String eventId);
+  Future<Either<Failure, String>> deleteEvent(String eventId);
 }

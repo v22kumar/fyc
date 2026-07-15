@@ -38,8 +38,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             
             <div id="admin-tools" class="hidden mb-10 bg-amber-50 p-6 rounded-xl border border-amber-200">
                 <h3 class="text-xl font-bold mb-4 text-amber-900 border-b border-amber-200 pb-2 flex justify-between items-center">
-                    Admin Tools
-                    <button id="generateFixturesBtn" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-700 transition-colors">Generate Fixtures</button>
+                    <div class="flex gap-2">
+                        <button id="generateFixturesBtn" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-700 transition-colors">Generate</button>
+                        <button onclick="openAddFixtureModal()" class="bg-white border border-amber-600 text-amber-700 px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">+ Add Fixture</button>
+                    </div>
                 </h3>
                 <div id="admin-teams-list" class="flex flex-col gap-3 max-h-96 overflow-y-auto pr-2">
                     <!-- Populated by JS -->
@@ -134,6 +136,46 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             </form>
         </div>
     </div>
+
+    <!-- Add Fixture Modal -->
+    <div id="addFixtureModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 font-sans">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Add Custom Fixture</h3>
+                <button onclick="closeAddFixtureModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            
+            <form id="addFixtureForm" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Team A</label>
+                    <select id="fixtureTeamA" required class="p-2.5 border border-gray-300 rounded-lg outline-none bg-white text-gray-900">
+                        <option value="">Select Team</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Team B</label>
+                    <select id="fixtureTeamB" required class="p-2.5 border border-gray-300 rounded-lg outline-none bg-white text-gray-900">
+                        <option value="">Select Team</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Match Date & Time (Optional)</label>
+                    <input type="datetime-local" id="fixtureDate" class="p-2.5 border border-gray-300 rounded-lg outline-none text-gray-900" />
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Venue (Optional)</label>
+                    <input type="text" id="fixtureVenue" class="p-2.5 border border-gray-300 rounded-lg outline-none text-gray-900" placeholder="e.g. Main Ground" />
+                </div>
+
+                <div class="flex gap-3 justify-end mt-4">
+                    <button type="button" onclick="closeAddFixtureModal()" class="flex-1 border border-gray-300 py-2 rounded-xl text-gray-600 font-medium">Cancel</button>
+                    <button type="submit" id="saveAddFixtureBtn" class="flex-1 bg-amber-600 text-white py-2 rounded-xl font-semibold hover:bg-amber-700">Add Fixture</button>
+                </div>
+            </form>
+        </div>
+    </div>
   </main>
 </BaseLayout>
 
@@ -218,6 +260,8 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         }
     }
 
+    let loadedTeams = [];
+
     async function loadAdminTeams(tId, token) {
         try {
             const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tId}/teams`, {
@@ -225,6 +269,8 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             });
             if (!res.ok) return;
             const teams = await res.json();
+            loadedTeams = teams.filter(t => t.status === 'APPROVED');
+            
             const container = document.getElementById('admin-teams-list');
             if (teams.length === 0) {
                 container.innerHTML = '<p class="text-sm text-amber-800">No teams registered yet.</p>';
@@ -278,6 +324,82 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             }
         } catch (e) {
             alert('Error generating fixtures');
+        }
+    });
+
+    window.openAddFixtureModal = function() {
+        if (loadedTeams.length < 2) {
+            alert("At least 2 approved teams are required to add a fixture.");
+            return;
+        }
+        
+        const selA = document.getElementById('fixtureTeamA');
+        const selB = document.getElementById('fixtureTeamB');
+        
+        const optionsHtml = '<option value="">Select Team</option>' + loadedTeams.map(t => 
+            `<option value="${t.id}">${escapeHtml(t.name)}</option>`
+        ).join('');
+        
+        selA.innerHTML = optionsHtml;
+        selB.innerHTML = optionsHtml;
+        
+        document.getElementById('fixtureDate').value = '';
+        document.getElementById('fixtureVenue').value = '';
+        
+        document.getElementById('addFixtureModal').classList.remove('hidden');
+    };
+
+    window.closeAddFixtureModal = function() {
+        document.getElementById('addFixtureModal').classList.add('hidden');
+    };
+
+    document.getElementById('addFixtureForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const teamA = document.getElementById('fixtureTeamA').value;
+        const teamB = document.getElementById('fixtureTeamB').value;
+        
+        if (teamA === teamB) {
+            alert("Please select two different teams.");
+            return;
+        }
+
+        const dateVal = document.getElementById('fixtureDate').value;
+        const payload = {
+            team_a_id: teamA,
+            team_b_id: teamB,
+            scheduled_at: dateVal ? new Date(dateVal).toISOString() : undefined,
+            venue: document.getElementById('fixtureVenue').value || undefined
+        };
+
+        const token = localStorage.getItem('fyc_token');
+        const btn = document.getElementById('saveAddFixtureBtn');
+        const oldText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/sports/tournaments/${tourneyId}/fixtures`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Organization-ID': DEFAULT_ORG_ID, 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert('Fixture added successfully!');
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert(data.detail || data.message || 'Failed to add fixture');
+            }
+        } catch (err) {
+            alert('Error adding fixture');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = oldText;
+            closeAddFixtureModal();
         }
     });
 

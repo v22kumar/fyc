@@ -16,3 +16,10 @@ class EventCheckinRequested extends EventEvent {
   @override
   List<Object?> get props => [eventId];
 }
+
+class EventDeleteRequested extends EventEvent {
+  final String eventId;
+  const EventDeleteRequested(this.eventId);
+  @override
+  List<Object?> get props => [eventId];
+}

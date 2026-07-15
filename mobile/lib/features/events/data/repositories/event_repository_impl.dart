@@ -59,4 +59,16 @@ class EventRepositoryImpl implements EventRepository {
       return Left(ServerFailure());
     }
   }
+
+  @override
+  Future<Either<Failure, String>> deleteEvent(String eventId) async {
+    try {
+      await _remote.deleteEvent(eventId);
+      return const Right('Event deleted successfully');
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
 }

@@ -138,9 +138,10 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
   // We will just fetch the latest ball to know the exact active players, or we can look at the batters dictionary
   // and pick two who are not "out".
   const activeBatters = Object.keys(state.batters).filter(k => !state.batters[k].out);
+  const currentCreaseBatters = activeBatters.slice(-2);
   
-  const [strikerId, setStrikerId] = useState(activeBatters[0] || '');
-  const [nonStrikerId, setNonStrikerId] = useState(activeBatters[1] || '');
+  const [strikerId, setStrikerId] = useState(currentCreaseBatters[0] || '');
+  const [nonStrikerId, setNonStrikerId] = useState(currentCreaseBatters[1] || '');
   // For bowler, we'd theoretically need to know who bowled last. If it's a new over, the UI asks.
   const [bowlerId, setBowlerId] = useState(Object.keys(state.bowlers).pop() || '');
 
@@ -170,6 +171,11 @@ function CricketScoreboard({ match: initialMatch, fixtureId }: { match: any, fix
         try {
           const errData = await res.json();
           if (errData.message) msg = errData.message;
+          else if (errData.detail) {
+            msg = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+          } else {
+            msg = JSON.stringify(errData);
+          }
         } catch {}
         toast.error(msg);
         console.error("Score ball failed:", {

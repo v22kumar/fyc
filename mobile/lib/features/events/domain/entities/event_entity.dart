@@ -11,6 +11,11 @@ class EventEntity extends Equatable {
   final String? bannerUrl;
   final String? geographyId;
   final int registrationCount;
+  final bool registrationEnabled;
+  final String? registrationType;
+  final int? maxParticipants;
+  final DateTime? registrationDeadline;
+  final String status;
 
   const EventEntity({
     required this.id,
@@ -23,6 +28,11 @@ class EventEntity extends Equatable {
     this.bannerUrl,
     this.geographyId,
     this.registrationCount = 0,
+    this.registrationEnabled = false,
+    this.registrationType,
+    this.maxParticipants,
+    this.registrationDeadline,
+    this.status = 'active',
   });
 
   bool get isUpcoming => eventStart.isAfter(DateTime.now());

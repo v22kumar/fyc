@@ -19,6 +19,7 @@ class EventBloc extends Bloc<EventEvent, EventState> {
         super(const EventInitial()) {
     on<EventFetchRequested>(_onFetch);
     on<EventCheckinRequested>(_onCheckin);
+    on<EventDeleteRequested>(_onDelete);
   }
 
   Future<void> _onFetch(
@@ -47,6 +48,21 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     result.fold(
       (f) => emit(EventFailure(f.message)),
       (msg) => emit(EventCheckinSuccess(msg)),
+    );
+  }
+
+  Future<void> _onDelete(
+    EventDeleteRequested event,
+    Emitter<EventState> emit,
+  ) async {
+    emit(const EventLoading());
+    final result = await _repository.deleteEvent(event.eventId);
+    result.fold(
+      (f) => emit(EventFailure(f.message)),
+      (msg) {
+        emit(EventDeleteSuccess(msg));
+        add(const EventFetchRequested());
+      },
     );
   }
 }
