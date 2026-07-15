@@ -6,6 +6,7 @@ import '../models/event_model.dart';
 
 abstract class EventDataSource {
   Future<List<EventModel>> fetchEvents();
+  Future<List<Map<String, dynamic>>> fetchEventRegistrations(String eventId);
   Future<Map<String, dynamic>> checkinEvent(String eventId);
   Future<EventModel> createEvent(Map<String, dynamic> body);
   Future<void> deleteEvent(String eventId);
@@ -23,6 +24,17 @@ class EventDataSourceImpl implements EventDataSource {
       return list
           .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchEventRegistrations(String eventId) async {
+    try {
+      final response = await _client.dio.get('${ApiConstants.events}/$eventId/registrations');
+      final list = response.data as List<dynamic>;
+      return list.map((e) => e as Map<String, dynamic>).toList();
     } on DioException catch (e) {
       throw mapDioException(e);
     }

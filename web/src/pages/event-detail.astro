@@ -135,6 +135,28 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             <div id="msg" class="hidden mt-4 p-3 rounded-lg text-sm text-center"></div>
             </form>
         </div>
+        
+        <!-- Participant List (Admins Only) -->
+        <div id="participants-section" class="hidden col-span-1 lg:col-span-12 mt-8">
+            <h3 class="text-2xl font-bold mb-4 text-gray-900">Registered Participants (Admin View)</h3>
+            <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="p-4 font-semibold text-gray-700">Name</th>
+                            <th class="p-4 font-semibold text-gray-700">DOB</th>
+                            <th class="p-4 font-semibold text-gray-700">Gender</th>
+                            <th class="p-4 font-semibold text-gray-700">Mobile</th>
+                            <th class="p-4 font-semibold text-gray-700">School/College</th>
+                            <th class="p-4 font-semibold text-gray-700">Class/Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="participants-tbody" class="divide-y divide-gray-100">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         </div>
     </div>
   </main>
@@ -192,6 +214,30 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                             const btn = document.getElementById('submitBtn');
                             btn.disabled = true;
                             btn.textContent = 'Already Registered';
+                        }
+                    }
+                } catch(e) {}
+                
+                // Check if admin and fetch participants
+                try {
+                    const pRes = await fetch(`${API_BASE}/api/v1/events/${eventId}/registrations`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (pRes.ok) {
+                        const participants = await pRes.json();
+                        if (participants && participants.length > 0) {
+                            document.getElementById('participants-section').classList.remove('hidden');
+                            const tbody = document.getElementById('participants-tbody');
+                            tbody.innerHTML = participants.map(p => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-4 text-gray-900 font-medium">${p.name}</td>
+                                    <td class="p-4 text-gray-600">${new Date(p.dob).toLocaleDateString()}</td>
+                                    <td class="p-4 text-gray-600">${p.gender}</td>
+                                    <td class="p-4 text-gray-600">${p.mobile_number}</td>
+                                    <td class="p-4 text-gray-600">${p.school_college}</td>
+                                    <td class="p-4 text-gray-600">${p.class_grade}</td>
+                                </tr>
+                            `).join('');
                         }
                     }
                 } catch(e) {}

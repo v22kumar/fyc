@@ -182,6 +182,9 @@ class _EventsListScreenState extends State<EventsListScreen> {
                   onRegister: entry.value.isUpcoming
                       ? () => _openRegister(entry.value)
                       : null,
+                  onViewParticipants: _canCreate
+                      ? () => _openParticipants(entry.value)
+                      : null,
                 ),
               )),
         ],
@@ -208,6 +211,15 @@ class _EventsListScreenState extends State<EventsListScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _EventRegisterSheet(event: event, lang: _lang),
+    );
+  }
+
+  void _openParticipants(EventEntity event) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EventParticipantsSheet(event: event, lang: _lang),
     );
   }
 
@@ -245,6 +257,7 @@ class _EventCard extends StatelessWidget {
   final VoidCallback? onCheckin;
   final VoidCallback? onRegister;
   final VoidCallback? onDelete;
+  final VoidCallback? onViewParticipants;
   final bool isAdmin;
 
   const _EventCard({
@@ -253,6 +266,7 @@ class _EventCard extends StatelessWidget {
     this.onCheckin,
     this.onRegister,
     this.onDelete,
+    this.onViewParticipants,
     this.isAdmin = false,
   });
 
@@ -354,13 +368,27 @@ class _EventCard extends StatelessWidget {
                             color: context.cText),
                       ),
                     ),
-                    if (isAdmin && onDelete != null)
-                      GestureDetector(
-                        onTap: onDelete,
-                        child: const Padding(
-                          padding: EdgeInsets.only(left: 8.0),
-                          child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                        ),
+                    if (isAdmin)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (onViewParticipants != null)
+                            GestureDetector(
+                              onTap: onViewParticipants,
+                              child: const Padding(
+                                padding: EdgeInsets.only(left: 8.0),
+                                child: Icon(Icons.people_outline, size: 20, color: Colors.blue),
+                              ),
+                            ),
+                          if (onDelete != null)
+                            GestureDetector(
+                              onTap: onDelete,
+                              child: const Padding(
+                                padding: EdgeInsets.only(left: 12.0),
+                                child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                              ),
+                            ),
+                        ],
                       ),
                   ],
                 ),
@@ -638,11 +666,12 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
         ),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
                 child: Container(
                   width: 40,
                   height: 4,
@@ -856,7 +885,111 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
               ),
             ],
           ),
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _EventParticipantsSheet extends StatefulWidget {
+  final EventEntity event;
+  final String lang;
+
+  const _EventParticipantsSheet({required this.event, required this.lang});
+
+  @override
+  State<_EventParticipantsSheet> createState() => _EventParticipantsSheetState();
+}
+
+class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
+  List<Map<String, dynamic>>? _participants;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final repo = sl<EventRepository>();
+      final res = await repo.fetchEventRegistrations(widget.event.id);
+      res.fold(
+        (l) => setState(() => _error = 'Failed to load participants.'),
+        (r) => setState(() => _participants = r),
+      );
+    } catch (e) {
+      setState(() => _error = 'An error occurred.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: context.cSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: context.cBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text(
+            tr(en: 'Registered Participants', ta: 'பதிவு செய்தவர்கள்', hi: 'पंजीकृत प्रतिभागी', ml: 'രജിസ്റ്റർ ചെയ്തവർ'),
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: context.cText),
+          ),
+          const SizedBox(height: 16),
+          if (_error != null)
+            Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red))))
+          else if (_participants == null)
+            const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (_participants!.isEmpty)
+            Expanded(
+              child: Center(
+                child: Text(
+                  tr(en: 'No participants yet.', ta: 'பங்கேற்பாளர்கள் இல்லை.', hi: 'कोई प्रतिभागी नहीं।', ml: 'പങ്കെടുക്കുന്നവർ ആരുമില്ല.'),
+                  style: TextStyle(color: context.cTextSecondary),
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                itemCount: _participants!.length,
+                separatorBuilder: (_, __) => Divider(color: context.cBorder),
+                itemBuilder: (ctx, i) {
+                  final p = _participants![i];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(p['name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: context.cText)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${p['mobile_number'] ?? ''} • ${p['gender'] ?? ''} • ${p['dob'] != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(p['dob'])) : ''}', style: TextStyle(color: context.cTextSecondary)),
+                        Text('${p['school_college'] ?? ''} - ${p['class_grade'] ?? ''}', style: TextStyle(color: context.cTextSecondary)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
