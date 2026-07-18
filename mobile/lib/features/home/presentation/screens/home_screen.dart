@@ -81,12 +81,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           color: AppColors.primaryLight,
           backgroundColor: AppColors.darkSurface,
           onRefresh: _onRefresh,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
+          // V2 1.1: sliver scaffold — the compact header collapses while the
+          // brand row + search stay pinned, and body sections are slivers so
+          // later slices can reorder/lazy-load them individually.
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
               _Header(l: l, aurora: _aurora),
-              Transform.translate(
-                offset: const Offset(0, -22),
+              SliverToBoxAdapter(
                 child: Container(
                   decoration: BoxDecoration(
                     color: context.cBackground,
@@ -146,146 +148,162 @@ class _Header extends StatelessWidget {
                 ? tr(en: 'Good Afternoon', ta: 'மதிய வணக்கம்', hi: 'नमस्कार', ml: 'ഉച്ച വണക്കം')
                 : tr(en: 'Good Evening', ta: 'மாலை வணக்கம்', hi: 'शुभ संध्या', ml: 'ശുഭ സായാഹ്നം');
 
-        return SizedBox(
-          height: 268,
-          child: Stack(
-            fit: StackFit.expand,
+        // V2 1.1 — compact collapsing header. The toolbar row (brand · language
+        // · bell · avatar) and the search pill stay pinned; the aurora backdrop
+        // and greeting collapse away as the user scrolls. ~190px expanded vs
+        // the old fixed 268px block.
+        return SliverAppBar(
+          pinned: true,
+          expandedHeight: 190,
+          backgroundColor: AppColors.darkBg,
+          surfaceTintColor: Colors.transparent,
+          automaticallyImplyLeading: false,
+          titleSpacing: 16,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(color: AppColors.darkBg),
-              // Photographic backdrop (FYC youth at Kanyakumari) — faded under aurora
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.32,
-                  child: Image.asset(
-                    'assets/images/hero_community.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.25)),
+                ),
+                child: Image.asset(
+                  'assets/images/fyc_mark.png',
+                  width: 26,
+                  height: 26,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.eco_rounded, size: 14, color: Colors.white70),
                 ),
               ),
-              AnimatedBuilder(
-                animation: aurora,
-                builder: (_, __) {
-                  final t = aurora.value * 2 * math.pi;
-                  return Stack(
-                    children: [
-                      Positioned(
-                        left: -50.0 + 70 * math.sin(t * 0.65),
-                        top: -60.0 + 50 * math.cos(t * 0.45),
-                        child: _Blob(size: 240, color: const Color(0xFF0F5132).withOpacity(0.60)),
-                      ),
-                      Positioned(
-                        right: -30.0 + 60 * math.sin(t * 0.4 + 1.5),
-                        top: 10.0 + 45 * math.cos(t * 0.55 + 0.8),
-                        child: _Blob(size: 200, color: const Color(0xFF16A34A).withOpacity(0.38)),
-                      ),
-                      Positioned(
-                        left: 90.0 + 80 * math.sin(t * 0.28 + 2.2),
-                        top: 90.0 + 35 * math.cos(t * 0.75 + 1.1),
-                        child: _Blob(size: 160, color: const Color(0xFFD4AF37).withOpacity(0.10)),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 55, sigmaY: 55),
-                child: Container(color: Colors.transparent),
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top row: logo + title + actions
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.25)),
-                            ),
-                            child: Image.asset(
-                              'assets/images/fyc_mark.png',
-                              width: 30,
-                              height: 30,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.eco_rounded, size: 16, color: Colors.white70),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('FYC Connect',
-                                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
-                                Text(tr(en: 'Welcome back!', ta: 'மீண்டும் வரவேற்கிறோம்!', hi: 'वापसी पर स्वागत है!', ml: 'വീണ്ടും സ്വാഗതം!'),
-                                    style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500)),
-                              ],
-                            ),
-                          ),
-                          _CircleBtn(
-                            icon: Icons.translate_rounded,
-                            tooltip: tr(en: 'Change Language', ta: 'மொழியை மாற்று', hi: 'भाषा बदलें', ml: 'ഭാഷ മാറ്റുക'),
-                            onTap: () => _showLanguagePicker(context),
-                          ),
-                          const SizedBox(width: 8),
-                          const _NotificationBell(),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => context.push('/me'),
-                            child: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Colors.white.withOpacity(0.15),
-                              child: Text(
-                                firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Text('$greetingEn, $firstName!',
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-                      const SizedBox(height: 4),
-                      Text(tr(en: 'Everything you need, all in one place.', ta: 'உங்களுக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.', hi: 'आपकी ज़रूरत की हर चीज़, एक ही जगह।', ml: 'നിങ്ങൾക്ക് വേണ്ടതെല്ലാം, ഒരിടത്ത്.'),
-                          style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w400)),
-                      const SizedBox(height: 16),
-                      // Search bar
-                      GestureDetector(
-                        onTap: () => context.push('/search'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.16)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.search, color: Colors.white60, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(tr(en: 'Search services, events, and more...', ta: 'சேவைகள், நிகழ்வுகள் மற்றும் பலவற்றைத் தேடுங்கள்...', hi: 'सेवाएँ, कार्यक्रम और बहुत कुछ खोजें...', ml: 'സേവനങ്ങൾ, പരിപാടികൾ എന്നിവ തിരയുക...'),
-                                    style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
-                              ),
-                              Icon(Icons.tune_rounded, color: Colors.white.withOpacity(0.5), size: 18),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              const SizedBox(width: 10),
+              const Text('FYC Connect',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
             ],
+          ),
+          actions: [
+            _CircleBtn(
+              icon: Icons.translate_rounded,
+              tooltip: tr(en: 'Change Language', ta: 'மொழியை மாற்று', hi: 'भाषा बदलें', ml: 'ഭാഷ മാറ്റുക'),
+              onTap: () => _showLanguagePicker(context),
+            ),
+            const SizedBox(width: 8),
+            const _NotificationBell(),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => context.push('/me'),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.white.withOpacity(0.15),
+                child: Text(
+                  firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            collapseMode: CollapseMode.pin,
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(color: AppColors.darkBg),
+                // Photographic backdrop (FYC youth at Kanyakumari) — faded under aurora
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.32,
+                    child: Image.asset(
+                      'assets/images/hero_community.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+                AnimatedBuilder(
+                  animation: aurora,
+                  builder: (_, __) {
+                    final t = aurora.value * 2 * math.pi;
+                    return Stack(
+                      children: [
+                        Positioned(
+                          left: -50.0 + 70 * math.sin(t * 0.65),
+                          top: -60.0 + 50 * math.cos(t * 0.45),
+                          child: _Blob(size: 240, color: const Color(0xFF0F5132).withOpacity(0.60)),
+                        ),
+                        Positioned(
+                          right: -30.0 + 60 * math.sin(t * 0.4 + 1.5),
+                          top: 10.0 + 45 * math.cos(t * 0.55 + 0.8),
+                          child: _Blob(size: 200, color: const Color(0xFF16A34A).withOpacity(0.38)),
+                        ),
+                        Positioned(
+                          left: 90.0 + 80 * math.sin(t * 0.28 + 2.2),
+                          top: 90.0 + 35 * math.cos(t * 0.75 + 1.1),
+                          child: _Blob(size: 160, color: const Color(0xFFD4AF37).withOpacity(0.10)),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 55, sigmaY: 55),
+                  child: Container(color: Colors.transparent),
+                ),
+                // Greeting — bottom-aligned above the pinned search pill.
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 70),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$greetingEn, $firstName!',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                        const SizedBox(height: 3),
+                        Text(tr(en: 'Everything you need, all in one place.', ta: 'உங்களுக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.', hi: 'आपकी ज़रूरत की हर चीज़, एक ही जगह।', ml: 'നിങ്ങൾക്ക് വേണ്ടതെല്ലാം, ഒരിടത്ത്.'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white60, fontSize: 12.5, fontWeight: FontWeight.w400)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(62),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: GestureDetector(
+                onTap: () => context.push('/search'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.16)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.white60, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(tr(en: 'Search services, events, and more...', ta: 'சேவைகள், நிகழ்வுகள் மற்றும் பலவற்றைத் தேடுங்கள்...', hi: 'सेवाएँ, कार्यक्रम और बहुत कुछ खोजें...', ml: 'സേവനങ്ങൾ, പരിപാടികൾ എന്നിവ തിരയുക...'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
+                      ),
+                      Icon(Icons.tune_rounded, color: Colors.white.withOpacity(0.5), size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

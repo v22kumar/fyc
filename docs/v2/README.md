@@ -50,7 +50,7 @@ Tick each box as the slice merges. Each line is one PR unless noted.
 - [x] 0.3 Token unification (`DSColors` ↔ `AppColors`, reconcile `radiusCard`)
 
 ### Phase 1 — Home structure & hierarchy (flagship)
-- [ ] 1.1 Compact collapsing header (~190px) + `ListView`→`CustomScrollView`
+- [x] 1.1 Compact collapsing header (~190px) + `ListView`→`CustomScrollView`
 - [ ] 1.2 Pinned floating search overlapping the header → `SearchScreen`
 - [ ] 1.3 Recommended section order (see IA doc)
 - [ ] 1.4 `FadeSlideIn` stagger + `DSSkeleton` on all sections + `EmptyState` icon path
