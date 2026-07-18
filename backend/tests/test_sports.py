@@ -368,16 +368,18 @@ def test_standings_include_nrr_and_rank_by_it(client, db):
     client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{f2}/result",
                 json={"team_a_score": "100/9 (10.0 ov)", "team_b_score": "101/8 (9.5 ov)", "winner_id": c}, headers=hdr)
 
-    res = client.get(f"/api/v1/sports/tournaments/{tid}/teams", headers={"X-Organization-ID": str(org.id)})
-    assert res.status_code == 200
-    rows = res.json()
-    by_name = {r["name"]: r for r in rows}
-    # NRR present and correctly signed
-    assert by_name["Aces"]["net_run_rate"] > 0
-    assert by_name["Blasters"]["net_run_rate"] < 0
-    # Both winners level on points; Aces (bigger margin) ranks above Chargers
-    winners = [r["name"] for r in rows if r["points"] == 3]
-    assert winners[0] == "Aces" and winners[1] == "Chargers"
+    # Both the /teams and /standings endpoints must carry NRR (the mobile
+    # standings screen uses /standings).
+    for path in (f"/api/v1/sports/tournaments/{tid}/teams",
+                 f"/api/v1/sports/tournaments/{tid}/standings"):
+        res = client.get(path, headers={"X-Organization-ID": str(org.id)})
+        assert res.status_code == 200, path
+        rows = res.json()
+        by_name = {r["name"]: r for r in rows}
+        assert by_name["Aces"]["net_run_rate"] > 0, path
+        assert by_name["Blasters"]["net_run_rate"] < 0, path
+        winners = [r["name"] for r in rows if r["points"] == 3]
+        assert winners[0] == "Aces" and winners[1] == "Chargers", path
 
 
 # ── Live scores (public Home strip) ──────────────────────────────────────────

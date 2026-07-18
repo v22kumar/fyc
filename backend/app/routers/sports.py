@@ -95,6 +95,26 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
         )
 
 
+def _standings_with_nrr(db: Session, t: Tournament):
+    """Teams for a tournament with net_run_rate attached, ranked by points then
+    NRR then wins. Shared by the /teams and /standings endpoints so both carry
+    NRR (the mobile standings screen uses /standings)."""
+    teams = db.query(Team).filter(Team.tournament_id == t.id).all()
+    fixtures = db.query(Fixture).filter(Fixture.tournament_id == t.id).all()
+    nrr = compute_nrr(fixtures, t.match_config)
+    for tm in teams:
+        tm.net_run_rate = nrr.get(tm.id)
+    teams.sort(
+        key=lambda tm: (
+            tm.points or 0,
+            tm.net_run_rate if tm.net_run_rate is not None else -999,
+            tm.wins or 0,
+        ),
+        reverse=True,
+    )
+    return teams
+
+
 def _fixture_out(f: Fixture) -> FixtureOut:
     return FixtureOut(
         id=f.id,
@@ -342,15 +362,7 @@ def list_teams(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     t = _get_tenant_tournament(db, tournament_id, tenant_id)
-    teams = db.query(Team).filter(Team.tournament_id == tournament_id).all()
-    # Attach net run rate (computed from completed-fixture scores) and rank by
-    # points, then NRR — the standard tiebreaker for seeding qualifiers.
-    fixtures = db.query(Fixture).filter(Fixture.tournament_id == tournament_id).all()
-    nrr = compute_nrr(fixtures, t.match_config)
-    for tm in teams:
-        tm.net_run_rate = nrr.get(tm.id)
-    teams.sort(key=lambda tm: (tm.points or 0, tm.net_run_rate if tm.net_run_rate is not None else -999, tm.wins or 0), reverse=True)
-    return teams
+    return _standings_with_nrr(db, t)
 
 
 _LIVE_MATCH_STATUSES = ("FIRST_INNINGS", "INNINGS_BREAK", "SECOND_INNINGS")
@@ -737,10 +749,8 @@ def get_standings(
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    _get_tenant_tournament(db, tournament_id, tenant_id)
-    return db.query(Team).filter(Team.tournament_id == tournament_id).order_by(
-        Team.points.desc(), Team.wins.desc(), Team.draws.desc()
-    ).all()
+    t = _get_tenant_tournament(db, tournament_id, tenant_id)
+    return _standings_with_nrr(db, t)
 
 
 @router.post("/tournaments/{tournament_id}/generate-fixtures", response_model=List[FixtureOut])
