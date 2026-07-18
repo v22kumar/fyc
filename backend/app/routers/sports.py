@@ -19,6 +19,7 @@ from app.schemas.sports import (
 )
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.services.nrr import compute_nrr
 from app.services.notification_service import NotificationService
 from app.schemas.notification import NotificationCategory
 from app.services.whatsapp_service import whatsapp_queue
@@ -340,8 +341,16 @@ def list_teams(
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    _get_tenant_tournament(db, tournament_id, tenant_id)
-    return db.query(Team).filter(Team.tournament_id == tournament_id).order_by(Team.points.desc(), Team.wins.desc()).all()
+    t = _get_tenant_tournament(db, tournament_id, tenant_id)
+    teams = db.query(Team).filter(Team.tournament_id == tournament_id).all()
+    # Attach net run rate (computed from completed-fixture scores) and rank by
+    # points, then NRR — the standard tiebreaker for seeding qualifiers.
+    fixtures = db.query(Fixture).filter(Fixture.tournament_id == tournament_id).all()
+    nrr = compute_nrr(fixtures, t.match_config)
+    for tm in teams:
+        tm.net_run_rate = nrr.get(tm.id)
+    teams.sort(key=lambda tm: (tm.points or 0, tm.net_run_rate if tm.net_run_rate is not None else -999, tm.wins or 0), reverse=True)
+    return teams
 
 
 @router.post("/tournaments/{tournament_id}/teams", response_model=TeamOut, status_code=201)

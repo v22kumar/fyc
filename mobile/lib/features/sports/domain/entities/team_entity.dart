@@ -11,6 +11,7 @@ class TeamEntity extends Equatable {
   final int draws;
   final int points;
   final bool isFycTeam;
+  final double? netRunRate;
 
   const TeamEntity({
     required this.id,
@@ -23,6 +24,7 @@ class TeamEntity extends Equatable {
     required this.draws,
     required this.points,
     required this.isFycTeam,
+    this.netRunRate,
   });
 
   int get played => wins + losses + draws;
@@ -37,5 +39,6 @@ class TeamEntity extends Equatable {
         draws,
         points,
         isFycTeam,
+        netRunRate,
       ];
 }

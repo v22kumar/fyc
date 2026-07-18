@@ -123,10 +123,17 @@ async function loadFixtures(tid) {
   return res.ok ? res.json() : [];
 }
 
+function fmtNrr(v) {
+  // Net run rate: signed, 2 decimals; em dash when a team has no result yet.
+  if (v === null || v === undefined) return '<span class="text-gray-300">—</span>';
+  const n = Number(v);
+  return (n >= 0 ? '+' : '') + n.toFixed(2);
+}
+
 function renderStandings(teams) {
   if (!teams.length) return '<p class="text-sm text-gray-400">No teams registered yet.</p>';
   return `<table class="w-full text-sm mb-4">
-    <thead><tr class="text-xs text-gray-500 border-b"><th class="text-left py-2">Team</th><th class="w-8">W</th><th class="w-8">L</th><th class="w-8">D</th><th class="w-10">Pts</th></tr></thead>
+    <thead><tr class="text-xs text-gray-500 border-b"><th class="text-left py-2">Team</th><th class="w-8">W</th><th class="w-8">L</th><th class="w-8">D</th><th class="w-10">Pts</th><th class="w-14">NRR</th></tr></thead>
     <tbody>${teams.map((t, i) => `
       <tr class="border-b border-gray-50 hover:bg-gray-50">
         <td class="py-2 font-medium text-gray-800">${i+1}. ${t.name}${t.is_fyc_team ? ' <span class="text-xs bg-[#064e3b]/10 text-[#064e3b] px-1.5 py-0.5 rounded-full">FYC</span>' : ''}</td>
@@ -134,6 +141,7 @@ function renderStandings(teams) {
         <td class="text-center text-red-500">${t.losses}</td>
         <td class="text-center text-gray-400">${t.draws}</td>
         <td class="text-center font-bold text-gray-900">${t.points}</td>
+        <td class="text-center text-gray-600 tabular-nums">${fmtNrr(t.net_run_rate)}</td>
       </tr>`).join('')}</tbody></table>`;
 }
 
