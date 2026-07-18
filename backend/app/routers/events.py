@@ -261,6 +261,64 @@ def get_event_registrations(
     registrations = db.query(EventRegistration).filter(EventRegistration.event_id == event_id).all()
     return registrations
 
+@router.get("/{event_id}/registrations.csv")
+def export_event_registrations_csv(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_executive),
+):
+    """Download an event's registrations as CSV (admin only). Admins collect
+    these offline (e.g. the Drawing Competition roster)."""
+    import csv as _csv
+    import io as _io
+    from fastapi.responses import StreamingResponse
+
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == current_user.organization_id,
+    ).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    rows = (
+        db.query(EventRegistration)
+        .filter(EventRegistration.event_id == event_id)
+        .order_by(EventRegistration.created_at.asc())
+        .all()
+    )
+
+    def _age(dob):
+        if not dob:
+            return ""
+        today = datetime.now(timezone.utc)
+        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+    out = _io.StringIO()
+    w = _csv.writer(out)
+    w.writerow(["Name", "DOB", "Age", "Gender", "Mobile", "School/College",
+                "Class", "Category", "Registered At"])
+    for r in rows:
+        cats = r.competition_category
+        cats = ", ".join(cats) if isinstance(cats, list) else (cats or "")
+        w.writerow([
+            r.name or "",
+            r.dob.date().isoformat() if r.dob else "",
+            _age(r.dob),
+            r.gender or "",
+            r.mobile_number or "",
+            r.school_college or "",
+            r.class_grade or "",
+            cats,
+            r.created_at.isoformat() if r.created_at else "",
+        ])
+    out.seek(0)
+    fname = f"registrations_{event.title_en or event_id}".replace(" ", "_")[:60]
+    return StreamingResponse(
+        iter([out.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{fname}.csv"'},
+    )
+
 @router.get("/{event_id}/registrants", response_model=EventRegistrantsOut)
 def get_event_registrants(
     event_id: UUID,

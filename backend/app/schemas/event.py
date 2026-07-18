@@ -70,14 +70,16 @@ class EventCheckoutOut(BaseModel):
     hours_accrued: float
 
 class EventRegistrationCreate(BaseModel):
+    # Only name, dob (age) and school_college are mandatory; everything else is
+    # the admin's choice to require, so keep them optional server-side.
     name: str
     dob: datetime
-    gender: str
-    mobile_number: str
+    school_college: str
+    gender: Optional[str] = None
+    mobile_number: Optional[str] = None
+    class_grade: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
-    school_college: str
-    class_grade: str
     member_id: Optional[str] = None
     competition_category: Optional[List[str]] = None
     remarks: Optional[str] = None
@@ -95,12 +97,12 @@ class EventRegistrationOut(BaseModel):
     user_id: Optional[UUID]
     name: str
     dob: datetime
-    gender: str
-    mobile_number: str
+    gender: Optional[str] = None
+    mobile_number: Optional[str] = None
     email: Optional[str]
     address: Optional[str]
     school_college: str
-    class_grade: str
+    class_grade: Optional[str] = None
     member_id: Optional[str]
     competition_category: Any
     remarks: Optional[str]

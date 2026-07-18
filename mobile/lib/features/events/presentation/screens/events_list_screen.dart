@@ -615,7 +615,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
   final _email = TextEditingController();
   final _address = TextEditingController();
   final _school = TextEditingController();
-  String _grade = '1 முதல் 3 ஆம் வகுப்பு';
+  String? _grade;
   final _memberId = TextEditingController();
   final _topic = TextEditingController();
   final _remarks = TextEditingController();
@@ -815,7 +815,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       ),
                       validator: (v) {
                         final s = (v ?? '').trim();
-                        if (s.length < 10) return '*';
+                        if (s.isNotEmpty && s.length < 10) return '*';
                         return null;
                       },
                     ),
@@ -847,24 +847,23 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 value: _grade,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Class / Grade *', ta: 'வகுப்பு / தரம் *', hi: 'कक्षा / ग्रेड *', ml: 'ക്ലാസ് / ഗ്രേഡ് *'),
+                  labelText: tr(en: 'Class / Grade', ta: 'வகுப்பு / தரம்', hi: 'कक्षा / ग्रेड', ml: 'ക്ലാസ് / ഗ്രേഡ്'),
+                  hintText: tr(en: 'Select', ta: 'தேர்ந்தெடுக்கவும்', hi: 'चुनें', ml: 'തിരഞ്ഞെടുക്കുക'),
                   prefixIcon: const Icon(Icons.grade_outlined),
                 ),
-                items: [
-                  '1 முதல் 3 ஆம் வகுப்பு',
-                  '4 முதல் 5 ஆம் வகுப்பு',
-                  '6 முதல் 8 ஆம் வகுப்பு',
-                  '9 முதல் 10 ஆம் வகுப்பு',
-                  '11 மற்றும் 12 ஆம் வகுப்பு',
-                  'கல்லூரி மாணவர்கள்',
-                  'திறந்த பிரிவு'
-                ].map((String val) {
+                // Full range independent of any category: pre-KG to college & above.
+                items: const [
+                  'Pre-KG', 'LKG', 'UKG',
+                  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6',
+                  'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12',
+                  'College', 'Above / Open',
+                ].map((val) {
                   return DropdownMenuItem<String>(
                     value: val,
                     child: Text(val, overflow: TextOverflow.ellipsis),
                   );
                 }).toList(),
-                onChanged: (v) => setState(() => _grade = v ?? _grade),
+                onChanged: (v) => setState(() => _grade = v),
               ),
               const SizedBox(height: 12),
               TextFormField(
