@@ -305,6 +305,29 @@ async def lifespan(app: FastAPI):
         except Exception as _bfe:
             logger.warning(f"[data-backfill] events.registration_enabled: {_bfe}")
 
+        # One-time backfill of the FYC LEAGUE 2026 knockout round, gated by a
+        # secret so it only runs when an operator opts in (set SEED_FYC_LEAGUE_2026=1
+        # in the Fly dashboard → Secrets, which triggers a redeploy). The seed is
+        # idempotent, so leaving the flag set is harmless; remove the secret (and
+        # this block, in a follow-up) once the data is confirmed live.
+        if os.getenv("SEED_FYC_LEAGUE_2026", "").strip().lower() in ("1", "true", "yes"):
+            try:
+                from scripts.seed_tournament_results import seed_round, _find_tournament
+                from app.core.database import SessionLocal as _SeedSession
+                _sdb = _SeedSession()
+                try:
+                    _target = os.getenv("SEED_FYC_LEAGUE_2026_TOURNAMENT") or None
+                    _t = _find_tournament(_sdb, _target)
+                    logger.info("[seed-fyc-league] running one-time knockout backfill…")
+                    _res = seed_round(_sdb, _t, commit=True, log=logger.info)
+                    logger.info(f"[seed-fyc-league] done: {_res}")
+                finally:
+                    _sdb.close()
+            except SystemExit as _se:
+                logger.warning(f"[seed-fyc-league] skipped: {_se}")
+            except Exception as _sfe:
+                logger.warning(f"[seed-fyc-league] failed: {_sfe}")
+
         _seed_database()
 
         # Pre-warm external API caches in a background thread so slow RSS feeds
