@@ -216,11 +216,13 @@ class _EventsListScreenState extends State<EventsListScreen> {
     );
   }
 
-  /// Register only when the backend will accept it: upcoming, registration
-  /// enabled, and the deadline (if any) not yet passed — mirrors the server
-  /// gates so a tap can't land on a guaranteed 400.
+  /// Register only when the backend will accept it: not yet ended (multi-day
+  /// competitions stay open while LIVE), registration enabled, and the
+  /// deadline (if any) not yet passed — mirrors the server gates so a tap
+  /// can't land on a guaranteed 400.
   bool _canRegister(EventEntity e) {
-    if (!e.isUpcoming || !e.registrationEnabled) return false;
+    final live = e.isUpcoming || e.isOngoing;
+    if (!live || !e.registrationEnabled) return false;
     final deadline = e.registrationDeadline;
     if (deadline != null && DateTime.now().isAfter(deadline)) return false;
     return true;
@@ -435,34 +437,51 @@ class _EventCard extends StatelessWidget {
                           _GoingRow(count: event.registrationCount, lang: lang),
                     ),
                     const Spacer(),
-                    if (statusText == tr(en: 'Upcoming', ta: 'வரவிருக்கிறது', hi: 'आगामी', ml: 'വരാനിരിക്കുന്ന') && onRegister != null)
-                      ElevatedButton(
-                        onPressed: onRegister,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: Text(tr(en: 'Register Now', ta: 'பதிவு செய்க', hi: 'अभी पंजीकरण करें', ml: 'ഇപ്പോൾ രജിസ്റ്റർ ചെയ്യുക'),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13)),
-                      )
-                    else if (onCheckin != null)
-                      ElevatedButton.icon(
-                        onPressed: onCheckin,
-                        icon: const Icon(Icons.qr_code_scanner, size: 16),
-                        label: Text(tr(en: 'Check In', ta: 'செக்-இன்', hi: 'चेक इन', ml: 'ചെക്ക് ഇൻ')),
-                      )
-                    else
+                    if (onRegister == null && onCheckin == null)
                       Text(statusText,
                           style: TextStyle(
                               color: context.cTextSecondary, fontSize: 12)),
                   ],
                 ),
+                // Register stays available while the event is upcoming OR live
+                // (a multi-day competition accepts entries until it ends), so
+                // both actions can coexist — a wrapping row keeps long Tamil
+                // labels from overflowing.
+                if (onRegister != null || onCheckin != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        if (onCheckin != null)
+                          ElevatedButton.icon(
+                            onPressed: onCheckin,
+                            icon: const Icon(Icons.qr_code_scanner, size: 16),
+                            label: Text(tr(en: 'Check In', ta: 'செக்-இன்', hi: 'चेक इन', ml: 'ചെക്ക് ഇൻ')),
+                          ),
+                        if (onRegister != null)
+                          ElevatedButton(
+                            onPressed: onRegister,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(tr(en: 'Register Now', ta: 'பதிவு செய்க', hi: 'अभी पंजीकरण करें', ml: 'ഇപ്പോൾ രജിസ്റ്റർ ചെയ്യുക'),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

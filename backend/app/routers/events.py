@@ -199,6 +199,15 @@ def register_for_event(
             deadline = deadline.replace(tzinfo=timezone.utc)
         if datetime.now(timezone.utc) > deadline:
             raise HTTPException(status_code=400, detail="Registration deadline has passed")
+
+    # A running (LIVE) event still accepts entries — multi-day competitions
+    # register participants mid-event. Only a finished event is closed.
+    event_end = event.event_end
+    if event_end is not None:
+        if event_end.tzinfo is None:
+            event_end = event_end.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > event_end:
+            raise HTTPException(status_code=400, detail="Event has ended")
         
     if event.max_participants:
         current_count = db.query(EventRegistration).filter(EventRegistration.event_id == event_id).count()
