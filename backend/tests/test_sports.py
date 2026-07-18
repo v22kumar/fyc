@@ -419,6 +419,16 @@ def test_live_scores_endpoint(client, db):
     assert m["batting_team"] == "Strikers"
     assert {m["team_a"], m["team_b"]} == {"Strikers", "Titans"}
 
+    # The live fixture's own status stays SCHEDULED — it must NOT leak into the
+    # upcoming list. live / recent / upcoming fixture IDs are disjoint.
+    live_ids = {x["fixture_id"] for x in body["live"]}
+    recent_ids = {x["fixture_id"] for x in body["recent"]}
+    upcoming_ids = {x["fixture_id"] for x in body["upcoming"]}
+    assert live_fx not in upcoming_ids
+    assert live_ids.isdisjoint(recent_ids)
+    assert live_ids.isdisjoint(upcoming_ids)
+    assert recent_ids.isdisjoint(upcoming_ids)
+
 
 def test_live_scores_public_no_auth(client, db):
     org = _make_org(db)

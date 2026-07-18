@@ -1973,7 +1973,9 @@ class _LiveScoresSection extends StatefulWidget {
 class _LiveScoresSectionState extends State<_LiveScoresSection> {
   List<Map<String, dynamic>> _live = const [];
   List<Map<String, dynamic>> _recent = const [];
+  List<Map<String, dynamic>> _upcoming = const [];
   bool _loaded = false;
+  bool _fetching = false; // in-flight guard so a slow poll can't stack another
   Timer? _timer;
 
   @override
@@ -1990,46 +1992,60 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
   }
 
   Future<void> _fetch() async {
+    if (_fetching) return;
+    _fetching = true;
     try {
       final res = await sl<ApiClient>().dio.get('/api/v1/sports/live');
       final data = res.data as Map<String, dynamic>;
       if (!mounted) return;
+      List<Map<String, dynamic>> pick(String k) =>
+          ((data[k] as List?) ?? const []).whereType<Map<String, dynamic>>().toList();
       setState(() {
-        _live = ((data['live'] as List?) ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        _recent = ((data['recent'] as List?) ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .toList();
+        _live = pick('live');
+        _recent = pick('recent');
+        _upcoming = pick('upcoming');
         _loaded = true;
       });
     } catch (_) {
       if (mounted) setState(() => _loaded = true);
+    } finally {
+      _fetching = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded || (_live.isEmpty && _recent.isEmpty)) {
+    if (!_loaded) return const SizedBox.shrink();
+    // Precedence: live > recent > upcoming; hide only when all three are empty.
+    final String mode;
+    final List<Map<String, dynamic>> items;
+    if (_live.isNotEmpty) {
+      mode = 'live';
+      items = _live;
+    } else if (_recent.isNotEmpty) {
+      mode = 'recent';
+      items = _recent;
+    } else if (_upcoming.isNotEmpty) {
+      mode = 'upcoming';
+      items = _upcoming;
+    } else {
       return const SizedBox.shrink();
     }
-    final showLive = _live.isNotEmpty;
-    final items = showLive ? _live : _recent;
+    final title = mode == 'live'
+        ? tr(en: 'Live Now', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം')
+        : mode == 'recent'
+            ? tr(en: 'Recent Results', ta: 'சமீபத்திய முடிவுகள்', hi: 'हाल के परिणाम', ml: 'സമീപകാല ഫലങ്ങൾ')
+            : tr(en: 'Upcoming Matches', ta: 'வரவிருக்கும் போட்டிகள்', hi: 'आगामी मैच', ml: 'വരാനിരിക്കുന്ന മത്സരങ്ങൾ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            if (showLive) ...[
+            if (mode == 'live') ...[
               const DSBadge(kind: DSBadgeKind.live),
               const SizedBox(width: 8),
             ],
-            Text(
-              showLive
-                  ? tr(en: 'Live Now', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം')
-                  : tr(en: 'Recent Results', ta: 'சமீபத்திய முடிவுகள்', hi: 'हाल के परिणाम', ml: 'സമീപകാല ഫലങ്ങൾ'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3),
-            ),
+            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3)),
             const Spacer(),
             GestureDetector(
               onTap: () => context.push('/sports'),
@@ -2043,12 +2059,12 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 116,
+          height: 128,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => _MatchCard(data: items[i], live: showLive),
+            itemBuilder: (_, i) => _MatchCard(data: items[i], mode: mode),
           ),
         ),
       ],
@@ -2058,15 +2074,40 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
 
 class _MatchCard extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool live;
-  const _MatchCard({required this.data, required this.live});
+  final String mode; // 'live' | 'recent' | 'upcoming'
+  const _MatchCard({required this.data, required this.mode});
+
+  /// Chase state, localized client-side from the structured fields the API
+  /// sends (no server-authored English).
+  String? _liveNote() {
+    if (data['innings_break'] == true) {
+      return tr(en: 'Innings break', ta: 'இன்னிங்ஸ் இடைவேளை', hi: 'पारी विश्राम', ml: 'ഇന്നിംഗ്സ് ബ്രേക്ക്');
+    }
+    final needed = (data['runs_needed'] as num?)?.toInt();
+    if (needed == null) return null;
+    if (needed <= 0) {
+      return tr(en: 'Target reached', ta: 'இலக்கை எட்டியது', hi: 'लक्ष्य पूरा', ml: 'ലക്ഷ്യത്തിലെത്തി');
+    }
+    return tr(
+        en: 'Need $needed run${needed == 1 ? '' : 's'}',
+        ta: '$needed ரன் தேவை',
+        hi: '$needed रन चाहिए',
+        ml: '$needed റൺ വേണം');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final live = mode == 'live';
     final batting = data['batting_team'] as String?;
-    final scoreLine = live
-        ? '${batting != null ? '$batting  ' : ''}${data['summary'] ?? ''}'
-        : (data['result'] as String? ?? tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി'));
+    final String scoreLine;
+    if (live) {
+      scoreLine = '${batting != null ? '$batting  ' : ''}${data['summary'] ?? ''}';
+    } else if (mode == 'recent') {
+      scoreLine = (data['result'] as String?) ?? tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി');
+    } else {
+      scoreLine = (data['venue'] as String?) ?? tr(en: 'Scheduled', ta: 'திட்டமிடப்பட்டது', hi: 'निर्धारित', ml: 'ഷെഡ്യൂൾ ചെയ്തു');
+    }
+    final note = live ? _liveNote() : null;
     return GestureDetector(
       onTap: () => context.push('/sports'),
       child: Container(
@@ -2080,6 +2121,7 @@ class _MatchCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -2107,18 +2149,20 @@ class _MatchCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               scoreLine,
-              maxLines: 2,
+              maxLines: live ? 1 : 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: live ? 15 : 12.5,
                 fontWeight: live ? FontWeight.w800 : FontWeight.w600,
-                color: live ? AppColors.primary : AppColors.success,
+                color: live
+                    ? AppColors.primary
+                    : (mode == 'recent' ? AppColors.success : context.cTextSecondary),
               ),
             ),
-            if (live && data['note'] != null) ...[
+            if (note != null) ...[
               const SizedBox(height: 2),
               Text(
-                data['note'] as String,
+                note,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),

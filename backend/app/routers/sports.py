@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
@@ -380,9 +380,17 @@ def live_scores(
     from app.models.cricket import CricketMatch
 
     live = []
+    live_fixture_ids = set()
+    # Eager-load fixture + its teams/tournament: this endpoint is polled every
+    # ~20s by every client, so avoid an N+1 per live match.
     matches = (
         db.query(CricketMatch)
         .join(Fixture, CricketMatch.fixture_id == Fixture.id)
+        .options(
+            joinedload(CricketMatch.fixture).joinedload(Fixture.team_a),
+            joinedload(CricketMatch.fixture).joinedload(Fixture.team_b),
+            joinedload(CricketMatch.fixture).joinedload(Fixture.tournament),
+        )
         .filter(Fixture.organization_id == tenant_id,
                 CricketMatch.status.in_(_LIVE_MATCH_STATUSES))
         .all()
@@ -391,6 +399,7 @@ def live_scores(
         f = m.fixture
         if not f:
             continue
+        live_fixture_ids.add(f.id)
         st = m.match_state or {}
         team_a = f.team_a.name if f.team_a else "?"
         team_b = f.team_b.name if f.team_b else "?"
@@ -401,12 +410,11 @@ def live_scores(
         overs = int(st.get("overs", 0) or 0)
         balls = int(st.get("balls", 0) or 0)
         target = st.get("target")
-        note = None
-        if m.status == "INNINGS_BREAK":
-            note = "Innings break"
-        elif m.status == "SECOND_INNINGS" and target:
-            need = int(target) - score
-            note = f"Need {need} run{'s' if need != 1 else ''}" if need > 0 else "Scores level"
+        # Structured chase state — the client localizes it (no server-authored
+        # English). runs_needed 0 == target reached.
+        runs_needed = None
+        if m.status == "SECOND_INNINGS" and target:
+            runs_needed = max(0, int(target) - score)
         t = f.tournament
         live.append({
             "fixture_id": str(f.id),
@@ -420,19 +428,21 @@ def live_scores(
             "overs": f"{overs}.{balls}",
             "target": int(target) if target else None,
             "summary": f"{score}/{wickets} ({overs}.{balls})",
-            "note": note,
+            "runs_needed": runs_needed,
+            "innings_break": m.status == "INNINGS_BREAK",
             "status": m.status,
         })
 
-    # Recently completed (any sport) — most recent first.
+    # Recently completed — most recent first, excluding anything currently live.
     recent = []
-    done = (
+    done_q = (
         db.query(Fixture)
+        .options(joinedload(Fixture.team_a), joinedload(Fixture.team_b), joinedload(Fixture.tournament))
         .filter(Fixture.organization_id == tenant_id, Fixture.status == "COMPLETED")
-        .order_by(Fixture.updated_at.desc())
-        .limit(6)
-        .all()
     )
+    if live_fixture_ids:
+        done_q = done_q.filter(~Fixture.id.in_(live_fixture_ids))
+    done = done_q.order_by(Fixture.updated_at.desc()).limit(6).all()
     for f in done:
         recent.append({
             "fixture_id": str(f.id),
@@ -445,15 +455,17 @@ def live_scores(
             "result": f.result_notes,
         })
 
-    # Next scheduled.
+    # Next scheduled — excluding any fixture already shown as live (a fixture's
+    # own status stays SCHEDULED while its cricket match is in progress).
     upcoming = []
-    sched = (
+    sched_q = (
         db.query(Fixture)
+        .options(joinedload(Fixture.team_a), joinedload(Fixture.team_b), joinedload(Fixture.tournament))
         .filter(Fixture.organization_id == tenant_id, Fixture.status == "SCHEDULED")
-        .order_by(Fixture.scheduled_at.asc())
-        .limit(6)
-        .all()
     )
+    if live_fixture_ids:
+        sched_q = sched_q.filter(~Fixture.id.in_(live_fixture_ids))
+    sched = sched_q.order_by(Fixture.scheduled_at.asc()).limit(6).all()
     for f in sched:
         upcoming.append({
             "fixture_id": str(f.id),
