@@ -44,7 +44,7 @@ def test_dry_run_writes_nothing(db):
 
 def test_commit_creates_teams_fixtures_and_standings(db):
     t = _tournament(db)
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
 
     teams = db.query(Team).filter(Team.tournament_id == t.id).all()
     assert len(teams) == 4  # Alpha, Beta, Gamma, FYC B
@@ -66,7 +66,7 @@ def test_alias_deduplicates(db):
                 tournament_id=t.id, name="FYC B", status="APPROVED"))
     db.commit()
 
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
     fyc = db.query(Team).filter(Team.tournament_id == t.id, Team.name == "FYC B").all()
     assert len(fyc) == 1
     assert fyc[0].wins == 1
@@ -74,8 +74,8 @@ def test_alias_deduplicates(db):
 
 def test_idempotent_rerun(db):
     t = _tournament(db)
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
 
     assert db.query(Team).filter(Team.tournament_id == t.id).count() == 4
     assert db.query(Fixture).filter(Fixture.tournament_id == t.id).count() == 2
@@ -97,7 +97,7 @@ def test_non_destructive_to_existing_fixture(db):
     db.add(ph)
     db.commit()
 
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
     kept = db.query(Fixture).filter(Fixture.match_number == 99).first()
     assert kept is not None and kept.status == "SCHEDULED"
 
@@ -116,7 +116,7 @@ def test_fills_scheduled_fixture_with_same_number(db):
     db.add(ph)
     db.commit()
 
-    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
     fixtures_1 = db.query(Fixture).filter(Fixture.tournament_id == t.id, Fixture.match_number == 1).all()
     assert len(fixtures_1) == 1
     assert fixtures_1[0].status == "COMPLETED"
@@ -140,12 +140,33 @@ def test_removes_junk_team_and_its_fixture(db):
     junk_id = junk.id
     ph_id = placeholder.id
 
-    result = seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    result = seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
     assert result["teams_removed"] == 1
     assert db.query(Team).filter(Team.id == junk_id).first() is None
     assert db.query(Fixture).filter(Fixture.id == ph_id).first() is None
     # FYC B (a real team) is untouched and reusable.
     assert db.query(Team).filter(Team.tournament_id == t.id, Team.name == "FYC B").count() == 1
+
+
+def test_pending_teams_added_without_downgrading_existing(db):
+    """PENDING_TEAMS are created with status PENDING and no fixtures; a team that
+    already exists (approved) keeps its status."""
+    t = _tournament(db)
+    # 'FYC A' pre-exists as APPROVED (it's in PENDING_TEAMS but must not downgrade)
+    db.add(Team(id=uuid.uuid4(), organization_id=t.organization_id,
+                tournament_id=t.id, name="FYC A", status="APPROVED"))
+    db.commit()
+
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute)  # default PENDING_TEAMS
+
+    fyc_a = db.query(Team).filter(Team.tournament_id == t.id, Team.name == "FYC A").one()
+    assert fyc_a.status == "APPROVED"  # untouched, not downgraded
+    for name in ["Kollamcode", "Thozikode", "Marthandam", "Irenipuram", "Karungal"]:
+        tm = db.query(Team).filter(Team.tournament_id == t.id, Team.name == name).one()
+        assert tm.status == "PENDING"
+        # a pending team is in no fixture
+        assert db.query(Fixture).filter(
+            (Fixture.team_a_id == tm.id) | (Fixture.team_b_id == tm.id)).count() == 0
 
 
 def test_aborts_on_conflicting_completed_fixture(db):
@@ -165,4 +186,4 @@ def test_aborts_on_conflicting_completed_fixture(db):
     db.commit()
 
     with pytest.raises(SystemExit):
-        seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+        seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])

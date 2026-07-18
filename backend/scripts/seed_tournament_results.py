@@ -71,6 +71,18 @@ REMOVE_TEAMS = [
     "NMC pandaraparambu",  # misspelling; the real team is "NRS Pandaraparambu"
 ]
 
+# The balance of the 20-team bracket — registered as PENDING (awaiting approval
+# / later rounds), no fixtures. Teams that already exist (e.g. FYC A) are left
+# with their current status untouched.
+PENDING_TEAMS = [
+    "FYC A",
+    "Kollamcode",
+    "Thozikode",
+    "Marthandam",
+    "Irenipuram",
+    "Karungal",
+]
+
 
 def _canon(name: str) -> str:
     return ALIASES.get(name.strip().lower(), name.strip())
@@ -102,7 +114,7 @@ def _find_tournament(db, ident):
     raise SystemExit(f"Multiple ongoing cricket tournaments — pass --tournament. Candidates: {names}")
 
 
-def seed_round(db, t, matches=MATCHES, *, commit, log=print):
+def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDING_TEAMS):
     """Ensure teams + fixtures + results for `matches` on tournament `t`.
 
     Idempotent and non-destructive. Standings are credited only the first time a
@@ -201,8 +213,23 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
         log(f"  {action:<6} match #{m['no']}: {a.name} ({m['a_score']}) vs "
             f"{b.name} ({m['b_score']}) -> {win.name}")
 
-    log(f"\nTeams: {len(existing)} ({created_teams} new, {removed_teams} removed)   "
-        f"Fixtures set: {len(matches)} ({created_fixtures} new)")
+    # Register the balance-of-bracket teams as PENDING (no fixtures). Existing
+    # teams keep their current status — an already-APPROVED team isn't downgraded.
+    added_pending = 0
+    for name in pending_teams:
+        key = _canon(name).lower()
+        if key in existing:
+            continue
+        tm = Team(id=uuid.uuid4(), organization_id=org_id, tournament_id=t.id,
+                  name=_canon(name), status="PENDING")
+        db.add(tm)
+        db.flush()
+        existing[key] = tm
+        added_pending += 1
+        log(f"  + pending team  {tm.name}")
+
+    log(f"\nTeams: {len(existing)} ({created_teams} new, {added_pending} pending, "
+        f"{removed_teams} removed)   Fixtures set: {len(matches)} ({created_fixtures} new)")
     if commit:
         db.commit()
         log("Committed. ✔  Remaining matches can be scored live in the app.")
@@ -210,7 +237,7 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
         db.rollback()
         log("Dry-run only — nothing written. Re-run with --commit to apply.")
     return {"teams": len(existing), "teams_created": created_teams,
-            "teams_removed": removed_teams,
+            "teams_pending": added_pending, "teams_removed": removed_teams,
             "fixtures": len(matches), "fixtures_created": created_fixtures}
 
 
