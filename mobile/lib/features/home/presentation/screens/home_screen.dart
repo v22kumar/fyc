@@ -9,6 +9,7 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_badge.dart';
+import '../../../../core/design_system/patterns/kolam_background.dart';
 import '../../../sports/presentation/screens/live_scorecard_screen.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
@@ -98,11 +99,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             slivers: [
               _Header(l: l, aurora: _aurora),
               SliverToBoxAdapter(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: context.cBackground,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-                  ),
+                child: _HomeBackdrop(
+                  child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,6 +120,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(height: 130),
                     ],
                   ),
+                  ),
                 ),
               ),
             ],
@@ -130,6 +129,67 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+/// The Home canvas: a soft brand-tinted gradient with a low-opacity kolam
+/// texture and two faint radial glows, so the body reads as an illustrated
+/// surface instead of flat white. Theme-aware; clipped to the rounded top.
+class _HomeBackdrop extends StatelessWidget {
+  final Widget child;
+  const _HomeBackdrop({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.isDark;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: dark
+                ? const [Color(0xFF10162E), AppColors.darkBackground]
+                : const [Color(0xFFF1F5FF), Color(0xFFFBFCFF)],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+                top: -70,
+                left: -60,
+                child: _glow(AppColors.primaryLight.withOpacity(dark ? 0.12 : 0.16), 220)),
+            Positioned(
+                top: 20,
+                right: -70,
+                child: _glow(AppColors.gold.withOpacity(dark ? 0.08 : 0.12), 200)),
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: KolamPattern(
+                    color: (dark ? Colors.white : const Color(0xFF0A1128))
+                        .withOpacity(dark ? 0.045 : 0.03),
+                  ),
+                ),
+              ),
+            ),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _glow(Color c, double d) => IgnorePointer(
+        child: Container(
+          width: d,
+          height: d,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [c, c.withOpacity(0)]),
+          ),
+        ),
+      );
 }
 
 // ── Header ───────────────────────────────────────────────────────────────────
@@ -718,47 +778,75 @@ class _QuickActions extends StatelessWidget {
           children: [
             for (final (icon, color, label, onTap) in actions)
               Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: onTap,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: context.cSurface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: context.cBorder.withOpacity(0.5)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                // Shadow on the outer Container; Ink paints the gradient; the
+                // InkWell sits above it so the ripple isn't hidden.
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    clipBehavior: Clip.antiAlias,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: context.isDark
+                              ? [color.withOpacity(0.20), context.cSurface]
+                              : [color.withOpacity(0.10), Colors.white],
                         ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(context.isDark ? 0.20 : 0.12),
-                            borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: context.isDark
+                                ? context.cBorder.withOpacity(0.5)
+                                : color.withOpacity(0.22)),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: onTap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [color, Color.lerp(color, Colors.black, 0.18)!],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                                ),
+                                child: Icon(icon, color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.cTextSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Icon(icon, color: color, size: 24),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            height: 1.15,
-                            fontWeight: FontWeight.w600,
-                            color: context.cTextSecondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
