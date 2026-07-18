@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
@@ -93,6 +93,26 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
             body_ta=f"{f.team_a.name} vs {f.team_b.name} போட்டி முடிவடைந்தது.",
             route=f"/sports/{t.id}/fixtures/{f.id}"
         )
+
+
+def _standings_with_nrr(db: Session, t: Tournament):
+    """Teams for a tournament with net_run_rate attached, ranked by points then
+    NRR then wins. Shared by the /teams and /standings endpoints so both carry
+    NRR (the mobile standings screen uses /standings)."""
+    teams = db.query(Team).filter(Team.tournament_id == t.id).all()
+    fixtures = db.query(Fixture).filter(Fixture.tournament_id == t.id).all()
+    nrr = compute_nrr(fixtures, t.match_config)
+    for tm in teams:
+        tm.net_run_rate = nrr.get(tm.id)
+    teams.sort(
+        key=lambda tm: (
+            tm.points or 0,
+            tm.net_run_rate if tm.net_run_rate is not None else -999,
+            tm.wins or 0,
+        ),
+        reverse=True,
+    )
+    return teams
 
 
 def _fixture_out(f: Fixture) -> FixtureOut:
@@ -342,15 +362,122 @@ def list_teams(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     t = _get_tenant_tournament(db, tournament_id, tenant_id)
-    teams = db.query(Team).filter(Team.tournament_id == tournament_id).all()
-    # Attach net run rate (computed from completed-fixture scores) and rank by
-    # points, then NRR — the standard tiebreaker for seeding qualifiers.
-    fixtures = db.query(Fixture).filter(Fixture.tournament_id == tournament_id).all()
-    nrr = compute_nrr(fixtures, t.match_config)
-    for tm in teams:
-        tm.net_run_rate = nrr.get(tm.id)
-    teams.sort(key=lambda tm: (tm.points or 0, tm.net_run_rate if tm.net_run_rate is not None else -999, tm.wins or 0), reverse=True)
-    return teams
+    return _standings_with_nrr(db, t)
+
+
+_LIVE_MATCH_STATUSES = ("FIRST_INNINGS", "INNINGS_BREAK", "SECOND_INNINGS")
+
+
+@router.get("/live")
+def live_scores(
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Public cross-tournament live cricket scores for the Home strip — visible to
+    everyone (tenant-scoped, no auth). Returns in-progress matches with their
+    current score, plus recent results and upcoming fixtures so the widget always
+    has something to show."""
+    from app.models.cricket import CricketMatch
+
+    live = []
+    live_fixture_ids = set()
+    # Eager-load fixture + its teams/tournament: this endpoint is polled every
+    # ~20s by every client, so avoid an N+1 per live match.
+    matches = (
+        db.query(CricketMatch)
+        .join(Fixture, CricketMatch.fixture_id == Fixture.id)
+        .options(
+            joinedload(CricketMatch.fixture).joinedload(Fixture.team_a),
+            joinedload(CricketMatch.fixture).joinedload(Fixture.team_b),
+            joinedload(CricketMatch.fixture).joinedload(Fixture.tournament),
+        )
+        .filter(Fixture.organization_id == tenant_id,
+                CricketMatch.status.in_(_LIVE_MATCH_STATUSES))
+        .all()
+    )
+    for m in matches:
+        f = m.fixture
+        if not f:
+            continue
+        live_fixture_ids.add(f.id)
+        st = m.match_state or {}
+        team_a = f.team_a.name if f.team_a else "?"
+        team_b = f.team_b.name if f.team_b else "?"
+        bat_id = str(st.get("batting_team_id") or "")
+        batting = team_a if bat_id == str(f.team_a_id) else (team_b if bat_id == str(f.team_b_id) else None)
+        score = int(st.get("score", 0) or 0)
+        wickets = int(st.get("wickets", 0) or 0)
+        overs = int(st.get("overs", 0) or 0)
+        balls = int(st.get("balls", 0) or 0)
+        target = st.get("target")
+        # Structured chase state — the client localizes it (no server-authored
+        # English). runs_needed 0 == target reached.
+        runs_needed = None
+        if m.status == "SECOND_INNINGS" and target:
+            runs_needed = max(0, int(target) - score)
+        t = f.tournament
+        live.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": t.name_en if t else None,
+            "team_a": team_a,
+            "team_b": team_b,
+            "batting_team": batting,
+            "score": score,
+            "wickets": wickets,
+            "overs": f"{overs}.{balls}",
+            "target": int(target) if target else None,
+            "summary": f"{score}/{wickets} ({overs}.{balls})",
+            "runs_needed": runs_needed,
+            "innings_break": m.status == "INNINGS_BREAK",
+            "status": m.status,
+        })
+
+    # Recently completed — most recent first, excluding anything currently live.
+    recent = []
+    done_q = (
+        db.query(Fixture)
+        .options(joinedload(Fixture.team_a), joinedload(Fixture.team_b), joinedload(Fixture.tournament))
+        .filter(Fixture.organization_id == tenant_id, Fixture.status == "COMPLETED")
+    )
+    if live_fixture_ids:
+        done_q = done_q.filter(~Fixture.id.in_(live_fixture_ids))
+    done = done_q.order_by(Fixture.updated_at.desc()).limit(6).all()
+    for f in done:
+        recent.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": f.tournament.name_en if f.tournament else None,
+            "team_a": f.team_a.name if f.team_a else "?",
+            "team_b": f.team_b.name if f.team_b else "?",
+            "team_a_score": f.team_a_score,
+            "team_b_score": f.team_b_score,
+            "result": f.result_notes,
+        })
+
+    # Next scheduled — excluding any fixture already shown as live (a fixture's
+    # own status stays SCHEDULED while its cricket match is in progress).
+    upcoming = []
+    sched_q = (
+        db.query(Fixture)
+        .options(joinedload(Fixture.team_a), joinedload(Fixture.team_b), joinedload(Fixture.tournament))
+        .filter(Fixture.organization_id == tenant_id, Fixture.status == "SCHEDULED")
+    )
+    if live_fixture_ids:
+        sched_q = sched_q.filter(~Fixture.id.in_(live_fixture_ids))
+    sched = sched_q.order_by(Fixture.scheduled_at.asc()).limit(6).all()
+    for f in sched:
+        upcoming.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": f.tournament.name_en if f.tournament else None,
+            "team_a": f.team_a.name if f.team_a else "?",
+            "team_b": f.team_b.name if f.team_b else "?",
+            "scheduled_at": f.scheduled_at.isoformat() if f.scheduled_at else None,
+            "venue": f.venue,
+        })
+
+    return {"live": live, "recent": recent, "upcoming": upcoming}
 
 
 @router.post("/tournaments/{tournament_id}/teams", response_model=TeamOut, status_code=201)
@@ -634,10 +761,8 @@ def get_standings(
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    _get_tenant_tournament(db, tournament_id, tenant_id)
-    return db.query(Team).filter(Team.tournament_id == tournament_id).order_by(
-        Team.points.desc(), Team.wins.desc(), Team.draws.desc()
-    ).all()
+    t = _get_tenant_tournament(db, tournament_id, tenant_id)
+    return _standings_with_nrr(db, t)
 
 
 @router.post("/tournaments/{tournament_id}/generate-fixtures", response_model=List[FixtureOut])

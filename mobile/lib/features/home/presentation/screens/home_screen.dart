@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
+import '../../../../core/design_system/components/ds_badge.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
 import '../../../../core/design_system/components/last_updated_pill.dart';
@@ -1958,6 +1960,221 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
   }
 }
 
+/// Live cross-tournament cricket scores on Home — visible to every user, and
+/// auto-refreshing so scores "stream" while the screen is open. Falls back to
+/// recent results when nothing is live; hides entirely when there is no sport.
+class _LiveScoresSection extends StatefulWidget {
+  const _LiveScoresSection();
+
+  @override
+  State<_LiveScoresSection> createState() => _LiveScoresSectionState();
+}
+
+class _LiveScoresSectionState extends State<_LiveScoresSection> {
+  List<Map<String, dynamic>> _live = const [];
+  List<Map<String, dynamic>> _recent = const [];
+  List<Map<String, dynamic>> _upcoming = const [];
+  bool _loaded = false;
+  bool _fetching = false; // in-flight guard so a slow poll can't stack another
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+    _timer = Timer.periodic(const Duration(seconds: 20), (_) => _fetch());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetch() async {
+    if (_fetching) return;
+    _fetching = true;
+    try {
+      final res = await sl<ApiClient>().dio.get('/api/v1/sports/live');
+      final data = res.data as Map<String, dynamic>;
+      if (!mounted) return;
+      List<Map<String, dynamic>> pick(String k) =>
+          ((data[k] as List?) ?? const []).whereType<Map<String, dynamic>>().toList();
+      setState(() {
+        _live = pick('live');
+        _recent = pick('recent');
+        _upcoming = pick('upcoming');
+        _loaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    } finally {
+      _fetching = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) return const SizedBox.shrink();
+    // Precedence: live > recent > upcoming; hide only when all three are empty.
+    final String mode;
+    final List<Map<String, dynamic>> items;
+    if (_live.isNotEmpty) {
+      mode = 'live';
+      items = _live;
+    } else if (_recent.isNotEmpty) {
+      mode = 'recent';
+      items = _recent;
+    } else if (_upcoming.isNotEmpty) {
+      mode = 'upcoming';
+      items = _upcoming;
+    } else {
+      return const SizedBox.shrink();
+    }
+    final title = mode == 'live'
+        ? tr(en: 'Live Now', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം')
+        : mode == 'recent'
+            ? tr(en: 'Recent Results', ta: 'சமீபத்திய முடிவுகள்', hi: 'हाल के परिणाम', ml: 'സമീപകാല ഫലങ്ങൾ')
+            : tr(en: 'Upcoming Matches', ta: 'வரவிருக்கும் போட்டிகள்', hi: 'आगामी मैच', ml: 'വരാനിരിക്കുന്ന മത്സരങ്ങൾ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (mode == 'live') ...[
+              const DSBadge(kind: DSBadgeKind.live),
+              const SizedBox(width: 8),
+            ],
+            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => context.push('/sports'),
+              behavior: HitTestBehavior.opaque,
+              child: Text(
+                tr(en: 'View all', ta: 'அனைத்தும்', hi: 'सभी देखें', ml: 'എല്ലാം'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 128,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => _MatchCard(data: items[i], mode: mode),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MatchCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final String mode; // 'live' | 'recent' | 'upcoming'
+  const _MatchCard({required this.data, required this.mode});
+
+  /// Chase state, localized client-side from the structured fields the API
+  /// sends (no server-authored English).
+  String? _liveNote() {
+    if (data['innings_break'] == true) {
+      return tr(en: 'Innings break', ta: 'இன்னிங்ஸ் இடைவேளை', hi: 'पारी विश्राम', ml: 'ഇന്നിംഗ്സ് ബ്രേക്ക്');
+    }
+    final needed = (data['runs_needed'] as num?)?.toInt();
+    if (needed == null) return null;
+    if (needed <= 0) {
+      return tr(en: 'Target reached', ta: 'இலக்கை எட்டியது', hi: 'लक्ष्य पूरा', ml: 'ലക്ഷ്യത്തിലെത്തി');
+    }
+    return tr(
+        en: 'Need $needed run${needed == 1 ? '' : 's'}',
+        ta: '$needed ரன் தேவை',
+        hi: '$needed रन चाहिए',
+        ml: '$needed റൺ വേണം');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final live = mode == 'live';
+    final batting = data['batting_team'] as String?;
+    final String scoreLine;
+    if (live) {
+      scoreLine = '${batting != null ? '$batting  ' : ''}${data['summary'] ?? ''}';
+    } else if (mode == 'recent') {
+      scoreLine = (data['result'] as String?) ?? tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി');
+    } else {
+      scoreLine = (data['venue'] as String?) ?? tr(en: 'Scheduled', ta: 'திட்டமிடப்பட்டது', hi: 'निर्धारित', ml: 'ഷെഡ്യൂൾ ചെയ്തു');
+    }
+    final note = live ? _liveNote() : null;
+    return GestureDetector(
+      onTap: () => context.push('/sports'),
+      child: Container(
+        width: 258,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: context.cSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.cBorder),
+          boxShadow: context.isDark ? null : AppTheme.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                if (live) ...[
+                  const DSBadge(kind: DSBadgeKind.live),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    (data['tournament_name'] as String?) ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.cTextSecondary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${data['team_a']}  vs  ${data['team_b']}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: context.cText),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              scoreLine,
+              maxLines: live ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: live ? 15 : 12.5,
+                fontWeight: live ? FontWeight.w800 : FontWeight.w600,
+                color: live
+                    ? AppColors.primary
+                    : (mode == 'recent' ? AppColors.success : context.cTextSecondary),
+              ),
+            ),
+            if (note != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                note,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CitizenDashboard extends StatelessWidget {
   final AppLocalizations l;
   final int refreshKey;
@@ -1974,6 +2191,7 @@ class _CitizenDashboard extends StatelessWidget {
     // reduce-motion aware, so this is a no-op when animations are disabled).
     final sections = <Widget>[
       const _AnnouncementsBar(),
+      const _LiveScoresSection(),
       const _QuickActions(),
       const _ServiceBento(),
       const _LiveUpdates(),

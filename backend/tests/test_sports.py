@@ -368,13 +368,70 @@ def test_standings_include_nrr_and_rank_by_it(client, db):
     client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{f2}/result",
                 json={"team_a_score": "100/9 (10.0 ov)", "team_b_score": "101/8 (9.5 ov)", "winner_id": c}, headers=hdr)
 
-    res = client.get(f"/api/v1/sports/tournaments/{tid}/teams", headers={"X-Organization-ID": str(org.id)})
+    # Both the /teams and /standings endpoints must carry NRR (the mobile
+    # standings screen uses /standings).
+    for path in (f"/api/v1/sports/tournaments/{tid}/teams",
+                 f"/api/v1/sports/tournaments/{tid}/standings"):
+        res = client.get(path, headers={"X-Organization-ID": str(org.id)})
+        assert res.status_code == 200, path
+        rows = res.json()
+        by_name = {r["name"]: r for r in rows}
+        assert by_name["Aces"]["net_run_rate"] > 0, path
+        assert by_name["Blasters"]["net_run_rate"] < 0, path
+        winners = [r["name"] for r in rows if r["points"] == 3]
+        assert winners[0] == "Aces" and winners[1] == "Chargers", path
+
+
+# ── Live scores (public Home strip) ──────────────────────────────────────────
+
+def test_live_scores_endpoint(client, db):
+    """Public /sports/live returns in-progress matches with a score summary,
+    plus recent and upcoming fixtures — no auth required."""
+    import uuid as _uuid
+    from app.models.sports import Fixture
+    from app.models.cricket import CricketMatch
+
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919455500001")
+    token = _login(client, org.id, "+919455500001")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs")
+    a = _create_team(client, org.id, token, tid, name="Strikers")
+    b = _create_team(client, org.id, token, tid, name="Titans")
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+
+    # A live fixture with an in-progress cricket match.
+    live_fx = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                          json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+    cm = CricketMatch(
+        id=_uuid.uuid4(), organization_id=org.id, fixture_id=live_fx,
+        status="FIRST_INNINGS", overs_per_innings=10,
+        match_state={"batting_team_id": a, "score": 82, "wickets": 3, "overs": 7, "balls": 4, "target": None},
+    )
+    db.add(cm)
+    db.commit()
+
+    res = client.get("/api/v1/sports/live", headers={"X-Organization-ID": str(org.id)})
     assert res.status_code == 200
-    rows = res.json()
-    by_name = {r["name"]: r for r in rows}
-    # NRR present and correctly signed
-    assert by_name["Aces"]["net_run_rate"] > 0
-    assert by_name["Blasters"]["net_run_rate"] < 0
-    # Both winners level on points; Aces (bigger margin) ranks above Chargers
-    winners = [r["name"] for r in rows if r["points"] == 3]
-    assert winners[0] == "Aces" and winners[1] == "Chargers"
+    body = res.json()
+    assert len(body["live"]) == 1
+    m = body["live"][0]
+    assert m["summary"] == "82/3 (7.4)"
+    assert m["batting_team"] == "Strikers"
+    assert {m["team_a"], m["team_b"]} == {"Strikers", "Titans"}
+
+    # The live fixture's own status stays SCHEDULED — it must NOT leak into the
+    # upcoming list. live / recent / upcoming fixture IDs are disjoint.
+    live_ids = {x["fixture_id"] for x in body["live"]}
+    recent_ids = {x["fixture_id"] for x in body["recent"]}
+    upcoming_ids = {x["fixture_id"] for x in body["upcoming"]}
+    assert live_fx not in upcoming_ids
+    assert live_ids.isdisjoint(recent_ids)
+    assert live_ids.isdisjoint(upcoming_ids)
+    assert recent_ids.isdisjoint(upcoming_ids)
+
+
+def test_live_scores_public_no_auth(client, db):
+    org = _make_org(db)
+    res = client.get("/api/v1/sports/live", headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    assert res.json() == {"live": [], "recent": [], "upcoming": []}
