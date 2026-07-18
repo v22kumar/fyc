@@ -378,6 +378,19 @@ def live_scores(
     current score, plus recent results and upcoming fixtures so the widget always
     has something to show."""
     from app.models.cricket import CricketMatch
+    from app.core import livecache
+    from app.core.config import settings
+
+    # Cache-aside: this endpoint is public and polled every ~20s by every open
+    # client, so under match-day load it is by far the hottest read. A short TTL
+    # (default 4s) collapses that fan-out to one DB pass per window while keeping
+    # the strip effectively live. Bypassed under tests so a just-scored ball is
+    # never hidden behind a cached response.
+    cache_key = f"sports:live:{tenant_id}"
+    if not settings.TESTING:
+        cached = livecache.get_json(cache_key)
+        if cached is not None:
+            return cached
 
     live = []
     live_fixture_ids = set()
@@ -477,7 +490,10 @@ def live_scores(
             "venue": f.venue,
         })
 
-    return {"live": live, "recent": recent, "upcoming": upcoming}
+    payload = {"live": live, "recent": recent, "upcoming": upcoming}
+    if not settings.TESTING:
+        livecache.set_json(cache_key, payload)
+    return payload
 
 
 @router.post("/tournaments/{tournament_id}/teams", response_model=TeamOut, status_code=201)

@@ -19,3 +19,4 @@ apscheduler>=3.10.0
 chess>=1.10.0
 firebase-admin>=6.5.0
 psutil
+redis>=5.0.0
