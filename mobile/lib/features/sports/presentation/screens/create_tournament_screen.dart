@@ -540,12 +540,13 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               value: _showLive,
               onChanged: (v) => setState(() => _showLive = v),
             ),
-            _ToggleRow(
-              icon: Icons.sports_cricket_outlined,
-              label: 'Village wides (first 2/over free)',
-              value: _villageWides,
-              onChanged: (v) => setState(() => _villageWides = v),
-            ),
+            if (_sport == 'cricket')
+              _ToggleRow(
+                icon: Icons.sports_cricket_outlined,
+                label: 'Village wides (first 2/over free)',
+                value: _villageWides,
+                onChanged: (v) => setState(() => _villageWides = v),
+              ),
             _ToggleRow(
               icon: Icons.card_giftcard_outlined,
               label: 'Prize Details',
