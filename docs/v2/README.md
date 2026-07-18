@@ -56,7 +56,7 @@ Tick each box as the slice merges. Each line is one PR unless noted.
 - [x] 1.4 `FadeSlideIn` stagger + `DSSkeleton` on all sections + `EmptyState` icon path
 - [x] 1.5 Animated stat counters (`_TodayImpactHub` / `_ImpactStats`)
 - [x] 1.6 Pull-to-refresh with real last-updated timestamp
-- [ ] 1.7 Remove dead code (`_UpcomingAndNews`, in-file `_SearchSheet`)
+- [x] 1.7 Remove dead code (`_UpcomingAndNews`, in-file `_SearchSheet`)
 
 ### Phase 2 — Dynamic content (existing data)
 - [ ] 2.1 Hero carousel — backend (`Announcement` featured/CTA + enum) + `DSCarousel`
