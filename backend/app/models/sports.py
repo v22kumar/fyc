@@ -38,6 +38,10 @@ class Tournament(Base, TimestampMixin, TenantModelMixin):
     venue = Column(String(200), nullable=True)
     show_points_table = Column(Boolean, default=True)
     show_live_scores = Column(Boolean, default=True)
+    # Village house-rule pinned at tournament level: when true, every cricket
+    # match in this tournament defaults to the "first 2 wides per over are free"
+    # rule (see recalculate_match_state).
+    village_wides = Column(Boolean, default=False, nullable=False)
     show_prize_details = Column(Boolean, default=False)
     prize_details = Column(Text, nullable=True)
     winner_id = Column(GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)

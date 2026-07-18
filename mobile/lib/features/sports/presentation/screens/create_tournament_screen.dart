@@ -80,6 +80,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _showPoints = true;
   bool _showLive = true;
   bool _showPrize = false;
+  bool _villageWides = false;
   bool _submitting = false;
   bool _showAdvanced = false;
 
@@ -104,6 +105,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       _regCloseDate = t.registrationCloseDate;
       _showPoints = t.showPointsTable;
       _showLive = t.showLiveScores;
+      _villageWides = t.villageWides;
       _showPrize = t.showPrizeDetails;
     } else {
       _loadDraft();
@@ -212,6 +214,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'show_points_table': _showPoints,
         'show_live_scores': _showLive,
         'show_prize_details': _showPrize,
+        'village_wides': _villageWides,
         'prize_details': _showPrize && _prizeCtrl.text.trim().isNotEmpty ? _prizeCtrl.text.trim() : null,
         'description_en': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         'description_ta': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
@@ -536,6 +539,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               label: 'Live Scores',
               value: _showLive,
               onChanged: (v) => setState(() => _showLive = v),
+            ),
+            _ToggleRow(
+              icon: Icons.sports_cricket_outlined,
+              label: 'Village wides (first 2/over free)',
+              value: _villageWides,
+              onChanged: (v) => setState(() => _villageWides = v),
             ),
             _ToggleRow(
               icon: Icons.card_giftcard_outlined,

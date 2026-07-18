@@ -22,6 +22,7 @@ class TournamentModel extends TournamentEntity {
     super.endDate,
     super.showPointsTable,
     super.showLiveScores,
+    super.villageWides,
     super.showPrizeDetails,
   });
 
@@ -49,6 +50,7 @@ class TournamentModel extends TournamentEntity {
       endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'] as String) : null,
       showPointsTable: (json['show_points_table'] as bool?) ?? true,
       showLiveScores: (json['show_live_scores'] as bool?) ?? true,
+      villageWides: (json['village_wides'] as bool?) ?? false,
       showPrizeDetails: (json['show_prize_details'] as bool?) ?? false,
     );
   }

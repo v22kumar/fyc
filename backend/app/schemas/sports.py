@@ -24,6 +24,7 @@ class TournamentCreate(BaseModel):
     show_live_scores: bool = True
     show_prize_details: bool = False
     prize_details: Optional[str] = None
+    village_wides: bool = False
 
 class TournamentQuickComplete(BaseModel):
     winner_id: UUID
@@ -52,6 +53,7 @@ class TournamentOut(BaseModel):
     show_live_scores: Optional[bool] = True
     show_prize_details: Optional[bool] = False
     prize_details: Optional[str] = None
+    village_wides: Optional[bool] = False
     # Derived lifecycle phase: REGISTRATION_OPEN / REGISTRATION_CLOSED / ONGOING / COMPLETED
     phase: Optional[str] = None
 

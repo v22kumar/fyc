@@ -28,6 +28,7 @@ class TournamentEntity extends Equatable {
   final DateTime? endDate;
   final bool showPointsTable;
   final bool showLiveScores;
+  final bool villageWides;
   final bool showPrizeDetails;
 
   const TournamentEntity({
@@ -51,6 +52,7 @@ class TournamentEntity extends Equatable {
     this.endDate,
     this.showPointsTable = true,
     this.showLiveScores = true,
+    this.villageWides = false,
     this.showPrizeDetails = false,
   });
 
