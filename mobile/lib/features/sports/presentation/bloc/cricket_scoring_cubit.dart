@@ -200,9 +200,24 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         ? passedBowler
         : s.pendingNewBowlerName;
 
-    // Keep the scoreboard on screen — mark the pad as saving instead of
-    // flashing a full-screen spinner. This is the "ultra-fast" feel.
-    emit(s.copyWith(submitting: true, clearError: true));
+    // Optimistic UI: for a simple, non-wicket, non-over-ending delivery, show
+    // the predicted score instantly so entry feels lightning-fast. The server
+    // response below always overwrites this with the authoritative state, and
+    // a failure rolls back to `s` — so the prediction is display-only and can
+    // never corrupt the match. Anything it can't safely predict (wicket, the
+    // 6th ball of an over, an unknown player) falls back to the saving hint.
+    final predicted = isWicket
+        ? null
+        : _predictBall(prev, players, runsBatter: runsBatter, extrasType: extrasType, extrasRuns: extrasRuns);
+    if (predicted != null) {
+      emit(CricketScoringLoaded(predicted,
+          players: players,
+          needsNewBowler: s.needsNewBowler,
+          submitting: true,
+          pendingNewBowlerName: s.pendingNewBowlerName));
+    } else {
+      emit(s.copyWith(submitting: true, clearError: true));
+    }
     final result = await _repository.scoreCricketBall(fixtureId, {
       'striker_id': players.strikerId,
       'non_striker_id': players.nonStrikerId,
@@ -381,6 +396,111 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     result.fold(
       (failure) => emit(CricketScoringFailure(failure.message)),
       (r) => emit(CricketScoringLoaded(r.$1, players: r.$2)),
+    );
+  }
+
+  /// Predicts the scoreboard after a simple delivery, for instant optimistic
+  /// display. Returns null (caller shows the saving hint instead) whenever the
+  /// outcome is anything this lightweight model shouldn't guess: a delivery
+  /// that completes the over (could also end the innings — the over limit isn't
+  /// in match state), or a striker/bowler not yet on the scorecard. The values
+  /// mirror recalculate_match_state exactly so the server response, when it
+  /// lands, matches and there's no visible correction. Extras total and overs
+  /// history are intentionally left for the authoritative refresh.
+  CricketMatchStateEntity? _predictBall(
+    CricketMatchStateEntity prev,
+    CricketPlayersEntity players, {
+    required int runsBatter,
+    required String extrasType,
+    required int extrasRuns,
+  }) {
+    final legal = extrasType != 'WIDE' && extrasType != 'NO_BALL';
+    // The 6th legal ball ends the over (and maybe the innings) — let the server
+    // own strike rotation, the bowler prompt and any innings break.
+    if (legal && prev.balls + 1 >= 6) return null;
+    // Need both current players already on the card to update their tallies.
+    if (!prev.batters.any((b) => b.id == players.strikerId)) return null;
+    if (!prev.bowlers.any((b) => b.id == players.bowlerId)) return null;
+
+    final freeWide = extrasType == 'WIDE' && prev.nextWideIsFree;
+    final creditsBatter = extrasType == 'NONE' || extrasType == 'NO_BALL';
+
+    int scoreDelta;
+    int bowlerRunsDelta;
+    switch (extrasType) {
+      case 'WIDE':
+        scoreDelta = freeWide ? extrasRuns : 1 + extrasRuns;
+        bowlerRunsDelta = scoreDelta;
+        break;
+      case 'NO_BALL':
+        scoreDelta = 1 + extrasRuns;
+        bowlerRunsDelta = 1 + runsBatter;
+        break;
+      case 'BYE':
+      case 'LEG_BYE':
+        scoreDelta = extrasRuns;
+        bowlerRunsDelta = 0;
+        break;
+      default:
+        scoreDelta = runsBatter;
+        bowlerRunsDelta = runsBatter;
+    }
+
+    final String token;
+    if (extrasType == 'WIDE') {
+      token = freeWide ? (extrasRuns > 0 ? '${extrasRuns}wd' : 'wd') : '${1 + extrasRuns}wd';
+    } else if (extrasType == 'NO_BALL') {
+      token = '${1 + extrasRuns}nb';
+    } else if (extrasType == 'BYE') {
+      token = '${extrasRuns}b';
+    } else if (extrasType == 'LEG_BYE') {
+      token = '${extrasRuns}lb';
+    } else {
+      token = runsBatter > 0 ? '$runsBatter' : '•';
+    }
+
+    final strikerFaces = extrasType != 'WIDE'; // a wide isn't a ball faced
+    final batters = prev.batters.map((b) {
+      if (b.id != players.strikerId) return b;
+      return CricketBatterEntity(
+        id: b.id,
+        name: b.name,
+        runs: b.runs + (creditsBatter ? runsBatter : 0),
+        balls: b.balls + (strikerFaces ? 1 : 0),
+        fours: b.fours + (creditsBatter && runsBatter == 4 ? 1 : 0),
+        sixes: b.sixes + (creditsBatter && runsBatter == 6 ? 1 : 0),
+        out: b.out,
+      );
+    }).toList();
+
+    final bowlers = prev.bowlers.map((b) {
+      if (b.id != players.bowlerId) return b;
+      return CricketBowlerEntity(
+        id: b.id,
+        name: b.name,
+        legalBalls: b.legalBalls + (legal ? 1 : 0),
+        runs: b.runs + bowlerRunsDelta,
+        wickets: b.wickets,
+      );
+    }).toList();
+
+    return CricketMatchStateEntity(
+      innings: prev.innings,
+      battingTeamId: prev.battingTeamId,
+      bowlingTeamId: prev.bowlingTeamId,
+      score: prev.score + scoreDelta,
+      wickets: prev.wickets,
+      overs: prev.overs,
+      balls: legal ? prev.balls + 1 : prev.balls,
+      target: prev.target,
+      status: prev.status,
+      batters: batters,
+      bowlers: bowlers,
+      extras: prev.extras,
+      recentBalls: [...prev.recentBalls, token],
+      oversHistory: prev.oversHistory,
+      villageWides: prev.villageWides,
+      widesThisOver: extrasType == 'WIDE' ? prev.widesThisOver + 1 : prev.widesThisOver,
     );
   }
 
