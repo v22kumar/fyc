@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/cricket_match_state_entity.dart';
 import '../bloc/cricket_scoring_cubit.dart';
 
@@ -26,28 +27,18 @@ class CricketOversHistory extends StatelessWidget {
     
     return Card(
       margin: const EdgeInsets.only(top: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Previous Overs',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    // Scroll to top or to scoring pad? Not implemented here since the pad is sticky at the bottom.
-                  },
-                  icon: const Icon(Icons.arrow_downward, size: 16),
-                  label: const Text('Live'),
-                ),
-              ],
+            const Text(
+              'OVERS LOG',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -84,31 +75,36 @@ class _OverTimeline extends StatelessWidget {
     return Theme(
       data: theme.copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        initiallyExpanded: true, // or false depending on preference
+        initiallyExpanded: true,
         tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
+                gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 'Over ${over.overIndex + 1}',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
               ),
             ),
             const SizedBox(width: 12),
             Text(
-              '$runsInOver runs${wicketsInOver > 0 ? ', $wicketsInOver W' : ''}',
-              style: theme.textTheme.bodyMedium,
+              '$runsInOver ${runsInOver == 1 ? 'run' : 'runs'}${wicketsInOver > 0 ? ' · $wicketsInOver W' : ''}',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)),
             ),
             if (over.balls.isNotEmpty) ...[
               const Spacer(),
-              Text(
-                over.balls.last.bowlerName,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+              Flexible(
+                child: Text(
+                  over.balls.last.bowlerName,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
+                ),
               ),
             ]
           ],
@@ -121,7 +117,7 @@ class _OverTimeline extends StatelessWidget {
               children: over.balls.map((b) => _BallCircle(ball: b, onTap: () => onBallTap(b))).toList(),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -136,21 +132,44 @@ class _BallCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isWicket = ball.isWicket;
     final isExtra = ball.extrasType != null && ball.extrasType != 'NONE';
-    
+    final isBoundary = !isExtra && !isWicket && (ball.runsBatter == 4 || ball.runsBatter == 6);
+
+    // High-contrast, meaning-coded chips: wicket=red, extra=amber,
+    // boundary=brand navy, everything else=light with dark ink.
+    late final Color bg;
+    late final Color fg;
+    late final Color border;
+    if (isWicket) {
+      bg = const Color(0xFFF43F5E);
+      fg = Colors.white;
+      border = const Color(0xFFF43F5E);
+    } else if (isExtra) {
+      bg = const Color(0xFFF59E0B);
+      fg = Colors.white;
+      border = const Color(0xFFF59E0B);
+    } else if (isBoundary) {
+      bg = AppColors.primary;
+      fg = Colors.white;
+      border = AppColors.primary;
+    } else {
+      bg = const Color(0xFFEFF2FA);
+      fg = const Color(0xFF0A1128);
+      border = const Color(0xFFD7DCEA);
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        width: 44,
-        height: 44,
+        width: 46,
+        height: 46,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isWicket ? theme.colorScheme.error : (isExtra ? theme.colorScheme.tertiary : theme.colorScheme.surface),
+          color: bg,
           shape: BoxShape.circle,
-          border: Border.all(color: theme.colorScheme.outlineVariant),
+          border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -161,11 +180,7 @@ class _BallCircle extends StatelessWidget {
         ),
         child: Text(
           ball.ballStr,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: isWicket ? theme.colorScheme.onError : (isExtra ? theme.colorScheme.onTertiary : theme.colorScheme.onSurface),
-          ),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: fg),
         ),
       ),
     );
@@ -308,7 +323,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   selected: _extrasType == 'WIDE',
                   onSelected: (_) => setState(() {
                     _extrasType = 'WIDE';
-                    _extrasRuns = 1;
+                    _extrasRuns = 0;
                   }),
                 ),
                 ChoiceChip(
@@ -316,7 +331,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   selected: _extrasType == 'NO_BALL',
                   onSelected: (_) => setState(() {
                     _extrasType = 'NO_BALL';
-                    _extrasRuns = 1;
+                    _extrasRuns = 0;
                   }),
                 ),
                 ChoiceChip(
@@ -341,11 +356,13 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('Extra Runs: '),
+                  Text(
+                    _extrasType == 'WIDE' || _extrasType == 'NO_BALL' ? 'Runs run off it: ' : 'Extra Runs: ',
+                  ),
                   const SizedBox(width: 8),
                   DropdownButton<int>(
                     value: _extrasRuns,
-                    items: [1, 2, 3, 4, 5, 6].map((e) => DropdownMenuItem(value: e, child: Text('$e'))).toList(),
+                    items: [0, 1, 2, 3, 4, 5, 6].map((e) => DropdownMenuItem(value: e, child: Text('$e'))).toList(),
                     onChanged: (v) => setState(() => _extrasRuns = v!),
                   ),
                 ],

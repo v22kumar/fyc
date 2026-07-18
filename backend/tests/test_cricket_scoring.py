@@ -259,6 +259,44 @@ def test_wides_are_normal_when_rule_disabled(client, db):
     assert st["village_wides"] is False
 
 
+def test_free_village_wide_can_still_be_run_on(client, db):
+    """A free (village-rule) wide adds no 1-run penalty, but runs physically
+    run off it (byes/overthrows) still count for the batting side and against
+    the bowler — the scorer must be able to record a free wide + runs."""
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0], village_wides=True), headers=H)
+    p = init.json()["current_players"]
+
+    st = _wide(client, H, fid, p, extras_runs=2).json()["match_state"]
+    assert st["score"] == 2            # two run off it — no penalty added
+    assert st["extras"]["w"] == 2
+    assert st["balls"] == 0            # still an illegal, re-bowled delivery
+    assert st["wides_this_over"] == 1
+    assert "2wd" in st["recent_balls"]
+
+
+def test_bare_no_ball_records_single_penalty_run(client, db):
+    """A no-ball with no bat runs ("0nb" in the scorer's words) is the plain
+    1-run penalty delivery — extras_runs=0 must be accepted and show as 1nb."""
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0]), headers=H)
+    p = init.json()["current_players"]
+
+    r = client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+        "striker_id": p["striker_id"], "non_striker_id": p["non_striker_id"],
+        "bowler_id": p["bowler_id"], "runs_batter": 0,
+        "extras_type": "NO_BALL", "extras_runs": 0,
+    }, headers=H)
+    assert r.status_code == 200, r.text
+    st = r.json()["match_state"]
+    assert st["score"] == 1
+    assert st["extras"]["nb"] == 1
+    assert st["balls"] == 0            # no-ball is illegal, re-bowled
+    assert "1nb" in st["recent_balls"]
+
+
 def test_wicket_on_final_legal_ball_of_innings_does_not_require_new_batter(client, db):
     """A wicket that also completes the innings' last over ends play right
     there — the over limit closes the innings just like a 10th wicket does, so

@@ -32,15 +32,49 @@ class CricketScoringLoaded extends CricketScoringState {
   /// a snackbar; the scoreboard itself is still valid).
   final String? errorMessage;
 
+  /// True while a ball is being posted. The scoreboard stays on screen (no
+  /// full-screen spinner reload) and the pad shows a subtle saving hint —
+  /// this is what makes ball entry feel instant.
+  final bool submitting;
+
+  /// A brand-new bowler the scorer picked at the over break (proactively,
+  /// before the first ball of the next over). Carried on the next delivery so
+  /// the backend creates/attributes them.
+  final String? pendingNewBowlerName;
+
   const CricketScoringLoaded(
     this.matchState, {
     this.players,
     this.needsNewBowler = false,
     this.errorMessage,
+    this.submitting = false,
+    this.pendingNewBowlerName,
   });
 
+  CricketScoringLoaded copyWith({
+    CricketMatchStateEntity? matchState,
+    CricketPlayersEntity? players,
+    bool? needsNewBowler,
+    String? errorMessage,
+    bool? submitting,
+    String? pendingNewBowlerName,
+    bool clearError = false,
+    bool clearPendingBowler = false,
+  }) {
+    return CricketScoringLoaded(
+      matchState ?? this.matchState,
+      players: players ?? this.players,
+      needsNewBowler: needsNewBowler ?? this.needsNewBowler,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      submitting: submitting ?? this.submitting,
+      pendingNewBowlerName:
+          clearPendingBowler ? null : (pendingNewBowlerName ?? this.pendingNewBowlerName),
+    );
+  }
+
   @override
-  List<Object?> get props => [matchState, players, needsNewBowler, errorMessage];
+  List<Object?> get props =>
+      [matchState, players, needsNewBowler, errorMessage, submitting, pendingNewBowlerName];
 }
 
 class CricketScoringFailure extends CricketScoringState {
@@ -107,13 +141,29 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     }
   }
 
-  /// An existing player was chosen to bowl the new over.
+  /// An existing player was chosen to bowl the new over (clears the
+  /// over-break prompt so the next ball scores without asking again).
   void chooseBowler(String id, String name) {
     final s = state;
     if (s is CricketScoringLoaded && s.players != null) {
-      emit(CricketScoringLoaded(
-        s.matchState,
+      emit(s.copyWith(
         players: s.players!.copyWith(bowlerId: id, bowlerName: name),
+        needsNewBowler: false,
+        clearPendingBowler: true,
+      ));
+    }
+  }
+
+  /// A brand-new bowler was picked at the over break. Show them at the crease
+  /// immediately (blank id → the pad falls back to this name with 0-0-0); the
+  /// name rides along on the next delivery so the backend creates them.
+  void chooseNewBowler(String name) {
+    final s = state;
+    if (s is CricketScoringLoaded && s.players != null) {
+      emit(s.copyWith(
+        players: s.players!.copyWith(bowlerId: '', bowlerName: name.trim()),
+        needsNewBowler: false,
+        pendingNewBowlerName: name.trim(),
       ));
     }
   }
@@ -140,11 +190,19 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     String? newBowlerName,
   }) async {
     final s = state;
-    if (s is! CricketScoringLoaded || s.players == null) return;
+    if (s is! CricketScoringLoaded || s.players == null || s.submitting) return;
     final players = s.players!;
     final prev = s.matchState;
 
-    emit(CricketScoringLoading());
+    // Carry a proactively-chosen new bowler (over-break pick) onto this ball.
+    final passedBowler = newBowlerName?.trim();
+    final effectiveNewBowler = (passedBowler != null && passedBowler.isNotEmpty)
+        ? passedBowler
+        : s.pendingNewBowlerName;
+
+    // Keep the scoreboard on screen — mark the pad as saving instead of
+    // flashing a full-screen spinner. This is the "ultra-fast" feel.
+    emit(s.copyWith(submitting: true, clearError: true));
     final result = await _repository.scoreCricketBall(fixtureId, {
       'striker_id': players.strikerId,
       'non_striker_id': players.nonStrikerId,
@@ -157,17 +215,14 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
       if (playerDismissedId != null) 'player_dismissed_id': playerDismissedId,
       if (newBatterName != null && newBatterName.trim().isNotEmpty)
         'new_batter_name': newBatterName.trim(),
-      if (newBowlerName != null && newBowlerName.trim().isNotEmpty)
-        'new_bowler_name': newBowlerName.trim(),
+      if (effectiveNewBowler != null && effectiveNewBowler.isNotEmpty)
+        'new_bowler_name': effectiveNewBowler,
     });
 
     result.fold(
       (failure) {
-        // Restore the pre-ball state so the scorer can retry.
-        emit(CricketScoringLoaded(s.matchState,
-            players: s.players,
-            needsNewBowler: s.needsNewBowler,
-            errorMessage: failure.message));
+        // Keep the pre-ball state on screen so the scorer can retry.
+        emit(s.copyWith(submitting: false, errorMessage: failure.message));
       },
       (newState) {
         var next = players;
@@ -187,8 +242,8 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
 
         // The mid-over bowler change (or new-over bowler) was created
         // server-side; adopt their UUID for subsequent balls.
-        if (newBowlerName != null && newBowlerName.trim().isNotEmpty) {
-          final b = _findBowlerByName(newState, newBowlerName.trim());
+        if (effectiveNewBowler != null && effectiveNewBowler.isNotEmpty) {
+          final b = _findBowlerByName(newState, effectiveNewBowler);
           if (b != null) next = next.copyWith(bowlerId: b.id, bowlerName: b.name);
         }
 
