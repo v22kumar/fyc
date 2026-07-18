@@ -195,7 +195,10 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       _snack('Please enter a tournament name');
       return;
     }
-    if (_regCloseDate == null) {
+    // Registration close date is required only when CREATING a tournament. When
+    // editing an existing one (its registration may already be over / never had
+    // a date), don't block the save on it.
+    if (widget.tournament == null && _regCloseDate == null) {
       _snack('Please set the registration close date');
       return;
     }
@@ -221,9 +224,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         if (_startDate != null) 'start_date': _startDate!.toUtc().toIso8601String(),
         if (_endDate != null) 'end_date': _endDate!.toUtc().toIso8601String(),
         // Registration stays open through the whole chosen day (end-of-day).
-        'registration_close_date': DateTime(
-          _regCloseDate!.year, _regCloseDate!.month, _regCloseDate!.day, 23, 59, 59,
-        ).toUtc().toIso8601String(),
+        // Only sent when set (an edited, registration-closed tournament may
+        // have none) so it never force-unwraps null.
+        if (_regCloseDate != null)
+          'registration_close_date': DateTime(
+            _regCloseDate!.year, _regCloseDate!.month, _regCloseDate!.day, 23, 59, 59,
+          ).toUtc().toIso8601String(),
       };
       if (widget.tournament != null) {
         await sl<ApiClient>().dio.put(
