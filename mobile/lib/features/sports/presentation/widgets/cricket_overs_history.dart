@@ -131,9 +131,8 @@ class _OverCard extends StatelessWidget {
                       '$runsInOver ${runsInOver == 1 ? 'run' : 'runs'}${wicketsInOver > 0 ? ' · $wicketsInOver W' : ''}',
                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
                     ),
-                    if (bowler.isNotEmpty) ...[
-                      const Spacer(),
-                      Flexible(
+                    if (bowler.isNotEmpty)
+                      Expanded(
                         child: Text(
                           bowler,
                           overflow: TextOverflow.ellipsis,
@@ -141,7 +140,6 @@ class _OverCard extends StatelessWidget {
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
                         ),
                       ),
-                    ],
                   ],
                 ),
               ],
