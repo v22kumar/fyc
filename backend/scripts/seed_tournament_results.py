@@ -75,9 +75,15 @@ def _find_tournament(db, ident):
         t = db.query(Tournament).filter(Tournament.id == ident).first()
         if t:
             return t
-        t = db.query(Tournament).filter(Tournament.name_en.ilike(f"%{ident}%")).first()
-        if t:
-            return t
+        # Never let a substring silently pick one of several tournaments — that
+        # could backfill the wrong one. Require an unambiguous match.
+        matches = db.query(Tournament).filter(
+            Tournament.name_en.ilike(f"%{ident}%")).all()
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            names = ", ".join(f"{m.name_en} ({m.id})" for m in matches)
+            raise SystemExit(f"Multiple tournaments matched '{ident}': {names}. Pass the id.")
         raise SystemExit(f"No tournament matched id/name '{ident}'.")
     ongoing = db.query(Tournament).filter(
         Tournament.sport == "cricket", Tournament.status == "ONGOING").all()
@@ -128,6 +134,18 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
         b = ensure_team(m["b"])
         win = ensure_team(m["winner"])
         f = fx_by_no.get(m["no"])
+        # Refuse to clobber a fixture that is already COMPLETED with a *different*
+        # result — overwriting would leave standings crediting the old winner.
+        # An identical re-completion (same pair + winner) passes through as a
+        # harmless idempotent no-op.
+        if f and f.status == "COMPLETED":
+            same_pair = {str(f.team_a_id), str(f.team_b_id)} == {str(a.id), str(b.id)}
+            same_winner = f.winner_id is None or str(f.winner_id) == str(win.id)
+            if not (same_pair and same_winner):
+                raise SystemExit(
+                    f"Match #{m['no']} is already COMPLETED with a conflicting result "
+                    f"({f.team_a_score} / {f.team_b_score}). Refusing to overwrite — "
+                    f"clear that fixture in-app first, then re-run.")
         action = "update" if f else "create"
         if not f:
             f = Fixture(id=uuid.uuid4(), organization_id=org_id, tournament_id=t.id,

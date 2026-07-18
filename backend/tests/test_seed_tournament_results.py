@@ -21,10 +21,12 @@ ROUND = [
 
 def _tournament(db):
     org = Organization(id=uuid.uuid4(), slug=f"t-{uuid.uuid4().hex[:6]}", name_ta="அ", name_en="Org")
-    db.add(org); db.commit()
+    db.add(org)
+    db.commit()
     t = Tournament(id=uuid.uuid4(), organization_id=org.id, name_ta="லீக்",
                    name_en="Test League", sport="cricket", year=2026, status="ONGOING")
-    db.add(t); db.commit()
+    db.add(t)
+    db.commit()
     return t
 
 
@@ -87,11 +89,54 @@ def test_non_destructive_to_existing_fixture(db):
     t = _tournament(db)
     a = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="X", status="APPROVED")
     b = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="Y", status="APPROVED")
-    db.add(a); db.add(b); db.commit()
+    db.add(a)
+    db.add(b)
+    db.commit()
     ph = Fixture(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
                  team_a_id=a.id, team_b_id=b.id, match_number=99, status="SCHEDULED")
-    db.add(ph); db.commit()
+    db.add(ph)
+    db.commit()
 
     seed.seed_round(db, t, ROUND, commit=True, log=_mute)
     kept = db.query(Fixture).filter(Fixture.match_number == 99).first()
     assert kept is not None and kept.status == "SCHEDULED"
+
+
+def test_fills_scheduled_fixture_with_same_number(db):
+    """A pre-existing SCHEDULED fixture that shares a match number with the round
+    is filled in (placeholder -> completed), not duplicated."""
+    t = _tournament(db)
+    x = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="Alpha", status="APPROVED")
+    y = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="Beta", status="APPROVED")
+    db.add(x)
+    db.add(y)
+    db.commit()
+    ph = Fixture(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
+                 team_a_id=x.id, team_b_id=y.id, match_number=1, status="SCHEDULED")
+    db.add(ph)
+    db.commit()
+
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    fixtures_1 = db.query(Fixture).filter(Fixture.tournament_id == t.id, Fixture.match_number == 1).all()
+    assert len(fixtures_1) == 1
+    assert fixtures_1[0].status == "COMPLETED"
+
+
+def test_aborts_on_conflicting_completed_fixture(db):
+    """If match #1 is already COMPLETED with a different result, the backfill
+    aborts instead of silently corrupting standings."""
+    import pytest
+    t = _tournament(db)
+    p = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="P", status="APPROVED")
+    q = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="Q", status="APPROVED")
+    db.add(p)
+    db.add(q)
+    db.commit()
+    done = Fixture(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
+                   team_a_id=p.id, team_b_id=q.id, match_number=1, status="COMPLETED",
+                   winner_id=p.id, team_a_score="50/2", team_b_score="49/10")
+    db.add(done)
+    db.commit()
+
+    with pytest.raises(SystemExit):
+        seed.seed_round(db, t, ROUND, commit=True, log=_mute)
