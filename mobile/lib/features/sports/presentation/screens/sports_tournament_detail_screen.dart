@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/fixture_entity.dart';
 import '../../domain/entities/team_entity.dart';
 import '../../domain/entities/tournament_entity.dart';
@@ -280,6 +281,30 @@ class _SportsTournamentDetailScreenState
     }
   }
 
+  /// Build a plain-text scoreboard and open the share sheet (user picks
+  /// WhatsApp etc.). Standings are already ranked by points → NRR.
+  void _shareScoreboard(TournamentEntity t, List<TeamEntity> teams) {
+    final b = StringBuffer();
+    b.writeln('${t.nameEn} — ${tr(en: 'Standings', ta: 'தரவரிசை', hi: 'स्टैंडिंग', ml: 'സ്റ്റാൻഡിംഗ്')}');
+    b.writeln('');
+    if (teams.isEmpty) {
+      b.writeln(tr(en: 'No teams yet.', ta: 'அணிகள் இல்லை.', hi: 'अभी कोई टीम नहीं।', ml: 'ടീമുകളില്ല.'));
+    } else {
+      var i = 1;
+      for (final tm in teams) {
+        final nrr = tm.netRunRate == null
+            ? ''
+            : '  NRR ${tm.netRunRate! >= 0 ? '+' : ''}${tm.netRunRate!.toStringAsFixed(2)}';
+        final out = tm.eliminated ? ' (OUT)' : '';
+        b.writeln('$i. ${tm.name}$out   ${tm.wins}W-${tm.losses}L   ${tm.points} pts$nrr');
+        i++;
+      }
+    }
+    b.writeln('');
+    b.writeln('— FYC Connect');
+    Share.share(b.toString(), subject: '${t.nameEn} — ${tr(en: 'Scoreboard', ta: 'மதிப்பெண் பட்டியல்', hi: 'स्कोरबोर्ड', ml: 'സ്കോർബോർഡ്')}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdmin = _isAdmin;
@@ -288,6 +313,18 @@ class _SportsTournamentDetailScreenState
       appBar: AppBar(
         title: Text(tr(en: 'Tournament', ta: 'போட்டி விவரம்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്')),
         actions: [
+          BlocBuilder<SportsBloc, SportsState>(
+            builder: (context, state) {
+              if (state is SportsDetailLoaded) {
+                return IconButton(
+                  icon: const Icon(Icons.share_outlined),
+                  tooltip: tr(en: 'Share scoreboard', ta: 'மதிப்பெண் பட்டியலைப் பகிர்', hi: 'स्कोरबोर्ड साझा करें', ml: 'സ്കോർബോർഡ് പങ്കിടുക'),
+                  onPressed: () => _shareScoreboard(state.tournament, state.standings),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           if (isAdmin)
             BlocBuilder<SportsBloc, SportsState>(
               builder: (context, state) {
