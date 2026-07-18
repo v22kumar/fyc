@@ -854,22 +854,19 @@ class _StandingsTable extends StatelessWidget {
   }
 
   List<Widget> _headerCells() {
-    const labels = ['P', 'W', 'L', 'D', 'Pts'];
-    return labels
-        .map(
-          (l) => Expanded(
-            flex: 1,
-            child: Text(
-              l,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary),
-            ),
+    Widget h(String l, {int flex = 1}) => Expanded(
+          flex: flex,
+          child: Text(
+            l,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary),
           ),
-        )
-        .toList();
+        );
+    // NRR is wider (e.g. "+10.20") so it gets extra flex.
+    return [h('P'), h('W'), h('L'), h('D'), h('Pts'), h('NRR', flex: 2)];
   }
 }
 
@@ -929,6 +926,7 @@ class _StandingsRow extends StatelessWidget {
           _cell('${team.losses}'),
           _cell('${team.draws}'),
           _cell('${team.points}', bold: true),
+          _cell(_fmtNrr(team.netRunRate), flex: 2),
         ],
       ),
     );
@@ -953,18 +951,25 @@ class _StandingsRow extends StatelessWidget {
     return content;
   }
 
-  Widget _cell(String text, {bool bold = false}) {
+  Widget _cell(String text, {bool bold = false, int flex = 1}) {
     return Expanded(
-      flex: 1,
+      flex: flex,
       child: Text(
         text,
         textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 13,
           fontWeight: bold ? FontWeight.bold : FontWeight.normal,
         ),
       ),
     );
+  }
+
+  String _fmtNrr(double? v) {
+    // Signed, 2 decimals; em dash until a team has a completed result.
+    if (v == null) return '—';
+    return (v >= 0 ? '+' : '') + v.toStringAsFixed(2);
   }
 }
 
