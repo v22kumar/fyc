@@ -51,8 +51,8 @@ Tick each box as the slice merges. Each line is one PR unless noted.
 
 ### Phase 1 — Home structure & hierarchy (flagship)
 - [x] 1.1 Compact collapsing header (~190px) + `ListView`→`CustomScrollView`
-- [ ] 1.2 Pinned floating search overlapping the header → `SearchScreen`
-- [ ] 1.3 Recommended section order (see IA doc)
+- [x] 1.2 Pinned floating search overlapping the header → `SearchScreen` (delivered by 1.1 — search pill is the pinned SliverAppBar bottom)
+- [x] 1.3 Recommended section order (see IA doc)
 - [ ] 1.4 `FadeSlideIn` stagger + `DSSkeleton` on all sections + `EmptyState` icon path
 - [ ] 1.5 Animated stat counters (`_TodayImpactHub` / `_ImpactStats`)
 - [ ] 1.6 Pull-to-refresh with real last-updated timestamp

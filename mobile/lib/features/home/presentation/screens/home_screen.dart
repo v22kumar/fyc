@@ -2150,10 +2150,18 @@ class _CitizenDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // V2 1.3 — IA order (docs/v2/home-information-architecture.md):
+    // time-sensitive and actionable first (announcements, actions, live feed,
+    // events, blood), evergreen dailies after, impact stats near the bottom.
+    // The announcements slot becomes the hero carousel in slice 2.1.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _TodayImpactHub(l: l),
+        const _AnnouncementsBar(),
+        const SizedBox(height: 22),
+        const _QuickActions(),
+        const SizedBox(height: 22),
+        const _ServiceBento(),
         const SizedBox(height: 22),
         const _LiveUpdates(),
         const SizedBox(height: 22),
@@ -2161,21 +2169,17 @@ class _CitizenDashboard extends StatelessWidget {
         const SizedBox(height: 22),
         const _BeAHeroCard(),
         const SizedBox(height: 22),
-        const _ServiceBento(),
-        const SizedBox(height: 22),
-        const _QuickActions(),
-        const SizedBox(height: 10),
-        const _AnnouncementsBar(),
-        const SizedBox(height: 22),
         _SectionHeader(title: 'Today'),
         const SizedBox(height: 12),
-        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
-        const SizedBox(height: 14),
         DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        const SizedBox(height: 14),
+        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         const SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
         const SizedBox(height: 14),
         GoldPriceCard(key: ValueKey('gold-$refreshKey')),
+        const SizedBox(height: 22),
+        _TodayImpactHub(l: l),
       ],
     );
   }
