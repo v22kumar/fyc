@@ -40,8 +40,10 @@ class DSColors {
   static const Color successSurface = Color(0xFFF0FDF4);
   static const Color warning = Color(0xFFD97706);
   static const Color warningSurface = Color(0xFFFFFBEB);
-  static const Color danger = Color(0xFFDC2626);
-  static const Color dangerSurface = Color(0xFFFEF2F2);
+  // Rose — the unified blood-donation / danger role (matches AppColors.accent,
+  // the value every shipping screen already uses; see audit #04/#10).
+  static const Color danger = Color(0xFFF43F5E);
+  static const Color dangerSurface = Color(0xFFFFF1F2);
   static const Color info = Color(0xFF2563EB);
   static const Color infoSurface = Color(0xFFEFF6FF);
 
@@ -85,11 +87,11 @@ class DSSpacing {
   static const double xl = 48;
 }
 
-/// Fixed radius scale — matches the spec exactly (card 24 / button 20 /
-/// dialog 28). Chip radius (pill) is derived, not a new scale value.
+/// Fixed radius scale. `card` matches `AppTheme.radiusCard` (20) — the single
+/// value every shipping card uses; the two are kept equal so they cannot drift.
 class DSRadius {
   DSRadius._();
-  static const double card = 24;
+  static const double card = 20;
   static const double button = 20;
   static const double dialog = 28;
   static const double chip = 999; // pill

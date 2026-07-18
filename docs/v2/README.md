@@ -47,7 +47,7 @@ Tick each box as the slice merges. Each line is one PR unless noted.
 ### Phase 0 — Foundations
 - [x] 0.1 `docs/v2/` scaffold (this folder)
 - [x] 0.2 Shared primitives: `DSAnimatedCounter`, `DSCarousel`, `DSCollapsibleSection`, `DSSectionHeader`, `LastUpdatedPill`, `Haptics` (+ tests)
-- [ ] 0.3 Token unification (`DSColors` ↔ `AppColors`, reconcile `radiusCard`)
+- [x] 0.3 Token unification (`DSColors` ↔ `AppColors`, reconcile `radiusCard`)
 
 ### Phase 1 — Home structure & hierarchy (flagship)
 - [ ] 1.1 Compact collapsing header (~190px) + `ListView`→`CustomScrollView`
