@@ -335,3 +335,43 @@ def test_register_after_event_ended_rejected(client, db):
                       headers={"X-Organization-ID": str(org.id)})
     assert res.status_code == 400
     assert "ended" in res.json()["detail"].lower()
+
+
+def test_register_minimal_fields_only(client, db):
+    """Only name, dob and school are mandatory now — gender/mobile/class optional."""
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333360")
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json={"name": "Solo", "dob": "2010-05-01T00:00:00Z",
+                            "school_college": "Govt School"},
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200, res.text
+    assert res.json()["name"] == "Solo"
+
+
+def test_registrations_csv_export_admin(client, db):
+    org = _make_org(db)
+    event_id, token = _create_event(client, db, org, "+919333333361")
+    for name in ["An(Kumar)", "Priya"]:
+        client.post(f"/api/v1/events/{event_id}/register",
+                    json={"name": name, "dob": "2012-03-03T00:00:00Z",
+                          "school_college": "St Mary", "class_grade": "5"},
+                    headers={"X-Organization-ID": str(org.id)})
+
+    res = client.get(f"/api/v1/events/{event_id}/registrations.csv",
+                     headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("text/csv")
+    body = res.text
+    assert body.splitlines()[0].startswith("Name,DOB,Age,Gender,Mobile,School/College,Class")
+    assert "Priya" in body and "St Mary" in body
+
+
+def test_registrations_csv_requires_admin(client, db):
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333362")
+    # No auth token → executive gate rejects.
+    res = client.get(f"/api/v1/events/{event_id}/registrations.csv",
+                     headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code in (401, 403)
