@@ -8,6 +8,7 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
+import '../../../../core/design_system/components/ds_animated_counter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -817,10 +818,10 @@ class _ImpactStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      ('1500+', 'Youth Network', const Color(0xFF16A34A), const Color(0xFFF0FDF4)),
-      ('1200+', 'Blood Donors', const Color(0xFFEF4444), const Color(0xFFFEF2F2)),
-      ('80+', 'Events Hosted', const Color(0xFF8B5CF6), const Color(0xFFF5F3FF)),
-      ('5000+', 'Lives Impacted', const Color(0xFFD97706), const Color(0xFFFFFBEB)),
+      (1500, 'Youth Network', const Color(0xFF16A34A), const Color(0xFFF0FDF4)),
+      (1200, 'Blood Donors', const Color(0xFFEF4444), const Color(0xFFFEF2F2)),
+      (80, 'Events Hosted', const Color(0xFF8B5CF6), const Color(0xFFF5F3FF)),
+      (5000, 'Lives Impacted', const Color(0xFFD97706), const Color(0xFFFFFBEB)),
     ];
 
     return Column(
@@ -849,7 +850,10 @@ class _ImpactStats extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Text(s.$1, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.isDark ? s.$3.withOpacity(0.95) : s.$3)),
+                    DSAnimatedCounter(
+                        value: s.$1,
+                        suffix: '+',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.isDark ? s.$3.withOpacity(0.95) : s.$3)),
                     const SizedBox(height: 3),
                     Text(s.$2,
                         style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
@@ -2106,11 +2110,18 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 7),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: context.cText)),
+          // Numeric metrics count up on first build; non-numeric values
+          // ("24/7", em dash) render as plain text.
+          Builder(builder: (context) {
+            final style = TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: context.cText);
+            final n = int.tryParse(value);
+            return n != null
+                ? DSAnimatedCounter(value: n, style: style)
+                : Text(value, style: style);
+          }),
           const SizedBox(height: 1),
           Text(label,
               style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
