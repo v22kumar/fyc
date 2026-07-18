@@ -310,3 +310,28 @@ def test_register_explicit_false_rejected(client, db):
                       json=_registration_payload(),
                       headers={"X-Organization-ID": str(org.id)})
     assert res.status_code == 400
+
+
+def test_register_during_live_event_succeeds(client, db):
+    """A multi-day competition that has already started still accepts entries
+    (the app showed no Register button for LIVE events — regression)."""
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333348",
+                                extra=_event_payload(start_offset=-24, duration=72))
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+
+
+def test_register_after_event_ended_rejected(client, db):
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333349",
+                                extra=_event_payload(start_offset=-48, duration=2))
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 400
+    assert "ended" in res.json()["detail"].lower()
