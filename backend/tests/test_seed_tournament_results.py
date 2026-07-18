@@ -122,6 +122,32 @@ def test_fills_scheduled_fixture_with_same_number(db):
     assert fixtures_1[0].status == "COMPLETED"
 
 
+def test_removes_junk_team_and_its_fixture(db):
+    """A team in REMOVE_TEAMS (a misspelling) is deleted along with any fixture
+    that references it, before seeding."""
+    t = _tournament(db)
+    junk = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
+                name="NMC pandaraparambu", status="APPROVED")
+    other = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
+                 name="FYC B", status="APPROVED")
+    db.add(junk)
+    db.add(other)
+    db.commit()
+    placeholder = Fixture(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id,
+                          team_a_id=other.id, team_b_id=junk.id, match_number=50, status="SCHEDULED")
+    db.add(placeholder)
+    db.commit()
+    junk_id = junk.id
+    ph_id = placeholder.id
+
+    result = seed.seed_round(db, t, ROUND, commit=True, log=_mute)
+    assert result["teams_removed"] == 1
+    assert db.query(Team).filter(Team.id == junk_id).first() is None
+    assert db.query(Fixture).filter(Fixture.id == ph_id).first() is None
+    # FYC B (a real team) is untouched and reusable.
+    assert db.query(Team).filter(Team.tournament_id == t.id, Team.name == "FYC B").count() == 1
+
+
 def test_aborts_on_conflicting_completed_fixture(db):
     """If match #1 is already COMPLETED with a different result, the backfill
     aborts instead of silently corrupting standings."""
