@@ -68,6 +68,8 @@ class Team(Base, TimestampMixin, TenantModelMixin):
     points = Column(Integer, default=0)
     is_fyc_team = Column(Boolean, default=False)
     status = Column(String(20), default="PENDING")
+    # Knockout: an admin marks a team out; standings show an "eliminated" badge.
+    eliminated = Column(Boolean, default=False, nullable=False)
     
     # Sportsmanship and History
     championships = Column(Integer, default=0)

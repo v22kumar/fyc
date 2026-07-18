@@ -13,6 +13,7 @@ class TeamModel extends TeamEntity {
     required super.points,
     required super.isFycTeam,
     super.netRunRate,
+    super.eliminated,
   });
 
   factory TeamModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +29,7 @@ class TeamModel extends TeamEntity {
       points: (json['points'] as num?)?.toInt() ?? 0,
       isFycTeam: (json['is_fyc_team'] as bool?) ?? false,
       netRunRate: (json['net_run_rate'] as num?)?.toDouble(),
+      eliminated: (json['eliminated'] as bool?) ?? false,
     );
   }
 }

@@ -80,6 +80,7 @@ class TeamOut(BaseModel):
     points: int
     is_fyc_team: bool
     status: str
+    eliminated: Optional[bool] = False
     net_run_rate: Optional[float] = None  # computed from completed fixtures
 
     class Config:
@@ -99,6 +100,7 @@ class TeamUpdate(BaseModel):
     losses: Optional[int] = None
     draws: Optional[int] = None
     points: Optional[int] = None
+    eliminated: Optional[bool] = None
 
 
 class PlayerCreate(BaseModel):
