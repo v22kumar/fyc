@@ -913,11 +913,28 @@ class _StandingsRow extends StatelessWidget {
                       fontWeight: team.isFycTeam
                           ? FontWeight.bold
                           : FontWeight.w500,
-                      color: team.isFycTeam ? AppColors.primary : null,
+                      color: team.eliminated
+                          ? AppColors.textSecondary
+                          : (team.isFycTeam ? AppColors.primary : null),
+                      decoration: team.eliminated ? TextDecoration.lineThrough : null,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (team.eliminated)
+                  Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      tr(en: 'OUT', ta: 'நீக்கம்', hi: 'बाहर', ml: 'പുറത്ത്'),
+                      style: const TextStyle(
+                          fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.accent),
+                    ),
+                  ),
               ],
             ),
           ),

@@ -4,6 +4,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/team_entity.dart';
+import '../screens/team_management_screen.dart';
 
 class EditTeamSheet extends StatefulWidget {
   final String tournamentId;
@@ -30,6 +31,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
   late final TextEditingController _drawsCtrl;
   late final TextEditingController _pointsCtrl;
   late bool _isFycTeam;
+  late bool _eliminated;
   bool _submitting = false;
 
   @override
@@ -43,6 +45,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
     _drawsCtrl = TextEditingController(text: widget.team.draws.toString());
     _pointsCtrl = TextEditingController(text: widget.team.points.toString());
     _isFycTeam = widget.team.isFycTeam;
+    _eliminated = widget.team.eliminated;
   }
 
   @override
@@ -69,6 +72,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
           'captain_name': _captainCtrl.text.trim().isEmpty ? null : _captainCtrl.text.trim(),
           'contact_phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
           'is_fyc_team': _isFycTeam,
+          'eliminated': _eliminated,
           'wins': int.tryParse(_winsCtrl.text) ?? 0,
           'losses': int.tryParse(_lossesCtrl.text) ?? 0,
           'draws': int.tryParse(_drawsCtrl.text) ?? 0,
@@ -136,7 +140,33 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
               onChanged: (val) => setState(() => _isFycTeam = val),
               contentPadding: EdgeInsets.zero,
             ),
-            const SizedBox(height: 20),
+            SwitchListTile(
+              title: const Text('Eliminated (knocked out)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              value: _eliminated,
+              onChanged: (val) => setState(() => _eliminated = val),
+              activeColor: AppColors.accent,
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => TeamManagementScreen(
+                    teamId: widget.team.id,
+                    teamName: widget.team.name,
+                  ),
+                ));
+              },
+              icon: const Icon(Icons.groups_outlined, size: 18),
+              label: const Text('Manage players'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(double.infinity, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 48,

@@ -466,3 +466,22 @@ def test_tournament_village_wides_pins_to_match(client, db):
     assert res.status_code in (200, 201), res.text
     cm = db.query(CricketMatch).filter(CricketMatch.fixture_id == fx).first()
     assert cm is not None and cm.village_wides is True
+
+
+def test_team_eliminated_toggle(client, db):
+    """Admin can mark a team eliminated; it surfaces in standings/teams."""
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919467700001")
+    token = _login(client, org.id, "+919467700001")
+    tid = _create_tournament(client, org.id, token)
+    team = _create_team(client, org.id, token, tid, name="Doomed")
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+
+    res = client.patch(f"/api/v1/sports/tournaments/{tid}/teams/{team}",
+                       json={"eliminated": True}, headers=hdr)
+    assert res.status_code == 200, res.text
+    assert res.json()["eliminated"] is True
+
+    rows = client.get(f"/api/v1/sports/tournaments/{tid}/standings",
+                      headers={"X-Organization-ID": str(org.id)}).json()
+    assert next(r for r in rows if r["name"] == "Doomed")["eliminated"] is True
