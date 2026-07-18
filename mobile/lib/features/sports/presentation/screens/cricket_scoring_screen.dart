@@ -1135,6 +1135,33 @@ class _ScoringPad extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 8),
+        if (state.pendingSync > 0)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF0B44A)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.cloud_off_rounded, color: Color(0xFFB45309), size: 19),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    tr(
+                      en: 'Offline — ${state.pendingSync} ball${state.pendingSync == 1 ? '' : 's'} will sync when you reconnect',
+                      ta: 'ஆஃப்லைன் — ${state.pendingSync} பந்து மீண்டும் இணைந்ததும் ஒத்திசைக்கப்படும்',
+                      hi: 'ऑफ़लाइन — ${state.pendingSync} गेंद फिर से कनेक्ट होने पर सिंक होंगी',
+                      ml: 'ഓഫ്‌ലൈൻ — ${state.pendingSync} ബോൾ വീണ്ടും കണക്റ്റ് ചെയ്യുമ്പോൾ സിങ്ക് ചെയ്യും',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF92400E)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         // Batter Card Row
         Row(
           children: [

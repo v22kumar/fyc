@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/error/failures.dart';
@@ -42,6 +44,10 @@ class CricketScoringLoaded extends CricketScoringState {
   /// the backend creates/attributes them.
   final String? pendingNewBowlerName;
 
+  /// Number of balls entered while offline that are queued for sync. >0 shows
+  /// a "pending sync" banner; drains to 0 once connectivity returns.
+  final int pendingSync;
+
   const CricketScoringLoaded(
     this.matchState, {
     this.players,
@@ -49,6 +55,7 @@ class CricketScoringLoaded extends CricketScoringState {
     this.errorMessage,
     this.submitting = false,
     this.pendingNewBowlerName,
+    this.pendingSync = 0,
   });
 
   CricketScoringLoaded copyWith({
@@ -58,6 +65,7 @@ class CricketScoringLoaded extends CricketScoringState {
     String? errorMessage,
     bool? submitting,
     String? pendingNewBowlerName,
+    int? pendingSync,
     bool clearError = false,
     bool clearPendingBowler = false,
   }) {
@@ -69,12 +77,13 @@ class CricketScoringLoaded extends CricketScoringState {
       submitting: submitting ?? this.submitting,
       pendingNewBowlerName:
           clearPendingBowler ? null : (pendingNewBowlerName ?? this.pendingNewBowlerName),
+      pendingSync: pendingSync ?? this.pendingSync,
     );
   }
 
   @override
   List<Object?> get props =>
-      [matchState, players, needsNewBowler, errorMessage, submitting, pendingNewBowlerName];
+      [matchState, players, needsNewBowler, errorMessage, submitting, pendingNewBowlerName, pendingSync];
 }
 
 class CricketScoringFailure extends CricketScoringState {
@@ -88,7 +97,28 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
   final SportsRepository _repository;
   final String fixtureId;
 
-  CricketScoringCubit(this._repository, this.fixtureId) : super(CricketScoringInitial());
+  /// In-memory outbox of balls entered while offline, replayed in order once
+  /// connectivity returns. In-memory (not persisted) by design — it covers the
+  /// real case of a brief signal drop while the scorer is actively on this
+  /// screen; a queued ball survives navigation within the app but not a full
+  /// app kill mid-outage (the scoreboard then reverts to server truth on
+  /// reload and the scorer re-enters).
+  final List<Map<String, dynamic>> _outbox = [];
+  StreamSubscription<List<ConnectivityResult>>? _connSub;
+  bool _flushing = false;
+
+  CricketScoringCubit(this._repository, this.fixtureId) : super(CricketScoringInitial()) {
+    _connSub = Connectivity().onConnectivityChanged.listen((results) {
+      final online = results.any((r) => r != ConnectivityResult.none);
+      if (online && _outbox.isNotEmpty) _flushOutbox();
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _connSub?.cancel();
+    return super.close();
+  }
 
   Future<void> load() async {
     emit(CricketScoringLoading());
@@ -200,25 +230,7 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         ? passedBowler
         : s.pendingNewBowlerName;
 
-    // Optimistic UI: for a simple, non-wicket, non-over-ending delivery, show
-    // the predicted score instantly so entry feels lightning-fast. The server
-    // response below always overwrites this with the authoritative state, and
-    // a failure rolls back to `s` — so the prediction is display-only and can
-    // never corrupt the match. Anything it can't safely predict (wicket, the
-    // 6th ball of an over, an unknown player) falls back to the saving hint.
-    final predicted = isWicket
-        ? null
-        : _predictBall(prev, players, runsBatter: runsBatter, extrasType: extrasType, extrasRuns: extrasRuns);
-    if (predicted != null) {
-      emit(CricketScoringLoaded(predicted,
-          players: players,
-          needsNewBowler: s.needsNewBowler,
-          submitting: true,
-          pendingNewBowlerName: s.pendingNewBowlerName));
-    } else {
-      emit(s.copyWith(submitting: true, clearError: true));
-    }
-    final result = await _repository.scoreCricketBall(fixtureId, {
+    final payload = <String, dynamic>{
       'striker_id': players.strikerId,
       'non_striker_id': players.nonStrikerId,
       'bowler_id': players.bowlerId,
@@ -232,12 +244,62 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         'new_batter_name': newBatterName.trim(),
       if (effectiveNewBowler != null && effectiveNewBowler.isNotEmpty)
         'new_bowler_name': effectiveNewBowler,
-    });
+    };
+
+    // Optimistic UI: for a simple, non-wicket, non-over-ending delivery, show
+    // the predicted score instantly so entry feels lightning-fast. The server
+    // response below always overwrites this with the authoritative state, and
+    // a failure rolls back to `s` — so the prediction is display-only and can
+    // never corrupt the match. Anything it can't safely predict (wicket, the
+    // 6th ball of an over, an unknown player) falls back to the saving hint.
+    final predicted = isWicket
+        ? null
+        : _predictBall(prev, players, runsBatter: runsBatter, extrasType: extrasType, extrasRuns: extrasRuns);
+
+    // A ball is safe to queue offline only when it keeps the same two batters
+    // and bowler and doesn't complete the over — exactly what _predictBall is
+    // willing to predict, with no new bowler coming on. Wickets, the 6th ball
+    // of an over and bowler changes need server-assigned ids, so they require a
+    // live connection.
+    final offlineSafe =
+        predicted != null && !isWicket && (effectiveNewBowler == null || effectiveNewBowler.isEmpty);
+
+    // Ordering guarantee: once anything is queued offline, every later ball
+    // goes through the queue too so it can never overtake an unsynced ball.
+    if (_outbox.isNotEmpty) {
+      if (offlineSafe) {
+        _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
+        _flushOutbox();
+      } else {
+        emit(s.copyWith(errorMessage: _reconnectMessage(s.pendingSync)));
+      }
+      return;
+    }
+
+    if (predicted != null) {
+      emit(CricketScoringLoaded(predicted,
+          players: players,
+          needsNewBowler: s.needsNewBowler,
+          submitting: true,
+          pendingNewBowlerName: s.pendingNewBowlerName));
+    } else {
+      emit(s.copyWith(submitting: true, clearError: true));
+    }
+    final result = await _repository.scoreCricketBall(fixtureId, payload);
 
     result.fold(
       (failure) {
-        // Keep the pre-ball state on screen so the scorer can retry.
-        emit(s.copyWith(submitting: false, errorMessage: failure.message));
+        // A transport-layer drop on a safe ball → queue it and keep scoring;
+        // it syncs in order when the connection returns. Anything else (or an
+        // unsafe ball offline) rolls back so the scorer can retry.
+        if (failure is NetworkFailure && offlineSafe) {
+          _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
+        } else {
+          emit(s.copyWith(
+            submitting: false,
+            errorMessage: failure is NetworkFailure ? _reconnectMessage(0) : failure.message,
+          ));
+        }
       },
       (newState) {
         var next = players;
@@ -277,6 +339,63 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         emit(CricketScoringLoaded(newState, players: next, needsNewBowler: overEnded));
       },
     );
+  }
+
+  /// The player arrangement after a simple (offline-safe) delivery: strike
+  /// crosses on an odd number of runs run; a wide never changes strike. No new
+  /// players and no over-cross happen offline, so this fully captures it.
+  CricketPlayersEntity _nextAfterSimple(
+      CricketPlayersEntity players, int runsBatter, String extrasType, int extrasRuns) {
+    final ranRuns = (extrasType == 'BYE' || extrasType == 'LEG_BYE') ? extrasRuns : runsBatter;
+    if (extrasType != 'WIDE' && ranRuns.isOdd) return players.swapped();
+    return players;
+  }
+
+  String _reconnectMessage(int pending) => pending > 0
+      ? "You're offline — reconnect to record this ($pending ball${pending == 1 ? '' : 's'} waiting to sync)."
+      : "You're offline — reconnect to record this ball.";
+
+  /// Queue a ball entered offline and show its optimistic state with the
+  /// pending-sync count. The queue replays in order once connectivity returns.
+  void _enqueueOffline(
+      Map<String, dynamic> payload, CricketMatchStateEntity predicted, CricketPlayersEntity next) {
+    _outbox.add(payload);
+    emit(CricketScoringLoaded(predicted,
+        players: next, needsNewBowler: false, submitting: false, pendingSync: _outbox.length));
+  }
+
+  /// Replay queued offline balls in order. Stops on a transport-layer failure
+  /// (still offline — retried on the next connectivity change); drops a ball
+  /// the server rejects for a non-network reason so a single poison entry can't
+  /// block the queue forever. Reconciles with authoritative state once drained.
+  Future<void> _flushOutbox() async {
+    if (_flushing || _outbox.isEmpty) return;
+    _flushing = true;
+    try {
+      while (_outbox.isNotEmpty) {
+        final res = await _repository.scoreCricketBall(fixtureId, _outbox.first);
+        if (isClosed) return;
+        final failure = res.fold<Failure?>((f) => f, (_) => null);
+        if (failure is NetworkFailure) break; // still offline — keep the queue
+        _outbox.removeAt(0); // success, or a poison ball we drop and move past
+      }
+      if (_outbox.isEmpty) {
+        final st = await _repository.fetchCricketMatchState(fixtureId);
+        if (isClosed) return;
+        st.fold((_) {}, (ms) {
+          final cur = state;
+          if (cur is CricketScoringLoaded) {
+            emit(CricketScoringLoaded(ms,
+                players: cur.players, needsNewBowler: cur.needsNewBowler, pendingSync: 0));
+          }
+        });
+      } else {
+        final cur = state;
+        if (cur is CricketScoringLoaded) emit(cur.copyWith(pendingSync: _outbox.length));
+      }
+    } finally {
+      _flushing = false;
+    }
   }
 
   Future<void> editBall({
