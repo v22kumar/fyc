@@ -78,6 +78,7 @@ class TeamOut(BaseModel):
     points: int
     is_fyc_team: bool
     status: str
+    net_run_rate: Optional[float] = None  # computed from completed fixtures
 
     class Config:
         from_attributes = True

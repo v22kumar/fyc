@@ -339,3 +339,42 @@ def test_respond_to_challenge_non_admin_denied(client, db):
         headers={"Authorization": f"Bearer {vol_token}", "X-Organization-ID": str(org.id)},
     )
     assert patch_res.status_code == 403
+
+
+# ── Net Run Rate in standings ────────────────────────────────────────────────
+
+def test_standings_include_nrr_and_rank_by_it(client, db):
+    """Two teams level on points (both 1 win) are ranked by NRR, and the value
+    is returned on each team."""
+    from app.models.sports import Team, Fixture
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919444444401")
+    token = _login(client, org.id, "+919444444401")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs")
+
+    a = _create_team(client, org.id, token, tid, name="Aces")
+    b = _create_team(client, org.id, token, tid, name="Blasters")
+    c = _create_team(client, org.id, token, tid, name="Chargers")
+    d = _create_team(client, org.id, token, tid, name="Dashers")
+
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    # Aces win big; Chargers win narrow. Both winners have 1 win / 3 pts.
+    f1 = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                     json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+    f2 = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                     json={"team_a_id": c, "team_b_id": d, "match_number": 2}, headers=hdr).json()["id"]
+    client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{f1}/result",
+                json={"team_a_score": "120/3 (10.0 ov)", "team_b_score": "60/10 (8.0 ov)", "winner_id": a}, headers=hdr)
+    client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{f2}/result",
+                json={"team_a_score": "100/9 (10.0 ov)", "team_b_score": "101/8 (9.5 ov)", "winner_id": c}, headers=hdr)
+
+    res = client.get(f"/api/v1/sports/tournaments/{tid}/teams", headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    rows = res.json()
+    by_name = {r["name"]: r for r in rows}
+    # NRR present and correctly signed
+    assert by_name["Aces"]["net_run_rate"] > 0
+    assert by_name["Blasters"]["net_run_rate"] < 0
+    # Both winners level on points; Aces (bigger margin) ranks above Chargers
+    winners = [r["name"] for r in rows if r["points"] == 3]
+    assert winners[0] == "Aces" and winners[1] == "Chargers"
