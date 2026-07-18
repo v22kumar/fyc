@@ -3,8 +3,12 @@ import '../../../../core/error/failures.dart';
 import '../entities/event_entity.dart';
 
 abstract class EventRepository {
-  Future<Either<Failure, List<EventEntity>>> fetchEvents();
-  Future<Either<Failure, List<Map<String, dynamic>>>> fetchEventRegistrations(String eventId);
+  /// Emits cache first (if present), then the network result.
+  Stream<Either<Failure, List<EventEntity>>> fetchEventsStream();
+
+  /// Names-only list of registered candidates (public-safe, no PII).
+  Future<Either<Failure, List<String>>> fetchEventRegistrants(String eventId);
+
   Future<Either<Failure, String>> checkinEvent(String eventId);
   Future<Either<Failure, String>> deleteEvent(String eventId);
 }

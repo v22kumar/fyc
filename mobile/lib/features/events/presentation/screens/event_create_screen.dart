@@ -98,7 +98,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
       'event_start': _start!.toUtc().toIso8601String(),
       'event_end': _end!.toUtc().toIso8601String(),
       'is_published': _publishNow,
-      'requires_registration': _requiresRegistration,
+      'registration_enabled': _requiresRegistration,
     };
     try {
       await sl<EventDataSource>().createEvent(body);

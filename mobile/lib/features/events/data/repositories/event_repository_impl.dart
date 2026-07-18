@@ -49,6 +49,18 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Future<Either<Failure, List<String>>> fetchEventRegistrants(String eventId) async {
+    try {
+      final names = await _remote.fetchEventRegistrants(eventId);
+      return Right(names);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, String>> checkinEvent(String eventId) async {
     try {
       final result = await _remote.checkinEvent(eventId);

@@ -10,7 +10,7 @@ from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.user import User, VolunteerMetadata
-from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOut, EventCheckoutOut, EventRegistrationCreate, EventRegistrationOut
+from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOut, EventCheckoutOut, EventRegistrationCreate, EventRegistrationOut, EventRegistrantsOut
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
 from app.services.notification_service import NotificationService
@@ -191,8 +191,12 @@ def register_for_event(
     if not event.registration_enabled:
         raise HTTPException(status_code=400, detail="This event does not require registration. Anyone can join!")
         
-    if event.registration_deadline and datetime.now(timezone.utc) > event.registration_deadline:
-        raise HTTPException(status_code=400, detail="Registration deadline has passed")
+    if event.registration_deadline:
+        deadline = event.registration_deadline
+        if deadline.tzinfo is None:  # SQLite hands back naive datetimes
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > deadline:
+            raise HTTPException(status_code=400, detail="Registration deadline has passed")
         
     if event.max_participants:
         current_count = db.query(EventRegistration).filter(EventRegistration.event_id == event_id).count()
@@ -245,6 +249,33 @@ def get_event_registrations(
         
     registrations = db.query(EventRegistration).filter(EventRegistration.event_id == event_id).all()
     return registrations
+
+@router.get("/{event_id}/registrants", response_model=EventRegistrantsOut)
+def get_event_registrants(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Names-only list of who registered — safe for any user (no PII).
+
+    The full-detail /registrations endpoint stays admin-only; this one powers
+    the member-facing "N Going" list in the app and on the web.
+    """
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == tenant_id,
+    ).first()
+    if not event or not event.is_published:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    names = [
+        row[0]
+        for row in db.query(EventRegistration.name)
+        .filter(EventRegistration.event_id == event_id)
+        .order_by(EventRegistration.created_at.asc())
+        .all()
+    ]
+    return EventRegistrantsOut(count=len(names), names=names)
 
 @router.get("/{event_id}/analytics")
 def get_event_analytics(

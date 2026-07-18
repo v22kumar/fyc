@@ -187,3 +187,98 @@ def test_event_checkin_citizen_denied(client, db):
         headers={"Authorization": f"Bearer {citizen_token}", "X-Organization-ID": str(org.id)}
     )
     assert res.status_code == 403
+
+
+# ── Event registration (Android RSVP flow) ────────────────────────────────────
+
+def _registration_payload(name="Kumar"):
+    return {
+        "name": name,
+        "dob": "2001-06-15T00:00:00Z",
+        "gender": "Male",
+        "mobile_number": "+919000000001",
+        "school_college": "Govt Higher Secondary School",
+        "class_grade": "12",
+        "competition_category": [],
+    }
+
+
+def _create_event(client, db, org, phone, extra=None):
+    _make_executive(db, org.id, phone)
+    token = _login(client, org.id, phone)
+    payload = _event_payload()
+    if extra:
+        payload.update(extra)
+    res = client.post("/api/v1/events", json=payload,
+                      headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)})
+    assert res.status_code == 201
+    return res.json()["id"], token
+
+
+def test_register_for_event_anonymous(client, db):
+    """The app's RSVP sheet posts without auth — must succeed for a published event."""
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333341")
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    assert res.json()["name"] == "Kumar"
+
+
+def test_register_with_future_deadline_succeeds(client, db):
+    """Regression: SQLite returns naive datetimes; comparing them against
+    datetime.now(timezone.utc) raised TypeError -> 500, which is why Android
+    registration failed on any event that had a deadline set."""
+    org = _make_org(db)
+    deadline = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+    event_id, _ = _create_event(client, db, org, "+919333333342",
+                                extra={"registration_deadline": deadline})
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+
+
+def test_register_past_deadline_rejected(client, db):
+    org = _make_org(db)
+    deadline = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    event_id, _ = _create_event(client, db, org, "+919333333343",
+                                extra={"registration_deadline": deadline})
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 400
+    assert "deadline" in res.json()["detail"].lower()
+
+
+def test_registrants_names_only(client, db):
+    """Member-facing list exposes names and count — never phone numbers."""
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333344")
+
+    for name in ["Kumar", "Priya"]:
+        client.post(f"/api/v1/events/{event_id}/register",
+                    json=_registration_payload(name=name),
+                    headers={"X-Organization-ID": str(org.id)})
+
+    res = client.get(f"/api/v1/events/{event_id}/registrants",
+                     headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["count"] == 2
+    assert body["names"] == ["Kumar", "Priya"]
+    assert "+919000000001" not in str(body)  # no PII on the public projection
+
+
+def test_registrants_other_tenant_404(client, db):
+    org = _make_org(db)
+    other = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333345")
+
+    res = client.get(f"/api/v1/events/{event_id}/registrants",
+                     headers={"X-Organization-ID": str(other.id)})
+    assert res.status_code == 404
