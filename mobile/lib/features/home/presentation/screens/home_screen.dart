@@ -778,61 +778,75 @@ class _QuickActions extends StatelessWidget {
           children: [
             for (final (icon, color, label, onTap) in actions)
               Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: onTap,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: context.isDark
-                            ? [color.withOpacity(0.20), context.cSurface]
-                            : [color.withOpacity(0.10), Colors.white],
+                // Shadow on the outer Container; Ink paints the gradient; the
+                // InkWell sits above it so the ripple isn't hidden.
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: context.isDark
-                              ? context.cBorder.withOpacity(0.5)
-                              : color.withOpacity(0.22)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.10),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    clipBehavior: Clip.antiAlias,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: context.isDark
+                              ? [color.withOpacity(0.20), context.cSurface]
+                              : [color.withOpacity(0.10), Colors.white],
                         ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [color, Color.lerp(color, Colors.black, 0.18)!],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: context.isDark
+                                ? context.cBorder.withOpacity(0.5)
+                                : color.withOpacity(0.22)),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: onTap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [color, Color.lerp(color, Colors.black, 0.18)!],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                                ),
+                                child: Icon(icon, color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.cTextSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Icon(icon, color: Colors.white, size: 24),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            height: 1.15,
-                            fontWeight: FontWeight.w600,
-                            color: context.cTextSecondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
