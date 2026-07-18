@@ -346,7 +346,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       appBar: AppBar(
         backgroundColor: context.cSurface,
         elevation: 0,
-        title: Text('Create Tournament',
+        title: Text(widget.tournament != null ? 'Edit Tournament' : 'Create Tournament',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText)),
       ),
       body: ListView(
@@ -663,13 +663,13 @@ Join us for our yearly gathering!
               ),
               child: _submitting
                   ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.emoji_events, color: Colors.white, size: 18),
-                        SizedBox(width: 10),
-                        Text('Create Tournament',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                        const Icon(Icons.emoji_events, color: Colors.white, size: 18),
+                        const SizedBox(width: 10),
+                        Text(widget.tournament != null ? 'Save Changes' : 'Create Tournament',
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                       ],
                     ),
             ),
