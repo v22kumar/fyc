@@ -7,6 +7,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
+import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -1591,7 +1592,13 @@ class _NextEventCardState extends State<_NextEventCard> {
   @override
   Widget build(BuildContext context) {
     final ta = _lang == 'ta';
-    if (!_loaded || _event == null) return const SizedBox.shrink();
+    if (!_loaded) {
+      // Card-shaped placeholder while /events loads, so the section doesn't
+      // pop in and shift the page (the section still collapses when there is
+      // genuinely no upcoming event).
+      return const DSSkeletonBlock(width: double.infinity, height: 92, radius: 18);
+    }
+    if (_event == null) return const SizedBox.shrink();
     final e = _event!;
     final start = DateTime.parse(e['event_start']).toLocal();
     final title = (ta
@@ -1821,18 +1828,30 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
         ),
         const SizedBox(height: 12),
         if (!_loaded)
-          Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: context.cSurface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.cBorder),
+          // Skeleton shaped like the real update rows — never a bare spinner.
+          Column(
+            children: List.generate(
+              2,
+              (i) => Padding(
+                padding: EdgeInsets.only(bottom: i == 0 ? 10 : 0),
+                child: Row(
+                  children: [
+                    const DSSkeletonBlock(width: 40, height: 40, radius: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          DSSkeletonBlock(width: double.infinity, height: 13, radius: 6),
+                          SizedBox(height: 7),
+                          DSSkeletonBlock(width: 160, height: 11, radius: 6),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: const Center(
-                child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))),
           )
         else
           ..._items.map((it) {
@@ -2154,32 +2173,40 @@ class _CitizenDashboard extends StatelessWidget {
     // time-sensitive and actionable first (announcements, actions, live feed,
     // events, blood), evergreen dailies after, impact stats near the bottom.
     // The announcements slot becomes the hero carousel in slice 2.1.
+    // V2 1.4 — sections enter with a top-to-bottom stagger (FadeSlideIn is
+    // reduce-motion aware, so this is a no-op when animations are disabled).
+    final sections = <Widget>[
+      const _AnnouncementsBar(),
+      const _QuickActions(),
+      const _ServiceBento(),
+      const _LiveUpdates(),
+      const _NextEventCard(),
+      const _BeAHeroCard(),
+      _SectionHeader(title: 'Today'),
+      DailyNewsCard(key: ValueKey('news-$refreshKey')),
+      DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
+      WeatherCard(key: ValueKey('weather-$refreshKey')),
+      GoldPriceCard(key: ValueKey('gold-$refreshKey')),
+      _TodayImpactHub(l: l),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _AnnouncementsBar(),
-        const SizedBox(height: 22),
-        const _QuickActions(),
-        const SizedBox(height: 22),
-        const _ServiceBento(),
-        const SizedBox(height: 22),
-        const _LiveUpdates(),
-        const SizedBox(height: 22),
-        const _NextEventCard(),
-        const SizedBox(height: 22),
-        const _BeAHeroCard(),
-        const SizedBox(height: 22),
-        _SectionHeader(title: 'Today'),
-        const SizedBox(height: 12),
-        DailyNewsCard(key: ValueKey('news-$refreshKey')),
-        const SizedBox(height: 14),
-        DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
-        const SizedBox(height: 14),
-        WeatherCard(key: ValueKey('weather-$refreshKey')),
-        const SizedBox(height: 14),
-        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
-        const SizedBox(height: 22),
-        _TodayImpactHub(l: l),
+        for (var i = 0; i < sections.length; i++) ...[
+          if (i > 0)
+            SizedBox(
+                height: sections[i - 1] is _SectionHeader
+                    ? 12
+                    : (sections[i - 1] is DailyNewsCard ||
+                            sections[i - 1] is DailyThirukkuralCard ||
+                            sections[i - 1] is WeatherCard
+                        ? 14
+                        : 22)),
+          FadeSlideIn(
+            delay: Duration(milliseconds: (i * 60).clamp(0, 480)),
+            child: sections[i],
+          ),
+        ],
       ],
     );
   }
