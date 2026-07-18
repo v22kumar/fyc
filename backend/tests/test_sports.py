@@ -435,3 +435,34 @@ def test_live_scores_public_no_auth(client, db):
     res = client.get("/api/v1/sports/live", headers={"X-Organization-ID": str(org.id)})
     assert res.status_code == 200
     assert res.json() == {"live": [], "recent": [], "upcoming": []}
+
+
+def test_tournament_village_wides_pins_to_match(client, db):
+    """A tournament with village_wides=True forces the rule on every cricket
+    match, even if the match init doesn't ask for it."""
+    import uuid as _uuid
+    from app.models.cricket import CricketMatch
+
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919466600001")
+    token = _login(client, org.id, "+919466600001")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs", village_wides=True)
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+
+    # Tournament reflects the pin.
+    got = client.get(f"/api/v1/sports/tournaments/{tid}", headers={"X-Organization-ID": str(org.id)}).json()
+    assert got["village_wides"] is True
+
+    a = _create_team(client, org.id, token, tid, name="VA")
+    b = _create_team(client, org.id, token, tid, name="VB")
+    fx = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                     json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+
+    # Init a cricket match WITHOUT asking for village_wides — the tournament pins it.
+    res = client.post(f"/api/v1/fixtures/{fx}/cricket/init", json={
+        "toss_winner_id": a, "toss_decision": "BAT", "overs": 10,
+        "striker_name": "P1", "non_striker_name": "P2", "bowler_name": "P3",
+    }, headers=hdr)
+    assert res.status_code in (200, 201), res.text
+    cm = db.query(CricketMatch).filter(CricketMatch.fixture_id == fx).first()
+    assert cm is not None and cm.village_wides is True

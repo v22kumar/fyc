@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.models.user import User
-from app.models.sports import Fixture, Team
+from app.models.sports import Fixture, Team, Tournament
 from app.models.cricket import CricketMatch, CricketBall
 from app.models.sports import Player
 from app.dependencies import get_current_user, RoleChecker
@@ -312,13 +312,18 @@ def init_cricket_match(
 
     _reject_if_same_name(payload.striker_name, payload.non_striker_name)
 
+    # Village-wides is pinned at the tournament level: if the tournament has the
+    # rule on, every match uses it (a per-match toggle can also enable it).
+    tournament = db.query(Tournament).filter(Tournament.id == fixture.tournament_id).first()
+    village_wides = bool(payload.village_wides) or bool(getattr(tournament, "village_wides", False))
+
     match = CricketMatch(
         id=uuid.uuid4(),
         fixture_id=fixture_id,
         toss_winner_id=payload.toss_winner_id,
         toss_decision=payload.toss_decision,
         overs_per_innings=payload.overs,
-        village_wides=payload.village_wides,
+        village_wides=village_wides,
         scorer_id=current_user.id,
         status="FIRST_INNINGS",
         organization_id=current_user.organization_id,

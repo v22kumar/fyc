@@ -228,6 +228,28 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDI
         added_pending += 1
         log(f"  + pending team  {tm.name}")
 
+    # Pin the village-wides house rule (first 2 wides/over free) on this live
+    # tournament, and ensure a small TEST tournament (also village-wides) exists
+    # for trial scoring — "one is live, one is test".
+    if not getattr(t, "village_wides", False):
+        t.village_wides = True
+        log("  village_wides pinned ON for this tournament")
+    test_name = "FYC Test — Village Wides"
+    test_t = db.query(Tournament).filter(
+        Tournament.organization_id == org_id, Tournament.name_en == test_name).first()
+    if not test_t:
+        test_t = Tournament(
+            id=uuid.uuid4(), organization_id=org_id, name_ta=test_name, name_en=test_name,
+            sport="cricket", year=t.year, status="ONGOING", format="KNOCKOUT",
+            village_wides=True, match_config=t.match_config or "10 Overs")
+        db.add(test_t)
+        db.flush()
+        for nm in ("Test A", "Test B"):
+            db.add(Team(id=uuid.uuid4(), organization_id=org_id, tournament_id=test_t.id,
+                        name=nm, status="APPROVED"))
+        db.flush()
+        log(f"  + test tournament '{test_name}' (village_wides ON) with 2 teams")
+
     log(f"\nTeams: {len(existing)} ({created_teams} new, {added_pending} pending, "
         f"{removed_teams} removed)   Fixtures set: {len(matches)} ({created_fixtures} new)")
     if commit:
