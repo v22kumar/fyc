@@ -9,6 +9,7 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_badge.dart';
+import '../../../sports/presentation/screens/live_scorecard_screen.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
 import '../../../../core/design_system/components/last_updated_pill.dart';
@@ -2109,7 +2110,21 @@ class _MatchCard extends StatelessWidget {
     }
     final note = live ? _liveNote() : null;
     return GestureDetector(
-      onTap: () => context.push('/sports'),
+      onTap: () {
+        final fid = data['fixture_id'] as String?;
+        if (live && fid != null) {
+          // Open the read-only live scorecard (batsman/bowler streaming view).
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => LiveScorecardScreen(
+              fixtureId: fid,
+              teamA: (data['team_a'] as String?) ?? '',
+              teamB: (data['team_b'] as String?) ?? '',
+            ),
+          ));
+        } else {
+          context.push('/sports');
+        }
+      },
       child: Container(
         width: 258,
         padding: const EdgeInsets.all(14),
