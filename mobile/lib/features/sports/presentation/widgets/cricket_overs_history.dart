@@ -282,11 +282,36 @@ class _EditBallSheetState extends State<_EditBallSheet> {
     }
   }
 
+  /// High-contrast selectable chip — the stock ChoiceChip left unselected
+  /// labels nearly invisible (light grey on white) in this sheet.
+  Widget _chip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : const Color(0xFFEFF2FA),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? AppColors.primary : const Color(0xFFD7DCEA)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : const Color(0xFF0A1128),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final b = widget.ball;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -322,62 +347,32 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
             ),
             const Divider(height: 32),
-            Text('Batter Runs', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const Text('Batter Runs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
-              children: [0, 1, 2, 3, 4, 5, 6].map((r) => ChoiceChip(
-                label: Text('$r'),
-                selected: _runs == r,
-                onSelected: (_) => setState(() => _runs = r),
-              )).toList(),
+              runSpacing: 8,
+              children: [0, 1, 2, 3, 4, 5, 6]
+                  .map((r) => _chip('$r', _runs == r, () => setState(() => _runs = r)))
+                  .toList(),
             ),
             const SizedBox(height: 24),
-            Text('Extras', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const Text('Extras', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
-                ChoiceChip(
-                  label: const Text('None'),
-                  selected: _extrasType == null || _extrasType == 'NONE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'NONE';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Wide'),
-                  selected: _extrasType == 'WIDE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'WIDE';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('No Ball'),
-                  selected: _extrasType == 'NO_BALL',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'NO_BALL';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Bye'),
-                  selected: _extrasType == 'BYE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'BYE';
-                    _extrasRuns = 1;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Leg Bye'),
-                  selected: _extrasType == 'LEG_BYE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'LEG_BYE';
-                    _extrasRuns = 1;
-                  }),
-                ),
+                _chip('None', _extrasType == null || _extrasType == 'NONE',
+                    () => setState(() { _extrasType = 'NONE'; _extrasRuns = 0; })),
+                _chip('Wide', _extrasType == 'WIDE',
+                    () => setState(() { _extrasType = 'WIDE'; _extrasRuns = 0; })),
+                _chip('No Ball', _extrasType == 'NO_BALL',
+                    () => setState(() { _extrasType = 'NO_BALL'; _extrasRuns = 0; })),
+                _chip('Bye', _extrasType == 'BYE',
+                    () => setState(() { _extrasType = 'BYE'; _extrasRuns = 1; })),
+                _chip('Leg Bye', _extrasType == 'LEG_BYE',
+                    () => setState(() { _extrasType = 'LEG_BYE'; _extrasRuns = 1; })),
               ],
             ),
             if (_extrasType != null && _extrasType != 'NONE') ...[
