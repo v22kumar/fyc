@@ -42,20 +42,41 @@ class DSFeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pill = pillColor ?? tint;
+    final dark = context.isDark;
     return Material(
       color: context.cSurface,
+      clipBehavior: Clip.antiAlias,
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         child: Ink(
           decoration: BoxDecoration(
-            color: context.cSurface,
+            // A soft tonal wash in the category colour so each tile reads as
+            // its own illustrated surface rather than flat white.
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: dark
+                  ? [tint.withOpacity(0.20), context.cSurface]
+                  : [tint.withOpacity(0.10), Colors.white],
+            ),
             borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(color: context.cBorder),
-            boxShadow: context.isDark ? null : AppTheme.cardShadow,
+            border: Border.all(color: dark ? context.cBorder : tint.withOpacity(0.22)),
+            boxShadow: dark
+                ? null
+                : [BoxShadow(color: tint.withOpacity(0.14), blurRadius: 16, offset: const Offset(0, 8))],
           ),
-          child: Padding(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Oversized, faint category glyph — the tile's illustration.
+              Positioned(
+                right: -16,
+                bottom: -14,
+                child: Icon(icon, size: 96, color: tint.withOpacity(dark ? 0.12 : 0.09)),
+              ),
+              Padding(
             padding: const EdgeInsets.all(14),
             child: Stack(
               children: [
@@ -66,10 +87,15 @@ class DSFeatureCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: tint.withOpacity(0.12),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [tint, Color.lerp(tint, Colors.black, 0.18)!],
+                        ),
                         borderRadius: BorderRadius.circular(13),
+                        boxShadow: [BoxShadow(color: tint.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
                       ),
-                      child: Icon(icon, color: tint, size: 23),
+                      child: Icon(icon, color: Colors.white, size: 23),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -136,6 +162,8 @@ class DSFeatureCard extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+            ],
           ),
         ),
       ),
