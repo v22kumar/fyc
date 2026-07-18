@@ -59,3 +59,40 @@ def test_second_innings(client, db):
     print("WRONG BOWLER STATUS", r.status_code)
     print("WRONG BOWLER TEXT", r.text)
 
+
+def test_second_innings_scorecard_excludes_first_innings_players(client, db):
+    """At the innings change the batters/bowlers scorecards reset, so innings 2
+    never carries innings-1 players. Regression for the live bug 'Bowler does
+    not belong to the bowling team': an innings-1 bowler (now on the batting
+    side after the swap) lingered in state and the next-bowler picker offered
+    them, producing a batting-team bowler_id the ball endpoint rejects."""
+    H, fid, team_ids = _setup_fixture(client, db)
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0], overs=1), headers=H)  # Kumar/Raj bat, Vel bowls
+    p1 = init.json()["current_players"]
+    for _ in range(6):
+        client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+            "striker_id": p1["striker_id"], "non_striker_id": p1["non_striker_id"],
+            "bowler_id": p1["bowler_id"], "runs_batter": 1}, headers=H)
+
+    r = client.post(f"/api/v1/fixtures/{fid}/cricket/second-innings", json={
+        "toss_winner_id": team_ids[0], "toss_decision": "BAT", "overs": 1,
+        "striker_name": "B1", "non_striker_name": "B2", "bowler_name": "A1"}, headers=H)
+    assert r.status_code == 200, r.text
+    p2 = r.json()["current_players"]
+
+    ball = client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+        "striker_id": p2["striker_id"], "non_striker_id": p2["non_striker_id"],
+        "bowler_id": p2["bowler_id"], "runs_batter": 1}, headers=H)
+    assert ball.status_code == 200, ball.text
+    st = ball.json()["match_state"]
+
+    batting_names = {b["name"] for b in st["batters"].values()}
+    bowling_names = {b["name"] for b in st["bowlers"].values()}
+    # innings-2 players are present…
+    assert {"B1", "B2"}.issubset(batting_names)
+    assert "A1" in bowling_names
+    # …and innings-1 players do NOT linger into innings 2.
+    assert "Kumar" not in batting_names and "Raj" not in batting_names
+    assert "Vel" not in bowling_names
+

@@ -34,25 +34,29 @@ class CricketOversHistory extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'OVERS LOG',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
+            Row(
+              children: [
+                const Text(
+                  'OVERS LOG',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
+                ),
+                const Spacer(),
+                Text(
+                  '${ms.oversHistory.length} ${ms.oversHistory.length == 1 ? 'over' : 'overs'}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8A93A6)),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: ms.oversHistory.length,
-              separatorBuilder: (context, index) => const Divider(height: 24),
-              itemBuilder: (context, index) {
-                // Show latest first
-                final over = ms.oversHistory.reversed.toList()[index];
-                return _OverTimeline(
-                  over: over,
+            const SizedBox(height: 12),
+            // Rack of over cards, newest on top — each card is one over's stack
+            // of deliveries, always visible (no tap-to-expand).
+            ...[
+              for (var i = ms.oversHistory.length - 1; i >= 0; i--)
+                _OverCard(
+                  over: ms.oversHistory[i],
                   onBallTap: (ball) => _showEditBallSheet(context, ball),
-                );
-              },
-            ),
+                ),
+            ],
           ],
         ),
       ),
@@ -60,64 +64,87 @@ class CricketOversHistory extends StatelessWidget {
   }
 }
 
-class _OverTimeline extends StatelessWidget {
+class _OverCard extends StatelessWidget {
   final CricketOverHistoryEntity over;
   final Function(CricketBallEntity) onBallTap;
 
-  const _OverTimeline({required this.over, required this.onBallTap});
+  const _OverCard({required this.over, required this.onBallTap});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final runsInOver = over.balls.fold(0, (sum, b) => sum + b.runsBatter + b.extrasRuns);
     final wicketsInOver = over.balls.where((b) => b.isWicket).length;
+    final bowler = over.balls.isNotEmpty ? over.balls.last.bowlerName : '';
 
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: EdgeInsets.zero,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'Over ${over.overIndex + 1}',
-                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              '$runsInOver ${runsInOver == 1 ? 'run' : 'runs'}${wicketsInOver > 0 ? ' · $wicketsInOver W' : ''}',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)),
-            ),
-            if (over.balls.isNotEmpty) ...[
-              const Spacer(),
-              Flexible(
-                child: Text(
-                  over.balls.last.bowlerName,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
-                ),
-              ),
-            ]
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE9ECF4)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: over.balls.map((b) => _BallCircle(ball: b, onTap: () => onBallTap(b))).toList(),
+          // Over-number tile — the spine of the rack.
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('OVER',
+                    style: TextStyle(color: Colors.white70, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.5, height: 1)),
+                Text('${over.overIndex + 1}',
+                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, height: 1.15)),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: over.balls.map((b) => _BallCircle(ball: b, onTap: () => onBallTap(b))).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      '$runsInOver ${runsInOver == 1 ? 'run' : 'runs'}${wicketsInOver > 0 ? ' · $wicketsInOver W' : ''}',
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
+                    ),
+                    if (bowler.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          bowler,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -162,9 +189,9 @@ class _BallCircle extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        width: 46,
-        height: 46,
+        margin: const EdgeInsets.only(right: 7),
+        width: 38,
+        height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: bg,
@@ -180,7 +207,8 @@ class _BallCircle extends StatelessWidget {
         ),
         child: Text(
           ball.ballStr,
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: fg),
+          maxLines: 1,
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: ball.ballStr.length > 2 ? 12 : 15, color: fg),
         ),
       ),
     );
@@ -254,11 +282,36 @@ class _EditBallSheetState extends State<_EditBallSheet> {
     }
   }
 
+  /// High-contrast selectable chip — the stock ChoiceChip left unselected
+  /// labels nearly invisible (light grey on white) in this sheet.
+  Widget _chip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : const Color(0xFFEFF2FA),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? AppColors.primary : const Color(0xFFD7DCEA)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : const Color(0xFF0A1128),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final b = widget.ball;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -294,62 +347,32 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
             ),
             const Divider(height: 32),
-            Text('Batter Runs', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const Text('Batter Runs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
-              children: [0, 1, 2, 3, 4, 5, 6].map((r) => ChoiceChip(
-                label: Text('$r'),
-                selected: _runs == r,
-                onSelected: (_) => setState(() => _runs = r),
-              )).toList(),
+              runSpacing: 8,
+              children: [0, 1, 2, 3, 4, 5, 6]
+                  .map((r) => _chip('$r', _runs == r, () => setState(() => _runs = r)))
+                  .toList(),
             ),
             const SizedBox(height: 24),
-            Text('Extras', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const Text('Extras', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
-                ChoiceChip(
-                  label: const Text('None'),
-                  selected: _extrasType == null || _extrasType == 'NONE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'NONE';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Wide'),
-                  selected: _extrasType == 'WIDE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'WIDE';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('No Ball'),
-                  selected: _extrasType == 'NO_BALL',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'NO_BALL';
-                    _extrasRuns = 0;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Bye'),
-                  selected: _extrasType == 'BYE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'BYE';
-                    _extrasRuns = 1;
-                  }),
-                ),
-                ChoiceChip(
-                  label: const Text('Leg Bye'),
-                  selected: _extrasType == 'LEG_BYE',
-                  onSelected: (_) => setState(() {
-                    _extrasType = 'LEG_BYE';
-                    _extrasRuns = 1;
-                  }),
-                ),
+                _chip('None', _extrasType == null || _extrasType == 'NONE',
+                    () => setState(() { _extrasType = 'NONE'; _extrasRuns = 0; })),
+                _chip('Wide', _extrasType == 'WIDE',
+                    () => setState(() { _extrasType = 'WIDE'; _extrasRuns = 0; })),
+                _chip('No Ball', _extrasType == 'NO_BALL',
+                    () => setState(() { _extrasType = 'NO_BALL'; _extrasRuns = 0; })),
+                _chip('Bye', _extrasType == 'BYE',
+                    () => setState(() { _extrasType = 'BYE'; _extrasRuns = 1; })),
+                _chip('Leg Bye', _extrasType == 'LEG_BYE',
+                    () => setState(() { _extrasType = 'LEG_BYE'; _extrasRuns = 1; })),
               ],
             ),
             if (_extrasType != null && _extrasType != 'NONE') ...[

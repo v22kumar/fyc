@@ -102,7 +102,32 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
   final cubit = context.read<CricketScoringCubit>();
   final ms = state.matchState;
   final currentBowlerId = state.players?.bowlerId;
-  final options = ms.bowlers.where((b) => b.id != currentBowlerId && b.name.trim().isNotEmpty).toList();
+  // Offer the BOWLING team's roster — never the accumulated match-state bowlers,
+  // which across an innings change can include players now on the batting side
+  // (that produced the "Bowler does not belong to the bowling team" error).
+  // Every option here is guaranteed to be a valid bowling-team player.
+  final options = <MapEntry<String, String>>[];
+  final seen = <String>{};
+  if (ms.bowlingTeamId != null) {
+    final res = await sl<SportsRepository>().fetchTeamPlayers(ms.bowlingTeamId!);
+    if (!context.mounted) return false;
+    res.fold((_) {}, (players) {
+      for (final p in players) {
+        if (p.id != currentBowlerId && p.name.trim().isNotEmpty && seen.add(p.id)) {
+          options.add(MapEntry(p.id, p.name));
+        }
+      }
+    });
+  }
+  // Fallback if the roster couldn't be loaded: bowlers already recorded this
+  // innings (innings-scoped now that the backend resets the scorecard).
+  if (options.isEmpty) {
+    for (final b in ms.bowlers) {
+      if (b.id != currentBowlerId && b.name.trim().isNotEmpty && seen.add(b.id)) {
+        options.add(MapEntry(b.id, b.name));
+      }
+    }
+  }
   final nameCtrl = TextEditingController();
 
   final choice = await showDialog<(String?, String?)>(
@@ -124,9 +149,9 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
               spacing: 8,
               runSpacing: 8,
               children: options
-                  .map((b) => ActionChip(
-                        label: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        onPressed: () => Navigator.pop(ctx, (b.id, b.name)),
+                  .map((o) => ActionChip(
+                        label: Text(o.value, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        onPressed: () => Navigator.pop(ctx, (o.key, o.value)),
                       ))
                   .toList(),
             ),

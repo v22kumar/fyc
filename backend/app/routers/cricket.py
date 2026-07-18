@@ -141,6 +141,14 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             state["extras"] = {"w": 0, "nb": 0, "b": 0, "lb": 0}
             state["recent_balls"] = []
             state["overs_history"] = []
+            # Reset the per-innings scorecards too. Without this, innings-1
+            # batters and bowlers linger into innings 2 — and since the teams
+            # have just swapped, an innings-1 bowler now belongs to the batting
+            # side. The mobile "next bowler" picker then offers them and the ball
+            # endpoint rejects the delivery ("Bowler does not belong to the
+            # bowling team"). Each innings starts with a clean scorecard.
+            state["batters"] = {}
+            state["bowlers"] = {}
             wides_this_over = 0
 
         striker_name = b.striker.name if b.striker else "Unknown striker"
