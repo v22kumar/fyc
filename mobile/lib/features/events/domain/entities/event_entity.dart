@@ -28,7 +28,7 @@ class EventEntity extends Equatable {
     this.bannerUrl,
     this.geographyId,
     this.registrationCount = 0,
-    this.registrationEnabled = false,
+    this.registrationEnabled = true,
     this.registrationType,
     this.maxParticipants,
     this.registrationDeadline,
