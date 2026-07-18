@@ -94,6 +94,84 @@ Widget _gradientCTA({required String label, required VoidCallback? onPressed, Ic
   );
 }
 
+/// Shows the "next bowler" picker (existing bowlers as chips + a free-text
+/// field for a new one) and applies the choice to the cubit. Returns true if a
+/// bowler was chosen, false if cancelled. Used both proactively at the over
+/// break and as a fallback when the next ball is tapped without a bowler set.
+Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) async {
+  final cubit = context.read<CricketScoringCubit>();
+  final ms = state.matchState;
+  final currentBowlerId = state.players?.bowlerId;
+  final options = ms.bowlers.where((b) => b.id != currentBowlerId && b.name.trim().isNotEmpty).toList();
+  final nameCtrl = TextEditingController();
+
+  final choice = await showDialog<(String?, String?)>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr(en: 'Next bowler', ta: 'அடுத்த பந்துவீச்சாளர்', hi: 'अगला गेंदबाज़', ml: 'അടുത്ത ബൗളർ')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr(en: 'Over complete — who bowls next?', ta: 'ஓவர் முடிந்தது — அடுத்து யார்?',
+                hi: 'ओवर पूरा — अगला कौन?', ml: 'ഓവർ പൂർത്തിയായി — അടുത്തത് ആര്?'),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
+          ),
+          const SizedBox(height: 12),
+          if (options.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options
+                  .map((b) => ActionChip(
+                        label: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        onPressed: () => Navigator.pop(ctx, (b.id, b.name)),
+                      ))
+                  .toList(),
+            ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: nameCtrl,
+            autofocus: options.isEmpty,
+            decoration: InputDecoration(
+              labelText: tr(en: 'Or new bowler name', ta: 'அல்லது புதிய பெயர்', hi: 'या नया नाम', ml: 'അല്ലെങ്കിൽ പുതിയ പേര്'),
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (v) {
+              if (v.trim().isNotEmpty) Navigator.pop(ctx, (null, v.trim()));
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (nameCtrl.text.trim().isNotEmpty) {
+              Navigator.pop(ctx, (null, nameCtrl.text.trim()));
+            }
+          },
+          child: Text(tr(en: 'OK', ta: 'சரி', hi: 'ठीक है', ml: 'ശരി')),
+        ),
+      ],
+    ),
+  );
+  if (choice == null) return false;
+  final (existingId, name) = choice;
+  if (existingId != null) {
+    cubit.chooseBowler(existingId, name!);
+  } else if (name != null && name.isNotEmpty) {
+    cubit.chooseNewBowler(name);
+  } else {
+    return false;
+  }
+  return true;
+}
+
 /// Full ball-by-ball cricket scorer for admins/managers.
 ///
 /// Lifecycle: toss + openers form → live scoring pad (runs, extras, wickets,
@@ -173,6 +251,23 @@ class _CricketScoringView extends StatelessWidget {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
+          // Prompt for the next bowler AT the over break (not on the first
+          // ball of the next over). Fires once on the false→true transition;
+          // if cancelled, tapping a run re-prompts as a fallback.
+          if (state is CricketScoringLoaded &&
+              state.needsNewBowler &&
+              state.players != null &&
+              !state.submitting &&
+              state.errorMessage == null) {
+            _pickNextBowler(context, state);
+          }
+        },
+        listenWhen: (prev, curr) {
+          final wasNeeding = prev is CricketScoringLoaded && prev.needsNewBowler;
+          final nowNeeding = curr is CricketScoringLoaded && curr.needsNewBowler;
+          final justNeeded = nowNeeding && !wasNeeding;
+          final hasError = curr is CricketScoringLoaded && curr.errorMessage != null;
+          return justNeeded || hasError;
         },
         builder: (context, state) {
           if (state is CricketScoringLoading || state is CricketScoringInitial) {
@@ -277,9 +372,12 @@ class _TossSetupFormState extends State<_TossSetupForm> {
   String _decision = 'BAT';
   bool _villageWides = false;
   final _overs = TextEditingController(text: '20');
-  final _striker = TextEditingController();
-  final _nonStriker = TextEditingController();
-  final _bowler = TextEditingController();
+  // Sensible defaults so the scorer can start in one tap and rename later
+  // (players can be renamed from team management). Openers must differ, so
+  // Player 1 / Player 2 by batting position.
+  final _striker = TextEditingController(text: 'Player 1');
+  final _nonStriker = TextEditingController(text: 'Player 2');
+  final _bowler = TextEditingController(text: 'Bowler 1');
 
   @override
   void dispose() {
@@ -650,9 +748,9 @@ class _SecondInningsForm extends StatefulWidget {
 }
 
 class _SecondInningsFormState extends State<_SecondInningsForm> {
-  final _striker = TextEditingController();
-  final _nonStriker = TextEditingController();
-  final _bowler = TextEditingController();
+  final _striker = TextEditingController(text: 'Player 1');
+  final _nonStriker = TextEditingController(text: 'Player 2');
+  final _bowler = TextEditingController(text: 'Bowler 1');
 
   @override
   void dispose() {
@@ -1028,6 +1126,15 @@ class _ScoringPad extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // A hairline progress line while a ball posts — the scoreboard stays
+        // put (no full-screen reload), so entry feels instant.
+        SizedBox(
+          height: 3,
+          child: state.submitting
+              ? const LinearProgressIndicator(minHeight: 3, backgroundColor: Colors.transparent)
+              : null,
+        ),
+        const SizedBox(height: 8),
         // Batter Card Row
         Row(
           children: [
@@ -1074,10 +1181,37 @@ class _ScoringPad extends StatelessWidget {
         if (state.needsNewBowler)
           Padding(
             padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: theme.colorScheme.tertiaryContainer, borderRadius: BorderRadius.circular(12)),
-              child: const Text('Over complete — the next ball will ask for the new bowler.', style: TextStyle(fontWeight: FontWeight.w500)),
+            child: Pressable(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _pickNextBowler(context, state),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF0B44A)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.sports_baseball_rounded, color: Color(0xFFB45309), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            tr(en: 'Over complete — tap to pick the next bowler',
+                                ta: 'ஓவர் முடிந்தது — அடுத்த பந்துவீச்சாளரைத் தேர்ந்தெடுக்கத் தட்டவும்',
+                                hi: 'ओवर पूरा — अगला गेंदबाज़ चुनने के लिए टैप करें',
+                                ml: 'ഓവർ പൂർത്തിയായി — അടുത്ത ബൗളറെ തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യുക'),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF92400E)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         const SizedBox(height: 16),
@@ -1122,23 +1256,16 @@ class _ScoringPad extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Under the village rule the first two wides of the over are free:
-            // record them immediately (no run picker); the 3rd+ opens the dialog.
-            _actionBtn(
-              context,
-              state.matchState.nextWideIsFree ? 'Wide (free)' : 'Wide',
-              () => state.matchState.nextWideIsFree
-                  ? _withBowlerIfNeeded(context, (nb) => context
-                      .read<CricketScoringCubit>()
-                      .scoreBall(extrasType: 'WIDE', extrasRuns: 0, newBowlerName: nb))
-                  : _extrasDialog(context, 'WIDE'),
-            ),
+            // Every extra opens a run picker so it can carry runs — including a
+            // free (village) wide that was still run on, and a bare "0nb".
+            _actionBtn(context, state.matchState.nextWideIsFree ? 'Wide (free)' : 'Wide',
+                () => _extrasSheet(context, 'WIDE')),
             const SizedBox(width: 8),
-            _actionBtn(context, 'No Ball', () => _extrasDialog(context, 'NO_BALL')),
+            _actionBtn(context, 'No Ball', () => _extrasSheet(context, 'NO_BALL')),
             const SizedBox(width: 8),
-            _actionBtn(context, 'Bye', () => _extrasDialog(context, 'BYE')),
+            _actionBtn(context, 'Bye', () => _extrasSheet(context, 'BYE')),
             const SizedBox(width: 8),
-            _actionBtn(context, 'Leg Bye', () => _extrasDialog(context, 'LEG_BYE')),
+            _actionBtn(context, 'Leg Bye', () => _extrasSheet(context, 'LEG_BYE')),
           ],
         ),
         const SizedBox(height: 12),
@@ -1167,132 +1294,99 @@ class _ScoringPad extends StatelessWidget {
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 48),
+            minimumSize: const Size(0, 52),
+            foregroundColor: const Color(0xFF0A1128),
+            side: const BorderSide(color: Color(0xFFCBD2E0), width: 1.4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: onTap,
-          child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          child: Text(label, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
         ),
       ),
     );
   }
 
+  /// If an over just ended and no bowler is chosen yet, prompt for one first;
+  /// otherwise score straight through. The proactive over-break prompt usually
+  /// resolves this already, so this is the tap-time fallback.
   Future<void> _withBowlerIfNeeded(
       BuildContext context, Future<void> Function(String?) send) async {
-    final cubit = context.read<CricketScoringCubit>();
-    if (!state.needsNewBowler) {
-      await send(null);
-      return;
+    if (state.needsNewBowler) {
+      final picked = await _pickNextBowler(context, state);
+      if (!picked || !context.mounted) return;
     }
-    final ms = state.matchState;
-    final currentBowlerId = state.players!.bowlerId;
-    final options = ms.bowlers.where((b) => b.id != currentBowlerId).toList();
-    final nameCtrl = TextEditingController();
+    await send(null);
+  }
 
-    final choice = await showDialog<(String?, String?)>(
+  /// Run picker for an extra. Wides/no-balls allow 0 (a bare wide / "0nb");
+  /// byes/leg-byes require at least one run. The picked value is the runs
+  /// physically run off the delivery — the backend adds the 1-run penalty for
+  /// a normal wide/no-ball itself.
+  Future<void> _extrasSheet(BuildContext context, String type) async {
+    final cubit = context.read<CricketScoringCubit>();
+    final isWideOrNoBall = type == 'WIDE' || type == 'NO_BALL';
+    final options = isWideOrNoBall ? const [0, 1, 2, 3, 4, 5, 6] : const [1, 2, 3, 4, 5, 6];
+    final title = {
+      'WIDE': tr(en: 'Wide', ta: 'வைடு', hi: 'वाइड', ml: 'വൈഡ്'),
+      'NO_BALL': tr(en: 'No ball', ta: 'நோ பால்', hi: 'नो बॉल', ml: 'നോ ബോൾ'),
+      'BYE': tr(en: 'Bye', ta: 'பை', hi: 'बाई', ml: 'ബൈ'),
+      'LEG_BYE': tr(en: 'Leg bye', ta: 'லெக் பை', hi: 'लेग बाई', ml: 'ലെഗ് ബൈ'),
+    }[type]!;
+    final hint = isWideOrNoBall
+        ? tr(en: 'Runs run off it (0 = none)', ta: 'ஓடிய ரன்கள் (0 = இல்லை)',
+            hi: 'इस पर बने रन (0 = कोई नहीं)', ml: 'ഓടിയ റൺസ് (0 = ഇല്ല)')
+        : tr(en: 'How many runs were run?', ta: 'எத்தனை ரன்கள் ஓடினர்?',
+            hi: 'कितने रन बने?', ml: 'എത്ര റൺസ് ഓടി?');
+
+    final picked = await showModalBottomSheet<int>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr(en: 'Next bowler', ta: 'அடுத்த பந்துவீச்சாளர்', hi: 'अगला गेंदबाज़', ml: 'അടുത്ത ബൗളർ')),
-        content: Column(
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFD7DCEA), borderRadius: BorderRadius.circular(4)))),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0A1128))),
+            const SizedBox(height: 4),
+            Text(hint, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+            const SizedBox(height: 16),
             Wrap(
-              spacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: options
-                  .map((b) => ActionChip(
-                        label: Text(b.name),
-                        onPressed: () => Navigator.pop(ctx, (b.id, b.name)),
+                  .map((r) => Pressable(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () => Navigator.pop(ctx, r),
+                            child: Container(
+                              width: 58,
+                              height: 58,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))],
+                              ),
+                              child: Text('$r', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                            ),
+                          ),
+                        ),
                       ))
                   .toList(),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                labelText: tr(en: 'Or new bowler name', ta: 'அல்லது புதிய பெயர்', hi: 'या नया नाम', ml: 'അല്ലെങ്കിൽ പുതിയ പേര്'),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (nameCtrl.text.trim().isNotEmpty) {
-                Navigator.pop(ctx, (null, nameCtrl.text.trim()));
-              }
-            },
-            child: Text(tr(en: 'OK', ta: 'சரி', hi: 'ठीक है', ml: 'ശരി')),
-          ),
-        ],
-      ),
-    );
-    if (choice == null) return;
-    final (existingId, name) = choice;
-    if (existingId != null) {
-      cubit.chooseBowler(existingId, name!);
-      await send(null);
-    } else {
-      await send(name);
-    }
-  }
-
-  Future<void> _extrasDialog(BuildContext context, String type) async {
-    final cubit = context.read<CricketScoringCubit>();
-    
-    // Instead of nested dialog, we just show a quick bottom sheet or inline dialog for number of runs
-    int runs = 1;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('$type Runs'),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [1, 2, 3, 4, 5].map((r) => InkWell(
-              onTap: () {
-                setDialogState(() => runs = r);
-              },
-              child: Container(
-                width: 48,
-                height: 48,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: runs == r ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceVariant,
-                  shape: BoxShape.circle,
-                ),
-                child: Text('$r', style: TextStyle(
-                  color: runs == r ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 18, fontWeight: FontWeight.bold
-                )),
-              ),
-            )).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Confirm'),
-            ),
           ],
         ),
       ),
     );
-    if (confirmed != true) return;
-    if (type == 'NO_BALL' || type == 'WIDE') {
-      final extraRuns = type == 'WIDE' ? runs - 1 : runs;
-      await _withBowlerIfNeeded(context, (nb) => cubit.scoreBall(extrasType: type, extrasRuns: extraRuns, newBowlerName: nb));
-    } else {
-      await _withBowlerIfNeeded(context, (nb) => cubit.scoreBall(extrasType: type, extrasRuns: runs, newBowlerName: nb));
-    }
+    if (picked == null || !context.mounted) return;
+    await _withBowlerIfNeeded(
+        context, (nb) => cubit.scoreBall(extrasType: type, extrasRuns: picked, newBowlerName: nb));
   }
 
   Future<void> _wicketDialog(BuildContext context) async {
@@ -1424,50 +1518,55 @@ class _Scorecard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (ms.batters.isEmpty && ms.bowlers.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
+    const ink = Color(0xFF0A1128);
+    const muted = Color(0xFF5B6478);
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(tr(en: 'Batting', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്'),
-                style: theme.textTheme.titleSmall),
-            const SizedBox(height: 4),
+            _sectionLabel(tr(en: 'Batting', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്')),
+            const SizedBox(height: 6),
             ...ms.batters.map((b) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          b.out ? '${b.name} (out)' : b.name,
-                          style: b.out
-                              ? TextStyle(color: theme.colorScheme.outline)
-                              : null,
+                          b.out ? '${b.name}  •  out' : b.name,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: b.out ? FontWeight.w500 : FontWeight.w700,
+                            color: b.out ? muted : ink,
+                          ),
                         ),
                       ),
-                      Text('${b.runs} (${b.balls})  4s:${b.fours} 6s:${b.sixes}'),
+                      Text('${b.runs} (${b.balls})   4s:${b.fours}  6s:${b.sixes}',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: b.out ? muted : ink)),
                     ],
                   ),
                 )),
             if (ms.extrasTotal > 0)
               Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '${tr(en: 'Extras', ta: 'எக்ஸ்ட்ராஸ்', hi: 'अतिरिक्त', ml: 'എക്സ്ട്രാസ്')}: ${ms.extrasTotal}',
-                  style: theme.textTheme.bodySmall,
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: muted),
                 ),
               ),
-            const Divider(),
-            Text(tr(en: 'Bowling', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്'),
-                style: theme.textTheme.titleSmall),
-            const SizedBox(height: 4),
+            const Divider(height: 24),
+            _sectionLabel(tr(en: 'Bowling', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്')),
+            const SizedBox(height: 6),
             ...ms.bowlers.map((b) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      Expanded(child: Text(b.name)),
-                      Text('${b.oversText} ov · ${b.runs}r · ${b.wickets}w'),
+                      Expanded(child: Text(b.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
+                      Text('${b.oversText} ov · ${b.runs}r · ${b.wickets}w',
+                          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: ink)),
                     ],
                   ),
                 )),
@@ -1476,4 +1575,9 @@ class _Scorecard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _sectionLabel(String text) => Text(
+        text.toUpperCase(),
+        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
+      );
 }

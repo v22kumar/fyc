@@ -161,7 +161,15 @@ def recalculate_match_state(db: Session, match: CricketMatch):
             # First two wides of the over are free under the village rule:
             # no penalty run added, but still an illegal (re-bowled) delivery.
             free_wide = village_wides and wides_this_over <= 2
-            if not free_wide:
+            if free_wide:
+                # No 1-run penalty under the village rule, but runs physically
+                # run off the delivery (byes/overthrows) still count against the
+                # bowling side — a free wide can still be run on.
+                if b.extras_runs:
+                    ball_runs += b.extras_runs
+                    bowler_runs += b.extras_runs
+                    state["extras"]["w"] += b.extras_runs
+            else:
                 ball_runs += 1 + b.extras_runs
                 bowler_runs += 1 + b.extras_runs
                 state["extras"]["w"] += 1 + b.extras_runs
@@ -209,8 +217,12 @@ def recalculate_match_state(db: Session, match: CricketMatch):
         if b.is_wicket:
             ball_str = "W"
         elif b.extras_type == "WIDE":
-            # A free (village-rule) wide adds no run, so show a bare "wd".
-            ball_str = "wd" if free_wide else f"{1 + b.extras_runs}wd"
+            # Free (village-rule) wide: show only runs physically run (bare
+            # "wd" when none); a normal wide includes the 1-run penalty.
+            if free_wide:
+                ball_str = f"{b.extras_runs}wd" if b.extras_runs else "wd"
+            else:
+                ball_str = f"{1 + b.extras_runs}wd"
         elif b.extras_type == "NO_BALL":
             ball_str = f"{1 + b.extras_runs}nb"
         elif b.extras_type == "BYE":
