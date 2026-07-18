@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/repositories/event_repository.dart';
 import '../bloc/event_bloc.dart';
 import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
@@ -179,10 +181,10 @@ class _EventsListScreenState extends State<EventsListScreen> {
                           .read<EventBloc>()
                           .add(EventCheckinRequested(entry.value.id))
                       : null,
-                  onRegister: entry.value.isUpcoming
+                  onRegister: _canRegister(entry.value)
                       ? () => _openRegister(entry.value)
                       : null,
-                  onViewParticipants: _canCreate
+                  onViewParticipants: entry.value.registrationEnabled
                       ? () => _openParticipants(entry.value)
                       : null,
                 ),
@@ -212,6 +214,16 @@ class _EventsListScreenState extends State<EventsListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => _EventRegisterSheet(event: event, lang: _lang),
     );
+  }
+
+  /// Register only when the backend will accept it: upcoming, registration
+  /// enabled, and the deadline (if any) not yet passed — mirrors the server
+  /// gates so a tap can't land on a guaranteed 400.
+  bool _canRegister(EventEntity e) {
+    if (!e.isUpcoming || !e.registrationEnabled) return false;
+    final deadline = e.registrationDeadline;
+    if (deadline != null && DateTime.now().isAfter(deadline)) return false;
+    return true;
   }
 
   void _openParticipants(EventEntity event) {
@@ -416,7 +428,12 @@ class _EventCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _GoingRow(count: event.registrationCount, lang: lang),
+                    GestureDetector(
+                      onTap: onViewParticipants,
+                      behavior: HitTestBehavior.opaque,
+                      child:
+                          _GoingRow(count: event.registrationCount, lang: lang),
+                    ),
                     const Spacer(),
                     if (statusText == tr(en: 'Upcoming', ta: 'வரவிருக்கிறது', hi: 'आगामी', ml: 'വരാനിരിക്കുന്ന') && onRegister != null)
                       ElevatedButton(
@@ -638,13 +655,23 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
+      // Surface the server's reason (deadline passed, already registered,
+      // full capacity…) instead of a blind generic failure.
+      String? detail;
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['detail'] is String) {
+          detail = data['detail'] as String;
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(
-              en: 'Registration failed. Please try again.',
-              ta: 'பதிவு தோல்வி. மீண்டும் முயற்சிக்கவும்.',
-              hi: 'पंजीकरण विफल। कृपया पुनः प्रयास करें।',
-              ml: 'രജിസ്ട്രേഷൻ പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.')),
+          content: Text(detail ??
+              tr(
+                  en: 'Registration failed. Please try again.',
+                  ta: 'பதிவு தோல்வி. மீண்டும் முயற்சிக்கவும்.',
+                  hi: 'पंजीकरण विफल। कृपया पुनः प्रयास करें।',
+                  ml: 'രജിസ്ട്രേഷൻ പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -903,7 +930,7 @@ class _EventParticipantsSheet extends StatefulWidget {
 }
 
 class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
-  List<Map<String, dynamic>>? _participants;
+  List<String>? _names;
   String? _error;
 
   @override
@@ -913,16 +940,16 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
   }
 
   Future<void> _fetch() async {
-    try {
-      final repo = sl<EventRepository>();
-      final res = await repo.fetchEventRegistrations(widget.event.id);
-      res.fold(
-        (l) => setState(() => _error = 'Failed to load participants.'),
-        (r) => setState(() => _participants = r),
-      );
-    } catch (e) {
-      setState(() => _error = 'An error occurred.');
-    }
+    final res = await sl<EventRepository>().fetchEventRegistrants(widget.event.id);
+    if (!mounted) return;
+    res.fold(
+      (l) => setState(() => _error = tr(
+          en: 'Failed to load participants.',
+          ta: 'பங்கேற்பாளர்களை ஏற்ற முடியவில்லை.',
+          hi: 'प्रतिभागियों को लोड नहीं किया जा सका।',
+          ml: 'പങ്കാളികളെ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.')),
+      (names) => setState(() => _names = names),
+    );
   }
 
   @override
@@ -956,10 +983,13 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
           ),
           const SizedBox(height: 16),
           if (_error != null)
-            Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red))))
-          else if (_participants == null)
+            Expanded(
+                child: Center(
+                    child: Text(_error!,
+                        style: const TextStyle(color: AppColors.accent))))
+          else if (_names == null)
             const Expanded(child: Center(child: CircularProgressIndicator()))
-          else if (_participants!.isEmpty)
+          else if (_names!.isEmpty)
             Expanded(
               child: Center(
                 child: Text(
@@ -968,27 +998,49 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
                 ),
               ),
             )
-          else
-            Expanded(
-              child: ListView.separated(
-                itemCount: _participants!.length,
-                separatorBuilder: (_, __) => Divider(color: context.cBorder),
-                itemBuilder: (ctx, i) {
-                  final p = _participants![i];
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(p['name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: context.cText)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${p['mobile_number'] ?? ''} • ${p['gender'] ?? ''} • ${p['dob'] != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(p['dob'])) : ''}', style: TextStyle(color: context.cTextSecondary)),
-                        Text('${p['school_college'] ?? ''} - ${p['class_grade'] ?? ''}', style: TextStyle(color: context.cTextSecondary)),
-                      ],
-                    ),
-                  );
-                },
+          else ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                tr(
+                    en: '${_names!.length} registered',
+                    ta: '${_names!.length} பேர் பதிவு செய்துள்ளனர்',
+                    hi: '${_names!.length} पंजीकृत',
+                    ml: '${_names!.length} രജിസ്റ്റർ ചെയ്തു'),
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: context.cTextSecondary),
               ),
             ),
+            const SizedBox(height: 8),
+            // Names only — the member-facing list never shows phone numbers
+            // or other personal details.
+            Expanded(
+              child: ListView.separated(
+                itemCount: _names!.length,
+                separatorBuilder: (_, __) => Divider(color: context.cBorder),
+                itemBuilder: (ctx, i) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: CircleAvatar(
+                    radius: 15,
+                    backgroundColor: AppColors.primary.withOpacity(0.10),
+                    child: Text(
+                      _names![i].isEmpty ? '?' : _names![i][0].toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary),
+                    ),
+                  ),
+                  title: Text(_names![i],
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, color: context.cText)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
