@@ -282,3 +282,31 @@ def test_registrants_other_tenant_404(client, db):
     res = client.get(f"/api/v1/events/{event_id}/registrants",
                      headers={"X-Organization-ID": str(other.id)})
     assert res.status_code == 404
+
+
+def test_register_legacy_null_registration_enabled(client, db):
+    """Regression: events created before the registration_enabled column carry
+    NULL, which the gate read as 'closed' — hiding/blocking registration on
+    every legacy event. NULL must mean enabled."""
+    from app.models.event import Event as EventModel
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333346")
+    db.query(EventModel).filter(EventModel.id == event_id).update(
+        {"registration_enabled": None})
+    db.commit()
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+
+
+def test_register_explicit_false_rejected(client, db):
+    org = _make_org(db)
+    event_id, _ = _create_event(client, db, org, "+919333333347",
+                                extra={"registration_enabled": False})
+
+    res = client.post(f"/api/v1/events/{event_id}/register",
+                      json=_registration_payload(),
+                      headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 400

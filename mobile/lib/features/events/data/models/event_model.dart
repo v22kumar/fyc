@@ -31,7 +31,9 @@ class EventModel extends EventEntity {
       bannerUrl: json['banner_url'] as String?,
       geographyId: json['geography_id'] as String?,
       registrationCount: (json['registration_count'] as num?)?.toInt() ?? 0,
-      registrationEnabled: json['registration_enabled'] as bool? ?? false,
+      // Absent/null means the row predates the column — registration is open
+      // unless the server says explicitly false (mirrors the backend gate).
+      registrationEnabled: json['registration_enabled'] as bool? ?? true,
       registrationType: json['registration_type'] as String?,
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
       registrationDeadline: json['registration_deadline'] != null 

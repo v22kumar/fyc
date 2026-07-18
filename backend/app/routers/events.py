@@ -188,7 +188,9 @@ def register_for_event(
     if not event.is_published:
         raise HTTPException(status_code=400, detail="Event is not open for registration")
         
-    if not event.registration_enabled:
+    # Only an explicit False closes registration — NULL means the row predates
+    # the column (unset = enabled, matching the insert default).
+    if event.registration_enabled is False:
         raise HTTPException(status_code=400, detail="This event does not require registration. Anyone can join!")
         
     if event.registration_deadline:

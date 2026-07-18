@@ -292,6 +292,19 @@ async def lifespan(app: FastAPI):
         except Exception as _cbe:
             logger.warning(f"[schema-repair] cricket_balls rebuild skipped: {_cbe}")
 
+        # Backfill: events created before the registration_enabled column
+        # existed carry NULL, which the register gate and the app both read as
+        # "registration closed" — hiding the Register button on legacy events.
+        # Unset means enabled (the column's insert default).
+        try:
+            from sqlalchemy import text as _bf_text
+            with engine.begin() as conn:
+                conn.execute(_bf_text(
+                    "UPDATE events SET registration_enabled = 1 "
+                    "WHERE registration_enabled IS NULL"))
+        except Exception as _bfe:
+            logger.warning(f"[data-backfill] events.registration_enabled: {_bfe}")
+
         _seed_database()
 
         # Pre-warm external API caches in a background thread so slow RSS feeds
