@@ -9,6 +9,7 @@ import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
+import '../../../../core/design_system/components/last_updated_pill.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -43,11 +44,13 @@ void showHomeCreateSheet(BuildContext context) => _showCreateSheet(context);
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _aurora;
   int _refreshKey = 0;
+  DateTime? _lastRefreshed;
 
   @override
   void initState() {
     super.initState();
     _aurora = AnimationController(vsync: this, duration: const Duration(seconds: 12))..repeat();
+    _lastRefreshed = DateTime.now();
     // Purge any leftover update installer from a previous update (best-effort),
     // then check for a newer build once the home screen is shown.
     UpdateInstaller.cleanupAfterUpdate();
@@ -66,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() => _refreshKey++);
     // Give the new futures a moment to kick off before hiding the spinner
     await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) setState(() => _lastRefreshed = DateTime.now());
   }
 
   @override
@@ -109,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               return _VolunteerDashboard(l: l, refreshKey: _refreshKey);
                             }
                           }
-                          return _CitizenDashboard(l: l, refreshKey: _refreshKey);
+                          return _CitizenDashboard(l: l, refreshKey: _refreshKey, lastRefreshed: _lastRefreshed);
                         },
                       ),
                       const SizedBox(height: 130),
@@ -985,7 +989,8 @@ class _MiniCard extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onViewAll;
-  const _SectionHeader({required this.title, this.onViewAll});
+  final Widget? trailing;
+  const _SectionHeader({required this.title, this.onViewAll, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -993,7 +998,9 @@ class _SectionHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3)),
-        if (onViewAll != null)
+        if (trailing != null)
+          trailing!
+        else if (onViewAll != null)
           GestureDetector(
             onTap: onViewAll,
             child: const Text('View All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
@@ -2176,7 +2183,8 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
 class _CitizenDashboard extends StatelessWidget {
   final AppLocalizations l;
   final int refreshKey;
-  const _CitizenDashboard({required this.l, required this.refreshKey});
+  final DateTime? lastRefreshed;
+  const _CitizenDashboard({required this.l, required this.refreshKey, this.lastRefreshed});
 
   @override
   Widget build(BuildContext context) {
@@ -2193,7 +2201,10 @@ class _CitizenDashboard extends StatelessWidget {
       const _LiveUpdates(),
       const _NextEventCard(),
       const _BeAHeroCard(),
-      _SectionHeader(title: 'Today'),
+      _SectionHeader(
+        title: 'Today',
+        trailing: lastRefreshed != null ? LastUpdatedPill(timestamp: lastRefreshed!) : null,
+      ),
       DailyNewsCard(key: ValueKey('news-$refreshKey')),
       DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
       WeatherCard(key: ValueKey('weather-$refreshKey')),
