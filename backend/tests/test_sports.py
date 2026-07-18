@@ -378,3 +378,48 @@ def test_standings_include_nrr_and_rank_by_it(client, db):
     # Both winners level on points; Aces (bigger margin) ranks above Chargers
     winners = [r["name"] for r in rows if r["points"] == 3]
     assert winners[0] == "Aces" and winners[1] == "Chargers"
+
+
+# ── Live scores (public Home strip) ──────────────────────────────────────────
+
+def test_live_scores_endpoint(client, db):
+    """Public /sports/live returns in-progress matches with a score summary,
+    plus recent and upcoming fixtures — no auth required."""
+    import uuid as _uuid
+    from app.models.sports import Fixture
+    from app.models.cricket import CricketMatch
+
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919455500001")
+    token = _login(client, org.id, "+919455500001")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs")
+    a = _create_team(client, org.id, token, tid, name="Strikers")
+    b = _create_team(client, org.id, token, tid, name="Titans")
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+
+    # A live fixture with an in-progress cricket match.
+    live_fx = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                          json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+    cm = CricketMatch(
+        id=_uuid.uuid4(), organization_id=org.id, fixture_id=live_fx,
+        status="FIRST_INNINGS", overs_per_innings=10,
+        match_state={"batting_team_id": a, "score": 82, "wickets": 3, "overs": 7, "balls": 4, "target": None},
+    )
+    db.add(cm)
+    db.commit()
+
+    res = client.get("/api/v1/sports/live", headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["live"]) == 1
+    m = body["live"][0]
+    assert m["summary"] == "82/3 (7.4)"
+    assert m["batting_team"] == "Strikers"
+    assert {m["team_a"], m["team_b"]} == {"Strikers", "Titans"}
+
+
+def test_live_scores_public_no_auth(client, db):
+    org = _make_org(db)
+    res = client.get("/api/v1/sports/live", headers={"X-Organization-ID": str(org.id)})
+    assert res.status_code == 200
+    assert res.json() == {"live": [], "recent": [], "upcoming": []}

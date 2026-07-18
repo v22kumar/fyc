@@ -353,6 +353,109 @@ def list_teams(
     return teams
 
 
+_LIVE_MATCH_STATUSES = ("FIRST_INNINGS", "INNINGS_BREAK", "SECOND_INNINGS")
+
+
+@router.get("/live")
+def live_scores(
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Public cross-tournament live cricket scores for the Home strip — visible to
+    everyone (tenant-scoped, no auth). Returns in-progress matches with their
+    current score, plus recent results and upcoming fixtures so the widget always
+    has something to show."""
+    from app.models.cricket import CricketMatch
+
+    live = []
+    matches = (
+        db.query(CricketMatch)
+        .join(Fixture, CricketMatch.fixture_id == Fixture.id)
+        .filter(Fixture.organization_id == tenant_id,
+                CricketMatch.status.in_(_LIVE_MATCH_STATUSES))
+        .all()
+    )
+    for m in matches:
+        f = m.fixture
+        if not f:
+            continue
+        st = m.match_state or {}
+        team_a = f.team_a.name if f.team_a else "?"
+        team_b = f.team_b.name if f.team_b else "?"
+        bat_id = str(st.get("batting_team_id") or "")
+        batting = team_a if bat_id == str(f.team_a_id) else (team_b if bat_id == str(f.team_b_id) else None)
+        score = int(st.get("score", 0) or 0)
+        wickets = int(st.get("wickets", 0) or 0)
+        overs = int(st.get("overs", 0) or 0)
+        balls = int(st.get("balls", 0) or 0)
+        target = st.get("target")
+        note = None
+        if m.status == "INNINGS_BREAK":
+            note = "Innings break"
+        elif m.status == "SECOND_INNINGS" and target:
+            need = int(target) - score
+            note = f"Need {need} run{'s' if need != 1 else ''}" if need > 0 else "Scores level"
+        t = f.tournament
+        live.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": t.name_en if t else None,
+            "team_a": team_a,
+            "team_b": team_b,
+            "batting_team": batting,
+            "score": score,
+            "wickets": wickets,
+            "overs": f"{overs}.{balls}",
+            "target": int(target) if target else None,
+            "summary": f"{score}/{wickets} ({overs}.{balls})",
+            "note": note,
+            "status": m.status,
+        })
+
+    # Recently completed (any sport) — most recent first.
+    recent = []
+    done = (
+        db.query(Fixture)
+        .filter(Fixture.organization_id == tenant_id, Fixture.status == "COMPLETED")
+        .order_by(Fixture.updated_at.desc())
+        .limit(6)
+        .all()
+    )
+    for f in done:
+        recent.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": f.tournament.name_en if f.tournament else None,
+            "team_a": f.team_a.name if f.team_a else "?",
+            "team_b": f.team_b.name if f.team_b else "?",
+            "team_a_score": f.team_a_score,
+            "team_b_score": f.team_b_score,
+            "result": f.result_notes,
+        })
+
+    # Next scheduled.
+    upcoming = []
+    sched = (
+        db.query(Fixture)
+        .filter(Fixture.organization_id == tenant_id, Fixture.status == "SCHEDULED")
+        .order_by(Fixture.scheduled_at.asc())
+        .limit(6)
+        .all()
+    )
+    for f in sched:
+        upcoming.append({
+            "fixture_id": str(f.id),
+            "tournament_id": str(f.tournament_id),
+            "tournament_name": f.tournament.name_en if f.tournament else None,
+            "team_a": f.team_a.name if f.team_a else "?",
+            "team_b": f.team_b.name if f.team_b else "?",
+            "scheduled_at": f.scheduled_at.isoformat() if f.scheduled_at else None,
+            "venue": f.venue,
+        })
+
+    return {"live": live, "recent": recent, "upcoming": upcoming}
+
+
 @router.post("/tournaments/{tournament_id}/teams", response_model=TeamOut, status_code=201)
 def register_team(
     tournament_id: str,
