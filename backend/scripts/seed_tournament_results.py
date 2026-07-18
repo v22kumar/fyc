@@ -64,6 +64,13 @@ ALIASES = {
     "7yc b": "FYC B",
 }
 
+# Junk/misspelled teams to delete from the tournament before seeding (matched
+# case-insensitively). Removing a team also removes any fixtures referencing it
+# (e.g. a placeholder), so the standings/feed only carry the real entries.
+REMOVE_TEAMS = [
+    "NMC pandaraparambu",  # misspelling; the real team is "NRS Pandaraparambu"
+]
+
 
 def _canon(name: str) -> str:
     return ALIASES.get(name.strip().lower(), name.strip())
@@ -105,6 +112,24 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
     org_id = t.organization_id
     log(f"Tournament: {t.name_en}  [{t.id}]  status={t.status}  org={org_id}")
     log(f"Mode: {'COMMIT' if commit else 'DRY-RUN (no writes)'}\n")
+
+    # Remove junk/misspelled teams first, along with any fixtures that reference
+    # them (a placeholder fixture, say), so they don't linger in the standings.
+    removed_teams = 0
+    remove_keys = {n.strip().lower() for n in REMOVE_TEAMS}
+    for tm in db.query(Team).filter(Team.tournament_id == t.id).all():
+        if tm.name.strip().lower() in remove_keys:
+            fx = db.query(Fixture).filter(
+                Fixture.tournament_id == t.id,
+                (Fixture.team_a_id == tm.id) | (Fixture.team_b_id == tm.id)).all()
+            for f in fx:
+                log(f"  - fixture #{f.match_number} ({f.status}) — references removed team")
+                db.delete(f)
+            db.delete(tm)
+            removed_teams += 1
+            log(f"  - team  {tm.name}")
+    if removed_teams:
+        db.flush()
 
     existing = {(_canon(tm.name)).lower(): tm
                 for tm in db.query(Team).filter(Team.tournament_id == t.id).all()}
@@ -176,7 +201,7 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
         log(f"  {action:<6} match #{m['no']}: {a.name} ({m['a_score']}) vs "
             f"{b.name} ({m['b_score']}) -> {win.name}")
 
-    log(f"\nTeams: {len(existing)} ({created_teams} new)   "
+    log(f"\nTeams: {len(existing)} ({created_teams} new, {removed_teams} removed)   "
         f"Fixtures set: {len(matches)} ({created_fixtures} new)")
     if commit:
         db.commit()
@@ -185,6 +210,7 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print):
         db.rollback()
         log("Dry-run only — nothing written. Re-run with --commit to apply.")
     return {"teams": len(existing), "teams_created": created_teams,
+            "teams_removed": removed_teams,
             "fixtures": len(matches), "fixtures_created": created_fixtures}
 
 
