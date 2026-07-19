@@ -11,6 +11,7 @@ class BloodDonorModel extends BloodDonorEntity {
     super.fullNameEn,
     super.fullNameTa,
     super.phoneNumber,
+    super.isImported,
   });
 
   factory BloodDonorModel.fromJson(Map<String, dynamic> json) =>
@@ -24,5 +25,6 @@ class BloodDonorModel extends BloodDonorEntity {
         fullNameEn: json['full_name_en'] as String?,
         fullNameTa: json['full_name_ta'] as String?,
         phoneNumber: json['phone_number'] as String?,
+        isImported: json['is_imported'] as bool? ?? false,
       );
 }

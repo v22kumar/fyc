@@ -10,6 +10,9 @@ class BloodDonorEntity extends Equatable {
   final String? fullNameEn;
   final String? fullNameTa;
   final String? phoneNumber; // only available after authenticated contact request
+  /// True for a directory contact imported from Friends2Support (vs a donor who
+  /// registered in the app) — drives the "Friends2Support" badge.
+  final bool isImported;
 
   const BloodDonorEntity({
     required this.id,
@@ -21,6 +24,7 @@ class BloodDonorEntity extends Equatable {
     this.fullNameEn,
     this.fullNameTa,
     this.phoneNumber,
+    this.isImported = false,
   });
 
   String displayName(String lang) =>
@@ -48,5 +52,6 @@ class BloodDonorEntity extends Equatable {
         geographyNameTa,
         fullNameEn,
         fullNameTa,
+        isImported,
       ];
 }

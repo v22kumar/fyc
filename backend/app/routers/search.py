@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.dependencies import get_current_user_optional
 from app.middleware.tenant import require_tenant_id
-from app.models.user import UserProfile
+from app.models.user import User, UserProfile
 from app.models.event import Event
 from app.models.sports import Tournament, Team, Player
 from app.models.issue import PublicIssue
@@ -41,10 +41,13 @@ def global_search(
     def should_search(t: str):
         return not filter_types or t in filter_types
 
-    # Users / People
+    # Users / People — excludes imported Friends2Support donor contacts (they're
+    # directory entries, not real people to surface in a member search; they
+    # still appear under the blood-donor results below).
     if should_search("USER"):
         users = db.query(UserProfile).join(UserProfile.user).filter(
-            UserProfile.user.has(organization_id=tenant_id),
+            User.organization_id == tenant_id,
+            (User.source.is_(None)) | (User.source != "F2S_IMPORT"),
             (UserProfile.full_name_en.ilike(q_like) | UserProfile.full_name_ta.ilike(q_like))
         ).limit(10).all()
         for u in users:

@@ -580,6 +580,24 @@ class _DonorCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    // Directory contacts imported from Friends2Support are
+                    // labelled so they read as a donor listing, not an app member.
+                    if (donor.isImported) ...[
+                      const SizedBox(height: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFF0B44A)),
+                        ),
+                        child: Text(
+                          tr(en: 'Friends2Support', ta: 'Friends2Support', hi: 'Friends2Support', ml: 'Friends2Support'),
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.3, color: Color(0xFFB45309)),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
