@@ -7,6 +7,10 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../bloc/notification_bloc.dart';
 import '../../domain/entities/notification_entity.dart';
+import '../../../../service_locator.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 /// Local relative-time formatter (avoids a third-party dependency).
 String _timeAgo(DateTime dt) {
@@ -57,6 +61,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
     context.read<NotificationBloc>().add(FetchNotifications());
   }
 
+  /// Fire a self-test push and surface the server's diagnostic (whether Firebase
+  /// is configured, whether this device has a token, whether the push went out).
+  Future<void> _sendTest(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final bloc = context.read<NotificationBloc>();
+    try {
+      final res = await sl<ApiClient>().dio.post('/api/v1/notifications/test');
+      final data = res.data;
+      final detail = (data is Map && data['detail'] is String)
+          ? data['detail'] as String
+          : tr(en: 'Test notification sent', ta: 'சோதனை அறிவிப்பு அனுப்பப்பட்டது');
+      messenger.showSnackBar(SnackBar(content: Text(detail), duration: const Duration(seconds: 5)));
+      bloc.add(FetchNotifications());
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(tr(en: 'Could not send test notification', ta: 'சோதனை அறிவிப்பை அனுப்ப முடியவில்லை')),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,6 +94,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         iconTheme: IconThemeData(color: context.cText),
         actions: [
+          // Admin-only self-test of the push pipeline — pushes to your own
+          // device and reports why if it can't.
+          Builder(builder: (context) {
+            final auth = context.read<AuthBloc>().state;
+            final isAdmin = auth is AuthAuthenticated && auth.user.isAdmin;
+            if (!isAdmin) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.notifications_active_outlined),
+              tooltip: tr(en: 'Send test notification', ta: 'சோதனை அறிவிப்பு அனுப்பு',
+                  hi: 'परीक्षण सूचना भेजें', ml: 'ടെസ്റ്റ് അറിയിപ്പ് അയയ്ക്കുക'),
+              onPressed: () => _sendTest(context),
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.done_all_rounded),
             onPressed: () => context.read<NotificationBloc>().add(MarkAllNotificationsAsRead()),
