@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -28,6 +30,68 @@ def get_my_notifications(
         Notification.user_id == current_user.id
     ).order_by(Notification.created_at.desc()).limit(50).all()
     return notifications
+
+class TestPushResult(BaseModel):
+    firebase_initialised: bool
+    has_device_token: bool
+    push_sent: bool
+    detail: str
+
+
+@router.post("/test", response_model=TestPushResult)
+def send_test_notification(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Self-test: push a notification to the caller's OWN device and report the
+    exact reason if it can't — so an admin can verify the FCM pipeline end to end
+    and see immediately whether the block is server config or a missing token."""
+    try:
+        import firebase_admin  # local import so a missing dep never breaks the module
+        fb_ready = bool(firebase_admin._apps)
+    except ImportError:
+        fb_ready = False
+    has_token = bool(current_user.fcm_token)
+
+    # Always drop an in-app record so it's visible in the bell regardless of push.
+    db.add(Notification(
+        user_id=current_user.id,
+        organization_id=current_user.organization_id,
+        title_en="FYC Connect — test",
+        title_ta="FYC Connect — சோதனை",
+        body_en="🔔 Test notification — push is working!",
+        body_ta="🔔 சோதனை அறிவிப்பு",
+        notification_type="TEST",
+        data={"type": "TEST", "route": "/notifications"},
+        sent_at=datetime.now(timezone.utc),
+    ))
+    db.commit()
+
+    sent = False
+    if fb_ready and has_token:
+        sent = NotificationService(db)._dispatch_push(
+            current_user.fcm_token,
+            "FYC Connect — test",
+            "🔔 Push notifications are working!",
+            {"type": "TEST", "route": "/notifications"},
+        )
+
+    if not fb_ready:
+        detail = "Firebase isn't configured on the server — set FIREBASE_CREDENTIALS_JSON and redeploy."
+    elif not has_token:
+        detail = "No device token registered yet — reopen the app and allow notifications, then try again."
+    elif sent:
+        detail = "Push sent — check your notification bar."
+    else:
+        detail = "Firebase is configured but the send failed (token may be stale — reopen the app)."
+
+    return TestPushResult(
+        firebase_initialised=fb_ready,
+        has_device_token=has_token,
+        push_sent=sent,
+        detail=detail,
+    )
+
 
 @router.put("/{notification_id}/read", response_model=NotificationResponse)
 def mark_as_read(
