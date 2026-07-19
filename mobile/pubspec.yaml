@@ -94,6 +94,10 @@ dependencies:
   # Accelerometer access — shake-to-trigger SOS
   sensors_plus: ^6.0.1
 
+  # Illustration + motion system (Home spot illustrations + Lottie micro-anims)
+  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -108,4 +112,6 @@ flutter:
   assets:
     - assets/images/
     - assets/illustrations/
+    - assets/illustrations/svg/
+    - assets/lottie/
     - assets/translations/
