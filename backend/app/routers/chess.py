@@ -514,10 +514,16 @@ def chess_members(
     current_user: User = Depends(get_current_user),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
-    """Returns all org members with their chess ratings (excluding self)."""
+    """Returns all org members with their chess ratings (excluding self, and
+    excluding imported directory contacts like Friends2Support donors — they are
+    not real app users/opponents)."""
     users = (
         db.query(User)
-        .filter(User.organization_id == tenant_id, User.id != current_user.id)
+        .filter(
+            User.organization_id == tenant_id,
+            User.id != current_user.id,
+            (User.source.is_(None)) | (User.source != "F2S_IMPORT"),
+        )
         .limit(200)
         .all()
     )

@@ -334,6 +334,23 @@ async def lifespan(app: FastAPI):
         except Exception as _bfc:
             logger.warning(f"[data-backfill] cricket completion finalize: {_bfc}")
 
+        # One-off: tag existing Friends2Support directory contacts (imported as
+        # donor-only PUBLIC_CITIZEN accounts) with source='F2S_IMPORT', so they
+        # stay out of member/opponent lists (e.g. the chess members list). Only
+        # touches donor-linked public citizens not already tagged — a real
+        # member/admin who is also a donor keeps source NULL and still appears
+        # everywhere. Self-clears (re-running matches nothing new).
+        try:
+            from sqlalchemy import text as _f2s_text
+            with engine.begin() as conn:
+                conn.execute(_f2s_text(
+                    "UPDATE users SET source = 'F2S_IMPORT' "
+                    "WHERE role = 'PUBLIC_CITIZEN' "
+                    "AND (source IS NULL OR source = '') "
+                    "AND id IN (SELECT user_id FROM blood_donors)"))
+        except Exception as _f2se:
+            logger.warning(f"[data-backfill] tag F2S donor contacts: {_f2se}")
+
         # One-time backfill of the FYC LEAGUE 2026 knockout round, gated by a
         # secret so it only runs when an operator opts in (set SEED_FYC_LEAGUE_2026=1
         # in the Fly dashboard → Secrets, which triggers a redeploy). The seed is
