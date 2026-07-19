@@ -57,9 +57,10 @@ MATCHES = [
     dict(no=7, a="Kalungu",              a_score="121/9 (10.0 ov)",
               b="Thondanamvilai",        b_score="122/7 (10.0 ov)",
               winner="Thondanamvilai",   notes="Thondanamvilai won by 3 wickets"),
-    dict(no=8, a="Kollemcode",           a_score="112/6 (9.0 ov)",
-              b="Karugal",               b_score="54/9 (9.0 ov)",
-              winner="Kollemcode",       notes="Kollemcode won by 58 runs"),
+    # 8th match — a 9-over game (Kollamcode batted first).
+    dict(no=8, a="Kollamcode",           a_score="112/6 (9.0 ov)",
+              b="Karungal",              b_score="54/9 (9.0 ov)",
+              winner="Kollamcode",       notes="Kollamcode won by 58 runs"),
 ]
 
 # Spelling variants -> canonical team name. Extend if the DB uses another form.
@@ -175,6 +176,12 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDI
         a = ensure_team(m["a"])
         b = ensure_team(m["b"])
         win = ensure_team(m["winner"])
+        # A team that has actually played can't stay PENDING (some were
+        # pre-registered as balance-of-bracket placeholders).
+        for tm in (a, b):
+            if tm.status == "PENDING":
+                tm.status = "APPROVED"
+                log(f"  ~ approved {tm.name} (now has a played match)")
         f = fx_by_no.get(m["no"])
         # Refuse to clobber a fixture that is already COMPLETED with a *different*
         # result — overwriting would leave standings crediting the old winner.
