@@ -10,6 +10,7 @@ import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_badge.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
+import '../../../../core/design_system/components/spot_illustration.dart';
 import '../../../sports/presentation/screens/live_scorecard_screen.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
@@ -626,6 +627,7 @@ class _Service {
   final String route;
   final String? pill;
   final Color? pillColor;
+  final String? illustration;
   const _Service({
     required this.title,
     required this.subtitle,
@@ -634,6 +636,7 @@ class _Service {
     required this.route,
     this.pill,
     this.pillColor,
+    this.illustration,
   });
 }
 
@@ -649,6 +652,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.bloodtype_rounded,
         tint: AppColors.accent,
         route: '/blood-donation',
+        illustration: 'blood',
       ),
       _Service(
         title: tr(en: 'Sports Arena', ta: 'விளையாட்டு', hi: 'खेल', ml: 'സ്പോർട്സ്'),
@@ -656,6 +660,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.sports_cricket_rounded,
         tint: AppColors.warning,
         route: '/sports',
+        illustration: 'sports',
       ),
       _Service(
         title: tr(en: 'Community Feed', ta: 'சமூகம்', hi: 'समुदाय', ml: 'സമൂഹം'),
@@ -663,6 +668,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.dynamic_feed_rounded,
         tint: AppColors.primaryLight,
         route: '/feed',
+        illustration: 'community',
       ),
       _Service(
         title: tr(en: 'Report an Issue', ta: 'புகார் அளி', hi: 'समस्या दर्ज करें', ml: 'പ്രശ്നം രേഖപ്പെടുത്തുക'),
@@ -670,6 +676,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.campaign_rounded,
         tint: AppColors.gold,
         route: '/issues',
+        illustration: 'report',
       ),
       _Service(
         title: tr(en: 'Green FYC', ta: 'பசுமை', hi: 'हरित', ml: 'ഹരിതം'),
@@ -677,6 +684,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.eco_rounded,
         tint: AppColors.success,
         route: '/green',
+        illustration: 'green',
         pill: tr(en: 'Eco', ta: 'சூழல்', hi: 'इको', ml: 'ഇക്കോ'),
         pillColor: AppColors.success,
       ),
@@ -686,6 +694,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.handyman_rounded,
         tint: AppColors.primary,
         route: '/community',
+        illustration: 'skills',
         pill: tr(en: 'New', ta: 'புதியது', hi: 'नया', ml: 'പുതിയത്'),
         pillColor: AppColors.primaryLight,
       ),
@@ -695,6 +704,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.work_rounded,
         tint: AppColors.gold,
         route: '/opportunities',
+        illustration: 'opportunities',
         pill: tr(en: 'Jobs', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി'),
         pillColor: AppColors.gold,
       ),
@@ -704,6 +714,7 @@ class _ServiceBento extends StatelessWidget {
         icon: Icons.event_rounded,
         tint: AppColors.primaryLight,
         route: '/events',
+        illustration: 'events',
       ),
     ];
 
@@ -714,6 +725,8 @@ class _ServiceBento extends StatelessWidget {
           title: tr(en: 'Explore FYC', ta: 'FYC ஐ ஆராயுங்கள்', hi: 'FYC एक्सप्लोर करें', ml: 'FYC പര്യവേക്ഷണം'),
           onViewAll: () => _showMoreSheet(context),
         ),
+        const SizedBox(height: 12),
+        const _FeaturedSportsHero(),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -734,12 +747,107 @@ class _ServiceBento extends StatelessWidget {
               tint: s.tint,
               pillLabel: s.pill,
               pillColor: s.pillColor,
+              illustration: s.illustration,
               actionLabel: tr(en: 'Open', ta: 'திற', hi: 'खोलें', ml: 'തുറക്കുക'),
               onTap: () => context.push(s.route),
             );
           },
         ),
       ],
+    );
+  }
+}
+
+/// A full-width featured hero for the live sports feature — brand gradient, a
+/// large sports spot-illustration and a Lottie "live" pulse. The visual anchor
+/// of the Explore section.
+class _FeaturedSportsHero extends StatelessWidget {
+  const _FeaturedSportsHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryLight],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(22)),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: () => context.push('/sports'),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 8, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const LivePulse(size: 22),
+                            const SizedBox(width: 6),
+                            Text(
+                              tr(en: 'LIVE SPORTS', ta: 'நேரடி விளையாட்டு', hi: 'लाइव खेल', ml: 'ലൈവ് സ്പോർട്സ്'),
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          tr(en: 'Sports Arena', ta: 'விளையாட்டு அரங்கம்', hi: 'खेल एरिना', ml: 'സ്പോർട്സ് അരീന'),
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          tr(en: 'Tournaments, chess & live scores', ta: 'போட்டிகள், சதுரங்கம் & நேரடி மதிப்பெண்', hi: 'टूर्नामेंट, शतरंज और लाइव स्कोर', ml: 'ടൂർണമെന്റുകൾ, ചെസ്സ്, തത്സമയ സ്കോർ'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tr(en: 'Watch live', ta: 'நேரடியாகப் பார்', hi: 'लाइव देखें', ml: 'ലൈവ് കാണുക'),
+                                style: const TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primary),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const SpotIllustration('sports', size: 116),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

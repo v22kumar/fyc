@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import 'spot_illustration.dart';
 
 /// A single self-explaining service tile — the core unit of the redesigned
 /// Home (and, progressively, the rest of the app). It mirrors the clarity of
@@ -25,6 +26,11 @@ class DSFeatureCard extends StatelessWidget {
   /// The "Open" affordance label; pass a localized string.
   final String actionLabel;
 
+  /// Optional spot-illustration name (a file in assets/illustrations/svg,
+  /// without extension). When set it becomes the tile's corner art; otherwise a
+  /// faint oversized [icon] glyph is used.
+  final String? illustration;
+
   final VoidCallback onTap;
 
   const DSFeatureCard({
@@ -37,6 +43,7 @@ class DSFeatureCard extends StatelessWidget {
     this.pillLabel,
     this.pillColor,
     this.actionLabel = 'Open',
+    this.illustration,
   });
 
   @override
@@ -78,12 +85,23 @@ class DSFeatureCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Oversized, faint category glyph — the tile's illustration.
-                Positioned(
-                  right: -16,
-                  bottom: -14,
-                  child: Icon(icon, size: 96, color: tint.withOpacity(dark ? 0.12 : 0.09)),
-                ),
+                // Corner art — a real spot illustration when provided, else a
+                // faint oversized category glyph.
+                if (illustration != null)
+                  Positioned(
+                    right: -6,
+                    bottom: -6,
+                    child: Opacity(
+                      opacity: dark ? 0.9 : 1,
+                      child: SpotIllustration(illustration!, size: 80),
+                    ),
+                  )
+                else
+                  Positioned(
+                    right: -16,
+                    bottom: -14,
+                    child: Icon(icon, size: 96, color: tint.withOpacity(dark ? 0.12 : 0.09)),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(14),
                   child: Stack(
