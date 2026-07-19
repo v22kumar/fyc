@@ -481,7 +481,11 @@ def score_ball(
     if match.scorer_id and str(match.scorer_id) != str(current_user.id) and current_user.role != "SUPER_ADMIN":
         raise HTTPException(403, "Only the assigned scorer can update this match")
 
-    if match.fixture.status not in ["LIVE", "IN_PROGRESS"]:
+    # A COMPLETED match stays editable: adding/correcting a delivery re-runs
+    # recalculate_match_state, which reopens the match and reverses standings if
+    # the edit changes the outcome. Only a fixture that never started (SCHEDULED)
+    # is blocked here.
+    if match.fixture.status not in ["LIVE", "IN_PROGRESS", "COMPLETED"]:
         return JSONResponse(status_code=400, content={"code": "MATCH_NOT_LIVE", "message": "Match is not in LIVE state."})
 
     state = match.match_state or {}

@@ -54,8 +54,10 @@ def _tournament_phase(db: Session, t) -> str:
         return "COMPLETED"
     fixtures = db.query(Fixture).filter(Fixture.tournament_id == t.id).all()
     if fixtures:
-        if all(f.status == "COMPLETED" for f in fixtures):
-            return "COMPLETED"
+        # A round finishing does NOT complete the tournament — a knockout keeps
+        # adding later rounds, so "all current fixtures done" just means "between
+        # rounds". COMPLETED is admin-marked only (the stored-status branch
+        # above / the quick-complete endpoint), never auto-derived.
         return "ONGOING"
     return "REGISTRATION_CLOSED" if _registration_closed(t) else "REGISTRATION_OPEN"
 
