@@ -57,11 +57,16 @@ MATCHES = [
     dict(no=7, a="Kalungu",              a_score="121/9 (10.0 ov)",
               b="Thondanamvilai",        b_score="122/7 (10.0 ov)",
               winner="Thondanamvilai",   notes="Thondanamvilai won by 3 wickets"),
+    dict(no=8, a="Kollemcode",           a_score="112/6 (9.0 ov)",
+              b="Karugal",               b_score="54/9 (9.0 ov)",
+              winner="Kollemcode",       notes="Kollemcode won by 58 runs"),
 ]
 
 # Spelling variants -> canonical team name. Extend if the DB uses another form.
 ALIASES = {
     "7yc b": "FYC B",
+    "kollemcode": "Kollamcode",
+    "karugal": "Karungal",
 }
 
 # Junk/misspelled teams to delete from the tournament before seeding (matched
@@ -234,6 +239,10 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDI
     if not getattr(t, "village_wides", False):
         t.village_wides = True
         log("  village_wides pinned ON for this tournament")
+    if t.match_config != "9 Overs":
+        t.match_config = "9 Overs"
+        log("  match_config pinned to '9 Overs'")
+        
     test_name = "FYC Test — Village Wides"
     test_t = db.query(Tournament).filter(
         Tournament.organization_id == org_id, Tournament.name_en == test_name).first()
