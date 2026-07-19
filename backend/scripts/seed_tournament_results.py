@@ -246,9 +246,14 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDI
     if not getattr(t, "village_wides", False):
         t.village_wides = True
         log("  village_wides pinned ON for this tournament")
-    if t.match_config != "9 Overs":
-        t.match_config = "9 Overs"
-        log("  match_config pinned to '9 Overs'")
+    # NRR over-quota for the all-out rule. The league is a 10-over competition
+    # (a side bowled out early is still charged the full 10 overs). Match #8 was
+    # a 9-over game but had no all-out innings, so the 10-over quota doesn't skew
+    # it. Without this the quota silently defaults to 20, deflating every all-out
+    # side's run rate.
+    if t.match_config != "10 Overs":
+        t.match_config = "10 Overs"
+        log("  match_config pinned to '10 Overs'")
         
     test_name = "FYC Test — Village Wides"
     test_t = db.query(Tournament).filter(
