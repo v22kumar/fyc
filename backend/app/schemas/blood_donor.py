@@ -35,6 +35,9 @@ class BloodDonorPublicOut(BaseModel):
     geography_name_ta: Optional[str] = None
     full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
+    # True for a directory contact imported from Friends2Support (vs a donor who
+    # self-registered in the app). Drives the "Friends2Support" badge.
+    is_imported: bool = False
 
 class ContactRequestOut(BaseModel):
     message: str

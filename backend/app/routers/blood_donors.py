@@ -91,9 +91,10 @@ def search_donors(
     total = db.query(func.count(BloodDonor.id)).filter(*filters).scalar() or 0
 
     rows = (
-        db.query(BloodDonor, UserProfile, GeographicNode)
+        db.query(BloodDonor, UserProfile, GeographicNode, User)
         .outerjoin(UserProfile, UserProfile.user_id == BloodDonor.user_id)
         .outerjoin(GeographicNode, GeographicNode.id == BloodDonor.geography_id)
+        .outerjoin(User, User.id == BloodDonor.user_id)
         .filter(*filters)
         .order_by(BloodDonor.blood_group, BloodDonor.id)
         .offset(offset)
@@ -111,8 +112,9 @@ def search_donors(
             geography_name_ta=geo.name_ta if geo else None,
             full_name_en=profile.full_name_en if profile else None,
             full_name_ta=profile.full_name_ta if profile else None,
+            is_imported=bool(user and user.source == "F2S_IMPORT"),
         )
-        for donor, profile, geo in rows
+        for donor, profile, geo, user in rows
     ]
 
     _search_cache.set(cache_key, (result, total))
