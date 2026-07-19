@@ -46,9 +46,11 @@ def send_test_notification(
     """Self-test: push a notification to the caller's OWN device and report the
     exact reason if it can't — so an admin can verify the FCM pipeline end to end
     and see immediately whether the block is server config or a missing token."""
-    import firebase_admin  # local import so a missing dep never breaks the module
-
-    fb_ready = bool(firebase_admin._apps)
+    try:
+        import firebase_admin  # local import so a missing dep never breaks the module
+        fb_ready = bool(firebase_admin._apps)
+    except ImportError:
+        fb_ready = False
     has_token = bool(current_user.fcm_token)
 
     # Always drop an in-app record so it's visible in the bell regardless of push.

@@ -96,8 +96,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         actions: [
           // Admin-only self-test of the push pipeline — pushes to your own
           // device and reports why if it can't.
-          Builder(builder: (context) {
-            final auth = context.read<AuthBloc>().state;
+          BlocBuilder<AuthBloc, AuthState>(builder: (context, auth) {
             final isAdmin = auth is AuthAuthenticated && auth.user.isAdmin;
             if (!isAdmin) return const SizedBox.shrink();
             return IconButton(
