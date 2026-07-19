@@ -450,8 +450,12 @@ class _SportsTournamentDetailScreenState
                         return _FixtureCard(
                           fixture: f,
                           lang: _lang,
-                          onEnterScore:
-                              (canScore && !f.isCompleted) ? () => _enterScore(f) : null,
+                          // Cricket fixtures stay openable after completion (to
+                          // view + edit the scorecard anytime); other sports only
+                          // while still live.
+                          onEnterScore: (canScore && (isCricket || !f.isCompleted))
+                              ? () => _enterScore(f)
+                              : null,
                           onEditFixture: isAdmin ? () => _editFixture(f, state.standings) : null,
                           onDeleteFixture: isAdmin ? () => _deleteFixture(f) : null,
                         );
@@ -807,8 +811,10 @@ class _FixtureCard extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: onEnterScore,
-                  icon: const Icon(Icons.bolt_rounded, size: 16),
-                  label: Text(tr(en: 'Enter Live Score', ta: 'ஸ்கோர் பதிவு செய்', hi: 'लाइव स्कोर दर्ज करें', ml: 'ലൈവ് സ്കോർ നൽകുക')),
+                  icon: Icon(fixture.isCompleted ? Icons.scoreboard_outlined : Icons.bolt_rounded, size: 16),
+                  label: Text(fixture.isCompleted
+                      ? tr(en: 'View / edit scorecard', ta: 'ஸ்கோர்கார்டு பார் / திருத்து', hi: 'स्कोरकार्ड देखें / संपादित करें', ml: 'സ്കോർകാർഡ് കാണുക / തിരുത്തുക')
+                      : tr(en: 'Enter Live Score', ta: 'ஸ்கோர் பதிவு செய்', hi: 'लाइव स्कोर दर्ज करें', ml: 'ലൈവ് സ്കോർ നൽകുക')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: BorderSide(color: AppColors.primary.withOpacity(0.5)),

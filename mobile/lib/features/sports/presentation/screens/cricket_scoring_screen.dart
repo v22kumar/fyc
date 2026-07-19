@@ -302,6 +302,10 @@ class _CricketScoringView extends StatelessWidget {
             return _ErrorRetry(message: state.message);
           }
           if (state is CricketScoringNotInitialized) {
+            // A result-only match (e.g. a seeded round with no ball-by-ball)
+            // can't be replayed — show its stored result instead of the
+            // toss/start form. A not-yet-started match still gets the form.
+            if (fixture.isCompleted) return _ResultOnlyView(fixture: fixture);
             return _TossSetupForm(fixture: fixture);
           }
           if (state is CricketScoringLoaded) {
@@ -383,6 +387,93 @@ class _ErrorRetry extends StatelessWidget {
 }
 
 // ── Toss + openers ───────────────────────────────────────────────────
+
+/// Read-only result for a completed match that has no ball-by-ball data (e.g. a
+/// seeded round entered as a result). Shows the scores + result line.
+class _ResultOnlyView extends StatelessWidget {
+  final FixtureEntity fixture;
+  const _ResultOnlyView({required this.fixture});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 34),
+                const SizedBox(height: 10),
+                Text(
+                  fixture.resultNotes ??
+                      tr(en: 'Match completed', ta: 'போட்டி முடிந்தது', hi: 'मैच समाप्त', ml: 'മത്സരം പൂർത്തിയായി'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _row(context, fixture.teamAName ?? 'Team A', fixture.teamAScore),
+          const SizedBox(height: 10),
+          _row(context, fixture.teamBName ?? 'Team B', fixture.teamBScore),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF0B44A)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    tr(en: 'This match was recorded as a result only — there is no ball-by-ball to replay.',
+                        ta: 'இந்தப் போட்டி முடிவாக மட்டும் பதிவு செய்யப்பட்டது — பந்து வாரியான விவரம் இல்லை.',
+                        hi: 'यह मैच केवल परिणाम के रूप में दर्ज है — बॉल-बाय-बॉल नहीं।',
+                        ml: 'ഈ മത്സരം ഫലമായി മാത്രം രേഖപ്പെടുത്തി — ബോൾ-ബൈ-ബോൾ ഇല്ല.'),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, String name, String? score) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: context.cSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.cBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)))),
+          Text(score ?? '—', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
+        ],
+      ),
+    );
+  }
+}
 
 class _TossSetupForm extends StatefulWidget {
   final FixtureEntity fixture;
@@ -1446,6 +1537,7 @@ class _ScoringPad extends StatelessWidget {
     final players = state.players!;
     String wicketType = 'BOWLED';
     String dismissedId = players.strikerId;
+    int runOutRuns = 0; // runs completed before a run-out (crossed once, twice…)
     final newBatter = TextEditingController();
     final lastWicket = state.matchState.wickets >= 9;
 
@@ -1472,6 +1564,29 @@ class _ScoringPad extends StatelessWidget {
                   ],
                   onChanged: (v) => setDialogState(() => wicketType = v ?? 'BOWLED'),
                 ),
+                // Runs completed before a run-out (the batsmen crossed) — these
+                // count. The backend credits runs_batter alongside the wicket.
+                if (wicketType == 'RUN_OUT') ...[
+                  const SizedBox(height: 14),
+                  const Text('Runs completed', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [0, 1, 2, 3, 4, 5, 6]
+                        .map((r) => ChoiceChip(
+                              label: Text('$r',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: runOutRuns == r ? Colors.white : const Color(0xFF0A1128))),
+                              selected: runOutRuns == r,
+                              selectedColor: AppColors.primary,
+                              backgroundColor: const Color(0xFFEFF2FA),
+                              onSelected: (_) => setDialogState(() => runOutRuns = r),
+                            ))
+                        .toList(),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 const Text('Who is out?', style: TextStyle(fontWeight: FontWeight.bold)),
                 RadioListTile<String>(
@@ -1551,6 +1666,7 @@ class _ScoringPad extends StatelessWidget {
     await _withBowlerIfNeeded(
       context,
       (nb) => cubit.scoreBall(
+        runsBatter: wicketType == 'RUN_OUT' ? runOutRuns : 0,
         isWicket: true,
         wicketType: wicketType,
         playerDismissedId: dismissedId,
