@@ -1,5 +1,78 @@
 from tests.test_cricket_scoring import _setup_fixture, _init_payload
 
+
+def _play_completed_match(client, H, fid, team_ids):
+    """Team A bats a 1-over innings (scores 4), Team B chases and wins with a 6."""
+    init = client.post(f"/api/v1/fixtures/{fid}/cricket/init",
+                       json=_init_payload(team_ids[0], overs=1), headers=H)
+    p1 = init.json()["current_players"]
+    client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+        "striker_id": p1["striker_id"], "non_striker_id": p1["non_striker_id"],
+        "bowler_id": p1["bowler_id"], "runs_batter": 4}, headers=H)
+    for _ in range(5):
+        client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+            "striker_id": p1["striker_id"], "non_striker_id": p1["non_striker_id"],
+            "bowler_id": p1["bowler_id"], "runs_batter": 0}, headers=H)
+    r = client.post(f"/api/v1/fixtures/{fid}/cricket/second-innings", json={
+        "toss_winner_id": team_ids[0], "toss_decision": "BAT", "overs": 1,
+        "striker_name": "B1", "non_striker_name": "B2", "bowler_name": "A1"}, headers=H)
+    p2 = r.json()["current_players"]
+    ball = client.post(f"/api/v1/fixtures/{fid}/cricket/ball", json={
+        "striker_id": p2["striker_id"], "non_striker_id": p2["non_striker_id"],
+        "bowler_id": p2["bowler_id"], "runs_batter": 6}, headers=H)
+    assert ball.status_code == 200, ball.text
+    assert ball.json()["match_state"]["status"] == "COMPLETED"
+
+
+def test_completed_cricket_match_writes_real_scores_result_and_standings(client, db):
+    """On completion the fixture must carry the real innings scores (not the old
+    'Completed' placeholder), a human result line, and the two teams' standings
+    must be updated exactly once."""
+    from app.models.sports import Fixture, Team
+
+    H, fid, team_ids = _setup_fixture(client, db)
+    _play_completed_match(client, H, fid, team_ids)
+
+    db.expire_all()
+    fx = db.query(Fixture).filter(Fixture.id == fid).first()
+    assert fx.status == "COMPLETED"
+    # Real, NRR-parseable scores — never the "Completed" placeholder.
+    assert fx.team_a_score and "Completed" not in fx.team_a_score
+    assert fx.team_b_score and "Completed" not in fx.team_b_score
+    assert "ov" in fx.team_a_score and "/" in fx.team_a_score
+    assert fx.winner_id is not None
+    assert fx.result_notes and "won by" in fx.result_notes
+
+    # Team B chased and won → wins/points; Team A → a loss.
+    a = db.query(Team).filter(Team.id == team_ids[0]).first()
+    b = db.query(Team).filter(Team.id == team_ids[1]).first()
+    assert str(fx.winner_id) == str(b.id)
+    assert b.wins == 1 and b.points == 3
+    assert a.losses == 1 and a.wins == 0
+
+
+def test_editing_a_ball_after_completion_does_not_double_count_standings(client, db):
+    """recalculate_match_state runs on every edit; the standings update must be a
+    one-off on the transition into COMPLETED, never re-applied on replay."""
+    from app.models.sports import Fixture, Team
+
+    H, fid, team_ids = _setup_fixture(client, db)
+    _play_completed_match(client, H, fid, team_ids)
+
+    # Edit the winning delivery (6 → 5); still >= target, still a Team B win.
+    ms = client.get(f"/api/v1/fixtures/{fid}/cricket", headers=H).json()["match_state"]
+    last_ball_id = ms["overs_history"][-1]["balls"][-1]["id"]
+    r = client.put(f"/api/v1/fixtures/{fid}/cricket/ball/{last_ball_id}",
+                   json={"runs_batter": 5}, headers=H)
+    assert r.status_code == 200, r.text
+
+    db.expire_all()
+    b = db.query(Team).filter(Team.id == team_ids[1]).first()
+    a = db.query(Team).filter(Team.id == team_ids[0]).first()
+    # Still exactly one win / one loss — not doubled.
+    assert b.wins == 1 and b.points == 3
+    assert a.losses == 1
+
 def test_second_innings(client, db):
     H, fid, team_ids = _setup_fixture(client, db)
     

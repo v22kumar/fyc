@@ -478,8 +478,10 @@ class _SportsTournamentDetailScreenState
                       ),
                     ),
                   
-                  // Register: only while registration is open, OR if admin.
-                  if (state.tournament.isRegistrationOpen || isAdmin)
+                  // Register: only while registration is open, OR if admin —
+                  // but never once the tournament is completed.
+                  if ((state.tournament.isRegistrationOpen || isAdmin) &&
+                      !state.tournament.isTournamentCompleted)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: SizedBox(
@@ -503,8 +505,9 @@ class _SportsTournamentDetailScreenState
                       ),
                     ),
 
-                  // Admin lifecycle actions: close registration → generate fixtures.
-                  if (isAdmin)
+                  // Admin lifecycle actions: close registration → generate
+                  // fixtures. Hidden once the tournament is completed.
+                  if (isAdmin && !state.tournament.isTournamentCompleted)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Column(
@@ -719,10 +722,14 @@ class _FixtureCard extends StatelessWidget {
                   ),
                 ),
                 if (hasScore)
-                  Text(
-                    '${fixture.teamAScore ?? '-'} : ${fixture.teamBScore ?? '-'}',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Text(
+                      '${fixture.teamAScore ?? '-'} : ${fixture.teamBScore ?? '-'}',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: const TextStyle(
+                          fontSize: 12.5, fontWeight: FontWeight.bold),
+                    ),
                   )
                 else
                   Text(
@@ -740,6 +747,21 @@ class _FixtureCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (fixture.resultNotes != null && fixture.resultNotes!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.emoji_events_rounded, size: 15, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      fixture.resultNotes!,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (fixture.scheduledAt != null) ...[
               const SizedBox(height: 10),
               Row(

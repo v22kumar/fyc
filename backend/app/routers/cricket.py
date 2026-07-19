@@ -86,6 +86,60 @@ def _reject_if_same_name(a: Optional[str], b: Optional[str]) -> None:
                    "they can't share the same name.",
         )
 
+def _fmt_innings(runs, wkts, overs, balls) -> str:
+    """A NRR-parseable innings score, e.g. '146/3 (18.4 ov)'."""
+    return f"{runs}/{wkts} ({overs}.{balls} ov)"
+
+
+def _write_cricket_scores(fixture, first_innings, state) -> None:
+    """Write both teams' final innings scores onto the fixture (score columns
+    are free-text and are what the NRR service parses)."""
+    scores = {}
+    if first_innings:
+        scores[str(first_innings["team_id"])] = _fmt_innings(
+            first_innings["score"], first_innings["wickets"], first_innings["overs"], first_innings["balls"])
+    scores[str(state["batting_team_id"])] = _fmt_innings(
+        state["score"], state["wickets"], state["overs"], state["balls"])
+    fixture.team_a_score = scores.get(str(fixture.team_a_id))
+    fixture.team_b_score = scores.get(str(fixture.team_b_id))
+
+
+def _cricket_result_notes(fixture, state, winner_id) -> str:
+    """Human result line, e.g. 'Eagles won by 6 wickets' / 'Phoenix won by 24 runs'."""
+    if winner_id is None:
+        return "Match tied"
+    winner_name = (
+        fixture.team_a.name if fixture.team_a and str(winner_id) == str(fixture.team_a_id)
+        else (fixture.team_b.name if fixture.team_b else "")
+    )
+    if state.get("target") is not None and state["score"] >= state["target"]:
+        wl = 10 - state["wickets"]
+        return f"{winner_name} won by {wl} wicket{'s' if wl != 1 else ''}"
+    margin = (state["target"] - 1 - state["score"]) if state.get("target") is not None else 0
+    return f"{winner_name} won by {margin} run{'s' if margin != 1 else ''}"
+
+
+def _apply_cricket_standings(db: Session, fixture, winner_id, delta: int) -> None:
+    """Apply (delta=+1) or reverse (delta=-1) a completed cricket result on the
+    two teams' standings. Idempotent by construction — callers apply +1 only on
+    the transition into COMPLETED and -1 only when reverting out of it."""
+    team_a = db.query(Team).filter(Team.id == fixture.team_a_id).first()
+    team_b = db.query(Team).filter(Team.id == fixture.team_b_id).first()
+    if winner_id is None:
+        for t in (team_a, team_b):
+            if t:
+                t.draws = (t.draws or 0) + delta
+                t.points = (t.points or 0) + delta  # 1 point each for a tie
+        return
+    winner = team_a if str(winner_id) == str(fixture.team_a_id) else team_b
+    loser = team_b if winner is team_a else team_a
+    if winner:
+        winner.wins = (winner.wins or 0) + delta
+        winner.points = (winner.points or 0) + 3 * delta
+    if loser:
+        loser.losses = (loser.losses or 0) + delta
+
+
 def recalculate_match_state(db: Session, match: CricketMatch):
     balls = db.query(CricketBall).filter(CricketBall.match_id == match.id).order_by(CricketBall.ball_index).all()
     
@@ -119,6 +173,9 @@ def recalculate_match_state(db: Session, match: CricketMatch):
     # reset on over completion and at the innings change.
     village_wides = bool(getattr(match, "village_wides", False))
     wides_this_over = 0
+    # Snapshot of the completed first innings (set at the innings change) — used
+    # to write both teams' final scores when the match completes.
+    first_innings = None
 
     def ensure_batter(pid, name):
         if str(pid) not in state["batters"]:
@@ -130,6 +187,15 @@ def recalculate_match_state(db: Session, match: CricketMatch):
 
     for b in balls:
         if b.innings_number > current_innings:
+            # Snapshot the just-completed first innings before we reset for the
+            # second — needed to write both teams' final scores on completion.
+            first_innings = {
+                "team_id": state["batting_team_id"],
+                "score": state["score"],
+                "wickets": state["wickets"],
+                "overs": state["overs"],
+                "balls": state["balls"],
+            }
             current_innings = b.innings_number
             state["innings"] = current_innings
             state["target"] = state["score"] + 1
@@ -279,25 +345,39 @@ def recalculate_match_state(db: Session, match: CricketMatch):
     chase_done = state["innings"] == 2 and state["target"] is not None and state["score"] >= state["target"]
 
     if chase_done or (innings_over and state["innings"] == 2):
+        # True only the first time we cross into COMPLETED — gates the one-off
+        # standings update so replaying (every ball/edit) can't double-count.
+        newly_completed = match.fixture.status != "COMPLETED"
         match.status = "COMPLETED"
         if state["score"] >= state["target"]:
-            match.fixture.winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["batting_team_id"] else match.fixture.team_b_id
+            winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["batting_team_id"] else match.fixture.team_b_id
         elif state["score"] == state["target"] - 1:
-            match.fixture.winner_id = None
+            winner_id = None
         else:
-            match.fixture.winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["bowling_team_id"] else match.fixture.team_b_id
+            winner_id = match.fixture.team_a_id if str(match.fixture.team_a_id) == state["bowling_team_id"] else match.fixture.team_b_id
 
+        match.fixture.winner_id = winner_id
         match.fixture.status = "COMPLETED"
-        match.fixture.team_a_score = "Completed"
-        match.fixture.team_b_score = "Completed"
+        # Write the real scores (NRR-parseable) + a human result line, instead
+        # of the old "Completed" placeholder.
+        _write_cricket_scores(match.fixture, first_innings, state)
+        match.fixture.result_notes = _cricket_result_notes(match.fixture, state, winner_id)
+        if newly_completed:
+            _apply_cricket_standings(db, match.fixture, winner_id, +1)
     elif innings_over and state["innings"] == 1:
         match.status = "INNINGS_BREAK"
     else:
         # Live play (also reverts a stale INNINGS_BREAK/COMPLETED after an undo).
         match.status = "FIRST_INNINGS" if state["innings"] == 1 else "SECOND_INNINGS"
         if match.fixture.status == "COMPLETED":
+            # Reverting a completed match (e.g. an undo dropped the winning run)
+            # — roll the standings back and clear the result.
+            _apply_cricket_standings(db, match.fixture, match.fixture.winner_id, -1)
             match.fixture.status = "LIVE"
             match.fixture.winner_id = None
+            match.fixture.team_a_score = None
+            match.fixture.team_b_score = None
+            match.fixture.result_notes = None
 
     # Surface lifecycle status inside match_state so the mobile scorer sees
     # INNINGS_BREAK / COMPLETED without a second request.
@@ -660,7 +740,7 @@ def edit_cricket_ball(
     history.append({
         "timestamp": datetime.utcnow().isoformat(),
         "editor_id": str(current_user.id),
-        "editor_name": current_user.full_name,
+        "editor_name": current_user.profile.full_name_en if current_user.profile else None,
         "old": old_state,
         "new": new_state,
         "notes": payload.notes
@@ -712,7 +792,7 @@ def undo_ball_edit(
     history.append({
         "timestamp": datetime.utcnow().isoformat(),
         "editor_id": str(current_user.id),
-        "editor_name": current_user.full_name,
+        "editor_name": current_user.profile.full_name_en if current_user.profile else None,
         "old": last_edit["new"],
         "new": old_state,
         "notes": "Undo last edit"
