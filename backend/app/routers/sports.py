@@ -75,10 +75,10 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
         loser_id = f.team_b_id if str(winner_id) == str(f.team_a_id) else f.team_a_id
         loser_team = db.query(Team).filter(Team.id == str(loser_id)).first()
         if winner_team:
-            winner_team.wins += 1
-            winner_team.points += 3
+            winner_team.wins = (winner_team.wins or 0) + 1
+            winner_team.points = (winner_team.points or 0) + 3
         if loser_team:
-            loser_team.losses += 1
+            loser_team.losses = (loser_team.losses or 0) + 1
     f.status = "COMPLETED"
     
     t = db.query(Tournament).filter(Tournament.id == f.tournament_id).first()
