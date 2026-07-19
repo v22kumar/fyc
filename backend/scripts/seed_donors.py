@@ -84,6 +84,7 @@ try:
             role="PUBLIC_CITIZEN",
             is_verified=True,
             preferred_language="ta",
+            source="F2S_IMPORT",  # a Friends2Support directory contact, not a real app user
         )
         db.add(user)
         db.flush()

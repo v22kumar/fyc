@@ -19,6 +19,13 @@ class User(Base, TimestampMixin, TenantModelMixin):
     is_verified = Column(Boolean(), default=False)
     preferred_language = Column(String(5), default="ta")  # 'ta' or 'en'
     fcm_token = Column(String(255), nullable=True)
+    # Where this account came from. NULL = a real self-registered user; a value
+    # like 'F2S_IMPORT' marks a directory contact imported from Friends2Support
+    # (a donor-only entry, not a real app user/member). Used to keep imported
+    # contacts out of member/opponent lists while still letting them exist as
+    # donors — orthogonal to `role`, so a real member who is also a donor is NOT
+    # marked and still appears everywhere.
+    source = Column(String(30), nullable=True)
 
     # Relationships
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
