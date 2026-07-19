@@ -305,6 +305,35 @@ async def lifespan(app: FastAPI):
         except Exception as _bfe:
             logger.warning(f"[data-backfill] events.registration_enabled: {_bfe}")
 
+        # One-off: finalize cricket fixtures left with the old "Completed"
+        # placeholder score (from before real scores/standings were written on
+        # completion). Recalculating writes the true innings scores + result and
+        # applies the standings exactly once. Guarded by the placeholder itself
+        # (self-clears after finalize), and by resetting status first so the
+        # completion path treats it as a fresh finalize — never double-counts.
+        try:
+            from app.models.cricket import CricketMatch as _CM
+            from app.models.sports import Fixture as _BfFx
+            from app.routers.cricket import recalculate_match_state as _bf_recalc
+            from app.core.database import SessionLocal as _BfSession
+            _bdb = _BfSession()
+            try:
+                _stuck = (
+                    _bdb.query(_CM)
+                    .join(_BfFx, _CM.fixture_id == _BfFx.id)
+                    .filter(_BfFx.team_a_score == "Completed")
+                    .all()
+                )
+                for _m in _stuck:
+                    _m.fixture.status = "IN_PROGRESS"
+                    _bf_recalc(_bdb, _m)
+                if _stuck:
+                    logger.info(f"[data-backfill] finalized {len(_stuck)} cricket fixture(s) with real scores + standings")
+            finally:
+                _bdb.close()
+        except Exception as _bfc:
+            logger.warning(f"[data-backfill] cricket completion finalize: {_bfc}")
+
         # One-time backfill of the FYC LEAGUE 2026 knockout round, gated by a
         # secret so it only runs when an operator opts in (set SEED_FYC_LEAGUE_2026=1
         # in the Fly dashboard → Secrets, which triggers a redeploy). The seed is
