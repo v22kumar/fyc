@@ -44,6 +44,56 @@ def parse_score(s: Optional[str]):
     return runs, wickets, overs + balls / 6.0
 
 
+# Strict form used to VALIDATE user-entered scores: the whole string must be
+# runs, an optional "/wickets", and an optional "(overs[.balls] ov)" — nothing
+# else. Trailing junk (a stray letter from a typo) fails fullmatch, so it can't
+# be silently truncated into a wrong number that then skews NRR.
+_STRICT_SCORE_RE = re.compile(
+    r"\s*(\d+)\s*(?:/\s*(\d+))?\s*(?:\(\s*(\d+)(?:\.(\d+))?\s*(?:ov(?:er)?s?)?\s*\)?)?\s*",
+    re.IGNORECASE,
+)
+
+
+def normalize_score(s: Optional[str]) -> Optional[str]:
+    """Validate and canonicalise a user-entered innings score for storage.
+
+    An empty value is allowed (a result may carry only a winner) and returns
+    None. A non-empty value MUST be a well-formed cricket score; it is rewritten
+    to the canonical, NRR-parseable form so a typo can never reach the standings:
+
+        "120/5 (20)"   -> "120/5 (20.0 ov)"
+        "34 (6.3 ov)"  -> "34/0 (6.3 ov)"
+        "112/6"        -> "112/6"            (no overs given — allowed)
+
+    Raises ValueError with a friendly message on anything malformed (letters, a
+    ball count above 5, more than 10 wickets, trailing junk).
+    """
+    if s is None:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    m = _STRICT_SCORE_RE.fullmatch(s)
+    if not m:
+        raise ValueError(
+            f'"{s}" isn\'t a valid score. Enter runs, optional wickets and overs '
+            f'— e.g. "120/5 (20.0 ov)".'
+        )
+    runs = int(m.group(1))
+    wkts = int(m.group(2)) if m.group(2) is not None else 0
+    if wkts > 10:
+        raise ValueError(f"A side can lose at most 10 wickets (got {wkts}).")
+    if m.group(3) is None:
+        return f"{runs}/{wkts}"
+    overs = int(m.group(3))
+    balls = int(m.group(4)) if m.group(4) is not None else 0
+    if balls > 5:
+        raise ValueError(
+            f"An over has 6 balls, so the balls part runs 0–5 (got .{balls})."
+        )
+    return f"{runs}/{wkts} ({overs}.{balls} ov)"
+
+
 def _quota_overs(match_config: Optional[str], default: float = 20.0) -> float:
     """Full over quota for the match, parsed from e.g. '10 Overs'."""
     if match_config:

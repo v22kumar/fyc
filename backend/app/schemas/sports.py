@@ -1,7 +1,7 @@
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class TournamentCreate(BaseModel):
@@ -146,6 +146,13 @@ class FixtureResultUpdate(BaseModel):
     team_b_score: Optional[str] = None
     winner_id: Optional[UUID] = None
     result_notes: Optional[str] = None
+
+    @field_validator("team_a_score", "team_b_score")
+    @classmethod
+    def _validate_score(cls, v):
+        # Validate + canonicalise so a typo can never be stored and skew NRR.
+        from app.services.nrr import normalize_score
+        return normalize_score(v)
 
 
 class FixtureOut(BaseModel):

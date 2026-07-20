@@ -1,7 +1,9 @@
 """Unit tests for the Net Run Rate service (app/services/nrr.py)."""
 from types import SimpleNamespace
 
-from app.services.nrr import parse_score, compute_nrr
+import pytest
+
+from app.services.nrr import parse_score, compute_nrr, normalize_score
 
 
 def _fx(a_id, b_id, a_score, b_score, status="COMPLETED"):
@@ -70,3 +72,25 @@ def test_completed_only_and_ranking():
 def test_unparseable_scores_skipped():
     nrr = compute_nrr([_fx("a", "b", None, "50/3 (10 ov)")], match_config="10 Overs")
     assert nrr == {}
+
+
+def test_normalize_score_canonicalises_good_input():
+    assert normalize_score(None) is None
+    assert normalize_score("   ") is None
+    assert normalize_score("120/5 (20)") == "120/5 (20.0 ov)"
+    assert normalize_score("34 (6.3 ov)") == "34/0 (6.3 ov)"
+    assert normalize_score("112/6") == "112/6"          # overs optional
+    assert normalize_score("121/2 (18.2)") == "121/2 (18.2 ov)"
+    assert normalize_score("90/8 (10.0 Overs)") == "90/8 (10.0 ov)"
+
+
+@pytest.mark.parametrize("bad", [
+    "abc",             # no runs at all
+    "12o/5",           # a letter 'o' typo -> trailing junk, not silently truncated
+    "120/11 (20)",     # more than 10 wickets
+    "120/5 (18.7)",    # 7 balls in an over is impossible
+    "120 all out",     # free text
+])
+def test_normalize_score_rejects_typos(bad):
+    with pytest.raises(ValueError):
+        normalize_score(bad)
