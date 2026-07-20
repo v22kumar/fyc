@@ -84,6 +84,8 @@ class ApiConstants {
   // Cricket scoring router has NO /sports prefix (mounted at /api/v1 directly).
   static String sportsFixtureCricket(String fid) =>
       '/api/v1/fixtures/$fid/cricket';
+  static String sportsFixtureCricketStream(String fid) =>
+      '/api/v1/fixtures/$fid/cricket/stream';
   static String sportsFixtureCricketInit(String fid) =>
       '/api/v1/fixtures/$fid/cricket/init';
   static String sportsFixtureCricketBall(String fid) =>
