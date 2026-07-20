@@ -74,7 +74,14 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
       return;
     }
 
-    final fixturesResult = await _repository.fetchFixtures(event.tournamentId);
+    // Fire fixtures + standings concurrently (they're independent) and await
+    // both, instead of one-then-the-other — halves the round-trip wait before
+    // the detail screen can render.
+    final fixturesFuture = _repository.fetchFixtures(event.tournamentId);
+    final standingsFuture = _repository.fetchStandings(event.tournamentId);
+    final fixturesResult = await fixturesFuture;
+    final standingsResult = await standingsFuture;
+
     final fixtures = fixturesResult.fold((f) => null, (list) => list);
     if (fixtures == null) {
       emit(SportsFailure(
@@ -82,8 +89,6 @@ class SportsBloc extends Bloc<SportsEvent, SportsState> {
       ));
       return;
     }
-    final standingsResult =
-        await _repository.fetchStandings(event.tournamentId);
     standingsResult.fold(
       (f) => emit(SportsFailure(f.message)),
       (standings) => emit(SportsDetailLoaded(

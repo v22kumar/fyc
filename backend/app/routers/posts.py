@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Query
 from sqlalchemy import func, desc
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
@@ -62,28 +62,46 @@ def _author(u: Optional[User], author_id) -> PostAuthor:
     )
 
 
-def _serialize(db: Session, post: Post, current_user_id) -> PostOut:
-    like_count = (
-        db.query(func.count(PostLike.id))
-        .filter(PostLike.post_id == post.id)
-        .scalar()
-        or 0
-    )
-    comment_count = (
-        db.query(func.count(Comment.id))
-        .filter(Comment.entity_type == "post", Comment.entity_id == post.id)
-        .scalar()
-        or 0
-    )
-    repost_count = (
-        db.query(func.count(PostRepost.id))
-        .filter(PostRepost.post_id == post.id)
-        .scalar()
-        or 0
-    )
+def _serialize(
+    db: Session,
+    post: Post,
+    current_user_id,
+    *,
+    counts: Optional[dict] = None,
+    liked_ids: Optional[set] = None,
+    reposted_ids: Optional[set] = None,
+) -> PostOut:
+    """Build a PostOut. Single-post callers pass nothing and each count is a
+    small query; the feed passes precomputed `counts` (post_id -> (likes,
+    comments, reposts)) and `liked_ids`/`reposted_ids` sets so a whole page is
+    served in a handful of queries instead of ~7 per post (the old N+1)."""
+    if counts is not None:
+        like_count, comment_count, repost_count = counts.get(post.id, (0, 0, 0))
+    else:
+        like_count = (
+            db.query(func.count(PostLike.id))
+            .filter(PostLike.post_id == post.id)
+            .scalar()
+            or 0
+        )
+        comment_count = (
+            db.query(func.count(Comment.id))
+            .filter(Comment.entity_type == "post", Comment.entity_id == post.id)
+            .scalar()
+            or 0
+        )
+        repost_count = (
+            db.query(func.count(PostRepost.id))
+            .filter(PostRepost.post_id == post.id)
+            .scalar()
+            or 0
+        )
     liked = False
     reposted = False
-    if current_user_id:
+    if liked_ids is not None or reposted_ids is not None:
+        liked = post.id in liked_ids if liked_ids is not None else False
+        reposted = post.id in reposted_ids if reposted_ids is not None else False
+    elif current_user_id:
         liked = (
             db.query(PostLike.id)
             .filter(
@@ -140,7 +158,12 @@ def list_posts(
     # startup schema-reconcile can be NULL. Treat NULL as "not hidden" so
     # pre-existing posts don't silently vanish from the feed — only rows
     # explicitly flagged True are excluded.
-    q = db.query(Post).filter(Post.organization_id == tenant_id, Post.is_hidden.isnot(True))
+    # Eager-load author + profile so the feed doesn't lazy-load them per row.
+    q = (
+        db.query(Post)
+        .options(joinedload(Post.author).joinedload(User.profile))
+        .filter(Post.organization_id == tenant_id, Post.is_hidden.isnot(True))
+    )
     if scope == "mine":
         if not current_user:
             return []
@@ -177,7 +200,54 @@ def list_posts(
 
     posts = q.offset(offset).limit(limit).all()
     cid = current_user.id if current_user else None
-    result = [_serialize(db, p, cid) for p in posts]
+
+    # Batch the counts + my-liked/reposted lookups for the whole page: a few
+    # grouped queries instead of ~7 per post (was the feed's biggest hotspot).
+    post_ids = [p.id for p in posts]
+    counts: dict = {}
+    liked_ids: set = set()
+    reposted_ids: set = set()
+    if post_ids:
+        like_rows = (
+            db.query(PostLike.post_id, func.count(PostLike.id))
+            .filter(PostLike.post_id.in_(post_ids))
+            .group_by(PostLike.post_id)
+            .all()
+        )
+        repost_rows = (
+            db.query(PostRepost.post_id, func.count(PostRepost.id))
+            .filter(PostRepost.post_id.in_(post_ids))
+            .group_by(PostRepost.post_id)
+            .all()
+        )
+        comment_rows = (
+            db.query(Comment.entity_id, func.count(Comment.id))
+            .filter(Comment.entity_type == "post", Comment.entity_id.in_(post_ids))
+            .group_by(Comment.entity_id)
+            .all()
+        )
+        likes_map = {pid: c for pid, c in like_rows}
+        reposts_map = {pid: c for pid, c in repost_rows}
+        comments_map = {pid: c for pid, c in comment_rows}
+        counts = {
+            pid: (likes_map.get(pid, 0), comments_map.get(pid, 0), reposts_map.get(pid, 0))
+            for pid in post_ids
+        }
+        if cid:
+            liked_ids = {
+                pid for (pid,) in db.query(PostLike.post_id)
+                .filter(PostLike.user_id == cid, PostLike.post_id.in_(post_ids))
+                .all()
+            }
+            reposted_ids = {
+                pid for (pid,) in db.query(PostRepost.post_id)
+                .filter(PostRepost.user_id == cid, PostRepost.post_id.in_(post_ids))
+                .all()
+            }
+    result = [
+        _serialize(db, p, cid, counts=counts, liked_ids=liked_ids, reposted_ids=reposted_ids)
+        for p in posts
+    ]
 
     cached = etag_not_modified(request, result)
     if cached is not None:

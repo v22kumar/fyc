@@ -92,14 +92,22 @@ def _seed_database():
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
         if donor_count < 1000 and os.environ.get("DATABASE_URL") != "sqlite:///:memory:":
-            print(f"Blood donors count is {donor_count} — seeding from friends2support CSV...")
-            try:
-                import sys as _sys
-                _sys.path.insert(0, ".")
-                from seeds.import_donors import main as _seed_donors
-                _seed_donors()
-            except Exception as _e:
-                print(f"Blood donor seeding failed: {_e}")
+            print(f"Blood donors count is {donor_count} — seeding from friends2support CSV in background...")
+            # The CSV import is the single heaviest boot task (thousands of rows).
+            # Run it in a daemon thread with its own DB session so the app starts
+            # serving immediately instead of blocking the first request behind it.
+            # It's idempotent, so a partial run is safe to resume next boot.
+            def _seed_donors_bg():
+                try:
+                    import sys as _sys
+                    _sys.path.insert(0, ".")
+                    from seeds.import_donors import main as _seed_donors
+                    _seed_donors()
+                    logger.info("[startup] Blood-donor CSV import finished (background).")
+                except Exception as _e:
+                    logger.warning(f"[startup] Blood donor seeding failed: {_e}")
+            import threading as _threading
+            _threading.Thread(target=_seed_donors_bg, daemon=True).start()
 
         # Ensure performance indexes exist (idempotent — IF NOT EXISTS)
         db.execute(text(
@@ -109,6 +117,39 @@ def _seed_database():
         db.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_bd_geography ON blood_donors (geography_id)"
         ))
+        db.commit()
+
+        # Performance indexes for the hot sports/cricket/notification read paths.
+        # These columns are filtered on every standings/fixtures/live/notifications
+        # query; without an index each was a full table scan. Idempotent, and the
+        # single-column names match SQLAlchemy's index=True defaults so a freshly
+        # created DB (which already has them) skips these no-ops. (See the lag
+        # investigation: un-indexed FKs were a top cause of "feels laggy".)
+        _perf_indexes = [
+            "CREATE INDEX IF NOT EXISTS ix_teams_tournament_id ON teams (tournament_id)",
+            "CREATE INDEX IF NOT EXISTS ix_players_team_id ON players (team_id)",
+            "CREATE INDEX IF NOT EXISTS ix_players_user_id ON players (user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_fixtures_tournament_id ON fixtures (tournament_id)",
+            "CREATE INDEX IF NOT EXISTS ix_fixtures_team_a_id ON fixtures (team_a_id)",
+            "CREATE INDEX IF NOT EXISTS ix_fixtures_team_b_id ON fixtures (team_b_id)",
+            "CREATE INDEX IF NOT EXISTS ix_fixtures_org_status ON fixtures (organization_id, status)",
+            "CREATE INDEX IF NOT EXISTS ix_cricket_balls_match_id ON cricket_balls (match_id)",
+            "CREATE INDEX IF NOT EXISTS ix_cb_match_innings_ball ON cricket_balls (match_id, innings_number, ball_index)",
+            "CREATE INDEX IF NOT EXISTS ix_notifications_user_id ON notifications (user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_notifications_user_created ON notifications (user_id, created_at)",
+            # Community feed: order by newest within a tenant, and the batched
+            # like/repost/comment count lookups the feed does per page.
+            "CREATE INDEX IF NOT EXISTS ix_posts_org_created ON posts (organization_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS ix_posts_author_id ON posts (author_id)",
+            "CREATE INDEX IF NOT EXISTS ix_post_likes_post_id ON post_likes (post_id)",
+            "CREATE INDEX IF NOT EXISTS ix_post_reposts_post_id ON post_reposts (post_id)",
+            "CREATE INDEX IF NOT EXISTS ix_comments_entity ON comments (entity_type, entity_id)",
+        ]
+        for _stmt in _perf_indexes:
+            try:
+                db.execute(text(_stmt))
+            except Exception as _ie:
+                logger.warning(f"[perf-index] skipped ({_ie}): {_stmt}")
         db.commit()
 
         # Add new columns to existing DB if not present (idempotent)

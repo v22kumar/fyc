@@ -39,7 +39,7 @@ class CricketBall(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "cricket_balls"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    match_id = Column(GUID(), ForeignKey("cricket_matches.id", ondelete="CASCADE"), nullable=False)
+    match_id = Column(GUID(), ForeignKey("cricket_matches.id", ondelete="CASCADE"), nullable=False, index=True)
     innings_number = Column(Integer, nullable=False) # 1 or 2
     
     # Audit trail ordering

@@ -2,9 +2,11 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
+from app.core import livecache
 from app.core.etag import etag_not_modified, set_etag
 from app.models.sports import Tournament, Team, Fixture, ChallengeMatch, LiveScoreEntry, Player
 from app.models.user import User
@@ -150,6 +152,34 @@ def _standings_with_nrr(db: Session, t: Tournament):
         reverse=True,
     )
     return teams
+
+
+def _standings_cache_version(db: Session, t: Tournament) -> str:
+    """A cheap token that changes whenever anything the standings depend on
+    changes — computed from the count + latest updated_at of the tournament's
+    fixtures and teams (both indexed on tournament_id). It makes the cache
+    self-invalidating: a new result bumps a fixture's updated_at, so the key
+    changes and the next read recomputes. No manual invalidation to get wrong."""
+    fx = (db.query(func.count(Fixture.id), func.max(Fixture.updated_at))
+          .filter(Fixture.tournament_id == t.id).one())
+    tm = (db.query(func.count(Team.id), func.max(Team.updated_at))
+          .filter(Team.tournament_id == t.id).one())
+    return f"{fx[0]}:{fx[1]}:{tm[0]}:{tm[1]}"
+
+
+def _cached_standings(db: Session, t: Tournament):
+    """Standings as JSON-ready TeamOut dicts, cached under a version token so
+    repeated reads/polls skip the recompute (loads all fixtures + NRR) while a
+    result change is reflected immediately. Returns dicts, which FastAPI
+    validates against the TeamOut response_model just like ORM objects."""
+    key = f"standings:{t.id}:{_standings_cache_version(db, t)}"
+    cached = livecache.get_json(key)
+    if cached is not None:
+        return cached
+    teams = _standings_with_nrr(db, t)
+    payload = [TeamOut.model_validate(tm).model_dump(mode="json") for tm in teams]
+    livecache.set_json(key, payload, ttl_seconds=300)
+    return payload
 
 
 def _fixture_out(f: Fixture) -> FixtureOut:
@@ -399,7 +429,7 @@ def list_teams(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     t = _get_tenant_tournament(db, tournament_id, tenant_id)
-    return _standings_with_nrr(db, t)
+    return _cached_standings(db, t)
 
 
 _LIVE_MATCH_STATUSES = ("FIRST_INNINGS", "INNINGS_BREAK", "SECOND_INNINGS")
@@ -815,7 +845,7 @@ def get_standings(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     t = _get_tenant_tournament(db, tournament_id, tenant_id)
-    return _standings_with_nrr(db, t)
+    return _cached_standings(db, t)
 
 
 @router.post("/tournaments/{tournament_id}/generate-fixtures", response_model=List[FixtureOut])

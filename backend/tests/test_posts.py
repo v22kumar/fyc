@@ -113,3 +113,31 @@ def test_create_post_without_key_allows_duplicates(client, db):
 
     # No idempotency key → two distinct posts (partial index only covers non-NULL).
     assert r1.json()["id"] != r2.json()["id"]
+
+
+def test_feed_batched_counts_map_to_the_right_posts(client, db):
+    """The batched (grouped) like/comment/repost counts and liked/reposted-by-me
+    flags must attach to the correct post, not bleed across the page."""
+    org = _make_org(db)
+    author = _register(client, org.id, "+919333000101")
+    liker = _register(client, org.id, "+919333000102")
+
+    pa = _create_post(client, author, org.id, content="post A").json()["id"]
+    pb = _create_post(client, author, org.id, content="post B").json()["id"]
+
+    # Two people like post A; nobody touches post B.
+    for tok in (author, liker):
+        assert client.post(f"/api/v1/posts/{pa}/like", headers=_headers(tok, org.id)).status_code == 200
+    # The liker comments once on post A.
+    assert client.post(f"/api/v1/posts/{pa}/comments", json={"content": "nice"},
+                       headers=_headers(liker, org.id)).status_code in (200, 201)
+
+    feed = client.get("/api/v1/posts", headers=_headers(liker, org.id))
+    assert feed.status_code == 200, feed.text
+    by_id = {p["id"]: p for p in feed.json()}
+    assert by_id[pa]["like_count"] == 2
+    assert by_id[pa]["comment_count"] == 1
+    assert by_id[pa]["liked_by_me"] is True   # liker liked A
+    assert by_id[pb]["like_count"] == 0
+    assert by_id[pb]["comment_count"] == 0
+    assert by_id[pb]["liked_by_me"] is False  # counts didn't bleed from A
