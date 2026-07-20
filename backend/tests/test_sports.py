@@ -265,6 +265,32 @@ def test_submit_fixture_result(client, db):
     assert data["team_a_score"] == "150/5"
 
 
+def test_submit_fixture_result_validates_and_normalises_score(client, db):
+    """A typo'd score is rejected (422) instead of silently corrupting NRR, and
+    a valid one is stored in the canonical NRR-parseable form."""
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919444444531")
+    token = _login(client, org.id, "+919444444531")
+    tid = _create_tournament(client, org.id, token)
+    a = _create_team(client, org.id, token, tid, name="Winners")
+    b = _create_team(client, org.id, token, tid, name="Losers")
+    _close_registration(client, org.id, token, tid)
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    fid = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                      json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+
+    # A garbage score is refused up front.
+    bad = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{fid}/result",
+                      json={"team_a_score": "12o/5 (20)", "team_b_score": "120/5", "winner_id": a}, headers=hdr)
+    assert bad.status_code == 422, bad.text
+
+    # A valid free-form score is canonicalised on the way in.
+    ok = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{fid}/result",
+                     json={"team_a_score": "120/5 (20)", "team_b_score": "118/9 (20)", "winner_id": a}, headers=hdr)
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["team_a_score"] == "120/5 (20.0 ov)"
+
+
 # ── Challenges ────────────────────────────────────────────────────────────────
 
 def test_submit_challenge_authenticated(client, db):

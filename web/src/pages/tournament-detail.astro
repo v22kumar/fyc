@@ -104,15 +104,52 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             <form id="resultForm" class="flex flex-col gap-4">
                 <input type="hidden" id="modalFixtureId" />
                 
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Structured score entry: numeric fields compose a canonical,
+                     NRR-parseable score so a typo can't reach the standings. -->
+                <div class="flex flex-col gap-3">
                     <div class="flex flex-col gap-1">
                         <label id="lblTeamA" class="text-xs font-semibold text-gray-500 uppercase">Team A Score</label>
-                        <input type="text" id="scoreA" required class="p-2.5 border border-gray-300 rounded-lg outline-none text-gray-900" placeholder="e.g. 120/5 (20)" />
+                        <div class="grid grid-cols-[1.1fr_1fr_1.5fr] gap-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Runs</span>
+                                <input type="number" min="0" inputmode="numeric" id="runsA" class="p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="120" />
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Wkts</span>
+                                <input type="number" min="0" max="10" inputmode="numeric" id="wktsA" class="p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="5" />
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Overs<span class="text-gray-300">.balls</span></span>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" min="0" inputmode="numeric" id="oversA" class="w-full p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="20" />
+                                    <span class="text-gray-400 font-bold">.</span>
+                                    <input type="number" min="0" max="5" inputmode="numeric" id="ballsA" class="w-12 p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="0" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex flex-col gap-1">
                         <label id="lblTeamB" class="text-xs font-semibold text-gray-500 uppercase">Team B Score</label>
-                        <input type="text" id="scoreB" required class="p-2.5 border border-gray-300 rounded-lg outline-none text-gray-900" placeholder="e.g. 121/2 (18.2)" />
+                        <div class="grid grid-cols-[1.1fr_1fr_1.5fr] gap-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Runs</span>
+                                <input type="number" min="0" inputmode="numeric" id="runsB" class="p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="121" />
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Wkts</span>
+                                <input type="number" min="0" max="10" inputmode="numeric" id="wktsB" class="p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="2" />
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400 mb-0.5">Overs<span class="text-gray-300">.balls</span></span>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" min="0" inputmode="numeric" id="oversB" class="w-full p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="18" />
+                                    <span class="text-gray-400 font-bold">.</span>
+                                    <input type="number" min="0" max="5" inputmode="numeric" id="ballsB" class="w-12 p-2 border border-gray-300 rounded-lg outline-none text-gray-900 text-center" placeholder="2" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <p class="text-[11px] text-gray-400 -mt-1">Leave a team's runs blank if no innings was played. NRR uses these numbers, so enter overs where you can.</p>
                 </div>
 
                 <div class="flex flex-col gap-1">
@@ -418,7 +455,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             const showAdminControls = isAdmin;
             const adminControlsHtml = showAdminControls ? `
                 <div class="mt-4 flex gap-2 justify-end border-t border-gray-100 pt-3">
-                    <button onclick="openResultModal('${f.id}', '${escapeHtml(f.team_a_name || 'Team A')}', '${escapeHtml(f.team_b_name || 'Team B')}', '${escapeHtml(f.team_a_id)}', '${escapeHtml(f.team_b_id)}')" class="bg-white border border-[#064e3b] text-[#064e3b] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-50 transition-colors shadow-sm">Enter Score</button>
+                    <button onclick="openResultModal('${f.id}', '${escapeHtml(f.team_a_name || 'Team A')}', '${escapeHtml(f.team_b_name || 'Team B')}', '${escapeHtml(f.team_a_id)}', '${escapeHtml(f.team_b_id)}', '${escapeHtml(f.team_a_score || '')}', '${escapeHtml(f.team_b_score || '')}', '${escapeHtml(f.winner_id || '')}')" class="bg-white border border-[#064e3b] text-[#064e3b] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-50 transition-colors shadow-sm">${f.status === 'COMPLETED' ? 'Edit Result' : 'Enter Score'}</button>
                     ${(sport || '').toLowerCase() === 'cricket' ? `<a href="${adminUrl}/dashboard/sports/cricket/${f.id}" target="_blank" class="bg-[#064e3b] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#0f5132] transition-colors shadow-sm">Live Scoring Dashboard</a>` : ''}
                 </div>
             ` : '';
@@ -506,22 +543,44 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         }
     });
 
-    window.openResultModal = function(fixtureId, nameA, nameB, idA, idB) {
+    // "34/10 (6.3 ov)" / "112/6" / "120/5 (20)" -> {runs, wkts, overs, balls}
+    function parseScoreToFields(s) {
+        const out = { runs: '', wkts: '', overs: '', balls: '' };
+        if (!s) return out;
+        const m = String(s).match(/\s*(\d+)\s*(?:\/\s*(\d+))?\s*(?:\(\s*(\d+)(?:\.(\d+))?)?/);
+        if (!m) return out;
+        out.runs = m[1] ?? '';
+        out.wkts = m[2] ?? '';
+        out.overs = m[3] ?? '';
+        out.balls = m[4] ?? '';
+        return out;
+    }
+
+    window.openResultModal = function(fixtureId, nameA, nameB, idA, idB, scoreA, scoreB, winnerId) {
         document.getElementById('modalFixtureId').value = fixtureId;
         document.getElementById('lblTeamA').textContent = `${nameA} Score`;
         document.getElementById('lblTeamB').textContent = `${nameB} Score`;
-        
+
         const optA = document.getElementById('optTeamA');
         optA.textContent = nameA;
         optA.value = idA;
-        
+
         const optB = document.getElementById('optTeamB');
         optB.textContent = nameB;
         optB.value = idB;
 
-        document.getElementById('scoreA').value = '';
-        document.getElementById('scoreB').value = '';
-        document.getElementById('winnerSelect').value = '';
+        // Prefill from any existing result so an edit doesn't force full re-entry.
+        const a = parseScoreToFields(scoreA);
+        const b = parseScoreToFields(scoreB);
+        document.getElementById('runsA').value = a.runs;
+        document.getElementById('wktsA').value = a.wkts;
+        document.getElementById('oversA').value = a.overs;
+        document.getElementById('ballsA').value = a.balls;
+        document.getElementById('runsB').value = b.runs;
+        document.getElementById('wktsB').value = b.wkts;
+        document.getElementById('oversB').value = b.overs;
+        document.getElementById('ballsB').value = b.balls;
+        document.getElementById('winnerSelect').value = winnerId || '';
         document.getElementById('resultNotes').value = '';
 
         document.getElementById('resultModal').classList.remove('hidden');
@@ -531,15 +590,47 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         document.getElementById('resultModal').classList.add('hidden');
     };
 
+    // Build a canonical, NRR-parseable score from the numeric fields. Returns
+    // '' when no runs were entered (no innings), or throws a friendly message on
+    // an out-of-range value so bad data never reaches the standings.
+    function readInnings(runsId, wktsId, oversId, ballsId, label) {
+        const val = (id) => document.getElementById(id).value.trim();
+        const runsS = val(runsId), wktsS = val(wktsId), oversS = val(oversId), ballsS = val(ballsId);
+        if (runsS === '') {
+            // No runs -> treat as no innings, but overs/wkts without runs is a slip.
+            if (wktsS || oversS || ballsS) throw new Error(`${label}: enter the runs scored.`);
+            return '';
+        }
+        const runs = parseInt(runsS, 10);
+        const wkts = wktsS === '' ? 0 : parseInt(wktsS, 10);
+        if (isNaN(runs) || runs < 0) throw new Error(`${label}: runs must be a number.`);
+        if (wkts < 0 || wkts > 10) throw new Error(`${label}: wickets run 0–10.`);
+        if (oversS === '' && ballsS === '') return `${runs}/${wkts}`;
+        const overs = oversS === '' ? 0 : parseInt(oversS, 10);
+        const balls = ballsS === '' ? 0 : parseInt(ballsS, 10);
+        if (overs < 0) throw new Error(`${label}: overs must be a number.`);
+        if (balls < 0 || balls > 5) throw new Error(`${label}: an over has 6 balls, so balls run 0–5.`);
+        return `${runs}/${wkts} (${overs}.${balls} ov)`;
+    }
+
     document.getElementById('resultForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fId = document.getElementById('modalFixtureId').value;
-        const scoreA = document.getElementById('scoreA').value;
-        const scoreB = document.getElementById('scoreB').value;
         const winnerId = document.getElementById('winnerSelect').value;
         const notes = document.getElementById('resultNotes').value;
         const btn = document.getElementById('saveResultBtn');
         const token = localStorage.getItem('fyc_token') || '';
+
+        let scoreA, scoreB;
+        try {
+            const lblA = document.getElementById('optTeamA').textContent || 'Team A';
+            const lblB = document.getElementById('optTeamB').textContent || 'Team B';
+            scoreA = readInnings('runsA', 'wktsA', 'oversA', 'ballsA', lblA);
+            scoreB = readInnings('runsB', 'wktsB', 'oversB', 'ballsB', lblB);
+        } catch (validationErr) {
+            alert(validationErr.message);
+            return;
+        }
 
         btn.disabled = true;
         btn.textContent = 'Saving...';
