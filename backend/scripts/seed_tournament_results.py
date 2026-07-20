@@ -191,10 +191,15 @@ def seed_round(db, t, matches=MATCHES, *, commit, log=print, pending_teams=PENDI
             same_pair = {str(f.team_a_id), str(f.team_b_id)} == {str(a.id), str(b.id)}
             same_winner = f.winner_id is None or str(f.winner_id) == str(win.id)
             if not (same_pair and same_winner):
-                raise SystemExit(
-                    f"Match #{m['no']} is already COMPLETED with a conflicting result "
-                    f"({f.team_a_score} / {f.team_b_score}). Refusing to overwrite — "
-                    f"clear that fixture in-app first, then re-run.")
+                # SKIP this one match rather than aborting the whole round — a
+                # single already-recorded (possibly hand-corrected) result must
+                # not stop the remaining matches from being seeded, which was
+                # leaving later fixtures unscored and their NRR blank. Leave the
+                # existing fixture untouched; clear it in-app to let a re-run land.
+                log(f"  ! skip   match #{m['no']}: already COMPLETED with a "
+                    f"conflicting result ({f.team_a_score} / {f.team_b_score}) — "
+                    f"left as-is. Clear that fixture in-app to re-seed it.")
+                continue
         action = "update" if f else "create"
         if not f:
             f = Fixture(id=uuid.uuid4(), organization_id=org_id, tournament_id=t.id,
