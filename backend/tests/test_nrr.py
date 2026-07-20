@@ -14,8 +14,34 @@ def test_parse_score_variants():
     assert parse_score("90/2 (10.0 ov)") == (90, 2, 10.0)
     assert parse_score("122/7 (10.0 ov)") == (122, 7, 10.0)
     assert parse_score("68 (4)") == (68, 0, 4.0)   # wickets optional
+    assert parse_score("112/6 (9.0 Overs)") == (112, 6, 9.0)  # "Overs" word ok
+    assert parse_score("112/6") == (112, 6, None)  # runs only -> overs unknown
+    assert parse_score("54") == (54, 0, None)      # bare runs
     assert parse_score(None) is None
     assert parse_score("no score") is None
+
+
+def test_runs_only_score_charges_full_quota_instead_of_blanking():
+    """A result typed as just "112/6" / "54/9" (no overs) still yields an NRR —
+    both innings are charged the full quota — rather than showing a blank "—"."""
+    nrr = compute_nrr(
+        [_fx("kol", "kar", "112/6", "54/9")],
+        match_config="10 Overs",
+    )
+    # Both charged 10 overs: Kollamcode 112/10 - 54/10 = +5.8, Karungal the inverse.
+    assert nrr["kol"] == round(112 / 10 - 54 / 10, 3)
+    assert nrr["kar"] == round(54 / 10 - 112 / 10, 3)
+
+
+def test_mixed_recorded_and_missing_overs():
+    """One side has overs, the other doesn't — the missing side uses the quota."""
+    nrr = compute_nrr(
+        [_fx("a", "b", "90/8 (10.0 ov)", "91/3")],
+        match_config="10 Overs",
+    )
+    # a: 90/10 for, 91/10 against; b: the inverse. Both non-blank.
+    assert nrr["a"] == round(90 / 10 - 91 / 10, 3)
+    assert nrr["b"] == round(91 / 10 - 90 / 10, 3)
 
 
 def test_all_out_uses_full_quota():

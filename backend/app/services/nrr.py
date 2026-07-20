@@ -9,16 +9,27 @@ Rules applied (standard cricket NRR):
   * NRR = (runs scored / overs faced) - (runs conceded / overs bowled).
   * A side that is ALL OUT is treated as having faced the full over quota,
     regardless of how few overs it actually lasted.
+  * A side whose innings has runs recorded but NO overs (e.g. a result typed
+    into the admin form as just "112/6") is likewise charged the full quota —
+    so a played match still gets an NRR instead of showing a blank "—". As
+    soon as the real overs land (seed/live scoring) the value sharpens.
   * "6.3 ov" means 6 overs and 3 balls = 6.5 overs.
 """
 import re
 from typing import Optional, Dict
 
-_SCORE_RE = re.compile(r"\s*(\d+)\s*(?:/\s*(\d+))?\s*\(\s*(\d+)(?:\.(\d+))?")
+# Runs are required; wickets ("/10") and the overs in parens ("(6.3 ov)") are
+# both optional so a runs-only score still parses (overs then default to quota).
+_SCORE_RE = re.compile(r"\s*(\d+)\s*(?:/\s*(\d+))?(?:\s*\(\s*(\d+)(?:\.(\d+))?)?")
 
 
 def parse_score(s: Optional[str]):
-    """'34/10 (6.3 ov)' -> (runs, wickets, overs_as_float). None if unparseable."""
+    """'34/10 (6.3 ov)' -> (runs, wickets, overs_or_None).
+
+    overs is None when the string carries no parseable overs component (e.g.
+    "112/6"); the caller then charges the full quota. Returns None only when
+    there aren't even any runs to read.
+    """
     if not s:
         return None
     m = _SCORE_RE.match(s)
@@ -26,6 +37,8 @@ def parse_score(s: Optional[str]):
         return None
     runs = int(m.group(1))
     wickets = int(m.group(2)) if m.group(2) is not None else 0
+    if m.group(3) is None:
+        return runs, wickets, None
     overs = int(m.group(3))
     balls = int(m.group(4)) if m.group(4) is not None else 0
     return runs, wickets, overs + balls / 6.0
@@ -65,9 +78,11 @@ def compute_nrr(fixtures, match_config: Optional[str], all_out_wickets: int = 10
             continue
         ar, aw, ao = a
         br, bw, bo = b
-        # All out -> full quota of overs used against the run rate.
-        a_ov = quota if aw >= all_out_wickets else min(ao, quota)
-        b_ov = quota if bw >= all_out_wickets else min(bo, quota)
+        # Overs faced: the full quota when a side is all out OR when the innings
+        # has no recorded overs (ao/bo is None); otherwise the overs actually
+        # faced, capped at the quota.
+        a_ov = quota if (aw >= all_out_wickets or ao is None) else min(ao, quota)
+        b_ov = quota if (bw >= all_out_wickets or bo is None) else min(bo, quota)
         if a_ov <= 0 or b_ov <= 0:
             continue
         _add(f.team_a_id, ar, a_ov, br, b_ov)
