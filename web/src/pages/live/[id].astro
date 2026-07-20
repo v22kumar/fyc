@@ -79,27 +79,31 @@ export const prerender = false;
 <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
   const pathParts = window.location.pathname.split('/');
   const fixtureId = pathParts[pathParts.length - 1]; // e.g. /live/1234
-  
-  let matchCache = null;
-  
-  async function fetchScore() {
+
+  // Team names never change during a match — fetch them once, not every tick.
+  (async () => {
     try {
-      // Use existing generic fixture endpoint to get names, then cricket endpoint for state
-      const [fRes, mRes] = await Promise.all([
-        fetch(`${API_BASE}/api/v1/sports/fixtures/${fixtureId}`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } }).catch(() => null), // Generic get fixture not available? Just use cricket endpoint
-        fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } })
-      ]);
-      
-      if (!mRes.ok) throw new Error('Not started');
-      const match = await mRes.json();
-      const state = match.match_state;
-      if (!state) return; // Match initialized but no state
-      
+      const r = await fetch(`${API_BASE}/api/v1/sports/fixtures/${fixtureId}`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } });
+      if (r.ok) {
+        const f = await r.json();
+        if (f && (f.team_a_name || f.team_b_name)) {
+          document.getElementById('match-title').textContent = `${f.team_a_name || 'Team A'} vs ${f.team_b_name || 'Team B'}`;
+        }
+      }
+    } catch (_) { /* names are cosmetic; the scoreboard still renders */ }
+  })();
+
+  // Render a {status, overs_per_innings, match_state} payload into the scoreboard.
+  function render(match) {
+    try {
+      const state = match && match.match_state;
+      if (!state) return; // Match initialized but no state yet
+
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('score-container').classList.remove('hidden');
-      
+
       // Update basic details
-      document.getElementById('match-status').textContent = match.status.replace('_', ' ');
+      document.getElementById('match-status').textContent = String(match.status || '').replace('_', ' ');
       document.getElementById('score').textContent = `${state.score}-${state.wickets}`;
       
       const overInt = Math.floor(state.balls / 6);
@@ -156,11 +160,45 @@ export const prerender = false;
       
     } catch (e) {
       console.error(e);
-      document.getElementById('loading').innerHTML = '<p class="text-gray-400">Match not yet started or failed to load.</p>';
     }
   }
 
-  // Poll every 3 seconds for instant updates
-  fetchScore();
-  setInterval(fetchScore, 3000);
+  // One-shot fetch used as the initial paint and as the polling fallback.
+  async function fetchScoreOnce() {
+    try {
+      const mRes = await fetch(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket`, { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } });
+      if (!mRes.ok) throw new Error('Not started');
+      render(await mRes.json());
+    } catch (e) {
+      const loading = document.getElementById('loading');
+      if (!document.getElementById('score-container').classList.contains('hidden')) return; // already showing a score
+      loading.innerHTML = '<p class="text-gray-400">Match not yet started or failed to load.</p>';
+    }
+  }
+
+  // Realtime: subscribe to the Server-Sent Events stream so a new ball lands
+  // within ~1s over a single connection. Fall back to 3s polling if the stream
+  // can't be established (older browser, proxy, or the endpoint is unavailable).
+  let pollTimer = null;
+  function startPolling() {
+    if (pollTimer) return;
+    fetchScoreOnce();
+    pollTimer = setInterval(fetchScoreOnce, 3000);
+  }
+
+  fetchScoreOnce(); // instant first paint
+  if (typeof EventSource !== 'undefined') {
+    let gotData = false;
+    const es = new EventSource(`${API_BASE}/api/v1/fixtures/${fixtureId}/cricket/stream`);
+    es.onmessage = (ev) => {
+      if (!ev.data) return;
+      try { render(JSON.parse(ev.data)); gotData = true; } catch (_) {}
+    };
+    es.onerror = () => {
+      // EventSource auto-reconnects; if it never delivered data, use polling too.
+      if (!gotData) startPolling();
+    };
+  } else {
+    startPolling();
+  }
 </script>

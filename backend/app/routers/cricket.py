@@ -1,14 +1,17 @@
+import asyncio
+import json
 import logging
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.models.user import User
 from app.models.sports import Fixture, Team, Tournament
 from app.models.cricket import CricketMatch, CricketBall
@@ -465,6 +468,80 @@ def get_cricket_match(
     if not match:
         raise HTTPException(404, "Cricket match not initialized")
     return match
+
+
+def _cricket_live_snapshot(fixture_id: str):
+    """The public live payload for a fixture (status + scoreboard state), read in
+    a short-lived session so a long-running stream never holds a DB connection.
+    Returns None when the match isn't initialised yet — or on any DB error, so a
+    transient blip skips a tick instead of tearing down every viewer's stream."""
+    db = SessionLocal()
+    try:
+        m = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+        if not m:
+            return None
+        return {
+            "status": m.status,
+            "overs_per_innings": m.overs_per_innings,
+            "match_state": m.match_state,
+        }
+    except Exception:
+        logger.debug("cricket live snapshot read failed for %s", fixture_id, exc_info=True)
+        return None
+    finally:
+        db.close()
+
+
+@router.get("/fixtures/{fixture_id}/cricket/stream")
+async def stream_cricket_match(fixture_id: str, request: Request):
+    """Server-Sent Events stream of a live cricket match.
+
+    Viewers open one long-lived connection instead of re-polling every few
+    seconds, so a new ball reaches every phone/browser within ~1s over a single
+    connection — no repeated India↔Singapore TLS handshakes. The server reads
+    the shared DB (so it works across Fly instances without extra infra) and
+    emits only when the scoreboard actually changes; clients keep their existing
+    poll as a fallback if the stream can't be established. No auth/tenant header
+    is required — EventSource can't send custom headers and this is public data,
+    exactly like the GET endpoint above.
+    """
+    async def event_gen():
+        # Tell EventSource to reconnect ~3s after any drop.
+        yield "retry: 3000\n\n"
+        last_sig = None
+        ticks_since_emit = 0
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                snap = await run_in_threadpool(_cricket_live_snapshot, fixture_id)
+            except Exception:
+                # A transient DB hiccup must not tear down every viewer's stream —
+                # skip this tick, keep the connection alive, try again next second.
+                snap = None
+            if snap is not None:
+                sig = json.dumps(snap, sort_keys=True, default=str)
+                if sig != last_sig:
+                    last_sig = sig
+                    ticks_since_emit = 0
+                    yield f"data: {json.dumps(snap, default=str)}\n\n"
+                    await asyncio.sleep(1.0)
+                    continue
+            # Heartbeat roughly every 15s of no change so proxies keep the pipe open.
+            ticks_since_emit += 1
+            if ticks_since_emit % 15 == 0:
+                yield ": ping\n\n"
+            await asyncio.sleep(1.0)
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # don't let nginx buffer the stream
+        },
+    )
 
 
 @router.post("/fixtures/{fixture_id}/cricket/ball")

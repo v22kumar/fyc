@@ -109,6 +109,10 @@ class SportsRepositoryImpl implements SportsRepository {
   }
 
   @override
+  Stream<CricketMatchStateEntity> streamCricketMatchState(String fixtureId) =>
+      _remote.streamCricketMatchState(fixtureId); // model is-a entity
+
+  @override
   Future<Either<Failure, CricketMatchStateEntity>> fetchCricketMatchState(String fixtureId) async {
     try {
       final result = await _remote.fetchCricketMatchState(fixtureId);

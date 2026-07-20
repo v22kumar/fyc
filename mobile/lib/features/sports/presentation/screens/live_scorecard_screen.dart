@@ -30,17 +30,47 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
   String? _error;
   bool _fetching = false;
   Timer? _timer;
+  StreamSubscription<CricketMatchStateEntity>? _sub;
 
   @override
   void initState() {
     super.initState();
-    _fetch();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _fetch());
+    _fetch(); // instant first paint
+    _startStream(); // realtime pushes over one connection
+    // Safety net: a slow poll that also revives the stream if it dropped, so the
+    // score is never stale even if SSE can't hold (proxy, flaky stadium wifi).
+    _timer = Timer.periodic(const Duration(seconds: 20), (_) {
+      _fetch();
+      if (_sub == null) _startStream();
+    });
+  }
+
+  void _startStream() {
+    _sub?.cancel();
+    _sub = sl<SportsRepository>().streamCricketMatchState(widget.fixtureId).listen(
+      (s) {
+        if (!mounted) return;
+        setState(() {
+          _state = s;
+          _error = null;
+        });
+      },
+      onError: (_) {
+        // Fall back to polling until the next reconnect tick.
+        _sub?.cancel();
+        _sub = null;
+      },
+      onDone: () {
+        _sub = null;
+      },
+      cancelOnError: true,
+    );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _sub?.cancel();
     super.dispose();
   }
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
@@ -26,6 +27,7 @@ abstract class SportsDataSource {
   Future<List<PlayerModel>> fetchTeamPlayers(String teamId);
   Future<PlayerModel> registerPlayer(String teamId, Map<String, dynamic> data);
   Future<CricketMatchStateModel> fetchCricketMatchState(String fixtureId);
+  Stream<CricketMatchStateModel> streamCricketMatchState(String fixtureId);
   Future<CricketMatchStateModel> scoreCricketBall(String fixtureId, Map<String, dynamic> data);
   Future<CricketMatchStateModel> editCricketBall(String fixtureId, String ballId, Map<String, dynamic> data);
   Future<CricketMatchStateModel> undoEditBall(String fixtureId, String ballId);
@@ -153,6 +155,45 @@ class SportsDataSourceImpl implements SportsDataSource {
       return CricketMatchStateModel.fromJson(data['match_state'] as Map<String, dynamic>? ?? {});
     } on DioException catch (e) {
       throw mapDioException(e);
+    }
+  }
+
+  @override
+  Stream<CricketMatchStateModel> streamCricketMatchState(String fixtureId) async* {
+    // Server-Sent Events: one long-lived connection that pushes the scoreboard
+    // as it changes, instead of re-polling every few seconds. Parsed with the
+    // same match_state mapping as the one-shot fetch.
+    final response = await _client.dio.get<ResponseBody>(
+      ApiConstants.sportsFixtureCricketStream(fixtureId),
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+        // Never time out an intentionally idle stream between deliveries.
+        receiveTimeout: Duration.zero,
+      ),
+    );
+    final body = response.data;
+    if (body == null) return;
+    var buffer = '';
+    await for (final chunk in body.stream) {
+      buffer += utf8.decode(chunk, allowMalformed: true);
+      int nl;
+      while ((nl = buffer.indexOf('\n')) != -1) {
+        final line = buffer.substring(0, nl).trimRight();
+        buffer = buffer.substring(nl + 1);
+        if (!line.startsWith('data:')) continue; // skip ": ping" / "retry:" lines
+        final payload = line.substring(5).trim();
+        if (payload.isEmpty) continue;
+        try {
+          final map = json.decode(payload) as Map<String, dynamic>;
+          final ms = map['match_state'];
+          if (ms is Map<String, dynamic>) {
+            yield CricketMatchStateModel.fromJson(ms);
+          }
+        } catch (_) {
+          // Ignore a malformed frame; the next delivery (or the poll fallback) recovers.
+        }
+      }
     }
   }
 
