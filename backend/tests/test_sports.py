@@ -382,6 +382,69 @@ def test_standings_include_nrr_and_rank_by_it(client, db):
         assert winners[0] == "Aces" and winners[1] == "Chargers", path
 
 
+def test_standings_derive_from_fixtures_not_stored_counters(client, db):
+    """W/L/D/points are recomputed from the completed fixtures on every read, so
+    a drifted stored counter (double-counted on a re-seed or a ball edit) can
+    never make the table disagree with the matches actually played."""
+    from app.models.sports import Team, Fixture
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919444444501")
+    token = _login(client, org.id, "+919444444501")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs")
+
+    a = _create_team(client, org.id, token, tid, name="Aces")
+    b = _create_team(client, org.id, token, tid, name="Blasters")
+    hdr = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    f1 = client.post(f"/api/v1/sports/tournaments/{tid}/fixtures",
+                     json={"team_a_id": a, "team_b_id": b, "match_number": 1}, headers=hdr).json()["id"]
+    client.post(f"/api/v1/sports/tournaments/{tid}/fixtures/{f1}/result",
+                json={"team_a_score": "120/3 (10.0 ov)", "team_b_score": "60/10 (8.0 ov)", "winner_id": a}, headers=hdr)
+
+    # Corrupt the stored counters to look nothing like the one match played.
+    aces = db.query(Team).filter(Team.id == a).one()
+    aces.wins, aces.losses, aces.points = 9, 9, 99
+    db.commit()
+
+    rows = client.get(f"/api/v1/sports/tournaments/{tid}/standings",
+                      headers={"X-Organization-ID": str(org.id)}).json()
+    by_name = {r["name"]: r for r in rows}
+    # Derived strictly from the single completed fixture, not the drifted store.
+    assert by_name["Aces"]["wins"] == 1
+    assert by_name["Aces"]["losses"] == 0
+    assert by_name["Aces"]["points"] == 3
+    assert by_name["Blasters"]["losses"] == 1
+    assert by_name["Blasters"]["points"] == 0
+
+    # And the drift must NOT be persisted back by the read.
+    db.expire_all()
+    assert db.query(Team).filter(Team.id == a).one().points == 99
+
+
+def test_standings_count_a_no_winner_completed_match_as_a_draw(client, db):
+    """A COMPLETED fixture with no winner is a tie — one point to each side."""
+    from app.models.sports import Team, Fixture
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919444444502")
+    token = _login(client, org.id, "+919444444502")
+    tid = _create_tournament(client, org.id, token, match_config="10 Overs")
+
+    a = _create_team(client, org.id, token, tid, name="Aces")
+    b = _create_team(client, org.id, token, tid, name="Blasters")
+    tie = Fixture(id=__import__("uuid").uuid4(), organization_id=org.id, tournament_id=tid,
+                  team_a_id=a, team_b_id=b, match_number=1, status="COMPLETED",
+                  winner_id=None, team_a_score="90/8 (10.0 ov)", team_b_score="90/6 (10.0 ov)")
+    db.add(tie)
+    db.commit()
+
+    rows = client.get(f"/api/v1/sports/tournaments/{tid}/standings",
+                      headers={"X-Organization-ID": str(org.id)}).json()
+    by_name = {r["name"]: r for r in rows}
+    for name in ("Aces", "Blasters"):
+        assert by_name[name]["draws"] == 1
+        assert by_name[name]["points"] == 1
+        assert by_name[name]["wins"] == 0 and by_name[name]["losses"] == 0
+
+
 # ── Live scores (public Home strip) ──────────────────────────────────────────
 
 def test_live_scores_endpoint(client, db):

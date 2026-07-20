@@ -98,14 +98,49 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
 
 
 def _standings_with_nrr(db: Session, t: Tournament):
-    """Teams for a tournament with net_run_rate attached, ranked by points then
-    NRR then wins. Shared by the /teams and /standings endpoints so both carry
-    NRR (the mobile standings screen uses /standings)."""
+    """Teams for a tournament with standings + net_run_rate attached, ranked by
+    points then NRR then wins. Shared by the /teams and /standings endpoints so
+    both carry NRR (the mobile standings screen uses /standings).
+
+    Wins/losses/draws/points are DERIVED here from the completed fixtures — the
+    same source of truth NRR is computed from — rather than read from the stored
+    Team counters. Those counters could drift (double-counting on a re-seed or a
+    ball edit, or missing a manually-corrected result), which showed up in the
+    live table as points that didn't tally with the matches actually played.
+    Recomputing every read keeps the table honest and self-healing.
+    """
     teams = db.query(Team).filter(Team.tournament_id == t.id).all()
     fixtures = db.query(Fixture).filter(Fixture.tournament_id == t.id).all()
     nrr = compute_nrr(fixtures, t.match_config)
+
+    wins: dict[str, int] = {}
+    losses: dict[str, int] = {}
+    draws: dict[str, int] = {}
+    for f in fixtures:
+        if str(f.status or "").upper() != "COMPLETED":
+            continue
+        a, b = str(f.team_a_id), str(f.team_b_id)
+        w = str(f.winner_id) if f.winner_id is not None else None
+        if w in (a, b):
+            loser = b if w == a else a
+            wins[w] = wins.get(w, 0) + 1
+            losses[loser] = losses.get(loser, 0) + 1
+        elif w is None:
+            # A completed match with no winner is a tie — a point to each side.
+            draws[a] = draws.get(a, 0) + 1
+            draws[b] = draws.get(b, 0) + 1
+        # else: winner_id set but not a participant → malformed, ignore.
+
     for tm in teams:
+        k = str(tm.id)
+        tm.wins = wins.get(k, 0)
+        tm.losses = losses.get(k, 0)
+        tm.draws = draws.get(k, 0)
+        tm.points = tm.wins * 3 + tm.draws
         tm.net_run_rate = nrr.get(tm.id)
+    # Detach so this read-only projection can never be flushed back to the DB.
+    for tm in teams:
+        db.expunge(tm)
     teams.sort(
         key=lambda tm: (
             tm.points or 0,

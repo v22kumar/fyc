@@ -169,10 +169,11 @@ def test_pending_teams_added_without_downgrading_existing(db):
             (Fixture.team_a_id == tm.id) | (Fixture.team_b_id == tm.id)).count() == 0
 
 
-def test_aborts_on_conflicting_completed_fixture(db):
-    """If match #1 is already COMPLETED with a different result, the backfill
-    aborts instead of silently corrupting standings."""
-    import pytest
+def test_skips_conflicting_completed_fixture_but_seeds_the_rest(db):
+    """A match already COMPLETED with a *different* result is left untouched
+    (never clobbered), but a single conflict must NOT abort the whole round —
+    the remaining matches still seed. (Aborting was leaving later fixtures
+    unscored, which showed up as blank NRR in the live table.)"""
     t = _tournament(db)
     p = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="P", status="APPROVED")
     q = Team(id=uuid.uuid4(), organization_id=t.organization_id, tournament_id=t.id, name="Q", status="APPROVED")
@@ -184,6 +185,17 @@ def test_aborts_on_conflicting_completed_fixture(db):
                    winner_id=p.id, team_a_score="50/2", team_b_score="49/10")
     db.add(done)
     db.commit()
+    done_id = done.id
 
-    with pytest.raises(SystemExit):
-        seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
+    # Must NOT raise — the conflict is skipped, not fatal.
+    seed.seed_round(db, t, ROUND, commit=True, log=_mute, pending_teams=[])
+
+    # Match #1 is left exactly as it was — ROUND's result did not overwrite it.
+    f1 = db.query(Fixture).filter(Fixture.id == done_id).one()
+    assert f1.winner_id == p.id
+    assert f1.team_a_score == "50/2" and f1.team_b_score == "49/10"
+
+    # Match #2 from ROUND still landed as a COMPLETED result.
+    f2 = db.query(Fixture).filter(
+        Fixture.tournament_id == t.id, Fixture.match_number == 2).one()
+    assert f2.status == "COMPLETED" and f2.winner_id
