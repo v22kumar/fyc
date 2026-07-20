@@ -12,7 +12,7 @@ class Notification(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "notifications"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title_en = Column(String(255), nullable=False)
     title_ta = Column(String(255), nullable=False)
     body_en = Column(String(1024), nullable=False)

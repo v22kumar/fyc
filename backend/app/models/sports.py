@@ -58,7 +58,7 @@ class Team(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "teams"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(100), nullable=False)
     captain_name = Column(String(100), nullable=True)
     contact_phone = Column(String(15), nullable=True)
@@ -89,8 +89,8 @@ class Player(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "players"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    team_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True) # Optional linking to registered user
+    team_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True) # Optional linking to registered user
     name = Column(String(100), nullable=False)
     photo_url = Column(String(500), nullable=True)
     jersey_number = Column(String(10), nullable=True)
@@ -113,9 +113,9 @@ class Fixture(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "fixtures"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
-    team_a_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
-    team_b_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    tournament_id = Column(GUID(), ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False, index=True)
+    team_a_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    team_b_id = Column(GUID(), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
     match_number = Column(Integer, nullable=True)
     scheduled_at = Column(DateTime(timezone=True), nullable=True)
     venue = Column(String(200), nullable=True)
