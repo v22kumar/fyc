@@ -109,6 +109,32 @@ class SportsRepositoryImpl implements SportsRepository {
   }
 
   @override
+  Future<Either<Failure, FixtureEntity>> submitFixtureResult(
+    String tournamentId,
+    String fixtureId, {
+    String? teamAScore,
+    String? teamBScore,
+    String? winnerId,
+    String? notes,
+  }) async {
+    try {
+      final result = await _remote.submitFixtureResult(
+        tournamentId,
+        fixtureId,
+        teamAScore: teamAScore,
+        teamBScore: teamBScore,
+        winnerId: winnerId,
+        notes: notes,
+      );
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
   Stream<CricketMatchStateEntity> streamCricketMatchState(String fixtureId) =>
       _remote.streamCricketMatchState(fixtureId); // model is-a entity
 

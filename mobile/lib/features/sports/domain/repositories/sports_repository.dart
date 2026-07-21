@@ -29,6 +29,14 @@ abstract class SportsRepository {
   });
   Future<Either<Failure, List<PlayerEntity>>> fetchTeamPlayers(String teamId);
   Future<Either<Failure, PlayerEntity>> registerPlayer(String teamId, Map<String, dynamic> data);
+  Future<Either<Failure, FixtureEntity>> submitFixtureResult(
+    String tournamentId,
+    String fixtureId, {
+    String? teamAScore,
+    String? teamBScore,
+    String? winnerId,
+    String? notes,
+  });
   Future<Either<Failure, CricketMatchStateEntity>> fetchCricketMatchState(String fixtureId);
   Stream<CricketMatchStateEntity> streamCricketMatchState(String fixtureId);
   Future<Either<Failure, CricketMatchStateEntity>> scoreCricketBall(String fixtureId, Map<String, dynamic> data);

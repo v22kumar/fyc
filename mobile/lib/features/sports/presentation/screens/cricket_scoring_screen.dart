@@ -390,12 +390,49 @@ class _ErrorRetry extends StatelessWidget {
 
 /// Read-only result for a completed match that has no ball-by-ball data (e.g. a
 /// seeded round entered as a result). Shows the scores + result line.
-class _ResultOnlyView extends StatelessWidget {
+class _ResultOnlyView extends StatefulWidget {
   final FixtureEntity fixture;
   const _ResultOnlyView({required this.fixture});
 
   @override
+  State<_ResultOnlyView> createState() => _ResultOnlyViewState();
+}
+
+class _ResultOnlyViewState extends State<_ResultOnlyView> {
+  late String? _scoreA = widget.fixture.teamAScore;
+  late String? _scoreB = widget.fixture.teamBScore;
+  late String? _notes = widget.fixture.resultNotes;
+  late String? _winnerId = widget.fixture.winnerId;
+
+  Future<void> _edit() async {
+    final draft = await showModalBottomSheet<_ResultDraft>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditResultSheet(
+        fixture: widget.fixture,
+        scoreA: _scoreA,
+        scoreB: _scoreB,
+        winnerId: _winnerId,
+        notes: _notes,
+      ),
+    );
+    if (draft != null && mounted) {
+      setState(() {
+        _scoreA = draft.scoreA;
+        _scoreB = draft.scoreB;
+        _winnerId = draft.winnerId;
+        _notes = draft.notes;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr(en: 'Result updated', ta: 'முடிவு புதுப்பிக்கப்பட்டது', hi: 'परिणाम अपडेट हुआ', ml: 'ഫലം അപ്ഡേറ്റ് ചെയ്തു')),
+      ));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final f = widget.fixture;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -416,7 +453,7 @@ class _ResultOnlyView extends StatelessWidget {
                 const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 34),
                 const SizedBox(height: 10),
                 Text(
-                  fixture.resultNotes ??
+                  _notes ??
                       tr(en: 'Match completed', ta: 'போட்டி முடிந்தது', hi: 'मैच समाप्त', ml: 'മത്സരം പൂർത്തിയായി'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
@@ -425,10 +462,21 @@ class _ResultOnlyView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _row(context, fixture.teamAName ?? 'Team A', fixture.teamAScore),
+          _row(context, f.teamAName ?? 'Team A', _scoreA),
           const SizedBox(height: 10),
-          _row(context, fixture.teamBName ?? 'Team B', fixture.teamBScore),
-          const SizedBox(height: 20),
+          _row(context, f.teamBName ?? 'Team B', _scoreB),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _edit,
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            label: Text(tr(en: 'Edit result', ta: 'முடிவைத் திருத்து', hi: 'परिणाम संपादित करें', ml: 'ഫലം തിരുത്തുക'),
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -442,10 +490,10 @@ class _ResultOnlyView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    tr(en: 'This match was recorded as a result only — there is no ball-by-ball to replay.',
-                        ta: 'இந்தப் போட்டி முடிவாக மட்டும் பதிவு செய்யப்பட்டது — பந்து வாரியான விவரம் இல்லை.',
-                        hi: 'यह मैच केवल परिणाम के रूप में दर्ज है — बॉल-बाय-बॉल नहीं।',
-                        ml: 'ഈ മത്സരം ഫലമായി മാത്രം രേഖപ്പെടുത്തി — ബോൾ-ബൈ-ബോൾ ഇല്ല.'),
+                    tr(en: 'Recorded as a result only — no ball-by-ball to replay. You can still edit the scores above.',
+                        ta: 'முடிவாக மட்டும் பதிவு — பந்து வாரியான விவரம் இல்லை. மேலே உள்ள மதிப்பெண்களைத் திருத்தலாம்.',
+                        hi: 'केवल परिणाम दर्ज है — बॉल-बाय-बॉल नहीं। ऊपर स्कोर संपादित कर सकते हैं।',
+                        ml: 'ഫലമായി മാത്രം രേഖപ്പെടുത്തി — ബോൾ-ബൈ-ബോൾ ഇല്ല. മുകളിലെ സ്കോർ തിരുത്താം.'),
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                   ),
                 ),
@@ -471,6 +519,253 @@ class _ResultOnlyView extends StatelessWidget {
           Text(score ?? '—', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
         ],
       ),
+    );
+  }
+}
+
+/// The canonical result values returned by the editor on a successful save.
+class _ResultDraft {
+  final String? scoreA;
+  final String? scoreB;
+  final String? winnerId;
+  final String? notes;
+  const _ResultDraft({this.scoreA, this.scoreB, this.winnerId, this.notes});
+}
+
+/// Structured editor for a result-only match: numeric runs/wickets/overs per
+/// team compose a canonical, NRR-parseable score (the backend validates again),
+/// so a typo can't skew NRR. Returns a [_ResultDraft] on success.
+class _EditResultSheet extends StatefulWidget {
+  final FixtureEntity fixture;
+  final String? scoreA;
+  final String? scoreB;
+  final String? winnerId;
+  final String? notes;
+  const _EditResultSheet({
+    required this.fixture,
+    this.scoreA,
+    this.scoreB,
+    this.winnerId,
+    this.notes,
+  });
+
+  @override
+  State<_EditResultSheet> createState() => _EditResultSheetState();
+}
+
+class _EditResultSheetState extends State<_EditResultSheet> {
+  final _runsA = TextEditingController();
+  final _wktsA = TextEditingController();
+  final _oversA = TextEditingController();
+  final _ballsA = TextEditingController();
+  final _runsB = TextEditingController();
+  final _wktsB = TextEditingController();
+  final _oversB = TextEditingController();
+  final _ballsB = TextEditingController();
+  late final _notes = TextEditingController(text: widget.notes ?? '');
+  late String _winner = widget.winnerId ?? ''; // '' == draw / not set
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fill(widget.scoreA, _runsA, _wktsA, _oversA, _ballsA);
+    _fill(widget.scoreB, _runsB, _wktsB, _oversB, _ballsB);
+  }
+
+  void _fill(String? score, TextEditingController r, TextEditingController w,
+      TextEditingController o, TextEditingController b) {
+    if (score == null) return;
+    final m = RegExp(r'\s*(\d+)\s*(?:/\s*(\d+))?\s*(?:\(\s*(\d+)(?:\.(\d+))?)?').firstMatch(score);
+    if (m == null) return;
+    r.text = m.group(1) ?? '';
+    w.text = m.group(2) ?? '';
+    o.text = m.group(3) ?? '';
+    b.text = m.group(4) ?? '';
+  }
+
+  @override
+  void dispose() {
+    for (final c in [_runsA, _wktsA, _oversA, _ballsA, _runsB, _wktsB, _oversB, _ballsB, _notes]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Compose a canonical score from the numeric fields, or throw a friendly
+  /// message. Empty runs => no innings (returns null).
+  String? _compose(TextEditingController r, TextEditingController w,
+      TextEditingController o, TextEditingController b, String label) {
+    final runsS = r.text.trim();
+    if (runsS.isEmpty) {
+      if (w.text.trim().isNotEmpty || o.text.trim().isNotEmpty || b.text.trim().isNotEmpty) {
+        throw tr(en: '$label: enter the runs scored.', ta: '$label: ரன்களை உள்ளிடவும்.', hi: '$label: रन दर्ज करें।', ml: '$label: റൺ നൽകുക.');
+      }
+      return null;
+    }
+    final runs = int.tryParse(runsS);
+    if (runs == null || runs < 0) throw tr(en: '$label: runs must be a number.', ta: '$label: ரன் எண்ணாக இருக்க வேண்டும்.', hi: '$label: रन संख्या हो।', ml: '$label: റൺ അക്കമായിരിക്കണം.');
+    final wkts = w.text.trim().isEmpty ? 0 : int.tryParse(w.text.trim()) ?? -1;
+    if (wkts < 0 || wkts > 10) throw tr(en: '$label: wickets run 0–10.', ta: '$label: விக்கெட் 0–10.', hi: '$label: विकेट 0–10।', ml: '$label: വിക്കറ്റ് 0–10.');
+    final oS = o.text.trim(), bS = b.text.trim();
+    if (oS.isEmpty && bS.isEmpty) return '$runs/$wkts';
+    final overs = oS.isEmpty ? 0 : int.tryParse(oS) ?? -1;
+    final balls = bS.isEmpty ? 0 : int.tryParse(bS) ?? -1;
+    if (overs < 0) throw tr(en: '$label: overs must be a number.', ta: '$label: ஓவர் எண்ணாக இருக்க வேண்டும்.', hi: '$label: ओवर संख्या हो।', ml: '$label: ഓവർ അക്കമായിരിക്കണം.');
+    if (balls < 0 || balls > 5) throw tr(en: '$label: an over has 6 balls (0–5).', ta: '$label: ஓவரில் 6 பந்துகள் (0–5).', hi: '$label: एक ओवर में 6 गेंद (0–5)।', ml: '$label: ഒരു ഓവറിൽ 6 പന്ത് (0–5).');
+    return '$runs/$wkts ($overs.$balls ov)';
+  }
+
+  Future<void> _save() async {
+    final f = widget.fixture;
+    String? scoreA, scoreB;
+    try {
+      scoreA = _compose(_runsA, _wktsA, _oversA, _ballsA, f.teamAName ?? 'Team A');
+      scoreB = _compose(_runsB, _wktsB, _oversB, _ballsB, f.teamBName ?? 'Team B');
+    } catch (msg) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString())));
+      return;
+    }
+    setState(() => _saving = true);
+    final res = await sl<SportsRepository>().submitFixtureResult(
+      f.tournamentId,
+      f.id,
+      teamAScore: scoreA,
+      teamBScore: scoreB,
+      winnerId: _winner.isEmpty ? null : _winner,
+      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    res.fold(
+      (l) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr(
+              en: "Couldn't save — check the scores and try again.",
+              ta: 'சேமிக்க முடியவில்லை — மதிப்பெண்களைச் சரிபார்க்கவும்.',
+              hi: 'सहेजा नहीं जा सका — स्कोर जांचें।',
+              ml: 'സേവ് ചെയ്യാനായില്ല — സ്കോർ പരിശോധിക്കുക.')),
+        ));
+      },
+      (fx) {
+        Navigator.of(context).pop(_ResultDraft(
+          scoreA: fx.teamAScore,
+          scoreB: fx.teamBScore,
+          winnerId: fx.winnerId,
+          notes: fx.resultNotes,
+        ));
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final f = widget.fixture;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.cBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(2))),
+              ),
+              Text(tr(en: 'Edit result', ta: 'முடிவைத் திருத்து', hi: 'परिणाम संपादित करें', ml: 'ഫലം തിരുത്തുക'),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
+              const SizedBox(height: 16),
+              _teamFields(context, f.teamAName ?? 'Team A', _runsA, _wktsA, _oversA, _ballsA),
+              const SizedBox(height: 14),
+              _teamFields(context, f.teamBName ?? 'Team B', _runsB, _wktsB, _oversB, _ballsB),
+              const SizedBox(height: 16),
+              Text(tr(en: 'Winner', ta: 'வெற்றியாளர்', hi: 'विजेता', ml: 'വിജയി'),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                value: _winner,
+                isExpanded: true,
+                decoration: _dec(context),
+                items: [
+                  DropdownMenuItem(value: '', child: Text(tr(en: 'Draw / not set', ta: 'சமன் / இல்லை', hi: 'ड्रॉ / नहीं', ml: 'സമനില / ഇല്ല'))),
+                  DropdownMenuItem(value: f.teamAId, child: Text(f.teamAName ?? 'Team A')),
+                  DropdownMenuItem(value: f.teamBId, child: Text(f.teamBName ?? 'Team B')),
+                ],
+                onChanged: (v) => setState(() => _winner = v ?? ''),
+              ),
+              const SizedBox(height: 14),
+              Text(tr(en: 'Result note (optional)', ta: 'முடிவு குறிப்பு (விருப்பம்)', hi: 'परिणाम नोट (वैकल्पिक)', ml: 'ഫല കുറിപ്പ് (ഐച്ഛികം)'),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
+              const SizedBox(height: 6),
+              TextField(controller: _notes, decoration: _dec(context, hint: tr(en: 'e.g. won by 8 wickets', ta: 'எ.கா. 8 விக்கெட்டில் வெற்றி', hi: 'जैसे 8 विकेट से जीत', ml: 'ഉദാ. 8 വിക്കറ്റിന് ജയം'))),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _saving ? null : _save,
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)),
+                child: _saving
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(tr(en: 'Save result', ta: 'முடிவைச் சேமி', hi: 'परिणाम सहेजें', ml: 'ഫലം സേവ് ചെയ്യുക'),
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _dec(BuildContext context, {String? hint}) => InputDecoration(
+        hintText: hint,
+        isDense: true,
+        filled: true,
+        fillColor: context.cSurface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.cBorder)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.cBorder)),
+      );
+
+  Widget _teamFields(BuildContext context, String name, TextEditingController r,
+      TextEditingController w, TextEditingController o, TextEditingController b) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cText)),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(flex: 3, child: _num(context, r, tr(en: 'Runs', ta: 'ரன்', hi: 'रन', ml: 'റൺ'))),
+            const SizedBox(width: 8),
+            Expanded(flex: 2, child: _num(context, w, tr(en: 'Wkts', ta: 'விக்', hi: 'विकेट', ml: 'വിക്'))),
+            const SizedBox(width: 8),
+            Expanded(flex: 2, child: _num(context, o, tr(en: 'Overs', ta: 'ஓவர்', hi: 'ओवर', ml: 'ഓവർ'))),
+            Padding(padding: const EdgeInsets.only(bottom: 12), child: Text('.', style: TextStyle(fontWeight: FontWeight.w900, color: context.cTextSecondary))),
+            Expanded(flex: 1, child: _num(context, b, tr(en: 'Ball', ta: 'பந்து', hi: 'गेंद', ml: 'പന്ത്'))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _num(BuildContext context, TextEditingController c, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 10, color: context.cTextSecondary)),
+        const SizedBox(height: 3),
+        TextField(
+          controller: c,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          decoration: _dec(context),
+        ),
+      ],
     );
   }
 }
