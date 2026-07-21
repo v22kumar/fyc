@@ -15,6 +15,14 @@ abstract class SportsDataSource {
   Future<List<TournamentModel>> fetchTournaments({String? sport});
   Future<List<FixtureModel>> fetchFixtures(String tournamentId);
   Future<List<TeamModel>> fetchStandings(String tournamentId);
+  Future<FixtureModel> submitFixtureResult(
+    String tournamentId,
+    String fixtureId, {
+    String? teamAScore,
+    String? teamBScore,
+    String? winnerId,
+    String? notes,
+  });
   Future<ChallengeModel> submitChallenge({
     required String challengerTeamName,
     required String challengerCaptain,
@@ -88,6 +96,31 @@ class SportsDataSourceImpl implements SportsDataSource {
       return list
           .map((e) => TeamModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<FixtureModel> submitFixtureResult(
+    String tournamentId,
+    String fixtureId, {
+    String? teamAScore,
+    String? teamBScore,
+    String? winnerId,
+    String? notes,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.sportsFixtureResult(tournamentId, fixtureId),
+        data: {
+          'team_a_score': teamAScore,
+          'team_b_score': teamBScore,
+          'winner_id': winnerId,
+          'result_notes': notes,
+        },
+      );
+      return FixtureModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

@@ -77,6 +77,8 @@ class ApiConstants {
       '/api/v1/sports/fixtures/$fid/live-entry';
   static String sportsTournamentFixtures(String tid) =>
       '/api/v1/sports/tournaments/$tid/fixtures';
+  static String sportsFixtureResult(String tid, String fid) =>
+      '/api/v1/sports/tournaments/$tid/fixtures/$fid/result';
   static String sportsTournamentTeams(String tid) =>
       '/api/v1/sports/tournaments/$tid/teams';
   static String sportsTeamPlayers(String teamId) =>
