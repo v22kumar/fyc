@@ -247,16 +247,30 @@ class NotificationService:
         notification delivery must not break the primary action (e.g. scoring)."""
         try:
             notification_type = getattr(category, "value", str(category))
+            
+            # Rewrite notification using AI
+            from app.services.ai_service import AIService
+            ai_svc = AIService(db)
+            smart_en = ai_svc.generate_smart_notification(title_en, body_en, notification_type)
+            smart_ta = ai_svc.generate_smart_notification(title_ta, body_ta, notification_type)
+            
+            title_en = smart_en["title"]
+            body_en = smart_en["body"]
+            title_ta = smart_ta["title"]
+            body_ta = smart_ta["body"]
+
             data = {"route": route} if route else None
-            cls(db).broadcast(
-                organization_id=tenant_id,
-                title_en=title_en,
-                title_ta=title_ta,
-                body_en=body_en,
-                body_ta=body_ta,
-                notification_type=notification_type,
-                data=data,
-                target_roles=target_roles,
+            
+            svc = cls(db)
+            svc.broadcast(
+                tenant_id,
+                title_en,
+                title_ta,
+                body_en,
+                body_ta,
+                notification_type,
+                data,
+                target_roles,
             )
         except Exception as e:  # pragma: no cover - best-effort delivery
             logger.warning(f"broadcast_to_tenant failed (non-fatal): {e}")

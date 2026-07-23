@@ -71,8 +71,10 @@ def main():
         return
 
     try:
-        with engine.connect() as conn:
-            pass
+        with engine.begin() as conn:
+            from sqlalchemy import text
+            conn.execute(text("DROP TABLE IF EXISTS apscheduler_jobs;"))
+            print("[seed] Dropped old apscheduler_jobs table to fix unpickling crash")
     except Exception as e:
         print(f"[seed] DB not ready ({e}), skipping friends2support import.")
         return

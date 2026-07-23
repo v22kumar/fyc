@@ -25,6 +25,7 @@ from app.models.platform_settings import OrganizationSettings, FeatureFlag
 from app.models.post import Post, PostLike, PostRepost, PostReport
 from app.models.chess_tournament import ChessTournament, ChessTournamentEntry, ChessTournamentMatch
 from app.models.weekly_games import WeeklyGame, WeeklyGamePlayer
+from app.models.ai_content import AIContent
 
 __all__ = [
     "Base",
@@ -40,6 +41,8 @@ __all__ = [
     "PublicIssue",
     "IssueStatus",
     "IssueCategory",
+    "Issue",
+    "IssueComment",
     "Event",
     "EventAttendance",
     "CommunityProfile",
@@ -94,4 +97,5 @@ __all__ = [
     "ChessTournamentMatch",
     "WeeklyGame",
     "WeeklyGamePlayer",
+    "AIContent",
 ]

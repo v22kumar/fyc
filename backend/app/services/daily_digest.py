@@ -62,6 +62,26 @@ def run_news_digest():
                 notification_type="NEWS"
             )
 
+def run_ai_daily_digest_job():
+    """Scheduled job to pre-cache the AI Daily Digest"""
+    logger.info("Running AI Daily Digest Job...")
+    with SessionLocal() as db:
+        from app.services.ai_service import AIService
+        svc = AIService(db)
+        orgs = db.query(Organization).all()
+        for org in orgs:
+            svc.generate_daily_digest(org.id)
+
+def run_ai_news_summary_job():
+    """Scheduled job to pre-cache the AI News Summary"""
+    logger.info("Running AI News Summary Job...")
+    with SessionLocal() as db:
+        from app.services.ai_service import AIService
+        svc = AIService(db)
+        orgs = db.query(Organization).all()
+        for org in orgs:
+            svc.generate_news_summary(org.id)
+
 def run_evening_digest():
     """Scheduled job for Evening Summary"""
     logger.info("Running Evening Notification Digest...")

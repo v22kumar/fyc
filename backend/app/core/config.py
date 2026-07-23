@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "FYC Connect"
+    GEMINI_API_KEY: str = ""
 
     # "development" | "staging" | "production" — gates the startup secret checks below.
     ENVIRONMENT: str = "development"
