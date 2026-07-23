@@ -438,14 +438,6 @@ async def lifespan(app: FastAPI):
                 logger.warning(f"[startup] Cache pre-warm failed: {_e}")
         _threading.Thread(target=_prewarm, daemon=True).start()
 
-        # Drop corrupted scheduler state before starting (hotfix for unpickling crash)
-        try:
-            with engine.begin() as conn:
-                from sqlalchemy import text
-                conn.execute(text("DROP TABLE IF EXISTS apscheduler_jobs;"))
-                logger.info("[scheduler] Dropped old apscheduler_jobs table to fix unpickling crash")
-        except Exception as _ae:
-            logger.warning(f"[scheduler] Could not drop apscheduler_jobs: {_ae}")
 
         # Schedulers — birthday always on; morning broadcast requires the flag.
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -637,4 +629,16 @@ def readiness_check():
     a real ORM query against a core table, so connection loss or column drift makes
     it return 503 -> the deploy fails its health check instead of going green.
     """
-    return {"status": "ready"}
+    from fastapi.responses import JSONResponse
+    db = SessionLocal()
+    try:
+        db.query(Organization).first()
+        return {"status": "ready"}
+    except Exception as e:
+        logger.error(f"[readiness] DB check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unready", "detail": str(e)[:200]},
+        )
+    finally:
+        db.close()
