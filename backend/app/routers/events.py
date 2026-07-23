@@ -239,9 +239,13 @@ def register_for_event(
         remarks=payload.remarks,
         status="registered"
     )
-    db.add(registration)
-    db.commit()
-    db.refresh(registration)
+    try:
+        db.add(registration)
+        db.commit()
+        db.refresh(registration)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"DB Error: {str(e)}")
     return registration
 
 @router.get("/{event_id}/registrations", response_model=List[EventRegistrationOut])
