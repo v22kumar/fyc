@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -76,7 +77,11 @@ void main() async {
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
   
   _warmUpBackend();
-  runApp(const FycApp());
+  runApp(
+    const ProviderScope(
+      child: FycApp(),
+    ),
+  );
 }
 
 Future<void> _warmUpBackend() async {
