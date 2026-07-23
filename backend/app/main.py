@@ -39,6 +39,7 @@ from app.routers import app_meta as app_meta_router
 from app.routers import chess as chess_router
 from app.routers import awards as awards_router
 from app.routers import weekly_games as weekly_games_router
+from app.routers import ai as ai_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -440,7 +441,7 @@ async def lifespan(app: FastAPI):
         # Schedulers — birthday always on; morning broadcast requires the flag.
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-        from app.core.database import engine
+        from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
         from app.services.birthdays import run_birthday_notifications
         
         # Use SQLAlchemyJobStore to ensure jobs only run once across multiple instances
@@ -452,7 +453,13 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
                           id="birthday_notifications", replace_existing=True)
 
-        from app.services.daily_digest import run_thirukkural_digest, run_news_digest, run_evening_digest
+        from app.services.daily_digest import (
+            run_thirukkural_digest, 
+            run_news_digest, 
+            run_evening_digest,
+            run_ai_daily_digest_job,
+            run_ai_news_summary_job
+        )
         scheduler.add_job(run_thirukkural_digest, "cron", hour=3, minute=30, timezone="UTC",  # 9:00 AM IST
                           id="thirukkural_digest", replace_existing=True)
         scheduler.add_job(run_news_digest, "cron", hour=4, minute=30, timezone="UTC",  # 10:00 AM IST
@@ -466,18 +473,12 @@ async def lifespan(app: FastAPI):
                               id="morning_broadcast", replace_existing=True)
             logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
 
-        async def _keepalive():
-            try:
-                import httpx
-                async with httpx.AsyncClient(timeout=5) as c:
-                    await c.get("http://localhost:8000/api/health")
-            except Exception as exc:
-                logger.debug("[scheduler] keepalive ping failed: %s", exc)
-
-        scheduler.add_job(_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
+        from app.services.keepalive import run_keepalive
+        scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
         scheduler.start()
         logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
         logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
+
 
     yield
 
@@ -594,6 +595,7 @@ app.include_router(app_meta_router.router, prefix="/api/v1")
 app.include_router(chess_router.router, prefix="/api/v1")
 app.include_router(awards_router.router, prefix="/api/v1")
 app.include_router(weekly_games_router.router, prefix="/api/v1")
+app.include_router(ai_router.router, prefix="/api/v1")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
