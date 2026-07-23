@@ -65,72 +65,80 @@ def migrate_data():
         logger.info(f"Migrating table: {table.name}...")
         
         with sqlite_engine.connect() as src_conn:
-            rows = src_conn.execute(select(table)).fetchall()
-            if not rows:
+        with sqlite_engine.connect() as src_conn:
+            # Check row count first
+            count_query = select(func.count()).select_from(table)
+            total_rows = src_conn.execute(count_query).scalar()
+            
+            if total_rows == 0:
                 logger.info(f"  -> Skipped {table.name} (0 rows)")
                 continue
                 
-            logger.info(f"  -> Found {len(rows)} rows to migrate.")
+            logger.info(f"  -> Found {total_rows} rows to migrate. Migrating in batches...")
             
-            # Convert rows to dictionaries mapping column name to value
-            records = []
-            for row in rows:
-                record = {}
-                for col_name, value in zip(table.columns.keys(), row):
-                    col = table.columns[col_name]
-                    if value is None and not col.nullable:
-                        # Provide a safe default for strictly not-null columns that SQLite allowed
-                        if col.default and getattr(col.default, 'is_scalar', False):
-                            value = col.default.arg
-                        else:
-                            try:
-                                ptype = col.type.python_type
-                                if ptype == bool: value = False
-                                elif ptype == int: value = 0
-                                elif ptype == float: value = 0.0
-                                elif ptype == str: value = ""
-                            except NotImplementedError:
-                                pass
-                    record[col_name] = value
-                
-                # CYCLE BREAK: Nullify cyclic FKs in tournaments and fixtures before insert to avoid ForeignKeyViolation
-                if table.name == "tournaments":
-                    updates = {}
-                    for col in ("winner_id", "runner_up_id"):
-                        if record.get(col) is not None:
-                            updates[col] = record[col]
-                            record[col] = None
-                    if updates:
-                        updates["id"] = record["id"]
-                        deferred_tournaments.append(updates)
-                elif table.name == "fixtures":
-                    updates = {}
-                    if record.get("winner_id") is not None:
-                        updates["winner_id"] = record["winner_id"]
-                        record["winner_id"] = None
-                    if updates:
-                        updates["id"] = record["id"]
-                        deferred_fixtures.append(updates)
-                        
-                records.append(record)
+            result = src_conn.execute(select(table))
+            batch_size = 1000
+            migrated_count = 0
             
-            with pg_engine.begin() as tgt_conn:
-                # Batch inserts for large tables
-                batch_size = 1000
-                for i in range(0, len(records), batch_size):
-                    batch = records[i:i + batch_size]
-                    tgt_conn.execute(table.insert(), batch)
+            while True:
+                rows = result.fetchmany(batch_size)
+                if not rows:
+                    break
                     
-                logger.info(f"  -> Successfully migrated {len(records)} rows to {table.name}.")
+                records = []
+                for row in rows:
+                    record = {}
+                    for col_name, value in zip(table.columns.keys(), row):
+                        col = table.columns[col_name]
+                        if value is None and not col.nullable:
+                            if col.default and getattr(col.default, 'is_scalar', False):
+                                value = col.default.arg
+                            else:
+                                try:
+                                    ptype = col.type.python_type
+                                    if ptype == bool: value = False
+                                    elif ptype == int: value = 0
+                                    elif ptype == float: value = 0.0
+                                    elif ptype == str: value = ""
+                                except NotImplementedError:
+                                    pass
+                        record[col_name] = value
+                    
+                    # CYCLE BREAK
+                    if table.name == "tournaments":
+                        updates = {}
+                        for col in ("winner_id", "runner_up_id"):
+                            if record.get(col) is not None:
+                                updates[col] = record[col]
+                                record[col] = None
+                        if updates:
+                            updates["id"] = record["id"]
+                            deferred_tournaments.append(updates)
+                    elif table.name == "fixtures":
+                        updates = {}
+                        if record.get("winner_id") is not None:
+                            updates["winner_id"] = record["winner_id"]
+                            record["winner_id"] = None
+                        if updates:
+                            updates["id"] = record["id"]
+                            deferred_fixtures.append(updates)
+                            
+                    records.append(record)
                 
+                with pg_engine.begin() as tgt_conn:
+                    tgt_conn.execute(table.insert(), records)
+                    
+                migrated_count += len(records)
+                logger.info(f"  -> Progress: {migrated_count}/{total_rows} rows")
+                
+            logger.info(f"  -> Successfully migrated {migrated_count} rows to {table.name}.")
+                
+            with pg_engine.begin() as tgt_conn:
                 # Reset PostgreSQL sequence for the primary key if it exists
                 if pg_engine.name == "postgresql":
                     for col in table.columns:
                         try:
-                            # Only sequence-reset integer primary keys (not UUIDs)
                             if col.primary_key and col.autoincrement and col.type.python_type == int:
-                                # Usually the sequence name is <table_name>_<column_name>_seq
-                                # A more robust way in Postgres is to use setval(pg_get_serial_sequence(...), max(id))
                                 try:
                                     seq_sql = f"SELECT setval(pg_get_serial_sequence('{table.name}', '{col.name}'), (SELECT MAX({col.name}) FROM {table.name}));"
                                     tgt_conn.execute(text(seq_sql))
