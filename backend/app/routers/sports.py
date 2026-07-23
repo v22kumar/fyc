@@ -80,7 +80,7 @@ def _apply_result(db: Session, f: Fixture, team_a_score, team_b_score, winner_id
         loser_team = db.query(Team).filter(Team.id == str(loser_id)).first()
         if winner_team:
             winner_team.wins = (winner_team.wins or 0) + 1
-            winner_team.points = (winner_team.points or 0) + 3
+            winner_team.points = (winner_team.points or 0) + 2
         if loser_team:
             loser_team.losses = (loser_team.losses or 0) + 1
     f.status = "COMPLETED"

@@ -94,7 +94,7 @@ def normalize_score(s: Optional[str]) -> Optional[str]:
     return f"{runs}/{wkts} ({overs}.{balls} ov)"
 
 
-def _quota_overs(match_config: Optional[str], default: float = 20.0) -> float:
+def _quota_overs(match_config: Optional[str], default: float = 10.0) -> float:
     """Full over quota for the match, parsed from e.g. '10 Overs'."""
     if match_config:
         m = re.search(r"(\d+)", match_config)

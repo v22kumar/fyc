@@ -439,14 +439,24 @@ async def lifespan(app: FastAPI):
 
         # Schedulers — birthday always on; morning broadcast requires the flag.
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+        from app.core.database import engine
         from app.services.birthdays import run_birthday_notifications
-        scheduler = AsyncIOScheduler()
+        
+        # Use SQLAlchemyJobStore to ensure jobs only run once across multiple instances
+        jobstores = {
+            'default': SQLAlchemyJobStore(engine=engine, tablename='apscheduler_jobs')
+        }
+        scheduler = AsyncIOScheduler(jobstores=jobstores)
+        
         scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
                           id="birthday_notifications", replace_existing=True)
 
-        from app.services.daily_digest import run_morning_digest, run_evening_digest
-        scheduler.add_job(run_morning_digest, "cron", hour=2, minute=30, timezone="UTC",  # 8:00 AM IST
-                          id="morning_digest", replace_existing=True)
+        from app.services.daily_digest import run_thirukkural_digest, run_news_digest, run_evening_digest
+        scheduler.add_job(run_thirukkural_digest, "cron", hour=3, minute=30, timezone="UTC",  # 9:00 AM IST
+                          id="thirukkural_digest", replace_existing=True)
+        scheduler.add_job(run_news_digest, "cron", hour=4, minute=30, timezone="UTC",  # 10:00 AM IST
+                          id="news_digest", replace_existing=True)
         scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC",  # 8:00 PM IST
                           id="evening_digest", replace_existing=True)
 

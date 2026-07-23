@@ -138,7 +138,7 @@ def _apply_cricket_standings(db: Session, fixture, winner_id, delta: int) -> Non
     loser = team_b if winner is team_a else team_a
     if winner:
         winner.wins = (winner.wins or 0) + delta
-        winner.points = (winner.points or 0) + 3 * delta
+        winner.points = (winner.points or 0) + 2 * delta
     if loser:
         loser.losses = (loser.losses or 0) + delta
 
