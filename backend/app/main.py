@@ -416,6 +416,50 @@ async def lifespan(app: FastAPI):
             except Exception as _sfe:
                 logger.warning(f"[seed-fyc-league] failed: {_sfe}")
 
+        # One-off: fix cricket tournament points (2 per win) and NRR match_config
+        try:
+            from app.core.database import SessionLocal as _FixSession
+            from app.models.sports import Tournament as _T, Fixture as _F, Team as _Tm
+            _db = _FixSession()
+            try:
+                _t = _db.query(_T).filter(_T.sport == "cricket").first()
+                if _t and _t.match_config == "9 Overs":
+                    _t.match_config = "10 Overs"
+                
+                for _team in _db.query(_Tm).all():
+                    _team.points = 0
+                    _team.wins = 0
+                    _team.losses = 0
+                    _team.ties = 0
+
+                for _f in _db.query(_F).filter(_F.status == "COMPLETED").all():
+                    if _f.winner_id:
+                        _wt = _db.query(_Tm).filter(_Tm.id == _f.winner_id).first()
+                        _lt_id = _f.team_b_id if str(_f.team_a_id) == str(_f.winner_id) else _f.team_a_id
+                        _lt = _db.query(_Tm).filter(_Tm.id == _lt_id).first()
+                        
+                        if _wt:
+                            _wt.wins = (_wt.wins or 0) + 1
+                            _wt.points = (_wt.points or 0) + 2
+                        if _lt:
+                            _lt.losses = (_lt.losses or 0) + 1
+                    else:
+                        _ta = _db.query(_Tm).filter(_Tm.id == _f.team_a_id).first()
+                        _tb = _db.query(_Tm).filter(_Tm.id == _f.team_b_id).first()
+                        if _ta:
+                            _ta.ties = (_ta.ties or 0) + 1
+                            _ta.points = (_ta.points or 0) + 1
+                        if _tb:
+                            _tb.ties = (_tb.ties or 0) + 1
+                            _tb.points = (_tb.points or 0) + 1
+                
+                _db.commit()
+                logger.info("[data-backfill] Re-calculated tournament points (2 per win) and NRR match config")
+            finally:
+                _db.close()
+        except Exception as _fe:
+            logger.warning(f"[data-backfill] tournament fix failed: {_fe}")
+
         _seed_database()
 
         # Pre-warm external API caches in a background thread so slow RSS feeds
