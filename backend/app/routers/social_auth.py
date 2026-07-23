@@ -17,8 +17,8 @@ router = APIRouter(prefix="/social", tags=["Social"])
 IG_APP_ID = os.getenv("IG_APP_ID", "1797067354995679")
 IG_APP_SECRET = os.getenv("IG_APP_SECRET", "140500a7cf07d2091c17e9b97e2a65c7")
 
-THREADS_APP_ID = os.getenv("THREADS_APP_ID", "1797067354995679")
-THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "140500a7cf07d2091c17e9b97e2a65c7")
+THREADS_APP_ID = os.getenv("THREADS_APP_ID", "1551943886666330")
+THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "c8a275a3cfd4c6c83d09d6514a75991f")
 
 # ---------------------------------------------------------------------------
 # INSTAGRAM OAUTH
