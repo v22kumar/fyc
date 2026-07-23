@@ -33,7 +33,11 @@ class Settings(BaseSettings):
     # opaque pydantic error, even in dev.
     SECRET_KEY: str = "dev-insecure-secret-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
+    # By default, use local PostgreSQL
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/fyc_connect"
+    
+    # Valkey (Redis-compatible) cache/session store
+    VALKEY_URL: str = "redis://localhost:6379/0"
 
     FIRST_SUPERADMIN_PHONE: str = "+919876543210"
     # Same pattern as SECRET_KEY: dev-safe default, rejected in production below.

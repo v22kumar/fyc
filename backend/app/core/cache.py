@@ -56,3 +56,34 @@ class TTLCache:
     def size(self) -> int:
         with self._lock:
             return len(self._store)
+
+import logging
+from redis import Redis
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+valkey_client = None
+
+def get_valkey() -> Redis | None:
+    """
+    Returns the global Valkey (Redis-compatible) client instance.
+    Returns None if the client fails to connect or isn't initialized.
+    """
+    global valkey_client
+    if valkey_client is None:
+        try:
+            valkey_client = Redis.from_url(
+                settings.VALKEY_URL, 
+                decode_responses=True, 
+                socket_timeout=3.0, 
+                socket_connect_timeout=3.0
+            )
+            # Ping to verify connection
+            valkey_client.ping()
+            logger.info("Connected to Valkey successfully.")
+        except Exception as e:
+            logger.warning(f"Could not connect to Valkey at {settings.VALKEY_URL}: {e}")
+            valkey_client = None
+
+    return valkey_client

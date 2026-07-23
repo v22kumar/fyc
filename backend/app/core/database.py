@@ -15,6 +15,7 @@ if is_sqlite:
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
+    pool_pre_ping=True,  # Crucial for Postgres to recover from disconnected sockets
     echo=False
 )
 

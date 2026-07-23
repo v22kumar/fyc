@@ -8,6 +8,7 @@ gives higher accuracy for Tamil Nadu / Kanyakumari than OpenWeatherMap.
 WMO weather codes → human-readable descriptions and icon mapping per the
 Open-Meteo documentation.
 """
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -134,14 +135,28 @@ async def get_weather(lat: float, lon: float) -> dict:
     No API key required — Open-Meteo is free.
     """
     key = _round_coords(lat, lon)
+    cache_key = f"weather_cache:{key[0]}_{key[1]}"
     now = datetime.now(timezone.utc)
-    cached = _cache.get(key)
+    
+    from app.core.cache import get_valkey
+    valkey = get_valkey()
+    
+    if valkey:
+        cached_data = valkey.get(cache_key)
+        if cached_data:
+            try:
+                return json.loads(cached_data)
+            except Exception as e:
+                logger.warning(f"Valkey cache parse error for weather {key}: {e}")
 
+    cached = _cache.get(key)
     is_stale = cached is None or now - cached["fetched_at"] > _CACHE_TTL
     if is_stale:
         try:
             data = await _fetch_from_api(lat, lon)
             _cache[key] = {"data": data, "fetched_at": now}
+            if valkey:
+                valkey.setex(cache_key, int(_CACHE_TTL.total_seconds()), json.dumps(data))
         except Exception as e:
             logger.warning(f"Open-Meteo fetch failed for ({lat}, {lon}): {e}")
             # Cache the failure for 5 minutes to prevent thread pool exhaustion

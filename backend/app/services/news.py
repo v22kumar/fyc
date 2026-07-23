@@ -5,7 +5,11 @@ Public RSS feed, no API key needed. Results are cached in-process so the
 home screen stays fast and a transient upstream hiccup never surfaces as an
 error — we just keep serving the last good batch until the next refresh.
 """
+import asyncio
+import html
+import json
 import logging
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -102,16 +106,46 @@ async def _fetch(url: str) -> list[dict]:
     return parse_rss(response.text)
 
 
-async def _get_cached(cache: dict, url: str, limit: int) -> list[dict]:
+async def _get_cached(cache_dict: dict, url: str, limit: int) -> list[dict]:
+    from app.core.cache import get_valkey
+    valkey = get_valkey()
+    cache_key = f"news_cache:{url}"
+    
+    if valkey:
+        cached_data = valkey.get(cache_key)
+        if cached_data:
+            try:
+                items = json.loads(cached_data)
+                # Convert ISO strings back to datetime objects
+                for item in items:
+                    if item.get("published_at"):
+                        item["published_at"] = datetime.fromisoformat(item["published_at"])
+                return items[:limit]
+            except Exception as e:
+                logger.warning(f"Valkey cache parse error for {url}: {e}")
+                
+    # Fallback to local dict logic or refresh
     now = datetime.now(timezone.utc)
-    is_stale = cache["fetched_at"] is None or now - cache["fetched_at"] > _CACHE_TTL
+    is_stale = cache_dict["fetched_at"] is None or now - cache_dict["fetched_at"] > _CACHE_TTL
     if is_stale:
         try:
-            cache["items"] = await _fetch(url)
-            cache["fetched_at"] = now
+            items = await _fetch(url)
+            cache_dict["items"] = items
+            cache_dict["fetched_at"] = now
+            
+            # Update Valkey if available
+            if valkey:
+                # Serialize datetime to ISO strings for JSON
+                class DateTimeEncoder(json.JSONEncoder):
+                    def default(self, obj):
+                        if isinstance(obj, datetime):
+                            return obj.isoformat()
+                        return super().default(obj)
+                valkey.setex(cache_key, int(_CACHE_TTL.total_seconds()), json.dumps(items, cls=DateTimeEncoder))
+                
         except Exception as e:
             logger.warning(f"News RSS fetch failed ({url}), serving cache: {e}")
-    return cache["items"][:limit]
+    return cache_dict["items"][:limit]
 
 
 async def get_top_tamil_news(limit: int = MAX_ITEMS) -> list[dict]:

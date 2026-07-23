@@ -6,6 +6,7 @@ Uses goldapi.io (https://www.goldapi.io) — 100 req/month free plan.
 Falls back to cached value on error so stale data is shown rather than an error.
 Set GOLD_API_KEY in Fly.io secrets (flyctl secrets set GOLD_API_KEY=...).
 """
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -78,7 +79,20 @@ async def get_gold_price() -> dict:
     if not settings.GOLD_API_KEY:
         return _STUB.copy()
 
+    cache_key = "gold_price_cache"
     now = datetime.now(timezone.utc)
+    
+    from app.core.cache import get_valkey
+    valkey = get_valkey()
+    
+    if valkey:
+        cached_data = valkey.get(cache_key)
+        if cached_data:
+            try:
+                return json.loads(cached_data)
+            except Exception as e:
+                logger.warning(f"Valkey cache parse error for gold price: {e}")
+
     is_stale = (
         _cache["fetched_at"] is None
         or now - _cache["fetched_at"] > _CACHE_TTL
@@ -89,6 +103,8 @@ async def get_gold_price() -> dict:
             data = await _fetch_from_api()
             _cache["data"] = data
             _cache["fetched_at"] = now
+            if valkey:
+                valkey.setex(cache_key, int(_CACHE_TTL.total_seconds()), json.dumps(data))
         except Exception as e:
             logger.warning(f"Gold price API fetch failed: {e}")
             # Cache the failure (or stale data) for a shorter duration (e.g. 5 minutes) to prevent thread pool exhaustion
