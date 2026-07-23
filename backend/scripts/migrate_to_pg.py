@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import Base, engine as pg_engine
 from app.core.config import settings
+import app.models  # Crucial: imports all models so Base.metadata is populated
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
