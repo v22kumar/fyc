@@ -31,8 +31,8 @@ import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
 import '../../../news/presentation/widgets/daily_news_card.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
-import '../../ai/presentation/widgets/ai_daily_digest_card.dart';
-import '../../ai/presentation/widgets/ai_news_summary_card.dart';
+import '../../../ai/presentation/widgets/ai_daily_digest_card.dart';
+import '../../../ai/presentation/widgets/ai_news_summary_card.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Home is always hosted inside [AppShellV2], which provides the single
