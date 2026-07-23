@@ -47,7 +47,26 @@ def migrate_data():
             logger.info(f"  -> Found {len(rows)} rows to migrate.")
             
             # Convert rows to dictionaries mapping column name to value
-            records = [dict(zip(table.columns.keys(), row)) for row in rows]
+            records = []
+            for row in rows:
+                record = {}
+                for col_name, value in zip(table.columns.keys(), row):
+                    col = table.columns[col_name]
+                    if value is None and not col.nullable:
+                        # Provide a safe default for strictly not-null columns that SQLite allowed
+                        if col.default and getattr(col.default, 'is_scalar', False):
+                            value = col.default.arg
+                        else:
+                            try:
+                                ptype = col.type.python_type
+                                if ptype == bool: value = False
+                                elif ptype == int: value = 0
+                                elif ptype == float: value = 0.0
+                                elif ptype == str: value = ""
+                            except NotImplementedError:
+                                pass
+                    record[col_name] = value
+                records.append(record)
             
             with pg_engine.begin() as tgt_conn:
                 # Check if target table is empty to avoid duplicate primary keys
@@ -69,7 +88,9 @@ def migrate_data():
                 # Reset PostgreSQL sequence for the primary key if it exists
                 if pg_engine.name == "postgresql":
                     for col in table.columns:
-                        if col.primary_key and col.autoincrement:
+                        try:
+                            # Only sequence-reset integer primary keys (not UUIDs)
+                            if col.primary_key and col.autoincrement and col.type.python_type == int:
                             # Usually the sequence name is <table_name>_<column_name>_seq
                             # A more robust way in Postgres is to use setval(pg_get_serial_sequence(...), max(id))
                             try:
@@ -79,6 +100,8 @@ def migrate_data():
                             except Exception as e:
                                 logger.warning(f"  -> Could not reset sequence for {table.name}.{col.name}: {e}")
                             break
+                        except NotImplementedError:
+                            pass
                             
     logger.info("Data migration completed successfully!")
     logger.info("This script has safely copied your data and synced the primary key sequences.")
