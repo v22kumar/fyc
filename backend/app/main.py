@@ -438,6 +438,15 @@ async def lifespan(app: FastAPI):
                 logger.warning(f"[startup] Cache pre-warm failed: {_e}")
         _threading.Thread(target=_prewarm, daemon=True).start()
 
+        # Drop corrupted scheduler state before starting (hotfix for unpickling crash)
+        try:
+            with engine.begin() as conn:
+                from sqlalchemy import text
+                conn.execute(text("DROP TABLE IF EXISTS apscheduler_jobs;"))
+                logger.info("[scheduler] Dropped old apscheduler_jobs table to fix unpickling crash")
+        except Exception as _ae:
+            logger.warning(f"[scheduler] Could not drop apscheduler_jobs: {_ae}")
+
         # Schedulers — birthday always on; morning broadcast requires the flag.
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
