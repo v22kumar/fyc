@@ -31,6 +31,8 @@ import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
 import '../../../news/presentation/widgets/daily_news_card.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
+import '../../ai/presentation/widgets/ai_daily_digest_card.dart';
+import '../../ai/presentation/widgets/ai_news_summary_card.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Home is always hosted inside [AppShellV2], which provides the single
@@ -2412,6 +2414,8 @@ class _CitizenDashboard extends StatelessWidget {
         title: 'Today',
         trailing: lastRefreshed != null ? LastUpdatedPill(timestamp: lastRefreshed!) : null,
       ),
+      AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       DailyNewsCard(key: ValueKey('news-$refreshKey')),
       DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
       WeatherCard(key: ValueKey('weather-$refreshKey')),
@@ -2501,7 +2505,9 @@ class _VolunteerDashboard extends StatelessWidget {
         const SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         const SizedBox(height: 14),
-        DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
+      DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
         const SizedBox(height: 14),
@@ -2593,7 +2599,9 @@ class _ManagerDashboard extends StatelessWidget {
         const SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         const SizedBox(height: 14),
-        DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
+      DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
         const SizedBox(height: 14),
