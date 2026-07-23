@@ -91,15 +91,15 @@ def migrate_data():
                         try:
                             # Only sequence-reset integer primary keys (not UUIDs)
                             if col.primary_key and col.autoincrement and col.type.python_type == int:
-                            # Usually the sequence name is <table_name>_<column_name>_seq
-                            # A more robust way in Postgres is to use setval(pg_get_serial_sequence(...), max(id))
-                            try:
-                                seq_sql = f"SELECT setval(pg_get_serial_sequence('{table.name}', '{col.name}'), (SELECT MAX({col.name}) FROM {table.name}));"
-                                tgt_conn.execute(text(seq_sql))
-                                logger.info(f"  -> Reset sequence for {table.name}.{col.name}")
-                            except Exception as e:
-                                logger.warning(f"  -> Could not reset sequence for {table.name}.{col.name}: {e}")
-                            break
+                                # Usually the sequence name is <table_name>_<column_name>_seq
+                                # A more robust way in Postgres is to use setval(pg_get_serial_sequence(...), max(id))
+                                try:
+                                    seq_sql = f"SELECT setval(pg_get_serial_sequence('{table.name}', '{col.name}'), (SELECT MAX({col.name}) FROM {table.name}));"
+                                    tgt_conn.execute(text(seq_sql))
+                                    logger.info(f"  -> Reset sequence for {table.name}.{col.name}")
+                                except Exception as e:
+                                    logger.warning(f"  -> Could not reset sequence for {table.name}.{col.name}: {e}")
+                                break
                         except NotImplementedError:
                             pass
                             
