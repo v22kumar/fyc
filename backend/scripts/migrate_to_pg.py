@@ -65,7 +65,6 @@ def migrate_data():
         logger.info(f"Migrating table: {table.name}...")
         
         with sqlite_engine.connect() as src_conn:
-        with sqlite_engine.connect() as src_conn:
             # Check row count first
             count_query = select(func.count()).select_from(table)
             total_rows = src_conn.execute(count_query).scalar()
