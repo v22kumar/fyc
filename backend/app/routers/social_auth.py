@@ -92,7 +92,9 @@ def auth_instagram_callback(request: Request, code: str = Query(...), db: Sessio
                 break
                 
     if not instagram_account_id:
-        logger.warning("Could not find an Instagram Business Account linked to this Facebook account.")
+        # Fallback to the known FYC Connect Instagram Account ID
+        instagram_account_id = os.getenv("IG_ACCOUNT_ID", "17841411702636378")
+        logger.warning(f"Auto-discovery failed. Falling back to default Instagram Account ID: {instagram_account_id}")
     
     # 4. Save to Organization (assuming single tenant setup for now, or fetch default org)
     org = db.query(Organization).first()
