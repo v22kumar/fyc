@@ -31,7 +31,7 @@ class GoldPriceResponse(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get("/weather", response_model=WeatherResponse)
-def get_weather(
+async def get_weather(
     lat: float = Query(..., description="Latitude of the location"),
     lon: float = Query(..., description="Longitude of the location"),
     response: Response = None,
@@ -40,13 +40,13 @@ def get_weather(
     # Instruct browsers/CDNs to cache for 30 min; serve stale up to 1hr while revalidating
     if response is not None:
         response.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=3600"
-    return weather_service.get_weather(lat=lat, lon=lon)
+    return await weather_service.get_weather(lat=lat, lon=lon)
 
 
 @router.get("/gold-price", response_model=GoldPriceResponse)
-def get_gold_price(response: Response = None):
+async def get_gold_price(response: Response = None):
     """Current gold price per gram in INR — 24K and 22K (12-hour server cache)."""
     # 12hr cache matches the server-side TTL; serve stale up to 24hr while revalidating
     if response is not None:
         response.headers["Cache-Control"] = "public, max-age=43200, stale-while-revalidate=86400"
-    return gold_price_service.get_gold_price()
+    return await gold_price_service.get_gold_price()

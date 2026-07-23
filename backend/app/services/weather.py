@@ -57,18 +57,19 @@ def _round_coords(lat: float, lon: float) -> tuple[float, float]:
     return (round(lat, 2), round(lon, 2))
 
 
-def _reverse_geocode(lat: float, lon: float) -> str:
+async def _reverse_geocode(lat: float, lon: float) -> str:
     """Return city/town name via Nominatim. Result cached per coordinate."""
     key = _round_coords(lat, lon)
     if key in _city_cache:
         return _city_cache[key]
     try:
-        resp = httpx.get(
-            "https://nominatim.openstreetmap.org/reverse",
-            params={"lat": lat, "lon": lon, "format": "json", "zoom": 10},
-            headers={"User-Agent": "FYC-Connect/1.0 (noreply@fyc.app)"},
-            timeout=5,
-        )
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"lat": lat, "lon": lon, "format": "json", "zoom": 10},
+                headers={"User-Agent": "FYC-Connect/1.0 (noreply@fyc.app)"},
+                timeout=5,
+            )
         resp.raise_for_status()
         addr = resp.json().get("address", {})
         city = (
@@ -87,24 +88,25 @@ def _reverse_geocode(lat: float, lon: float) -> str:
     return city
 
 
-def _fetch_from_api(lat: float, lon: float) -> dict:
-    response = httpx.get(
-        "https://api.open-meteo.com/v1/forecast",
-        params={
-            "latitude": lat,
-            "longitude": lon,
-            "current": [
-                "temperature_2m",
-                "relative_humidity_2m",
-                "apparent_temperature",
-                "weather_code",
-                "wind_speed_10m",
-            ],
-            "timezone": "Asia/Kolkata",
-            "wind_speed_unit": "ms",  # metres per second, consistent with OWM
-        },
-        timeout=_REQUEST_TIMEOUT,
-    )
+async def _fetch_from_api(lat: float, lon: float) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": lat,
+                "longitude": lon,
+                "current": [
+                    "temperature_2m",
+                    "relative_humidity_2m",
+                    "apparent_temperature",
+                    "weather_code",
+                    "wind_speed_10m",
+                ],
+                "timezone": "Asia/Kolkata",
+                "wind_speed_unit": "ms",  # metres per second, consistent with OWM
+            },
+            timeout=_REQUEST_TIMEOUT,
+        )
     response.raise_for_status()
     data = response.json()
 
@@ -118,13 +120,13 @@ def _fetch_from_api(lat: float, lon: float) -> dict:
         "feels_like": current.get("apparent_temperature"),
         "description": _WMO_DESCRIPTIONS.get(code, "Unknown"),
         "icon": _WMO_ICONS.get(code, "01d"),
-        "city": _reverse_geocode(lat, lon),
+        "city": await _reverse_geocode(lat, lon),
         "humidity": current.get("relative_humidity_2m"),
         "wind_speed": round(wind_ms, 1) if wind_ms is not None else None,
     }
 
 
-def get_weather(lat: float, lon: float) -> dict:
+async def get_weather(lat: float, lon: float) -> dict:
     """Return current weather for the given coordinates.
 
     Caches per (lat, lon) pair (rounded to 2 dp) for 30 minutes.
@@ -138,7 +140,7 @@ def get_weather(lat: float, lon: float) -> dict:
     is_stale = cached is None or now - cached["fetched_at"] > _CACHE_TTL
     if is_stale:
         try:
-            data = _fetch_from_api(lat, lon)
+            data = await _fetch_from_api(lat, lon)
             _cache[key] = {"data": data, "fetched_at": now}
         except Exception as e:
             logger.warning(f"Open-Meteo fetch failed for ({lat}, {lon}): {e}")

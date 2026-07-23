@@ -90,49 +90,50 @@ def parse_rss(xml_text: str) -> list[dict]:
     return items
 
 
-def _fetch(url: str) -> list[dict]:
-    response = httpx.get(
-        url,
-        headers={"User-Agent": _USER_AGENT},
-        timeout=_REQUEST_TIMEOUT,
-        follow_redirects=True,
-    )
+async def _fetch(url: str) -> list[dict]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            url,
+            headers={"User-Agent": _USER_AGENT},
+            timeout=_REQUEST_TIMEOUT,
+            follow_redirects=True,
+        )
     response.raise_for_status()
     return parse_rss(response.text)
 
 
-def _get_cached(cache: dict, url: str, limit: int) -> list[dict]:
+async def _get_cached(cache: dict, url: str, limit: int) -> list[dict]:
     now = datetime.now(timezone.utc)
     is_stale = cache["fetched_at"] is None or now - cache["fetched_at"] > _CACHE_TTL
     if is_stale:
         try:
-            cache["items"] = _fetch(url)
+            cache["items"] = await _fetch(url)
             cache["fetched_at"] = now
         except Exception as e:
             logger.warning(f"News RSS fetch failed ({url}), serving cache: {e}")
     return cache["items"][:limit]
 
 
-def get_top_tamil_news(limit: int = MAX_ITEMS) -> list[dict]:
+async def get_top_tamil_news(limit: int = MAX_ITEMS) -> list[dict]:
     """Return up to `limit` Tamil headlines (Google News India, Tamil edition)."""
-    return _get_cached(_cache, GOOGLE_NEWS_RSS_URL, min(limit, MAX_ITEMS))
+    return await _get_cached(_cache, GOOGLE_NEWS_RSS_URL, min(limit, MAX_ITEMS))
 
 
-def get_india_news(limit: int = MAX_INDIA_ITEMS) -> list[dict]:
+async def get_india_news(limit: int = MAX_INDIA_ITEMS) -> list[dict]:
     """Return up to `limit` India headlines (Google News India, English edition)."""
-    return _get_cached(_india_cache, INDIA_NEWS_RSS_URL, min(limit, MAX_INDIA_ITEMS))
+    return await _get_cached(_india_cache, INDIA_NEWS_RSS_URL, min(limit, MAX_INDIA_ITEMS))
 
 
-def get_tn_jobs_news(limit: int = MAX_TN_JOBS_ITEMS) -> list[dict]:
+async def get_tn_jobs_news(limit: int = MAX_TN_JOBS_ITEMS) -> list[dict]:
     """Return up to `limit` Tamil Nadu government job/recruitment headlines."""
-    return _get_cached(_tn_jobs_cache, TN_JOBS_RSS_URL, min(limit, MAX_TN_JOBS_ITEMS))
+    return await _get_cached(_tn_jobs_cache, TN_JOBS_RSS_URL, min(limit, MAX_TN_JOBS_ITEMS))
 
 
-def get_central_jobs_news(limit: int = MAX_CENTRAL_JOBS_ITEMS) -> list[dict]:
+async def get_central_jobs_news(limit: int = MAX_CENTRAL_JOBS_ITEMS) -> list[dict]:
     """Return up to `limit` Central government job/recruitment headlines (SSC, UPSC, Railway, IBPS)."""
-    return _get_cached(_central_jobs_cache, CENTRAL_JOBS_RSS_URL, min(limit, MAX_CENTRAL_JOBS_ITEMS))
+    return await _get_cached(_central_jobs_cache, CENTRAL_JOBS_RSS_URL, min(limit, MAX_CENTRAL_JOBS_ITEMS))
 
 
-def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]:
+async def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]:
     """Return up to `limit` Kanyakumari/Kanniyakumari local headlines (Tamil)."""
-    return _get_cached(_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL, min(limit, MAX_KANYAKUMARI_ITEMS))
+    return await _get_cached(_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL, min(limit, MAX_KANYAKUMARI_ITEMS))

@@ -24,7 +24,7 @@ _VERSION_JSON_URL = (
 _version_cache: dict = {"ts": 0.0, "data": None}
 
 
-def _release_version() -> dict | None:
+async def _release_version() -> dict | None:
     """Fetch version.json from the GitHub Release, cached for 5 minutes.
 
     Returns the last cached copy on a network hiccup, or None if it has never
@@ -34,7 +34,8 @@ def _release_version() -> dict | None:
     if _version_cache["data"] is not None and now - _version_cache["ts"] < 300:
         return _version_cache["data"]
     try:
-        r = httpx.get(_VERSION_JSON_URL, timeout=6.0, follow_redirects=True)
+        async with httpx.AsyncClient() as client:
+            r = await client.get(_VERSION_JSON_URL, timeout=6.0, follow_redirects=True)
         if r.status_code == 200:
             data = r.json()
             if isinstance(data, dict):
@@ -47,9 +48,9 @@ def _release_version() -> dict | None:
 
 
 @router.get("/download")
-def download_app():
+async def download_app():
     """302 redirect to the latest FYC Connect Android APK (arm64)."""
-    rel = _release_version() or {}
+    rel = await _release_version() or {}
     url = rel.get("apk_url") or settings.APP_APK_URL or _CANONICAL_APK
     # Self-heal: an older APP_APK_URL may still point at the removed
     # fyc-connect-latest.apk (which 404s) — fall back to the canonical asset.
@@ -59,7 +60,7 @@ def download_app():
 
 
 @router.get("/info")
-def app_info():
+async def app_info():
     """Metadata for the in-app updater: latest version + APK URL.
 
     The app compares its own build number to latest_version_code and, if older,
@@ -67,7 +68,7 @@ def app_info():
     is the primary source of truth; Fly settings are a fallback so the endpoint
     still works if the release can't be reached.
     """
-    rel = _release_version() or {}
+    rel = await _release_version() or {}
 
     latest_code = rel.get("version_code")
     if not isinstance(latest_code, int):

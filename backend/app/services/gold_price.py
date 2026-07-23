@@ -35,12 +35,13 @@ _STUB = {
 }
 
 
-def _fetch_from_api() -> dict:
-    response = httpx.get(
-        _GOLDAPI_URL,
-        headers={"x-access-token": settings.GOLD_API_KEY, "Content-Type": "application/json"},
-        timeout=_REQUEST_TIMEOUT,
-    )
+async def _fetch_from_api() -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            _GOLDAPI_URL,
+            headers={"x-access-token": settings.GOLD_API_KEY, "Content-Type": "application/json"},
+            timeout=_REQUEST_TIMEOUT,
+        )
     response.raise_for_status()
     data = response.json()
 
@@ -67,7 +68,7 @@ def _fetch_from_api() -> dict:
     }
 
 
-def get_gold_price() -> dict:
+async def get_gold_price() -> dict:
     """Return current gold price per gram in INR (24K and 22K).
 
     Caches the result for 12 hours (stays within 100 req/month plan).
@@ -85,7 +86,7 @@ def get_gold_price() -> dict:
 
     if is_stale:
         try:
-            data = _fetch_from_api()
+            data = await _fetch_from_api()
             _cache["data"] = data
             _cache["fetched_at"] = now
         except Exception as e:
