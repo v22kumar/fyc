@@ -70,7 +70,7 @@ def migrate_data():
             
             with pg_engine.begin() as tgt_conn:
                 if pg_engine.name == "postgresql":
-                    tgt_conn.execute(text("SET session_replica_role = 'replica';"))
+                    tgt_conn.execute(text(f"ALTER TABLE {table.name} DISABLE TRIGGER ALL;"))
                     
                 # Check if target table is empty to avoid duplicate primary keys
                 count_query = select(func.count()).select_from(table)
@@ -107,7 +107,7 @@ def migrate_data():
                             pass
                             
                 if pg_engine.name == "postgresql":
-                    tgt_conn.execute(text("SET session_replica_role = 'origin';"))
+                    tgt_conn.execute(text(f"ALTER TABLE {table.name} ENABLE TRIGGER ALL;"))
                             
     logger.info("Data migration completed successfully!")
     logger.info("This script has safely copied your data and synced the primary key sequences.")
