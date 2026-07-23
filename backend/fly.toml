@@ -3,8 +3,7 @@
 app = "fyc-backend"
 primary_region = "sin"
 
-[deploy]
-  release_command = "python seeds/import_donors.py"
+
 
 [build]
   dockerfile = "Dockerfile"
