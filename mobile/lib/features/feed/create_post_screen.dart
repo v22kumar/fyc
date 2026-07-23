@@ -161,8 +161,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            onPressed: canPost ? _submit : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            child: _posting
+                ? const SizedBox(width: 24, height: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                : Text(
+                    tr(en: 'Post Update', ta: 'இடுகையை வெளியிடு', hi: 'पोस्ट करें', ml: 'പോസ്റ്റ് ചെയ്യുക'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+          ),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
         children: [
           // Author + role + audience
           Row(
