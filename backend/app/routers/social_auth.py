@@ -28,6 +28,9 @@ THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "140500a7cf07d2091c17e9b97e
 def auth_instagram(request: Request):
     """Redirect to Facebook Login to authorize Instagram App."""
     base_url = str(request.base_url).rstrip("/")
+    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+        base_url = base_url.replace("http://", "https://")
+        
     redirect_uri = f"{base_url}/api/v1/social/auth/instagram/callback"
     
     # We request pages permissions to fetch the Instagram Business Account
@@ -41,6 +44,9 @@ def auth_instagram(request: Request):
 def auth_instagram_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db)):
     """Exchange the code for a Long-Lived Access Token and save it."""
     base_url = str(request.base_url).rstrip("/")
+    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+        base_url = base_url.replace("http://", "https://")
+        
     redirect_uri = f"{base_url}/api/v1/social/auth/instagram/callback"
     
     # 1. Exchange for short-lived token
@@ -108,9 +114,12 @@ def auth_instagram_callback(request: Request, code: str = Query(...), db: Sessio
 def auth_threads(request: Request):
     """Redirect to Threads Login to authorize App."""
     base_url = str(request.base_url).rstrip("/")
+    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+        base_url = base_url.replace("http://", "https://")
+        
     redirect_uri = f"{base_url}/api/v1/social/auth/threads/callback"
     permissions = "threads_basic,threads_read_replies"
-    auth_url = f"https://www.threads.net/oauth/authorize?client_id={THREADS_APP_ID}&redirect_uri={redirect_uri}&scope={permissions}&response_type=code"
+    auth_url = f"https://threads.net/oauth/authorize?client_id={THREADS_APP_ID}&redirect_uri={redirect_uri}&scope={permissions}&response_type=code"
     return RedirectResponse(auth_url)
 
 
@@ -118,6 +127,9 @@ def auth_threads(request: Request):
 def auth_threads_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db)):
     """Exchange the code for a Threads Token and save it."""
     base_url = str(request.base_url).rstrip("/")
+    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+        base_url = base_url.replace("http://", "https://")
+        
     redirect_uri = f"{base_url}/api/v1/social/auth/threads/callback"
     
     # 1. Exchange for short-lived token
