@@ -138,7 +138,7 @@ def _standings_with_nrr(db: Session, t: Tournament):
         tm.wins = wins.get(k, 0)
         tm.losses = losses.get(k, 0)
         tm.draws = draws.get(k, 0)
-        tm.points = tm.wins * 3 + tm.draws
+        tm.points = tm.wins * 2 + tm.draws
         tm.net_run_rate = nrr.get(tm.id)
     # Detach so this read-only projection can never be flushed back to the DB.
     for tm in teams:
