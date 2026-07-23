@@ -41,7 +41,9 @@ class AiDailyDigestCard extends ConsumerWidget {
           ),
         ],
       ),
+      clipBehavior: Clip.hardEdge,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Positioned(
             right: -20,

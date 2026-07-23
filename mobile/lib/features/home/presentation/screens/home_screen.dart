@@ -2403,6 +2403,8 @@ class _CitizenDashboard extends StatelessWidget {
     // V2 1.4 — sections enter with a top-to-bottom stagger (FadeSlideIn is
     // reduce-motion aware, so this is a no-op when animations are disabled).
     final sections = <Widget>[
+      AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       const _AnnouncementsBar(),
       const _LiveScoresSection(),
       const _QuickActions(),
@@ -2414,8 +2416,6 @@ class _CitizenDashboard extends StatelessWidget {
         title: 'Today',
         trailing: lastRefreshed != null ? LastUpdatedPill(timestamp: lastRefreshed!) : null,
       ),
-      AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
-      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       DailyNewsCard(key: ValueKey('news-$refreshKey')),
       DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
       WeatherCard(key: ValueKey('weather-$refreshKey')),
@@ -2455,6 +2455,9 @@ class _VolunteerDashboard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+        AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
+        const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2505,9 +2508,7 @@ class _VolunteerDashboard extends StatelessWidget {
         const SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         const SizedBox(height: 14),
-        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
-      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
-      DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
         const SizedBox(height: 14),
@@ -2527,6 +2528,9 @@ class _ManagerDashboard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
+        AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
+        const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2599,9 +2603,7 @@ class _ManagerDashboard extends StatelessWidget {
         const SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         const SizedBox(height: 14),
-        AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
-      AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
-      DailyNewsCard(key: ValueKey('news-$refreshKey')),
+        DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
         const SizedBox(height: 14),

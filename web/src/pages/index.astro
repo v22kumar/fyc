@@ -495,6 +495,37 @@ const updates = [
       </div>
     </section>
 
+    <!-- AI Features at Top -->
+    <section class="py-6 bg-[#f8f9fa] px-4">
+      <div class="max-w-6xl mx-auto flex flex-col gap-6">
+        
+        <!-- AI Daily Digest -->
+        <div id="ai-digest-card" class="bg-gradient-to-r from-teal-900 to-[#0F5132] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden hidden">
+          <div class="absolute -top-10 -right-10 text-white/5 text-[150px] pointer-events-none">✨</div>
+          <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+            <div class="bg-white/20 p-4 rounded-2xl shrink-0">
+              <span class="text-3xl">🤖</span>
+            </div>
+            <div>
+              <h2 class="text-xl md:text-2xl font-black mb-2 text-center md:text-left">AI Daily Digest</h2>
+              <p id="ai-digest-content" class="text-green-50/90 leading-relaxed text-sm md:text-base text-center md:text-left"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI News Summary Card -->
+        <div id="ai-news-summary" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 shadow-sm hidden">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="bg-blue-100 text-blue-700 p-1.5 rounded-lg text-sm flex items-center justify-center shadow-sm">✨</span>
+            <h3 class="font-extrabold text-blue-900 text-sm">AI News Summary</h3>
+          </div>
+          <p id="ai-news-content" class="text-gray-700 text-sm leading-relaxed mb-3"></p>
+          <div id="ai-news-topics" class="flex flex-wrap gap-2"></div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- Modules bento grid -->
     <section class="py-14 bg-[#f8f9fa] px-4">
       <div class="max-w-6xl mx-auto">
@@ -530,23 +561,7 @@ const updates = [
       </div>
     </section>
 
-    <!-- AI Daily Digest -->
-    <section class="py-8 bg-[#f8f9fa] px-4">
-      <div class="max-w-6xl mx-auto">
-        <div id="ai-digest-card" class="bg-gradient-to-r from-teal-900 to-[#0F5132] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden hidden">
-          <div class="absolute -top-10 -right-10 text-white/5 text-[150px] pointer-events-none">✨</div>
-          <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div class="bg-white/20 p-4 rounded-2xl shrink-0">
-              <span class="text-3xl">🤖</span>
-            </div>
-            <div>
-              <h2 class="text-xl md:text-2xl font-black mb-2 text-center md:text-left">AI Daily Digest</h2>
-              <p id="ai-digest-content" class="text-green-50/90 leading-relaxed text-sm md:text-base text-center md:text-left"></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+
 
     <!-- Thirukkural + News -->
     <section class="py-12 bg-white px-4 border-y border-gray-100">
@@ -584,15 +599,7 @@ const updates = [
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google News</span>
           </div>
 
-          <!-- AI News Summary Card -->
-          <div id="ai-news-summary" class="mb-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 shadow-sm hidden">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="bg-blue-100 text-blue-700 p-1.5 rounded-lg text-sm flex items-center justify-center shadow-sm">✨</span>
-              <h3 class="font-extrabold text-blue-900 text-sm">AI News Summary</h3>
-            </div>
-            <p id="ai-news-content" class="text-gray-700 text-sm leading-relaxed mb-3"></p>
-            <div id="ai-news-topics" class="flex flex-wrap gap-2"></div>
-          </div>
+
 
           <div class="flex gap-1 mb-3 bg-gray-100 rounded-xl p-1 flex-wrap">
             {[
@@ -802,25 +809,27 @@ const updates = [
       fetch(`${API_BASE}/api/v1/ai/daily-digest`, {
         headers: { 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': 'Bearer ' + _tok }
       }).then(r => r.json()).then(data => {
-        if (data && data.summary) {
-          document.getElementById('ai-digest-content').textContent = data.summary;
-          document.getElementById('ai-digest-card').classList.remove('hidden');
-        }
-      }).catch(() => {});
+        document.getElementById('ai-digest-content').textContent = (data && data.summary) ? data.summary : "Check out the news and events directly!";
+        document.getElementById('ai-digest-card').classList.remove('hidden');
+      }).catch(() => {
+        document.getElementById('ai-digest-content').textContent = "Check out the news and events directly!";
+        document.getElementById('ai-digest-card').classList.remove('hidden');
+      });
 
       // News Summary
       fetch(`${API_BASE}/api/v1/ai/news-summary`, {
         headers: { 'X-Organization-ID': DEFAULT_ORG_ID, 'Authorization': 'Bearer ' + _tok }
       }).then(r => r.json()).then(data => {
-        if (data && data.summary) {
-          document.getElementById('ai-news-content').textContent = data.summary;
-          if (data.trending_topics && data.trending_topics.length > 0) {
-            const topicsHtml = data.trending_topics.map(t => `<span class="bg-white border border-blue-200 text-blue-800 text-[11px] px-2.5 py-1 rounded-full font-semibold shadow-sm">${esc(t)}</span>`).join('');
-            document.getElementById('ai-news-topics').innerHTML = topicsHtml;
-          }
-          document.getElementById('ai-news-summary').classList.remove('hidden');
+        document.getElementById('ai-news-content').textContent = (data && data.summary) ? data.summary : "Check out the detailed news categories below for the latest updates.";
+        if (data && data.trending_topics && data.trending_topics.length > 0) {
+          const topicsHtml = data.trending_topics.map(t => `<span class="bg-white border border-blue-200 text-blue-800 text-[11px] px-2.5 py-1 rounded-full font-semibold shadow-sm">${esc(t)}</span>`).join('');
+          document.getElementById('ai-news-topics').innerHTML = topicsHtml;
         }
-      }).catch(() => {});
+        document.getElementById('ai-news-summary').classList.remove('hidden');
+      }).catch(() => {
+        document.getElementById('ai-news-content').textContent = "Check out the detailed news categories below for the latest updates.";
+        document.getElementById('ai-news-summary').classList.remove('hidden');
+      });
     }
 
     // ── Tabbed News ──────────────────────────────────────────────────

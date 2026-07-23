@@ -472,6 +472,7 @@ def live_scores(
             joinedload(CricketMatch.fixture).joinedload(Fixture.tournament),
         )
         .filter(Fixture.organization_id == tenant_id,
+                Fixture.status == "IN_PROGRESS",
                 CricketMatch.status.in_(_LIVE_MATCH_STATUSES))
         .all()
     )

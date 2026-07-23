@@ -1,0 +1,43 @@
+---
+// web/src/components/AiDailyDigest.astro
+export interface Props {
+  summary?: string;
+}
+
+const { summary = "Check out the news and events directly!" } = Astro.props;
+---
+
+<div class="mb-4 rounded-2xl overflow-hidden shadow-lg relative bg-gradient-to-br from-teal-900 to-green-800 text-white p-6">
+  <!-- Faint decorative background icon -->
+  <div class="absolute -top-6 -right-6 text-white/5">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-40 h-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"></path>
+      <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"></path>
+      <path d="m13.6 13.7 2.1 2.1"></path>
+      <path d="m22 2-1.5 1.5"></path>
+      <path d="m9 17-1.5 1.5"></path>
+    </svg>
+  </div>
+
+  <div class="relative z-10 flex flex-col items-start gap-3">
+    <div class="flex items-center gap-3">
+      <div class="bg-white/20 p-2 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+          <path d="M2 14h2"></path>
+          <path d="M20 14h2"></path>
+          <path d="M15 13v2"></path>
+          <path d="M9 13v2"></path>
+          <path d="M12 8V4"></path>
+          <path d="M12 4 10 6"></path>
+          <path d="M12 4l2 2"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg font-extrabold tracking-wide">AI Daily Digest</h2>
+    </div>
+    
+    <p class="text-white/90 text-sm leading-relaxed max-w-2xl font-medium">
+      {summary}
+    </p>
+  </div>
+</div>
