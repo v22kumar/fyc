@@ -90,6 +90,8 @@ def get_gold_price() -> dict:
             _cache["fetched_at"] = now
         except Exception as e:
             logger.warning(f"Gold price API fetch failed: {e}")
+            # Cache the failure (or stale data) for a shorter duration (e.g. 5 minutes) to prevent thread pool exhaustion
+            _cache["fetched_at"] = now - _CACHE_TTL + timedelta(minutes=5)
             if _cache["data"] is not None:
                 return _cache["data"]
             return _STUB.copy()

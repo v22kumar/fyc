@@ -476,7 +476,7 @@ async def lifespan(app: FastAPI):
 
         from app.services.keepalive import run_keepalive
         scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
-        # scheduler.start()  # Disabled for debugging
+        scheduler.start()
         logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
         logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
 

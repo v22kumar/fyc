@@ -142,6 +142,8 @@ def get_weather(lat: float, lon: float) -> dict:
             _cache[key] = {"data": data, "fetched_at": now}
         except Exception as e:
             logger.warning(f"Open-Meteo fetch failed for ({lat}, {lon}): {e}")
+            # Cache the failure for 5 minutes to prevent thread pool exhaustion
+            _cache[key] = {"data": cached["data"] if cached else None, "fetched_at": now - _CACHE_TTL + timedelta(minutes=5)}
             if cached is not None:
                 return cached["data"]
             return {
