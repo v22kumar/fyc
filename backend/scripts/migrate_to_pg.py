@@ -99,6 +99,12 @@ def migrate_data():
                                     elif ptype == int: value = 0
                                     elif ptype == float: value = 0.0
                                     elif ptype == str: value = ""
+                                    elif ptype.__name__ == 'datetime':
+                                        import datetime
+                                        value = datetime.datetime(2000, 1, 1)
+                                    elif ptype.__name__ == 'date':
+                                        import datetime
+                                        value = datetime.date(2000, 1, 1)
                                 except NotImplementedError:
                                     pass
                         record[col_name] = value
