@@ -15,7 +15,7 @@ class AIService:
     def __init__(self, db: Session):
         self.db = db
         self.api_key = settings.GEMINI_API_KEY
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
     
     def _call_gemini(self, prompt: str) -> Optional[str]:
         """Make an async-compatible HTTP call to the Gemini API."""
