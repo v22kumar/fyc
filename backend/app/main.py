@@ -503,7 +503,8 @@ async def lifespan(app: FastAPI):
             run_news_digest, 
             run_evening_digest,
             run_ai_daily_digest_job,
-            run_ai_news_summary_job
+            run_ai_news_summary_job,
+            run_notification_cleanup
         )
         scheduler.add_job(run_thirukkural_digest, "cron", hour=3, minute=30, timezone="UTC",  # 9:00 AM IST
                           id="thirukkural_digest", replace_existing=True)
@@ -511,6 +512,10 @@ async def lifespan(app: FastAPI):
                           id="news_digest", replace_existing=True)
         scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC",  # 8:00 PM IST
                           id="evening_digest", replace_existing=True)
+                          
+        # Nightly database cleanup
+        scheduler.add_job(run_notification_cleanup, "cron", hour=2, minute=0, timezone="UTC",  # 7:30 AM IST
+                          id="notification_cleanup", replace_existing=True)
 
         if settings.MORNING_BROADCAST_ENABLED:
             from app.services.whatsapp_broadcast import run_morning_broadcast

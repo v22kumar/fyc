@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.tenant import Organization
 from app.models.user import User
+from app.models.notification import Notification
 from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
@@ -98,3 +99,22 @@ def run_evening_digest():
                 body_ta="இன்றைய புதுப்பிப்புகள் மற்றும் சாதனைகளை மதிப்பாய்வு செய்யவும்.",
                 notification_type="SYSTEM"
             )
+
+def run_notification_cleanup():
+    """Scheduled job to permanently delete old, transient notifications to save storage (e.g. 7 days old)"""
+    logger.info("Running Notification Cleanup Job...")
+    import datetime
+    cutoff_date = datetime.datetime.now(timezone.utc) - datetime.timedelta(days=7)
+    
+    with SessionLocal() as db:
+        # We delete NEWS, SYSTEM, DAILY, COMMUNITY notifications older than 7 days.
+        # We do not delete ADMIN or specific targeted types unless they are marked as transient.
+        from sqlalchemy import delete
+        
+        stmt = delete(Notification).where(
+            Notification.notification_type.in_(["NEWS", "SYSTEM", "COMMUNITY", "DAILY"]),
+            Notification.created_at < cutoff_date
+        )
+        result = db.execute(stmt)
+        db.commit()
+        logger.info(f"[Cleanup] Deleted {result.rowcount} old notifications.")

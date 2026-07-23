@@ -279,6 +279,9 @@ class NotificationService:
         query = self.db.query(User).filter(User.organization_id == organization_id)
         if target_roles:
             query = query.filter(User.role.in_(target_roles))
+        else:
+            # Prevent spamming Blood Donors for generic news/broadcasts.
+            query = query.filter(User.role.in_(["SUPER_ADMIN", "ADMIN", "MEMBER"]))
             
         for u in query.all():
             self.send_notification(
