@@ -34,6 +34,14 @@ def migrate_data():
     # Ensure tables exist in Postgres
     Base.metadata.create_all(bind=pg_engine)
 
+    if pg_engine.name == "postgresql":
+        logger.info("Clearing any auto-generated startup data from Postgres to ensure a perfect 1-to-1 migration...")
+        with pg_engine.begin() as tgt_conn:
+            # Gather all table names
+            all_tables = [t.name for t in Base.metadata.sorted_tables]
+            if all_tables:
+                tgt_conn.execute(text(f"TRUNCATE TABLE {', '.join(all_tables)} CASCADE;"))
+
     # BREAK THE METADATA CYCLE
     # SQLAlchemy's sorted_tables breaks down when it encounters mutual foreign keys (like tournaments <-> teams).
     # We temporarily remove the cyclic FKs from the metadata so the topological sort works flawlessly.
@@ -107,14 +115,6 @@ def migrate_data():
                 records.append(record)
             
             with pg_engine.begin() as tgt_conn:
-                # Check if target table is empty to avoid duplicate primary keys
-                count_query = select(func.count()).select_from(table)
-                existing_count = tgt_conn.execute(count_query).scalar()
-                
-                if existing_count > 0:
-                    logger.warning(f"  -> Target table '{table.name}' already has {existing_count} rows. Skipping to avoid ID conflicts.")
-                    continue
-                
                 # Batch inserts for large tables
                 batch_size = 1000
                 for i in range(0, len(records), batch_size):
