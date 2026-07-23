@@ -14,7 +14,7 @@ FCM_SERVER_KEY = settings.FCM_SERVER_KEY
 FCM_URL = "https://fcm.googleapis.com/fcm/send"
 
 
-def _send_fcm(token: str, title: str, body: str, data: dict | None = None) -> bool:
+async def _send_fcm(token: str, title: str, body: str, data: dict | None = None) -> bool:
     if not FCM_SERVER_KEY:
         logger.info(f"[FCM disabled] To: {token[:12]}… | {title}: {body}")
         return False
@@ -25,20 +25,27 @@ def _send_fcm(token: str, title: str, body: str, data: dict | None = None) -> bo
             "notification": {"title": title, "body": body, "sound": "default"},
             "data": data or {},
         }
-        r = httpx.post(
-            FCM_URL,
-            json=payload,
-            headers={"Authorization": f"key={FCM_SERVER_KEY}", "Content-Type": "application/json"},
-            timeout=10,
-        )
-        r.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                FCM_URL,
+                json=payload,
+                headers={"Authorization": f"key={FCM_SERVER_KEY}", "Content-Type": "application/json"},
+                timeout=10.0,
+            )
+            r.raise_for_status()
         return True
+    except httpx.TimeoutException:
+        logger.error("FCM send failed: Timeout")
+        return False
+    except httpx.HTTPStatusError as e:
+        logger.error(f"FCM send failed: HTTP error {e.response.status_code}")
+        return False
     except Exception as e:
         logger.error(f"FCM send failed: {e}")
         return False
 
 
-def _send_topic(topic: str, title: str, body: str, data: dict | None = None) -> bool:
+async def _send_topic(topic: str, title: str, body: str, data: dict | None = None) -> bool:
     """Send to all subscribers of an FCM topic (e.g. 'org_fyc-nagercoil_blood')."""
     if not FCM_SERVER_KEY:
         logger.info(f"[FCM disabled] Topic: {topic} | {title}: {body}")
@@ -50,14 +57,21 @@ def _send_topic(topic: str, title: str, body: str, data: dict | None = None) -> 
             "notification": {"title": title, "body": body, "sound": "default"},
             "data": data or {},
         }
-        r = httpx.post(
-            FCM_URL,
-            json=payload,
-            headers={"Authorization": f"key={FCM_SERVER_KEY}", "Content-Type": "application/json"},
-            timeout=10,
-        )
-        r.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                FCM_URL,
+                json=payload,
+                headers={"Authorization": f"key={FCM_SERVER_KEY}", "Content-Type": "application/json"},
+                timeout=10.0,
+            )
+            r.raise_for_status()
         return True
+    except httpx.TimeoutException:
+        logger.error("FCM topic send failed: Timeout")
+        return False
+    except httpx.HTTPStatusError as e:
+        logger.error(f"FCM topic send failed: HTTP error {e.response.status_code}")
+        return False
     except Exception as e:
         logger.error(f"FCM topic send failed: {e}")
         return False
@@ -65,7 +79,7 @@ def _send_topic(topic: str, title: str, body: str, data: dict | None = None) -> 
 
 # ── Public helpers called from routers ────────────────────────────────────────
 
-def notify_blood_request(org_slug: str, blood_group: str, location: str, lang: str = "ta") -> bool:
+async def notify_blood_request(org_slug: str, blood_group: str, location: str, lang: str = "ta") -> bool:
     """Broadcast urgent blood request to the org's blood topic."""
     if lang == "ta":
         title = f"அவசர இரத்தம் தேவை — {blood_group}"
@@ -74,10 +88,10 @@ def notify_blood_request(org_slug: str, blood_group: str, location: str, lang: s
         title = f"Urgent Blood Needed — {blood_group}"
         body = f"{blood_group} blood urgently needed near {location}. Please respond!"
     topic = f"org_{org_slug}_blood"
-    return _send_topic(topic, title, body, {"type": "BLOOD_REQUEST", "blood_group": blood_group})
+    return await _send_topic(topic, title, body, {"type": "BLOOD_REQUEST", "blood_group": blood_group})
 
 
-def notify_issue_assigned(fcm_token: str, issue_id: str, category: str, lang: str = "ta") -> bool:
+async def notify_issue_assigned(fcm_token: str, issue_id: str, category: str, lang: str = "ta") -> bool:
     """Notify a volunteer they've been assigned an issue."""
     if lang == "ta":
         title = "புதிய பணி ஒதுக்கப்பட்டது"
@@ -85,10 +99,10 @@ def notify_issue_assigned(fcm_token: str, issue_id: str, category: str, lang: st
     else:
         title = "New Issue Assigned"
         body = f"A {category} issue has been assigned to you. Please act promptly."
-    return _send_fcm(fcm_token, title, body, {"type": "ISSUE_ASSIGNED", "issue_id": issue_id})
+    return await _send_fcm(fcm_token, title, body, {"type": "ISSUE_ASSIGNED", "issue_id": issue_id})
 
 
-def notify_issue_resolved(fcm_token: str, issue_id: str, lang: str = "ta") -> bool:
+async def notify_issue_resolved(fcm_token: str, issue_id: str, lang: str = "ta") -> bool:
     """Notify the reporter their issue was resolved."""
     if lang == "ta":
         title = "உங்கள் புகார் தீர்க்கப்பட்டது"
@@ -96,10 +110,10 @@ def notify_issue_resolved(fcm_token: str, issue_id: str, lang: str = "ta") -> bo
     else:
         title = "Your Issue is Resolved"
         body = "The issue you reported has been resolved. Thank you!"
-    return _send_fcm(fcm_token, title, body, {"type": "ISSUE_RESOLVED", "issue_id": issue_id})
+    return await _send_fcm(fcm_token, title, body, {"type": "ISSUE_RESOLVED", "issue_id": issue_id})
 
 
-def notify_event_created(org_slug: str, title: str, date: str, lang: str = "ta") -> bool:
+async def notify_event_created(org_slug: str, title: str, date: str, lang: str = "ta") -> bool:
     """Broadcast new event to all org members."""
     if lang == "ta":
         notif_title = f"புதிய நிகழ்வு: {title}"
@@ -108,10 +122,10 @@ def notify_event_created(org_slug: str, title: str, date: str, lang: str = "ta")
         notif_title = f"New Event: {title}"
         body = f"Happening on {date}. Come join us!"
     topic = f"org_{org_slug}_events"
-    return _send_topic(topic, notif_title, body, {"type": "EVENT_CREATED"})
+    return await _send_topic(topic, notif_title, body, {"type": "EVENT_CREATED"})
 
 
-def notify_announcement(org_slug: str, title: str, category: str, lang: str = "ta") -> bool:
+async def notify_announcement(org_slug: str, title: str, category: str, lang: str = "ta") -> bool:
     """Broadcast announcement to org topic."""
     topic = f"org_{org_slug}_announcements"
-    return _send_topic(topic, title, f"[{category}] {title}", {"type": "ANNOUNCEMENT", "category": category})
+    return await _send_topic(topic, title, f"[{category}] {title}", {"type": "ANNOUNCEMENT", "category": category})

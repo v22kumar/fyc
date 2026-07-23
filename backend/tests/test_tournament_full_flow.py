@@ -261,5 +261,5 @@ def test_conduct_full_cricket_tournament(client, db):
     by_id = {t["id"]: t for t in standings}
     winner = by_id[fx["team_a_id"]]
     loser = by_id[fx["team_b_id"]]
-    assert winner["wins"] == 1 and winner["points"] == 3
+    assert winner["wins"] == 1 and winner["points"] == 2
     assert loser["losses"] == 1

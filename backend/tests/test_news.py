@@ -1,3 +1,4 @@
+import pytest
 from app.services import news as service
 
 _SAMPLE_RSS = """<?xml version="1.0" encoding="UTF-8"?>
@@ -42,10 +43,11 @@ def test_parse_rss_skips_items_without_a_link():
     assert len(items) == 2
 
 
-def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
+@pytest.mark.asyncio
+async def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
     calls = {"n": 0}
 
-    def fake_fetch(url):
+    async def fake_fetch(url):
         calls["n"] += 1
         return service.parse_rss(_SAMPLE_RSS)
 
@@ -53,37 +55,42 @@ def test_get_top_tamil_news_caches_and_falls_back_on_failure(monkeypatch):
     service._cache["items"] = []
     service._cache["fetched_at"] = None
 
-    first = service.get_top_tamil_news(limit=10)
+    first = await service.get_top_tamil_news(limit=10)
     assert len(first) == 2
     assert calls["n"] == 1
 
     # Cache still fresh — second call should not re-fetch.
-    second = service.get_top_tamil_news(limit=10)
+    second = await service.get_top_tamil_news(limit=10)
     assert calls["n"] == 1
     assert second == first
 
     # Force staleness, but make the upstream fetch fail — should serve the
     # last good cache instead of raising.
-    def failing_fetch(url):
+    async def failing_fetch(url):
         raise RuntimeError("upstream unreachable")
 
     monkeypatch.setattr(service, "_fetch", failing_fetch)
     service._cache["fetched_at"] = None
-    third = service.get_top_tamil_news(limit=10)
+    third = await service.get_top_tamil_news(limit=10)
     assert third == first
 
 
-def test_get_top_tamil_news_respects_limit_and_max(monkeypatch):
-    monkeypatch.setattr(service, "_fetch", lambda url: service.parse_rss(_SAMPLE_RSS))
+@pytest.mark.asyncio
+async def test_get_top_tamil_news_respects_limit_and_max(monkeypatch):
+    async def mock_fetch(url):
+        return service.parse_rss(_SAMPLE_RSS)
+    monkeypatch.setattr(service, "_fetch", mock_fetch)
     service._cache["items"] = []
     service._cache["fetched_at"] = None
 
-    assert len(service.get_top_tamil_news(limit=1)) == 1
-    assert len(service.get_top_tamil_news(limit=999)) <= service.MAX_ITEMS
+    assert len(await service.get_top_tamil_news(limit=1)) == 1
+    assert len(await service.get_top_tamil_news(limit=999)) <= service.MAX_ITEMS
 
 
 def test_news_endpoint(client, monkeypatch):
-    monkeypatch.setattr(service, "_fetch", lambda url: service.parse_rss(_SAMPLE_RSS))
+    async def mock_fetch(url):
+        return service.parse_rss(_SAMPLE_RSS)
+    monkeypatch.setattr(service, "_fetch", mock_fetch)
     service._cache["items"] = []
     service._cache["fetched_at"] = None
 

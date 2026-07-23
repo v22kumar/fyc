@@ -9,7 +9,7 @@ def is_configured() -> bool:
     return bool(settings.INSTAGRAM_ACCOUNT_ID and settings.INSTAGRAM_ACCESS_TOKEN)
 
 
-def publish_photo(image_url: str, caption: str) -> str:
+async def publish_photo(image_url: str, caption: str) -> str:
     """
     Publish a photo to the org's Instagram feed.
     Returns the Instagram media ID.
@@ -24,20 +24,19 @@ def publish_photo(image_url: str, caption: str) -> str:
     account_id = settings.INSTAGRAM_ACCOUNT_ID
     token = settings.INSTAGRAM_ACCESS_TOKEN
 
-    # Step 1: create container
-    r1 = httpx.post(
-        f"{GRAPH_API}/{account_id}/media",
-        params={"image_url": image_url, "caption": caption, "access_token": token},
-        timeout=15,
-    )
-    r1.raise_for_status()
-    container_id = r1.json()["id"]
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        # Step 1: create container
+        r1 = await client.post(
+            f"{GRAPH_API}/{account_id}/media",
+            params={"image_url": image_url, "caption": caption, "access_token": token},
+        )
+        r1.raise_for_status()
+        container_id = r1.json()["id"]
 
-    # Step 2: publish
-    r2 = httpx.post(
-        f"{GRAPH_API}/{account_id}/media_publish",
-        params={"creation_id": container_id, "access_token": token},
-        timeout=15,
-    )
-    r2.raise_for_status()
-    return r2.json()["id"]
+        # Step 2: publish
+        r2 = await client.post(
+            f"{GRAPH_API}/{account_id}/media_publish",
+            params={"creation_id": container_id, "access_token": token},
+        )
+        r2.raise_for_status()
+        return r2.json()["id"]

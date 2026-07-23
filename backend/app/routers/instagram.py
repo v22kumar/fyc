@@ -30,7 +30,7 @@ _TRUSTED_ROLES = {"CLUB_MEMBER", "EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"}
     response_model=InstagramPostOut,
     status_code=status.HTTP_201_CREATED,
 )
-def create_instagram_post(
+async def create_instagram_post(
     payload: InstagramPostCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -62,7 +62,7 @@ def create_instagram_post(
     if is_trusted:
         if configured:
             try:
-                media_id = instagram_service.publish_photo(
+                media_id = await instagram_service.publish_photo(
                     payload.image_url, payload.caption
                 )
                 post.status = InstagramPostStatus.PUBLISHED
@@ -130,7 +130,7 @@ def list_instagram_posts(
     "/posts/{post_id}/approve",
     response_model=InstagramPostOut,
 )
-def approve_instagram_post(
+async def approve_instagram_post(
     post_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
@@ -168,7 +168,7 @@ def approve_instagram_post(
 
     if instagram_service.is_configured():
         try:
-            media_id = instagram_service.publish_photo(post.image_url, post.caption)
+            media_id = await instagram_service.publish_photo(post.image_url, post.caption)
             post.status = InstagramPostStatus.PUBLISHED
             post.instagram_media_id = media_id
         except Exception as exc:

@@ -1,6 +1,6 @@
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -82,6 +82,7 @@ def get_issue_stats(
 def submit_issue(
     payload: IssueCreate,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
@@ -135,7 +136,8 @@ def submit_issue(
     if reporter_fcm_token:
         try:
             dept = _DEPT_MAP.get(payload.category.value, "the relevant department")
-            notify_issue_assigned(
+            background_tasks.add_task(
+                notify_issue_assigned,
                 fcm_token=reporter_fcm_token,
                 issue_id=str(issue.id),
                 category=dept,
@@ -182,6 +184,7 @@ def get_issue(
 def update_issue_status(
     issue_id: UUID,
     payload: IssueStatusUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):
@@ -234,7 +237,7 @@ def update_issue_status(
             reporter = db.query(User).filter(User.id == issue.reported_by_user_id).first()
             fcm = getattr(reporter, "fcm_token", None) if reporter else None
             if fcm:
-                notify_issue_resolved(fcm_token=fcm, issue_id=str(issue.id))
+                background_tasks.add_task(notify_issue_resolved, fcm_token=fcm, issue_id=str(issue.id))
         except Exception:
             pass
 
@@ -249,6 +252,7 @@ class IssueAssignRequest(BaseModel):
 def assign_issue_volunteer(
     issue_id: UUID,
     payload: IssueAssignRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_executive),
 ):
@@ -298,7 +302,7 @@ def assign_issue_volunteer(
                 issue.category.value if hasattr(issue.category, 'value') else str(issue.category),
                 "General"
             )
-            notify_issue_assigned(fcm_token=fcm, issue_id=str(issue.id), category=dept)
+            background_tasks.add_task(notify_issue_assigned, fcm_token=fcm, issue_id=str(issue.id), category=dept)
     except Exception:
         pass
 

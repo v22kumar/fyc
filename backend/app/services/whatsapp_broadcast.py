@@ -62,7 +62,7 @@ def compose_morning_message() -> str:
     return "\n".join(lines)
 
 
-def send_to_group(message: str) -> bool:
+async def send_to_group(message: str) -> bool:
     """POST message to the FYC WhatsApp group via Meta Cloud API."""
     if not (settings.META_WA_TOKEN and settings.META_WA_PHONE_NUMBER_ID and settings.META_WA_GROUP_ID):
         logger.info("[broadcast] Meta Cloud API not configured — skipping group send")
@@ -76,21 +76,27 @@ def send_to_group(message: str) -> bool:
             "type": "text",
             "text": {"body": message, "preview_url": False},
         }
-        resp = httpx.post(
-            url,
-            json=payload,
-            headers={"Authorization": f"Bearer {settings.META_WA_TOKEN}"},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        logger.info(f"[broadcast] Group message sent OK: {resp.json()}")
-        return True
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                url,
+                json=payload,
+                headers={"Authorization": f"Bearer {settings.META_WA_TOKEN}"},
+            )
+            resp.raise_for_status()
+            logger.info(f"[broadcast] Group message sent OK: {resp.json()}")
+            return True
+    except httpx.TimeoutException:
+        logger.warning("[broadcast] Group send failed: Timeout")
+        return False
+    except httpx.HTTPStatusError as e:
+        logger.warning(f"[broadcast] Group send failed: HTTP error {e.response.status_code}")
+        return False
     except Exception as e:
         logger.warning(f"[broadcast] Group send failed: {e}")
         return False
 
 
-def send_to_members(message: str, org_id: uuid.UUID = _DEFAULT_ORG_ID) -> dict:
+async def send_to_members(message: str, org_id: uuid.UUID = _DEFAULT_ORG_ID) -> dict:
     """Send the message to all registered users with phone numbers via Twilio."""
     if not (settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN):
         logger.info("[broadcast] Twilio not configured — skipping individual sends")
@@ -122,7 +128,9 @@ def send_to_members(message: str, org_id: uuid.UUID = _DEFAULT_ORG_ID) -> dict:
     logger.info(f"[broadcast] Sending to {len(phones)} members")
     for phone in phones:
         try:
-            client.messages.create(
+            # Run the blocking Twilio call in a thread pool to avoid blocking the event loop
+            await asyncio.to_thread(
+                client.messages.create,
                 from_=settings.TWILIO_WHATSAPP_FROM,
                 to=f"whatsapp:{phone}",
                 body=message,
@@ -131,12 +139,12 @@ def send_to_members(message: str, org_id: uuid.UUID = _DEFAULT_ORG_ID) -> dict:
         except Exception as e:
             logger.warning(f"[broadcast] Failed to send to {phone}: {e}")
             failed += 1
-        time.sleep(1)  # 1 msg/sec to stay within Twilio rate limits
+        await asyncio.sleep(1)  # 1 msg/sec to stay within Twilio rate limits
 
     return {"sent": sent, "failed": failed}
 
 
-def run_morning_broadcast() -> None:
+async def run_morning_broadcast() -> None:
     """Orchestrate the daily broadcast — called by APScheduler and the admin endpoint."""
     logger.info("[broadcast] Starting morning broadcast")
     try:
@@ -145,8 +153,8 @@ def run_morning_broadcast() -> None:
         logger.error(f"[broadcast] Failed to compose message: {e}")
         return
 
-    group_ok = send_to_group(message)
-    result = send_to_members(message)
+    group_ok = await send_to_group(message)
+    result = await send_to_members(message)
 
     _last_broadcast["run_at"] = datetime.now(timezone.utc).isoformat()
     _last_broadcast["group_ok"] = group_ok

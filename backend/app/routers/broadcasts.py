@@ -8,9 +8,9 @@ require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
 
 
 @router.post("/send-now")
-def trigger_broadcast(current_user=Depends(require_admin)):
+async def trigger_broadcast(current_user=Depends(require_admin)):
     """Manually trigger the morning broadcast immediately (admin only)."""
-    run_morning_broadcast()
+    await run_morning_broadcast()
     return {
         "status": "sent",
         "detail": _last_broadcast,

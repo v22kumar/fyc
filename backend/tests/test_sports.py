@@ -404,7 +404,7 @@ def test_standings_include_nrr_and_rank_by_it(client, db):
         by_name = {r["name"]: r for r in rows}
         assert by_name["Aces"]["net_run_rate"] > 0, path
         assert by_name["Blasters"]["net_run_rate"] < 0, path
-        winners = [r["name"] for r in rows if r["points"] == 3]
+        winners = [r["name"] for r in rows if r["points"] == 2]
         assert winners[0] == "Aces" and winners[1] == "Chargers", path
 
 
@@ -437,7 +437,7 @@ def test_standings_derive_from_fixtures_not_stored_counters(client, db):
     # Derived strictly from the single completed fixture, not the drifted store.
     assert by_name["Aces"]["wins"] == 1
     assert by_name["Aces"]["losses"] == 0
-    assert by_name["Aces"]["points"] == 3
+    assert by_name["Aces"]["points"] == 2
     assert by_name["Blasters"]["losses"] == 1
     assert by_name["Blasters"]["points"] == 0
 

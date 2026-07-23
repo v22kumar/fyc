@@ -283,7 +283,7 @@ def recent_hashtags(
 
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
-def create_post(
+async def create_post(
     payload: PostCreate,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
@@ -359,7 +359,7 @@ def create_post(
                     base = settings.PUBLIC_BASE_URL.rstrip("/") if getattr(settings, "PUBLIC_BASE_URL", "") else ""
                     image_url = f"{base}{image_url}" if base else image_url
                 if image_url.startswith("http"):
-                    instagram_service.publish_photo(image_url, content[:2200])
+                    await instagram_service.publish_photo(image_url, content[:2200])
                     post.source = "instagram"
                     db.commit()
                     db.refresh(post)

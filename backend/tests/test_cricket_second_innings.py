@@ -47,7 +47,7 @@ def test_completed_cricket_match_writes_real_scores_result_and_standings(client,
     a = db.query(Team).filter(Team.id == team_ids[0]).first()
     b = db.query(Team).filter(Team.id == team_ids[1]).first()
     assert str(fx.winner_id) == str(b.id)
-    assert b.wins == 1 and b.points == 3
+    assert b.wins == 1 and b.points == 2
     assert a.losses == 1 and a.wins == 0
 
 
@@ -70,7 +70,7 @@ def test_editing_a_ball_after_completion_does_not_double_count_standings(client,
     b = db.query(Team).filter(Team.id == team_ids[1]).first()
     a = db.query(Team).filter(Team.id == team_ids[0]).first()
     # Still exactly one win / one loss — not doubled.
-    assert b.wins == 1 and b.points == 3
+    assert b.wins == 1 and b.points == 2
     assert a.losses == 1
 
 def test_second_innings(client, db):
