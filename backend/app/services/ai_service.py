@@ -15,7 +15,7 @@ class AIService:
     def __init__(self, db: Session):
         self.db = db
         self.api_key = settings.GEMINI_API_KEY
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     
     def _call_gemini(self, prompt: str) -> Optional[str]:
         """Make an async-compatible HTTP call to the Gemini API."""
@@ -175,7 +175,24 @@ class AIService:
             return cached.content_data
 
         from app.services.news import get_kanyakumari_news, get_top_tamil_news
-        news_items = get_kanyakumari_news(limit=5) + get_top_tamil_news(limit=5)
+        import asyncio
+        
+        try:
+            # The news functions are async (refactored in Phase 1 for performance)
+            # If there's an existing event loop, run_until_complete, else asyncio.run
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # We can't use run_until_complete in a running loop, but in our architecture
+                # this is called from a synchronous background thread (apscheduler) or sync route
+                # where the loop is usually not running. 
+                pass
+            k_news = loop.run_until_complete(get_kanyakumari_news(limit=5))
+            t_news = loop.run_until_complete(get_top_tamil_news(limit=5))
+        except RuntimeError:
+            k_news = asyncio.run(get_kanyakumari_news(limit=5))
+            t_news = asyncio.run(get_top_tamil_news(limit=5))
+            
+        news_items = k_news + t_news
         
         context = "Latest News Headlines:\\n"
         for i, item in enumerate(news_items[:10]):
