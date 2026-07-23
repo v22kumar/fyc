@@ -34,8 +34,19 @@ def migrate_data():
     # Ensure tables exist in Postgres
     Base.metadata.create_all(bind=pg_engine)
 
-    # Use sorted_tables to respect foreign key constraints
-    for table in Base.metadata.sorted_tables:
+    # Use sorted_tables, but manually reorder 'tournaments' before 'teams' to break cyclic dependency
+    tables = list(Base.metadata.sorted_tables)
+    table_names = [t.name for t in tables]
+    if "teams" in table_names and "tournaments" in table_names:
+        teams_idx = table_names.index("teams")
+        tourn_idx = table_names.index("tournaments")
+        if teams_idx < tourn_idx:
+            t = tables.pop(tourn_idx)
+            tables.insert(teams_idx, t)
+
+    deferred_tournaments = []
+
+    for table in tables:
         logger.info(f"Migrating table: {table.name}...")
         
         with sqlite_engine.connect() as src_conn:
@@ -66,12 +77,21 @@ def migrate_data():
                             except NotImplementedError:
                                 pass
                     record[col_name] = value
+                
+                # CYCLE BREAK: Nullify cyclic FKs in tournaments before insert to avoid ForeignKeyViolation
+                if table.name == "tournaments":
+                    updates = {}
+                    for col in ("winner_id", "runner_up_id"):
+                        if record.get(col) is not None:
+                            updates[col] = record[col]
+                            record[col] = None
+                    if updates:
+                        updates["id"] = record["id"]
+                        deferred_tournaments.append(updates)
+                        
                 records.append(record)
             
             with pg_engine.begin() as tgt_conn:
-                if pg_engine.name == "postgresql":
-                    tgt_conn.execute(text(f"ALTER TABLE {table.name} DISABLE TRIGGER ALL;"))
-                    
                 # Check if target table is empty to avoid duplicate primary keys
                 count_query = select(func.count()).select_from(table)
                 existing_count = tgt_conn.execute(count_query).scalar()
@@ -106,8 +126,23 @@ def migrate_data():
                         except NotImplementedError:
                             pass
                             
-                if pg_engine.name == "postgresql":
-                    tgt_conn.execute(text(f"ALTER TABLE {table.name} ENABLE TRIGGER ALL;"))
+    if deferred_tournaments and pg_engine.name == "postgresql":
+        logger.info("Applying deferred foreign key updates for 'tournaments'...")
+        with pg_engine.begin() as tgt_conn:
+            for update_dict in deferred_tournaments:
+                t_id = update_dict["id"]
+                sets = []
+                params = {"id": t_id}
+                if "winner_id" in update_dict:
+                    sets.append("winner_id = :w_id")
+                    params["w_id"] = update_dict["winner_id"]
+                if "runner_up_id" in update_dict:
+                    sets.append("runner_up_id = :r_id")
+                    params["r_id"] = update_dict["runner_up_id"]
+                
+                if sets:
+                    sql = f"UPDATE tournaments SET {', '.join(sets)} WHERE id = :id"
+                    tgt_conn.execute(text(sql), params)
                             
     logger.info("Data migration completed successfully!")
     logger.info("This script has safely copied your data and synced the primary key sequences.")
