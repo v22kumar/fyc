@@ -29,13 +29,20 @@ class CommentOut(BaseModel):
     class Config:
         from_attributes = True
 
+import requests
+import logging
+from app.models.tenant import Organization
+from app.models.post import Post
+
+logger = logging.getLogger(__name__)
+
 @router.post("", response_model=CommentOut)
 def create_comment(
     payload: CommentCreatePayload,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Add a lightweight comment to any entity."""
+    """Add a lightweight comment to any entity, and sync it to social media if applicable."""
     comment = Comment(
         organization_id=current_user.organization_id,
         author_id=current_user.id,
@@ -46,6 +53,64 @@ def create_comment(
     db.add(comment)
     db.commit()
     db.refresh(comment)
+    
+    # Cross-Platform Comment Sync
+    if payload.entity_type == "post":
+        post = db.query(Post).filter(Post.id == payload.entity_id).first()
+        if post and post.source in ["instagram", "threads"] and post.idempotency_key:
+            org = db.query(Organization).filter(Organization.id == current_user.organization_id).first()
+            if org:
+                # Prepend the user's name since it will be posted from the business account
+                full_name = "User"
+                profile = current_user.profile
+                if profile:
+                    full_name = profile.full_name_en or profile.full_name_ta or "User"
+                
+                comment_text = f"{full_name}: {payload.content}"
+                
+                if post.source == "instagram" and org.instagram_access_token:
+                    media_id = post.idempotency_key.replace("ig_", "")
+                    try:
+                        res = requests.post(
+                            f"https://graph.facebook.com/v19.0/{media_id}/comments",
+                            data={
+                                "message": comment_text,
+                                "access_token": org.instagram_access_token
+                            }
+                        )
+                        if res.status_code != 200:
+                            logger.error(f"Failed to sync IG comment: {res.text}")
+                    except Exception as e:
+                        logger.error(f"Error syncing IG comment: {e}")
+                        
+                elif post.source == "threads" and org.threads_access_token and org.threads_account_id:
+                    media_id = post.idempotency_key.replace("threads_", "")
+                    try:
+                        # 1. Create Reply Container
+                        c_res = requests.post(
+                            f"https://graph.threads.net/v1.0/{org.threads_account_id}/threads",
+                            data={
+                                "media_type": "TEXT",
+                                "text": comment_text,
+                                "reply_to_id": media_id,
+                                "access_token": org.threads_access_token
+                            }
+                        )
+                        if c_res.status_code == 200:
+                            creation_id = c_res.json().get("id")
+                            # 2. Publish Reply Container
+                            requests.post(
+                                f"https://graph.threads.net/v1.0/{org.threads_account_id}/threads_publish",
+                                data={
+                                    "creation_id": creation_id,
+                                    "access_token": org.threads_access_token
+                                }
+                            )
+                        else:
+                            logger.error(f"Failed to create Threads reply container: {c_res.text}")
+                    except Exception as e:
+                        logger.error(f"Error syncing Threads comment: {e}")
+
     return comment
 
 @router.get("/{entity_type}/{entity_id}", response_model=List[CommentOut])

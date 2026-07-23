@@ -665,6 +665,8 @@ app.include_router(awards_router.router, prefix="/api/v1")
 app.include_router(weekly_games_router.router, prefix="/api/v1")
 app.include_router(ai_router.router, prefix="/api/v1")
 app.include_router(social_auth_router.router, prefix="/api/v1")
+from app.routers import threads as threads_router
+app.include_router(threads_router.router, prefix="/api/v1")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
