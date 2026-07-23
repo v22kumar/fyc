@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../providers/ai_providers.dart';
 
 class AiNewsSummaryCard extends ConsumerWidget {
@@ -49,7 +49,7 @@ class AiNewsSummaryCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  LucideIcons.sparkles,
+                  Icons.auto_awesome,
                   color: Colors.blue.shade700,
                   size: 20,
                 ),

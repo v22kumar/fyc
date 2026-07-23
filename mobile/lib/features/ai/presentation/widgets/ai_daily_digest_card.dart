@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../providers/ai_providers.dart';
 
 class AiDailyDigestCard extends ConsumerWidget {
@@ -47,7 +47,7 @@ class AiDailyDigestCard extends ConsumerWidget {
             right: -20,
             top: -20,
             child: Icon(
-              LucideIcons.sparkles,
+              Icons.auto_awesome,
               size: 100,
               color: Colors.white.withOpacity(0.05),
             ),
@@ -66,7 +66,7 @@ class AiDailyDigestCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        LucideIcons.bot,
+                        Icons.smart_toy_outlined,
                         color: Colors.white,
                         size: 20,
                       ),
