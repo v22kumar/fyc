@@ -33,8 +33,9 @@ class Settings(BaseSettings):
     # opaque pydantic error, even in dev.
     SECRET_KEY: str = "dev-insecure-secret-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    # By default, use local PostgreSQL
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/fyc_connect"
+    # By default, we use local SQLite to remain 100% free and avoid $38/mo cluster fees.
+    # The app is fully compatible with PostgreSQL if you ever decide to upgrade.
+    DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
     
     # Valkey (Redis-compatible) cache/session store
     VALKEY_URL: str = "redis://localhost:6379/0"
