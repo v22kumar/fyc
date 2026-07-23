@@ -40,6 +40,7 @@ from app.routers import chess as chess_router
 from app.routers import awards as awards_router
 from app.routers import weekly_games as weekly_games_router
 from app.routers import ai as ai_router
+from app.routers import social_auth as social_auth_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -518,9 +519,26 @@ async def lifespan(app: FastAPI):
                           id="notification_cleanup", replace_existing=True)
 
         if settings.MORNING_BROADCAST_ENABLED:
-            from app.services.whatsapp_broadcast import run_morning_broadcast
-            scheduler.add_job(run_morning_broadcast, "cron", hour=0, minute=30, timezone="UTC",
-                              id="morning_broadcast", replace_existing=True)
+            from app.services.whatsapp_broadcast import daily_broadcast
+            from app.services.social_sync import sync_social_feeds
+            scheduler.add_job(
+                daily_broadcast,
+                'cron',
+                hour=0,
+                minute=30,
+                id='whatsapp_daily_broadcast',
+                replace_existing=True,
+                misfire_grace_time=3600
+            )
+            
+            # Schedule Social Media feed sync every hour
+            scheduler.add_job(
+                sync_social_feeds,
+                'interval',
+                hours=1,
+                id='social_media_sync',
+                replace_existing=True
+            )
             logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
 
         from app.services.keepalive import run_keepalive
@@ -646,6 +664,7 @@ app.include_router(chess_router.router, prefix="/api/v1")
 app.include_router(awards_router.router, prefix="/api/v1")
 app.include_router(weekly_games_router.router, prefix="/api/v1")
 app.include_router(ai_router.router, prefix="/api/v1")
+app.include_router(social_auth_router.router, prefix="/api/v1")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")

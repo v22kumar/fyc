@@ -15,3 +15,10 @@ class Organization(Base, TimestampMixin):
     name_ta = Column(String(150), nullable=False)
     name_en = Column(String(150), nullable=False)
     is_active = Column(Boolean(), default=True)
+    
+    # Social Media Sync Tokens
+    instagram_access_token = Column(String, nullable=True)
+    instagram_account_id = Column(String, nullable=True)
+    threads_access_token = Column(String, nullable=True)
+    threads_account_id = Column(String, nullable=True)
+
