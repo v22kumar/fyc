@@ -34,7 +34,7 @@ def auth_instagram(request: Request):
     redirect_uri = f"{base_url}/api/v1/social/auth/instagram/callback"
     
     # We request pages permissions to fetch the Instagram Business Account
-    permissions = "instagram_basic,instagram_manage_comments,pages_show_list,pages_read_engagement"
+    permissions = "instagram_basic,pages_show_list,pages_read_engagement"
     
     auth_url = f"https://www.facebook.com/v19.0/dialog/oauth?client_id={IG_APP_ID}&redirect_uri={redirect_uri}&scope={permissions}"
     return RedirectResponse(auth_url)
