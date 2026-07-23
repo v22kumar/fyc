@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # Make sure we can import from app
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import SessionLocal
 from app.models.tenant import Organization
