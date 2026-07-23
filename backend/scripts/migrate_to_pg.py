@@ -34,17 +34,24 @@ def migrate_data():
     # Ensure tables exist in Postgres
     Base.metadata.create_all(bind=pg_engine)
 
-    # Use sorted_tables, but manually reorder 'tournaments' before 'teams' to break cyclic dependency
-    tables = list(Base.metadata.sorted_tables)
-    table_names = [t.name for t in tables]
-    if "teams" in table_names and "tournaments" in table_names:
-        teams_idx = table_names.index("teams")
-        tourn_idx = table_names.index("tournaments")
-        if teams_idx < tourn_idx:
-            t = tables.pop(tourn_idx)
-            tables.insert(teams_idx, t)
+    # BREAK THE METADATA CYCLE
+    # SQLAlchemy's sorted_tables breaks down when it encounters mutual foreign keys (like tournaments <-> teams).
+    # We temporarily remove the cyclic FKs from the metadata so the topological sort works flawlessly.
+    tournaments_table = Base.metadata.tables.get("tournaments")
+    if tournaments_table is not None:
+        cyclic_fks = [fk for fk in tournaments_table.foreign_keys if fk.parent.name in ("winner_id", "runner_up_id")]
+        for fk in cyclic_fks:
+            tournaments_table.foreign_keys.remove(fk)
+            
+    fixtures_table = Base.metadata.tables.get("fixtures")
+    if fixtures_table is not None:
+        cyclic_fks = [fk for fk in fixtures_table.foreign_keys if fk.parent.name == "winner_id"]
+        for fk in cyclic_fks:
+            fixtures_table.foreign_keys.remove(fk)
 
+    tables = list(Base.metadata.sorted_tables)
     deferred_tournaments = []
+    deferred_fixtures = []
 
     for table in tables:
         logger.info(f"Migrating table: {table.name}...")
@@ -78,7 +85,7 @@ def migrate_data():
                                 pass
                     record[col_name] = value
                 
-                # CYCLE BREAK: Nullify cyclic FKs in tournaments before insert to avoid ForeignKeyViolation
+                # CYCLE BREAK: Nullify cyclic FKs in tournaments and fixtures before insert to avoid ForeignKeyViolation
                 if table.name == "tournaments":
                     updates = {}
                     for col in ("winner_id", "runner_up_id"):
@@ -88,6 +95,14 @@ def migrate_data():
                     if updates:
                         updates["id"] = record["id"]
                         deferred_tournaments.append(updates)
+                elif table.name == "fixtures":
+                    updates = {}
+                    if record.get("winner_id") is not None:
+                        updates["winner_id"] = record["winner_id"]
+                        record["winner_id"] = None
+                    if updates:
+                        updates["id"] = record["id"]
+                        deferred_fixtures.append(updates)
                         
                 records.append(record)
             
@@ -143,6 +158,15 @@ def migrate_data():
                 if sets:
                     sql = f"UPDATE tournaments SET {', '.join(sets)} WHERE id = :id"
                     tgt_conn.execute(text(sql), params)
+
+    if deferred_fixtures and pg_engine.name == "postgresql":
+        logger.info("Applying deferred foreign key updates for 'fixtures'...")
+        with pg_engine.begin() as tgt_conn:
+            for update_dict in deferred_fixtures:
+                t_id = update_dict["id"]
+                params = {"id": t_id, "w_id": update_dict["winner_id"]}
+                sql = "UPDATE fixtures SET winner_id = :w_id WHERE id = :id"
+                tgt_conn.execute(text(sql), params)
                             
     logger.info("Data migration completed successfully!")
     logger.info("This script has safely copied your data and synced the primary key sequences.")
