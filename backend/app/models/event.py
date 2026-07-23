@@ -70,10 +70,10 @@ class EventRegistration(Base, TimestampMixin):
     mobile_number = Column(String(15), nullable=True)
     email = Column(String(150), nullable=True)
     address = Column(Text, nullable=True)
-    school_college = Column(String(200), nullable=False)
+    school_college = Column(String(200), nullable=True)
     class_grade = Column(String(50), nullable=True)
     member_id = Column(String(50), nullable=True)
-    competition_category = Column(JSON, nullable=False, default=list) # List of chosen categories (Topics)
+    competition_category = Column(JSON, nullable=True, default=list) # List of chosen categories (Topics)
     remarks = Column(Text, nullable=True)
     status = Column(String(50), nullable=False, default="registered")
     
