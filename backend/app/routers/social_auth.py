@@ -14,11 +14,11 @@ router = APIRouter(prefix="/social", tags=["Social"])
 
 # App secrets can be configured via ENV variables in production
 # Defaulting to the credentials provided by the user for FYC Connect
-IG_APP_ID = os.getenv("IG_APP_ID", "909285875002274")
-IG_APP_SECRET = os.getenv("IG_APP_SECRET", "72403e3ff19da21956bb3de60f5f551e")
+IG_APP_ID = os.getenv("IG_APP_ID", "1797067354995679")
+IG_APP_SECRET = os.getenv("IG_APP_SECRET", "140500a7cf07d2091c17e9b97e2a65c7")
 
-THREADS_APP_ID = os.getenv("THREADS_APP_ID", "1551943886666330")
-THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "c8a275a3cfd4c6c83d09d6514a75991f")
+THREADS_APP_ID = os.getenv("THREADS_APP_ID", "1797067354995679")
+THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "140500a7cf07d2091c17e9b97e2a65c7")
 
 # ---------------------------------------------------------------------------
 # INSTAGRAM OAUTH
