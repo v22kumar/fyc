@@ -87,6 +87,15 @@ class Settings(BaseSettings):
     INSTAGRAM_ACCOUNT_ID: str = ""    # numeric IG business account ID
     INSTAGRAM_ACCESS_TOKEN: str = ""  # long-lived page access token
 
+    # Meta OAuth app credentials for Instagram Business Login / Threads.
+    # Set via `flyctl secrets set IG_APP_SECRET=...` etc. NEVER hardcode these —
+    # an app secret in the repo is a credential leak and must be rotated.
+    IG_APP_ID: str = ""
+    IG_APP_SECRET: str = ""
+    IG_ACCOUNT_ID: str = ""            # fallback IG business account id
+    THREADS_APP_ID: str = ""
+    THREADS_APP_SECRET: str = ""
+
     # Weather via Open-Meteo (free, no key needed); this var kept for compat only
     OPENWEATHER_API_KEY: str = ""
 

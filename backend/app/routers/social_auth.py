@@ -6,20 +6,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.tenant import Organization
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/social", tags=["Social"])
 
-# App secrets can be configured via ENV variables in production
-# Defaulting to the credentials provided by the user for FYC Connect
-# We will use the user's older App ID which has Instagram Business Login configured
-IG_APP_ID = os.getenv("IG_APP_ID", "909285875002274")
-IG_APP_SECRET = os.getenv("IG_APP_SECRET", "72403e3ff19da21956bb3de60f5f551e")
+# Meta OAuth app credentials come from environment / Fly secrets ONLY — never a
+# hardcoded default (an app secret in source is a leak). Configure with:
+#   flyctl secrets set IG_APP_ID=... IG_APP_SECRET=... THREADS_APP_ID=... \
+#                      THREADS_APP_SECRET=... IG_ACCOUNT_ID=...
+IG_APP_ID = settings.IG_APP_ID
+IG_APP_SECRET = settings.IG_APP_SECRET
 
-THREADS_APP_ID = os.getenv("THREADS_APP_ID", "1551943886666330")
-THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "c8a275a3cfd4c6c83d09d6514a75991f")
+THREADS_APP_ID = settings.THREADS_APP_ID
+THREADS_APP_SECRET = settings.THREADS_APP_SECRET
 
 # ---------------------------------------------------------------------------
 # INSTAGRAM OAUTH
@@ -76,7 +78,7 @@ def auth_instagram_callback(request: Request, code: str = Query(...), db: Sessio
         raise HTTPException(status_code=404, detail="Organization not found")
         
     org.instagram_access_token = short_lived_token
-    org.instagram_account_id = user_id or os.getenv("IG_ACCOUNT_ID", "17841411702636378")
+    org.instagram_account_id = user_id or settings.IG_ACCOUNT_ID
     db.commit()
     
     return {"status": "success", "message": "Instagram OAuth configured successfully!"}

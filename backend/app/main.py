@@ -170,9 +170,13 @@ def _seed_database():
         # env-overridable so the credential is not pinned in source; the literal
         # fallback preserves the existing login until BOOTSTRAP_ADMIN_PASSWORD is set.
         bootstrap_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "vrn2252@gmail.com")
-        bootstrap_password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "V22@kumar")
+        # No hardcoded password — must be supplied via env/Fly secret. The existing
+        # admin already exists in prod, so this only gates first-time bootstrap.
+        bootstrap_password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "")
         admin_user = db.query(User).filter(User.email == bootstrap_email).first()
-        if not admin_user:
+        if not admin_user and not bootstrap_password:
+            print("BOOTSTRAP_ADMIN_PASSWORD not set — skipping SUPER_ADMIN bootstrap.")
+        elif not admin_user:
             admin_user = User(
                 id=uuid.uuid4(),
                 organization_id=uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
