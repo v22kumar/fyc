@@ -668,6 +668,10 @@ app.include_router(social_auth_router.router, prefix="/api/v1")
 from app.routers import threads as threads_router
 app.include_router(threads_router.router, prefix="/api/v1")
 
+from app.routers import facebook as facebook_router
+app.include_router(facebook_router.router, prefix="/api/v1/facebook")
+
+
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
 

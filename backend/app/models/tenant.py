@@ -21,4 +21,5 @@ class Organization(Base, TimestampMixin):
     instagram_account_id = Column(String, nullable=True)
     threads_access_token = Column(String, nullable=True)
     threads_account_id = Column(String, nullable=True)
-
+    facebook_access_token = Column(String, nullable=True)
+    facebook_page_id = Column(String, nullable=True)
