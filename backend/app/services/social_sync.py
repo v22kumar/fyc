@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def sync_social_feeds():
     """
-    Background job to pull new posts from Instagram and Threads,
+    Background job to pull new posts from social platforms,
     inserting them into the community feed (posts table).
     """
     logger.info("Starting background sync for social feeds...")
@@ -26,6 +26,9 @@ def sync_social_feeds():
             if not admin_user:
                 continue
                 
+            if org.facebook_access_token and org.facebook_page_id:
+                _sync_facebook(db, org, admin_user)
+
             if org.instagram_access_token and org.instagram_account_id:
                 _sync_instagram(db, org, admin_user)
                 
@@ -35,6 +38,49 @@ def sync_social_feeds():
         logger.error(f"Error during social feed sync: {e}")
     finally:
         db.close()
+
+
+def _sync_facebook(db: Session, org: Organization, admin_user: User):
+    try:
+        url = f"https://graph.facebook.com/v19.0/{org.facebook_page_id}/posts"
+        params = {
+            "fields": "id,message,full_picture,created_time,permalink_url",
+            "access_token": org.facebook_access_token,
+            "limit": 10
+        }
+        res = requests.get(url, params=params)
+        if res.status_code != 200:
+            logger.error(f"Failed to fetch Facebook feed: {res.text}")
+            return
+            
+        data = res.json().get("data", [])
+        for item in data:
+            media_id = item.get("id")
+            idem_key = f"fb_{media_id}"
+            
+            existing = db.query(Post).filter(
+                Post.organization_id == org.id,
+                Post.idempotency_key == idem_key
+            ).first()
+            
+            if not existing:
+                message = item.get("message", "")
+                full_picture = item.get("full_picture")
+                
+                post = Post(
+                    organization_id=org.id,
+                    author_id=admin_user.id,
+                    content=message,
+                    image_urls=[full_picture] if full_picture else [],
+                    category="Announcement",
+                    source="facebook",
+                    idempotency_key=idem_key
+                )
+                db.add(post)
+                
+        db.commit()
+    except Exception as e:
+        logger.error(f"Exception syncing Facebook for org {org.id}: {e}")
 
 
 def _sync_instagram(db: Session, org: Organization, admin_user: User):
@@ -68,7 +114,7 @@ def _sync_instagram(db: Session, org: Organization, admin_user: User):
                 post = Post(
                     organization_id=org.id,
                     author_id=admin_user.id,
-                    content=f"{caption}\n\n[Original Instagram Post]({item.get('permalink')})",
+                    content=caption,
                     image_urls=[media_url] if media_url and item.get("media_type") in ["IMAGE", "CAROUSEL_ALBUM"] else [],
                     category="Announcement",
                     source="instagram",
@@ -112,7 +158,7 @@ def _sync_threads(db: Session, org: Organization, admin_user: User):
                 post = Post(
                     organization_id=org.id,
                     author_id=admin_user.id,
-                    content=f"{text_content}\n\n[Original Threads Post]({item.get('permalink')})",
+                    content=text_content,
                     image_urls=[media_url] if media_url and item.get("media_type") == "IMAGE" else [],
                     category="Announcement",
                     source="threads",
@@ -123,3 +169,4 @@ def _sync_threads(db: Session, org: Organization, admin_user: User):
         db.commit()
     except Exception as e:
         logger.error(f"Exception syncing Threads for org {org.id}: {e}")
+
