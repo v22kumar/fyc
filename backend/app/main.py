@@ -490,15 +490,17 @@ async def lifespan(app: FastAPI):
             # per day), so the Home AI cards are populated immediately on deploy
             # instead of waiting for the morning cron. No-op without a Gemini key.
             if settings.GEMINI_API_KEY:
-                try:
-                    from app.services.daily_digest import (
-                        run_ai_daily_digest_job, run_ai_news_summary_job,
-                    )
-                    run_ai_daily_digest_job()
-                    run_ai_news_summary_job()
-                    logger.info("[startup] AI daily digest + news summary generated")
-                except Exception as _aie:
-                    logger.warning(f"[startup] AI content generation failed: {_aie}")
+                from app.services.daily_digest import (
+                    run_ai_daily_digest_job, run_ai_news_summary_job,
+                )
+                # Run the two jobs independently so one failing doesn't skip the other.
+                for _label, _job in (("daily digest", run_ai_daily_digest_job),
+                                     ("news summary", run_ai_news_summary_job)):
+                    try:
+                        _job()
+                    except Exception as _aie:
+                        logger.warning(f"[startup] AI {_label} generation failed: {_aie}")
+                logger.info("[startup] AI content generation attempted")
         _threading.Thread(target=_prewarm, daemon=True).start()
 
 
