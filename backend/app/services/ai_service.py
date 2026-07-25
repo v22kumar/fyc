@@ -132,19 +132,26 @@ class AIService:
         if cached:
             return cached.content_data
 
-        # Aggregate data (Mocking the exact fetch logic for brevity, ideally uses repositories)
-        from app.models.event import Event
-        from app.models.sports import Fixture
-        from app.models.blood_donor import BloodDonor
-        
-        events = self.db.query(Event).filter(Event.organization_id == organization_id).limit(3).all()
-        fixtures = self.db.query(Fixture).filter(Fixture.tournament_id != None).limit(3).all()
-        blood_requests = self.db.query(BloodDonor).filter(BloodDonor.is_available == True).limit(2).all()
-        
+        # Aggregate today's community data. Wrapped defensively: a single bad
+        # field must not abort the whole digest (this is why it was silently
+        # empty — Event has title_en/title_ta, not `title`, so `e.title` raised
+        # for every org that had any events).
         context = "Today's Community Data:\\n"
-        context += "Events: " + ", ".join([e.title for e in events]) + "\\n"
-        context += "Sports: " + ", ".join([f"{f.team_a_score} vs {f.team_b_score}" for f in fixtures if f.team_a_score]) + "\\n"
-        context += "Blood Donors: " + ", ".join([f"Available: {br.blood_group}" for br in blood_requests]) + "\\n"
+        try:
+            from app.models.event import Event
+            from app.models.sports import Fixture
+            from app.models.blood_donor import BloodDonor
+
+            events = self.db.query(Event).filter(Event.organization_id == organization_id).limit(3).all()
+            fixtures = self.db.query(Fixture).filter(Fixture.tournament_id != None).limit(3).all()
+            blood_requests = self.db.query(BloodDonor).filter(BloodDonor.is_available == True).limit(2).all()
+
+            event_titles = [(e.title_en or e.title_ta or "") for e in events]
+            context += "Events: " + ", ".join(t for t in event_titles if t) + "\\n"
+            context += "Sports: " + ", ".join(f"{f.team_a_score} vs {f.team_b_score}" for f in fixtures if f.team_a_score) + "\\n"
+            context += "Blood Donors: " + ", ".join(f"Available: {br.blood_group}" for br in blood_requests) + "\\n"
+        except Exception as e:
+            logger.warning(f"Daily digest data aggregation partial failure: {e}")
 
         prompt = f"""
         You are the FYC Connect community AI assistant. Based on the data below,
