@@ -9,14 +9,14 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import create_access_token, verify_password, get_password_hash
+from app.core.security import create_access_token, create_refresh_token, decode_token, verify_password, get_password_hash
 from app.dependencies import get_current_user
 from app.services.otp_sender import send_otp as deliver_otp, send_verify_otp, check_verify_otp
 from app.dependencies import get_current_user
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
-from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, _build_user_out
+from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -119,7 +119,7 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/register", response_model=Token)
@@ -206,7 +206,7 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
 
 
 from google.oauth2 import id_token
@@ -336,7 +336,7 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/login/password", response_model=Token)
@@ -364,9 +364,31 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
 
 
+@router.post("/refresh", response_model=AccessTokenResponse)
+def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db)):
+    """Exchange a valid refresh token for a fresh access token. The app calls
+    this silently when an access token expires, so the user stays signed in
+    until they explicitly log out (or the refresh token itself expires)."""
+    try:
+        data = decode_token(payload.refresh_token)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+    if data.get("type") != "refresh":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not a refresh token")
+
+    user = db.query(User).filter(User.id == data.get("sub")).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User no longer exists")
+
+    access_token = create_access_token(
+        subject=user.id,
+        role=user.role,
+        organization_id=str(user.organization_id),
+    )
+    return AccessTokenResponse(access_token=access_token)
 
 
 

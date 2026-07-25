@@ -83,6 +83,16 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserOut
+    refresh_token: Optional[str] = None
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class AccessTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 
 class TokenPayload(BaseModel):

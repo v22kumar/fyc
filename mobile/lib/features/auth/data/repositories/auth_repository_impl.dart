@@ -41,6 +41,11 @@ class AuthRepositoryImpl implements AuthRepository {
         otpCode: otpCode,
       );
       await _storage.saveToken(token.accessToken);
+      if (token.refreshToken != null) {
+        await _storage.saveRefreshToken(token.refreshToken!);
+      } else {
+        await _storage.clearRefreshToken();
+      }
       return Right(token.user);
     } on Failure catch (f) {
       return Left(f);
@@ -72,6 +77,11 @@ class AuthRepositoryImpl implements AuthRepository {
         preferredLanguage: preferredLanguage,
       );
       await _storage.saveToken(token.accessToken);
+      if (token.refreshToken != null) {
+        await _storage.saveRefreshToken(token.refreshToken!);
+      } else {
+        await _storage.clearRefreshToken();
+      }
       return Right(token.user);
     } on Failure catch (f) {
       return Left(f);
@@ -110,6 +120,11 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       await _storage.saveToken(token.accessToken);
+      if (token.refreshToken != null) {
+        await _storage.saveRefreshToken(token.refreshToken!);
+      } else {
+        await _storage.clearRefreshToken();
+      }
       return Right(token.user);
     } on Failure catch (f) {
       return Left(f);
@@ -131,6 +146,11 @@ class AuthRepositoryImpl implements AuthRepository {
         ));
       }
       await _storage.saveToken(result.token!.accessToken);
+      if (result.token!.refreshToken != null) {
+        await _storage.saveRefreshToken(result.token!.refreshToken!);
+      } else {
+        await _storage.clearRefreshToken();
+      }
       return Right(GoogleAuthSuccess(result.token!.user));
     } on Failure catch (f) {
       return Left(f);

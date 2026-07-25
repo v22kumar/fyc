@@ -61,6 +61,14 @@ def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """Retrieve the logged in user based on the validated JWT token."""
+    # A refresh token (type='refresh') must never authenticate a protected
+    # endpoint — it can only be exchanged at /auth/refresh. Access tokens carry
+    # no 'type' claim, so this rejects refresh tokens without breaking them.
+    if payload.get("type") == "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token cannot be used to access resources.",
+        )
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(

@@ -47,6 +47,15 @@ def create_access_token(
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def create_refresh_token(subject: Union[str, Any]) -> str:
+    """Create a long-lived refresh token. Carries type='refresh' so it can never
+    be used as an access token (and vice-versa). Used to mint fresh access
+    tokens silently, so the user stays signed in until they explicitly log out."""
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+
+
 def decode_token(token: str) -> dict:
     """Decode a JWT token and validate its contents. Raises jwt.PyJWTError if invalid."""
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])

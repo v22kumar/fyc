@@ -3,6 +3,7 @@ class AppConstants {
 
   static const String appName = 'FYC Connect';
   static const String tokenKey = 'fyc_auth_token';
+  static const String refreshTokenKey = 'fyc_refresh_token';
   static const String langKey = 'fyc_lang';
   static const String orgIdKey = 'fyc_org_id';
   static const String themeKey = 'fyc_theme'; // 'light' | 'dark' | 'system'
