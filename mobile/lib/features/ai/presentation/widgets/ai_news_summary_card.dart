@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../providers/ai_providers.dart';
 import 'ai_sparkle.dart';
+
+/// Pick the news summary for the app's current language (falls back to English,
+/// then the legacy single `summary` field).
+String _localizedSummary(Map<String, dynamic> data) {
+  final en = ((data['summary_en'] ?? data['summary'] ?? '') as String? ?? '').trim();
+  final ta = ((data['summary_ta'] ?? '') as String? ?? '').trim();
+  return tr(en: en, ta: ta.isNotEmpty ? ta : en).trim();
+}
 
 /// Home "AI News Summary" — a clean, theme-aware surface card with a violet AI
 /// accent and gradient trending-topic chips.
@@ -18,8 +27,8 @@ class AiNewsSummaryCard extends ConsumerWidget {
     final aiNewsState = ref.watch(aiNewsSummaryProvider);
     return aiNewsState.when(
       data: (data) {
-        final summary = (data['summary'] as String?)?.trim();
-        if (summary == null || summary.isEmpty) return const SizedBox.shrink();
+        final summary = _localizedSummary(data);
+        if (summary.isEmpty) return const SizedBox.shrink();
         final topics = List<String>.from(data['trending_topics'] ?? const []);
         return _shell(context, child: _content(context, summary, topics));
       },

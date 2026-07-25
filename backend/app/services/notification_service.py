@@ -132,7 +132,16 @@ class NotificationService:
         channels = []
 
         if pref.push_enabled and user.fcm_token:
-            success = self._dispatch_push(user.fcm_token, title_en, body_en, data)
+            # Dispatch in the user's language — the tray only shows one title/body,
+            # and most FYC members read Tamil (the push was always English before).
+            _lang = (getattr(user, "preferred_language", None) or "en").lower()
+            _is_ta = _lang.startswith("ta")
+            success = self._dispatch_push(
+                user.fcm_token,
+                title_ta if _is_ta else title_en,
+                body_ta if _is_ta else body_en,
+                data,
+            )
             if success:
                 channels.append("FCM")
                 notification.delivered_at = datetime.now(timezone.utc)
@@ -193,7 +202,14 @@ class NotificationService:
         self.db.refresh(notification)
 
         if pref.push_enabled and user.fcm_token:
-            if self._dispatch_push(user.fcm_token, title_en, body_en, data):
+            _lang = (getattr(user, "preferred_language", None) or "en").lower()
+            _is_ta = _lang.startswith("ta")
+            if self._dispatch_push(
+                user.fcm_token,
+                title_ta if _is_ta else title_en,
+                body_ta if _is_ta else body_en,
+                data,
+            ):
                 notification.delivered_at = datetime.now(timezone.utc)
                 notification.delivery_channel = "FCM"
                 self.db.commit()

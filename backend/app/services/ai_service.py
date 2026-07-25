@@ -9,6 +9,31 @@ from app.models.ai_content import AIContent
 
 logger = logging.getLogger(__name__)
 
+
+def _parse_bilingual(response_text: str, keep: tuple = ()) -> Dict[str, Any]:
+    """Parse Gemini's JSON reply into {summary_en, summary_ta, summary}.
+
+    `summary` mirrors the English text for older clients (web / pre-i18n app)
+    that still read a single `summary` field. Extra keys named in `keep` (e.g.
+    trending_topics) are carried through. Tolerates a model that only returned a
+    single `summary`."""
+    cleaned = response_text.strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    if cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    parsed = json.loads(cleaned.strip())
+    en = (parsed.get("summary_en") or parsed.get("summary") or "").strip()
+    ta = (parsed.get("summary_ta") or "").strip()
+    out: Dict[str, Any] = {"summary_en": en, "summary_ta": ta, "summary": en}
+    for k in keep:
+        if k in parsed:
+            out[k] = parsed[k]
+    return out
+
+
 class AIService:
     """Service to interact with Google Gemini and cache responses."""
     
@@ -107,44 +132,48 @@ class AIService:
         if cached:
             return cached.content_data
 
-        # Aggregate data (Mocking the exact fetch logic for brevity, ideally uses repositories)
-        from app.models.event import Event
-        from app.models.sports import Fixture
-        from app.models.blood_donor import BloodDonor
-        
-        events = self.db.query(Event).filter(Event.organization_id == organization_id).limit(3).all()
-        fixtures = self.db.query(Fixture).filter(Fixture.tournament_id != None).limit(3).all()
-        blood_requests = self.db.query(BloodDonor).filter(BloodDonor.is_available == True).limit(2).all()
-        
+        # Aggregate today's community data. Wrapped defensively: a single bad
+        # field must not abort the whole digest (this is why it was silently
+        # empty — Event has title_en/title_ta, not `title`, so `e.title` raised
+        # for every org that had any events).
         context = "Today's Community Data:\\n"
-        context += "Events: " + ", ".join([e.title for e in events]) + "\\n"
-        context += "Sports: " + ", ".join([f"{f.team_a_score} vs {f.team_b_score}" for f in fixtures if f.team_a_score]) + "\\n"
-        context += "Blood Donors: " + ", ".join([f"Available: {br.blood_group}" for br in blood_requests]) + "\\n"
+        try:
+            from app.models.event import Event
+            from app.models.sports import Fixture
+            from app.models.blood_donor import BloodDonor
+
+            events = self.db.query(Event).filter(Event.organization_id == organization_id).limit(3).all()
+            fixtures = self.db.query(Fixture).filter(Fixture.tournament_id != None).limit(3).all()
+            blood_requests = self.db.query(BloodDonor).filter(BloodDonor.is_available == True).limit(2).all()
+
+            event_titles = [(e.title_en or e.title_ta or "") for e in events]
+            context += "Events: " + ", ".join(t for t in event_titles if t) + "\\n"
+            context += "Sports: " + ", ".join(f"{f.team_a_score} vs {f.team_b_score}" for f in fixtures if f.team_a_score) + "\\n"
+            context += "Blood Donors: " + ", ".join(f"Available: {br.blood_group}" for br in blood_requests) + "\\n"
+        except Exception as e:
+            logger.warning(f"Daily digest data aggregation partial failure: {e}")
 
         prompt = f"""
-        You are the FYC Connect community AI assistant. Write a concise daily digest summary (max 3 sentences) based on the following data.
-        Make it sound engaging and community-focused.
-        
+        You are the FYC Connect community AI assistant. Based on the data below,
+        write a concise, engaging, community-focused daily digest (max 3 sentences).
+        Provide it in BOTH English and Tamil.
+
         Data:
         {context}
-        
-        Return JSON format:
+
+        Return ONLY JSON (no markdown):
         {{
-            "summary": "Your generated summary text here"
+            "summary_en": "the digest in English",
+            "summary_ta": "the same digest written in Tamil (தமிழில்)"
         }}
         """
-        
+
         response_text = self._call_gemini(prompt)
         if not response_text:
             return None
-            
+
         try:
-            cleaned = response_text.strip()
-            if cleaned.startswith("```json"): cleaned = cleaned[7:]
-            if cleaned.startswith("```"): cleaned = cleaned[3:]
-            if cleaned.endswith("```"): cleaned = cleaned[:-3]
-            parsed = json.loads(cleaned.strip())
-            
+            parsed = _parse_bilingual(response_text)
             # Cache it
             content = AIContent(
                 organization_id=organization_id,
@@ -199,30 +228,27 @@ class AIService:
             context += f"- {item.get('title', '')}\\n"
 
         prompt = f"""
-        You are a news summarizer. Given the following headlines, write a unified short summary of the day's news (max 3 sentences).
-        Identify the most important trending topics.
-        
+        You are a news summarizer. Given the following headlines, write a unified
+        short summary of the day's news (max 3 sentences), in BOTH English and Tamil.
+        Also identify the most important trending topics.
+
         Headlines:
         {context}
-        
-        Return JSON format:
+
+        Return ONLY JSON (no markdown):
         {{
-            "summary": "Your unified summary text here",
+            "summary_en": "unified summary in English",
+            "summary_ta": "the same summary written in Tamil (தமிழில்)",
             "trending_topics": ["Topic 1", "Topic 2", "Topic 3"]
         }}
         """
-        
+
         response_text = self._call_gemini(prompt)
         if not response_text:
             return None
-            
+
         try:
-            cleaned = response_text.strip()
-            if cleaned.startswith("```json"): cleaned = cleaned[7:]
-            if cleaned.startswith("```"): cleaned = cleaned[3:]
-            if cleaned.endswith("```"): cleaned = cleaned[:-3]
-            parsed = json.loads(cleaned.strip())
-            
+            parsed = _parse_bilingual(response_text, keep=("trending_topics",))
             # Cache it
             content = AIContent(
                 organization_id=organization_id,
