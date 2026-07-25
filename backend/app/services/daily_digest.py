@@ -111,20 +111,25 @@ def run_evening_digest():
             )
 
 def run_notification_cleanup():
-    """Scheduled job to permanently delete old, transient notifications to save storage (e.g. 7 days old)"""
-    logger.info("Running Notification Cleanup Job...")
-    import datetime
-    cutoff_date = datetime.datetime.now(timezone.utc) - datetime.timedelta(days=7)
-    
+    """Prune in-app notification history older than the retention window.
+
+    A notification row is just a "something was sent" record — the underlying
+    event / post / match still lives in its own table — so a uniform N-day
+    retention (NOTIFICATION_RETENTION_DAYS, default 7) keeps the table small
+    without losing any real data. Applies to every type."""
+    from app.core.config import settings
+    days = settings.NOTIFICATION_RETENTION_DAYS
+    logger.info(f"Running Notification Cleanup Job (retaining {days} days)...")
     with SessionLocal() as db:
-        # We delete NEWS, SYSTEM, DAILY, COMMUNITY notifications older than 7 days.
-        # We do not delete ADMIN or specific targeted types unless they are marked as transient.
-        from sqlalchemy import delete
-        
-        stmt = delete(Notification).where(
-            Notification.notification_type.in_(["NEWS", "SYSTEM", "COMMUNITY", "DAILY"]),
-            Notification.created_at < cutoff_date
-        )
-        result = db.execute(stmt)
-        db.commit()
-        logger.info(f"[Cleanup] Deleted {result.rowcount} old notifications.")
+        deleted = prune_old_notifications(db, days)
+        logger.info(f"[Cleanup] Deleted {deleted} notifications older than {days} days.")
+
+
+def prune_old_notifications(db, days: int) -> int:
+    """Delete every notification older than `days`. Returns the number removed."""
+    from datetime import timedelta
+    from sqlalchemy import delete
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+    result = db.execute(delete(Notification).where(Notification.created_at < cutoff_date))
+    db.commit()
+    return result.rowcount or 0

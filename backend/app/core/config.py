@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     # Long-lived refresh token: the app silently mints new access tokens with it,
     # so users stay signed in until they log out (default 60 days).
     REFRESH_TOKEN_EXPIRE_DAYS: int = 60
+
+    # In-app notification history is pruned nightly to this many days. A
+    # notification row is just a "was sent" record — the real event/post/match
+    # lives in its own table — so old rows can be dropped without losing data.
+    NOTIFICATION_RETENTION_DAYS: int = 7
     # By default, we use local SQLite to remain 100% free and avoid $38/mo cluster fees.
     # The app is fully compatible with PostgreSQL if you ever decide to upgrade.
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
