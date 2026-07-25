@@ -471,8 +471,12 @@ def live_scores(
             joinedload(CricketMatch.fixture).joinedload(Fixture.team_b),
             joinedload(CricketMatch.fixture).joinedload(Fixture.tournament),
         )
+        # Liveness is the CRICKET match's status — a fixture's own status is
+        # "LIVE" while scoring (cricket init sets it) but the match_state is the
+        # source of truth, so don't also constrain Fixture.status here (an earlier
+        # `Fixture.status == "IN_PROGRESS"` filter matched nothing, since fixtures
+        # are only ever SCHEDULED/LIVE/COMPLETED — it silently emptied the strip).
         .filter(Fixture.organization_id == tenant_id,
-                Fixture.status == "IN_PROGRESS",
                 CricketMatch.status.in_(_LIVE_MATCH_STATUSES))
         .all()
     )
