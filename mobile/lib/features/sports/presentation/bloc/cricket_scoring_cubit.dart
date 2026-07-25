@@ -303,15 +303,26 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     final offlineSafe =
         predicted != null && !isWicket && (effectiveNewBowler == null || effectiveNewBowler.isEmpty);
 
-    // Ordering guarantee: once anything is queued offline, every later ball
-    // goes through the queue too so it can never overtake an unsynced ball.
+    // ── Fast path (the common case: a normal delivery) ─────────────────────
+    // A predictable, self-contained ball NEVER waits on the network. Apply the
+    // prediction instantly, persist it to the durable queue, and sync in the
+    // background. Ball entry stays at UI speed (~tap latency, well under 200ms)
+    // regardless of the India↔server round-trip — the durable queue guarantees
+    // no data loss and the client_ball_id guarantees the background sync can
+    // never double-count. Order is preserved: later balls queue behind earlier
+    // ones and the single flush loop drains them in sequence.
+    if (offlineSafe) {
+      _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
+      _flushOutbox(); // background — deliberately not awaited
+      return;
+    }
+
+    // An unpredictable ball (wicket, over-end, bowler/batter change) needs
+    // server-assigned ids, so it does wait for the round-trip — but these are
+    // rare (≈1 per over). It must not overtake balls still syncing, so if the
+    // queue isn't empty yet, ask the scorer to retry once it has drained.
     if (_outbox.isNotEmpty) {
-      if (offlineSafe) {
-        _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
-        _flushOutbox();
-      } else {
-        emit(s.copyWith(errorMessage: _reconnectMessage(s.pendingSync)));
-      }
+      emit(s.copyWith(errorMessage: _reconnectMessage(s.pendingSync)));
       return;
     }
 
