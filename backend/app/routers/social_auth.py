@@ -23,6 +23,18 @@ IG_APP_SECRET = settings.IG_APP_SECRET
 THREADS_APP_ID = settings.THREADS_APP_ID
 THREADS_APP_SECRET = settings.THREADS_APP_SECRET
 
+
+def _require_meta_config(app_id: str, app_secret: str, provider: str) -> None:
+    """Fail closed when a provider's OAuth app credentials aren't configured, so
+    we never build a redirect with an empty client_id or POST an empty secret."""
+    if not app_id or not app_secret:
+        raise HTTPException(
+            status_code=503,
+            detail=(f"{provider} OAuth is not configured on the server. "
+                    f"Set its app id/secret as environment / Fly secrets first."),
+        )
+
+
 # ---------------------------------------------------------------------------
 # INSTAGRAM OAUTH
 # ---------------------------------------------------------------------------
@@ -30,6 +42,7 @@ THREADS_APP_SECRET = settings.THREADS_APP_SECRET
 @router.get("/auth/instagram")
 def auth_instagram(request: Request):
     """Redirect to Instagram Business Login to authorize App."""
+    _require_meta_config(IG_APP_ID, IG_APP_SECRET, "Instagram")
     base_url = str(request.base_url).rstrip("/")
     if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
@@ -46,6 +59,7 @@ def auth_instagram(request: Request):
 @router.get("/auth/instagram/callback")
 def auth_instagram_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db)):
     """Exchange the code for a Long-Lived Access Token using Instagram API."""
+    _require_meta_config(IG_APP_ID, IG_APP_SECRET, "Instagram")
     base_url = str(request.base_url).rstrip("/")
     if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
@@ -73,14 +87,22 @@ def auth_instagram_callback(request: Request, code: str = Query(...), db: Sessio
     # For Instagram Business Login, the short lived token can be used directly or exchanged
     # Since we are just trying to get it working, we will save the short lived token (which might be long lived already for some endpoints)
     
+    account_id = user_id or settings.IG_ACCOUNT_ID
+    if not account_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Instagram returned no account id and IG_ACCOUNT_ID is unset — "
+                   "cannot configure publishing without a target account.",
+        )
+
     org = db.query(Organization).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
-        
+
     org.instagram_access_token = short_lived_token
-    org.instagram_account_id = user_id or settings.IG_ACCOUNT_ID
+    org.instagram_account_id = account_id
     db.commit()
-    
+
     return {"status": "success", "message": "Instagram OAuth configured successfully!"}
 
 
@@ -91,6 +113,7 @@ def auth_instagram_callback(request: Request, code: str = Query(...), db: Sessio
 @router.get("/auth/threads")
 def auth_threads(request: Request):
     """Redirect to Threads Login to authorize App."""
+    _require_meta_config(THREADS_APP_ID, THREADS_APP_SECRET, "Threads")
     base_url = str(request.base_url).rstrip("/")
     if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
@@ -104,6 +127,7 @@ def auth_threads(request: Request):
 @router.get("/auth/threads/callback")
 def auth_threads_callback(request: Request, code: str = Query(...), db: Session = Depends(get_db)):
     """Exchange the code for a Threads Token and save it."""
+    _require_meta_config(THREADS_APP_ID, THREADS_APP_SECRET, "Threads")
     base_url = str(request.base_url).rstrip("/")
     if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")

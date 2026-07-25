@@ -169,10 +169,11 @@ def _seed_database():
         # Ensure the owner account is SUPER_ADMIN. Email + bootstrap password are
         # env-overridable so the credential is not pinned in source; the literal
         # fallback preserves the existing login until BOOTSTRAP_ADMIN_PASSWORD is set.
-        bootstrap_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "vrn2252@gmail.com")
-        # No hardcoded password — must be supplied via env/Fly secret. The existing
-        # admin already exists in prod, so this only gates first-time bootstrap.
-        bootstrap_password = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "")
+        # Read via Settings (honours backend/.env locally and Fly/OS env in prod).
+        # No hardcoded password — the existing admin already exists in prod, so
+        # this only gates first-time bootstrap.
+        bootstrap_email = settings.BOOTSTRAP_ADMIN_EMAIL
+        bootstrap_password = settings.BOOTSTRAP_ADMIN_PASSWORD
         admin_user = db.query(User).filter(User.email == bootstrap_email).first()
         if not admin_user and not bootstrap_password:
             print("BOOTSTRAP_ADMIN_PASSWORD not set — skipping SUPER_ADMIN bootstrap.")

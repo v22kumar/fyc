@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     # Same pattern as SECRET_KEY: dev-safe default, rejected in production below.
     FIRST_SUPERADMIN_PASSWORD: str = "changeme_admin_password"
 
+    # Owner-account bootstrap (main.py). No password default — first-time
+    # SUPER_ADMIN bootstrap is skipped unless BOOTSTRAP_ADMIN_PASSWORD is set.
+    # Read via Settings so a value in backend/.env is honoured locally too.
+    BOOTSTRAP_ADMIN_EMAIL: str = "vrn2252@gmail.com"
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""
+
     # Comma-separated list of allowed CORS origins, e.g. "https://fycconnect.org,https://admin.fycconnect.org"
     ALLOWED_ORIGINS: str = "*"
 
