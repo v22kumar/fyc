@@ -36,10 +36,12 @@ _last_broadcast: dict = {
 }
 
 
-def compose_morning_message() -> str:
+async def compose_morning_message() -> str:
     """Build the daily morning message string."""
     kural = get_daily_kural()
-    news_items = get_kanyakumari_news(limit=3)
+    # get_kanyakumari_news is async (httpx) — await it; calling it bare returned
+    # a coroutine and broke message composition (the broadcast silently aborted).
+    news_items = await get_kanyakumari_news(limit=3)
 
     lines = [
         "🌅 காலை வணக்கம்! Good Morning, FYC Family! 🙏",
@@ -148,7 +150,7 @@ async def run_morning_broadcast() -> None:
     """Orchestrate the daily broadcast — called by APScheduler and the admin endpoint."""
     logger.info("[broadcast] Starting morning broadcast")
     try:
-        message = compose_morning_message()
+        message = await compose_morning_message()
     except Exception as e:
         logger.error(f"[broadcast] Failed to compose message: {e}")
         return

@@ -471,18 +471,25 @@ async def lifespan(app: FastAPI):
         # Pre-warm external API caches in a background thread so slow RSS feeds
         # don't delay the server becoming ready.
         import threading as _threading
+        import asyncio as _asyncio
         def _prewarm():
             try:
                 from app.services.weather import get_weather
                 from app.services.gold_price import get_gold_price
                 from app.services import news as _news_svc
-                get_weather(8.1833, 77.4119)
-                get_gold_price()
-                _news_svc.get_top_tamil_news()
-                _news_svc.get_india_news()
-                _news_svc.get_kanyakumari_news()
-                _news_svc.get_tn_jobs_news()
-                _news_svc.get_central_jobs_news()
+                # These services are async (httpx). This runs in a fresh thread
+                # with no event loop, so drive the coroutines with asyncio.run —
+                # calling them bare returned un-awaited coroutines, making the
+                # whole pre-warm a silent no-op.
+                async def _warm():
+                    await get_weather(8.1833, 77.4119)
+                    await get_gold_price()
+                    await _news_svc.get_top_tamil_news()
+                    await _news_svc.get_india_news()
+                    await _news_svc.get_kanyakumari_news()
+                    await _news_svc.get_tn_jobs_news()
+                    await _news_svc.get_central_jobs_news()
+                _asyncio.run(_warm())
                 logger.info("[startup] All caches pre-warmed (weather, gold, news×5)")
             except Exception as _e:
                 logger.warning(f"[startup] Cache pre-warm failed: {_e}")

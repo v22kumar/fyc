@@ -38,8 +38,12 @@ def run_thirukkural_digest():
 def run_news_digest():
     """Scheduled job for News (10 AM IST)"""
     logger.info("Running News Notification Digest...")
+    import asyncio
     from app.services.news import get_kanyakumari_news
-    news_items = get_kanyakumari_news(limit=1)
+    # get_kanyakumari_news is async (httpx); this sync scheduler job runs in a
+    # thread with no loop, so drive it with asyncio.run — calling it bare left
+    # news_items as an un-awaited coroutine and the digest silently failed.
+    news_items = asyncio.run(get_kanyakumari_news(limit=1))
     if not news_items:
         logger.warning("No news items found for the digest.")
         return
