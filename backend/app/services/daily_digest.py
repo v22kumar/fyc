@@ -38,8 +38,12 @@ def run_thirukkural_digest():
 def run_news_digest():
     """Scheduled job for News (10 AM IST)"""
     logger.info("Running News Notification Digest...")
+    import asyncio
     from app.services.news import get_kanyakumari_news
-    news_items = get_kanyakumari_news(limit=1)
+    # get_kanyakumari_news is async (httpx); this sync scheduler job runs in a
+    # thread with no loop, so drive it with asyncio.run — calling it bare left
+    # news_items as an un-awaited coroutine and the digest silently failed.
+    news_items = asyncio.run(get_kanyakumari_news(limit=1))
     if not news_items:
         logger.warning("No news items found for the digest.")
         return
@@ -69,9 +73,13 @@ def run_ai_daily_digest_job():
     with SessionLocal() as db:
         from app.services.ai_service import AIService
         svc = AIService(db)
-        orgs = db.query(Organization).all()
-        for org in orgs:
-            svc.generate_daily_digest(org.id)
+        for org in db.query(Organization).all():
+            # Isolate per-org failures (a Gemini hiccup for one org must not
+            # abort caching for the rest).
+            try:
+                svc.generate_daily_digest(org.id)
+            except Exception as e:  # noqa: BLE001 - best-effort pre-cache
+                logger.warning(f"AI daily digest failed for org {org.id}: {e}")
 
 def run_ai_news_summary_job():
     """Scheduled job to pre-cache the AI News Summary"""
@@ -79,9 +87,11 @@ def run_ai_news_summary_job():
     with SessionLocal() as db:
         from app.services.ai_service import AIService
         svc = AIService(db)
-        orgs = db.query(Organization).all()
-        for org in orgs:
-            svc.generate_news_summary(org.id)
+        for org in db.query(Organization).all():
+            try:
+                svc.generate_news_summary(org.id)
+            except Exception as e:  # noqa: BLE001 - best-effort pre-cache
+                logger.warning(f"AI news summary failed for org {org.id}: {e}")
 
 def run_evening_digest():
     """Scheduled job for Evening Summary"""

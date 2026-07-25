@@ -471,21 +471,43 @@ async def lifespan(app: FastAPI):
         # Pre-warm external API caches in a background thread so slow RSS feeds
         # don't delay the server becoming ready.
         import threading as _threading
+        import asyncio as _asyncio
         def _prewarm():
             try:
                 from app.services.weather import get_weather
                 from app.services.gold_price import get_gold_price
                 from app.services import news as _news_svc
-                get_weather(8.1833, 77.4119)
-                get_gold_price()
-                _news_svc.get_top_tamil_news()
-                _news_svc.get_india_news()
-                _news_svc.get_kanyakumari_news()
-                _news_svc.get_tn_jobs_news()
-                _news_svc.get_central_jobs_news()
+                # These services are async (httpx). This runs in a fresh thread
+                # with no event loop, so drive the coroutines with asyncio.run —
+                # calling them bare returned un-awaited coroutines, making the
+                # whole pre-warm a silent no-op.
+                async def _warm():
+                    await get_weather(8.1833, 77.4119)
+                    await get_gold_price()
+                    await _news_svc.get_top_tamil_news()
+                    await _news_svc.get_india_news()
+                    await _news_svc.get_kanyakumari_news()
+                    await _news_svc.get_tn_jobs_news()
+                    await _news_svc.get_central_jobs_news()
+                _asyncio.run(_warm())
                 logger.info("[startup] All caches pre-warmed (weather, gold, news×5)")
             except Exception as _e:
                 logger.warning(f"[startup] Cache pre-warm failed: {_e}")
+            # Generate today's AI digest + news summary now (idempotent — cached
+            # per day), so the Home AI cards are populated immediately on deploy
+            # instead of waiting for the morning cron. No-op without a Gemini key.
+            if settings.GEMINI_API_KEY:
+                from app.services.daily_digest import (
+                    run_ai_daily_digest_job, run_ai_news_summary_job,
+                )
+                # Run the two jobs independently so one failing doesn't skip the other.
+                for _label, _job in (("daily digest", run_ai_daily_digest_job),
+                                     ("news summary", run_ai_news_summary_job)):
+                    try:
+                        _job()
+                    except Exception as _aie:
+                        logger.warning(f"[startup] AI {_label} generation failed: {_aie}")
+                logger.info("[startup] AI content generation attempted")
         _threading.Thread(target=_prewarm, daemon=True).start()
 
 
@@ -523,9 +545,26 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(run_notification_cleanup, "cron", hour=2, minute=0, timezone="UTC",  # 7:30 AM IST
                           id="notification_cleanup", replace_existing=True)
 
+        # AI pre-cache jobs — populate the Home AI cards ahead of peak hours.
+        # Only scheduled when a Gemini key is configured (the jobs no-op without
+        # it, but skipping keeps the scheduler clean).
+        if settings.GEMINI_API_KEY:
+            scheduler.add_job(run_ai_daily_digest_job, "cron", hour=2, minute=45, timezone="UTC",  # 8:15 AM IST
+                              id="ai_daily_digest", replace_existing=True)
+            scheduler.add_job(run_ai_news_summary_job, "cron", hour=4, minute=45, timezone="UTC",  # 10:15 AM IST
+                              id="ai_news_summary", replace_existing=True)
+            logger.info("[scheduler] AI digest + news summary jobs scheduled")
+
+        # Social feed sync — pulls Instagram/Facebook/Threads posts into the
+        # community feed hourly. Runs independently of the WhatsApp morning
+        # broadcast (it was previously trapped behind that unrelated flag, so the
+        # feed never synced). The job itself no-ops for any org without tokens.
+        from app.services.social_sync import sync_social_feeds
+        scheduler.add_job(sync_social_feeds, "interval", hours=1,
+                          id="social_media_sync", replace_existing=True)
+
         if settings.MORNING_BROADCAST_ENABLED:
             from app.services.whatsapp_broadcast import daily_broadcast
-            from app.services.social_sync import sync_social_feeds
             scheduler.add_job(
                 daily_broadcast,
                 'cron',
@@ -534,15 +573,6 @@ async def lifespan(app: FastAPI):
                 id='whatsapp_daily_broadcast',
                 replace_existing=True,
                 misfire_grace_time=3600
-            )
-            
-            # Schedule Social Media feed sync every hour
-            scheduler.add_job(
-                sync_social_feeds,
-                'interval',
-                hours=1,
-                id='social_media_sync',
-                replace_existing=True
             )
             logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
 

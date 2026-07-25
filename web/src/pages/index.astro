@@ -499,25 +499,34 @@ const updates = [
     <section class="py-6 bg-[#f8f9fa] px-4">
       <div class="max-w-6xl mx-auto flex flex-col gap-6">
         
-        <!-- AI Daily Digest -->
-        <div id="ai-digest-card" class="bg-gradient-to-r from-teal-900 to-[#0F5132] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden hidden">
-          <div class="absolute -top-10 -right-10 text-white/5 text-[150px] pointer-events-none">✨</div>
-          <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div class="bg-white/20 p-4 rounded-2xl shrink-0">
-              <span class="text-3xl">🤖</span>
+        <!-- AI Daily Briefing -->
+        <div id="ai-digest-card" class="relative overflow-hidden rounded-3xl p-8 shadow-xl text-white hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-teal-600">
+          <div class="absolute -top-12 -right-10 text-white/10 text-[160px] leading-none pointer-events-none select-none">✨</div>
+          <div class="absolute -bottom-20 right-24 w-44 h-44 rounded-full bg-white/5 pointer-events-none"></div>
+          <div class="relative z-10">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+              <span class="inline-flex items-center gap-1.5 bg-white/20 border border-white/25 rounded-full px-3 py-1.5 text-xs font-black tracking-wide">
+                <span class="animate-pulse">✨</span> FYC AI
+              </span>
+              <h2 class="text-lg md:text-2xl font-black">Today's Briefing</h2>
             </div>
-            <div>
-              <h2 class="text-xl md:text-2xl font-black mb-2 text-center md:text-left">AI Daily Digest</h2>
-              <p id="ai-digest-content" class="text-green-50/90 leading-relaxed text-sm md:text-base text-center md:text-left"></p>
+            <p id="ai-digest-content" class="text-white/95 leading-relaxed text-sm md:text-base font-medium"></p>
+            <div class="flex items-center gap-1.5 mt-5 text-white/70 text-[11px] font-semibold">
+              <span>⚡</span> Generated for FYC · refreshes daily
             </div>
           </div>
         </div>
 
         <!-- AI News Summary Card -->
-        <div id="ai-news-summary" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 shadow-sm hidden">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="bg-blue-100 text-blue-700 p-1.5 rounded-lg text-sm flex items-center justify-center shadow-sm">✨</span>
-            <h3 class="font-extrabold text-blue-900 text-sm">AI News Summary</h3>
+        <div id="ai-news-summary" class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hidden">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 text-white flex items-center justify-center shadow-sm">
+              <span class="animate-pulse">✨</span>
+            </span>
+            <div>
+              <h3 class="font-extrabold text-gray-900 text-sm">AI News Summary</h3>
+              <p class="text-gray-400 text-[11px] font-semibold">The day in a glance</p>
+            </div>
           </div>
           <p id="ai-news-content" class="text-gray-700 text-sm leading-relaxed mb-3"></p>
           <div id="ai-news-topics" class="flex flex-wrap gap-2"></div>
@@ -822,7 +831,10 @@ const updates = [
       }).then(r => r.json()).then(data => {
         document.getElementById('ai-news-content').textContent = (data && data.summary) ? data.summary : "Check out the detailed news categories below for the latest updates.";
         if (data && data.trending_topics && data.trending_topics.length > 0) {
-          const topicsHtml = data.trending_topics.map(t => `<span class="bg-white border border-blue-200 text-blue-800 text-[11px] px-2.5 py-1 rounded-full font-semibold shadow-sm">${esc(t)}</span>`).join('');
+          const topicsHtml = data.trending_topics.map(t => {
+            const label = String(t).startsWith('#') ? t : '#' + t;
+            return `<span class="text-[11px] px-2.5 py-1 rounded-full font-bold text-violet-700 bg-gradient-to-r from-violet-100 to-pink-100 border border-violet-200">${esc(label)}</span>`;
+          }).join('');
           document.getElementById('ai-news-topics').innerHTML = topicsHtml;
         }
         document.getElementById('ai-news-summary').classList.remove('hidden');
