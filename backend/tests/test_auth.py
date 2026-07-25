@@ -43,6 +43,24 @@ def test_refresh_rejects_an_access_token(client, db):
     assert junk.status_code == 401
 
 
+def test_refresh_token_cannot_access_protected_endpoint(client, db):
+    """A refresh token must not authenticate a normal request — only /refresh."""
+    org, _ = _org_with_admin(db, phone="+919888800003")
+    body = client.post("/api/v1/auth/login/password",
+                       json={"organization_id": str(org.id), "username": "+919888800003", "password": "pass"}).json()
+    r = client.get("/api/v1/auth/users/me", headers={
+        "Authorization": f"Bearer {body['refresh_token']}",
+        "X-Organization-ID": str(org.id),
+    })
+    assert r.status_code == 401
+    # The access token still works on the same endpoint.
+    ok = client.get("/api/v1/auth/users/me", headers={
+        "Authorization": f"Bearer {body['access_token']}",
+        "X-Organization-ID": str(org.id),
+    })
+    assert ok.status_code == 200
+
+
 def test_otp_send_invalid_organization(client):
     """Sending OTP to a non-existent organization must return 404."""
     random_uuid = str(uuid.uuid4())

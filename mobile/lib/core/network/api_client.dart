@@ -48,6 +48,10 @@ class _AuthInterceptor extends Interceptor {
   // original request — so neither recurses back through this interceptor.
   final Dio _bare = Dio(BaseOptions(
     baseUrl: ApiConstants.baseUrl,
+    // Same timeouts as the primary client so a stalled refresh/replay can't
+    // hold every concurrent 401 handler open indefinitely.
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
     headers: {'Content-Type': 'application/json'},
   ));
 
@@ -77,11 +81,18 @@ class _AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final requestHadToken = err.requestOptions.headers['Authorization'] != null;
-    // Auth endpoints (otp/send, otp/verify, login/password, google, register,
-    // refresh) return 401 for ordinary "wrong/expired credentials" — that's not
-    // a mid-session expiry and must not trigger a refresh/logout loop.
-    final isAuthEndpoint = err.requestOptions.path.startsWith('/api/v1/auth/');
-    if (err.response?.statusCode == 401 && requestHadToken && !isAuthEndpoint) {
+    // Only the CREDENTIAL-ISSUING auth routes (and /refresh itself) return 401
+    // for ordinary "wrong/expired credentials" — those must not trigger a
+    // refresh/logout loop. Protected auth routes like /auth/users/me DO need the
+    // refresh-and-replay recovery (it's the launch session check), so don't
+    // blanket-exclude every /auth/ path.
+    final p = err.requestOptions.path;
+    final isCredentialRoute = p.contains('/auth/login') ||
+        p.contains('/auth/otp') ||
+        p.contains('/auth/register') ||
+        p.contains('/auth/google') ||
+        p.contains('/auth/refresh');
+    if (err.response?.statusCode == 401 && requestHadToken && !isCredentialRoute) {
       // Access token expired mid-session. Silently mint a new one with the
       // refresh token and replay the original request, so the user stays signed
       // in instead of being bounced to login.
