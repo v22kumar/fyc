@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/tr.dart';
 import '../../providers/ai_providers.dart';
 import 'ai_sparkle.dart';
+
+/// Pick the digest text for the app's current language. Falls back to English
+/// when the Tamil copy is absent, and to the legacy single `summary` field for
+/// older backends.
+String _localizedSummary(Map<String, dynamic> data) {
+  final en = ((data['summary_en'] ?? data['summary'] ?? '') as String? ?? '').trim();
+  final ta = ((data['summary_ta'] ?? '') as String? ?? '').trim();
+  return tr(en: en, ta: ta.isNotEmpty ? ta : en).trim();
+}
 
 /// Home "AI Daily Briefing" — a premium gradient hero summarising the day's
 /// community activity. Shows an on-brand skeleton while the digest is preparing.
@@ -18,8 +28,8 @@ class AiDailyDigestCard extends ConsumerWidget {
     final aiDigestState = ref.watch(aiDailyDigestProvider);
     return aiDigestState.when(
       data: (data) {
-        final summary = (data['summary'] as String?)?.trim();
-        if (summary == null || summary.isEmpty) return const SizedBox.shrink();
+        final summary = _localizedSummary(data);
+        if (summary.isEmpty) return const SizedBox.shrink();
         return _shell(child: _content(summary));
       },
       loading: () => _shell(child: _skeleton()),

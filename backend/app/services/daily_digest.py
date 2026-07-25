@@ -15,12 +15,15 @@ def run_thirukkural_digest():
     from app.services.thirukkural import get_daily_kural
     kural = get_daily_kural()
     
-    title_ta = f"இன்றைய திருக்குறள் (Kural #{kural.get('number', '')})"
+    title_ta = f"இன்றைய திருக்குறள் (குறள் {kural.get('number', '')})"
     title_en = f"Daily Thirukkural (Kural #{kural.get('number', '')})"
-    
-    # Send the first two lines of the Kural as the body in Tamil, and the English meaning in English.
-    body_ta = f"{kural.get('line1', '')}\n{kural.get('line2', '')}"
-    body_en = kural.get("english_meaning", kural.get("english_couplet", ""))
+
+    couplet = f"{kural.get('line1', '')}\n{kural.get('line2', '')}".strip()
+    # The FULL Tamil kural (couplet + its Tamil meaning) — not the English gloss.
+    body_ta = f"{couplet}\n\n{kural.get('tamil_meaning', '')}".strip()
+    # English speakers still get the Tamil couplet (the actual kural) plus the
+    # English meaning underneath.
+    body_en = f"{couplet}\n\n{kural.get('english_meaning', kural.get('english_couplet', ''))}".strip()
 
     with SessionLocal() as db:
         svc = NotificationService(db)
@@ -32,7 +35,10 @@ def run_thirukkural_digest():
                 title_ta=title_ta,
                 body_en=body_en,
                 body_ta=body_ta,
-                notification_type="SYSTEM"
+                notification_type="SYSTEM",
+                # Tapping the notification opens the app on the Home screen, where
+                # the daily Thirukkural card lives.
+                data={"route": "/home"},
             )
 
 def run_news_digest():
