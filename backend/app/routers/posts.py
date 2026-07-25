@@ -3,7 +3,7 @@ import re
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status, Query
 from sqlalchemy import func, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -283,12 +283,16 @@ def recent_hashtags(
 
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
-async def create_post(
+def create_post(
     payload: PostCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
     current_user: User = Depends(get_current_user),
 ):
+    # Plain `def` so FastAPI runs this DB-bound handler in its threadpool rather
+    # than blocking the event loop with sync SQLAlchemy. The one async bit (the
+    # Instagram cross-post) is deferred to a background task below.
     content = (payload.content or "").strip()
     images = [u for u in (payload.image_urls or []) if u]
     if not content and not images:
@@ -343,30 +347,44 @@ async def create_post(
 
     # Optional cross-post to the org's Instagram feed. Gated to managers/admins
     # (official voice), requires an image, and only runs when IG is configured.
-    # Best-effort: a failed cross-post must never fail the community post.
+    # Deferred to a background task so the slow Meta API call never delays the
+    # post response; best-effort — a failed cross-post never fails the post.
     if (
         payload.share_to_instagram
         and images
         and current_user.role in ("EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN")
     ):
-        try:
-            from app.services import instagram as instagram_service
-
-            if instagram_service.is_configured():
-                image_url = images[0]
-                if not image_url.startswith("http"):
-                    # Instagram needs a public absolute URL.
-                    base = settings.PUBLIC_BASE_URL.rstrip("/") if getattr(settings, "PUBLIC_BASE_URL", "") else ""
-                    image_url = f"{base}{image_url}" if base else image_url
-                if image_url.startswith("http"):
-                    await instagram_service.publish_photo(image_url, content[:2200])
-                    post.source = "instagram"
-                    db.commit()
-                    db.refresh(post)
-        except Exception as e:  # pragma: no cover - best-effort
-            logger.warning(f"Instagram cross-post failed (non-fatal): {e}")
+        background_tasks.add_task(_cross_post_instagram, str(post.id), images[0], content[:2200])
 
     return _serialize(db, post, current_user.id)
+
+
+def _cross_post_instagram(post_id: str, image_url: str, caption: str) -> None:
+    """Publish a community post's image to the org Instagram, then flag the post
+    source. Runs as a background task in the threadpool (a sync fn), driving the
+    async publish with asyncio.run and using its own DB session."""
+    import asyncio
+    from app.services import instagram as instagram_service
+    from app.core.database import SessionLocal
+    try:
+        if not instagram_service.is_configured():
+            return
+        if not image_url.startswith("http"):
+            base = settings.PUBLIC_BASE_URL.rstrip("/") if getattr(settings, "PUBLIC_BASE_URL", "") else ""
+            image_url = f"{base}{image_url}" if base else image_url
+        if not image_url.startswith("http"):
+            return
+        asyncio.run(instagram_service.publish_photo(image_url, caption))
+        db = SessionLocal()
+        try:
+            p = db.query(Post).filter(Post.id == post_id).first()
+            if p:
+                p.source = "instagram"
+                db.commit()
+        finally:
+            db.close()
+    except Exception as e:  # pragma: no cover - best-effort
+        logger.warning(f"Instagram cross-post failed (non-fatal): {e}")
 
 
 @router.post("/{post_id}/repost")

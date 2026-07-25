@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     # By default, we use local SQLite to remain 100% free and avoid $38/mo cluster fees.
     # The app is fully compatible with PostgreSQL if you ever decide to upgrade.
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
+
+    # Connection-pool sizing for a REMOTE Postgres (e.g. Supabase). Ignored for
+    # SQLite. Each threadpooled sync request checks out one connection, so the
+    # pool should be sized against FastAPI's threadpool (~40) AND your Postgres
+    # plan's connection limit. Prefer the Supabase *pooler* (pgbouncer, port
+    # 6543) for the DATABASE_URL so many app connections multiplex onto few DB
+    # ones. pool_recycle guards against the provider dropping idle connections.
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_RECYCLE: int = 1800  # seconds
     
     # Valkey (Redis-compatible) cache/session store
     VALKEY_URL: str = "redis://localhost:6379/0"
