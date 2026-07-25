@@ -4,9 +4,10 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.core.security import decode_token
 from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
@@ -737,7 +738,8 @@ async def spectate_websocket(
         await websocket.close(code=4002, reason="Invalid game_id")
         return
 
-    game = db.query(ChessGame).filter(ChessGame.id == gid).first()
+    game = await run_in_threadpool(
+        lambda: db.query(ChessGame).filter(ChessGame.id == gid).first())
     if not game:
         await websocket.close(code=4003, reason="Game not found")
         return
@@ -814,14 +816,30 @@ async def game_websocket(
         await websocket.close(code=4002, reason="Invalid game_id")
         return
 
-    game = db.query(ChessGame).filter(ChessGame.id == gid).first()
-    if not game:
+    # Load the game AND resolve player display names in one threadpool hop —
+    # both hit the DB (and game.white/black lazily load), so doing them on the
+    # event loop would block every socket for the round-trip. Every DB touch in
+    # this handler is offloaded the same way (mirrors the cricket SSE pattern).
+    def _load_game():
+        g = db.query(ChessGame).filter(ChessGame.id == gid).first()
+        if g is None:
+            return None
+        return g, (_display_name(db, g.white) or "White"), (_display_name(db, g.black) or "Black")
+
+    loaded = await run_in_threadpool(_load_game)
+    if loaded is None:
         await websocket.close(code=4003, reason="Game not found")
         return
+    game, white_name, black_name = loaded
 
     uid = str(user_id)
     white_id = str(game.white_id) if game.white_id else None
     black_id = str(game.black_id) if game.black_id else None
+    # Cache the scalars we read in the loop. SessionLocal expires attributes on
+    # commit, so re-reading game.* after a commit would trigger a SELECT on the
+    # event loop — cache them once to keep the loop free of any DB access.
+    game_org_id = game.organization_id
+    game_time_control = game.time_control
 
     if uid not in (white_id, black_id):
         await websocket.close(code=4004, reason="Not a player in this game")
@@ -830,8 +848,11 @@ async def game_websocket(
     # ── Accept + register ─────────────────────────────────────────────────────
     await websocket.accept()
 
-    white_name = _display_name(db, game.white) or "White"
-    black_name = _display_name(db, game.black) or "Black"
+    # Reusable helper: finalize a completed game (rating/stat updates + commit)
+    # off the event loop. Called from every game-ending branch below.
+    def _finalize_game():
+        _update_stats(db, game, game_org_id)
+        db.commit()
 
     session = ws_manager.get_or_create(
         game_id=str(gid),
@@ -839,7 +860,7 @@ async def game_websocket(
         black_id=black_id,
         white_name=white_name,
         black_name=black_name,
-        time_control=game.time_control,
+        time_control=game_time_control,
     )
 
     session.cancel_disconnect_timer(uid)
@@ -852,13 +873,13 @@ async def game_websocket(
     if session.both_connected():
         if game.status == "waiting":
             game.status = "in_progress"
-            db.commit()
+            await run_in_threadpool(db.commit)
         session.start_clock()
         start_msg: dict = {
             "type": "game_start",
             "white_name": white_name,
             "black_name": black_name,
-            "time_control": game.time_control,
+            "time_control": game_time_control,
             "fen": session.board.fen(),
             "turn": "white",
         }
@@ -898,18 +919,23 @@ async def game_websocket(
                 ply = len(session.san_list)
                 turn = "white" if session.board.turn else "black"
 
-                # Persist move to DB
-                org_id = game.organization_id
-                db.add(ChessMove(
-                    id=uuid.uuid4(),
-                    organization_id=org_id,
-                    game_id=gid,
-                    ply=ply,
-                    uci=uci,
-                    san=san,
-                    fen_after=fen,
-                ))
-                db.commit()
+                # Persist move to DB (off the event loop — this is the hot path;
+                # a move commit on the loop would stall every other socket).
+                org_id = game_org_id
+
+                def _persist_move():
+                    db.add(ChessMove(
+                        id=uuid.uuid4(),
+                        organization_id=org_id,
+                        game_id=gid,
+                        ply=ply,
+                        uci=uci,
+                        san=san,
+                        fen_after=fen,
+                    ))
+                    db.commit()
+
+                await run_in_threadpool(_persist_move)
 
                 move_msg: dict = {
                     "type": "move",
@@ -931,8 +957,7 @@ async def game_websocket(
                     game.status = "ended"
                     game.total_moves = ply
                     game.ended_at = datetime.now(timezone.utc)
-                    _update_stats(db, game, game.organization_id)
-                    db.commit()
+                    await run_in_threadpool(_finalize_game)
                     await session.broadcast({"type": "game_over", **over})
                     ws_manager.remove(str(gid))
                     break
@@ -947,8 +972,7 @@ async def game_websocket(
                     game.status = "ended"
                     game.total_moves = len(session.san_list)
                     game.ended_at = datetime.now(timezone.utc)
-                    _update_stats(db, game, game.organization_id)
-                    db.commit()
+                    await run_in_threadpool(_finalize_game)
                     await session.broadcast({
                         "type": "game_over",
                         "result": result,
@@ -967,8 +991,7 @@ async def game_websocket(
                 game.status = "ended"
                 game.total_moves = len(session.san_list)
                 game.ended_at = datetime.now(timezone.utc)
-                _update_stats(db, game, game.organization_id)
-                db.commit()
+                await run_in_threadpool(_finalize_game)
                 await session.broadcast({"type": "game_over", "result": result, "reason": "resignation"})
                 ws_manager.remove(str(gid))
                 break
@@ -986,8 +1009,7 @@ async def game_websocket(
                     game.status = "ended"
                     game.total_moves = len(session.san_list)
                     game.ended_at = datetime.now(timezone.utc)
-                    _update_stats(db, game, game.organization_id)
-                    db.commit()
+                    await run_in_threadpool(_finalize_game)
                     await session.broadcast({"type": "game_over", "result": "draw", "reason": "agreement"})
                     ws_manager.remove(str(gid))
                     break
@@ -1019,11 +1041,25 @@ async def game_websocket(
             async def forfeit(disconnected_uid: str):
                 color = session.get_color(disconnected_uid)
                 result = "black_wins" if color == "white" else "white_wins"
-                game.result = result
-                game.status = "ended"
-                game.ended_at = datetime.now(timezone.utc)
-                _update_stats(db, game, game.organization_id)
-                db.commit()
+
+                def _persist_forfeit():
+                    # This timer fires ~60s AFTER the handler returned, so the
+                    # request's `db` session is already closed — use a fresh one
+                    # (and re-load the game). Runs off the event loop.
+                    fdb = SessionLocal()
+                    try:
+                        g = fdb.query(ChessGame).filter(ChessGame.id == gid).first()
+                        if not g or g.status == "ended":
+                            return
+                        g.result = result
+                        g.status = "ended"
+                        g.ended_at = datetime.now(timezone.utc)
+                        _update_stats(fdb, g, g.organization_id)
+                        fdb.commit()
+                    finally:
+                        fdb.close()
+
+                await run_in_threadpool(_persist_forfeit)
                 await session.broadcast({
                     "type": "game_over",
                     "result": result,
