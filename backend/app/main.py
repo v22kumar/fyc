@@ -158,17 +158,24 @@ def _seed_database():
                 logger.warning(f"[perf-index] skipped ({_ie}): {_stmt}")
         db.commit()
 
-        # Add new columns to existing DB if not present (idempotent)
-        for migration in [
+        # Add new columns to existing DB if not present (idempotent). Uses
+        # inspect() rather than SQLite-only `PRAGMA table_info`, so it works on
+        # Postgres (Supabase) too — the PRAGMA form errored there and silently
+        # skipped this whole block via the surrounding try/except.
+        from sqlalchemy import inspect as _mig_inspect
+        _mig_insp = _mig_inspect(engine)
+        for table, col, sql in [
             ("user_profiles", "date_of_birth", "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE"),
             ("users", "fcm_token", "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)"),
         ]:
-            table, col, sql = migration
-            cols = db.execute(text(f"PRAGMA table_info({table})")).fetchall()
-            if col not in [c[1] for c in cols]:
-                db.execute(text(sql))
-                db.commit()
-                print(f"[migration] Added column {table}.{col}")
+            try:
+                existing = {c["name"] for c in _mig_insp.get_columns(table)}
+                if col not in existing:
+                    db.execute(text(sql))
+                    db.commit()
+                    print(f"[migration] Added column {table}.{col}")
+            except Exception as _me:
+                logger.warning(f"[migration] {table}.{col} skipped: {_me}")
 
         # Ensure the owner account is SUPER_ADMIN. Email + bootstrap password are
         # env-overridable so the credential is not pinned in source; the literal
@@ -351,8 +358,10 @@ async def lifespan(app: FastAPI):
         try:
             from sqlalchemy import text as _bf_text
             with engine.begin() as conn:
+                # TRUE (not integer 1) so it's valid for a Postgres boolean
+                # column as well as SQLite.
                 conn.execute(_bf_text(
-                    "UPDATE events SET registration_enabled = 1 "
+                    "UPDATE events SET registration_enabled = TRUE "
                     "WHERE registration_enabled IS NULL"))
         except Exception as _bfe:
             logger.warning(f"[data-backfill] events.registration_enabled: {_bfe}")
