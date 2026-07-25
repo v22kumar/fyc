@@ -111,13 +111,17 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
 
   static const _outboxBoxName = 'cricket_outbox';
   Box? _outboxBox;
+  // Completes once the Hive box is open and any prior-session balls are
+  // restored. Awaited before we enqueue, so a first tap can never persist to a
+  // null box or land ahead of restored balls.
+  late final Future<void> _outboxReady;
 
   CricketScoringCubit(this._repository, this.fixtureId) : super(CricketScoringInitial()) {
     _connSub = Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) => r != ConnectivityResult.none);
       if (online && _outbox.isNotEmpty) _flushOutbox();
     });
-    _restoreOutbox();
+    _outboxReady = _restoreOutbox();
   }
 
   @override
@@ -255,6 +259,10 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     String? newBatterName,
     String? newBowlerName,
   }) async {
+    // Guarantee the durable queue is open + restored before enqueuing. After
+    // the first tap this is already complete and returns on the next microtask,
+    // so it doesn't add perceptible latency.
+    await _outboxReady;
     final s = state;
     if (s is! CricketScoringLoaded || s.players == null || s.submitting) return;
     final players = s.players!;
@@ -320,8 +328,9 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     // An unpredictable ball (wicket, over-end, bowler/batter change) needs
     // server-assigned ids, so it does wait for the round-trip — but these are
     // rare (≈1 per over). It must not overtake balls still syncing, so if the
-    // queue isn't empty yet, ask the scorer to retry once it has drained.
-    if (_outbox.isNotEmpty) {
+    // queue isn't empty OR a flush (incl. its reconciling fetch) is in flight,
+    // ask the scorer to retry once it has drained.
+    if (_outbox.isNotEmpty || _flushing) {
       emit(s.copyWith(errorMessage: _reconnectMessage(s.pendingSync)));
       return;
     }
@@ -422,31 +431,46 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
   Future<void> _flushOutbox() async {
     if (_flushing || _outbox.isEmpty) return;
     _flushing = true;
+    var brokeOffline = false;
     try {
       while (_outbox.isNotEmpty) {
         final res = await _repository.scoreCricketBall(fixtureId, _outbox.first);
         if (isClosed) return;
         final failure = res.fold<Failure?>((f) => f, (_) => null);
-        if (failure is NetworkFailure) break; // still offline — keep the queue
+        if (failure is NetworkFailure) {
+          brokeOffline = true;
+          break; // still offline — keep the queue for the next connectivity event
+        }
         _outbox.removeAt(0); // success, or a poison ball we drop and move past
         _persistOutbox(); // durable after each drained ball
       }
       if (_outbox.isEmpty) {
         final st = await _repository.fetchCricketMatchState(fixtureId);
         if (isClosed) return;
-        st.fold((_) {}, (ms) {
-          final cur = state;
-          if (cur is CricketScoringLoaded) {
-            emit(CricketScoringLoaded(ms,
-                players: cur.players, needsNewBowler: cur.needsNewBowler, pendingSync: 0));
-          }
-        });
-      } else {
+        // A ball may have been enqueued while we awaited the fetch — don't
+        // overwrite that fresh optimistic state with now-stale server truth;
+        // the finally re-drain below will sync it and reconcile next pass.
+        if (_outbox.isEmpty) {
+          st.fold((_) {}, (ms) {
+            final cur = state;
+            if (cur is CricketScoringLoaded) {
+              emit(CricketScoringLoaded(ms,
+                  players: cur.players, needsNewBowler: cur.needsNewBowler, pendingSync: 0));
+            }
+          });
+        }
+      }
+      if (_outbox.isNotEmpty) {
         final cur = state;
         if (cur is CricketScoringLoaded) emit(cur.copyWith(pendingSync: _outbox.length));
       }
     } finally {
       _flushing = false;
+      // Balls enqueued during this flush had their own _flushOutbox() no-op
+      // (because _flushing was true). Drain them now — but not if we stopped
+      // because we're offline (the connectivity listener handles that), so we
+      // never spin in a tight retry loop.
+      if (_outbox.isNotEmpty && !brokeOffline && !isClosed) _flushOutbox();
     }
   }
 
