@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class LegendEntry {
@@ -109,11 +110,11 @@ class LegendsPage extends StatelessWidget {
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Chess Legends',
+              trId('chess_legends'),
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
             Text(

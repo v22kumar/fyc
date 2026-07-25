@@ -147,7 +147,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
               backgroundColor: AppColors.accent,
               duration: const Duration(seconds: 4),
               action: SnackBarAction(
-                label: tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः प्रयास', ml: 'വീണ്ടും ശ്രമിക്കുക'),
+                label: trId('retry_3'),
                 textColor: Colors.white,
                 onPressed: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -268,8 +268,8 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'FYC Connect',
+                        Text(
+                          trId('fyc_connect'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 26,
@@ -279,12 +279,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr(
-                            en: 'Joining hands in social service',
-                            ta: 'சமூக சேவையில் இணைவோம்',
-                            hi: 'सामाजिक सेवा में जुड़ें',
-                            ml: 'സാമൂഹിക സേവനത്തിൽ ഒന്നിക്കാം',
-                          ),
+                          trId('joining_hands_in_social_service'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.55),
                             fontSize: 13,
@@ -300,12 +295,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: Text(
-                            tr(
-                              en: 'What is this app?',
-                              ta: 'இது என்ன செயலி?',
-                              hi: 'यह ऐप किस लिए है?',
-                              ml: 'ഇതെന്ത് ആപ്പാണ്?',
-                            ),
+                            trId('what_is_this_app'),
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 12,
@@ -345,12 +335,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                   // Title
                                   Text(
                                     _isPasswordLogin
-                                        ? tr(
-                                            en: 'Official Login',
-                                            ta: 'குழுவினர் உள்நுழைவு',
-                                            hi: 'आधिकारिक लॉगिन',
-                                            ml: 'ഔദ്യോഗിക ലോഗിൻ',
-                                          )
+                                        ? trId('official_login')
                                         : (_otpSent
                                             ? l.enterOtp
                                             : l.enterPhoneNumber),
@@ -380,29 +365,14 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                           TextFormField(
                                             controller: _usernameCtrl,
                                             decoration: InputDecoration(
-                                              hintText: tr(
-                                                en: 'Username or Phone',
-                                                ta: 'பயனர் பெயர் அல்லது அலைபேசி',
-                                                hi: 'उपयोगकर्ता नाम या फ़ोन',
-                                                ml: 'ഉപയോക്തൃനാമം അല്ലെങ്കിൽ ഫോൺ',
-                                              ),
+                                              hintText: trId('username_or_phone'),
                                               prefixIcon: const Icon(
                                                   Icons.person_outline),
-                                              label: Text(tr(
-                                                en: 'Username',
-                                                ta: 'பயனர் பெயர்',
-                                                hi: 'उपयोगकर्ता नाम',
-                                                ml: 'ഉപയോക്തൃനാമം',
-                                              )),
+                                              label: Text(trId('username')),
                                             ),
                                             validator: (v) =>
                                                 (v == null || v.trim().isEmpty)
-                                                    ? tr(
-                                                        en: 'Required',
-                                                        ta: 'உள்ளிடவும்',
-                                                        hi: 'आवश्यक',
-                                                        ml: 'ആവശ്യമാണ്',
-                                                      )
+                                                    ? trId('required')
                                                     : null,
                                           ),
                                           const SizedBox(height: 14),
@@ -410,29 +380,14 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                             controller: _passwordCtrl,
                                             obscureText: true,
                                             decoration: InputDecoration(
-                                              hintText: tr(
-                                                en: 'Password',
-                                                ta: 'கடவுச்சொல்',
-                                                hi: 'पासवर्ड',
-                                                ml: 'പാസ്‌വേഡ്',
-                                              ),
+                                              hintText: trId('password'),
                                               prefixIcon: const Icon(
                                                   Icons.lock_outline),
-                                              label: Text(tr(
-                                                en: 'Password',
-                                                ta: 'கடவுச்சொல்',
-                                                hi: 'पासवर्ड',
-                                                ml: 'പാസ്‌വേഡ്',
-                                              )),
+                                              label: Text(trId('password')),
                                             ),
                                             validator: (v) =>
                                                 (v == null || v.trim().isEmpty)
-                                                    ? tr(
-                                                        en: 'Required',
-                                                        ta: 'உள்ளிடவும்',
-                                                        hi: 'आवश्यक',
-                                                        ml: 'ആവശ്യമാണ്',
-                                                      )
+                                                    ? trId('required')
                                                     : null,
                                           ),
                                           const SizedBox(height: 20),
@@ -449,12 +404,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                             color: Colors.white,
                                                             strokeWidth: 2),
                                                   )
-                                                : Text(tr(
-                                                    en: 'Login',
-                                                    ta: 'உள்நுழைக',
-                                                    hi: 'लॉगिन',
-                                                    ml: 'ലോഗിൻ',
-                                                  )),
+                                                : Text(trId('login')),
                                           ),
                                         ],
                                       ),
@@ -580,18 +530,8 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                         }),
                                         child: Text(
                                           _isPasswordLogin
-                                              ? tr(
-                                                  en: 'Back to OTP Login',
-                                                  ta: 'உறுப்பினர் உள்நுழைவு (OTP)',
-                                                  hi: 'OTP लॉगिन पर वापस',
-                                                  ml: 'OTP ലോഗിനിലേക്ക് മടങ്ങുക',
-                                                )
-                                              : tr(
-                                                  en: 'Club Official Login',
-                                                  ta: 'குழுவினர் உள்நுழைவு (கடவுச்சொல்)',
-                                                  hi: 'क्लब आधिकारिक लॉगिन',
-                                                  ml: 'ക്ലബ് ഔദ്യോഗിക ലോഗിൻ',
-                                                ),
+                                              ? trId('back_to_otp_login')
+                                              : trId('club_official_login'),
                                           style: const TextStyle(
                                             color: AppColors.primary,
                                             fontWeight: FontWeight.bold,
@@ -609,7 +549,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 12),
                                         child: Text(
-                                          tr(en: 'OR', ta: 'அல்லது', hi: 'या', ml: 'അല്ലെങ്കിൽ'),
+                                          trId('or'),
                                           style: TextStyle(
                                               color: AppColors.textSecondary,
                                               fontSize: 12),
@@ -641,11 +581,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                       Icons.g_mobiledata,
                                                       size: 18),
                                             ),
-                                      label: Text(tr(
-                                          en: 'Continue with Google',
-                                          ta: 'Google மூலம் தொடரவும்',
-                                          hi: 'Google के साथ जारी रखें',
-                                          ml: 'Google ഉപയോഗിച്ച് തുടരുക')),
+                                      label: Text(trId('continue_with_google')),
                                       style: OutlinedButton.styleFrom(
                                         minimumSize:
                                             const Size.fromHeight(48),

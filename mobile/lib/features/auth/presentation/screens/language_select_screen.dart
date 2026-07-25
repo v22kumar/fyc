@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../../core/l10n/tr.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -157,8 +158,8 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'FYC Connect',
+                    Text(
+                      trId('fyc_connect'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,

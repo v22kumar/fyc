@@ -34,7 +34,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Local Services', ta: 'சமூக கடை', hi: 'स्थानीय सेवाएं', ml: 'പ്രാദേശിക സേവനങ്ങൾ')),
+        title: Text(trId('local_services')),
       ),
       body: BlocBuilder<CommunityBloc, CommunityState>(
         builder: (context, state) {
@@ -77,11 +77,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                     onPressed: () => context
                         .read<CommunityBloc>()
                         .add(const CommunityFetchRequested()),
-                    child: Text(tr(
-                        en: 'Retry',
-                        ta: 'மீண்டும் முயற்சிக்கவும்',
-                        hi: 'पुनः प्रयास करें',
-                        ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                    child: Text(trId('retry')),
                   ),
                 ],
               ),
@@ -106,11 +102,7 @@ class _ProfileCard extends StatelessWidget {
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(
-              en: 'Could not start call',
-              ta: 'அழைப்பைத் தொடங்க முடியவில்லை',
-              hi: 'कॉल शुरू नहीं हो सका',
-              ml: 'കോൾ ആരംഭിക്കാനായില്ല')),
+          content: Text(trId('could_not_start_call')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -155,11 +147,7 @@ class _ProfileCard extends StatelessWidget {
                 _Tag(text: profile.category, color: AppColors.primary),
                 if (!profile.isAvailable)
                   _Tag(
-                    text: tr(
-                        en: 'Unavailable',
-                        ta: 'கிடைக்கவில்லை',
-                        hi: 'अनुपलब्ध',
-                        ml: 'ലഭ്യമല്ല'),
+                    text: trId('unavailable'),
                     color: Colors.grey,
                   ),
                 if (profile.yearsExperience != null)
@@ -206,7 +194,7 @@ class _ProfileCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _call(context),
                   icon: const Icon(Icons.call, size: 16),
-                  label: Text(tr(en: 'Call', ta: 'அழைக்க', hi: 'कॉल करें', ml: 'വിളിക്കുക')),
+                  label: Text(trId('call')),
                 ),
               ),
             ],
@@ -258,21 +246,13 @@ class _Empty extends StatelessWidget {
             const Text('👥', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
             Text(
-              tr(
-                  en: 'No local services listed yet',
-                  ta: 'உள்ளூர் சேவைகள் எதுவும் பதிவு செய்யப்படவில்லை',
-                  hi: 'अभी तक कोई स्थानीय सेवा सूचीबद्ध नहीं है',
-                  ml: 'ഇതുവരെ പ്രാദേശിക സേവനങ്ങളൊന്നും ലിസ്റ്റ് ചെയ്തിട്ടില്ല'),
+              trId('no_local_services_listed_yet'),
               style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              tr(
-                  en: 'This is a directory of tradespeople and service providers (carpenters, electricians, plumbers & more) run by the community — not a member roster.',
-                  ta: 'இது சமூகத்தால் நடத்தப்படும் தொழிலாளர்கள் மற்றும் சேவை வழங்குநர்களின் (தச்சர், மின்சாரம், குழாய் பணி மற்றும் பல) பட்டியல் — உறுப்பினர் பட்டியல் அல்ல.',
-                  hi: 'यह समुदाय द्वारा चलाई जाने वाली कारीगरों और सेवा प्रदाताओं (बढ़ई, इलेक्ट्रीशियन, प्लंबर आदि) की सूची है — सदस्य सूची नहीं।',
-                  ml: 'ഇത് സമൂഹം നടത്തുന്ന ആശാരിമാർ, ഇലക്ട്രീഷ്യൻമാർ, പ്ലംബർമാർ തുടങ്ങിയ സേവനദാതാക്കളുടെ പട്ടികയാണ് — അംഗങ്ങളുടെ പട്ടികയല്ല.'),
+              trId('this_is_a_directory_of_tradespeople_and'),
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),

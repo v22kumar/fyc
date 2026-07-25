@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../core/l10n/tr.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -263,7 +264,7 @@ class _AiGamePageState extends State<AiGamePage>
   // ── Loading ─────────────────────────────────────────────────────────────────
 
   Widget _buildLoading() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -273,7 +274,7 @@ class _AiGamePageState extends State<AiGamePage>
             child: CircularProgressIndicator(color: _kGreenBright, strokeWidth: 3),
           ),
           SizedBox(height: 16),
-          Text('Loading Stockfish…',
+          Text(trId('loading_stockfish'),
               style: TextStyle(color: Color(0xFF8B9A8E), fontSize: 15)),
         ],
       ),
@@ -463,23 +464,23 @@ class _AiGamePageState extends State<AiGamePage>
           ),
           _ToolIcon(
             icon: Icons.swap_vert_rounded,
-            tooltip: 'Flip board',
+            tooltip: trId('flip_board'),
             onTap: () => context.read<AiGameBloc>().add(const FlipAiBoard()),
           ),
           _ToolIcon(
             icon: Icons.add_rounded,
-            tooltip: 'Zoom in',
+            tooltip: trId('zoom_in'),
             onTap: () => setState(
                 () => _zoom = (_zoom + 0.08).clamp(0.85, 1.25)),
           ),
           _ToolIcon(
             icon: Icons.search_rounded,
-            tooltip: 'Reset zoom',
+            tooltip: trId('reset_zoom'),
             onTap: () => setState(() => _zoom = 1.0),
           ),
           _ToolIcon(
             icon: Icons.bar_chart_rounded,
-            tooltip: 'Analysis',
+            tooltip: trId('analysis'),
             onTap: () => _soon('Analysis'),
           ),
         ],
@@ -521,7 +522,7 @@ class _AiGamePageState extends State<AiGamePage>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('New Game',
+                child: Text(trId('new_game'),
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               ),
             ),
@@ -546,7 +547,7 @@ class _AiGamePageState extends State<AiGamePage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Board theme',
+            Text(trId('board_theme'),
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -624,14 +625,14 @@ class _AiGamePageState extends State<AiGamePage>
       builder: (ctx) => AlertDialog(
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Resign?',
+        title: Text(trId('resign_2'),
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         content: Text('Forfeit this game to ${s.aiName}?',
             style: const TextStyle(color: Color(0xFF8B9A8E))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
+            child: Text(trId('cancel_2'),
                 style: TextStyle(color: Color(0xFF8B9A8E))),
           ),
           TextButton(
@@ -640,7 +641,7 @@ class _AiGamePageState extends State<AiGamePage>
               context.read<AiGameBloc>().add(const ResignToAi());
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign',
+            child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
@@ -846,7 +847,7 @@ class _BoardDropdown extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Board',
+            Text(trId('board'),
                 style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
                     fontSize: 13,
@@ -1057,7 +1058,7 @@ class _AiResultSheet extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Review'),
+                  child: Text(trId('review')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1071,7 +1072,7 @@ class _AiResultSheet extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Play Again',
+                  child: Text(trId('play_again'),
                       style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),

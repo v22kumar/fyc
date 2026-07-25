@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -140,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(trId('settings_2')),
         backgroundColor: context.cBackground,
         foregroundColor: context.cText,
         elevation: 0,
@@ -202,18 +203,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Confirm Logout'),
-                    content: const Text('Are you sure you want to log out of your account?'),
+                    title: Text(trId('confirm_logout')),
+                    content: Text(trId('are_you_sure_you_want_to_log_out_of_your')),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: Text(trId('cancel_2'))),
                       TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
                           context.read<AuthBloc>().add(const AuthLogoutRequested());
                           context.go('/login');
                         },
-                        child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                        child: Text(trId('logout'), style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),

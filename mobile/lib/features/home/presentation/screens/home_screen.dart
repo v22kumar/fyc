@@ -215,10 +215,10 @@ class _Header extends StatelessWidget {
 
         final hour = DateTime.now().hour;
         final greetingEn = hour < 12
-            ? tr(en: 'Good Morning', ta: 'காலை வணக்கம்', hi: 'सुप्रभात', ml: 'സുപ്രഭാതം')
+            ? trId('good_morning')
             : hour < 17
-                ? tr(en: 'Good Afternoon', ta: 'மதிய வணக்கம்', hi: 'नमस्कार', ml: 'ഉച്ച വണക്കം')
-                : tr(en: 'Good Evening', ta: 'மாலை வணக்கம்', hi: 'शुभ संध्या', ml: 'ശുഭ സായാഹ്നം');
+                ? trId('good_afternoon')
+                : trId('good_evening');
 
         // V2 1.1 — compact collapsing header. The toolbar row (brand · language
         // · bell · avatar) and the search pill stay pinned; the aurora backdrop
@@ -249,14 +249,14 @@ class _Header extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text('FYC Connect',
+              Text(trId('fyc_connect'),
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
             ],
           ),
           actions: [
             _CircleBtn(
               icon: Icons.translate_rounded,
-              tooltip: tr(en: 'Change Language', ta: 'மொழியை மாற்று', hi: 'भाषा बदलें', ml: 'ഭാഷ മാറ്റുക'),
+              tooltip: trId('change_language'),
               onTap: () => _showLanguagePicker(context),
             ),
             const SizedBox(width: 8),
@@ -336,7 +336,7 @@ class _Header extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                         const SizedBox(height: 3),
-                        Text(tr(en: 'Everything you need, all in one place.', ta: 'உங்களுக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.', hi: 'आपकी ज़रूरत की हर चीज़, एक ही जगह।', ml: 'നിങ്ങൾക്ക് വേണ്ടതെല്ലാം, ഒരിടത്ത്.'),
+                        Text(trId('everything_you_need_all_in_one_place'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white60, fontSize: 12.5, fontWeight: FontWeight.w400)),
@@ -365,7 +365,7 @@ class _Header extends StatelessWidget {
                       const Icon(Icons.search, color: Colors.white60, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(tr(en: 'Search services, events, and more...', ta: 'சேவைகள், நிகழ்வுகள் மற்றும் பலவற்றைத் தேடுங்கள்...', hi: 'सेवाएँ, कार्यक्रम और बहुत कुछ खोजें...', ml: 'സേവനങ്ങൾ, പരിപാടികൾ എന്നിവ തിരയുക...'),
+                        child: Text(trId('search_services_events_and_more'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
@@ -513,17 +513,17 @@ class _BeAHeroCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(tr(en: 'Be a Hero', ta: 'ஒரு ஹீரோவாகுங்கள்', hi: 'हीरो बनें', ml: 'ഒരു ഹീറോ ആകൂ'),
+                    Text(trId('be_a_hero'),
                         style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
                     const SizedBox(width: 6),
                     Icon(Icons.favorite, color: Colors.white.withOpacity(0.85), size: 15),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(tr(en: 'Donate Blood. Save Lives.', ta: 'இரத்த தானம் செய்யுங்கள். உயிர்களைக் காப்பாற்றுங்கள்.', hi: 'रक्तदान करें। जीवन बचाएँ।', ml: 'രക്തദാനം ചെയ്യൂ. ജീവൻ രക്ഷിക്കൂ.'),
+                Text(trId('donate_blood_save_lives'),
                     style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(tr(en: 'Your one donation can save up to 3 lives.', ta: 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்.', hi: 'आपका एक दान 3 जीवन तक बचा सकता है।', ml: 'നിങ്ങളുടെ ഒരു ദാനം 3 ജീവൻ വരെ രക്ഷിക്കാം.'),
+                Text(trId('your_one_donation_can_save_up_to_3_lives_2'),
                     style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11)),
                 const SizedBox(height: 14),
                 Pressable(
@@ -538,7 +538,7 @@ class _BeAHeroCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(tr(en: 'Find Blood Donors', ta: 'இரத்த தானம் செய்பவர்களைக் கண்டறியுங்கள்', hi: 'रक्तदाता खोजें', ml: 'രക്തദാതാക്കളെ കണ്ടെത്തുക'),
+                          Text(trId('find_blood_donors'),
                               style: const TextStyle(color: Color(0xFFE11D48), fontSize: 13, fontWeight: FontWeight.w700)),
                           const SizedBox(width: 6),
                           const Icon(Icons.arrow_forward, color: Color(0xFFE11D48), size: 16),
@@ -649,70 +649,70 @@ class _ServiceBento extends StatelessWidget {
   Widget build(BuildContext context) {
     final services = <_Service>[
       _Service(
-        title: tr(en: 'Blood Donation', ta: 'இரத்த தானம்', hi: 'रक्तदान', ml: 'രക്തദാനം'),
-        subtitle: tr(en: 'Verified donors near you', ta: 'அருகில் சரிபார்க்கப்பட்ட நன்கொடையாளர்கள்', hi: 'आस-पास सत्यापित दाता', ml: 'അടുത്തുള്ള സ്ഥിരീകരിച്ച ദാതാക്കൾ'),
+        title: trId('blood_donation'),
+        subtitle: trId('verified_donors_near_you'),
         icon: Icons.bloodtype_rounded,
         tint: AppColors.accent,
         route: '/blood-donation',
         illustration: 'blood',
       ),
       _Service(
-        title: tr(en: 'Sports Arena', ta: 'விளையாட்டு', hi: 'खेल', ml: 'സ്പോർട്സ്'),
-        subtitle: tr(en: 'Tournaments, chess & live scores', ta: 'போட்டிகள், சதுரங்கம் & நேரடி மதிப்பெண்', hi: 'टूर्नामेंट, शतरंज और लाइव स्कोर', ml: 'ടൂർണമെന്റുകൾ, ചെസ്സ്, തത്സമയ സ്കോർ'),
+        title: trId('sports_arena'),
+        subtitle: trId('tournaments_chess_live_scores'),
         icon: Icons.sports_cricket_rounded,
         tint: AppColors.warning,
         route: '/sports',
         illustration: 'sports',
       ),
       _Service(
-        title: tr(en: 'Community Feed', ta: 'சமூகம்', hi: 'समुदाय', ml: 'സമൂഹം'),
-        subtitle: tr(en: 'Threads, gallery & updates', ta: 'இழைகள், படத்தொகுப்பு & புதுப்பிப்புகள்', hi: 'थ्रेड्स, गैलरी और अपडेट', ml: 'ത്രെഡുകൾ, ഗാലറി, അപ്ഡേറ്റുകൾ'),
+        title: trId('community_feed_2'),
+        subtitle: trId('threads_gallery_updates'),
         icon: Icons.dynamic_feed_rounded,
         tint: AppColors.primaryLight,
         route: '/feed',
         illustration: 'community',
       ),
       _Service(
-        title: tr(en: 'Report an Issue', ta: 'புகார் அளி', hi: 'समस्या दर्ज करें', ml: 'പ്രശ്നം രേഖപ്പെടുത്തുക'),
-        subtitle: tr(en: 'Civic complaints, tracked to fix', ta: 'குடிமை புகார்கள், தீர்வு வரை கண்காணிப்பு', hi: 'नागरिक शिकायतें, समाधान तक ट्रैक', ml: 'പൗര പരാതികൾ, പരിഹാരം വരെ'),
+        title: trId('report_an_issue_3'),
+        subtitle: trId('civic_complaints_tracked_to_fix'),
         icon: Icons.campaign_rounded,
         tint: AppColors.gold,
         route: '/issues',
         illustration: 'report',
       ),
       _Service(
-        title: tr(en: 'Green FYC', ta: 'பசுமை', hi: 'हरित', ml: 'ഹരിതം'),
-        subtitle: tr(en: 'Tree drives & eco initiatives', ta: 'மரம் நடும் இயக்கம் & சூழல் முயற்சிகள்', hi: 'वृक्षारोपण और पर्यावरण पहल', ml: 'വൃക്ഷത്തൈ & പരിസ്ഥിതി സംരംഭങ്ങൾ'),
+        title: trId('green_fyc'),
+        subtitle: trId('tree_drives_eco_initiatives'),
         icon: Icons.eco_rounded,
         tint: AppColors.success,
         route: '/green',
         illustration: 'green',
-        pill: tr(en: 'Eco', ta: 'சூழல்', hi: 'इको', ml: 'ഇക്കോ'),
+        pill: trId('eco'),
         pillColor: AppColors.success,
       ),
       _Service(
-        title: tr(en: 'Skills Directory', ta: 'திறன் அடைவு', hi: 'कौशल निर्देशिका', ml: 'നൈപുണ്യ ഡയറക്ടറി'),
-        subtitle: tr(en: 'Carpenters, electricians, tutors', ta: 'தச்சர், மின்சாரி, ஆசிரியர்', hi: 'बढ़ई, इलेक्ट्रीशियन, शिक्षक', ml: 'ആശാരി, ഇലക്ട്രീഷ്യൻ, ട്യൂട്ടർ'),
+        title: trId('skills_directory'),
+        subtitle: trId('carpenters_electricians_tutors'),
         icon: Icons.handyman_rounded,
         tint: AppColors.primary,
         route: '/community',
         illustration: 'skills',
-        pill: tr(en: 'New', ta: 'புதியது', hi: 'नया', ml: 'പുതിയത്'),
+        pill: trId('new_2'),
         pillColor: AppColors.primaryLight,
       ),
       _Service(
-        title: tr(en: 'Opportunities', ta: 'வாய்ப்புகள்', hi: 'अवसर', ml: 'അവസരങ്ങൾ'),
-        subtitle: tr(en: 'Jobs, scholarships & community gigs', ta: 'வேலை, உதவித்தொகை & பணிகள்', hi: 'नौकरियाँ, छात्रवृत्ति और काम', ml: 'ജോലി, സ്കോളർഷിപ്പ്, ഗിഗുകൾ'),
+        title: trId('opportunities'),
+        subtitle: trId('jobs_scholarships_community_gigs'),
         icon: Icons.work_rounded,
         tint: AppColors.gold,
         route: '/opportunities',
         illustration: 'opportunities',
-        pill: tr(en: 'Jobs', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി'),
+        pill: trId('jobs_2'),
         pillColor: AppColors.gold,
       ),
       _Service(
-        title: tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ'),
-        subtitle: tr(en: 'Festivals & meetings — register', ta: 'விழாக்கள் & கூட்டங்கள் — பதிவு', hi: 'त्योहार और बैठकें — पंजीकरण', ml: 'ഉത്സവങ്ങൾ & മീറ്റിംഗുകൾ — രജിസ്റ്റർ'),
+        title: trId('events'),
+        subtitle: trId('festivals_meetings_register'),
         icon: Icons.event_rounded,
         tint: AppColors.primaryLight,
         route: '/events',
@@ -724,7 +724,7 @@ class _ServiceBento extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: tr(en: 'Explore FYC', ta: 'FYC ஐ ஆராயுங்கள்', hi: 'FYC एक्सप्लोर करें', ml: 'FYC പര്യവേക്ഷണം'),
+          title: trId('explore_fyc'),
           onViewAll: () => _showMoreSheet(context),
         ),
         const SizedBox(height: 12),
@@ -750,7 +750,7 @@ class _ServiceBento extends StatelessWidget {
               pillLabel: s.pill,
               pillColor: s.pillColor,
               illustration: s.illustration,
-              actionLabel: tr(en: 'Open', ta: 'திற', hi: 'खोलें', ml: 'തുറക്കുക'),
+              actionLabel: trId('open'),
               onTap: () => context.push(s.route),
             );
           },
@@ -806,19 +806,19 @@ class _FeaturedSportsHero extends StatelessWidget {
                             const LivePulse(size: 22),
                             const SizedBox(width: 6),
                             Text(
-                              tr(en: 'LIVE SPORTS', ta: 'நேரடி விளையாட்டு', hi: 'लाइव खेल', ml: 'ലൈവ് സ്പോർട്സ്'),
+                              trId('live_sports'),
                               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          tr(en: 'Sports Arena', ta: 'விளையாட்டு அரங்கம்', hi: 'खेल एरिना', ml: 'സ്പോർട്സ് അരീന'),
+                          trId('sports_arena_2'),
                           style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          tr(en: 'Tournaments, chess & live scores', ta: 'போட்டிகள், சதுரங்கம் & நேரடி மதிப்பெண்', hi: 'टूर्नामेंट, शतरंज और लाइव स्कोर', ml: 'ടൂർണമെന്റുകൾ, ചെസ്സ്, തത്സമയ സ്കോർ'),
+                          trId('tournaments_chess_live_scores'),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w500),
@@ -831,7 +831,7 @@ class _FeaturedSportsHero extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                tr(en: 'Watch live', ta: 'நேரடியாகப் பார்', hi: 'लाइव देखें', ml: 'ലൈവ് കാണുക'),
+                                trId('watch_live'),
                                 style: const TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
                               ),
                               const SizedBox(width: 4),
@@ -863,25 +863,25 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = <(IconData, Color, String, VoidCallback)>[
       (Icons.bloodtype_rounded, const Color(0xFFEF4444),
-          tr(en: 'Blood\nRequest', ta: 'இரத்தம்', hi: 'रक्त', ml: 'രക്തം'),
+          trId('blood_request'),
           () => context.push('/blood-donation')),
       (Icons.report_problem_rounded, const Color(0xFFF59E0B),
-          tr(en: 'Report\nIssue', ta: 'புகார்', hi: 'शिकायत', ml: 'റിപ്പോർട്ട്'),
+          trId('report_issue'),
           () => context.push('/issues')),
       (Icons.event_rounded, const Color(0xFF16A34A),
-          tr(en: 'Create\nEvent', ta: 'நிகழ்வு', hi: 'कार्यक्रम', ml: 'ഇവന്റ്'),
+          trId('create_event_2'),
           () => showHomeCreateSheet(context)),
       (Icons.emoji_events_rounded, const Color(0xFFD97706),
-          tr(en: 'Weekly\nGame', ta: 'விளையாட்டு', hi: 'खेल', ml: 'ഗെയിം'),
+          trId('weekly_game'),
           () => context.push('/sports')),
       (Icons.emergency_share_rounded, const Color(0xFFDC2626),
-          tr(en: 'Emergency\nContacts', ta: 'அவசரம்', hi: 'आपातकाल', ml: 'അടിയന്തരം'),
+          trId('emergency_contacts'),
           () => showSosSheet(context)),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: tr(en: 'Quick Actions', ta: 'விரைவு செயல்கள்', hi: 'त्वरित कार्य', ml: 'ദ്രുത പ്രവർത്തനങ്ങൾ')),
+        _SectionHeader(title: trId('quick_actions')),
         const SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -997,14 +997,14 @@ class _AnnouncementsBar extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Announcements',
+                    Text(trId('announcements'),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
-                    Text('Annual Sports Meet on 25th May!',
+                    Text(trId('annual_sports_meet_on_25th_may'),
                         style: TextStyle(fontSize: 11, color: context.cTextSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
-              Text('View All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
+              Text(trId('view_all_2'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.isDark ? AppColors.primaryLight : AppColors.primary)),
               Icon(Icons.chevron_right, color: context.isDark ? AppColors.primaryLight : AppColors.primary, size: 18),
             ],
           ),
@@ -1104,7 +1104,7 @@ class _MiniCard extends StatelessWidget {
             ),
             GestureDetector(
               onTap: onViewAll,
-              child: const Text('View All', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              child: Text(trId('view_all_2'), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primary)),
             ),
           ],
         ),
@@ -1166,7 +1166,7 @@ class _SectionHeader extends StatelessWidget {
         else if (onViewAll != null)
           GestureDetector(
             onTap: onViewAll,
-            child: const Text('View All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+            child: Text(trId('view_all_2'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
           ),
       ],
     );
@@ -1206,7 +1206,7 @@ void _showLanguagePicker(BuildContext context) {
                     decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
               ),
               const SizedBox(height: 18),
-              Text('Language', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
+              Text(trId('language'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
               const SizedBox(height: 14),
               ...langs.map((lang) {
                 final selected = current == lang.$1;
@@ -1295,7 +1295,7 @@ void _showCreateSheet(BuildContext context) {
             child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
           ),
           const SizedBox(height: 18),
-          Text('Create', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
+          Text(trId('create_2'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
           const SizedBox(height: 14),
           ...actions.map((a) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -1445,18 +1445,18 @@ class _MoreSheet extends StatelessWidget {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Confirm Logout'),
-                    content: const Text('Are you sure you want to log out?'),
+                    title: Text(trId('confirm_logout')),
+                    content: Text(trId('are_you_sure_you_want_to_log_out')),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: Text(trId('cancel_2'))),
                       TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
                           Navigator.pop(context);
                           context.read<AuthBloc>().add(const AuthLogoutRequested());
                         },
-                        child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                        child: Text(trId('logout'), style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -2231,10 +2231,10 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
       return const SizedBox.shrink();
     }
     final title = mode == 'live'
-        ? tr(en: 'Live Now', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം')
+        ? trId('live_now')
         : mode == 'recent'
-            ? tr(en: 'Recent Results', ta: 'சமீபத்திய முடிவுகள்', hi: 'हाल के परिणाम', ml: 'സമീപകാല ഫലങ്ങൾ')
-            : tr(en: 'Upcoming Matches', ta: 'வரவிருக்கும் போட்டிகள்', hi: 'आगामी मैच', ml: 'വരാനിരിക്കുന്ന മത്സരങ്ങൾ');
+            ? trId('recent_results')
+            : trId('upcoming_matches');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2250,7 +2250,7 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
               onTap: () => context.push('/sports'),
               behavior: HitTestBehavior.opaque,
               child: Text(
-                tr(en: 'View all', ta: 'அனைத்தும்', hi: 'सभी देखें', ml: 'എല്ലാം'),
+                trId('view_all'),
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
               ),
             ),
@@ -2280,12 +2280,12 @@ class _MatchCard extends StatelessWidget {
   /// sends (no server-authored English).
   String? _liveNote() {
     if (data['innings_break'] == true) {
-      return tr(en: 'Innings break', ta: 'இன்னிங்ஸ் இடைவேளை', hi: 'पारी विश्राम', ml: 'ഇന്നിംഗ്സ് ബ്രേക്ക്');
+      return trId('innings_break');
     }
     final needed = (data['runs_needed'] as num?)?.toInt();
     if (needed == null) return null;
     if (needed <= 0) {
-      return tr(en: 'Target reached', ta: 'இலக்கை எட்டியது', hi: 'लक्ष्य पूरा', ml: 'ലക്ഷ്യത്തിലെത്തി');
+      return trId('target_reached');
     }
     return tr(
         en: 'Need $needed run${needed == 1 ? '' : 's'}',
@@ -2302,9 +2302,9 @@ class _MatchCard extends StatelessWidget {
     if (live) {
       scoreLine = '${batting != null ? '$batting  ' : ''}${data['summary'] ?? ''}';
     } else if (mode == 'recent') {
-      scoreLine = (data['result'] as String?) ?? tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി');
+      scoreLine = (data['result'] as String?) ?? trId('completed_2');
     } else {
-      scoreLine = (data['venue'] as String?) ?? tr(en: 'Scheduled', ta: 'திட்டமிடப்பட்டது', hi: 'निर्धारित', ml: 'ഷെഡ്യൂൾ ചെയ്തു');
+      scoreLine = (data['venue'] as String?) ?? trId('scheduled');
     }
     final note = live ? _liveNote() : null;
     return GestureDetector(
@@ -2473,8 +2473,8 @@ class _VolunteerDashboard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Volunteer Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF8B5CF6))),
-                    Text('Thanks for making a difference!', style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                    Text(trId('volunteer_dashboard'), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF8B5CF6))),
+                    Text(trId('thanks_for_making_a_difference'), style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
                   ],
                 ),
               ),
@@ -2546,8 +2546,8 @@ class _ManagerDashboard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Manager Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFF59E0B))),
-                    Text('Manage club activities and requests', style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
+                    Text(trId('manager_dashboard'), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFF59E0B))),
+                    Text(trId('manage_club_activities_and_requests'), style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
                   ],
                 ),
               ),

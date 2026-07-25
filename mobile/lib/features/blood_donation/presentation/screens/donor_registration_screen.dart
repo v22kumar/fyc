@@ -41,12 +41,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            tr(
-              en: 'Please select your blood group',
-              ta: 'இரத்த வகை தேர்ந்தெடுக்கவும்',
-              hi: 'कृपया अपना रक्त समूह चुनें',
-              ml: 'നിങ്ങളുടെ രക്തഗ്രൂപ്പ് തിരഞ്ഞെടുക്കുക',
-            ),
+            trId('please_select_your_blood_group'),
           ),
         ),
       );
@@ -66,12 +61,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(
-          en: 'Register as Donor',
-          ta: 'தானியாக பதிவு',
-          hi: 'दाता के रूप में पंजीकरण करें',
-          ml: 'ദാതാവായി രജിസ്റ്റർ ചെയ്യുക',
-        )),
+        title: Text(trId('register_as_donor_2')),
       ),
       body: BlocListener<BloodDonorBloc, BloodDonorState>(
         listener: (context, state) {
@@ -79,12 +69,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  tr(
-                    en: 'Registered successfully! Thank you.',
-                    ta: 'வெற்றிகரமாக பதிவு செய்யப்பட்டீர்கள்!',
-                    hi: 'सफलतापूर्वक पंजीकृत! धन्यवाद।',
-                    ml: 'വിജയകരമായി രജിസ്റ്റർ ചെയ്തു! നന്ദി.',
-                  ),
+                  trId('registered_successfully_thank_you'),
                 ),
                 backgroundColor: AppColors.primary,
               ),
@@ -108,12 +93,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
               _InfoBanner(lang: lang),
               const SizedBox(height: 24),
               Text(
-                tr(
-                  en: 'Select Blood Group',
-                  ta: 'இரத்த வகை தேர்ந்தெடுக்கவும்',
-                  hi: 'रक्त समूह चुनें',
-                  ml: 'രക്തഗ്രൂപ്പ് തിരഞ്ഞെടുക്കുക',
-                ),
+                trId('select_blood_group'),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
@@ -124,12 +104,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                tr(
-                  en: 'Availability',
-                  ta: 'கிடைக்கும் நிலை',
-                  hi: 'उपलब्धता',
-                  ml: 'ലഭ്യത',
-                ),
+                trId('availability'),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -140,12 +115,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                tr(
-                  en: 'Last Donation Date (optional)',
-                  ta: 'கடைசி தான தேதி (விரும்பினால்)',
-                  hi: 'अंतिम दान तिथि (वैकल्पिक)',
-                  ml: 'അവസാന ദാന തീയതി (ഓപ്ഷണൽ)',
-                ),
+                trId('last_donation_date_optional'),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -168,12 +138,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                               color: Colors.white,
                             )
                           : Text(
-                              tr(
-                                en: 'Register as Donor',
-                                ta: 'தானியாக பதிவு செய்க',
-                                hi: 'दाता के रूप में पंजीकरण करें',
-                                ml: 'ദാതാവായി രജിസ്റ്റർ ചെയ്യുക',
-                              ),
+                              trId('register_as_donor_3'),
                               style: const TextStyle(fontSize: 16),
                             ),
                     ),
@@ -208,12 +173,7 @@ class _InfoBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              tr(
-                en: 'Your phone number will only be shared when someone explicitly requests your contact. All requests are logged.',
-                ta: 'உங்கள் தொலைபேசி எண் யாரேனும் கோரும்போது மட்டுமே பகிரப்படும். அனைத்து கோரிக்கைகளும் பதிவு செய்யப்படும்.',
-                hi: 'आपका फ़ोन नंबर केवल तभी साझा किया जाएगा जब कोई स्पष्ट रूप से आपका संपर्क मांगे। सभी अनुरोध दर्ज किए जाते हैं।',
-                ml: 'ആരെങ്കിലും വ്യക്തമായി നിങ്ങളുടെ ബന്ധപ്പെടാനുള്ള വിവരം ആവശ്യപ്പെടുമ്പോൾ മാത്രമേ നിങ്ങളുടെ ഫോൺ നമ്പർ പങ്കിടൂ. എല്ലാ അഭ്യർത്ഥനകളും രേഖപ്പെടുത്തുന്നു.',
-              ),
+              trId('your_phone_number_will_only_be_shared_wh'),
               style: const TextStyle(fontSize: 13),
             ),
           ),
@@ -303,18 +263,8 @@ class _AvailabilityToggle extends StatelessWidget {
           Expanded(
             child: Text(
               value
-                  ? tr(
-                      en: 'I am available to donate',
-                      ta: 'தான செய்ய கிடைக்கிறேன்',
-                      hi: 'मैं दान करने के लिए उपलब्ध हूँ',
-                      ml: 'എനിക്ക് രക്തദാനം ചെയ്യാൻ കഴിയും',
-                    )
-                  : tr(
-                      en: 'Not available right now',
-                      ta: 'தற்போது கிடைக்கவில்லை',
-                      hi: 'अभी उपलब्ध नहीं',
-                      ml: 'ഇപ്പോൾ ലഭ്യമല്ല',
-                    ),
+                  ? trId('i_am_available_to_donate')
+                  : trId('not_available_right_now'),
               style: const TextStyle(fontSize: 15),
             ),
           ),
@@ -357,12 +307,7 @@ class _DatePickerField extends StatelessWidget {
             Text(
               date != null
                   ? '${date!.day}/${date!.month}/${date!.year}'
-                  : tr(
-                      en: 'Select date (optional)',
-                      ta: 'தேதி தேர்வு (விரும்பினால்)',
-                      hi: 'तिथि चुनें (वैकल्पिक)',
-                      ml: 'തീയതി തിരഞ്ഞെടുക്കുക (ഓപ്ഷണൽ)',
-                    ),
+                  : trId('select_date_optional'),
               style: TextStyle(
                 fontSize: 15,
                 color: date != null ? Colors.black87 : Colors.grey,

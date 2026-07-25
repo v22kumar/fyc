@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/cricket_match_state_entity.dart';
@@ -36,8 +37,8 @@ class CricketOversHistory extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
-                  'OVERS LOG',
+                Text(
+                  trId('overs_log'),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
                 ),
                 const Spacer(),
@@ -106,7 +107,7 @@ class _OverCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('OVER',
+                Text(trId('over'),
                     style: TextStyle(color: Colors.white70, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.5, height: 1)),
                 Text('${over.overIndex + 1}',
                     style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, height: 1.15)),
@@ -253,17 +254,17 @@ class _EditBallSheetState extends State<_EditBallSheet> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Delivery?'),
+        title: Text(trId('edit_delivery')),
         content: const Text(
           'Editing this delivery will automatically recalculate the entire innings. '
           'All subsequent strike rotations, runs, and bowler figures will be adjusted. Are you sure?',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trId('cancel_2'))),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true), 
             style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Recalculate'),
+            child: Text(trId('recalculate')),
           ),
         ],
       ),
@@ -332,7 +333,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Edit Ball',
+                  trId('edit_ball'),
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
@@ -347,7 +348,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
             ),
             const Divider(height: 32),
-            const Text('Batter Runs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            Text(trId('batter_runs'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -357,7 +358,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   .toList(),
             ),
             const SizedBox(height: 24),
-            const Text('Extras', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
+            Text(trId('extras'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -393,7 +394,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
             ],
             const SizedBox(height: 24),
             SwitchListTile(
-              title: const Text('Wicket?'),
+              title: Text(trId('wicket_2')),
               contentPadding: EdgeInsets.zero,
               value: _isWicket,
               onChanged: (v) => setState(() => _isWicket = v),
@@ -401,9 +402,9 @@ class _EditBallSheetState extends State<_EditBallSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _notesCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Audit Notes (optional)',
-                hintText: 'Reason for edit',
+              decoration: InputDecoration(
+                labelText: trId('audit_notes_optional'),
+                hintText: trId('reason_for_edit'),
                 border: OutlineInputBorder(),
               ),
               maxLines: 2,
@@ -418,7 +419,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                         Navigator.pop(context);
                         context.read<CricketScoringCubit>().undoEditBall(widget.ball.id);
                       },
-                      child: const Text('Undo Last Edit'),
+                      child: Text(trId('undo_last_edit')),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -427,7 +428,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   flex: 2,
                   child: FilledButton(
                     onPressed: _save,
-                    child: const Text('Save & Recalculate'),
+                    child: Text(trId('save_recalculate')),
                   ),
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 
 /// Lichess-style horizontal move bar.
 /// Shows move pairs, auto-scrolls to the latest move, and displays a
@@ -64,9 +65,9 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
         children: [
           Expanded(
             child: pairs.isEmpty && !widget.isThinking
-                ? const Center(
+                ? Center(
                     child: Text(
-                      'Game start',
+                      trId('game_start'),
                       style: TextStyle(
                         color: Color(0xFF8B8682),
                         fontSize: 12,

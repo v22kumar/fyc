@@ -1,4 +1,5 @@
 import 'package:bishop/bishop.dart' as bishop;
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:squares/squares.dart';
@@ -103,7 +104,7 @@ class _ReplayPageState extends State<ReplayPage> {
           if (_game != null)
             IconButton(
               icon: const Icon(Icons.share_rounded, color: Colors.white70),
-              tooltip: 'Share PGN',
+              tooltip: trId('share_pgn'),
               onPressed: () => _sharePgn(_game!),
             ),
         ],
@@ -124,7 +125,7 @@ class _ReplayPageState extends State<ReplayPage> {
         children: [
           const Icon(Icons.error_outline, color: AppColors.warning, size: 48),
           const SizedBox(height: 12),
-          const Text('Could not load game',
+          Text(trId('could_not_load_game'),
               style: TextStyle(
                   color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 8),

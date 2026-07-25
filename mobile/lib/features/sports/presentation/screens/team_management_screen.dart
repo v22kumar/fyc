@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../service_locator.dart';
 import '../../domain/repositories/sports_repository.dart';
@@ -34,7 +35,7 @@ class TeamManagementScreen extends StatelessWidget {
               return Center(child: Text('Error: ${state.message}'));
             } else if (state is TeamManagementLoaded) {
               if (state.players.isEmpty) {
-                return const Center(child: Text('No players registered yet.'));
+                return Center(child: Text(trId('no_players_registered_yet')));
               }
               return ListView.builder(
                 itemCount: state.players.length,
@@ -83,24 +84,24 @@ class TeamManagementScreen extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Add Player'),
+          title: Text(trId('add_player')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Player Name'),
+                decoration: InputDecoration(labelText: trId('player_name')),
               ),
               TextField(
                 controller: roleController,
-                decoration: const InputDecoration(labelText: 'Role (e.g. Batsman, Bowler)'),
+                decoration: InputDecoration(labelText: trId('role_e_g_batsman_bowler')),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(trId('cancel_2')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -112,7 +113,7 @@ class TeamManagementScreen extends StatelessWidget {
                   Navigator.pop(ctx);
                 }
               },
-              child: const Text('Add'),
+              child: Text(trId('add')),
             ),
           ],
         );

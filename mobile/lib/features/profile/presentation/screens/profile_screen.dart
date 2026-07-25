@@ -56,15 +56,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     switch (role) {
       case 'SUPER_ADMIN':
       case 'ADMIN':
-        return tr(en: 'Administrator', ta: 'நிர்வாகி', hi: 'प्रशासक', ml: 'അഡ്മിനിസ്ട്രേറ്റർ');
+        return trId('administrator');
       case 'EXECUTIVE_MEMBER':
-        return tr(en: 'Executive Member', ta: 'நிர்வாகக் குழு', hi: 'कार्यकारी सदस्य', ml: 'എക്സിക്യൂട്ടീവ് അംഗം');
+        return trId('executive_member');
       case 'CLUB_MEMBER':
-        return tr(en: 'Club Member', ta: 'கிளப் உறுப்பினர்', hi: 'क्लब सदस्य', ml: 'ക്ലബ് അംഗം');
+        return trId('club_member');
       case 'VOLUNTEER':
-        return tr(en: 'Volunteer', ta: 'தன்னார்வலர்', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ');
+        return trId('volunteer_5');
       default:
-        return tr(en: 'Member', ta: 'உறுப்பினர்', hi: 'सदस्य', ml: 'അംഗം');
+        return trId('member');
     }
   }
 
@@ -74,17 +74,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(tr(en: 'Log out?', ta: 'வெளியேறவா?', hi: 'लॉग आउट करें?', ml: 'ലോഗ് ഔട്ട് ചെയ്യണോ?')),
-        content: Text(tr(en: 'You will be signed out of your account.', ta: 'உங்கள் கணக்கிலிருந்து வெளியேற விரும்புகிறீர்களா?', hi: 'आप अपने खाते से साइन आउट हो जाएंगे।', ml: 'നിങ്ങൾ നിങ്ങളുടെ അക്കൗണ്ടിൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്യപ്പെടും.')),
+        title: Text(trId('log_out')),
+        content: Text(trId('you_will_be_signed_out_of_your_account')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(trId('cancel'))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<AuthBloc>().add(const AuthLogoutRequested());
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
-            child: Text(tr(en: 'Log out', ta: 'வெளியேறு', hi: 'लॉग आउट', ml: 'ലോഗ് ഔട്ട്'), style: const TextStyle(color: Colors.white)),
+            child: Text(trId('log_out_2'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -95,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final ta = _lang == 'ta';
     final state = context.watch<AuthBloc>().state;
-    String name = tr(en: 'FYC Member', ta: 'FYC உறுப்பினர்', hi: 'FYC सदस्य', ml: 'FYC അംഗം');
+    String name = trId('fyc_member');
     String role = 'MEMBER';
     if (state is AuthAuthenticated) {
       name = (ta
@@ -111,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(tr(en: 'Profile', ta: 'சுயவிவரம்', hi: 'प्रोफ़ाइल', ml: 'പ്രൊഫൈൽ'),
+        title: Text(trId('profile'),
             style: TextStyle(color: context.cText, fontWeight: FontWeight.w800, fontSize: 18)),
         iconTheme: IconThemeData(color: context.cText),
       ),
@@ -173,27 +173,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // ── Stats row ────────────────────────────────────────────────────
           Row(
             children: [
-              _stat(context, _events.toString(), tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ'), Icons.event, const Color(0xFF8B5CF6)),
+              _stat(context, _events.toString(), trId('events'), Icons.event, const Color(0xFF8B5CF6)),
               const SizedBox(width: 10),
-              _stat(context, _hours.toStringAsFixed(0), tr(en: 'Hours', ta: 'மணி', hi: 'घंटे', ml: 'മണിക്കൂർ'), Icons.schedule, const Color(0xFF2563EB)),
+              _stat(context, _hours.toStringAsFixed(0), trId('hours'), Icons.schedule, const Color(0xFF2563EB)),
               const SizedBox(width: 10),
-              _stat(context, _donations.toString(), tr(en: 'Donations', ta: 'தானம்', hi: 'दान', ml: 'ദാനങ്ങൾ'), Icons.water_drop, const Color(0xFFEF4444)),
+              _stat(context, _donations.toString(), trId('donations'), Icons.water_drop, const Color(0xFFEF4444)),
               const SizedBox(width: 10),
-              _stat(context, _trees.toString(), tr(en: 'Trees', ta: 'மரங்கள்', hi: 'पेड़', ml: 'മരങ്ങൾ'), Icons.eco, const Color(0xFF16A34A)),
+              _stat(context, _trees.toString(), trId('trees'), Icons.eco, const Color(0xFF16A34A)),
             ],
           ),
           const SizedBox(height: 22),
           // ── Activity ─────────────────────────────────────────────────────
-          _sectionLabel(context, tr(en: 'My Activity', ta: 'என் செயல்பாடு', hi: 'मेरी गतिविधि', ml: 'എന്റെ പ്രവർത്തനം')),
-          _menuTile(context, Icons.map_rounded, tr(en: 'My Journey', ta: 'என் பயணம்', hi: 'मेरी यात्रा', ml: 'എന്റെ യാത്ര'), const Color(0xFFEC4899), () => context.push('/journey')),
-          _menuTile(context, Icons.celebration_rounded, tr(en: 'My Events', ta: 'என் நிகழ்வுகள்', hi: 'मेरे कार्यक्रम', ml: 'എന്റെ പരിപാടികൾ'), const Color(0xFF8B5CF6), () => context.push('/events')),
-          _menuTile(context, Icons.search_rounded, tr(en: 'My Reports', ta: 'என் புகார்கள்', hi: 'मेरी रिपोर्ट', ml: 'എന്റെ റിപ്പോർട്ടുകൾ'), const Color(0xFF14B8A6), () => context.push('/issues/track')),
-          _menuTile(context, Icons.badge_rounded, tr(en: 'Membership Card', ta: 'என் அட்டை', hi: 'सदस्यता कार्ड', ml: 'അംഗത്വ കാർഡ്'), const Color(0xFF0B6E4F), () => context.push('/membership')),
+          _sectionLabel(context, trId('my_activity')),
+          _menuTile(context, Icons.map_rounded, trId('my_journey'), const Color(0xFFEC4899), () => context.push('/journey')),
+          _menuTile(context, Icons.celebration_rounded, trId('my_events'), const Color(0xFF8B5CF6), () => context.push('/events')),
+          _menuTile(context, Icons.search_rounded, trId('my_reports'), const Color(0xFF14B8A6), () => context.push('/issues/track')),
+          _menuTile(context, Icons.badge_rounded, trId('membership_card'), const Color(0xFF0B6E4F), () => context.push('/membership')),
           const SizedBox(height: 18),
           // ── Account ──────────────────────────────────────────────────────
-          _sectionLabel(context, tr(en: 'Account', ta: 'கணக்கு', hi: 'खाता', ml: 'അക്കൗണ്ട്')),
-          _menuTile(context, Icons.settings_rounded, tr(en: 'Settings', ta: 'அமைப்புகள்', hi: 'सेटिंग्स', ml: 'ക്രമീകരണങ്ങൾ'), const Color(0xFF475569), () => context.push('/settings')),
-          _menuTile(context, Icons.info_outline_rounded, tr(en: 'About FYC', ta: 'எங்களைப் பற்றி', hi: 'FYC के बारे में', ml: 'FYC-യെ കുറിച്ച്'), const Color(0xFF475569), () => context.push('/about')),
+          _sectionLabel(context, trId('account')),
+          _menuTile(context, Icons.settings_rounded, trId('settings'), const Color(0xFF475569), () => context.push('/settings')),
+          _menuTile(context, Icons.info_outline_rounded, trId('about_fyc'), const Color(0xFF475569), () => context.push('/about')),
           const SizedBox(height: 18),
           // ── Logout ───────────────────────────────────────────────────────
           SizedBox(
@@ -201,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: OutlinedButton.icon(
               onPressed: _confirmLogout,
               icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.accent),
-              label: Text(tr(en: 'Log out', ta: 'வெளியேறு', hi: 'लॉग आउट', ml: 'ലോഗ് ഔട്ട്'),
+              label: Text(trId('log_out_2'),
                   style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.accent.withOpacity(0.5)),

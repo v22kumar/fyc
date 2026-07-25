@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -83,13 +84,13 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
       widget.onTeamUpdated();
       Navigator.pop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Team updated successfully!'), backgroundColor: AppColors.success),
+        SnackBar(content: Text(trId('team_updated_successfully')), backgroundColor: AppColors.success),
       );
     } catch (_) {
       if (mounted) {
         setState(() => _submitting = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not update team'), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('could_not_update_team')), backgroundColor: AppColors.accent),
         );
       }
     }
@@ -110,38 +111,38 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
             const SizedBox(height: 18),
-            const Text('Edit Team & Standings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(trId('edit_team_standings'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 16),
-            TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Team Name *')),
+            TextField(controller: _nameCtrl, decoration: InputDecoration(labelText: trId('team_name_2'))),
             const SizedBox(height: 12),
-            TextField(controller: _captainCtrl, decoration: const InputDecoration(labelText: 'Captain Name')),
+            TextField(controller: _captainCtrl, decoration: InputDecoration(labelText: trId('captain_name'))),
             const SizedBox(height: 12),
-            TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Contact Phone')),
+            TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: trId('contact_phone'))),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: TextField(controller: _winsCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Wins'))),
+                Expanded(child: TextField(controller: _winsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('wins')))),
                 const SizedBox(width: 12),
-                Expanded(child: TextField(controller: _lossesCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Losses'))),
+                Expanded(child: TextField(controller: _lossesCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('losses')))),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: TextField(controller: _drawsCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Draws'))),
+                Expanded(child: TextField(controller: _drawsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('draws')))),
                 const SizedBox(width: 12),
-                Expanded(child: TextField(controller: _pointsCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Points'))),
+                Expanded(child: TextField(controller: _pointsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('points')))),
               ],
             ),
             const SizedBox(height: 12),
             SwitchListTile(
-              title: const Text('FYC Team', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text(trId('fyc_team'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               value: _isFycTeam,
               onChanged: (val) => setState(() => _isFycTeam = val),
               contentPadding: EdgeInsets.zero,
             ),
             SwitchListTile(
-              title: const Text('Eliminated (knocked out)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text(trId('eliminated_knocked_out'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               value: _eliminated,
               onChanged: (val) => setState(() => _eliminated = val),
               activeColor: AppColors.accent,
@@ -159,7 +160,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
                 ));
               },
               icon: const Icon(Icons.groups_outlined, size: 18),
-              label: const Text('Manage players'),
+              label: Text(trId('manage_players')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 minimumSize: const Size(double.infinity, 46),
@@ -173,7 +174,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
               child: ElevatedButton(
                 onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('save_changes'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

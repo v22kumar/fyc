@@ -39,38 +39,33 @@ _SportScoring _scoringFor(String sport) {
   switch (sport.toLowerCase()) {
     case 'football':
       return _SportScoring(
-        () => tr(en: 'Goals', ta: 'கோல்கள்', hi: 'गोल', ml: 'ഗോളുകൾ'),
+        () => trId('goals'),
         '0',
-        () => tr(en: 'Notes — e.g. "2-1, won in extra time"', ta: 'குறிப்பு',
-            hi: 'नोट्स', ml: 'കുറിപ്പുകൾ'),
+        () => trId('notes_e_g_2_1_won_in_extra_time'),
       );
     case 'volleyball':
       return _SportScoring(
-        () => tr(en: 'Sets', ta: 'செட்கள்', hi: 'सेट', ml: 'സെറ്റുകൾ'),
+        () => trId('sets'),
         '0',
-        () => tr(en: 'Notes — e.g. "25-20, 25-18, 25-22"', ta: 'குறிப்பு',
-            hi: 'नोट्स', ml: 'കുറിപ്പുകൾ'),
+        () => trId('notes_e_g_25_20_25_18_25_22'),
       );
     case 'kabaddi':
       return _SportScoring(
-        () => tr(en: 'Points', ta: 'புள்ளிகள்', hi: 'अंक', ml: 'പോയിന്റുകൾ'),
+        () => trId('points'),
         '0',
-        () => tr(en: 'Notes — e.g. "42-38, won by 4"', ta: 'குறிப்பு',
-            hi: 'नोट्स', ml: 'കുറിപ്പുകൾ'),
+        () => trId('notes_e_g_42_38_won_by_4'),
       );
     case 'carrom':
       return _SportScoring(
-        () => tr(en: 'Points', ta: 'புள்ளிகள்', hi: 'अंक', ml: 'പോയിന്റുകൾ'),
+        () => trId('points'),
         '0',
-        () => tr(en: 'Notes — e.g. "Best of 3, 2-1"', ta: 'குறிப்பு',
-            hi: 'नोट्स', ml: 'കുറിപ്പുകൾ'),
+        () => trId('notes_e_g_best_of_3_2_1'),
       );
     default:
       return _SportScoring(
-        () => tr(en: 'Score', ta: 'மதிப்பெண்', hi: 'स्कोर', ml: 'സ്കോർ'),
+        () => trId('score'),
         '0',
-        () => tr(en: 'Notes (optional)', ta: 'குறிப்பு (விருப்பம்)',
-            hi: 'नोट्स (वैकल्पिक)', ml: 'കുറിപ്പുകൾ (ഓപ്ഷണൽ)'),
+        () => trId('notes_optional'),
       );
   }
 }
@@ -117,12 +112,8 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(widget.isManager
-              ? tr(en: 'Result saved', ta: 'முடிவு சேமிக்கப்பட்டது',
-                  hi: 'परिणाम सहेजा गया', ml: 'ഫലം സേവ് ചെയ്തു')
-              : tr(en: 'Score submitted — pending admin approval',
-                  ta: 'மதிப்பெண் சமர்ப்பிக்கப்பட்டது — நிர்வாக ஒப்புதலுக்காக',
-                  hi: 'स्कोर सबमिट — एडमिन अनुमोदन बाकी',
-                  ml: 'സ്കോർ സമർപ്പിച്ചു — അഡ്മിൻ അംഗീകാരം ബാക്കി')),
+              ? trId('result_saved')
+              : trId('score_submitted_pending_admin_approval')),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -130,8 +121,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
       if (mounted) {
         setState(() => _submitting = false);
         messenger.showSnackBar(
-          SnackBar(content: Text(tr(en: 'Could not submit score', ta: 'சமர்ப்பிக்க முடியவில்லை',
-              hi: 'सबमिट नहीं हो सका', ml: 'സമർപ്പിക്കാനായില്ല')), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('could_not_submit_score')), backgroundColor: AppColors.accent),
         );
       }
     }
@@ -157,7 +147,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
               const Icon(Icons.bolt_rounded, color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
-                '${tr(en: 'Enter Score', ta: 'மதிப்பெண்ணை பதிவு செய்', hi: 'स्कोर दर्ज करें', ml: 'സ്കോർ നൽകുക')} · ${scoring.unitLabel()}',
+                '${trId('enter_score')} · ${scoring.unitLabel()}',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText),
               ),
             ],
@@ -165,14 +155,8 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
           const SizedBox(height: 4),
           Text(
             widget.isManager
-                ? tr(en: 'This result is saved to the standings right away.',
-                    ta: 'இந்த முடிவு உடனடியாக புள்ளிப்பட்டியலில் சேமிக்கப்படும்.',
-                    hi: 'यह परिणाम तुरंत अंक तालिका में सहेजा जाएगा।',
-                    ml: 'ഈ ഫലം ഉടനെ പോയിന്റ് പട്ടികയിൽ സേവ് ചെയ്യും.')
-                : tr(en: 'Your entry will be sent to an admin for approval.',
-                    ta: 'உங்கள் பதிவு நிர்வாக ஒப்புதலுக்கு அனுப்பப்படும்.',
-                    hi: 'आपकी प्रविष्टि एडमिन अनुमोदन के लिए भेजी जाएगी।',
-                    ml: 'നിങ്ങളുടെ എൻട്രി അഡ്മിൻ അംഗീകാരത്തിനായി അയയ്ക്കും.'),
+                ? trId('this_result_is_saved_to_the_standings_ri')
+                : trId('your_entry_will_be_sent_to_an_admin_for'),
             style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
           ),
           const SizedBox(height: 18),
@@ -180,16 +164,16 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
           Row(
             children: [
               Expanded(child: _ScoreField(label: teamA, controller: _scoreACtrl, hint: scoring.hint)),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('vs', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey)),
+                child: Text(trId('vs_2'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey)),
               ),
               Expanded(child: _ScoreField(label: teamB, controller: _scoreBCtrl, hint: scoring.hint)),
             ],
           ),
           const SizedBox(height: 18),
 
-          Text(tr(en: 'Winner', ta: 'வெற்றியாளர்', hi: 'विजेता', ml: 'വിജയി'),
+          Text(trId('winner'),
               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.cText)),
           const SizedBox(height: 8),
           Wrap(
@@ -199,8 +183,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
                   onTap: () => setState(() => _winnerId = widget.fixture.teamAId)),
               _WinnerChip(label: teamB, selected: _winnerId == widget.fixture.teamBId,
                   onTap: () => setState(() => _winnerId = widget.fixture.teamBId)),
-              _WinnerChip(label: tr(en: 'Draw / TBD', ta: 'சமன் / பின்னர்',
-                  hi: 'ड्रॉ / बाद में', ml: 'സമനില / പിന്നീട്'), selected: _winnerId == null,
+              _WinnerChip(label: trId('draw_tbd'), selected: _winnerId == null,
                   onTap: () => setState(() => _winnerId = null)),
             ],
           ),
@@ -231,8 +214,8 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                   : Text(
                       widget.isManager
-                          ? tr(en: 'Save result', ta: 'முடிவைச் சேமி', hi: 'परिणाम सहेजें', ml: 'ഫലം സേവ് ചെയ്യുക')
-                          : tr(en: 'Submit for approval', ta: 'ஒப்புதலுக்கு சமர்ப்பி', hi: 'अनुमोदन हेतु सबमिट', ml: 'അംഗീകാരത്തിന് സമർപ്പിക്കുക'),
+                          ? trId('save_result')
+                          : trId('submit_for_approval'),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
             ),
           ),

@@ -66,10 +66,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
     if (_start == null || _end == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(en: 'Pick a start and end time',
-              ta: 'தொடக்க & முடிவு நேரத்தைத் தேர்வுசெய்க',
-              hi: 'शुरू और समाप्ति समय चुनें',
-              ml: 'ആരംഭ, അവസാന സമയം തിരഞ്ഞെടുക്കുക')),
+          content: Text(trId('pick_a_start_and_end_time')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -78,10 +75,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
     if (!_end!.isAfter(_start!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(en: 'End time must be after start',
-              ta: 'முடிவு நேரம் தொடக்கத்திற்குப் பின் இருக்க வேண்டும்',
-              hi: 'समाप्ति समय शुरू के बाद होना चाहिए',
-              ml: 'അവസാന സമയം ആരംഭത്തിന് ശേഷമായിരിക്കണം')),
+          content: Text(trId('end_time_must_be_after_start')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -115,10 +109,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(en: 'Could not create event. Please try again.',
-              ta: 'நிகழ்வை உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
-              hi: 'कार्यक्रम नहीं बना। पुनः प्रयास करें।',
-              ml: 'പരിപാടി സൃഷ്ടിക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക.')),
+          content: Text(trId('could_not_create_event_please_try_again')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -130,8 +121,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
     final fmt = DateFormat('EEE, d MMM · h:mm a');
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Create Event', ta: 'நிகழ்வை உருவாக்கு',
-            hi: 'कार्यक्रम बनाएं', ml: 'പരിപാടി സൃഷ്ടിക്കുക')),
+        title: Text(trId('create_event')),
       ),
       body: Form(
         key: _formKey,
@@ -139,39 +129,36 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _field(_titleEn,
-                tr(en: 'Title (English)', ta: 'தலைப்பு (ஆங்கிலம்)', hi: 'शीर्षक (अंग्रेज़ी)', ml: 'തലക്കെട്ട് (ഇംഗ്ലീഷ്)'),
+                trId('title_english'),
                 required: true),
             _field(_titleTa,
-                tr(en: 'Title (Tamil, optional)', ta: 'தலைப்பு (தமிழ்)', hi: 'शीर्षक (तमिल)', ml: 'തലക്കെട്ട് (തമിഴ്)')),
+                trId('title_tamil_optional')),
             _field(_descEn,
-                tr(en: 'Description (English)', ta: 'விவரம் (ஆங்கிலம்)', hi: 'विवरण (अंग्रेज़ी)', ml: 'വിവരണം (ഇംഗ്ലീഷ്)'),
+                trId('description_english'),
                 required: true, maxLines: 4),
             _field(_descTa,
-                tr(en: 'Description (Tamil, optional)', ta: 'விவரம் (தமிழ்)', hi: 'विवरण (तमिल)', ml: 'വിവരണം (തമിഴ്)'),
+                trId('description_tamil_optional'),
                 maxLines: 4),
             _dateTile(
-              label: tr(en: 'Starts', ta: 'தொடக்கம்', hi: 'शुरू', ml: 'ആരംഭം'),
+              label: trId('starts'),
               value: _start == null ? null : fmt.format(_start!),
               onTap: () => _pick(isStart: true),
             ),
             _dateTile(
-              label: tr(en: 'Ends', ta: 'முடிவு', hi: 'समाप्ति', ml: 'അവസാനം'),
+              label: trId('ends'),
               value: _end == null ? null : fmt.format(_end!),
               onTap: () => _pick(isStart: false),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr(en: 'Requires registration', ta: 'பதிவு தேவை',
-                  hi: 'पंजीकरण आवश्यक', ml: 'രജിസ്ട്രേഷൻ ആവശ്യമാണ്')),
+              title: Text(trId('requires_registration')),
               value: _requiresRegistration,
               onChanged: (v) => setState(() => _requiresRegistration = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr(en: 'Publish now', ta: 'இப்போது வெளியிடு',
-                  hi: 'अभी प्रकाशित करें', ml: 'ഇപ്പോൾ പ്രസിദ്ധീകരിക്കുക')),
-              subtitle: Text(tr(en: 'Off = saved as draft', ta: 'ஆஃப் = வரைவாக சேமிக்கும்',
-                  hi: 'बंद = ड्राफ्ट', ml: 'ഓഫ് = ഡ്രാഫ്റ്റ്')),
+              title: Text(trId('publish_now')),
+              subtitle: Text(trId('off_saved_as_draft')),
               value: _publishNow,
               onChanged: (v) => setState(() => _publishNow = v),
             ),
@@ -181,7 +168,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
               child: _saving
                   ? const SizedBox(
                       width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(tr(en: 'Create', ta: 'உருவாக்கு', hi: 'बनाएं', ml: 'സൃഷ്ടിക്കുക')),
+                  : Text(trId('create')),
             ),
           ],
         ),
@@ -197,7 +184,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
         leading: const Icon(Icons.schedule),
         title: Text(label),
         subtitle: Text(value ??
-            tr(en: 'Tap to choose', ta: 'தேர்வுசெய்ய தட்டவும்', hi: 'चुनने के लिए टैप करें', ml: 'തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യുക')),
+            trId('tap_to_choose')),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
@@ -214,7 +201,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
         validator: required
             ? (v) => (v == null || v.trim().isEmpty)
-                ? tr(en: 'Required', ta: 'தேவை', hi: 'आवश्यक', ml: 'ആവശ്യമാണ്')
+                ? trId('required_2')
                 : null
             : null,
       ),

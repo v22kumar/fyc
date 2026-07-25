@@ -57,13 +57,13 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Jobs & Gigs', ta: 'வேலைகள் & பணிகள்', hi: 'नौकरियाँ और काम', ml: 'ജോലികളും ഗിഗുകളും')),
+        title: Text(trId('jobs_gigs')),
       ),
       floatingActionButton: _canPost
           ? FloatingActionButton.extended(
               onPressed: _openCreate,
               icon: const Icon(Icons.add),
-              label: Text(tr(en: 'Post a Job', ta: 'வேலை பதிவிடு', hi: 'नौकरी पोस्ट करें', ml: 'ജോലി പോസ്റ്റ്')),
+              label: Text(trId('post_a_job_2')),
             )
           : null,
       body: BlocConsumer<OpportunityBloc, OpportunityState>(
@@ -77,12 +77,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        tr(
-                          en: 'Success! Your application has been submitted.',
-                          ta: 'வெற்றி! விண்ணப்பம் சமர்ப்பிக்கப்பட்டது.',
-                          hi: 'सफलता! आपका आवेदन सबमिट कर दिया गया है।',
-                          ml: 'വിജയം! നിങ്ങളുടെ അപേക്ഷ സമർപ്പിച്ചു.',
-                        ),
+                        trId('success_your_application_has_been_submit'),
                       ),
                     ),
                   ],
@@ -110,7 +105,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => context.read<OpportunityBloc>().add(const OpportunityFetchRequested()),
-                    child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'फिर से प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                    child: Text(trId('retry_5')),
                   ),
                 ],
               ),
@@ -130,11 +125,11 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    _FilterChip('ALL', tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം'), _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('ALL', trId('all'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                     const SizedBox(width: 8),
-                    _FilterChip('JOB', tr(en: 'Jobs', ta: 'வேலைகள்', hi: 'नौकरियाँ', ml: 'ജോലികൾ'), _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('JOB', trId('jobs'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                     const SizedBox(width: 8),
-                    _FilterChip('VOLUNTEER', tr(en: 'Volunteer', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ'), _selectedTab, (v) => setState(() => _selectedTab = v)),
+                    _FilterChip('VOLUNTEER', trId('volunteer_7'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                   ],
                 ),
               ),
@@ -186,19 +181,14 @@ class _PremiumEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            tr(en: 'No Jobs Yet', ta: 'வேலைகள் இல்லை', hi: 'अभी तक कोई नौकरी नहीं', ml: 'ഇതുവരെ ജോലികളൊന്നുമില്ല'),
+            trId('no_jobs_yet'),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.cText),
           ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              tr(
-                en: 'Be the first to post a job or volunteer drive for the FYC community.',
-                ta: 'FYC சமூகத்திற்கு முதன்முதலில் வேலை அல்லது தன்னார்வப் பணியை பதிவிடுங்கள்.',
-                hi: 'FYC समुदाय के लिए नौकरी या स्वयंसेवक अभियान पोस्ट करने वाले पहले व्यक्ति बनें।',
-                ml: 'FYC സമൂഹത്തിനായി ഒരു ജോലിയോ വളണ്ടിയർ ഡ്രൈവോ ആദ്യമായി പോസ്റ്റ് ചെയ്യൂ.',
-              ),
+              trId('be_the_first_to_post_a_job_or_volunteer'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: context.cTextSecondary),
             ),
@@ -214,7 +204,7 @@ class _PremiumEmptyState extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Text(
-                  tr(en: 'Post a Job', ta: 'வேலை பதிவிடு', hi: 'नौकरी पोस्ट करें', ml: 'ജോലി പോസ്റ്റ് ചെയ്യൂ'),
+                  trId('post_a_job_3'),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -261,15 +251,12 @@ class _SkillsPeerLink extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr(en: 'Skills Directory', ta: 'திறன் அடைவு', hi: 'कौशल निर्देशिका', ml: 'നൈപുണ്യ ഡയറക്ടറി'),
+                    trId('skills_directory'),
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.cText),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    tr(en: 'Hiring? Browse carpenters, electricians, tutors & more',
-                        ta: 'தச்சர், மின்சாரி, ஆசிரியர் & பலரை பாருங்கள்',
-                        hi: 'बढ़ई, इलेक्ट्रीशियन, शिक्षक और अधिक देखें',
-                        ml: 'ആശാരി, ഇലക്ട്രീഷ്യൻ, ട്യൂട്ടർ എന്നിവരെ കാണൂ'),
+                    trId('hiring_browse_carpenters_electricians_tu'),
                     style: TextStyle(fontSize: 12.5, color: context.cTextSecondary),
                   ),
                 ],
@@ -317,8 +304,8 @@ class _OpportunityCard extends StatelessWidget {
                   ),
                   child: Text(
                     isVolunteer
-                        ? tr(en: 'VOLUNTEER', ta: 'தன்னார்வ பணி', hi: 'स्वयंसेवा', ml: 'വളണ്ടിയർ')
-                        : tr(en: 'JOB', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി'),
+                        ? trId('volunteer_8')
+                        : trId('job_2'),
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: typeColor),
                   ),
                 ),
@@ -329,7 +316,7 @@ class _OpportunityCard extends StatelessWidget {
                   )
                 else if (isVolunteer)
                   Text(
-                    tr(en: 'Volunteer', ta: 'தன்னார்வம்', hi: 'स्वयंसेवा', ml: 'വളണ്ടിയർ'),
+                    trId('volunteer_9'),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryLight),
                   )
                 else if (opp.hours.isNotEmpty)
@@ -378,8 +365,8 @@ class _OpportunityCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(backgroundColor: typeColor),
                 child: Text(
                   isVolunteer
-                      ? tr(en: 'Apply to Volunteer', ta: 'தன்னார்வலராக விண்ணப்பி', hi: 'स्वयंसेवा के लिए आवेदन करें', ml: 'വളണ്ടിയർ ചെയ്യാൻ അപേക്ഷിക്കുക')
-                      : tr(en: 'Apply Now', ta: 'இப்போது விண்ணப்பி', hi: 'अभी आवेदन करें', ml: 'ഇപ്പോൾ അപേക്ഷിക്കൂ'),
+                      ? trId('apply_to_volunteer')
+                      : trId('apply_now'),
                   style: const TextStyle(fontSize: 14),
                 ),
               ),

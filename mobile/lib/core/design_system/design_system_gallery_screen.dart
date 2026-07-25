@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/tr.dart';
 import 'tokens.dart';
 import 'typography.dart';
 import 'components/ds_badge.dart';
@@ -51,19 +52,19 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
       child: Builder(builder: (context) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Design System Gallery'),
+            title: Text(trId('design_system_gallery')),
             actions: [
               IconButton(
-                tooltip: 'Toggle dark mode',
+                tooltip: trId('toggle_dark_mode'),
                 icon: Icon(_dark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
                 onPressed: () => setState(() => _dark = !_dark),
               ),
               PopupMenuButton<String>(
-                tooltip: 'Language',
+                tooltip: trId('language'),
                 initialValue: _lang,
                 onSelected: (v) => setState(() => _lang = v),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'en', child: Text('EN')),
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'en', child: Text(trId('en'))),
                   PopupMenuItem(value: 'ta', child: Text('தமிழ்')),
                   PopupMenuItem(value: 'hi', child: Text('हिंदी')),
                   PopupMenuItem(value: 'ml', child: Text('മലയാളം')),
@@ -123,10 +124,10 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                 label: 'Category',
                 value: _dropdownValue,
                 hint: 'Choose one',
-                items: const [
-                  DropdownMenuItem(value: 'cricket', child: Text('Cricket')),
-                  DropdownMenuItem(value: 'events', child: Text('Events')),
-                  DropdownMenuItem(value: 'green', child: Text('Green FYC')),
+                items: [
+                  DropdownMenuItem(value: 'cricket', child: Text(trId('cricket_2'))),
+                  DropdownMenuItem(value: 'events', child: Text(trId('events'))),
+                  DropdownMenuItem(value: 'green', child: Text(trId('green_fyc_2'))),
                 ],
                 onChanged: (v) => setState(() => _dropdownValue = v),
               ),
@@ -191,7 +192,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                 child: DSEmptyState(
                   icon: Icons.forum_rounded,
                   title: 'No community updates yet.',
-                  message: 'Be the first to share something with the community.',
+                  message: trId('be_the_first_to_share_something_with_the'),
                   primaryLabel: 'Create Post',
                   onPrimary: () {},
                   secondaryLabel: 'Refresh',

@@ -52,7 +52,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Announcements', ta: 'அறிவிப்புகள்', hi: 'घोषणाएँ', ml: 'അറിയിപ്പുകൾ')),
+        title: Text(trId('announcements')),
       ),
       body: BlocBuilder<AnnouncementBloc, AnnouncementState>(
         builder: (context, state) {
@@ -63,9 +63,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             if (state.announcements.isEmpty) {
               return EmptyState(
                 icon: Icons.campaign_rounded,
-                title: tr(en: 'No Announcements', ta: 'அறிவிப்புகள் இல்லை', hi: 'कोई घोषणा नहीं', ml: 'അറിയിപ്പുകളൊന്നുമില്ല'),
-                message: tr(en: 'You\'re all caught up! There are no new announcements from FYC.', ta: 'FYC இலிருந்து புதிய அறிவிப்புகள் எதுவும் இல்லை.', hi: 'आप पूरी तरह अपडेट हैं! FYC से कोई नई घोषणा नहीं है।', ml: 'നിങ്ങൾ എല്ലാം കണ്ടുകഴിഞ്ഞു! FYC-യിൽ നിന്ന് പുതിയ അറിയിപ്പുകളൊന്നുമില്ല.'),
-                buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'रिफ्रेश करें', ml: 'പുതുക്കുക'),
+                title: trId('no_announcements'),
+                message: trId('you_re_all_caught_up_there_are_no_new_an'),
+                buttonText: trId('refresh_2'),
                 onAction: () => context.read<AnnouncementBloc>().add(const AnnouncementFetchRequested()),
               );
             }
@@ -106,7 +106,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         .read<AnnouncementBloc>()
                         .add(const AnnouncementFetchRequested()),
                     child:
-                        Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                        Text(trId('retry')),
                   ),
                 ],
               ),

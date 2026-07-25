@@ -45,7 +45,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
     if (!_formKey.currentState!.validate()) return;
     if (_scheduledAt == null || _scheduledTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a date and time')),
+        SnackBar(content: Text(trId('please_select_a_date_and_time'))),
       );
       return;
     }
@@ -78,7 +78,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
         context.read<SportsBloc>().add(const SportsFetchRequested());
         Navigator.pop(context, true);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Weekly game updated successfully!'), backgroundColor: AppColors.success),
+          SnackBar(content: Text(trId('weekly_game_updated_successfully')), backgroundColor: AppColors.success),
         );
       } else {
         context.read<SportsBloc>().add(SportsWeeklyGameCreateRequested(data));
@@ -88,7 +88,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
       if (mounted) {
         setState(() => _isLoading = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Failed to save game details'), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('failed_to_save_game_details')), backgroundColor: AppColors.accent),
         );
       }
     }
@@ -116,8 +116,8 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Schedule a Match',
+                Text(
+                  trId('schedule_a_match'),
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                 ),
                 IconButton(
@@ -130,8 +130,8 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             TextFormField(
               initialValue: _title,
               decoration: InputDecoration(
-                labelText: 'Match Title',
-                hintText: 'e.g. Sunday Morning Bash',
+                labelText: trId('match_title'),
+                hintText: trId('e_g_sunday_morning_bash'),
                 prefixIcon: const Icon(Icons.title),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -142,13 +142,13 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             DropdownButtonFormField<String>(
               value: _sport,
               decoration: InputDecoration(
-                labelText: 'Sport',
+                labelText: trId('sport'),
                 prefixIcon: const Icon(Icons.sports),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              items: const [
-                DropdownMenuItem(value: 'cricket', child: Text('Cricket 🏏')),
-                DropdownMenuItem(value: 'football', child: Text('Football ⚽')),
+              items: [
+                DropdownMenuItem(value: 'cricket', child: Text(trId('cricket'))),
+                DropdownMenuItem(value: 'football', child: Text(trId('football'))),
               ],
               onChanged: (v) => setState(() => _sport = v!),
             ),
@@ -156,8 +156,8 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
             TextFormField(
               initialValue: _venue,
               decoration: InputDecoration(
-                labelText: 'Venue',
-                hintText: 'e.g. FYC Ground',
+                labelText: trId('venue'),
+                hintText: trId('e_g_fyc_ground'),
                 prefixIcon: const Icon(Icons.location_on_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -179,7 +179,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                     },
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        labelText: 'Date',
+                        labelText: trId('date'),
                         prefixIcon: const Icon(Icons.calendar_today),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -199,7 +199,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                     },
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        labelText: 'Time',
+                        labelText: trId('time'),
                         prefixIcon: const Icon(Icons.access_time),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),

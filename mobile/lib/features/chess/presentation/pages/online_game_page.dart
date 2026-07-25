@@ -1,4 +1,5 @@
 import 'package:bishop/bishop.dart' as bishop;
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
@@ -43,7 +44,7 @@ class OnlineGamePage extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               );
             }
-            return const Text('Online Game',
+            return Text(trId('online_game'),
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
           },
         ),
@@ -71,15 +72,15 @@ class OnlineGamePage extends StatelessWidget {
                             .add(const SendOfferDraw());
                       }
                     },
-                    itemBuilder: (_) => const [
+                    itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'draw',
-                        child: Text('Offer Draw',
+                        child: Text(trId('offer_draw'),
                             style: TextStyle(color: Colors.white)),
                       ),
                       PopupMenuItem(
                         value: 'resign',
-                        child: Text('Resign',
+                        child: Text(trId('resign'),
                             style: TextStyle(color: Colors.red)),
                       ),
                     ],
@@ -108,13 +109,13 @@ class OnlineGamePage extends StatelessWidget {
   // ── States ─────────────────────────────────────────────────────────────────
 
   Widget _buildConnecting() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircularProgressIndicator(color: _kGreen),
           SizedBox(height: 16),
-          Text('Connecting…',
+          Text(trId('connecting'),
               style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
       ),
@@ -130,8 +131,8 @@ class OnlineGamePage extends StatelessWidget {
           const SizedBox(height: 20),
           const CircularProgressIndicator(color: _kGreen),
           const SizedBox(height: 16),
-          const Text(
-            'Waiting for opponent…',
+          Text(
+            trId('waiting_for_opponent'),
             style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -247,13 +248,13 @@ class OnlineGamePage extends StatelessWidget {
                   color: const Color(0xFFB45309),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.wifi_off, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Opponent disconnected — waiting 60s',
+                        trId('opponent_disconnected_waiting_60s'),
                         style: TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w600),
                       ),
@@ -279,8 +280,8 @@ class OnlineGamePage extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Opponent offers a draw',
+                    Text(
+                      trId('opponent_offers_a_draw'),
                       style: TextStyle(
                           color: Colors.white, fontWeight: FontWeight.w700),
                     ),
@@ -296,7 +297,7 @@ class OnlineGamePage extends StatelessWidget {
                               foregroundColor: Colors.white70,
                               side: const BorderSide(color: Colors.white24),
                             ),
-                            child: const Text('Decline'),
+                            child: Text(trId('decline')),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -309,7 +310,7 @@ class OnlineGamePage extends StatelessWidget {
                               backgroundColor: const Color(0xFFD4AF37),
                               foregroundColor: Colors.black,
                             ),
-                            child: const Text('Accept'),
+                            child: Text(trId('accept')),
                           ),
                         ),
                       ],
@@ -352,7 +353,7 @@ class OnlineGamePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('Back to Chess',
+                  child: Text(trId('back_to_chess'),
                       style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
@@ -387,14 +388,14 @@ class OnlineGamePage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Resign?',
+        title: Text(trId('resign_2'),
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        content: const Text('You will forfeit this game.',
+        content: Text(trId('you_will_forfeit_this_game'),
             style: TextStyle(color: Color(0xFF8B8682))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel',
+              child: Text(trId('cancel_2'),
                   style: TextStyle(color: Color(0xFF8B8682)))),
           TextButton(
             onPressed: () {
@@ -402,7 +403,7 @@ class OnlineGamePage extends StatelessWidget {
               context.read<OnlineGameBloc>().add(const SendResign());
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign',
+            child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
@@ -653,7 +654,7 @@ class _OnlineResultSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Back to Chess',
+              child: Text(trId('back_to_chess'),
                   style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),

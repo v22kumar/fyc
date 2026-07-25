@@ -84,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       initialDate: _dob ?? DateTime(now.year - 18, now.month, now.day),
       firstDate: DateTime(now.year - 120),
       lastDate: now,
-      helpText: tr(en: 'Select date of birth', ta: 'பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்'),
+      helpText: trId('select_date_of_birth'),
     );
     if (picked != null) setState(() => _dob = picked);
   }
@@ -95,9 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       // A tap-to-pick field can't use a normal validator; surface it explicitly.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(
-              en: 'Please select your date of birth',
-              ta: 'உங்கள் பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்')),
+          content: Text(trId('please_select_your_date_of_birth')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -234,8 +232,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'FYC Connect',
+                        Text(
+                          trId('fyc_connect'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 26,
@@ -245,12 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr(
-                            en: 'Join us in community service',
-                            ta: 'சமூக சேவையில் இணைவோம்',
-                            hi: 'सामुदायिक सेवा में हमसे जुड़ें',
-                            ml: 'സാമൂഹിക സേവനത്തിൽ ഞങ്ങളോടൊപ്പം ചേരൂ',
-                          ),
+                          trId('join_us_in_community_service'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.55),
                             fontSize: 13,
@@ -302,18 +295,18 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           keyboardType: TextInputType.phone,
                                           autofillHints: const [AutofillHints.telephoneNumber],
                                           decoration: InputDecoration(
-                                            label: Text(tr(en: 'Phone Number', ta: 'தொலைபேசி எண்', hi: 'फ़ोन नंबर', ml: 'ഫോൺ നമ്പർ')),
+                                            label: Text(trId('phone_number')),
                                             hintText: '9876543210',
                                             prefixIcon: const Icon(Icons.phone_outlined),
                                           ),
                                           validator: (v) {
                                             final t = (v ?? '').replaceAll(RegExp(r'\s'), '');
                                             if (t.isEmpty) {
-                                              return tr(en: 'Phone number is required', ta: 'தொலைபேசி எண் தேவை', hi: 'फ़ोन नंबर आवश्यक है', ml: 'ഫോൺ നമ്പർ ആവശ്യമാണ്');
+                                              return trId('phone_number_is_required');
                                             }
                                             final digits = t.replaceAll(RegExp(r'\D'), '');
                                             if (digits.length < 10) {
-                                              return tr(en: 'Enter a valid phone number', ta: 'சரியான தொலைபேசி எண்ணை உள்ளிடவும்', hi: 'मान्य फ़ोन नंबर दर्ज करें', ml: 'സാധുവായ ഫോൺ നമ്പർ നൽകുക');
+                                              return trId('enter_a_valid_phone_number');
                                             }
                                             return null;
                                           },
@@ -333,12 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       controller: _nameTaCtrl,
                                       decoration: InputDecoration(
                                         label: Text(l.nameInTamil),
-                                        hintText: tr(
-                                          en: 'e.g. Karthik J',
-                                          ta: 'உதா: கார்த்திக் ஜே',
-                                          hi: 'उदा. कार्तिक जे',
-                                          ml: 'ഉദാ. കാർത്തിക് ജെ',
-                                        ),
+                                        hintText: trId('e_g_karthik_j'),
                                         prefixIcon: const Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
@@ -351,12 +339,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       controller: _nameEnCtrl,
                                       decoration: InputDecoration(
                                         label: Text(l.nameInEnglish),
-                                        hintText: tr(
-                                          en: 'e.g. Karthik J',
-                                          ta: 'எ.கா. Karthik J',
-                                          hi: 'उदा. Karthik J',
-                                          ml: 'ഉദാ. Karthik J',
-                                        ),
+                                        hintText: trId('e_g_karthik_j_2'),
                                         prefixIcon: const Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
@@ -370,17 +353,17 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       keyboardType: TextInputType.emailAddress,
                                       autofillHints: const [AutofillHints.email],
                                       decoration: InputDecoration(
-                                        label: Text(tr(en: 'Email', ta: 'மின்னஞ்சல்', hi: 'ईमेल', ml: 'ഇമെയിൽ')),
-                                        hintText: 'name@example.com',
+                                        label: Text(trId('email')),
+                                        hintText: trId('name_example_com'),
                                         prefixIcon: const Icon(Icons.email_outlined),
                                       ),
                                       validator: (v) {
                                         final t = (v ?? '').trim();
                                         if (t.isEmpty) {
-                                          return tr(en: 'Email is required', ta: 'மின்னஞ்சல் தேவை', hi: 'ईमेल आवश्यक है', ml: 'ഇമെയിൽ ആവശ്യമാണ്');
+                                          return trId('email_is_required');
                                         }
                                         if (!_emailRe.hasMatch(t)) {
-                                          return tr(en: 'Enter a valid email', ta: 'சரியான மின்னஞ்சலை உள்ளிடவும்', hi: 'मान्य ईमेल दर्ज करें', ml: 'സാധുവായ ഇമെയിൽ നൽകുക');
+                                          return trId('enter_a_valid_email');
                                         }
                                         return null;
                                       },
@@ -393,12 +376,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       borderRadius: BorderRadius.circular(12),
                                       child: InputDecorator(
                                         decoration: InputDecoration(
-                                          label: Text(tr(en: 'Date of Birth', ta: 'பிறந்த தேதி', hi: 'जन्म तिथि', ml: 'ജനന തീയതി')),
+                                          label: Text(trId('date_of_birth')),
                                           prefixIcon: const Icon(Icons.cake_outlined),
                                         ),
                                         child: Text(
                                           _dob == null
-                                              ? tr(en: 'Select your date of birth', ta: 'பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்', hi: 'अपनी जन्म तिथि चुनें', ml: 'ജനന തീയതി തിരഞ്ഞെടുക്കുക')
+                                              ? trId('select_your_date_of_birth')
                                               : _fmtDob(_dob!),
                                           style: TextStyle(
                                             color: _dob == null ? AppColors.textSecondary : AppColors.textPrimary,
@@ -425,12 +408,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           child: _RoleCard(
                                             icon: '🏠',
                                             label: l.citizen,
-                                            subtitle: tr(
-                                              en: 'Citizen',
-                                              ta: 'குடிமகன்',
-                                              hi: 'नागरिक',
-                                              ml: 'പൗരൻ',
-                                            ),
+                                            subtitle: trId('citizen'),
                                             isSelected: _role == 'PUBLIC_CITIZEN',
                                             onTap: () => setState(() => _role = 'PUBLIC_CITIZEN'),
                                           ),
@@ -440,12 +418,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           child: _RoleCard(
                                             icon: '🤝',
                                             label: l.volunteer,
-                                            subtitle: tr(
-                                              en: 'Volunteer',
-                                              ta: 'தொண்டர்',
-                                              hi: 'स्वयंसेवक',
-                                              ml: 'സന്നദ്ധപ്രവർത്തകൻ',
-                                            ),
+                                            subtitle: trId('volunteer_2'),
                                             isSelected: _role == 'VOLUNTEER',
                                             onTap: () => setState(() => _role = 'VOLUNTEER'),
                                           ),
@@ -473,12 +446,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                 color: AppColors.textSecondary)),
                                         TextButton(
                                           onPressed: () => context.go('/login'),
-                                          child: Text(tr(
-                                            en: 'Login',
-                                            ta: 'உள்நுழைக',
-                                            hi: 'लॉग इन',
-                                            ml: 'ലോഗിൻ',
-                                          )),
+                                          child: Text(trId('login_2')),
                                         ),
                                       ],
                                     ),

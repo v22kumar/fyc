@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/thirukkural_datasource.dart';
@@ -225,7 +226,7 @@ class _ThirukkuralContent extends StatelessWidget {
                         child: const Text('📜', style: TextStyle(fontSize: 18)),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -239,7 +240,7 @@ class _ThirukkuralContent extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Thirukkural of the Day',
+                              trId('thirukkural_of_the_day'),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.white60,
@@ -362,7 +363,7 @@ class _ThirukkuralContent extends StatelessWidget {
                         Icon(Icons.cloud_off_rounded, size: 12, color: Colors.white.withOpacity(0.35)),
                         const SizedBox(width: 4),
                         Text(
-                          'offline',
+                          trId('offline'),
                           style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.35)),
                         ),
                       ],

@@ -11,11 +11,7 @@ class LastUpdatedPill extends StatelessWidget {
   String _label() {
     final diff = DateTime.now().difference(timestamp);
     if (diff.inMinutes < 1) {
-      return tr(
-          en: 'Updated just now',
-          ta: 'இப்போது புதுப்பிக்கப்பட்டது',
-          hi: 'अभी अपडेट किया गया',
-          ml: 'ഇപ്പോൾ അപ്ഡേറ്റ് ചെയ്തു');
+      return trId('updated_just_now');
     }
     if (diff.inHours < 1) {
       final m = diff.inMinutes;

@@ -71,9 +71,9 @@ class AiNewsSummaryCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('AI News Summary',
+              Text(trId('ai_news_summary'),
                   style: TextStyle(color: context.cText, fontWeight: FontWeight.w800, fontSize: 15.5)),
-              Text('The day in a glance',
+              Text(trId('the_day_in_a_glance'),
                   style: TextStyle(color: context.cTextSecondary, fontWeight: FontWeight.w600, fontSize: 11.5)),
             ],
           ),

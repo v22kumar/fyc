@@ -154,7 +154,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tr(en: 'Update Available', ta: 'புதிய பதிப்பு தயாராக உள்ளது', hi: 'अपडेट उपलब्ध है', ml: 'അപ്ഡേറ്റ് ലഭ്യമാണ്'),
+                    Text(trId('update_available'),
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -182,11 +182,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           Text(
             u.notes.trim().isNotEmpty
                 ? u.notes
-                : tr(
-                    en: 'Get the latest features and improvements with this update.',
-                    ta: 'சமீபத்திய அம்சங்கள் மற்றும் சீர்திருத்தங்களைப் பெற புதுப்பிக்கவும்.',
-                    hi: 'इस अपडेट के साथ नवीनतम सुविधाएं और सुधार पाएं।',
-                    ml: 'ഈ അപ്ഡേറ്റിലൂടെ ഏറ്റവും പുതിയ സവിശേഷതകളും മെച്ചപ്പെടുത്തലുകളും നേടൂ.'),
+                : trId('get_the_latest_features_and_improvements'),
             style: TextStyle(
                 fontSize: 13.5, height: 1.4, color: context.cTextSecondary),
           ),
@@ -196,11 +192,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             const SizedBox(height: 12),
             Center(
               child: Text(
-                tr(
-                    en: 'This update is required to continue',
-                    ta: 'தொடர இந்த புதுப்பிப்பு அவசியம்',
-                    hi: 'जारी रखने के लिए यह अपडेट आवश्यक है',
-                    ml: 'തുടരാൻ ഈ അപ്ഡേറ്റ് ആവശ്യമാണ്'),
+                trId('this_update_is_required_to_continue'),
                 style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
               ),
             ),
@@ -244,7 +236,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: AppColors.primary)),
             const SizedBox(width: 12),
-            Text(tr(en: 'Opening installer…', ta: 'நிறுவலைத் திறக்கிறது…', hi: 'इंस्टॉलर खोला जा रहा है…', ml: 'ഇൻസ്റ്റാളർ തുറക്കുന്നു…'),
+            Text(trId('opening_installer'),
                 style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
@@ -255,28 +247,24 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
         return Column(
           children: [
             Text(
-              tr(
-                  en: "Download failed. Try via your browser instead.",
-                  ta: 'பதிவிறக்கம் தோல்வியடைந்தது. உலாவியில் முயற்சிக்கவும்.',
-                  hi: 'डाउनलोड विफल रहा। इसके बजाय अपने ब्राउज़र से प्रयास करें।',
-                  ml: 'ഡൗൺലോഡ് പരാജയപ്പെട്ടു. പകരം നിങ്ങളുടെ ബ്രൗസർ വഴി ശ്രമിക്കുക.'),
+              trId('download_failed_try_via_your_browser_ins'),
               style: const TextStyle(fontSize: 12.5, color: AppColors.accent),
             ),
             const SizedBox(height: 10),
             _primaryButton(
-                tr(en: 'Download in browser', ta: 'உலாவியில் பதிவிறக்கு', hi: 'ब्राउज़र में डाउनलोड करें', ml: 'ബ്രൗസറിൽ ഡൗൺലോഡ് ചെയ്യുക'),
+                trId('download_in_browser'),
                 _fallbackBrowser),
           ],
         );
       case _Phase.idle:
         return Column(
           children: [
-            _primaryButton(tr(en: 'Update Now', ta: 'இப்போது புதுப்பி', hi: 'अभी अपडेट करें', ml: 'ഇപ്പോൾ അപ്ഡേറ്റ് ചെയ്യുക'), _startUpdate),
+            _primaryButton(trId('update_now'), _startUpdate),
             if (!widget.update.mandatory) ...[
               const SizedBox(height: 6),
               TextButton(
                 onPressed: _later,
-                child: Text(tr(en: 'Later', ta: 'பிறகு', hi: 'बाद में', ml: 'പിന്നീട്'),
+                child: Text(trId('later'),
                     style: TextStyle(color: context.cTextSecondary)),
               ),
             ],

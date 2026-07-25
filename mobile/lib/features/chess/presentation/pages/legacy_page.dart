@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
@@ -43,8 +44,8 @@ class _LegacyPageState extends State<LegacyPage> {
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
-        title: const Text(
-          'Hall of Fame & Awards',
+        title: Text(
+          trId('hall_of_fame_awards'),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: false,
@@ -62,8 +63,8 @@ class _LegacyPageState extends State<LegacyPage> {
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
           children: [
             // ── Weekly Spotlight ────────────────────────────────────────────
-            const Text(
-              'Weekly Spotlight',
+            Text(
+              trId('weekly_spotlight'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -130,8 +131,8 @@ class _LegacyPageState extends State<LegacyPage> {
             const SizedBox(height: 28),
 
             // ── Leaderboard ─────────────────────────────────────────────────
-            const Text(
-              'Leaderboard',
+            Text(
+              trId('leaderboard'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -155,8 +156,8 @@ class _LegacyPageState extends State<LegacyPage> {
                   return Container(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     alignment: Alignment.center,
-                    child: const Text(
-                      'No ranked players yet',
+                    child: Text(
+                      trId('no_ranked_players_yet'),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
@@ -368,7 +369,7 @@ class _ErrorCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Text(
-        'Could not load data. Please try again.',
+        trId('could_not_load_data_please_try_again'),
         style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
       ),
     );

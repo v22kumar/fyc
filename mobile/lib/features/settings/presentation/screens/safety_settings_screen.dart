@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/services/sos_service.dart';
 import '../../../../core/theme/app_theme.dart';
 
@@ -63,7 +64,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(
-        title: const Text('Safety Center'),
+        title: Text(trId('safety_center')),
         backgroundColor: context.cBackground,
         foregroundColor: context.cText,
         elevation: 0,
@@ -88,7 +89,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                           await SosService.setLoudSiren(v);
                           if (mounted) setState(() => _loudSiren = v);
                         },
-                        title: Text('Loud Siren',
+                        title: Text(trId('loud_siren'),
                             style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
                         subtitle: Text(
                             _loudSiren ? 'Vibrating alarm when you trigger SOS' : 'Silent mode',
@@ -102,7 +103,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                           await SosService.setShakeToTrigger(v);
                           if (mounted) setState(() => _shakeToTrigger = v);
                         },
-                        title: Text('Shake to Trigger',
+                        title: Text(trId('shake_to_trigger'),
                             style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
                         subtitle: Text(
                             _shakeToTrigger
@@ -114,7 +115,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Trusted Contacts',
+                Text(trId('trusted_contacts'),
                     style: TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: context.cTextSecondary)),
                 const SizedBox(height: 10),
@@ -129,7 +130,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                       if (_contacts.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('No contacts yet — add a phone number below.',
+                          child: Text(trId('no_contacts_yet_add_a_phone_number_below'),
                               style: TextStyle(color: context.cTextSecondary, fontSize: 13)),
                         )
                       else
@@ -158,7 +159,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                                 keyboardType: TextInputType.phone,
                                 style: TextStyle(color: context.cText),
                                 decoration: InputDecoration(
-                                  hintText: 'Add phone number',
+                                  hintText: trId('add_phone_number'),
                                   hintStyle: TextStyle(color: context.cTextSecondary),
                                   filled: true,
                                   fillColor: context.isDark ? Colors.white10 : Colors.black12,

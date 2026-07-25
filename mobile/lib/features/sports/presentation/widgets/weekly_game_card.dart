@@ -39,17 +39,17 @@ class WeeklyGameCard extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Weekly Game'),
-        content: const Text('Are you sure you want to delete this weekly game match?'),
+        title: Text(trId('delete_weekly_game')),
+        content: Text(trId('are_you_sure_you_want_to_delete_this_wee')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(trId('cancel_2')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(trId('delete')),
           ),
         ],
       ),
@@ -64,11 +64,11 @@ class WeeklyGameCard extends StatelessWidget {
         if (!context.mounted) return;
         context.read<SportsBloc>().add(const SportsFetchRequested());
         messenger.showSnackBar(
-          const SnackBar(content: Text('Weekly game deleted successfully!'), backgroundColor: AppColors.success),
+          SnackBar(content: Text(trId('weekly_game_deleted_successfully')), backgroundColor: AppColors.success),
         );
       } catch (_) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Failed to delete weekly game'), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('failed_to_delete_weekly_game')), backgroundColor: AppColors.accent),
         );
       }
     }
@@ -180,23 +180,23 @@ class WeeklyGameCard extends StatelessWidget {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
                                   children: [
                                     Icon(Icons.edit, size: 16),
                                     SizedBox(width: 8),
-                                    Text('Edit Game', style: TextStyle(fontSize: 13)),
+                                    Text(trId('edit_game'), style: TextStyle(fontSize: 13)),
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
                                     Icon(Icons.delete, color: Colors.red, size: 16),
                                     SizedBox(width: 8),
-                                    Text('Delete', style: TextStyle(color: Colors.red, fontSize: 13)),
+                                    Text(trId('delete'), style: TextStyle(color: Colors.red, fontSize: 13)),
                                   ],
                                 ),
                               ),
@@ -319,7 +319,7 @@ class WeeklyGameCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                             ),
-                            child: const Text('Start Game', style: TextStyle(fontWeight: FontWeight.w700)),
+                            child: Text(trId('start_game'), style: TextStyle(fontWeight: FontWeight.w700)),
                           ),
                         ],
                       ],
@@ -333,7 +333,7 @@ class WeeklyGameCard extends StatelessWidget {
                           context.push('/sports/fixture/${game.fixtureId}/live');
                         },
                         icon: const Icon(Icons.analytics, color: Colors.white),
-                        label: const Text('View Live Score', style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: Text(trId('view_live_score'), style: TextStyle(fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade600,
                           foregroundColor: Colors.white,

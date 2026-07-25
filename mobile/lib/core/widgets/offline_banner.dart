@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/l10n/tr.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
@@ -39,12 +40,12 @@ class _OfflineBannerState extends State<OfflineBanner> {
         color: const Color(0xFFDC2626),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.wifi_off, color: Colors.white, size: 14),
             SizedBox(width: 8),
-            Text('No internet connection', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(trId('no_internet_connection'), style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

@@ -50,7 +50,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
       final eventTitle = parts.length > 2 ? parts.sublist(2).join(':') : '';
       _showResultDialog(
         success: true,
-        title: tr(en: 'Event Check-In', ta: 'நிகழ்வு சரிபார்ப்பு', hi: 'इवेंट चेक-इन', ml: 'ഇവന്റ് ചെക്ക്-ഇൻ'),
+        title: trId('event_check_in'),
         message: tr(
           en: 'Successfully checked in!\n\n$eventTitle',
           ta: 'நிகழ்வில் வெற்றிகரமாக பதிவு செய்யப்பட்டது!\n\n$eventTitle',
@@ -64,25 +64,15 @@ class _QrScanScreenState extends State<QrScanScreen> {
       final membershipNumber = parts.length > 1 ? parts[1] : 'unknown';
       _showResultDialog(
         success: true,
-        title: tr(en: 'Membership Verified', ta: 'உறுப்பினர் சரிபார்ப்பு', hi: 'सदस्यता सत्यापित', ml: 'അംഗത്വം പരിശോധിച്ചു'),
-        message: tr(
-          en: 'Valid FYC Membership Card',
-          ta: 'செல்லுபடியான FYC உறுப்பினர் அட்டை',
-          hi: 'वैध FYC सदस्यता कार्ड',
-          ml: 'സാധുവായ FYC അംഗത്വ കാർഡ്',
-        ),
+        title: trId('membership_verified'),
+        message: trId('valid_fyc_membership_card'),
         detail: membershipNumber,
       );
     } else {
       _showResultDialog(
         success: false,
-        title: tr(en: 'Unknown QR Code', ta: 'அறியப்படாத குறியீடு', hi: 'अज्ञात QR कोड', ml: 'അജ്ഞാത QR കോഡ്'),
-        message: tr(
-          en: 'This QR code was not issued by the FYC system.',
-          ta: 'இந்த QR குறியீடு FYC அமைப்பால் உருவாக்கப்படவில்லை.',
-          hi: 'यह QR कोड FYC सिस्टम द्वारा जारी नहीं किया गया था।',
-          ml: 'ഈ QR കോഡ് FYC സിസ്റ്റം നൽകിയതല്ല.',
-        ),
+        title: trId('unknown_qr_code'),
+        message: trId('this_qr_code_was_not_issued_by_the_fyc_s'),
         detail: payload.length > 60 ? '${payload.substring(0, 60)}…' : payload,
       );
     }
@@ -143,14 +133,14 @@ class _QrScanScreenState extends State<QrScanScreen> {
               setState(() => _hasScanned = false);
               _controller.start();
             },
-            child: Text(tr(en: 'Scan Again', ta: 'மீண்டும் ஸ்கேன்', hi: 'फिर से स्कैन करें', ml: 'വീണ്ടും സ്കാൻ ചെയ്യുക')),
+            child: Text(trId('scan_again')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
-            child: Text(tr(en: 'Done', ta: 'முடிந்தது', hi: 'पूर्ण', ml: 'പൂർത്തിയായി')),
+            child: Text(trId('done_2')),
           ),
         ],
       ),
@@ -165,7 +155,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          tr(en: 'Scan QR Code', ta: 'QR ஸ்கேன்', hi: 'QR कोड स्कैन करें', ml: 'QR കോഡ് സ്കാൻ ചെയ്യുക'),
+          trId('scan_qr_code'),
           style: const TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -179,7 +169,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               _controller.toggleTorch();
               setState(() => _torchOn = !_torchOn);
             },
-            tooltip: tr(en: 'Torch', ta: 'ஒளி', hi: 'टॉर्च', ml: 'ടോർച്ച്'),
+            tooltip: trId('torch'),
           ),
         ],
       ),
@@ -212,12 +202,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             left: 0,
             right: 0,
             child: Text(
-              tr(
-                en: 'Place the FYC QR code inside the frame',
-                ta: 'FYC QR குறியீட்டை சதுரத்தில் வைக்கவும்',
-                hi: 'FYC QR कोड को फ्रेम के अंदर रखें',
-                ml: 'FYC QR കോഡ് ഫ്രെയിമിനുള്ളിൽ വയ്ക്കുക',
-              ),
+              trId('place_the_fyc_qr_code_inside_the_frame'),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,

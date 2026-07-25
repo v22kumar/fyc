@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -72,7 +73,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
     if (_teamAId == null || _teamBId == null) return;
     if (_teamAId == _teamBId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Team A and Team B cannot be the same'), backgroundColor: AppColors.accent),
+        SnackBar(content: Text(trId('team_a_and_team_b_cannot_be_the_same')), backgroundColor: AppColors.accent),
       );
       return;
     }
@@ -134,19 +135,19 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
           
           DropdownButtonFormField<String>(
             value: _teamAId,
-            hint: const Text('Select Team A'),
+            hint: Text(trId('select_team_a')),
             items: widget.teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
             onChanged: (val) => setState(() => _teamAId = val),
-            decoration: const InputDecoration(labelText: 'Team A *'),
+            decoration: InputDecoration(labelText: trId('team_a_2')),
           ),
           const SizedBox(height: 12),
           
           DropdownButtonFormField<String>(
             value: _teamBId,
-            hint: const Text('Select Team B'),
+            hint: Text(trId('select_team_b')),
             items: widget.teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
             onChanged: (val) => setState(() => _teamBId = val),
-            decoration: const InputDecoration(labelText: 'Team B *'),
+            decoration: InputDecoration(labelText: trId('team_b_2')),
           ),
           const SizedBox(height: 12),
 
@@ -156,7 +157,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
                 child: TextField(
                   controller: _matchNumCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Match Number'),
+                  decoration: InputDecoration(labelText: trId('match_number')),
                 ),
               ),
               const SizedBox(width: 16),
@@ -164,7 +165,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
                 child: InkWell(
                   onTap: _selectDateTime,
                   child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Scheduled At'),
+                    decoration: InputDecoration(labelText: trId('scheduled_at')),
                     child: Text(
                       _scheduledAt == null
                           ? 'Select Date/Time'
@@ -180,7 +181,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
 
           TextField(
             controller: _venueCtrl,
-            decoration: const InputDecoration(labelText: 'Venue'),
+            decoration: InputDecoration(labelText: trId('venue')),
           ),
           const SizedBox(height: 24),
           
@@ -190,7 +191,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Schedule Fixture', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('schedule_fixture'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             ),
           ),
         ],

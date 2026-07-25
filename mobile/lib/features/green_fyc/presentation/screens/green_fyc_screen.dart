@@ -33,13 +33,13 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Green FYC', ta: 'பசுமை FYC', hi: 'ग्रीन FYC', ml: 'ഗ്രീൻ FYC')),
+        title: Text(trId('green_fyc_2')),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/green/register'),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.park_rounded),
-        label: Text(tr(en: 'Register a Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'ഒരു മരം രജിസ്റ്റർ ചെയ്യുക')),
+        label: Text(trId('register_a_tree')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
         listener: (context, state) {
@@ -95,12 +95,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                             right: 16,
                             bottom: 14,
                             child: Text(
-                              tr(
-                                en: 'Every tree is a promise to tomorrow',
-                                ta: 'ஒவ்வொரு மரமும் ஒரு வாக்குறுதி',
-                                hi: 'हर पेड़ कल के लिए एक वादा है',
-                                ml: 'ഓരോ മരവും നാളെയ്ക്കുള്ള ഒരു വാഗ്ദാനമാണ്',
-                              ),
+                              trId('every_tree_is_a_promise_to_tomorrow'),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -119,12 +114,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                   _StatsHeader(stats: state.stats, lang: lang),
                   const SizedBox(height: 24),
                   _SectionHeader(
-                    label: tr(
-                      en: 'Plantation Drives',
-                      ta: 'மரம் நடும் இயக்கங்கள்',
-                      hi: 'वृक्षारोपण अभियान',
-                      ml: 'വൃക്ഷത്തൈ നടീൽ യജ്ഞങ്ങൾ',
-                    ),
+                    label: trId('plantation_drives'),
                   ),
                   if (state.drives.isEmpty)
                     _EmptyDrives(lang: lang)
@@ -150,7 +140,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                         .read<GreenBloc>()
                         .add(const GreenFetchRequested()),
                     child: Text(
-                        tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                        trId('retry')),
                   ),
                 ],
               ),
@@ -181,27 +171,27 @@ class _StatsHeader extends StatelessWidget {
         _StatCard(
           icon: Icons.eco_rounded,
           value: stats.totalPlanted,
-          label: tr(en: 'Total Planted', ta: 'மொத்தம் நடப்பட்டது', hi: 'कुल रोपित', ml: 'ആകെ നട്ടത്'),
+          label: trId('total_planted'),
         ),
         _StatCard(
           icon: Icons.grass_rounded,
           value: stats.growing,
-          label: tr(en: 'Growing', ta: 'வளர்கிறது', hi: 'बढ़ रहे हैं', ml: 'വളരുന്നു'),
+          label: trId('growing'),
         ),
         _StatCard(
           icon: Icons.park_rounded,
           value: stats.mature,
-          label: tr(en: 'Mature', ta: 'முதிர்ந்தது', hi: 'परिपक्व', ml: 'പക്വമായത്'),
+          label: trId('mature'),
         ),
         _StatCard(
           icon: Icons.local_florist_rounded,
           value: stats.dead,
-          label: tr(en: 'Dead', ta: 'அழிந்தது', hi: 'मृत', ml: 'നശിച്ചത്'),
+          label: trId('dead'),
         ),
         _StatCard(
           icon: Icons.assignment_rounded,
           value: stats.drivesCount,
-          label: tr(en: 'Drives', ta: 'இயக்கங்கள்', hi: 'अभियान', ml: 'യജ്ഞങ്ങൾ'),
+          label: trId('drives'),
         ),
       ],
     );
@@ -405,12 +395,7 @@ class _EmptyDrives extends StatelessWidget {
             Icon(Icons.park_rounded, size: 64, color: AppColors.primary.withOpacity(0.6)),
             const SizedBox(height: 16),
             Text(
-              tr(
-                en: 'No plantation drives yet',
-                ta: 'மரம் நடும் இயக்கங்கள் இல்லை',
-                hi: 'अभी तक कोई वृक्षारोपण अभियान नहीं',
-                ml: 'ഇതുവരെ വൃക്ഷത്തൈ നടീൽ യജ്ഞങ്ങളൊന്നുമില്ല',
-              ),
+              trId('no_plantation_drives_yet'),
               style: TextStyle(fontSize: 16, color: context.cTextSecondary),
             ),
           ],

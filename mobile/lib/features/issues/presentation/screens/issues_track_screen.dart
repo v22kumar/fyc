@@ -40,7 +40,7 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Track Issues', ta: 'புகார்களைக் கண்காணி', hi: 'शिकायतें ट्रैक करें', ml: 'പരാതികൾ ട്രാക്ക് ചെയ്യുക')),
+        title: Text(trId('track_issues')),
       ),
       body: Column(
         children: [
@@ -59,9 +59,9 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                   if (state.issues.isEmpty) {
                     return EmptyState(
                       emoji: '📋',
-                      title: tr(en: 'All Clear!', ta: 'புகார்கள் இல்லை', hi: 'सब ठीक है!', ml: 'എല്ലാം ശരിയാണ്!'),
-                      message: tr(en: 'There are no reported issues in your area. Everything looks good!', ta: 'உங்கள் பகுதியில் புகார்கள் எதுவும் இல்லை.', hi: 'आपके क्षेत्र में कोई शिकायत दर्ज नहीं है। सब कुछ ठीक लग रहा है!', ml: 'നിങ്ങളുടെ പ്രദേശത്ത് റിപ്പോർട്ട് ചെയ്ത പരാതികളൊന്നുമില്ല. എല്ലാം നന്നായി കാണപ്പെടുന്നു!'),
-                      buttonText: tr(en: 'Report an Issue', ta: 'புதிய புகார்', hi: 'शिकायत दर्ज करें', ml: 'പരാതി രേഖപ്പെടുത്തുക'),
+                      title: trId('all_clear'),
+                      message: trId('there_are_no_reported_issues_in_your_are'),
+                      buttonText: trId('report_an_issue'),
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SubmitIssueScreen()),
                       ),

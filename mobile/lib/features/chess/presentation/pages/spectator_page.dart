@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
@@ -43,8 +44,8 @@ class SpectatorPage extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               );
             }
-            return const Text(
-              'Spectating',
+            return Text(
+              trId('spectating'),
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             );
           },
@@ -87,13 +88,13 @@ class SpectatorPage extends StatelessWidget {
   }
 
   Widget _buildConnecting() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircularProgressIndicator(color: _kGreen),
           SizedBox(height: 16),
-          Text('Connecting…',
+          Text(trId('connecting'),
               style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
       ),
@@ -209,8 +210,8 @@ class SpectatorPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text(
-                    'Back to Chess',
+                  child: Text(
+                    trId('back_to_chess'),
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -210,8 +211,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                 ),
                 const SizedBox(height: 16),
                 // Tagline
-                const Text(
-                  'Think. Plan. Win.',
+                Text(
+                  trId('think_plan_win'),
                   style: TextStyle(
                     color: _kTextSecondary,
                     fontSize: 12,
@@ -221,8 +222,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                 ),
                 const SizedBox(height: 6),
                 // FYC
-                const Text(
-                  'FYC',
+                Text(
+                  trId('fyc'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -232,8 +233,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                   ),
                 ),
                 // CHESS ARENA
-                const Text(
-                  'CHESS ARENA',
+                Text(
+                  trId('chess_arena'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -261,8 +262,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                   _buildUnratedBadge(),
                 const SizedBox(height: 6),
                 // Sub-text
-                const Text(
-                  'Play games to earn your rating',
+                Text(
+                  trId('play_games_to_earn_your_rating'),
                   style: TextStyle(
                     color: _kTextSecondary,
                     fontSize: 12,
@@ -286,8 +287,8 @@ class _ChessHomePageState extends State<ChessHomePage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Unrated',
+          Text(
+            trId('unrated'),
             style: TextStyle(
               color: _kTextSecondary,
               fontSize: 13,
@@ -329,8 +330,8 @@ class _ChessHomePageState extends State<ChessHomePage>
             ),
           ),
           const SizedBox(width: 4),
-          const Text(
-            'Rating',
+          Text(
+            trId('rating'),
             style: TextStyle(
               color: _kTextSecondary,
               fontSize: 12,
@@ -452,8 +453,8 @@ class _ChessHomePageState extends State<ChessHomePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Start your chess journey!',
+                  Text(
+                    trId('start_your_chess_journey'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -461,8 +462,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Play your first game and unlock your potential',
+                  Text(
+                    trId('play_your_first_game_and_unlock_your_pot'),
                     style: TextStyle(
                       color: _kTextSecondary,
                       fontSize: 12,
@@ -502,8 +503,8 @@ class _ChessHomePageState extends State<ChessHomePage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'PLAY MODES',
+              Text(
+                trId('play_modes'),
                 style: TextStyle(
                   color: _kTextSecondary,
                   fontSize: 11,
@@ -513,8 +514,8 @@ class _ChessHomePageState extends State<ChessHomePage>
               ),
               GestureDetector(
                 onTap: () => context.push('/chess/challenge'),
-                child: const Text(
-                  'Explore All >',
+                child: Text(
+                  trId('explore_all'),
                   style: TextStyle(
                     color: _kGreenLight,
                     fontSize: 12,
@@ -566,7 +567,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 badge: 'Win rewards',
                 badgeColor: _kGold,
                 onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Daily challenges coming soon!')),
+                  SnackBar(content: Text(trId('daily_challenges_coming_soon'))),
                 ),
               ),
             ],
@@ -624,9 +625,9 @@ class _ChessHomePageState extends State<ChessHomePage>
                   color: _kGreen.withOpacity(0.15),
                   border: Border.all(color: _kGreen.withOpacity(0.5), width: 1.5),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'FYC',
+                    trId('fyc'),
                     style: TextStyle(
                       color: _kGreenLight,
                       fontSize: 11,
@@ -644,8 +645,8 @@ class _ChessHomePageState extends State<ChessHomePage>
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'Chess Aspirant',
+                        Text(
+                          trId('chess_aspirant'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
@@ -718,7 +719,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           const SizedBox(height: 10),
           // Motivational quote
           Text(
-            '"Every master was once a beginner"',
+            trId('every_master_was_once_a_beginner'),
             style: TextStyle(
               color: _kTextSecondary,
               fontSize: 11,
@@ -759,16 +760,16 @@ class _ChessHomePageState extends State<ChessHomePage>
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
-              children: const [
+              children: [
                 Text('🏟️', style: TextStyle(fontSize: 26)),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Chess Tournaments',
+                      Text(trId('chess_tournaments'),
                           style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-                      Text('Compete in the FYC Arena',
+                      Text(trId('compete_in_the_fyc_arena'),
                           style: TextStyle(color: Colors.white70, fontSize: 12)),
                     ],
                   ),
@@ -1065,8 +1066,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
           // Header with blinking dot
           Row(
             children: [
-              const Text(
-                'LIVE GAMES',
+              Text(
+                trId('live_games'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -1092,8 +1093,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
               const Spacer(),
               GestureDetector(
                 onTap: () => context.push('/chess/challenge'),
-                child: const Text(
-                  'View All >',
+                child: Text(
+                  trId('view_all_3'),
                   style: TextStyle(
                     color: _kGreenLight,
                     fontSize: 12,
@@ -1134,8 +1135,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'No live games right now',
+                    Text(
+                      trId('no_live_games_right_now'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -1143,8 +1144,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Be the first to start a game and let others watch',
+                    Text(
+                      trId('be_the_first_to_start_a_game_and_let_oth'),
                       style: TextStyle(
                         color: _kTextSecondary,
                         fontSize: 12,
@@ -1163,8 +1164,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                           borderRadius: BorderRadius.circular(24),
                         ),
                       ),
-                      child: const Text(
-                        'Start a Game',
+                      child: Text(
+                        trId('start_a_game'),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
@@ -1261,7 +1262,7 @@ class _LiveGameTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Watch'),
+            child: Text(trId('watch')),
           ),
         ],
       ),
@@ -1317,23 +1318,23 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Player Names',
+      title: Text(trId('player_names'),
           style: TextStyle(fontWeight: FontWeight.w700)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _white,
-            decoration: const InputDecoration(
-              labelText: '♔ White',
+            decoration: InputDecoration(
+              labelText: trId('white'),
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _black,
-            decoration: const InputDecoration(
-              labelText: '♚ Black',
+            decoration: InputDecoration(
+              labelText: trId('black'),
               border: OutlineInputBorder(),
             ),
           ),
@@ -1342,7 +1343,7 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(trId('cancel_2')),
         ),
         ElevatedButton(
           onPressed: () {
@@ -1358,7 +1359,7 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
           ),
-          child: const Text('Start Game'),
+          child: Text(trId('start_game')),
         ),
       ],
     );
@@ -1399,13 +1400,13 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('vs Computer',
+      title: Text(trId('vs_computer'),
           style: TextStyle(fontWeight: FontWeight.w700)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Difficulty',
+          Text(trId('difficulty'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -1444,7 +1445,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
             }),
           ),
           const SizedBox(height: 20),
-          const Text('Play as',
+          Text(trId('play_as'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -1474,7 +1475,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(trId('cancel_2')),
         ),
         ElevatedButton(
           onPressed: () {
@@ -1487,7 +1488,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
           ),
-          child: const Text('Play'),
+          child: Text(trId('play')),
         ),
       ],
     );

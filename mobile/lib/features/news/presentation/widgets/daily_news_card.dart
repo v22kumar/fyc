@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -82,7 +83,7 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'செய்திகள் · News',
+                  trId('news_2'),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -97,7 +98,7 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                       size: 18, color: context.cTextSecondary),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  tooltip: 'Refresh news',
+                  tooltip: trId('refresh_news'),
                 ),
               ],
             ),
@@ -240,19 +241,19 @@ class _ErrorState extends StatelessWidget {
         children: [
           Icon(Icons.cloud_off_rounded, size: 40, color: context.cTextSecondary),
           const SizedBox(height: 10),
-          Text('Couldn\'t load news',
+          Text(trId('couldn_t_load_news'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: context.cText,
                   fontSize: 13)),
           const SizedBox(height: 4),
-          Text('Check connection and try again',
+          Text(trId('check_connection_and_try_again'),
               style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
           const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-            label: const Text('Retry', style: TextStyle(color: Colors.white)),
+            label: Text(trId('retry_6'), style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -279,7 +280,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.newspaper_rounded, size: 36, color: context.cTextSecondary),
           const SizedBox(height: 8),
-          Text('No news available',
+          Text(trId('no_news_available'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: context.cText,
@@ -288,7 +289,7 @@ class _EmptyState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-            label: const Text('Retry', style: TextStyle(color: Colors.white)),
+            label: Text(trId('retry_6'), style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -340,8 +341,8 @@ class _NewsRow extends StatelessWidget {
                   color: AppColors.primarySurface,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
-                  'JOBS',
+                child: Text(
+                  trId('jobs_3'),
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,

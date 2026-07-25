@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -43,13 +44,13 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
       if (!mounted) return;
       Navigator.pop(context, true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Team Registration Submitted!'), backgroundColor: AppColors.success),
+        SnackBar(content: Text(trId('team_registration_submitted')), backgroundColor: AppColors.success),
       );
     } catch (_) {
       if (mounted) {
         setState(() => _submitting = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not register team'), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('could_not_register_team')), backgroundColor: AppColors.accent),
         );
       }
     }
@@ -65,13 +66,13 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
         children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
           const SizedBox(height: 18),
-          const Text('Register Team', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(trId('register_team'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
-          TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Team Name')),
+          TextField(controller: _nameCtrl, decoration: InputDecoration(labelText: trId('team_name'))),
           const SizedBox(height: 12),
-          TextField(controller: _captainCtrl, decoration: const InputDecoration(labelText: 'Captain Name')),
+          TextField(controller: _captainCtrl, decoration: InputDecoration(labelText: trId('captain_name'))),
           const SizedBox(height: 12),
-          TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Contact Phone')),
+          TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: trId('contact_phone'))),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -79,7 +80,7 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Registration', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('submit_registration'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             ),
           ),
         ],

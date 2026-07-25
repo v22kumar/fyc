@@ -59,7 +59,7 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(
-        title: Text(tr(en: 'Members', ta: 'உறுப்பினர்கள்', hi: 'सदस्य', ml: 'അംഗങ്ങൾ')),
+        title: Text(trId('members')),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -81,12 +81,11 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
               children: [
                 Icon(Icons.wifi_off_rounded, size: 44, color: context.cTextSecondary),
                 const SizedBox(height: 12),
-                Text(tr(en: "Couldn't load members", ta: 'உறுப்பினர்களை ஏற்ற முடியவில்லை',
-                    hi: 'सदस्य लोड नहीं हुए', ml: 'അംഗങ്ങളെ ലോഡ് ചെയ്യാനായില്ല')),
+                Text(trId('couldn_t_load_members')),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _load,
-                  child: Text(tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः', ml: 'വീണ്ടും')),
+                  child: Text(trId('retry_2')),
                 ),
               ],
             ),
@@ -103,17 +102,13 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
               children: [
                 const Text('👥', style: TextStyle(fontSize: 56)),
                 const SizedBox(height: 14),
-                Text(tr(en: 'No members yet', ta: 'உறுப்பினர்கள் இல்லை',
-                    hi: 'अभी कोई सदस्य नहीं', ml: 'ഇതുവരെ അംഗങ്ങളില്ല'),
+                Text(trId('no_members_yet'),
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: context.cText)),
                 const SizedBox(height: 6),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
-                    tr(en: 'Registered club members will appear here.',
-                        ta: 'பதிவு செய்த கழக உறுப்பினர்கள் இங்கே தோன்றுவார்கள்.',
-                        hi: 'पंजीकृत क्लब सदस्य यहाँ दिखाई देंगे।',
-                        ml: 'രജിസ്റ്റർ ചെയ്ത ക്ലബ് അംഗങ്ങൾ ഇവിടെ കാണാം.'),
+                    trId('registered_club_members_will_appear_here'),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: context.cTextSecondary),
                   ),
@@ -188,13 +183,13 @@ class _RoleBadge extends StatelessWidget {
     switch (role) {
       case 'SUPER_ADMIN':
       case 'ADMIN':
-        return (tr(en: 'Admin', ta: 'நிர்வாகி', hi: 'एडमिन', ml: 'അഡ്മിൻ'), const Color(0xFFDC2626));
+        return (trId('admin'), const Color(0xFFDC2626));
       case 'EXECUTIVE_MEMBER':
-        return (tr(en: 'Executive', ta: 'செயற்குழு', hi: 'कार्यकारी', ml: 'എക്സിക്യൂട്ടീവ്'), const Color(0xFF7C3AED));
+        return (trId('executive'), const Color(0xFF7C3AED));
       case 'CLUB_MEMBER':
-        return (tr(en: 'Member', ta: 'உறுப்பினர்', hi: 'सदस्य', ml: 'അംഗം'), AppColors.primary);
+        return (trId('member'), AppColors.primary);
       case 'VOLUNTEER':
-        return (tr(en: 'Volunteer', ta: 'தொண்டர்', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ'), const Color(0xFF16A34A));
+        return (trId('volunteer'), const Color(0xFF16A34A));
       default:
         return (role, Colors.grey);
     }
