@@ -14,8 +14,19 @@ class LocalStorage {
   Future<String?> getToken() async =>
       _prefs.getString(AppConstants.tokenKey);
 
-  Future<void> clearToken() async =>
-      _prefs.remove(AppConstants.tokenKey);
+  // Long-lived refresh token — used to silently mint new access tokens so the
+  // user stays signed in until they explicitly log out.
+  Future<void> saveRefreshToken(String token) async =>
+      _prefs.setString(AppConstants.refreshTokenKey, token);
+
+  Future<String?> getRefreshToken() async =>
+      _prefs.getString(AppConstants.refreshTokenKey);
+
+  /// Clears BOTH tokens — this is the session-over / logout path.
+  Future<void> clearToken() async {
+    await _prefs.remove(AppConstants.tokenKey);
+    await _prefs.remove(AppConstants.refreshTokenKey);
+  }
 
   // Language preference
   Future<void> saveLang(String lang) async =>

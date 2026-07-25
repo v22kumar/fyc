@@ -3,6 +3,46 @@ from app.core.security import get_password_hash
 from app.models.tenant import Organization
 from app.models.user import User
 
+
+def _org_with_admin(db, phone="+919888800001", password="pass"):
+    org = Organization(id=uuid.uuid4(), slug=f"a-{uuid.uuid4().hex[:6]}",
+                       name_ta="அ", name_en="Org")
+    db.add(org)
+    db.flush()
+    u = User(organization_id=org.id, phone_number=phone,
+             password_hash=get_password_hash(password), role="ADMIN", is_verified=True)
+    db.add(u)
+    db.commit()
+    return org, u
+
+
+def test_login_returns_refresh_token_and_refresh_mints_access(client, db):
+    org, _ = _org_with_admin(db)
+    r = client.post("/api/v1/auth/login/password",
+                    json={"organization_id": str(org.id), "username": "+919888800001", "password": "pass"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["access_token"] and body["refresh_token"], "login must return both tokens"
+
+    # Exchange the refresh token for a fresh access token.
+    rr = client.post("/api/v1/auth/refresh", json={"refresh_token": body["refresh_token"]})
+    assert rr.status_code == 200, rr.text
+    assert rr.json()["access_token"]
+
+
+def test_refresh_rejects_an_access_token(client, db):
+    """An access token must not be usable at /refresh (type mismatch) — only a
+    genuine refresh token works."""
+    org, _ = _org_with_admin(db, phone="+919888800002")
+    body = client.post("/api/v1/auth/login/password",
+                       json={"organization_id": str(org.id), "username": "+919888800002", "password": "pass"}).json()
+    bad = client.post("/api/v1/auth/refresh", json={"refresh_token": body["access_token"]})
+    assert bad.status_code == 401
+
+    junk = client.post("/api/v1/auth/refresh", json={"refresh_token": "not-a-jwt"})
+    assert junk.status_code == 401
+
+
 def test_otp_send_invalid_organization(client):
     """Sending OTP to a non-existent organization must return 404."""
     random_uuid = str(uuid.uuid4())

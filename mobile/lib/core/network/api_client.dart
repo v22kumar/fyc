@@ -7,9 +7,9 @@ class ApiClient {
   final Dio _dio;
   final LocalStorage _localStorage;
 
-  /// Fired when a request that carried a session token comes back 401 — the
-  /// access token (60min lifetime, no refresh) has expired mid-session. Wired
-  /// once in main.dart to log the user out and return them to login, the same
+  /// Fired only when a 401 could NOT be recovered by refreshing (no/expired
+  /// refresh token) — i.e. the session is truly over. Wired once in main.dart
+  /// to log the user out and return them to login, the same
   /// decoupling pattern as LocalNotifications.onTapRoute: this networking
   /// layer must not import the router/feature layer directly (app_router.dart
   /// imports feature screens, which import service_locator.dart, which
@@ -44,6 +44,16 @@ class ApiClient {
 class _AuthInterceptor extends Interceptor {
   final LocalStorage _storage;
 
+  // A bare Dio (no interceptors) used to hit /auth/refresh and to replay the
+  // original request — so neither recurses back through this interceptor.
+  final Dio _bare = Dio(BaseOptions(
+    baseUrl: ApiConstants.baseUrl,
+    headers: {'Content-Type': 'application/json'},
+  ));
+
+  // Single-flight guard: concurrent 401s share ONE refresh call.
+  Future<bool>? _refreshing;
+
   _AuthInterceptor(this._storage);
 
   @override
@@ -67,18 +77,51 @@ class _AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final requestHadToken = err.requestOptions.headers['Authorization'] != null;
-    // Auth endpoints (otp/send, otp/verify, login/password, google, register)
-    // return 401 for ordinary "wrong credentials" — that's not a session
-    // expiry and must not trigger a forced logout while the user is mid-login.
+    // Auth endpoints (otp/send, otp/verify, login/password, google, register,
+    // refresh) return 401 for ordinary "wrong/expired credentials" — that's not
+    // a mid-session expiry and must not trigger a refresh/logout loop.
     final isAuthEndpoint = err.requestOptions.path.startsWith('/api/v1/auth/');
     if (err.response?.statusCode == 401 && requestHadToken && !isAuthEndpoint) {
-      // The 60-minute access token (no refresh mechanism) has expired mid-
-      // session — every other request would silently keep failing until the
-      // user force-closes and reopens the app. Clear it and bounce them back
-      // to login instead of leaving the app in a broken-looking state.
+      // Access token expired mid-session. Silently mint a new one with the
+      // refresh token and replay the original request, so the user stays signed
+      // in instead of being bounced to login.
+      final refreshed = await _refreshAccessToken();
+      if (refreshed) {
+        try {
+          final newToken = await _storage.getToken();
+          final opts = err.requestOptions;
+          opts.headers['Authorization'] = 'Bearer $newToken';
+          final res = await _bare.fetch(opts);
+          return handler.resolve(res);
+        } catch (_) {
+          // Replaying failed — fall through to the session-over path.
+        }
+      }
+      // No/invalid refresh token, or refresh failed → the session is truly over.
       await _storage.clearToken();
       ApiClient.onSessionExpired?.call();
     }
     handler.next(err);
+  }
+
+  Future<bool> _refreshAccessToken() {
+    return _refreshing ??= _doRefresh().whenComplete(() => _refreshing = null);
+  }
+
+  Future<bool> _doRefresh() async {
+    try {
+      final rt = await _storage.getRefreshToken();
+      if (rt == null || rt.isEmpty) return false;
+      final res = await _bare.post(ApiConstants.authRefresh, data: {'refresh_token': rt});
+      final data = res.data;
+      final newAccess = (data is Map) ? data['access_token'] as String? : null;
+      if (newAccess != null && newAccess.isNotEmpty) {
+        await _storage.saveToken(newAccess);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 }
