@@ -1,6 +1,20 @@
+import '../constants/app_constants.dart';
 import '../storage/local_storage.dart';
 import '../../service_locator.dart';
 import 'registry/registry.dart';
+
+/// The active UI language, read fresh so it updates live on a language switch.
+///
+/// Falls back to the default language if the service locator isn't ready yet
+/// (an early frame, or a widget test that pumps a screen without registering
+/// storage) — a label lookup must never crash the whole widget tree.
+String _activeLang() {
+  try {
+    return sl<LocalStorage>().getLang();
+  } catch (_) {
+    return AppConstants.defaultLang;
+  }
+}
 
 /// Resolve a registered UI string by its stable [id], in the app's current
 /// language.
@@ -14,7 +28,7 @@ import 'registry/registry.dart';
 /// [args] fills `{placeholder}` tokens, e.g.
 /// `trId('need_runs', {'n': 5})` against `'Need {n} runs'`.
 String trId(String id, [Map<String, Object?>? args]) {
-  final lang = sl<LocalStorage>().getLang();
+  final lang = _activeLang();
   var s = kStrings[lang]?[id] ?? kStrings['en']?[id] ?? id;
   if (args != null && args.isNotEmpty) {
     args.forEach((k, v) => s = s.replaceAll('{$k}', '${v ?? ''}'));
@@ -32,7 +46,7 @@ String trId(String id, [Map<String, Object?>? args]) {
 /// user switches language (MaterialApp rebuilds via localeNotifier). `en` and
 /// `ta` are required; `hi`/`ml` fall back to English when omitted.
 String tr({required String en, required String ta, String? hi, String? ml}) {
-  switch (sl<LocalStorage>().getLang()) {
+  switch (_activeLang()) {
     case 'ta':
       return ta;
     case 'hi':
