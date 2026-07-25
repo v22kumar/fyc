@@ -44,6 +44,12 @@ class CricketBall(Base, TimestampMixin, TenantModelMixin):
     
     # Audit trail ordering
     ball_index = Column(Integer, nullable=False) # absolute index in innings (1, 2, 3...)
+
+    # Client-generated idempotency key (an opaque string, typically a UUID). A
+    # ball entered offline carries this so a retried / re-synced POST is deduped
+    # (returns the existing state) instead of inserting a duplicate. UNIQUE index
+    # created at startup.
+    client_ball_id = Column(String(64), nullable=True)
     
     # Players
     striker_id = Column(GUID(), ForeignKey("players.id", ondelete="CASCADE"), nullable=False)

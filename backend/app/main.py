@@ -137,6 +137,10 @@ def _seed_database():
             "CREATE INDEX IF NOT EXISTS ix_fixtures_org_status ON fixtures (organization_id, status)",
             "CREATE INDEX IF NOT EXISTS ix_cricket_balls_match_id ON cricket_balls (match_id)",
             "CREATE INDEX IF NOT EXISTS ix_cb_match_innings_ball ON cricket_balls (match_id, innings_number, ball_index)",
+            # Idempotency: one row per client-generated ball id (multiple NULLs are
+            # allowed by both SQLite and Postgres), so an offline retry can't
+            # insert a duplicate ball even under a race.
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_cb_client_ball_id ON cricket_balls (client_ball_id)",
             "CREATE INDEX IF NOT EXISTS ix_notifications_user_id ON notifications (user_id)",
             "CREATE INDEX IF NOT EXISTS ix_notifications_user_created ON notifications (user_id, created_at)",
             # Community feed: order by newest within a tenant, and the batched

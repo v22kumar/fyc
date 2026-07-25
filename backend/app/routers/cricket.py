@@ -6,7 +6,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -57,6 +59,9 @@ class CricketBallRequest(BaseModel):
     player_dismissed_id: Optional[str] = None
     new_batter_name: Optional[str] = None
     new_bowler_name: Optional[str] = None
+    # Client-generated idempotency key so an offline-queued ball that is retried
+    # (or arrives twice) is recorded exactly once.
+    client_ball_id: Optional[str] = None
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -144,7 +149,20 @@ def _apply_cricket_standings(db: Session, fixture, winner_id, delta: int) -> Non
 
 
 def recalculate_match_state(db: Session, match: CricketMatch):
-    balls = db.query(CricketBall).filter(CricketBall.match_id == match.id).order_by(CricketBall.ball_index).all()
+    # Eager-load the three player relationships: the replay loop reads
+    # b.striker/non_striker/bowler.name, which was an N+1 lazy query per ball —
+    # murderous on a remote Postgres (a network round-trip per player per ball).
+    balls = (
+        db.query(CricketBall)
+        .options(
+            joinedload(CricketBall.striker),
+            joinedload(CricketBall.non_striker),
+            joinedload(CricketBall.bowler),
+        )
+        .filter(CricketBall.match_id == match.id)
+        .order_by(CricketBall.ball_index)
+        .all()
+    )
     
     # Base state
     state = {
@@ -651,13 +669,28 @@ def score_ball(
     if str(striker.organization_id) != str(current_user.organization_id) or str(bowler.organization_id) != str(current_user.organization_id):
         return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Players do not belong to your organization."})
 
-    ball_index = db.query(CricketBall).filter(CricketBall.match_id == match.id).count() + 1
+    # Idempotent replay: if this exact ball was already recorded (an offline
+    # queue retry or a duplicate re-sync), don't insert it again — return the
+    # current scoreboard. This is what makes the offline queue safe.
+    if payload.client_ball_id:
+        dup = db.query(CricketBall).filter(
+            CricketBall.match_id == match.id,
+            CricketBall.client_ball_id == payload.client_ball_id,
+        ).first()
+        if dup:
+            return {"status": "success", "match_state": match.match_state or recalculate_match_state(db, match)}
+
+    # MAX(ball_index)+1, not COUNT(*)+1 — cheaper (indexed) and stable if a ball
+    # was ever deleted.
+    max_idx = db.query(func.max(CricketBall.ball_index)).filter(CricketBall.match_id == match.id).scalar() or 0
+    ball_index = max_idx + 1
 
     ball = CricketBall(
         id=uuid.uuid4(),
         match_id=match.id,
         innings_number=innings_num,
         ball_index=ball_index,
+        client_ball_id=payload.client_ball_id,
         striker_id=striker_id,
         non_striker_id=non_striker_id,
         bowler_id=bowler_id,
@@ -675,6 +708,11 @@ def score_ball(
         db.flush()
         new_state = recalculate_match_state(db, match)
         db.commit()
+    except IntegrityError:
+        # A concurrent request with the same client_ball_id lost the race to the
+        # unique index — treat as an idempotent success, not an error.
+        db.rollback()
+        return {"status": "success", "match_state": recalculate_match_state(db, match)}
     except Exception as e:
         db.rollback()
         logger.exception(f"cricket score_ball failed. Match ID: {match.id}, payload: {payload.model_dump()}")
