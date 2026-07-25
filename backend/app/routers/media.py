@@ -3,6 +3,7 @@ import io
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
+from fastapi.concurrency import run_in_threadpool
 
 from app.dependencies import get_current_user
 from app.models.user import User
@@ -75,7 +76,11 @@ async def upload_file(
         ext = Path(file.filename or "upload.jpg").suffix.lstrip(".") or "jpg"
         public_id = f"fyc/{org_id}/{uuid.uuid4().hex}"
 
-        result = cloudinary.uploader.upload(
+        # The Cloudinary upload is a blocking, multi-second HTTP call — run it in
+        # a worker thread so it never stalls the event loop (and every other
+        # request/live-score stream) for the duration of the CDN round-trip.
+        result = await run_in_threadpool(
+            cloudinary.uploader.upload,
             io.BytesIO(content),
             folder=f"fyc/{org_id}",
             public_id=uuid.uuid4().hex,
@@ -91,8 +96,12 @@ async def upload_file(
     filename = f"{uuid.uuid4().hex}{ext}"
 
     org_dir = UPLOAD_DIR / org_id
-    org_dir.mkdir(parents=True, exist_ok=True)
     dest = org_dir / filename
-    dest.write_bytes(content)
+
+    def _write_local():
+        org_dir.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(content)
+
+    await run_in_threadpool(_write_local)  # offload blocking disk I/O
 
     return {"url": f"/uploads/{org_id}/{filename}", "filename": filename}

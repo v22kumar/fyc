@@ -12,12 +12,20 @@ if is_sqlite:
     connect_args = {"check_same_thread": False}
 
 # Create engine
-engine = create_engine(
-    settings.DATABASE_URL,
+engine_kwargs = dict(
     connect_args=connect_args,
     pool_pre_ping=True,  # Crucial for Postgres to recover from disconnected sockets
-    echo=False
+    echo=False,
 )
+if not is_sqlite:
+    # Size the pool for a remote Postgres so threadpooled sync requests don't
+    # queue waiting for a connection, while staying under the provider's limit.
+    engine_kwargs.update(
+        pool_size=settings.DB_POOL_SIZE,
+        max_overflow=settings.DB_MAX_OVERFLOW,
+        pool_recycle=settings.DB_POOL_RECYCLE,
+    )
+engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
 
 # Create session maker
 SessionLocal = sessionmaker(
