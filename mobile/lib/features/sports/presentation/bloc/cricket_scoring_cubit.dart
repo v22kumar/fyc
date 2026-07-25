@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/cricket_match_state_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
@@ -97,27 +100,60 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
   final SportsRepository _repository;
   final String fixtureId;
 
-  /// In-memory outbox of balls entered while offline, replayed in order once
-  /// connectivity returns. In-memory (not persisted) by design — it covers the
-  /// real case of a brief signal drop while the scorer is actively on this
-  /// screen; a queued ball survives navigation within the app but not a full
-  /// app kill mid-outage (the scoreboard then reverts to server truth on
-  /// reload and the scorer re-enters).
+  /// Durable outbox of balls entered while offline, replayed in order once
+  /// connectivity returns. Persisted to Hive (keyed by fixture) so a queued
+  /// ball survives an app kill mid-outage — nothing is lost in a live match.
+  /// Every ball carries a client_ball_id, so replaying one that actually
+  /// reached the server is deduped server-side rather than double-counted.
   final List<Map<String, dynamic>> _outbox = [];
   StreamSubscription<List<ConnectivityResult>>? _connSub;
   bool _flushing = false;
+
+  static const _outboxBoxName = 'cricket_outbox';
+  Box? _outboxBox;
 
   CricketScoringCubit(this._repository, this.fixtureId) : super(CricketScoringInitial()) {
     _connSub = Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) => r != ConnectivityResult.none);
       if (online && _outbox.isNotEmpty) _flushOutbox();
     });
+    _restoreOutbox();
   }
 
   @override
   Future<void> close() {
     _connSub?.cancel();
     return super.close();
+  }
+
+  /// Reload any balls that were queued but not yet synced before the app was
+  /// closed, and try to drain them. Idempotency (client_ball_id) makes this
+  /// safe even if some already landed server-side.
+  Future<void> _restoreOutbox() async {
+    try {
+      _outboxBox = Hive.isBoxOpen(_outboxBoxName)
+          ? Hive.box(_outboxBoxName)
+          : await Hive.openBox(_outboxBoxName);
+      final raw = _outboxBox?.get(fixtureId);
+      if (raw is String && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          _outbox.addAll(decoded.map((e) => Map<String, dynamic>.from(e as Map)));
+        }
+      }
+    } catch (_) {/* a corrupt/absent queue just starts empty */}
+    if (_outbox.isNotEmpty && !isClosed) _flushOutbox();
+  }
+
+  /// Persist the current queue for this fixture so it survives an app kill.
+  void _persistOutbox() {
+    try {
+      if (_outbox.isEmpty) {
+        _outboxBox?.delete(fixtureId);
+      } else {
+        _outboxBox?.put(fixtureId, jsonEncode(_outbox));
+      }
+    } catch (_) {/* best-effort durability; the in-memory queue still works */}
   }
 
   Future<void> load() async {
@@ -231,6 +267,9 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         : s.pendingNewBowlerName;
 
     final payload = <String, dynamic>{
+      // A stable per-ball idempotency key: if this exact ball is retried (an
+      // offline re-sync, or a lost response), the server records it once.
+      'client_ball_id': const Uuid().v4(),
       'striker_id': players.strikerId,
       'non_striker_id': players.nonStrikerId,
       'bowler_id': players.bowlerId,
@@ -360,6 +399,7 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
   void _enqueueOffline(
       Map<String, dynamic> payload, CricketMatchStateEntity predicted, CricketPlayersEntity next) {
     _outbox.add(payload);
+    _persistOutbox(); // durable before we tell the scorer it's captured
     emit(CricketScoringLoaded(predicted,
         players: next, needsNewBowler: false, submitting: false, pendingSync: _outbox.length));
   }
@@ -378,6 +418,7 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         final failure = res.fold<Failure?>((f) => f, (_) => null);
         if (failure is NetworkFailure) break; // still offline — keep the queue
         _outbox.removeAt(0); // success, or a poison ball we drop and move past
+        _persistOutbox(); // durable after each drained ball
       }
       if (_outbox.isEmpty) {
         final st = await _repository.fetchCricketMatchState(fixtureId);
