@@ -88,8 +88,8 @@ The platform uses JWT-based authentication. An `X-Organization-ID` header is req
 
 **Default Super Admin:**
 - **Email:** `vrn2252@gmail.com`
-- **Password:** `V22@kumar`
-- *(These credentials will grant you full access across the Flutter App and Admin Panel.)*
+- **Password:** set at first boot via the `BOOTSTRAP_ADMIN_PASSWORD` env/Fly secret (never committed).
+- *(This account grants full access across the Flutter App and Admin Panel.)*
 
 ---
 

@@ -38,7 +38,7 @@ Modules do not duplicate logic. For instance:
 2. `pip install -r requirements.txt`
 3. Copy `.env.example` to `.env` and fill in necessary keys.
 4. `uvicorn app.main:app --reload`
-5. The system will automatically seed the database with a default organization (`fyc-nagercoil`) and superadmin account (`vrn2252@gmail.com` / `V22@kumar`).
+5. The system will automatically seed the database with a default organization (`fyc-nagercoil`) and a superadmin account (`vrn2252@gmail.com`); set its password at first boot via the `BOOTSTRAP_ADMIN_PASSWORD` env var (no default is committed).
 
 ### Fly.io Production Deployment
 1. Ensure the `fly.toml` is configured properly.

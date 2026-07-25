@@ -4,10 +4,14 @@ import urllib.parse
 import webbrowser
 import requests
 import sys
+import os
 
-# The credentials provided by the user
-IG_APP_ID = "909285875002274"
-IG_APP_SECRET = "72403e3ff19da21956bb3de60f5f551e"
+# Credentials come from the environment only — never hardcode an app secret.
+#   IG_APP_ID=... IG_APP_SECRET=... python scripts/setup_meta_tokens.py
+IG_APP_ID = os.getenv("IG_APP_ID", "")
+IG_APP_SECRET = os.getenv("IG_APP_SECRET", "")
+if not IG_APP_ID or not IG_APP_SECRET:
+    sys.exit("Set IG_APP_ID and IG_APP_SECRET in the environment before running this.")
 
 # We use localhost to easily catch the redirect
 REDIRECT_URI = "http://localhost:8080/auth"
