@@ -591,9 +591,17 @@ async def lifespan(app: FastAPI):
 
         from app.services.keepalive import run_keepalive
         scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
-        scheduler.start()
-        logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
-        logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
+        # Only ONE instance may actually run the scheduler — otherwise every Fly
+        # machine fires the same cron jobs (duplicate pushes / WhatsApp blasts to
+        # the whole member base). Jobs are still persisted to the shared jobstore
+        # above; the non-leader simply never .start()s, so it never executes them.
+        from app.core.scheduler_lock import should_run_scheduler
+        if should_run_scheduler():
+            scheduler.start()
+            logger.info("[scheduler] Birthday notifications scheduled at 00:31 UTC (6:01 AM IST)")
+            logger.info("[scheduler] Keepalive ping every 4 minutes to prevent Fly.io cold start")
+        else:
+            logger.info("[scheduler] standing down — another instance owns the cron leader lock")
 
 
     yield

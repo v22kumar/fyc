@@ -240,6 +240,33 @@ def my_games(
     return [_game_out(db, g) for g in games]
 
 
+@router.get("/games/active", response_model=Optional[ChessGameOut])
+def active_game(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """The player's current joinable game (status waiting or in_progress), if any.
+
+    This is the reliable, poll-anywhere signal that a game is ready — the app
+    polls it globally so the CHALLENGER always gets pulled into the game even if
+    they left the challenge screen or the accept push never arrived (push is
+    best-effort and off unless Firebase is configured). Returns null when the
+    player has no game to join.
+    """
+    g = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.status.in_(("waiting", "in_progress")),
+            (ChessGame.white_id == current_user.id) | (ChessGame.black_id == current_user.id),
+        )
+        .order_by(ChessGame.created_at.desc())
+        .first()
+    )
+    return _game_out(db, g) if g else None
+
+
 @router.get("/games/live", response_model=List[LiveGameOut])
 def list_live_games(
     db: Session = Depends(get_db),
@@ -721,8 +748,11 @@ async def spectate_websocket(
     game_id: str,
     websocket: WebSocket,
     token: str = Query(...),
-    db: Session = Depends(get_db),
 ):
+    # A WebSocket lives for minutes; taking Depends(get_db) would pin one of the
+    # (30) pooled DB connections for the whole time, and enough open sockets
+    # would starve the pool and stall ball-scoring. Instead every DB touch uses
+    # a short-lived SessionLocal() opened off the event loop, then closed.
     # ── Auth ──────────────────────────────────────────────────────────────────
     try:
         payload = decode_token(token)
@@ -738,13 +768,17 @@ async def spectate_websocket(
         await websocket.close(code=4002, reason="Invalid game_id")
         return
 
-    game = await run_in_threadpool(
-        lambda: db.query(ChessGame).filter(ChessGame.id == gid).first())
-    if not game:
+    def _load_status():
+        with SessionLocal() as s:
+            g = s.query(ChessGame).filter(ChessGame.id == gid).first()
+            return g.status if g else None
+
+    status = await run_in_threadpool(_load_status)
+    if status is None:
         await websocket.close(code=4003, reason="Game not found")
         return
 
-    if game.status not in ("waiting", "in_progress"):
+    if status not in ("waiting", "in_progress"):
         await websocket.close(code=4005, reason="Game is not live")
         return
 
@@ -799,8 +833,11 @@ async def game_websocket(
     game_id: str,
     websocket: WebSocket,
     token: str = Query(...),
-    db: Session = Depends(get_db),
 ):
+    # No Depends(get_db): a game socket lives for minutes; pinning a pooled
+    # connection that whole time would starve the pool (and ball-scoring) once a
+    # handful of games are live. Every DB touch below uses a short-lived
+    # SessionLocal() opened off the event loop.
     # ── Auth ──────────────────────────────────────────────────────────────────
     try:
         payload = decode_token(token)
@@ -816,30 +853,37 @@ async def game_websocket(
         await websocket.close(code=4002, reason="Invalid game_id")
         return
 
-    # Load the game AND resolve player display names in one threadpool hop —
-    # both hit the DB (and game.white/black lazily load), so doing them on the
-    # event loop would block every socket for the round-trip. Every DB touch in
-    # this handler is offloaded the same way (mirrors the cricket SSE pattern).
+    # Load the game AND resolve player display names in one short-lived session,
+    # returning only the scalars we need — nothing stays attached to a session
+    # that outlives the query.
     def _load_game():
-        g = db.query(ChessGame).filter(ChessGame.id == gid).first()
-        if g is None:
-            return None
-        return g, (_display_name(db, g.white) or "White"), (_display_name(db, g.black) or "Black")
+        with SessionLocal() as s:
+            g = s.query(ChessGame).filter(ChessGame.id == gid).first()
+            if g is None:
+                return None
+            return {
+                "white_id": str(g.white_id) if g.white_id else None,
+                "black_id": str(g.black_id) if g.black_id else None,
+                "org_id": g.organization_id,
+                "time_control": g.time_control,
+                "status": g.status,
+                "white_name": _display_name(s, g.white) or "White",
+                "black_name": _display_name(s, g.black) or "Black",
+            }
 
     loaded = await run_in_threadpool(_load_game)
     if loaded is None:
         await websocket.close(code=4003, reason="Game not found")
         return
-    game, white_name, black_name = loaded
 
     uid = str(user_id)
-    white_id = str(game.white_id) if game.white_id else None
-    black_id = str(game.black_id) if game.black_id else None
-    # Cache the scalars we read in the loop. SessionLocal expires attributes on
-    # commit, so re-reading game.* after a commit would trigger a SELECT on the
-    # event loop — cache them once to keep the loop free of any DB access.
-    game_org_id = game.organization_id
-    game_time_control = game.time_control
+    white_id = loaded["white_id"]
+    black_id = loaded["black_id"]
+    game_org_id = loaded["org_id"]
+    game_time_control = loaded["time_control"]
+    game_status = loaded["status"]
+    white_name = loaded["white_name"]
+    black_name = loaded["black_name"]
 
     if uid not in (white_id, black_id):
         await websocket.close(code=4004, reason="Not a player in this game")
@@ -848,11 +892,22 @@ async def game_websocket(
     # ── Accept + register ─────────────────────────────────────────────────────
     await websocket.accept()
 
-    # Reusable helper: finalize a completed game (rating/stat updates + commit)
-    # off the event loop. Called from every game-ending branch below.
-    def _finalize_game():
-        _update_stats(db, game, game_org_id)
-        db.commit()
+    # Finalize a completed game (result + rating/stat updates) in a fresh
+    # session. Idempotent: it re-loads the row and bails if the game is already
+    # ended, so two racing end-conditions (e.g. a flag claim and a mating move)
+    # can never rate/finalize the game twice.
+    def _end_game_db(result, reason, total_moves):
+        with SessionLocal() as s:
+            g = s.query(ChessGame).filter(ChessGame.id == gid).first()
+            if not g or g.status == "ended":
+                return
+            g.result = result
+            g.draw_reason = reason
+            g.status = "ended"
+            g.total_moves = total_moves
+            g.ended_at = datetime.now(timezone.utc)
+            _update_stats(s, g, game_org_id)
+            s.commit()
 
     session = ws_manager.get_or_create(
         game_id=str(gid),
@@ -871,9 +926,15 @@ async def game_websocket(
 
     # Notify both when game is fully connected
     if session.both_connected():
-        if game.status == "waiting":
-            game.status = "in_progress"
-            await run_in_threadpool(db.commit)
+        if game_status == "waiting":
+            def _mark_in_progress():
+                with SessionLocal() as s:
+                    g = s.query(ChessGame).filter(ChessGame.id == gid).first()
+                    if g and g.status == "waiting":
+                        g.status = "in_progress"
+                        s.commit()
+            await run_in_threadpool(_mark_in_progress)
+            game_status = "in_progress"
         session.start_clock()
         start_msg: dict = {
             "type": "game_start",
@@ -924,16 +985,17 @@ async def game_websocket(
                 org_id = game_org_id
 
                 def _persist_move():
-                    db.add(ChessMove(
-                        id=uuid.uuid4(),
-                        organization_id=org_id,
-                        game_id=gid,
-                        ply=ply,
-                        uci=uci,
-                        san=san,
-                        fen_after=fen,
-                    ))
-                    db.commit()
+                    with SessionLocal() as s:
+                        s.add(ChessMove(
+                            id=uuid.uuid4(),
+                            organization_id=org_id,
+                            game_id=gid,
+                            ply=ply,
+                            uci=uci,
+                            san=san,
+                            fen_after=fen,
+                        ))
+                        s.commit()
 
                 await run_in_threadpool(_persist_move)
 
@@ -952,12 +1014,8 @@ async def game_websocket(
 
                 over = session.game_over_result()
                 if over:
-                    game.result = over["result"]
-                    game.draw_reason = over.get("reason")
-                    game.status = "ended"
-                    game.total_moves = ply
-                    game.ended_at = datetime.now(timezone.utc)
-                    await run_in_threadpool(_finalize_game)
+                    _r, _reason, _tm = over["result"], over.get("reason"), ply
+                    await run_in_threadpool(lambda: _end_game_db(_r, _reason, _tm))
                     await session.broadcast({"type": "game_over", **over})
                     ws_manager.remove(str(gid))
                     break
@@ -968,11 +1026,8 @@ async def game_websocket(
                 if color and session.is_flagged(color):
                     # Our own flag: we lose
                     result = "black_wins" if color == "white" else "white_wins"
-                    game.result = result
-                    game.status = "ended"
-                    game.total_moves = len(session.san_list)
-                    game.ended_at = datetime.now(timezone.utc)
-                    await run_in_threadpool(_finalize_game)
+                    _tm = len(session.san_list)
+                    await run_in_threadpool(lambda: _end_game_db(result, "time", _tm))
                     await session.broadcast({
                         "type": "game_over",
                         "result": result,
@@ -987,11 +1042,8 @@ async def game_websocket(
             elif msg_type == "resign":
                 color = session.get_color(uid)
                 result = "black_wins" if color == "white" else "white_wins"
-                game.result = result
-                game.status = "ended"
-                game.total_moves = len(session.san_list)
-                game.ended_at = datetime.now(timezone.utc)
-                await run_in_threadpool(_finalize_game)
+                _tm = len(session.san_list)
+                await run_in_threadpool(lambda: _end_game_db(result, "resignation", _tm))
                 await session.broadcast({"type": "game_over", "result": result, "reason": "resignation"})
                 ws_manager.remove(str(gid))
                 break
@@ -1004,12 +1056,8 @@ async def game_websocket(
 
             elif msg_type == "accept_draw":
                 if session.draw_offered_by and session.draw_offered_by != uid:
-                    game.result = "draw"
-                    game.draw_reason = "agreement"
-                    game.status = "ended"
-                    game.total_moves = len(session.san_list)
-                    game.ended_at = datetime.now(timezone.utc)
-                    await run_in_threadpool(_finalize_game)
+                    _tm = len(session.san_list)
+                    await run_in_threadpool(lambda: _end_game_db("draw", "agreement", _tm))
                     await session.broadcast({"type": "game_over", "result": "draw", "reason": "agreement"})
                     ws_manager.remove(str(gid))
                     break

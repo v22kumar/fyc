@@ -213,6 +213,12 @@ def _validate_production_secrets(s: "Settings") -> None:
         errors.append("ALLOWED_ORIGINS must not be '*' in production")
     if s.FIRST_SUPERADMIN_PASSWORD.strip().lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
         errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
+    # A single-file SQLite DB cannot be shared across Fly instances — if the
+    # Postgres/Supabase secret is ever missing, the app would silently fall back
+    # to a per-machine SQLite file and split-brain writes across instances. Fail
+    # loudly instead so production always runs on the shared Postgres.
+    if s.DATABASE_URL.strip().lower().startswith("sqlite"):
+        errors.append("DATABASE_URL must point to Postgres in production (not SQLite)")
 
     if errors:
         raise RuntimeError(

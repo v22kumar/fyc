@@ -43,6 +43,29 @@ def test_refresh_rejects_an_access_token(client, db):
     assert junk.status_code == 401
 
 
+def test_logout_revokes_refresh_tokens(client, db):
+    """After /auth/logout bumps token_version, the old refresh token can no
+    longer mint access tokens (server-side revocation)."""
+    org, _ = _org_with_admin(db, phone="+919888800009")
+    body = client.post("/api/v1/auth/login/password",
+                       json={"organization_id": str(org.id), "username": "+919888800009", "password": "pass"}).json()
+    refresh = body["refresh_token"]
+
+    # Works before logout.
+    assert client.post("/api/v1/auth/refresh", json={"refresh_token": refresh}).status_code == 200
+
+    # Log out everywhere (authenticated with the access token).
+    out = client.post("/api/v1/auth/logout", headers={
+        "Authorization": f"Bearer {body['access_token']}",
+        "X-Organization-ID": str(org.id),
+    })
+    assert out.status_code == 200, out.text
+
+    # The same refresh token is now revoked.
+    revoked = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
+    assert revoked.status_code == 401
+
+
 def test_refresh_token_cannot_access_protected_endpoint(client, db):
     """A refresh token must not authenticate a normal request — only /refresh."""
     org, _ = _org_with_admin(db, phone="+919888800003")

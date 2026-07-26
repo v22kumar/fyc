@@ -29,6 +29,7 @@ dependencies:
 
   # Local storage
   shared_preferences: ^2.3.0
+  flutter_secure_storage: ^9.2.2   # Keystore/Keychain for auth + refresh tokens
 
   # Deep links (WhatsApp wa.me) + APK download for the in-app updater
   url_launcher: ^6.3.0

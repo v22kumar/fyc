@@ -632,4 +632,5 @@ const Map<String, String> kTa = {
   'your_one_donation_can_save_up_to_3_lives_2': 'உங்கள் ஒரு தானம் 3 உயிர்களைக் காப்பாற்றும்.',
   'your_phone_number_will_only_be_shared_wh': 'உங்கள் தொலைபேசி எண் யாரேனும் கோரும்போது மட்டுமே பகிரப்படும். அனைத்து கோரிக்கைகளும் பதிவு செய்யப்படும்.',
   'your_registrations_appear_here': 'பதிவுகள் இங்கே தோன்றும்',
+  'your_chess_game_is_ready_tap_to_join': 'உங்கள் சதுரங்க ஆட்டம் தயார் — சேர தட்டவும்',
 };

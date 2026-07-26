@@ -7,11 +7,17 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.dependencies import RoleChecker
 from app.models.tenant import Organization
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Publishing to the org's Facebook Page is an admin action — it was previously
+# unauthenticated, letting anyone post with the stored Page token.
+require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
 
 class FacebookPostRequest(BaseModel):
     message: str
@@ -19,11 +25,19 @@ class FacebookPostRequest(BaseModel):
     link: Optional[str] = None
 
 @router.post("/publish")
-def publish_to_facebook(payload: FacebookPostRequest, db: Session = Depends(get_db)):
+def publish_to_facebook(
+    payload: FacebookPostRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
     """
     Publish a text, link, or photo post to the connected Facebook Page.
     """
-    org = db.query(Organization).first()
+    # Scope to the caller's own organization (not Organization.first(), which
+    # would leak the first tenant's Page token to any other tenant's admin).
+    org = db.query(Organization).filter(
+        Organization.id == current_user.organization_id
+    ).first()
     if not org or not org.facebook_access_token:
         raise HTTPException(status_code=400, detail="Facebook Page Access Token not configured for this organization.")
 

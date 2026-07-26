@@ -18,6 +18,10 @@ abstract class AuthRemoteDataSource {
 
   Future<void> signOutGoogle();
 
+  /// Tell the server to revoke this account's refresh tokens (logout
+  /// everywhere). Best-effort — a network failure must not block local logout.
+  Future<void> serverLogout();
+
   Future<TokenModel> verifyOtp({
     required String verificationId,
     required String otpCode,
@@ -194,5 +198,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await GoogleSignIn(scopes: ['email', 'profile']).signOut();
     } catch (_) {/* best-effort */}
+  }
+
+  @override
+  Future<void> serverLogout() async {
+    try {
+      await _client.dio.post(ApiConstants.authLogout);
+    } catch (_) {/* best-effort: local logout proceeds regardless */}
   }
 }

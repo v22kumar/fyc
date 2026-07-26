@@ -884,4 +884,5 @@ const Map<String, String> kEn = {
   'wicket_3': 'WICKET',
   'you_will_forfeit_this_game': 'You will forfeit this game.',
   'your_turn': 'Your turn',
+  'your_chess_game_is_ready_tap_to_join': 'Your chess game is ready — tap to join',
 };
