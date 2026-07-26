@@ -861,6 +861,15 @@ async def game_websocket(
             g = s.query(ChessGame).filter(ChessGame.id == gid).first()
             if g is None:
                 return None
+            # Also load the moves so a freshly-(re)created session can replay the
+            # game to its true position — surviving redeploys without resetting
+            # the board to move 1 or duplicating ply numbers.
+            moves = [
+                m.uci for m in s.query(ChessMove)
+                .filter(ChessMove.game_id == gid)
+                .order_by(ChessMove.ply.asc())
+                .all()
+            ]
             return {
                 "white_id": str(g.white_id) if g.white_id else None,
                 "black_id": str(g.black_id) if g.black_id else None,
@@ -869,6 +878,7 @@ async def game_websocket(
                 "status": g.status,
                 "white_name": _display_name(s, g.white) or "White",
                 "black_name": _display_name(s, g.black) or "Black",
+                "moves": moves,
             }
 
     loaded = await run_in_threadpool(_load_game)
@@ -884,6 +894,7 @@ async def game_websocket(
     game_status = loaded["status"]
     white_name = loaded["white_name"]
     black_name = loaded["black_name"]
+    game_moves = loaded["moves"]
 
     if uid not in (white_id, black_id):
         await websocket.close(code=4004, reason="Not a player in this game")
@@ -916,6 +927,7 @@ async def game_websocket(
         white_name=white_name,
         black_name=black_name,
         time_control=game_time_control,
+        initial_uci=game_moves,
     )
 
     session.cancel_disconnect_timer(uid)
@@ -985,17 +997,32 @@ async def game_websocket(
                 org_id = game_org_id
 
                 def _persist_move():
-                    with SessionLocal() as s:
-                        s.add(ChessMove(
-                            id=uuid.uuid4(),
-                            organization_id=org_id,
-                            game_id=gid,
-                            ply=ply,
-                            uci=uci,
-                            san=san,
-                            fen_after=fen,
-                        ))
-                        s.commit()
+                    # Retry a transient write contention (SQLite "database is
+                    # locked" under tournament load) instead of letting it raise
+                    # out of the message loop — an uncaught error there would fall
+                    # through to the disconnect handler and FALSE-FORFEIT a live
+                    # game. On persistent failure we log and keep the game running
+                    # (the in-memory board stays authoritative for this session).
+                    import time as _t
+                    for _attempt in range(3):
+                        try:
+                            with SessionLocal() as s:
+                                s.add(ChessMove(
+                                    id=uuid.uuid4(),
+                                    organization_id=org_id,
+                                    game_id=gid,
+                                    ply=ply,
+                                    uci=uci,
+                                    san=san,
+                                    fen_after=fen,
+                                ))
+                                s.commit()
+                            return
+                        except Exception as _e:  # noqa: BLE001
+                            if _attempt < 2:
+                                _t.sleep(0.15)
+                                continue
+                            logger.error(f"chess move persist failed after retries (game {gid}): {_e}")
 
                 await run_in_threadpool(_persist_move)
 
