@@ -47,6 +47,7 @@ class ApiConstants {
   static const String loginPassword = '/api/v1/auth/login/password';
   static const String googleSignIn = '/api/v1/auth/google';
   static const String authRefresh = '/api/v1/auth/refresh';
+  static const String authLogout = '/api/v1/auth/logout';
   static const String me = '/api/v1/auth/users/me';
 
   // Blood donors
