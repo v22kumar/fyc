@@ -27,7 +27,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'My Journey', ta: 'என் பயணம்', hi: 'मेरी यात्रा', ml: 'എന്റെ യാത്ര')),
+        title: Text(trId('my_journey')),
         elevation: 0,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -66,37 +66,37 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         _ImpactCard(
                           icon: Icons.event,
                           color: Colors.purple,
-                          title: tr(en: 'Events Attended', ta: 'நிகழ்வுகள்', hi: 'शामिल कार्यक्रम', ml: 'പങ്കെടുത്ത പരിപാടികൾ'),
+                          title: trId('events_attended'),
                           value: j.eventsAttended.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.check_circle,
                           color: Colors.green,
-                          title: tr(en: 'Issues Resolved', ta: 'புகார்கள்', hi: 'हल किए मुद्दे', ml: 'പരിഹരിച്ച പ്രശ്നങ്ങൾ'),
+                          title: trId('issues_resolved'),
                           value: j.issuesHelped.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.park,
                           color: Colors.teal,
-                          title: tr(en: 'Trees Planted', ta: 'மரங்கள்', hi: 'लगाए पेड़', ml: 'നട്ട മരങ്ങൾ'),
+                          title: trId('trees_planted'),
                           value: j.treesPlanted.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.water_drop,
                           color: Colors.redAccent,
-                          title: tr(en: 'Blood Donations', ta: 'இரத்ததானம்', hi: 'रक्तदान', ml: 'രക്തദാനങ്ങൾ'),
+                          title: trId('blood_donations'),
                           value: j.bloodDonations.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.sports_soccer,
                           color: Colors.orange,
-                          title: tr(en: 'Sports Matches', ta: 'விளையாட்டு', hi: 'खेल मैच', ml: 'കായിക മത്സരങ്ങൾ'),
+                          title: trId('sports_matches'),
                           value: j.sportsMatchesPlayed.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.timer,
                           color: Colors.blueAccent,
-                          title: tr(en: 'Volunteer Hours', ta: 'நேரம்', hi: 'सेवा घंटे', ml: 'വൊളന്റിയർ മണിക്കൂറുകൾ'),
+                          title: trId('volunteer_hours'),
                           value: '${j.volunteerHours}h',
                         ),
                       ],
@@ -119,7 +119,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                       onPressed: () {
                         context.read<JourneyBloc>().add(const JourneyFetchRequested());
                       },
-                      child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'पुनः प्रयास', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                      child: Text(trId('retry_4')),
                     )
                   ],
                 ),
@@ -155,12 +155,12 @@ class _JourneyScreenState extends State<JourneyScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            tr(en: 'Your Community Impact', ta: 'உங்கள் சமூகத் தாக்கம்', hi: 'आपका सामुदायिक प्रभाव', ml: 'നിങ്ങളുടെ സമൂഹ സ്വാധീനം'),
+            trId('your_community_impact'),
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            tr(en: 'Your contributions are making a real difference!', ta: 'உங்கள் பங்களிப்புகள் நமது சமூகத்தை மாற்றுகின்றன!', hi: 'आपके योगदान वास्तविक बदलाव ला रहे हैं!', ml: 'നിങ്ങളുടെ സംഭാവനകൾ യഥാർത്ഥ മാറ്റം വരുത്തുന്നു!'),
+            trId('your_contributions_are_making_a_real_dif'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
@@ -251,33 +251,29 @@ class _MilestonesSection extends StatelessWidget {
         j.sportsMatchesPlayed;
     final milestones = <_Milestone>[
       _Milestone(Icons.emoji_events_rounded,
-          tr(en: 'First Steps', ta: 'முதல் அடி', hi: 'पहला कदम', ml: 'ആദ്യ ചുവട്'), total >= 1),
+          trId('first_steps'), total >= 1),
       _Milestone(Icons.event_available_rounded,
-          tr(en: 'Event Regular', ta: 'நிகழ்வு வழக்கம்', hi: 'नियमित', ml: 'സ്ഥിരം'), j.eventsAttended >= 5),
+          trId('event_regular'), j.eventsAttended >= 5),
       _Milestone(Icons.bloodtype_rounded,
-          tr(en: 'Life Saver', ta: 'உயிர் காப்பாளர்', hi: 'जीवनरक्षक', ml: 'ജീവൻ രക്ഷകൻ'), j.bloodDonations >= 1),
+          trId('life_saver'), j.bloodDonations >= 1),
       _Milestone(Icons.park_rounded,
-          tr(en: 'Green Thumb', ta: 'பசுமைக் கரம்', hi: 'हरित', ml: 'ഹരിതം'), j.treesPlanted >= 5),
+          trId('green_thumb'), j.treesPlanted >= 5),
       _Milestone(Icons.timer_rounded,
-          tr(en: 'Dedicated', ta: 'அர்ப்பணிப்பு', hi: 'समर्पित', ml: 'അർപ്പണം'), j.volunteerHours >= 25),
+          trId('dedicated'), j.volunteerHours >= 25),
       _Milestone(Icons.verified_rounded,
-          tr(en: 'Problem Solver', ta: 'தீர்வாளர்', hi: 'समाधानकर्ता', ml: 'പരിഹാരകൻ'), j.issuesHelped >= 3),
+          trId('problem_solver'), j.issuesHelped >= 3),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          tr(en: 'Milestones', ta: 'மைல்கற்கள்', hi: 'उपलब्धियां', ml: 'നാഴികക്കല്ലുകൾ'),
+          trId('milestones'),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
         ),
         const SizedBox(height: 4),
         Text(
-          tr(
-              en: 'Badges you unlock as you contribute.',
-              ta: 'நீங்கள் பங்களிக்கும்போது திறக்கும் பதக்கங்கள்.',
-              hi: 'योगदान करते ही अनलॉक होने वाले बैज।',
-              ml: 'സംഭാവന ചെയ്യുമ്പോൾ അൺലോക്ക് ചെയ്യുന്ന ബാഡ്ജുകൾ.'),
+          trId('badges_you_unlock_as_you_contribute'),
           style: TextStyle(fontSize: 13, color: context.cTextSecondary),
         ),
         const SizedBox(height: 14),

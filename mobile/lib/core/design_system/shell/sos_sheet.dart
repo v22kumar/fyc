@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/l10n/tr.dart';
 
 import '../../services/sos_service.dart';
 
@@ -136,7 +137,7 @@ class _SosSheetState extends State<_SosSheet> {
                 children: [
                   const Icon(Icons.health_and_safety_rounded, color: Color(0xFFDC2626), size: 26),
                   const SizedBox(width: 10),
-                  const Text('Safety Center',
+                  Text(trId('safety_center'),
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -202,7 +203,7 @@ class _SosSheetState extends State<_SosSheet> {
                   ),
                   onPressed: _busy ? null : _alertMembers,
                   icon: const Icon(Icons.campaign_rounded),
-                  label: const Text('Alert nearby FYC members'),
+                  label: Text(trId('alert_nearby_fyc_members')),
                 ),
               ),
 

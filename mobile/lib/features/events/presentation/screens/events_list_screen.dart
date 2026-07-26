@@ -53,9 +53,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
       _refresh();
       SuccessSnackbar.show(
         context,
-        title: tr(en: 'Created', ta: 'உருவாக்கப்பட்டது', hi: 'बन गया', ml: 'സൃഷ്ടിച്ചു'),
-        message: tr(en: 'Event created', ta: 'நிகழ்வு உருவாக்கப்பட்டது',
-            hi: 'कार्यक्रम बन गया', ml: 'പരിപാടി സൃഷ്ടിച്ചു'),
+        title: trId('created'),
+        message: trId('event_created'),
       );
     }
   }
@@ -70,18 +69,18 @@ class _EventsListScreenState extends State<EventsListScreen> {
             ? FloatingActionButton.extended(
                 onPressed: _openCreate,
                 icon: const Icon(Icons.add),
-                label: Text(tr(en: 'New', ta: 'புதிது', hi: 'नया', ml: 'പുതിയത്')),
+                label: Text(trId('new')),
               )
             : null,
         appBar: AppBar(
-          title: Text(tr(en: 'Events', ta: 'நிகழ்வுகள்', hi: 'कार्यक्रम', ml: 'പരിപാടികൾ')),
+          title: Text(trId('events')),
           bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം')),
-              Tab(text: tr(en: 'Upcoming', ta: 'வரவிருக்கும்', hi: 'आगामी', ml: 'വരാനിരിക്കുന്നവ')),
-              Tab(text: tr(en: 'Past', ta: 'கடந்தவை', hi: 'पिछले', ml: 'കഴിഞ്ഞവ')),
-              Tab(text: tr(en: 'My Events', ta: 'என் நிகழ்வுகள்', hi: 'मेरे कार्यक्रम', ml: 'എന്റെ പരിപാടികൾ')),
+              Tab(text: trId('all')),
+              Tab(text: trId('upcoming')),
+              Tab(text: trId('past')),
+              Tab(text: trId('my_events')),
             ],
           ),
         ),
@@ -90,7 +89,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
             if (state is EventCheckinSuccess) {
               SuccessSnackbar.show(
                 context,
-                title: tr(en: 'Success', ta: 'வெற்றி', hi: 'सफलता', ml: 'വിജയം'),
+                title: trId('success'),
                 message: state.message,
               );
               _refresh();
@@ -120,7 +119,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _refresh,
-                      child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                      child: Text(trId('retry')),
                     ),
                   ],
                 ),
@@ -152,13 +151,9 @@ class _EventsListScreenState extends State<EventsListScreen> {
       return EmptyState(
         icon: Icons.event_rounded,
         imageAsset: 'assets/illustrations/empty_events.png',
-        title: tr(en: 'No Events Right Now', ta: 'தற்போது நிகழ்வுகள் இல்லை', hi: 'अभी कोई कार्यक्रम नहीं', ml: 'ഇപ്പോൾ പരിപാടികളൊന്നുമില്ല'),
-        message: tr(
-            en: 'Check back later for upcoming community events and initiatives.',
-            ta: 'சமூக நிகழ்வுகளுக்குப் பிறகு மீண்டும் பார்க்கவும்.',
-            hi: 'आगामी सामुदायिक कार्यक्रमों और पहलों के लिए बाद में फिर देखें।',
-            ml: 'വരാനിരിക്കുന്ന കമ്മ്യൂണിറ്റി പരിപാടികൾക്കും സംരംഭങ്ങൾക്കും പിന്നീട് വീണ്ടും പരിശോധിക്കുക.'),
-        buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
+        title: trId('no_events_right_now'),
+        message: trId('check_back_later_for_upcoming_community'),
+        buttonText: trId('refresh'),
         onAction: _refresh,
       );
     }
@@ -198,12 +193,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
     final ta = _lang == 'ta';
     return EmptyState(
       icon: Icons.confirmation_number_rounded,
-      title: tr(en: 'Your registrations appear here', ta: 'பதிவுகள் இங்கே தோன்றும்', hi: 'आपके पंजीकरण यहाँ दिखेंगे', ml: 'നിങ്ങളുടെ രജിസ്ട്രേഷനുകൾ ഇവിടെ കാണാം'),
-      message: tr(
-          en: 'Events you register for or check in to will show up here.',
-          ta: 'நீங்கள் பதிவு செய்யும் நிகழ்வுகள் இங்கே காண்பிக்கப்படும்.',
-          hi: 'आप जिन कार्यक्रमों के लिए पंजीकरण या चेक-इन करेंगे, वे यहाँ दिखेंगे।',
-          ml: 'നിങ്ങൾ രജിസ്റ്റർ ചെയ്യുകയോ ചെക്ക്-ഇൻ ചെയ്യുകയോ ചെയ്യുന്ന പരിപാടികൾ ഇവിടെ കാണാം.'),
+      title: trId('your_registrations_appear_here'),
+      message: trId('events_you_register_for_or_check_in_to_w'),
     );
   }
 
@@ -241,20 +232,16 @@ class _EventsListScreenState extends State<EventsListScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr(en: 'Delete Event?', ta: 'நிகழ்வை நீக்கவா?', hi: 'कार्यक्रम हटाएं?', ml: 'പരിപാടി ഇല്ലാതാക്കണോ?')),
-        content: Text(tr(
-            en: 'This will hide the event from all users.',
-            ta: 'இது அனைத்து பயனர்களிடமிருந்தும் நிகழ்வை மறைக்கும்.',
-            hi: 'यह सभी उपयोगकर्ताओं से कार्यक्रम छिपा देगा।',
-            ml: 'ഇത് എല്ലാ ഉപയോക്താക്കളിൽ നിന്നും പരിപാടി മറയ്ക്കും.')),
+        title: Text(trId('delete_event')),
+        content: Text(trId('this_will_hide_the_event_from_all_users')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+            child: Text(trId('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(tr(en: 'Delete', ta: 'நீக்கு', hi: 'हटाएं', ml: 'ഇല്ലാതാക്കുക'), style: const TextStyle(color: Colors.red)),
+            child: Text(trId('delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -291,20 +278,20 @@ class _EventCard extends StatelessWidget {
     final ta = lang == 'ta';
     
     final now = DateTime.now();
-    String statusText = tr(en: 'Upcoming', ta: 'வரவிருக்கிறது', hi: 'आगामी', ml: 'വരാനിരിക്കുന്ന');
+    String statusText = trId('upcoming_2');
     Color statusColor = Colors.blue;
     
     if (now.isAfter(event.eventEnd)) {
-      statusText = tr(en: 'Completed', ta: 'முடிந்தது', hi: 'पूरा हो गया', ml: 'പൂർത്തിയായി');
+      statusText = trId('completed');
       statusColor = Colors.grey;
     } else if (now.isAfter(event.eventStart) && now.isBefore(event.eventEnd)) {
-      statusText = tr(en: 'Live', ta: 'நேரலை', hi: 'लाइव', ml: 'തത്സമയം');
+      statusText = trId('live');
       statusColor = AppColors.success;
     } else if (event.registrationDeadline != null && now.isAfter(event.registrationDeadline!)) {
-      statusText = tr(en: 'Closed', ta: 'மூடப்பட்டது', hi: 'बंद', ml: 'അടച്ചു');
+      statusText = trId('closed');
       statusColor = AppColors.accent;
     } else if (event.maxParticipants != null && event.registrationCount >= event.maxParticipants!) {
-      statusText = tr(en: 'Closed', ta: 'மூடப்பட்டது', hi: 'बंद', ml: 'അടച്ചു');
+      statusText = trId('closed');
       statusColor = AppColors.accent;
     }
 
@@ -460,7 +447,7 @@ class _EventCard extends StatelessWidget {
                           ElevatedButton.icon(
                             onPressed: onCheckin,
                             icon: const Icon(Icons.qr_code_scanner, size: 16),
-                            label: Text(tr(en: 'Check In', ta: 'செக்-இன்', hi: 'चेक इन', ml: 'ചെക്ക് ഇൻ')),
+                            label: Text(trId('check_in')),
                           ),
                         if (onRegister != null)
                           ElevatedButton(
@@ -472,7 +459,7 @@ class _EventCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
                             ),
-                            child: Text(tr(en: 'Register Now', ta: 'பதிவு செய்க', hi: 'अभी पंजीकरण करें', ml: 'ഇപ്പോൾ രജിസ്റ്റർ ചെയ്യുക'),
+                            child: Text(trId('register_now'),
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -585,7 +572,7 @@ class _GoingRow extends StatelessWidget {
         Text(
           count > 0
               ? tr(en: '$count Going', ta: '$count பேர் வருகிறார்கள்', hi: '$count लोग आ रहे हैं', ml: '$count പേർ വരുന്നു')
-              : tr(en: 'Be the first', ta: 'முதலில் பதிவு செய்க', hi: 'पहले बनें', ml: 'ആദ്യത്തെയാളാകൂ'),
+              : trId('be_the_first'),
           style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -664,12 +651,8 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
       Navigator.pop(context);
       SuccessSnackbar.show(
         context,
-        title: tr(en: 'Registered', ta: 'பதிவு வெற்றி', hi: 'पंजीकृत', ml: 'രജിസ്റ്റർ ചെയ്തു'),
-        message: tr(
-            en: 'You are registered for this event.',
-            ta: 'நிகழ்வுக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது.',
-            hi: 'आप इस कार्यक्रम के लिए पंजीकृत हैं।',
-            ml: 'നിങ്ങൾ ഈ പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്തിട്ടുണ്ട്.'),
+        title: trId('registered'),
+        message: trId('you_are_registered_for_this_event'),
       );
     } catch (e) {
       if (!mounted) return;
@@ -686,11 +669,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(detail ??
-              tr(
-                  en: 'Registration failed. Please try again.',
-                  ta: 'பதிவு தோல்வி. மீண்டும் முயற்சிக்கவும்.',
-                  hi: 'पंजीकरण विफल। कृपया पुनः प्रयास करें।',
-                  ml: 'രജിസ്ട്രേഷൻ പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.')),
+              trId('registration_failed_please_try_again')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -729,7 +708,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 ),
               ),
               Text(
-                tr(en: 'Register for Event', ta: 'நிகழ்வுக்கு பதிவு', hi: 'कार्यक्रम के लिए पंजीकरण', ml: 'പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്യുക'),
+                trId('register_for_event'),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -746,11 +725,11 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
               TextFormField(
                 controller: _name,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Full Name', ta: 'பெயர்', hi: 'पूरा नाम', ml: 'പൂർണ്ണ നാമം'),
+                  labelText: trId('full_name'),
                   prefixIcon: const Icon(Icons.person_outline),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? tr(en: 'Enter your name', ta: 'பெயரை உள்ளிடவும்', hi: 'अपना नाम दर्ज करें', ml: 'നിങ്ങളുടെ പേര് നൽകുക')
+                    ? trId('enter_your_name')
                     : null,
               ),
               const SizedBox(height: 12),
@@ -761,7 +740,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       controller: _dob,
                       readOnly: true,
                       decoration: InputDecoration(
-                        labelText: tr(en: 'DOB', ta: 'பிறந்த தேதி', hi: 'जन्म की तारीख', ml: 'ജനനത്തീയതി'),
+                        labelText: trId('dob'),
                         prefixIcon: const Icon(Icons.calendar_today),
                       ),
                       onTap: () async {
@@ -783,18 +762,18 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                     child: DropdownButtonFormField<String>(
                       value: _gender,
                       decoration: InputDecoration(
-                        labelText: tr(en: 'Gender', ta: 'பாலினம்', hi: 'लिंग', ml: 'ലിംഗം'),
+                        labelText: trId('gender'),
                       ),
                       items: [
                         DropdownMenuItem(
                             value: 'Male',
-                            child: Text(tr(en: 'Male', ta: 'ஆண்', hi: 'पुरुष', ml: 'പുരുഷൻ'))),
+                            child: Text(trId('male'))),
                         DropdownMenuItem(
                             value: 'Female',
-                            child: Text(tr(en: 'Female', ta: 'பெண்', hi: 'महिला', ml: 'സ്ത്രീ'))),
+                            child: Text(trId('female'))),
                         DropdownMenuItem(
                             value: 'Other',
-                            child: Text(tr(en: 'Other', ta: 'பிற', hi: 'अन्य', ml: 'മറ്റുള്ളവ'))),
+                            child: Text(trId('other'))),
                       ],
                       onChanged: (v) =>
                           setState(() => _gender = v ?? 'Male'),
@@ -810,7 +789,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       controller: _mobile,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        labelText: tr(en: 'Mobile', ta: 'கைபேசி', hi: 'मोबाइल', ml: 'മൊബൈൽ'),
+                        labelText: trId('mobile'),
                         prefixIcon: const Icon(Icons.phone_outlined),
                       ),
                       validator: (v) {
@@ -826,7 +805,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        labelText: tr(en: 'Email (Optional)', ta: 'மின்னஞ்சல்', hi: 'ईमेल', ml: 'ഇമെയിൽ'),
+                        labelText: trId('email_optional'),
                         prefixIcon: const Icon(Icons.email_outlined),
                       ),
                     ),
@@ -837,7 +816,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
               TextFormField(
                 controller: _school,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'School / College *', ta: 'பள்ளி / கல்லூரி *', hi: 'स्कूल / कॉलेज *', ml: 'സ്കൂൾ / കോളേജ് *'),
+                  labelText: trId('school_college'),
                   prefixIcon: const Icon(Icons.school_outlined),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty) ? '*' : null,
@@ -847,8 +826,8 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 value: _grade,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Class / Grade', ta: 'வகுப்பு / தரம்', hi: 'कक्षा / ग्रेड', ml: 'ക്ലാസ് / ഗ്രേഡ്'),
-                  hintText: tr(en: 'Select', ta: 'தேர்ந்தெடுக்கவும்', hi: 'चुनें', ml: 'തിരഞ്ഞെടുക്കുക'),
+                  labelText: trId('class_grade'),
+                  hintText: trId('select'),
                   prefixIcon: const Icon(Icons.grade_outlined),
                 ),
                 // Full range independent of any category: pre-KG to college & above.
@@ -870,7 +849,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 controller: _address,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Address (Optional)', ta: 'முகவரி (விரும்பினால்)', hi: 'पता (वैकल्पिक)', ml: 'വിലാസം (ഓപ്ഷണൽ)'),
+                  labelText: trId('address_optional'),
                   prefixIcon: const Icon(Icons.location_on_outlined),
                 ),
               ),
@@ -878,7 +857,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
               TextFormField(
                 controller: _memberId,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Member ID (Optional)', ta: 'உறுப்பினர் ஐடி (விரும்பினால்)', hi: 'सदस्य आईडी (वैकल्पिक)', ml: 'അംഗ ഐഡി (ഓപ്ഷണൽ)'),
+                  labelText: trId('member_id_optional'),
                   prefixIcon: const Icon(Icons.badge_outlined),
                 ),
               ),
@@ -887,11 +866,11 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 TextFormField(
                   controller: _topic,
                   decoration: InputDecoration(
-                    labelText: tr(en: 'Topic *', ta: 'தலைப்பு *', hi: 'विषय *', ml: 'വിഷയം *'),
+                    labelText: trId('topic'),
                     prefixIcon: const Icon(Icons.subject),
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? tr(en: 'Enter topic', ta: 'தலைப்பை உள்ளிடவும்', hi: 'विषय दर्ज करें', ml: 'വിഷയം നൽകുക')
+                      ? trId('enter_topic')
                       : null,
                 ),
               ],
@@ -900,7 +879,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 controller: _remarks,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: tr(en: 'Remarks (Optional)', ta: 'குறிப்புகள் (விரும்பினால்)', hi: 'टिप्पणी (वैकल्पिक)', ml: 'പരാമർശങ്ങൾ (ഓപ്ഷണൽ)'),
+                  labelText: trId('remarks_optional'),
                   prefixIcon: const Icon(Icons.notes),
                 ),
               ),
@@ -922,7 +901,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : Text(tr(en: 'Confirm Registration', ta: 'பதிவை உறுதிசெய்', hi: 'पंजीकरण की पुष्टि करें', ml: 'രജിസ്ട്രേഷൻ സ്ഥിരീകരിക്കുക'),
+                      : Text(trId('confirm_registration'),
                           style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700)),
@@ -961,11 +940,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
     final res = await sl<EventRepository>().fetchEventRegistrants(widget.event.id);
     if (!mounted) return;
     res.fold(
-      (l) => setState(() => _error = tr(
-          en: 'Failed to load participants.',
-          ta: 'பங்கேற்பாளர்களை ஏற்ற முடியவில்லை.',
-          hi: 'प्रतिभागियों को लोड नहीं किया जा सका।',
-          ml: 'പങ്കാളികളെ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.')),
+      (l) => setState(() => _error = trId('failed_to_load_participants')),
       (names) => setState(() => _names = names),
     );
   }
@@ -993,7 +968,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
             ),
           ),
           Text(
-            tr(en: 'Registered Participants', ta: 'பதிவு செய்தவர்கள்', hi: 'पंजीकृत प्रतिभागी', ml: 'രജിസ്റ്റർ ചെയ്തവർ'),
+            trId('registered_participants'),
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -1011,7 +986,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
             Expanded(
               child: Center(
                 child: Text(
-                  tr(en: 'No participants yet.', ta: 'பங்கேற்பாளர்கள் இல்லை.', hi: 'कोई प्रतिभागी नहीं।', ml: 'പങ്കെടുക്കുന്നവർ ആരുമില്ല.'),
+                  trId('no_participants_yet'),
                   style: TextStyle(color: context.cTextSecondary),
                 ),
               ),

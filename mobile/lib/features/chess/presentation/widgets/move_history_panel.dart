@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class MoveHistoryPanel extends StatefulWidget {
@@ -54,8 +55,8 @@ class _MoveHistoryPanelState extends State<MoveHistoryPanel> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
         ),
-        child: const Text(
-          'No moves yet',
+        child: Text(
+          trId('no_moves_yet'),
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       );

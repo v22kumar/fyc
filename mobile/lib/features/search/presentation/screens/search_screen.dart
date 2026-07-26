@@ -269,7 +269,7 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         if (_recent.isNotEmpty) ...[
-          _sectionLabel(tr(en: 'RECENT', ta: 'சமீபத்தியவை', hi: 'हाल के', ml: 'സമീപകാലം')),
+          _sectionLabel(trId('recent')),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -277,7 +277,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 24),
         ],
-        _sectionLabel(tr(en: 'SUGGESTED', ta: 'பரிந்துரைகள்', hi: 'सुझाव', ml: 'നിർദ്ദേശങ്ങൾ')),
+        _sectionLabel(trId('suggested')),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -337,7 +337,7 @@ class _SearchScreenState extends State<SearchScreen> {
           focusNode: _focusNode,
           style: TextStyle(color: context.cText, fontSize: 16),
           decoration: InputDecoration(
-            hintText: 'Search people, events, news...',
+            hintText: trId('search_people_events_news'),
             hintStyle: TextStyle(color: context.cTextSecondary.withOpacity(0.5)),
             border: InputBorder.none,
           ),
@@ -360,7 +360,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ? _buildEmptyState()
                   : _results.isEmpty
                       ? Center(
-                          child: Text('No results found.', style: TextStyle(color: context.cTextSecondary, fontSize: 16)),
+                          child: Text(trId('no_results_found'), style: TextStyle(color: context.cTextSecondary, fontSize: 16)),
                         )
                       : ListView(
                           padding: const EdgeInsets.all(16),

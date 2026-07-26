@@ -84,7 +84,38 @@ class NotificationService:
         self.db.refresh(pref)
         return pref
 
-    def send_notification(self, 
+    def _push_text(self, user, title_en, title_ta, body_en, body_ta, data):
+        """Pick the push title/body in the user's language.
+
+        If the notification carries an ``i18n_key`` in ``data``, the text is
+        resolved from the central registry (``app.core.i18n``) in the user's
+        language — so pushes localize to ANY registered language, not just
+        Tamil/English. Otherwise it falls back to the stored en/ta columns
+        (Tamil for Tamil members, English for everyone else)."""
+        from app.core import i18n
+
+        lang = i18n._norm(getattr(user, "preferred_language", None) or "en")
+        key = (data or {}).get("i18n_key")
+        params = (data or {}).get("i18n_params") or {}
+
+        def col(en, ta):
+            return ta if lang.startswith("ta") else en
+
+        # Title and body resolve independently: a digest can localize its static
+        # title from the registry while its dynamic body (a headline, a kural)
+        # falls back to the stored column.
+        title = (i18n.t(f"{key}.title", lang, **params) if key else None) or col(title_en, title_ta)
+        body = (i18n.t(f"{key}.body", lang, **params) if key else None) or col(body_en, body_ta)
+        return title, body
+
+    @staticmethod
+    def _tray_data(data):
+        """Strip i18n control keys so they never leak into the FCM payload."""
+        if not data:
+            return data
+        return {k: v for k, v in data.items() if k not in ("i18n_key", "i18n_params")}
+
+    def send_notification(self,
                           user_id: UUID, 
                           organization_id: UUID, 
                           title_en: str, 
@@ -132,15 +163,15 @@ class NotificationService:
         channels = []
 
         if pref.push_enabled and user.fcm_token:
-            # Dispatch in the user's language — the tray only shows one title/body,
-            # and most FYC members read Tamil (the push was always English before).
-            _lang = (getattr(user, "preferred_language", None) or "en").lower()
-            _is_ta = _lang.startswith("ta")
+            # Dispatch in the user's language — the tray only shows one title/body.
+            # Resolves ANY registered language via an optional i18n_key in data,
+            # else falls back to the stored en/ta columns.
+            _title, _body = self._push_text(user, title_en, title_ta, body_en, body_ta, data)
             success = self._dispatch_push(
                 user.fcm_token,
-                title_ta if _is_ta else title_en,
-                body_ta if _is_ta else body_en,
-                data,
+                _title,
+                _body,
+                self._tray_data(data),
             )
             if success:
                 channels.append("FCM")
@@ -202,13 +233,12 @@ class NotificationService:
         self.db.refresh(notification)
 
         if pref.push_enabled and user.fcm_token:
-            _lang = (getattr(user, "preferred_language", None) or "en").lower()
-            _is_ta = _lang.startswith("ta")
+            _title, _body = self._push_text(user, title_en, title_ta, body_en, body_ta, data)
             if self._dispatch_push(
                 user.fcm_token,
-                title_ta if _is_ta else title_en,
-                body_ta if _is_ta else body_en,
-                data,
+                _title,
+                _body,
+                self._tray_data(data),
             ):
                 notification.delivered_at = datetime.now(timezone.utc)
                 notification.delivery_channel = "FCM"

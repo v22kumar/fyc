@@ -58,7 +58,7 @@ class _State extends State<ChessTournamentDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(failMsg ?? tr(en: 'Action failed. Try again.', ta: 'செயல் தோல்வி.', hi: 'क्रिया विफल।', ml: 'പ്രവർത്തനം പരാജയപ്പെട്ടു.')),
+            content: Text(failMsg ?? trId('action_failed_try_again')),
             backgroundColor: AppColors.accent));
       }
     } finally {
@@ -85,27 +85,27 @@ class _State extends State<ChessTournamentDetailScreen> {
       // 409 = opponent not ready yet; anything else is a generic failure.
       final waiting = e.toString().contains('409');
       _snack(waiting
-          ? tr(en: 'Waiting for your opponent to be ready.', ta: 'எதிராளி தயாராவதற்குக் காத்திருக்கிறது.', hi: 'प्रतिद्वंद्वी के तैयार होने की प्रतीक्षा।', ml: 'എതിരാളി തയ്യാറാകാൻ കാത്തിരിക്കുന്നു.')
-          : tr(en: 'Could not open the board.', ta: 'பலகையைத் திறக்க முடியவில்லை.', hi: 'बोर्ड नहीं खुला।', ml: 'ബോർഡ് തുറക്കാനായില്ല.'));
+          ? trId('waiting_for_your_opponent_to_be_ready')
+          : trId('could_not_open_the_board'));
     }
   }
 
   String _roundName(int r, int total) {
-    if (r == total) return tr(en: 'Final', ta: 'இறுதிப் போட்டி', hi: 'फ़ाइनल', ml: 'ഫൈനൽ');
-    if (r == total - 1) return tr(en: 'Semi-finals', ta: 'அரையிறுதி', hi: 'सेमीफ़ाइनल', ml: 'സെമിഫൈനൽ');
-    if (r == total - 2) return tr(en: 'Quarter-finals', ta: 'காலிறுதி', hi: 'क्वार्टरफ़ाइनल', ml: 'ക്വാർട്ടർ ഫൈനൽ');
-    return '${tr(en: 'Round', ta: 'சுற்று', hi: 'राउंड', ml: 'റൗണ്ട്')} $r';
+    if (r == total) return trId('final');
+    if (r == total - 1) return trId('semi_finals');
+    if (r == total - 2) return trId('quarter_finals');
+    return '${trId('round')} $r';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.cBackground,
-      appBar: AppBar(title: Text(_t?.name ?? tr(en: 'Tournament', ta: 'போட்டி', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്'))),
+      appBar: AppBar(title: Text(_t?.name ?? trId('tournament_3'))),
       body: _t == null && !_error
           ? const Center(child: CircularProgressIndicator())
           : _error
-              ? Center(child: ElevatedButton(onPressed: _load, child: Text(tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः', ml: 'വീണ്ടും'))))
+              ? Center(child: ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))))
               : RefreshIndicator(onRefresh: _load, child: _body(_t!)),
     );
   }
@@ -127,7 +127,7 @@ class _State extends State<ChessTournamentDetailScreen> {
     // Bracket
     if (t.matches.isNotEmpty) {
       children.add(const SizedBox(height: 16));
-      children.add(Text(tr(en: 'Tournament Bracket', ta: 'போட்டி வரைபடம்', hi: 'टूर्नामेंट ब्रैकेट', ml: 'ടൂർണമെന്റ് ബ്രാക്കറ്റ്'),
+      children.add(Text(trId('tournament_bracket'),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)));
       children.add(const SizedBox(height: 16));
       
@@ -177,7 +177,7 @@ class _State extends State<ChessTournamentDetailScreen> {
           const Text('🏆', style: TextStyle(fontSize: 32)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr(en: 'Champion', ta: 'வெற்றியாளர்', hi: 'चैंपियन', ml: 'ചാമ്പ്യൻ'), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(trId('champion'), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
             Text(t.champion!.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
           ])),
         ]),
@@ -196,14 +196,14 @@ class _State extends State<ChessTournamentDetailScreen> {
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text('${t.entryCount} ${tr(en: 'approved', ta: 'அங்கீகரிக்கப்பட்டது', hi: 'स्वीकृत', ml: 'അംഗീകരിച്ചു')}',
+          Text('${t.entryCount} ${trId('approved')}',
               style: TextStyle(fontWeight: FontWeight.w800, color: context.cText, fontSize: 15)),
           if (t.pendingCount > 0) ...[
             const SizedBox(width: 8),
-            _roundBadge('${t.pendingCount} ${tr(en: 'pending', ta: 'நிலுவை', hi: 'लंबित', ml: 'തീർപ്പാക്കാത്തത്')}', const Color(0xFFF59E0B)),
+            _roundBadge('${t.pendingCount} ${trId('pending')}', const Color(0xFFF59E0B)),
           ],
           const Spacer(),
-          if (t.isClosed) _roundBadge(tr(en: 'Registration closed', ta: 'பதிவு மூடப்பட்டது', hi: 'पंजीकरण बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു'), context.cTextSecondary),
+          if (t.isClosed) _roundBadge(trId('registration_closed_4'), context.cTextSecondary),
         ]),
         const SizedBox(height: 12),
 
@@ -212,7 +212,7 @@ class _State extends State<ChessTournamentDetailScreen> {
           SizedBox(width: double.infinity, child: ElevatedButton.icon(
             onPressed: _busy ? null : () => _run(() => ChessTournamentApi.register(t.id)),
             icon: const Icon(Icons.how_to_reg, color: Colors.white),
-            label: Text(tr(en: 'Register to Play', ta: 'விளையாட பதிவு செய்', hi: 'खेलने के लिए पंजीकरण', ml: 'കളിക്കാൻ രജിസ്റ്റർ ചെയ്യുക'), style: const TextStyle(color: Colors.white)),
+            label: Text(trId('register_to_play'), style: const TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
           ))
         else if (t.isRegistered)
@@ -225,21 +225,21 @@ class _State extends State<ChessTournamentDetailScreen> {
             SizedBox(width: double.infinity, child: OutlinedButton.icon(
               onPressed: _busy ? null : () => _run(() async { await ChessTournamentApi.closeRegistration(t.id); }),
               icon: const Icon(Icons.lock_clock),
-              label: Text(tr(en: 'Close Registration', ta: 'பதிவை மூடு', hi: 'पंजीकरण बंद करें', ml: 'രജിസ്ട്രേഷൻ അടയ്ക്കുക')),
+              label: Text(trId('close_registration_3')),
             )),
           if (t.isClosed) ...[
             SizedBox(width: double.infinity, child: ElevatedButton.icon(
               onPressed: _busy ? null : () => _run(() async { await ChessTournamentApi.start(t.id); },
-                  failMsg: tr(en: 'Need at least 2 approved players.', ta: 'குறைந்தது 2 வீரர்கள் தேவை.', hi: 'कम से कम 2 स्वीकृत खिलाड़ी चाहिए।', ml: 'കുറഞ്ഞത് 2 കളിക്കാർ വേണം.')),
+                  failMsg: trId('need_at_least_2_approved_players')),
               icon: const Icon(Icons.play_circle_fill, color: Colors.white),
-              label: Text(tr(en: 'Start Tournament & Draw Bracket', ta: 'போட்டியைத் தொடங்கு', hi: 'टूर्नामेंट शुरू करें', ml: 'ടൂർണമെന്റ് ആരംഭിക്കുക'), style: const TextStyle(color: Colors.white)),
+              label: Text(trId('start_tournament_draw_bracket'), style: const TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
             )),
             const SizedBox(height: 8),
             SizedBox(width: double.infinity, child: TextButton.icon(
               onPressed: _busy ? null : () => _run(() async { await ChessTournamentApi.reopenRegistration(t.id); }),
               icon: const Icon(Icons.lock_open, size: 18),
-              label: Text(tr(en: 'Reopen Registration', ta: 'பதிவை மீண்டும் திற', hi: 'पंजीकरण फिर खोलें', ml: 'രജിസ്ട്രേഷൻ വീണ്ടും തുറക്കുക')),
+              label: Text(trId('reopen_registration')),
             )),
           ],
         ],
@@ -254,15 +254,15 @@ class _State extends State<ChessTournamentDetailScreen> {
     switch (status) {
       case 'APPROVED':
         icon = Icons.check_circle; color = const Color(0xFF16A34A);
-        label = tr(en: "You're approved — get ready!", ta: 'நீங்கள் அங்கீகரிக்கப்பட்டீர்கள்!', hi: 'आप स्वीकृत हैं!', ml: 'നിങ്ങൾ അംഗീകരിക്കപ്പെട്ടു!');
+        label = trId('you_re_approved_get_ready');
         break;
       case 'REJECTED':
         icon = Icons.cancel; color = AppColors.accent;
-        label = tr(en: 'Not accepted this time', ta: 'இம்முறை ஏற்கப்படவில்லை', hi: 'इस बार स्वीकार नहीं', ml: 'ഇത്തവണ സ്വീകരിച്ചില്ല');
+        label = trId('not_accepted_this_time');
         break;
       default:
         icon = Icons.hourglass_top; color = const Color(0xFFF59E0B);
-        label = tr(en: 'Registered — waiting for approval', ta: 'பதிவு — அங்கீகாரத்திற்குக் காத்திருக்கிறது', hi: 'पंजीकृत — अनुमोदन प्रतीक्षित', ml: 'രജിസ്റ്റർ ചെയ്തു — അംഗീകാരം കാത്തിരിക്കുന്നു');
+        label = trId('registered_waiting_for_approval');
     }
     return Row(children: [
       Icon(icon, color: color, size: 20),
@@ -277,10 +277,10 @@ class _State extends State<ChessTournamentDetailScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(tr(en: 'Pending approvals', ta: 'நிலுவையிலுள்ள ஒப்புதல்கள்', hi: 'लंबित अनुमोदन', ml: 'തീർപ്പാക്കാത്ത അംഗീകാരങ്ങൾ'),
+        Text(trId('pending_approvals'),
             style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
         const SizedBox(height: 4),
-        Text(tr(en: 'Only approved players enter the bracket.', ta: 'அங்கீகரிக்கப்பட்ட வீரர்கள் மட்டுமே பங்கேற்பர்.', hi: 'केवल स्वीकृत खिलाड़ी शामिल होंगे।', ml: 'അംഗീകരിച്ച കളിക്കാർ മാത്രം.'),
+        Text(trId('only_approved_players_enter_the_bracket'),
             style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
         const SizedBox(height: 8),
         ...t.pendingEntries.map((e) => Padding(
@@ -289,13 +289,13 @@ class _State extends State<ChessTournamentDetailScreen> {
                 Expanded(child: Text(e.name, style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: tr(en: 'Approve', ta: 'அங்கீகரி', hi: 'स्वीकृत', ml: 'അംഗീകരിക്കുക'),
+                  tooltip: trId('approve'),
                   onPressed: _busy ? null : () => _run(() => ChessTournamentApi.decide(t.id, e.id, true)),
                   icon: const Icon(Icons.check_circle, color: Color(0xFF16A34A)),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: tr(en: 'Reject', ta: 'நிராகரி', hi: 'अस्वीकार', ml: 'നിരസിക്കുക'),
+                  tooltip: trId('reject'),
                   onPressed: _busy ? null : () => _run(() => ChessTournamentApi.decide(t.id, e.id, false)),
                   icon: Icon(Icons.cancel, color: AppColors.accent),
                 ),
@@ -312,11 +312,11 @@ class _State extends State<ChessTournamentDetailScreen> {
     final allDecided = cur.every((m) => m.winnerId != null || m.status == 'BYE');
     return SizedBox(width: double.infinity, child: ElevatedButton.icon(
       onPressed: (_busy || !allDecided) ? null : () => _run(() async { await ChessTournamentApi.nextRound(t.id); },
-          failMsg: tr(en: 'Finish the current round first.', ta: 'முதலில் இந்தச் சுற்றை முடிக்கவும்.', hi: 'पहले वर्तमान राउंड पूरा करें।', ml: 'ആദ്യം ഈ റൗണ്ട് പൂർത്തിയാക്കുക.')),
+          failMsg: trId('finish_the_current_round_first')),
       icon: const Icon(Icons.skip_next, color: Colors.white),
       label: Text(allDecided
-          ? '${tr(en: 'Start', ta: 'தொடங்கு', hi: 'शुरू', ml: 'ആരംഭിക്കുക')} ${_roundName(t.currentRound + 1, t.rounds)}'
-          : tr(en: 'Waiting for round to finish', ta: 'சுற்று முடிய காத்திருக்கிறது', hi: 'राउंड समाप्ति प्रतीक्षित', ml: 'റൗണ്ട് പൂർത്തിയാകാൻ കാത്തിരിക്കുന്നു'),
+          ? '${trId('start')} ${_roundName(t.currentRound + 1, t.rounds)}'
+          : trId('waiting_for_round_to_finish'),
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       style: ElevatedButton.styleFrom(backgroundColor: allDecided ? AppColors.primary : context.cTextSecondary, padding: const EdgeInsets.symmetric(vertical: 12)),
     ));
@@ -334,7 +334,7 @@ class _State extends State<ChessTournamentDetailScreen> {
     Widget side(PlayerRef? p, bool isWinner) => Expanded(
           child: Row(children: [
             if (isWinner) const Padding(padding: EdgeInsets.only(right: 4), child: Text('👑', style: TextStyle(fontSize: 14))),
-            Expanded(child: Text(p?.name ?? (m.status == 'BYE' ? tr(en: 'Bye', ta: 'பை', hi: 'बाई', ml: 'ബൈ') : tr(en: 'TBD', ta: 'பின்னர்', hi: 'बाद में', ml: 'പിന്നീട്')),
+            Expanded(child: Text(p?.name ?? (m.status == 'BYE' ? trId('bye') : trId('tbd')),
                 style: TextStyle(fontWeight: isWinner ? FontWeight.w800 : FontWeight.w500, color: p == null ? context.cTextSecondary : context.cText), maxLines: 1, overflow: TextOverflow.ellipsis)),
           ]),
         );
@@ -346,19 +346,19 @@ class _State extends State<ChessTournamentDetailScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           side(m.playerA, decided && m.winnerId == m.playerA?.id),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(tr(en: 'vs', ta: 'எதிராக', hi: 'बनाम', ml: 'vs'), style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(trId('vs_2'), style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
           side(m.playerB, decided && m.winnerId == m.playerB?.id),
         ]),
 
         if (showConductToggle) ...[
           const SizedBox(height: 10),
           Row(children: [
-            Text('${tr(en: 'Conduct', ta: 'நடத்தை', hi: 'संचालन', ml: 'നടത്തിപ്പ്')}:', style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
+            Text('${trId('conduct')}:', style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
             const SizedBox(width: 8),
-            _conductChip(tr(en: 'In App', ta: 'ஆப்பில்', hi: 'ऐप में', ml: 'ആപ്പിൽ'), !m.isPhysical,
+            _conductChip(trId('in_app'), !m.isPhysical,
                 () => _run(() => ChessTournamentApi.setConduct(t.id, m.id, 'APP'))),
             const SizedBox(width: 6),
-            _conductChip(tr(en: 'In Person', ta: 'நேரில்', hi: 'व्यक्तिगत', ml: 'നേരിട്ട്'), m.isPhysical,
+            _conductChip(trId('in_person'), m.isPhysical,
                 () => _pickPhysical(t, m)),
           ]),
         ],
@@ -371,8 +371,8 @@ class _State extends State<ChessTournamentDetailScreen> {
             const SizedBox(width: 6),
             Expanded(child: Text(
                 m.venue != null && m.venue!.isNotEmpty
-                    ? '${tr(en: 'In person', ta: 'நேரில்', hi: 'व्यक्तिगत', ml: 'നേരിട്ട്')} · ${m.venue}'
-                    : tr(en: 'Played in person', ta: 'நேரில் விளையாடப்படுகிறது', hi: 'व्यक्तिगत रूप से खेला गया', ml: 'നേരിട്ട് കളിക്കുന്നു'),
+                    ? '${trId('in_person_2')} · ${m.venue}'
+                    : trId('played_in_person'),
                 style: TextStyle(fontSize: 11.5, color: context.cTextSecondary, fontStyle: FontStyle.italic))),
           ]),
         ],
@@ -383,7 +383,7 @@ class _State extends State<ChessTournamentDetailScreen> {
         // Round-not-started hint (activated flag false, both players known).
         if (iAmIn && !m.activated && bothSet && !decided) ...[
           const SizedBox(height: 8),
-          Text(tr(en: 'Waiting for the organizer to start this round.', ta: 'இந்தச் சுற்றைத் தொடங்க அமைப்பாளருக்குக் காத்திருக்கிறது.', hi: 'आयोजक द्वारा राउंड शुरू करने की प्रतीक्षा।', ml: 'സംഘാടകൻ റൗണ്ട് ആരംഭിക്കാൻ കാത്തിരിക്കുന്നു.'),
+          Text(trId('waiting_for_the_organizer_to_start_this'),
               style: TextStyle(fontSize: 11.5, color: context.cTextSecondary, fontStyle: FontStyle.italic)),
         ],
 
@@ -392,12 +392,12 @@ class _State extends State<ChessTournamentDetailScreen> {
           Row(children: [
             Expanded(child: OutlinedButton(
               onPressed: _busy ? null : () => _run(() => ChessTournamentApi.reportResult(t.id, m.id, m.playerA!.id)),
-              child: Text('${tr(en: 'Win', ta: 'வெற்றி', hi: 'जीत', ml: 'ജയം')}: ${m.playerA!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+              child: Text('${trId('win')}: ${m.playerA!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
             )),
             const SizedBox(width: 8),
             Expanded(child: OutlinedButton(
               onPressed: _busy ? null : () => _run(() => ChessTournamentApi.reportResult(t.id, m.id, m.playerB!.id)),
-              child: Text('${tr(en: 'Win', ta: 'வெற்றி', hi: 'जीत', ml: 'ജയം')}: ${m.playerB!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+              child: Text('${trId('win')}: ${m.playerB!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
             )),
           ]),
         ],
@@ -414,7 +414,7 @@ class _State extends State<ChessTournamentDetailScreen> {
         child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: _busy ? null : () => _playMatch(m),
           icon: const Icon(Icons.sports_esports, color: Colors.white, size: 18),
-          label: Text(tr(en: 'Resume Match', ta: 'தொடரவும்', hi: 'फिर शुरू करें', ml: 'തുടരുക'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          label: Text(trId('resume_match'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 10)),
         )),
       );
@@ -430,7 +430,7 @@ class _State extends State<ChessTournamentDetailScreen> {
         child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: _busy ? null : () => _run(() => ChessTournamentApi.markReady(t.id, m.id)),
           icon: const Icon(Icons.check, color: Colors.white, size: 18),
-          label: Text(tr(en: "I'm Ready", ta: 'நான் தயார்', hi: 'मैं तैयार हूँ', ml: 'ഞാൻ തയ്യാർ'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          label: Text(trId('i_m_ready'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 10)),
         )),
       );
@@ -441,7 +441,7 @@ class _State extends State<ChessTournamentDetailScreen> {
         child: Row(children: [
           const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
           const SizedBox(width: 6),
-          Expanded(child: Text(tr(en: "You're ready — waiting for your opponent…", ta: 'நீங்கள் தயார் — எதிராளிக்குக் காத்திருக்கிறது…', hi: 'आप तैयार — प्रतिद्वंद्वी की प्रतीक्षा…', ml: 'നിങ്ങൾ തയ്യാർ — എതിരാളിയെ കാത്തിരിക്കുന്നു…'),
+          Expanded(child: Text(trId('you_re_ready_waiting_for_your_opponent'),
               style: TextStyle(fontSize: 12, color: context.cTextSecondary))),
         ]),
       );
@@ -451,7 +451,7 @@ class _State extends State<ChessTournamentDetailScreen> {
       child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
         onPressed: _busy ? null : () => _playMatch(m),
         icon: const Icon(Icons.sports_esports, color: Colors.white, size: 18),
-        label: Text(tr(en: 'Play Your Match', ta: 'உங்கள் ஆட்டத்தை விளையாடு', hi: 'अपना मैच खेलें', ml: 'നിങ്ങളുടെ മത്സരം കളിക്കുക'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        label: Text(trId('play_your_match'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 10)),
       )),
     );
@@ -462,17 +462,17 @@ class _State extends State<ChessTournamentDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr(en: 'Play in person', ta: 'நேரில் விளையாடு', hi: 'व्यक्तिगत रूप से खेलें', ml: 'നേരിട്ട് കളിക്കുക')),
+        title: Text(trId('play_in_person')),
         content: TextField(
           controller: ctrl,
           decoration: InputDecoration(
-            labelText: tr(en: 'Venue (optional)', ta: 'இடம் (விருப்பம்)', hi: 'स्थान (वैकल्पिक)', ml: 'വേദി (ഓപ്ഷണൽ)'),
-            hintText: tr(en: 'e.g. FYC Club Hall', ta: 'எ.கா. FYC மண்டபம்', hi: 'जैसे FYC हॉल', ml: 'ഉദാ. FYC ഹാൾ'),
+            labelText: trId('venue_optional'),
+            hintText: trId('e_g_fyc_club_hall'),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द', ml: 'റദ്ദാക്കുക'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr(en: 'Confirm', ta: 'உறுதி', hi: 'पुष्टि', ml: 'സ്ഥിരീകരിക്കുക'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trId('cancel_2'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trId('confirm'))),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../../core/l10n/tr.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -164,8 +165,8 @@ class _SplashScreenState extends State<SplashScreen>
                     const SizedBox(height: 36),
 
                     // App name
-                    const Text(
-                      'FYC Connect',
+                    Text(
+                      trId('fyc_connect'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 34,

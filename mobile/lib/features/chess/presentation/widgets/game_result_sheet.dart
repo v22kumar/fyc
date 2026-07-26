@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/game_state.dart';
 import '../../domain/entities/chess_game.dart';
@@ -93,8 +94,8 @@ class GameResultSheet extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'New Game',
+              child: Text(
+                trId('new_game'),
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
@@ -114,8 +115,8 @@ class GameResultSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
                 ),
               ),
-              child: const Text(
-                'Review Position',
+              child: Text(
+                trId('review_position'),
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),

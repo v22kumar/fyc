@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class PlayerInfoBar extends StatelessWidget {
@@ -81,8 +82,8 @@ class PlayerInfoBar extends StatelessWidget {
                 color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'Your turn',
+              child: Text(
+                trId('your_turn'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 10,

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
@@ -157,7 +158,7 @@ class _GoldContent extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Per gram · INR',
+                      trId('per_gram_inr'),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -175,8 +176,8 @@ class _GoldContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: _goldColor.withOpacity(0.4)),
                 ),
-                child: const Text(
-                  'LIVE',
+                child: Text(
+                  trId('live_3'),
                   style: TextStyle(
                     color: _goldColor,
                     fontSize: 10,
@@ -296,7 +297,7 @@ class _GoldError extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Gold price unavailable',
+            trId('gold_price_unavailable'),
             style: TextStyle(
               fontSize: 14,
               color: context.cTextSecondary,

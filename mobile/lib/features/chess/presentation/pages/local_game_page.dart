@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart' hide GameState;
@@ -74,8 +75,8 @@ class _LocalGamePageState extends State<LocalGamePage> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Local Game',
+        title: Text(
+          trId('local_game'),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -91,14 +92,14 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   IconButton(
                     icon: const Icon(Icons.swap_vert_rounded,
                         color: Colors.white54, size: 22),
-                    tooltip: 'Flip board',
+                    tooltip: trId('flip_board'),
                     onPressed: () =>
                         context.read<GameBloc>().add(const FlipBoard()),
                   ),
                   IconButton(
                     icon: const Icon(Icons.flag_rounded,
                         color: Colors.white54, size: 22),
-                    tooltip: 'Resign',
+                    tooltip: trId('resign'),
                     onPressed: () => _confirmResign(context, state),
                   ),
                 ],
@@ -229,7 +230,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('New Game',
+                  child: Text(trId('new_game'),
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
               ),
@@ -246,7 +247,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
       builder: (ctx) => AlertDialog(
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Resign?',
+        title: Text(trId('resign_2'),
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         content: Text(
           '${state.currentPlayerName} will forfeit this game.',
@@ -255,7 +256,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
+            child: Text(trId('cancel_2'),
                 style: TextStyle(color: Color(0xFF8B8682))),
           ),
           TextButton(
@@ -266,7 +267,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   .add(Resign(whiteResigns: state.isWhiteTurn));
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Resign',
+            child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],

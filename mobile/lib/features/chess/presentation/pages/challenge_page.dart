@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -175,7 +176,7 @@ class _ChallengePageState extends State<ChallengePage>
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Online Match',
+        title: Text(trId('online_match'),
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         bottom: TabBar(
           controller: _tabs,
@@ -358,14 +359,14 @@ class _ChallengeTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: AppColors.primaryLight));
               }
               if (snap.hasError) {
-                return const Center(
-                    child: Text('Could not load members',
+                return Center(
+                    child: Text(trId('could_not_load_members'),
                         style: TextStyle(color: AppColors.textSecondary)));
               }
               final members = snap.data ?? [];
               if (members.isEmpty) {
-                return const Center(
-                    child: Text('No other members found',
+                return Center(
+                    child: Text(trId('no_other_members_found'),
                         style: TextStyle(color: AppColors.textSecondary)));
               }
               return ListView.builder(
@@ -519,7 +520,7 @@ class _InboxTab extends StatelessWidget {
               children: [
                 const Text('📬', style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 12),
-                const Text('No pending challenges',
+                Text(trId('no_pending_challenges'),
                     style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 16,
@@ -528,7 +529,7 @@ class _InboxTab extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onRefresh,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh'),
+                  label: Text(trId('refresh_2')),
                 ),
               ],
             ),
@@ -621,7 +622,7 @@ class _ChallengeTile extends StatelessWidget {
                     foregroundColor: AppColors.textSecondary,
                     side: const BorderSide(color: AppColors.border),
                   ),
-                  child: const Text('Decline'),
+                  child: Text(trId('decline')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -632,7 +633,7 @@ class _ChallengeTile extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Accept'),
+                  child: Text(trId('accept')),
                 ),
               ),
             ],

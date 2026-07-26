@@ -52,7 +52,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
         if (state is IssueDetailActionSuccess) {
           SuccessSnackbar.show(
             context,
-            title: tr(en: 'Success', ta: 'வெற்றி', hi: 'सफलता', ml: 'വിജയം'),
+            title: trId('success'),
             message: state.message,
           );
           if (state.updatedIssue != null) {
@@ -70,7 +70,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(tr(en: 'Issue Details', ta: 'புகார் விவரம்', hi: 'शिकायत विवरण', ml: 'പരാതി വിശദാംശങ്ങൾ')),
+          title: Text(trId('issue_details')),
         ),
         body: Stack(
           children: [
@@ -126,7 +126,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                     const SizedBox(height: 24),
                   ],
                   Text(
-                    tr(en: 'Description', ta: 'விளக்கம்', hi: 'विवरण', ml: 'വിവരണം'),
+                    trId('description_2'),
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -138,7 +138,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                   const Divider(),
                   const SizedBox(height: 16),
                   Text(
-                    tr(en: 'Actions', ta: 'செயல்கள்', hi: 'कार्रवाई', ml: 'നടപടികൾ'),
+                    trId('actions'),
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -147,7 +147,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.check_circle_outline),
-                        label: Text(tr(en: 'Mark as RESOLVED', ta: 'தீர்க்கப்பட்டது என குறிக்கவும்', hi: 'हल हुआ के रूप में चिह्नित करें', ml: 'പരിഹരിച്ചതായി അടയാളപ്പെടുത്തുക')),
+                        label: Text(trId('mark_as_resolved')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -164,7 +164,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.email_outlined),
-                      label: Text(tr(en: 'Log Email Sent to Authorities', ta: 'மின்னஞ்சல் அனுப்பியதை பதிவு செய்', hi: 'अधिकारियों को भेजा गया ईमेल दर्ज करें', ml: 'അധികൃതർക്ക് അയച്ച ഇമെയിൽ രേഖപ്പെടുത്തുക')),
+                      label: Text(trId('log_email_sent_to_authorities')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.primary),

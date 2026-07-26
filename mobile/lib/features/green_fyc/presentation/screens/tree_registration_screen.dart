@@ -120,7 +120,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Register a Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'ഒരു മരം രജിസ്റ്റർ ചെയ്യുക')),
+        title: Text(trId('register_a_tree')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
         listener: (context, state) {
@@ -133,13 +133,8 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
             storage.clearDraft('tree_draft_lon');
             SuccessSnackbar.show(
               context,
-              title: tr(en: 'Success', ta: 'வெற்றி', hi: 'सफलता', ml: 'വിജയം'),
-              message: tr(
-                en: 'Tree registered successfully!',
-                ta: 'மரம் வெற்றிகரமாக பதிவு செய்யப்பட்டது!',
-                hi: 'पेड़ सफलतापूर्वक पंजीकृत हो गया!',
-                ml: 'മരം വിജയകരമായി രജിസ്റ്റർ ചെയ്തു!',
-              ),
+              title: trId('success'),
+              message: trId('tree_registered_successfully'),
             );
             context.pop();
           }
@@ -149,7 +144,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                 content: Text(state.message),
                 backgroundColor: AppColors.accent,
                 action: SnackBarAction(
-                  label: tr(en: 'Retry', ta: 'மீண்டும் முயற்சி', hi: 'पुनः प्रयास', ml: 'വീണ്ടും ശ്രമിക്കുക'),
+                  label: trId('retry_4'),
                   textColor: Colors.white,
                   onPressed: _submit,
                 ),
@@ -169,7 +164,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Label(
-                  text: tr(en: 'Planted Date', ta: 'மரம் நடப்பட்ட தேதி', hi: 'रोपण की तिथि', ml: 'നട്ട തീയതി'),
+                  text: trId('planted_date'),
                 ),
                 const SizedBox(height: 8),
                 _DatePickerField(
@@ -178,30 +173,30 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                 ),
                 const SizedBox(height: 20),
                 _Label(
-                  text: tr(en: 'Species (Tamil) — optional', ta: 'மர வகை (தமிழ்) — விரும்பினால்', hi: 'प्रजाति (तमिल) — वैकल्पिक', ml: 'ഇനം (തമിഴ്) — ഓപ്ഷണൽ'),
+                  text: trId('species_tamil_optional'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _speciesTaCtrl,
                   decoration: InputDecoration(
-                    hintText: tr(en: 'e.g. வேம்பு', ta: 'எ.கா. வேம்பு', hi: 'जैसे வேம்பு', ml: 'ഉദാ. வேம்பு'),
+                    hintText: trId('e_g'),
                   ),
                 ),
                 const SizedBox(height: 20),
                 _Label(
-                  text: tr(en: 'Species (English) — optional', ta: 'மர வகை (ஆங்கிலம்) — விரும்பினால்', hi: 'प्रजाति (अंग्रेज़ी) — वैकल्पिक', ml: 'ഇനം (ഇംഗ്ലീഷ്) — ഓപ്ഷണൽ'),
+                  text: trId('species_english_optional'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _speciesEnCtrl,
                   decoration: InputDecoration(
-                    hintText: tr(en: 'e.g. Neem', ta: 'எ.கா. Neem', hi: 'जैसे Neem', ml: 'ഉദാ. Neem'),
+                    hintText: trId('e_g_neem'),
                   ),
                 ),
                 const SizedBox(height: 20),
                 if (drives.isNotEmpty) ...[
                   _Label(
-                    text: tr(en: 'Drive (optional)', ta: 'இயக்கம் (விரும்பினால்)', hi: 'अभियान (वैकल्पिक)', ml: 'ഡ്രൈവ് (ഓപ്ഷണൽ)'),
+                    text: trId('drive_optional'),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String?>(
@@ -212,7 +207,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                       DropdownMenuItem<String?>(
                         value: null,
                         child: Text(
-                          tr(en: 'None', ta: 'எதுவும் இல்லை', hi: 'कोई नहीं', ml: 'ഒന്നുമില്ല'),
+                          trId('none'),
                         ),
                       ),
                       ...drives.map(
@@ -230,7 +225,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                   const SizedBox(height: 20),
                 ],
                 _Label(
-                  text: tr(en: 'Location (optional)', ta: 'இருப்பிடம் (விரும்பினால்)', hi: 'स्थान (वैकल्पिक)', ml: 'സ്ഥലം (ഓപ്ഷണൽ)'),
+                  text: trId('location_optional'),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -243,7 +238,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                           signed: true,
                         ),
                         decoration: InputDecoration(
-                          hintText: tr(en: 'Latitude', ta: 'அட்சரேகை', hi: 'अक्षांश', ml: 'അക്ഷാംശം'),
+                          hintText: trId('latitude'),
                         ),
                       ),
                     ),
@@ -256,7 +251,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                           signed: true,
                         ),
                         decoration: InputDecoration(
-                          hintText: tr(en: 'Longitude', ta: 'தீர்க்கரேகை', hi: 'देशांतर', ml: 'രേഖാംശം'),
+                          hintText: trId('longitude'),
                         ),
                       ),
                     ),
@@ -264,19 +259,19 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                 ),
                 const SizedBox(height: 20),
                 _Label(
-                  text: tr(en: 'Notes (optional)', ta: 'குறிப்புகள் (விரும்பினால்)', hi: 'टिप्पणियाँ (वैकल्पिक)', ml: 'കുറിപ്പുകൾ (ഓപ്ഷണൽ)'),
+                  text: trId('notes_optional_2'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _notesCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: tr(en: 'Additional details', ta: 'கூடுதல் விவரங்கள்', hi: 'अतिरिक्त विवरण', ml: 'കൂടുതൽ വിശദാംശങ്ങൾ'),
+                    hintText: trId('additional_details'),
                   ),
                 ),
                 const SizedBox(height: 20),
                 _Label(
-                  text: tr(en: 'Photo (optional)', ta: 'புகைப்படம் (விரும்பினால்)', hi: 'फ़ोटो (वैकल्पिक)', ml: 'ഫോട്ടോ (ഓപ്ഷണൽ)'),
+                  text: trId('photo_optional'),
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
@@ -310,7 +305,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                tr(en: 'Tap to add photo', ta: 'புகைப்படம் சேர்க்க தட்டவும்', hi: 'फ़ोटो जोड़ने के लिए टैप करें', ml: 'ഫോട്ടോ ചേർക്കാൻ ടാപ്പ് ചെയ്യുക'),
+                                trId('tap_to_add_photo'),
                                 style: const TextStyle(
                                   color: Color(0xFF64748B),
                                   fontSize: 14,
@@ -318,7 +313,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                tr(en: 'Optional — helps verify the planting', ta: 'விரும்பினால் — நடவு உறுதிப்படுத்த உதவுகிறது', hi: 'वैकल्पिक — रोपण सत्यापित करने में मदद करता है', ml: 'ഓപ്ഷണൽ — നടീൽ പരിശോധിക്കാൻ സഹായിക്കുന്നു'),
+                                trId('optional_helps_verify_the_planting'),
                                 style: const TextStyle(
                                   color: Color(0xFF94A3B8),
                                   fontSize: 11,
@@ -337,7 +332,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                     child: isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            tr(en: 'Register Tree', ta: 'மரம் பதிவு செய்க', hi: 'पेड़ पंजीकृत करें', ml: 'മരം രജിസ്റ്റർ ചെയ്യുക'),
+                            trId('register_tree'),
                             style: const TextStyle(fontSize: 16),
                           ),
                   ),

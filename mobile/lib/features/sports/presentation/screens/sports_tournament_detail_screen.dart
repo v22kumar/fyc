@@ -101,8 +101,7 @@ class _SportsTournamentDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(en: 'Fixtures generated', ta: 'அட்டவணை உருவாக்கப்பட்டது',
-              hi: 'फ़िक्स्चर बन गए', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിച്ചു')),
+          content: Text(trId('fixtures_generated')),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -115,18 +114,16 @@ class _SportsTournamentDetailScreenState
         final go = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text(tr(en: 'Registration still open', ta: 'பதிவு இன்னும் திறந்துள்ளது',
-                hi: 'रजिस्ट्रेशन अभी खुला है', ml: 'രജിസ്ട്രേഷൻ ഇപ്പോഴും തുറന്നിരിക്കുന്നു')),
+            title: Text(trId('registration_still_open')),
             content: Text(detail),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text(tr(en: 'Wait', ta: 'காத்திரு', hi: 'रुकें', ml: 'കാത്തിരിക്കുക')),
+                child: Text(trId('wait')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text(tr(en: 'Close early & generate', ta: 'முன்கூட்டியே மூடி உருவாக்கு',
-                    hi: 'जल्दी बंद करें और बनाएं', ml: 'നേരത്തെ അടച്ച് സൃഷ്ടിക്കുക')),
+                child: Text(trId('close_early_generate')),
               ),
             ],
           ),
@@ -137,10 +134,7 @@ class _SportsTournamentDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(detail ??
-              tr(en: 'Could not generate — need ≥2 approved teams and no existing fixtures',
-                  ta: 'உருவாக்க முடியவில்லை — குறைந்தது 2 அணிகள் தேவை',
-                  hi: 'नहीं बना — कम से कम 2 टीमें चाहिए',
-                  ml: 'സൃഷ്ടിക്കാനായില്ല — കുറഞ്ഞത് 2 ടീമുകൾ വേണം')),
+              trId('could_not_generate_need_2_approved_teams')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -151,19 +145,13 @@ class _SportsTournamentDetailScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr(en: 'Close registration?', ta: 'பதிவை மூடவா?',
-            hi: 'रजिस्ट्रेशन बंद करें?', ml: 'രജിസ്ട്രേഷൻ അടയ്ക്കണോ?')),
-        content: Text(tr(
-            en: 'No new teams can register after this. You can then generate fixtures.',
-            ta: 'இதற்குப் பிறகு புதிய அணிகள் பதிவு செய்ய முடியாது. பிறகு அட்டவணை உருவாக்கலாம்.',
-            hi: 'इसके बाद कोई नई टीम रजिस्टर नहीं कर सकती। फिर आप फ़िक्स्चर बना सकते हैं।',
-            ml: 'ഇതിനുശേഷം പുതിയ ടീമുകൾക്ക് രജിസ്റ്റർ ചെയ്യാനാകില്ല. പിന്നീട് ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കാം.')),
+        title: Text(trId('close_registration')),
+        content: Text(trId('no_new_teams_can_register_after_this_you')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द', ml: 'റദ്ദാക്കുക'))),
+              child: Text(trId('cancel_2'))),
           FilledButton(onPressed: () => Navigator.pop(ctx, true),
-              child: Text(tr(en: 'Close registration', ta: 'பதிவை மூடு',
-                  hi: 'रजिस्ट्रेशन बंद करें', ml: 'രജിസ്ട്രേഷൻ അടയ്ക്കുക'))),
+              child: Text(trId('close_registration_2'))),
         ],
       ),
     );
@@ -172,16 +160,14 @@ class _SportsTournamentDetailScreenState
       await sl<ApiClient>().dio.post(ApiConstants.sportsCloseRegistration(widget.tournamentId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr(en: 'Registration closed', ta: 'பதிவு மூடப்பட்டது',
-            hi: 'रजिस्ट्रेशन बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു')),
+        content: Text(trId('registration_closed')),
         backgroundColor: AppColors.primary,
       ));
       _reload();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr(en: 'Could not close registration', ta: 'மூட முடியவில்லை',
-            hi: 'बंद नहीं हो सका', ml: 'അടയ്ക്കാനായില്ല')),
+        content: Text(trId('could_not_close_registration')),
         backgroundColor: AppColors.accent,
       ));
     }
@@ -224,17 +210,17 @@ class _SportsTournamentDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Fixture'),
-        content: const Text('Are you sure you want to delete this fixture?'),
+        title: Text(trId('delete_fixture')),
+        content: Text(trId('are_you_sure_you_want_to_delete_this_fix')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(trId('cancel_2')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(trId('delete')),
           ),
         ],
       ),
@@ -248,13 +234,13 @@ class _SportsTournamentDetailScreenState
         _reload();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fixture deleted successfully!'), backgroundColor: AppColors.success),
+            SnackBar(content: Text(trId('fixture_deleted_successfully')), backgroundColor: AppColors.success),
           );
         }
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete fixture'), backgroundColor: AppColors.accent),
+            SnackBar(content: Text(trId('failed_to_delete_fixture')), backgroundColor: AppColors.accent),
           );
         }
       }
@@ -265,16 +251,14 @@ class _SportsTournamentDetailScreenState
   (String, Color) _phaseChip(TournamentEntity t) {
     switch (t.effectivePhase) {
       case 'REGISTRATION_OPEN':
-        return (tr(en: 'REGISTRATION OPEN', ta: 'பதிவு திறந்துள்ளது',
-            hi: 'रजिस्ट्रेशन खुला', ml: 'രജിസ്ട്രേഷൻ തുറന്നു'), const Color(0xFF12A150));
+        return (trId('registration_open'), const Color(0xFF12A150));
       case 'REGISTRATION_CLOSED':
-        return (tr(en: 'REGISTRATION CLOSED', ta: 'பதிவு மூடப்பட்டது',
-            hi: 'रजिस्ट्रेशन बंद', ml: 'രജിസ്ട്രേഷൻ അടച്ചു'), const Color(0xFFD97706));
+        return (trId('registration_closed_2'), const Color(0xFFD97706));
       case 'ONGOING':
-        return (tr(en: 'ONGOING', ta: 'நடைபெறுகிறது', hi: 'चल रहा है', ml: 'നടക്കുന്നു'),
+        return (trId('ongoing'),
             const Color(0xFF2563EB));
       case 'COMPLETED':
-        return (tr(en: 'COMPLETED', ta: 'முடிந்தது', hi: 'समाप्त', ml: 'പൂർത്തിയായി'),
+        return (trId('completed_3'),
             const Color(0xFF6B7280));
       default:
         return (t.status, const Color(0xFF0B6E4F));
@@ -285,10 +269,10 @@ class _SportsTournamentDetailScreenState
   /// WhatsApp etc.). Standings are already ranked by points → NRR.
   void _shareScoreboard(TournamentEntity t, List<TeamEntity> teams) {
     final b = StringBuffer();
-    b.writeln('${t.nameEn} — ${tr(en: 'Standings', ta: 'தரவரிசை', hi: 'स्टैंडिंग', ml: 'സ്റ്റാൻഡിംഗ്')}');
+    b.writeln('${t.nameEn} — ${trId('standings')}');
     b.writeln('');
     if (teams.isEmpty) {
-      b.writeln(tr(en: 'No teams yet.', ta: 'அணிகள் இல்லை.', hi: 'अभी कोई टीम नहीं।', ml: 'ടീമുകളില്ല.'));
+      b.writeln(trId('no_teams_yet'));
     } else {
       var i = 1;
       for (final tm in teams) {
@@ -302,7 +286,7 @@ class _SportsTournamentDetailScreenState
     }
     b.writeln('');
     b.writeln('— FYC Connect');
-    Share.share(b.toString(), subject: '${t.nameEn} — ${tr(en: 'Scoreboard', ta: 'மதிப்பெண் பட்டியல்', hi: 'स्कोरबोर्ड', ml: 'സ്കോർബോർഡ്')}');
+    Share.share(b.toString(), subject: '${t.nameEn} — ${trId('scoreboard')}');
   }
 
   @override
@@ -311,14 +295,14 @@ class _SportsTournamentDetailScreenState
     final isMember = _isMember;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Tournament', ta: 'போட்டி விவரம்', hi: 'टूर्नामेंट', ml: 'ടൂർണമെന്റ്')),
+        title: Text(trId('tournament_2')),
         actions: [
           BlocBuilder<SportsBloc, SportsState>(
             builder: (context, state) {
               if (state is SportsDetailLoaded) {
                 return IconButton(
                   icon: const Icon(Icons.share_outlined),
-                  tooltip: tr(en: 'Share scoreboard', ta: 'மதிப்பெண் பட்டியலைப் பகிர்', hi: 'स्कोरबोर्ड साझा करें', ml: 'സ്കോർബോർഡ് പങ്കിടുക'),
+                  tooltip: trId('share_scoreboard'),
                   onPressed: () => _shareScoreboard(state.tournament, state.standings),
                 );
               }
@@ -428,13 +412,13 @@ class _SportsTournamentDetailScreenState
                   ),
                   const SizedBox(height: 18),
                   _SectionHeader(
-                    label: tr(en: 'Fixtures', ta: 'போட்டிகள்', hi: 'फ़िक्स्चर', ml: 'ഫിക്സ്ചറുകൾ'),
+                    label: trId('fixtures'),
                   ),
                   if (state.fixtures.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        tr(en: 'No fixtures scheduled', ta: 'போட்டிகள் இல்லை', hi: 'कोई फ़िक्स्चर निर्धारित नहीं', ml: 'ഫിക്സ്ചറുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല'),
+                        trId('no_fixtures_scheduled'),
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
@@ -503,7 +487,7 @@ class _SportsTournamentDetailScreenState
                             if (ok == true) _reload();
                           },
                           icon: const Icon(Icons.group_add, color: Colors.white),
-                          label: Text(tr(en: 'Register Your Team', ta: 'அணியை பதிவு செய்', hi: 'अपनी टीम पंजीकृत करें', ml: 'നിങ്ങളുടെ ടീം രജിസ്റ്റർ ചെയ്യുക'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          label: Text(trId('register_your_team'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                         ),
                       ),
@@ -523,7 +507,7 @@ class _SportsTournamentDetailScreenState
                                   onPressed: _generateFixtures,
                                   icon: const Icon(Icons.auto_awesome_motion_outlined, color: Colors.white),
                                   label: Text(
-                                    tr(en: 'Generate fixtures', ta: 'அட்டவணை உருவாக்கு', hi: 'फ़िक्स्चर बनाएं', ml: 'ഫിക്സ്ചറുകൾ സൃഷ്ടിക്കുക'),
+                                    trId('generate_fixtures'),
                                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                   style: ElevatedButton.styleFrom(
@@ -539,7 +523,7 @@ class _SportsTournamentDetailScreenState
                                   onPressed: _showAddFixtureSheet,
                                   icon: const Icon(Icons.add_circle_outline),
                                   label: Text(
-                                    tr(en: 'Add Fixture', ta: 'அட்டவணை சேர்', hi: 'फ़िक्स्चर जोड़ें', ml: 'ഫിക്സ്ചർ ചേർക്കുക'),
+                                    trId('add_fixture'),
                                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                   style: OutlinedButton.styleFrom(
@@ -558,8 +542,7 @@ class _SportsTournamentDetailScreenState
                               child: OutlinedButton.icon(
                                 onPressed: _closeRegistration,
                                 icon: const Icon(Icons.lock_clock_outlined),
-                                label: Text(tr(en: 'Close registration now', ta: 'இப்போது பதிவை மூடு',
-                                    hi: 'रजिस्ट्रेशन अभी बंद करें', ml: 'ഇപ്പോൾ രജിസ്ട്രേഷൻ അടയ്ക്കുക')),
+                                label: Text(trId('close_registration_now')),
                               ),
                             ),
                           ],
@@ -568,13 +551,13 @@ class _SportsTournamentDetailScreenState
                     ),
                   
                   _SectionHeader(
-                    label: tr(en: 'Standings', ta: 'புள்ளிப்பட்டியல்', hi: 'अंक तालिका', ml: 'പോയിന്റ് പട്ടിക'),
+                    label: trId('standings_2'),
                   ),
                   if (state.standings.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        tr(en: 'No teams yet', ta: 'அணிகள் இல்லை', hi: 'अभी कोई टीम नहीं', ml: 'ഇതുവരെ ടീമുകളൊന്നുമില്ല'),
+                        trId('no_teams_yet_2'),
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
@@ -601,7 +584,7 @@ class _SportsTournamentDetailScreenState
                   ElevatedButton(
                     onPressed: _reload,
                     child: Text(
-                        tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                        trId('retry')),
                   ),
                 ],
               ),
@@ -653,8 +636,8 @@ class _FixtureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM yyyy · h:mm a');
-    final teamA = fixture.teamAName ?? (tr(en: 'Team A', ta: 'அணி A', hi: 'टीम A', ml: 'ടീം A'));
-    final teamB = fixture.teamBName ?? (tr(en: 'Team B', ta: 'அணி B', hi: 'टीम B', ml: 'ടീം B'));
+    final teamA = fixture.teamAName ?? (trId('team_a'));
+    final teamB = fixture.teamBName ?? (trId('team_b'));
     final hasScore =
         (fixture.teamAScore != null) || (fixture.teamBScore != null);
 
@@ -669,7 +652,7 @@ class _FixtureCard extends StatelessWidget {
               children: [
                 if (fixture.matchNumber != null)
                   Text(
-                    (tr(en: 'Match #', ta: 'போட்டி #', hi: 'मैच #', ml: 'മത്സരം #')) +
+                    (trId('match')) +
                         '${fixture.matchNumber}',
                     style: const TextStyle(
                         fontSize: 12, color: AppColors.textSecondary),
@@ -690,23 +673,23 @@ class _FixtureCard extends StatelessWidget {
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
                             Icon(Icons.edit, size: 16),
                             SizedBox(width: 8),
-                            Text('Edit Fixture', style: TextStyle(fontSize: 13)),
+                            Text(trId('edit_fixture'), style: TextStyle(fontSize: 13)),
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
                             Icon(Icons.delete, color: Colors.red, size: 16),
                             SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red, fontSize: 13)),
+                            Text(trId('delete'), style: TextStyle(color: Colors.red, fontSize: 13)),
                           ],
                         ),
                       ),
@@ -737,7 +720,7 @@ class _FixtureCard extends StatelessWidget {
                   )
                 else
                   Text(
-                    tr(en: 'vs', ta: 'எதிராக', hi: 'बनाम', ml: 'vs'),
+                    trId('vs_2'),
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textSecondary),
                   ),
@@ -813,8 +796,8 @@ class _FixtureCard extends StatelessWidget {
                   onPressed: onEnterScore,
                   icon: Icon(fixture.isCompleted ? Icons.scoreboard_outlined : Icons.bolt_rounded, size: 16),
                   label: Text(fixture.isCompleted
-                      ? tr(en: 'View / edit scorecard', ta: 'ஸ்கோர்கார்டு பார் / திருத்து', hi: 'स्कोरकार्ड देखें / संपादित करें', ml: 'സ്കോർകാർഡ് കാണുക / തിരുത്തുക')
-                      : tr(en: 'Enter Live Score', ta: 'ஸ்கோர் பதிவு செய்', hi: 'लाइव स्कोर दर्ज करें', ml: 'ലൈവ് സ്കോർ നൽകുക')),
+                      ? trId('view_edit_scorecard')
+                      : trId('enter_live_score')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
@@ -894,7 +877,7 @@ class _StandingsTable extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: Text(
-                      tr(en: 'Team', ta: 'அணி', hi: 'टीम', ml: 'ടീം'),
+                      trId('team'),
                       style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -995,7 +978,7 @@ class _StandingsRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      tr(en: 'OUT', ta: 'நீக்கம்', hi: 'बाहर', ml: 'പുറത്ത്'),
+                      trId('out'),
                       style: const TextStyle(
                           fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.accent),
                     ),
@@ -1068,7 +1051,7 @@ class _EmptyDetail extends StatelessWidget {
           const Text('🏟️', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            tr(en: 'No details available yet', ta: 'விவரங்கள் இன்னும் இல்லை', hi: 'अभी कोई विवरण उपलब्ध नहीं', ml: 'ഇതുവരെ വിശദാംശങ്ങളൊന്നുമില്ല'),
+            trId('no_details_available_yet'),
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ],

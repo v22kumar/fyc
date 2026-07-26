@@ -22,7 +22,7 @@ String _fullUrl(String url) =>
 String _ago(DateTime d, bool ta) {
   final diff = DateTime.now().difference(d);
   if (diff.inMinutes < 1) {
-    return tr(en: 'just now', ta: 'இப்போது', hi: 'अभी', ml: 'ഇപ്പോൾ');
+    return trId('just_now_2');
   }
   if (diff.inMinutes < 60) return '${diff.inMinutes}m';
   if (diff.inHours < 24) return '${diff.inHours}h';
@@ -170,11 +170,10 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 Icon(Icons.wifi_off_rounded, size: 40, color: context.cTextSecondary),
                 const SizedBox(height: 12),
-                Text(tr(en: "Couldn't load the feed", ta: 'சுவரை ஏற்ற முடியவில்லை',
-                    hi: 'फ़ीड लोड नहीं हुआ', ml: 'ഫീഡ് ലോഡ് ചെയ്യാനായില്ല')),
+                Text(trId('couldn_t_load_the_feed')),
                 const SizedBox(height: 12),
                 ElevatedButton(onPressed: _load,
-                    child: Text(tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः', ml: 'വീണ്ടും'))),
+                    child: Text(trId('retry_2'))),
               ],
             ),
           ),
@@ -191,13 +190,10 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 Icon(Icons.dynamic_feed_rounded, size: 44, color: context.cTextSecondary),
                 const SizedBox(height: 12),
-                Text(tr(en: 'No posts yet', ta: 'இன்னும் இடுகைகள் இல்லை',
-                    hi: 'अभी कोई पोस्ट नहीं', ml: 'ഇതുവരെ പോസ്റ്റുകളില്ല'),
+                Text(trId('no_posts_yet'),
                     style: TextStyle(fontWeight: FontWeight.w700, color: context.cText)),
                 const SizedBox(height: 4),
-                Text(tr(en: 'Be the first to share something!',
-                    ta: 'முதலில் பகிருங்கள்!', hi: 'सबसे पहले साझा करें!',
-                    ml: 'ആദ്യം പങ്കിടൂ!'),
+                Text(trId('be_the_first_to_share_something'),
                     style: TextStyle(fontSize: 12.5, color: context.cTextSecondary)),
               ],
             ),
@@ -235,13 +231,13 @@ class _FeedScreenState extends State<FeedScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _error
-                      ? tr(en: "Couldn't load activity", ta: 'ஏற்ற முடியவில்லை', hi: 'लोड नहीं हुआ', ml: 'ലോഡ് ചെയ്യാനായില്ല')
-                      : tr(en: 'No recent activity', ta: 'சமீபத்திய செயல்பாடு இல்லை', hi: 'कोई हालिया गतिविधि नहीं', ml: 'സമീപകാല പ്രവർത്തനങ്ങളില്ല'),
+                      ? trId('couldn_t_load_activity')
+                      : trId('no_recent_activity'),
                   style: TextStyle(fontWeight: FontWeight.w700, color: context.cText),
                 ),
                 if (_error) ...[
                   const SizedBox(height: 12),
-                  ElevatedButton(onPressed: _load, child: Text(tr(en: 'Retry', ta: 'மீண்டும்', hi: 'पुनः', ml: 'വീണ്ടും'))),
+                  ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))),
                 ],
               ],
             ),
@@ -382,16 +378,12 @@ class _Header extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tr(en: 'Community Feed', ta: 'சமூக சுவர்',
-                          hi: 'समुदाय फ़ीड', ml: 'കമ്മ്യൂണിറ്റി ഫീഡ്'),
+                      trId('community_feed_3'),
                       style: const TextStyle(color: Colors.white, fontSize: 20,
                           fontWeight: FontWeight.w800),
                     ),
                     Text(
-                      tr(en: 'Stay connected. Share. Inspire.',
-                          ta: 'இணைந்திருங்கள். பகிருங்கள்.',
-                          hi: 'जुड़े रहें। साझा करें।',
-                          ml: 'ബന്ധപ്പെട്ടിരിക്കൂ. പങ്കിടൂ.'),
+                      trId('stay_connected_share_inspire'),
                       style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12),
                     ),
                   ],
@@ -428,10 +420,7 @@ class _Header extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        tr(en: "What's happening in your community?",
-                            ta: 'உங்கள் சமூகத்தில் என்ன நடக்கிறது?',
-                            hi: 'आपके समुदाय में क्या हो रहा है?',
-                            ml: 'നിങ്ങളുടെ സമൂഹത്തിൽ എന്താണ്?'),
+                        trId('what_s_happening_in_your_community'),
                         style: TextStyle(color: context.cTextSecondary, fontSize: 13),
                         maxLines: 1, overflow: TextOverflow.ellipsis,
                       ),
@@ -447,7 +436,7 @@ class _Header extends StatelessWidget {
                         children: [
                           const Icon(Icons.edit, color: Colors.white, size: 14),
                           const SizedBox(width: 5),
-                          Text(tr(en: 'Post', ta: 'இடு', hi: 'पोस्ट', ml: 'പോസ്റ്റ്'),
+                          Text(trId('post_2'),
                               style: const TextStyle(color: Colors.white,
                                   fontWeight: FontWeight.w700, fontSize: 12.5)),
                         ],
@@ -474,9 +463,9 @@ class _TabsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String label(String en) => switch (en) {
-          'All' => tr(en: 'All', ta: 'எல்லாம்', hi: 'सभी', ml: 'എല്ലാം'),
-          'Green FYC' => tr(en: 'Green FYC', ta: 'பசுமை FYC', hi: 'ग्रीन FYC', ml: 'ഗ്രീൻ FYC'),
-          'Activity' => tr(en: 'Activity', ta: 'செயல்பாடு', hi: 'गतिविधि', ml: 'പ്രവർത്തനം'),
+          'All' => trId('all_2'),
+          'Green FYC' => trId('green_fyc_2'),
+          'Activity' => trId('activity'),
           _ => en, // Instagram / Threads — brand names, keep as-is
         };
     return Padding(
@@ -532,10 +521,10 @@ class _FilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String label(String en) => switch (en) {
-          'All' => tr(en: 'All', ta: 'எல்லாம்', hi: 'सभी', ml: 'എല്ലാം'),
-          'Popular' => tr(en: 'Popular', ta: 'பிரபலம்', hi: 'लोकप्रिय', ml: 'ജനപ്രിയം'),
-          'Recent' => tr(en: 'Recent', ta: 'சமீபத்திய', hi: 'हाल', ml: 'സമീപകാലം'),
-          _ => tr(en: 'Following', ta: 'பின்தொடர்', hi: 'फ़ॉलोइंग', ml: 'പിന്തുടരുന്നു'),
+          'All' => trId('all_2'),
+          'Popular' => trId('popular'),
+          'Recent' => trId('recent_2'),
+          _ => trId('following'),
         };
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -680,15 +669,15 @@ class _PostCardState extends State<_PostCard> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.orange),
-              title: const Text('Report Post'),
+              title: Text(trId('report_post')),
               onTap: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reporting post...')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('reporting_post'))));
                 try {
                   await FeedApi.report(p.id, reason: 'Inappropriate content');
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post reported.')));
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_reported'))));
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to report.')));
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_report'))));
                 }
               },
             ),
@@ -700,37 +689,37 @@ class _PostCardState extends State<_PostCard> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Blocking ${p.author.name}...')));
                 try {
                   await FeedApi.blockUser(p.author.id);
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User blocked. Refresh to hide their posts.')));
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('user_blocked_refresh_to_hide_their_posts'))));
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to block user.')));
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_block_user'))));
                 }
               },
             ),
             if (isAdmin)
               ListTile(
                 leading: const Icon(Icons.visibility_off, color: Colors.orange),
-                title: const Text('Hide Post (Admin)'),
+                title: Text(trId('hide_post_admin')),
                 onTap: () async {
                   Navigator.pop(context);
                   try {
                     await FeedApi.hide(p.id);
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post hidden.')));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_hidden'))));
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to hide.')));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_hide'))));
                   }
                 },
               ),
             if (isAdmin || isAuthor)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Delete Post (Admin/Author)'),
+                title: Text(trId('delete_post_admin_author')),
                 onTap: () async {
                   Navigator.pop(context);
                   try {
                     await FeedApi.delete(p.id);
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted. Refresh feed.')));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_deleted_refresh_feed'))));
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete. You may not have permission.')));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_delete_you_may_not_have_permis'))));
                   }
                 },
               ),
@@ -857,8 +846,7 @@ class _PostCardState extends State<_PostCard> {
                 IconButton(
                   icon: Icon(Icons.send_outlined, size: 19, color: context.cTextSecondary),
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(tr(en: 'Sharing coming soon', ta: 'விரைவில்',
-                        hi: 'जल्द', ml: 'ഉടൻ')),
+                    content: Text(trId('sharing_coming_soon')),
                   )),
                 ),
               ],
@@ -1121,7 +1109,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 decoration: BoxDecoration(color: context.cBorder,
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 12),
-            Text(tr(en: 'Comments', ta: 'கருத்துகள்', hi: 'टिप्पणियाँ', ml: 'അഭിപ്രായങ്ങൾ'),
+            Text(trId('comments'),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText)),
             const Divider(height: 20),
             Expanded(
@@ -1129,8 +1117,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   ? const Center(child: CircularProgressIndicator())
                   : _comments!.isEmpty
                       ? Center(child: Text(
-                          tr(en: 'Be the first to comment', ta: 'முதல் கருத்தை இடுங்கள்',
-                              hi: 'सबसे पहले टिप्पणी करें', ml: 'ആദ്യം അഭിപ്രായമിടൂ'),
+                          trId('be_the_first_to_comment'),
                           style: TextStyle(color: context.cTextSecondary)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1181,8 +1168,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _send(),
                         decoration: InputDecoration(
-                          hintText: tr(en: 'Write a comment…', ta: 'கருத்தை எழுதுங்கள்…',
-                              hi: 'टिप्पणी लिखें…', ml: 'അഭിപ്രായം എഴുതുക…'),
+                          hintText: trId('write_a_comment'),
                           filled: true,
                           fillColor: context.cBackground,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

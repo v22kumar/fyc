@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/api_client.dart';
@@ -56,7 +57,7 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Action failed'), backgroundColor: AppColors.accent),
+          SnackBar(content: Text(trId('action_failed')), backgroundColor: AppColors.accent),
         );
       }
     } finally {
@@ -71,7 +72,7 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
       appBar: AppBar(
         backgroundColor: context.cSurface,
         elevation: 0,
-        title: Text('Score Approvals',
+        title: Text(trId('score_approvals'),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText)),
       ),
       body: Column(
@@ -207,7 +208,7 @@ class _EntryCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: busy ? null : onReject,
                     icon: const Icon(Icons.close_rounded, size: 16),
-                    label: const Text('Reject'),
+                    label: Text(trId('reject')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.accent,
                       side: BorderSide(color: AppColors.accent.withOpacity(0.5)),
@@ -223,7 +224,7 @@ class _EntryCard extends StatelessWidget {
                     icon: busy
                         ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Icon(Icons.check_rounded, size: 16, color: Colors.white),
-                    label: const Text('Approve', style: TextStyle(color: Colors.white)),
+                    label: Text(trId('approve'), style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),

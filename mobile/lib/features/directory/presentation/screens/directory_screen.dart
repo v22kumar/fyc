@@ -70,7 +70,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Directory', ta: 'அவசர தொடர்பு', hi: 'निर्देशिका', ml: 'ഡയറക്ടറി')),
+        title: Text(trId('directory')),
       ),
       body: Column(
         children: [
@@ -126,11 +126,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                                 DirectoryFetchRequested(
                                     category: _selectedCategory),
                               ),
-                          child: Text(tr(
-                              en: 'Retry',
-                              ta: 'மீண்டும் முயற்சிக்கவும்',
-                              hi: 'पुनः प्रयास करें',
-                              ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                          child: Text(trId('retry')),
                         ),
                       ],
                     ),
@@ -170,7 +166,7 @@ class _FilterRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(tr(en: 'All', ta: 'அனைத்தும்', hi: 'सभी', ml: 'എല്ലാം')),
+              label: Text(trId('all')),
               selected: selected == null,
               onSelected: (_) => onSelect(null),
             ),
@@ -344,7 +340,7 @@ class _ContactCard extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onCall,
                       icon: const Icon(Icons.phone, size: 16),
-                      label: Text(tr(en: 'Call', ta: 'அழைக்க', hi: 'कॉल करें', ml: 'വിളിക്കുക')),
+                      label: Text(trId('call')),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 44),
                       ),
@@ -359,7 +355,7 @@ class _ContactCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: onWhatsApp,
                         icon: const Icon(Icons.chat, size: 16),
-                        label: const Text('WhatsApp'),
+                        label: Text(trId('whatsapp')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF25D366),
                           minimumSize: const Size(0, 44),
@@ -390,11 +386,7 @@ class _EmptyContacts extends StatelessWidget {
           const Text('📇', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            tr(
-                en: 'No contacts found',
-                ta: 'தொடர்புகள் இல்லை',
-                hi: 'कोई संपर्क नहीं मिला',
-                ml: 'കോൺടാക്റ്റുകൾ ഒന്നും കണ്ടെത്തിയില്ല'),
+            trId('no_contacts_found'),
             style: TextStyle(fontSize: 16, color: context.cTextSecondary),
           ),
         ],

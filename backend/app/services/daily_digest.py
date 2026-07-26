@@ -13,10 +13,12 @@ def run_thirukkural_digest():
     """Scheduled job for Thirukkural (9 AM IST)"""
     logger.info("Running Thirukkural Notification Digest...")
     from app.services.thirukkural import get_daily_kural
+    from app.core import i18n
     kural = get_daily_kural()
-    
-    title_ta = f"இன்றைய திருக்குறள் (குறள் {kural.get('number', '')})"
-    title_en = f"Daily Thirukkural (Kural #{kural.get('number', '')})"
+    _num = kural.get('number', '')
+
+    title_ta = i18n.t("digest.thirukkural.title", "ta", n=_num)
+    title_en = i18n.t("digest.thirukkural.title", "en", n=_num)
 
     couplet = f"{kural.get('line1', '')}\n{kural.get('line2', '')}".strip()
     # The FULL Tamil kural (couplet + its Tamil meaning) — not the English gloss.
@@ -37,8 +39,10 @@ def run_thirukkural_digest():
                 body_ta=body_ta,
                 notification_type="SYSTEM",
                 # Tapping the notification opens the app on the Home screen, where
-                # the daily Thirukkural card lives.
-                data={"route": "/home"},
+                # the daily Thirukkural card lives. i18n_key localizes the title to
+                # the member's language (hi/ml too); the body stays the Tamil kural.
+                data={"route": "/home", "i18n_key": "digest.thirukkural",
+                      "i18n_params": {"n": _num}},
             )
 
 def run_news_digest():
@@ -59,18 +63,21 @@ def run_news_digest():
     source = item.get("source") or ""
     
     body = f"{title} — {source}"
-    
+
+    from app.core import i18n
     with SessionLocal() as db:
         svc = NotificationService(db)
         orgs = db.query(Organization).all()
         for org in orgs:
             svc.broadcast(
                 organization_id=org.id,
-                title_en="Latest News 📰",
-                title_ta="முக்கிய செய்திகள் 📰",
+                title_en=i18n.t("digest.news.title", "en"),
+                title_ta=i18n.t("digest.news.title", "ta"),
                 body_en=body,
                 body_ta=body,
-                notification_type="NEWS"
+                notification_type="NEWS",
+                # Localizes the title to any language; the body is the headline.
+                data={"i18n_key": "digest.news"},
             )
 
 def run_ai_daily_digest_job():
@@ -102,18 +109,21 @@ def run_ai_news_summary_job():
 def run_evening_digest():
     """Scheduled job for Evening Summary"""
     logger.info("Running Evening Notification Digest...")
+    from app.core import i18n
     with SessionLocal() as db:
         svc = NotificationService(db)
         orgs = db.query(Organization).all()
         for org in orgs:
-            # Broadcast Evening Summary
+            # Broadcast Evening Summary — fully localized (title + body) to any
+            # registered language via the registry.
             svc.broadcast(
                 organization_id=org.id,
-                title_en="Evening Digest 🌙",
-                title_ta="மாலை சுருக்கம் 🌙",
-                body_en="Review the updates and achievements from today.",
-                body_ta="இன்றைய புதுப்பிப்புகள் மற்றும் சாதனைகளை மதிப்பாய்வு செய்யவும்.",
-                notification_type="SYSTEM"
+                title_en=i18n.t("digest.evening.title", "en"),
+                title_ta=i18n.t("digest.evening.title", "ta"),
+                body_en=i18n.t("digest.evening.body", "en"),
+                body_ta=i18n.t("digest.evening.body", "ta"),
+                notification_type="SYSTEM",
+                data={"i18n_key": "digest.evening"},
             )
 
 def run_notification_cleanup():

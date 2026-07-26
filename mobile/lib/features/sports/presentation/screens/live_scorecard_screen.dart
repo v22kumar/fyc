@@ -83,11 +83,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
       return;
     }
     res.fold(
-      (l) => setState(() => _error = tr(
-          en: 'Could not load the live score.',
-          ta: 'நேரடி மதிப்பெண்ணை ஏற்ற முடியவில்லை.',
-          hi: 'लाइव स्कोर लोड नहीं हो सका।',
-          ml: 'തത്സമയ സ്കോർ ലോഡ് ചെയ്യാനായില്ല.')),
+      (l) => setState(() => _error = trId('could_not_load_the_live_score')),
       (s) => setState(() {
         _state = s;
         _error = null;
@@ -116,7 +112,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(
-        title: Text('${widget.teamA}  ${tr(en: 'vs', ta: 'எதிர்', hi: 'बनाम', ml: 'vs')}  ${widget.teamB}',
+        title: Text('${widget.teamA}  ${trId('vs')}  ${widget.teamB}',
             overflow: TextOverflow.ellipsis),
       ),
       body: _error != null
@@ -136,12 +132,12 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
   Widget _scoreCard(BuildContext context, CricketMatchStateEntity s) {
     String? note;
     if (s.status == 'INNINGS_BREAK') {
-      note = tr(en: 'Innings break', ta: 'இன்னிங்ஸ் இடைவேளை', hi: 'पारी विश्राम', ml: 'ഇന്നിംഗ്സ് ബ്രേക്ക്');
+      note = trId('innings_break');
     } else if (s.innings == 2 && s.target != null) {
       final need = s.target! - s.score;
       note = need > 0
           ? tr(en: 'Need $need run${need == 1 ? '' : 's'}', ta: '$need ரன் தேவை', hi: '$need रन चाहिए', ml: '$need റൺ വേണം')
-          : tr(en: 'Target reached', ta: 'இலக்கை எட்டியது', hi: 'लक्ष्य पूरा', ml: 'ലക്ഷ്യത്തിലെത്തി');
+          : trId('target_reached');
     }
     return Container(
       width: double.infinity,
@@ -160,7 +156,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
           const SizedBox(height: 6),
           Text('${s.score}/${s.wickets}',
               style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: -1)),
-          Text('${tr(en: 'Overs', ta: 'ஓவர்கள்', hi: 'ओवर', ml: 'ഓവർ')} ${s.overs}.${s.balls}',
+          Text('${trId('overs_2')} ${s.overs}.${s.balls}',
               style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
           if (note != null) ...[
             const SizedBox(height: 10),
@@ -172,7 +168,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
           ],
           if (s.recentBalls.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(tr(en: 'This over', ta: 'இந்த ஓவர்', hi: 'यह ओवर', ml: 'ഈ ഓവർ'),
+            Text(trId('this_over'),
                 style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Wrap(
@@ -201,7 +197,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(tr(en: 'Batting', ta: 'பேட்டிங்', hi: 'बल्लेबाजी', ml: 'ബാറ്റിംഗ്'),
+        Text(trId('batting_2'),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cTextSecondary)),
         const SizedBox(height: 8),
         ...atCrease.map((b) => _row(context,
@@ -209,10 +205,10 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
             value: '${b.runs} (${b.balls})',
             highlight: b.id == striker)),
         if (atCrease.isEmpty)
-          Text(tr(en: 'Yet to bat', ta: 'இன்னும் பேட்டிங் இல்லை', hi: 'बल्लेबाजी बाकी', ml: 'ബാറ്റിംഗ് ബാക്കി'),
+          Text(trId('yet_to_bat'),
               style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
         const SizedBox(height: 18),
-        Text(tr(en: 'Bowling', ta: 'பந்துவீச்சு', hi: 'गेंदबाजी', ml: 'ബൗളിംഗ്'),
+        Text(trId('bowling_2'),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cTextSecondary)),
         const SizedBox(height: 8),
         if (bowler != null)
@@ -220,7 +216,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
               name: bowler.name,
               value: '${bowler.legalBalls ~/ 6}.${bowler.legalBalls % 6}-${bowler.runs}-${bowler.wickets}')
         else
-          Text(tr(en: '—', ta: '—', hi: '—', ml: '—'), style: TextStyle(color: context.cTextSecondary)),
+          Text(trId('str'), style: TextStyle(color: context.cTextSecondary)),
       ],
     );
   }

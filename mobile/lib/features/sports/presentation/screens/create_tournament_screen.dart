@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -300,11 +301,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               child: const Text('🏆', style: TextStyle(fontSize: 40)),
             ),
             const SizedBox(height: 16),
-            Text('Tournament Created!',
+            Text(trId('tournament_created'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
             const SizedBox(height: 8),
             Text(
-              'Now register teams, then tap "Generate Fixtures" to auto-create the schedule.',
+              trId('now_register_teams_then_tap_generate_fix'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.5, color: context.cTextSecondary, height: 1.5),
             ),
@@ -326,7 +327,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
-                child: const Text('Manage Tournament',
+                child: Text(trId('manage_tournament'),
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ),
@@ -397,7 +398,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Teams can register until this date. Fixtures can only be generated after it (or when you close registration early).',
+            trId('teams_can_register_until_this_date_fixtu'),
             style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
           ),
           const SizedBox(height: 18),
@@ -575,7 +576,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 _Label('Description (Markdown Supported)'),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
-                  tooltip: 'Templates',
+                  tooltip: trId('templates'),
                   onSelected: (template) {
                     setState(() {
                       if (template == 'Cricket') {
@@ -613,12 +614,12 @@ Join us for our yearly gathering!
                       }
                     });
                   },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'Cricket', child: Text('🏏 Cricket Tournament')),
-                    PopupMenuItem(value: 'Volleyball', child: Text('🏐 Volleyball Tournament')),
-                    PopupMenuItem(value: 'Independence', child: Text('🇮🇳 Independence Day')),
-                    PopupMenuItem(value: 'Blood Donation', child: Text('🩸 Blood Donation')),
-                    PopupMenuItem(value: 'General', child: Text('🎉 General Event')),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(value: 'Cricket', child: Text(trId('cricket_tournament'))),
+                    PopupMenuItem(value: 'Volleyball', child: Text(trId('volleyball_tournament'))),
+                    PopupMenuItem(value: 'Independence', child: Text(trId('independence_day'))),
+                    PopupMenuItem(value: 'Blood Donation', child: Text(trId('blood_donation_2'))),
+                    PopupMenuItem(value: 'General', child: Text(trId('general_event'))),
                   ],
                 ),
               ],
@@ -676,7 +677,7 @@ Join us for our yearly gathering!
           ),
           const SizedBox(height: 8),
           Center(
-            child: Text('We\'ll generate fixtures automatically',
+            child: Text(trId('we_ll_generate_fixtures_automatically'),
                 style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
           ),
           const SizedBox(height: 30),
@@ -893,7 +894,7 @@ class _SummaryCard extends StatelessWidget {
             children: [
               const Text('🏆', style: TextStyle(fontSize: 16)),
               const SizedBox(width: 8),
-              Text('Tournament Summary',
+              Text(trId('tournament_summary'),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cText)),
             ],
           ),
@@ -939,7 +940,7 @@ class _HowItWorks extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('How it works?',
+          Text(trId('how_it_works_2'),
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
                   color: context.isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB))),
           const SizedBox(height: 12),

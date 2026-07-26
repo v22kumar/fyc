@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -187,7 +188,7 @@ class _WeatherContent extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: context.cText),
                     ),
-                    Text('Current Weather',
+                    Text(trId('current_weather'),
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -312,7 +313,7 @@ class _WeatherError extends StatelessWidget {
             child: const Text('🌤', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(width: 12),
-          Text('Weather unavailable',
+          Text(trId('weather_unavailable'),
               style: TextStyle(fontSize: 14, color: context.cTextSecondary)),
         ],
       ),

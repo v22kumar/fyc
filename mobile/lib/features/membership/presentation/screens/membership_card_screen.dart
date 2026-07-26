@@ -64,12 +64,7 @@ class _MembershipCardScreenState extends State<MembershipCardScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          tr(
-            en: 'My Membership Card',
-            ta: 'என் உறுப்பினர் அட்டை',
-            hi: 'मेरा सदस्यता कार्ड',
-            ml: 'എന്റെ അംഗത്വ കാർഡ്',
-          ),
+          trId('my_membership_card'),
           style: const TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -124,12 +119,7 @@ class _CardView extends StatelessWidget {
           const SizedBox(height: 16),
           // Flip hint
           Text(
-            tr(
-              en: 'Tap card to flip',
-              ta: 'அட்டையை திருப்ப தட்டவும்',
-              hi: 'पलटने के लिए कार्ड पर टैप करें',
-              ml: 'കാർഡ് മറിക്കാൻ ടാപ്പ് ചെയ്യുക',
-            ),
+            trId('tap_card_to_flip'),
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -265,8 +255,8 @@ class _CardFront extends StatelessWidget {
                             color: Colors.white.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Center(
-                            child: Text('FYC',
+                          child: Center(
+                            child: Text(trId('fyc'),
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -279,8 +269,8 @@ class _CardFront extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'FRIENDS YOUTH CLUB',
+                        Text(
+                          trId('friends_youth_club'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -296,7 +286,7 @@ class _CardFront extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'SINCE 2000 • NAGERCOIL',
+                          trId('since_2000_nagercoil'),
                           style: TextStyle(
                             color: const Color(0xFFFBBF24).withOpacity(0.9),
                             fontSize: 8,
@@ -335,12 +325,7 @@ class _CardFront extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr(
-                            en: 'VALID THRU',
-                            ta: 'காலாவதி தேதி',
-                            hi: 'मान्य अवधि',
-                            ml: 'സാധുത വരെ',
-                          ),
+                          trId('valid_thru'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
                             fontSize: 8,
@@ -374,18 +359,8 @@ class _CardFront extends StatelessWidget {
                       ),
                       child: Text(
                         card.isExpired
-                            ? tr(
-                                en: 'EXPIRED',
-                                ta: 'காலாவதியானது',
-                                hi: 'समाप्त',
-                                ml: 'കാലഹരണപ്പെട്ടു',
-                              )
-                            : tr(
-                                en: 'ACTIVE',
-                                ta: 'செயல்படு',
-                                hi: 'सक्रिय',
-                                ml: 'സജീവം',
-                              ),
+                            ? trId('expired')
+                            : trId('active'),
                         style: TextStyle(
                           color: card.isActive && !card.isExpired
                               ? const Color(0xFF10B981)
@@ -487,12 +462,7 @@ class _CardBack extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        tr(
-                          en: 'Scan this QR code to verify membership authenticity',
-                          ta: 'இந்த QR குறியீட்டை ஸ்கேன் செய்து உறுப்பினர்தன்மையை சரிபார்க்கவும்',
-                          hi: 'सदस्यता की प्रामाणिकता सत्यापित करने के लिए यह QR कोड स्कैन करें',
-                          ml: 'അംഗത്വത്തിന്റെ ആധികാരികത പരിശോധിക്കാൻ ഈ QR കോഡ് സ്കാൻ ചെയ്യുക',
-                        ),
+                        trId('scan_this_qr_code_to_verify_membership_a'),
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 10,
@@ -500,8 +470,8 @@ class _CardBack extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'UNITE. PLAY. THRIVE.',
+                      Text(
+                        trId('unite_play_thrive'),
                         style: TextStyle(
                           color: Color(0xFFFBBF24),
                           fontSize: 9,
@@ -511,7 +481,7 @@ class _CardBack extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'fyc2000.org',
+                        trId('fyc2000_org'),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.4),
                           fontSize: 9,
@@ -563,18 +533,8 @@ class _StatusBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             isValid
-                ? tr(
-                    en: 'Valid Membership Card',
-                    ta: 'செல்லுபடியான உறுப்பினர் அட்டை',
-                    hi: 'मान्य सदस्यता कार्ड',
-                    ml: 'സാധുവായ അംഗത്വ കാർഡ്',
-                  )
-                : tr(
-                    en: 'Card Expired or Inactive',
-                    ta: 'அட்டை காலாவதியானது',
-                    hi: 'कार्ड समाप्त या निष्क्रिय',
-                    ml: 'കാർഡ് കാലഹരണപ്പെട്ടു അല്ലെങ്കിൽ നിഷ്ക്രിയം',
-                  ),
+                ? trId('valid_membership_card')
+                : trId('card_expired_or_inactive'),
             style: TextStyle(
               color: isValid
                   ? const Color(0xFF10B981)
@@ -600,40 +560,20 @@ class _DetailsList extends StatelessWidget {
     final df = DateFormat('d MMM yyyy');
     final rows = [
       (
-        tr(
-          en: 'Membership No.',
-          ta: 'உறுப்பினர் எண்',
-          hi: 'सदस्यता संख्या',
-          ml: 'അംഗത്വ നമ്പർ',
-        ),
+        trId('membership_no'),
         card.membershipNumber
       ),
       (
-        tr(
-          en: 'Designation',
-          ta: 'பதவி',
-          hi: 'पदनाम',
-          ml: 'പദവി',
-        ),
+        trId('designation'),
         '${card.designationTa} / ${card.designationEn}'
       ),
       if (card.issuedAt != null)
         (
-          tr(
-            en: 'Issued On',
-            ta: 'வழங்கப்பட்ட தேதி',
-            hi: 'जारी तिथि',
-            ml: 'നൽകിയ തീയതി',
-          ),
+          trId('issued_on'),
           df.format(card.issuedAt!)
         ),
       (
-        tr(
-          en: 'Valid Until',
-          ta: 'காலாவதி தேதி',
-          hi: 'मान्य अवधि',
-          ml: 'സാധുത വരെ',
-        ),
+        trId('valid_until'),
         df.format(card.expiresAt)
       ),
     ];
@@ -695,12 +635,7 @@ class _NoCardView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              tr(
-                en: 'No Membership Card Found',
-                ta: 'உறுப்பினர் அட்டை இல்லை',
-                hi: 'कोई सदस्यता कार्ड नहीं मिला',
-                ml: 'അംഗത്വ കാർഡ് കണ്ടെത്തിയില്ല',
-              ),
+              trId('no_membership_card_found'),
               style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -715,12 +650,7 @@ class _NoCardView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              tr(
-                en: 'Contact your administrator to get your digital card issued.',
-                ta: 'உங்கள் அட்டைக்காக நிர்வாகியை தொடர்பு கொள்ளுங்கள்.',
-                hi: 'अपना डिजिटल कार्ड जारी करवाने के लिए अपने व्यवस्थापक से संपर्क करें।',
-                ml: 'നിങ്ങളുടെ ഡിജിറ്റൽ കാർഡ് ലഭിക്കാൻ അഡ്മിനിസ്ട്രേറ്ററെ ബന്ധപ്പെടുക.',
-              ),
+              trId('contact_your_administrator_to_get_your_d'),
               style: const TextStyle(color: Colors.white38, fontSize: 11),
               textAlign: TextAlign.center,
             ),

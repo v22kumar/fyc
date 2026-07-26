@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 
 /// Lichess-style player card — shown above and below the board.
 /// Displays avatar, name, rating, active indicator, thinking spinner, clock.
@@ -171,8 +172,8 @@ class ChessPlayerCard extends StatelessWidget {
                 color: const Color(0xFF4A7C59),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'Your turn',
+              child: Text(
+                trId('your_turn'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -192,8 +193,8 @@ class ChessPlayerCard extends StatelessWidget {
                   color: const Color(0xFF4A7C59),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Your turn',
+                child: Text(
+                  trId('your_turn'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 9,

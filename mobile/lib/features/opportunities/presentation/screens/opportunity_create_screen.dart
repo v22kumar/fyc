@@ -75,10 +75,7 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr(en: 'Could not post. Please try again.',
-              ta: 'பதிவிட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
-              hi: 'पोस्ट नहीं हो सका। पुनः प्रयास करें।',
-              ml: 'പോസ്റ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.')),
+          content: Text(trId('could_not_post_please_try_again')),
           backgroundColor: AppColors.accent,
         ),
       );
@@ -89,27 +86,26 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Post a Job', ta: 'வேலையை பதிவிடு',
-            hi: 'नौकरी पोस्ट करें', ml: 'ജോലി പോസ്റ്റ് ചെയ്യൂ')),
+        title: Text(trId('post_a_job')),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(tr(en: 'Type', ta: 'வகை', hi: 'प्रकार', ml: 'തരം'),
+            Text(trId('type'),
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: Text(tr(en: 'Job', ta: 'வேலை', hi: 'नौकरी', ml: 'ജോലി')),
+                  label: Text(trId('job')),
                   selected: _type == 'JOB',
                   onSelected: (_) => setState(() => _type = 'JOB'),
                 ),
                 ChoiceChip(
-                  label: Text(tr(en: 'Volunteer', ta: 'தன்னார்வ', hi: 'स्वयंसेवक', ml: 'വളണ്ടിയർ')),
+                  label: Text(trId('volunteer_3')),
                   selected: _type == 'VOLUNTEER',
                   onSelected: (_) => setState(() => _type = 'VOLUNTEER'),
                 ),
@@ -117,28 +113,26 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
             ),
             const SizedBox(height: 16),
             _field(_titleEn,
-                tr(en: 'Title (English)', ta: 'தலைப்பு (ஆங்கிலம்)', hi: 'शीर्षक (अंग्रेज़ी)', ml: 'തലക്കെട്ട് (ഇംഗ്ലീഷ്)'),
+                trId('title_english'),
                 required: true),
             _field(_titleTa,
-                tr(en: 'Title (Tamil, optional)', ta: 'தலைப்பு (தமிழ்)', hi: 'शीर्षक (तमिल)', ml: 'തലക്കെട്ട് (തമിഴ്)')),
+                trId('title_tamil_optional')),
             _field(_organizer,
-                tr(en: 'Organizer', ta: 'ஏற்பாட்டாளர்', hi: 'आयोजक', ml: 'സംഘാടകൻ')),
+                trId('organizer')),
             _field(_category,
-                tr(en: 'Category', ta: 'வகை', hi: 'श्रेणी', ml: 'വിഭാഗം')),
+                trId('category')),
             _field(_location,
-                tr(en: 'Location', ta: 'இடம்', hi: 'स्थान', ml: 'സ്ഥലം')),
+                trId('location')),
             if (_type == 'JOB')
               _field(_budget,
-                  tr(en: 'Budget / pay (e.g. ₹500/day)', ta: 'ஊதியம் (எ.கா. ₹500/நாள்)',
-                      hi: 'बजट / वेतन (जैसे ₹500/दिन)', ml: 'ബജറ്റ് / വേതനം (ഉദാ. ₹500/ദിവസം)')),
+                  trId('budget_pay_e_g_500_day')),
             _field(_hours,
-                tr(en: 'Hours / commitment', ta: 'நேரம்', hi: 'समय', ml: 'സമയം')),
+                trId('hours_commitment')),
             _field(_contact,
-                tr(en: 'Contact phone (shown to applicants)', ta: 'தொடர்பு எண்',
-                    hi: 'संपर्क फ़ोन', ml: 'ബന്ധപ്പെടാനുള്ള ഫോൺ'),
+                trId('contact_phone_shown_to_applicants'),
                 keyboardType: TextInputType.phone),
             _field(_descEn,
-                tr(en: 'Description', ta: 'விவரம்', hi: 'विवरण', ml: 'വിവരണം'),
+                trId('description'),
                 maxLines: 4),
             const SizedBox(height: 20),
             FilledButton(
@@ -146,7 +140,7 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
               child: _saving
                   ? const SizedBox(
                       width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(tr(en: 'Post', ta: 'பதிவிடு', hi: 'पोस्ट करें', ml: 'പോസ്റ്റ്')),
+                  : Text(trId('post')),
             ),
           ],
         ),
@@ -165,7 +159,7 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
         validator: required
             ? (v) => (v == null || v.trim().isEmpty)
-                ? tr(en: 'Required', ta: 'தேவை', hi: 'आवश्यक', ml: 'ആവശ്യമാണ്')
+                ? trId('required_2')
                 : null
             : null,
       ),

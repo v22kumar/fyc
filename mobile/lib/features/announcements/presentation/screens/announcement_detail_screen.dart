@@ -20,7 +20,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Announcement', ta: 'அறிவிப்பு', hi: 'घोषणा', ml: 'അറിയിപ്പ്')),
+        title: Text(trId('announcement')),
       ),
       body: ListView(
         padding: EdgeInsets.zero,

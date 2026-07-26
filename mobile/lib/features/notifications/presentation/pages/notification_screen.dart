@@ -15,7 +15,7 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 /// Local relative-time formatter (avoids a third-party dependency).
 String _timeAgo(DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inMinutes < 1) return tr(en: 'just now', ta: 'இப்போது');
+  if (diff.inMinutes < 1) return trId('just_now');
   if (diff.inMinutes < 60) return '${diff.inMinutes}m';
   if (diff.inHours < 24) return '${diff.inHours}h';
   if (diff.inDays < 7) return '${diff.inDays}d';
@@ -36,11 +36,11 @@ String _bucketOf(DateTime dt) {
 String _bucketLabel(String bucket) {
   switch (bucket) {
     case 'today':
-      return tr(en: 'Today', ta: 'இன்று', hi: 'आज', ml: 'ഇന്ന്');
+      return trId('today');
     case 'yesterday':
-      return tr(en: 'Yesterday', ta: 'நேற்று', hi: 'कल', ml: 'ഇന്നലെ');
+      return trId('yesterday');
     default:
-      return tr(en: 'Earlier', ta: 'முன்பு', hi: 'पहले', ml: 'നേരത്തെ');
+      return trId('earlier');
   }
 }
 
@@ -71,12 +71,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final data = res.data;
       final detail = (data is Map && data['detail'] is String)
           ? data['detail'] as String
-          : tr(en: 'Test notification sent', ta: 'சோதனை அறிவிப்பு அனுப்பப்பட்டது');
+          : trId('test_notification_sent');
       messenger.showSnackBar(SnackBar(content: Text(detail), duration: const Duration(seconds: 5)));
       bloc.add(FetchNotifications());
     } catch (_) {
       messenger.showSnackBar(SnackBar(
-        content: Text(tr(en: 'Could not send test notification', ta: 'சோதனை அறிவிப்பை அனுப்ப முடியவில்லை')),
+        content: Text(trId('could_not_send_test_notification')),
       ));
     }
   }
@@ -89,7 +89,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         backgroundColor: context.cSurface,
         elevation: 0,
         title: Text(
-          tr(en: 'Notifications', ta: 'அறிவிப்புகள்', hi: 'सूचनाएं', ml: 'അറിയിപ്പുകൾ'),
+          trId('notifications'),
           style: TextStyle(color: context.cText, fontWeight: FontWeight.w700),
         ),
         iconTheme: IconThemeData(color: context.cText),
@@ -101,15 +101,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
             if (!isAdmin) return const SizedBox.shrink();
             return IconButton(
               icon: const Icon(Icons.notifications_active_outlined),
-              tooltip: tr(en: 'Send test notification', ta: 'சோதனை அறிவிப்பு அனுப்பு',
-                  hi: 'परीक्षण सूचना भेजें', ml: 'ടെസ്റ്റ് അറിയിപ്പ് അയയ്ക്കുക'),
+              tooltip: trId('send_test_notification'),
               onPressed: () => _sendTest(context),
             );
           }),
           IconButton(
             icon: const Icon(Icons.done_all_rounded),
             onPressed: () => context.read<NotificationBloc>().add(MarkAllNotificationsAsRead()),
-            tooltip: tr(en: 'Mark all as read', ta: 'அனைத்தையும் படித்ததாகக் குறி'),
+            tooltip: trId('mark_all_as_read'),
           ),
         ],
       ),
@@ -256,7 +255,7 @@ class _EmptyInbox extends StatelessWidget {
           Icon(Icons.notifications_none_rounded, size: 64, color: context.cTextSecondary.withOpacity(0.25)),
           const SizedBox(height: 16),
           Text(
-            tr(en: 'No notifications right now.', ta: 'இப்போது அறிவிப்புகள் எதுவும் இல்லை.', hi: 'अभी कोई सूचना नहीं।', ml: 'ഇപ്പോൾ അറിയിപ്പുകളൊന്നുമില്ല.'),
+            trId('no_notifications_right_now'),
             style: TextStyle(color: context.cTextSecondary, fontSize: 15),
           ),
         ],

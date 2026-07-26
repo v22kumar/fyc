@@ -133,14 +133,13 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
   final choice = await showDialog<(String?, String?)>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(tr(en: 'Next bowler', ta: 'அடுத்த பந்துவீச்சாளர்', hi: 'अगला गेंदबाज़', ml: 'അടുത്ത ബൗളർ')),
+      title: Text(trId('next_bowler')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr(en: 'Over complete — who bowls next?', ta: 'ஓவர் முடிந்தது — அடுத்து யார்?',
-                hi: 'ओवर पूरा — अगला कौन?', ml: 'ഓവർ പൂർത്തിയായി — അടുത്തത് ആര്?'),
+            trId('over_complete_who_bowls_next'),
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
           ),
           const SizedBox(height: 12),
@@ -160,7 +159,7 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
             controller: nameCtrl,
             autofocus: options.isEmpty,
             decoration: InputDecoration(
-              labelText: tr(en: 'Or new bowler name', ta: 'அல்லது புதிய பெயர்', hi: 'या नया नाम', ml: 'അല്ലെങ്കിൽ പുതിയ പേര്'),
+              labelText: trId('or_new_bowler_name'),
               border: const OutlineInputBorder(),
             ),
             onSubmitted: (v) {
@@ -172,7 +171,7 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: Text(tr(en: 'Cancel', ta: 'ரத்து', hi: 'रद्द करें', ml: 'റദ്ദാക്കുക')),
+          child: Text(trId('cancel')),
         ),
         FilledButton(
           onPressed: () {
@@ -180,7 +179,7 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
               Navigator.pop(ctx, (null, nameCtrl.text.trim()));
             }
           },
-          child: Text(tr(en: 'OK', ta: 'சரி', hi: 'ठीक है', ml: 'ശരി')),
+          child: Text(trId('ok')),
         ),
       ],
     ),
@@ -242,24 +241,24 @@ class _CricketScoringView extends StatelessWidget {
               if (state is CricketScoringLoaded && !state.matchState.isCompleted) {
                 return TextButton.icon(
                   icon: const Icon(Icons.undo),
-                  label: const Text('Undo Last Ball', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(trId('undo_last_ball_2'), style: TextStyle(fontWeight: FontWeight.bold)),
                   style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Undo Last Ball?'),
-                        content: const Text('Are you sure you want to revert the last scored ball?'),
+                        title: Text(trId('undo_last_ball')),
+                        content: Text(trId('are_you_sure_you_want_to_revert_the_last')),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Undo')),
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trId('cancel_2'))),
+                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trId('undo'))),
                         ],
                       ),
                     );
                     if (confirm == true && context.mounted) {
                       context.read<CricketScoringCubit>().undoBall();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Ball reverted')),
+                        SnackBar(content: Text(trId('ball_reverted'))),
                       );
                     }
                   },
@@ -376,8 +375,7 @@ class _ErrorRetry extends StatelessWidget {
             const SizedBox(height: 12),
             FilledButton(
               onPressed: () => context.read<CricketScoringCubit>().load(),
-              child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சி',
-                  hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+              child: Text(trId('retry_6')),
             ),
           ],
         ),
@@ -425,7 +423,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
         _notes = draft.notes;
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr(en: 'Result updated', ta: 'முடிவு புதுப்பிக்கப்பட்டது', hi: 'परिणाम अपडेट हुआ', ml: 'ഫലം അപ്ഡേറ്റ് ചെയ്തു')),
+        content: Text(trId('result_updated')),
       ));
     }
   }
@@ -454,7 +452,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
                 const SizedBox(height: 10),
                 Text(
                   _notes ??
-                      tr(en: 'Match completed', ta: 'போட்டி முடிந்தது', hi: 'मैच समाप्त', ml: 'മത്സരം പൂർത്തിയായി'),
+                      trId('match_completed'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
                 ),
@@ -473,7 +471,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            label: Text(tr(en: 'Edit result', ta: 'முடிவைத் திருத்து', hi: 'परिणाम संपादित करें', ml: 'ഫലം തിരുത്തുക'),
+            label: Text(trId('edit_result'),
                 style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
           const SizedBox(height: 16),
@@ -490,10 +488,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    tr(en: 'Recorded as a result only — no ball-by-ball to replay. You can still edit the scores above.',
-                        ta: 'முடிவாக மட்டும் பதிவு — பந்து வாரியான விவரம் இல்லை. மேலே உள்ள மதிப்பெண்களைத் திருத்தலாம்.',
-                        hi: 'केवल परिणाम दर्ज है — बॉल-बाय-बॉल नहीं। ऊपर स्कोर संपादित कर सकते हैं।',
-                        ml: 'ഫലമായി മാത്രം രേഖപ്പെടുത്തി — ബോൾ-ബൈ-ബോൾ ഇല്ല. മുകളിലെ സ്കോർ തിരുത്താം.'),
+                    trId('recorded_as_a_result_only_no_ball_by_bal'),
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                   ),
                 ),
@@ -640,11 +635,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
     res.fold(
       (l) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(tr(
-              en: "Couldn't save — check the scores and try again.",
-              ta: 'சேமிக்க முடியவில்லை — மதிப்பெண்களைச் சரிபார்க்கவும்.',
-              hi: 'सहेजा नहीं जा सका — स्कोर जांचें।',
-              ml: 'സേവ് ചെയ്യാനായില്ല — സ്കോർ പരിശോധിക്കുക.')),
+          content: Text(trId('couldn_t_save_check_the_scores_and_try_a')),
         ));
       },
       (fx) {
@@ -678,14 +669,14 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                 child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(2))),
               ),
-              Text(tr(en: 'Edit result', ta: 'முடிவைத் திருத்து', hi: 'परिणाम संपादित करें', ml: 'ഫലം തിരുത്തുക'),
+              Text(trId('edit_result'),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
               const SizedBox(height: 16),
               _teamFields(context, f.teamAName ?? 'Team A', _runsA, _wktsA, _oversA, _ballsA),
               const SizedBox(height: 14),
               _teamFields(context, f.teamBName ?? 'Team B', _runsB, _wktsB, _oversB, _ballsB),
               const SizedBox(height: 16),
-              Text(tr(en: 'Winner', ta: 'வெற்றியாளர்', hi: 'विजेता', ml: 'വിജയി'),
+              Text(trId('winner'),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
@@ -693,24 +684,24 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                 isExpanded: true,
                 decoration: _dec(context),
                 items: [
-                  DropdownMenuItem(value: '', child: Text(tr(en: 'Draw / not set', ta: 'சமன் / இல்லை', hi: 'ड्रॉ / नहीं', ml: 'സമനില / ഇല്ല'))),
+                  DropdownMenuItem(value: '', child: Text(trId('draw_not_set'))),
                   DropdownMenuItem(value: f.teamAId, child: Text(f.teamAName ?? 'Team A')),
                   DropdownMenuItem(value: f.teamBId, child: Text(f.teamBName ?? 'Team B')),
                 ],
                 onChanged: (v) => setState(() => _winner = v ?? ''),
               ),
               const SizedBox(height: 14),
-              Text(tr(en: 'Result note (optional)', ta: 'முடிவு குறிப்பு (விருப்பம்)', hi: 'परिणाम नोट (वैकल्पिक)', ml: 'ഫല കുറിപ്പ് (ഐച്ഛികം)'),
+              Text(trId('result_note_optional'),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
               const SizedBox(height: 6),
-              TextField(controller: _notes, decoration: _dec(context, hint: tr(en: 'e.g. won by 8 wickets', ta: 'எ.கா. 8 விக்கெட்டில் வெற்றி', hi: 'जैसे 8 विकेट से जीत', ml: 'ഉദാ. 8 വിക്കറ്റിന് ജയം'))),
+              TextField(controller: _notes, decoration: _dec(context, hint: trId('e_g_won_by_8_wickets'))),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)),
                 child: _saving
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(tr(en: 'Save result', ta: 'முடிவைச் சேமி', hi: 'परिणाम सहेजें', ml: 'ഫലം സേവ് ചെയ്യുക'),
+                    : Text(trId('save_result'),
                         style: const TextStyle(fontWeight: FontWeight.w800)),
               ),
             ],
@@ -740,13 +731,13 @@ class _EditResultSheetState extends State<_EditResultSheet> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(flex: 3, child: _num(context, r, tr(en: 'Runs', ta: 'ரன்', hi: 'रन', ml: 'റൺ'))),
+            Expanded(flex: 3, child: _num(context, r, trId('runs'))),
             const SizedBox(width: 8),
-            Expanded(flex: 2, child: _num(context, w, tr(en: 'Wkts', ta: 'விக்', hi: 'विकेट', ml: 'വിക്'))),
+            Expanded(flex: 2, child: _num(context, w, trId('wkts'))),
             const SizedBox(width: 8),
-            Expanded(flex: 2, child: _num(context, o, tr(en: 'Overs', ta: 'ஓவர்', hi: 'ओवर', ml: 'ഓവർ'))),
+            Expanded(flex: 2, child: _num(context, o, trId('overs'))),
             Padding(padding: const EdgeInsets.only(bottom: 12), child: Text('.', style: TextStyle(fontWeight: FontWeight.w900, color: context.cTextSecondary))),
-            Expanded(flex: 1, child: _num(context, b, tr(en: 'Ball', ta: 'பந்து', hi: 'गेंद', ml: 'പന്ത്'))),
+            Expanded(flex: 1, child: _num(context, b, trId('ball'))),
           ],
         ),
       ],
@@ -816,13 +807,11 @@ class _TossSetupFormState extends State<_TossSetupForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr(en: 'Start match', ta: 'போட்டியைத் தொடங்கு',
-                hi: 'मैच शुरू करें', ml: 'മത്സരം ആരംഭിക്കുക'),
+            trId('start_match'),
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
           ),
           const SizedBox(height: 18),
-          Text(tr(en: 'Toss won by', ta: 'டாஸ் வென்றது',
-              hi: 'टॉस जीता', ml: 'ടോസ് നേടിയത്'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+          Text(trId('toss_won_by'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -838,17 +827,17 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ],
           ),
           const SizedBox(height: 18),
-          Text(tr(en: 'Decision', ta: 'முடிவு', hi: 'निर्णय', ml: 'തീരുമാനം'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+          Text(trId('decision'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
               _themedChip(context,
-                  label: tr(en: 'Bat', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്'),
+                  label: trId('bat'),
                   selected: _decision == 'BAT',
                   onSelected: () => setState(() => _decision = 'BAT')),
               _themedChip(context,
-                  label: tr(en: 'Bowl', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്'),
+                  label: trId('bowl'),
                   selected: _decision == 'BOWL',
                   onSelected: () => setState(() => _decision = 'BOWL')),
             ],
@@ -858,8 +847,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             controller: _overs,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: tr(en: 'Overs per innings', ta: 'ஓவர்கள்',
-                  hi: 'ओवर', ml: 'ഓവറുകൾ'),
+              labelText: trId('overs_per_innings'),
               border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
@@ -868,8 +856,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
           TextField(
             controller: _striker,
             decoration: InputDecoration(
-              labelText: tr(en: 'Striker name', ta: 'ஸ்ட்ரைக்கர் பெயர்',
-                  hi: 'स्ट्राइकर का नाम', ml: 'സ്ട്രൈക്കർ പേര്'),
+              labelText: trId('striker_name'),
               border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
@@ -878,8 +865,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
           TextField(
             controller: _nonStriker,
             decoration: InputDecoration(
-              labelText: tr(en: 'Non-striker name', ta: 'நான்-ஸ்ட்ரைக்கர் பெயர்',
-                  hi: 'नॉन-स्ट्राइकर का नाम', ml: 'നോൺ-സ്ട്രൈക്കർ പേര്'),
+              labelText: trId('non_striker_name'),
               border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
@@ -888,8 +874,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
           TextField(
             controller: _bowler,
             decoration: InputDecoration(
-              labelText: tr(en: 'Opening bowler name', ta: 'தொடக்க பந்துவீச்சாளர்',
-                  hi: 'गेंदबाज़ का नाम', ml: 'ഓപ്പണിംഗ് ബൗളർ'),
+              labelText: trId('opening_bowler_name'),
               border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
@@ -905,15 +890,11 @@ class _TossSetupFormState extends State<_TossSetupForm> {
               onChanged: (v) => setState(() => _villageWides = v),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               title: Text(
-                tr(en: '2 free wides per over', ta: 'ஓவருக்கு 2 இலவச வைடுகள்',
-                    hi: 'प्रति ओवर 2 फ्री वाइड', ml: 'ഓവറിന് 2 ഫ്രീ വൈഡുകൾ'),
+                trId('2_free_wides_per_over'),
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               subtitle: Text(
-                tr(en: 'Village rule: first two wides in an over add no run (still re-bowled)',
-                    ta: 'கிராம விதி: ஓவரின் முதல் இரண்டு வைடுகளுக்கு ரன் இல்லை (மீண்டும் வீசவும்)',
-                    hi: 'गाँव नियम: ओवर की पहली दो वाइड पर रन नहीं (फिर भी दोबारा फेंकें)',
-                    ml: 'ഗ്രാമ നിയമം: ഓവറിലെ ആദ്യ രണ്ട് വൈഡിന് റൺ ഇല്ല (വീണ്ടും എറിയണം)'),
+                trId('village_rule_first_two_wides_in_an_over'),
                 style: const TextStyle(fontSize: 11.5),
               ),
             ),
@@ -937,7 +918,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                       Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Complete match setup first',
+                        trId('complete_match_setup_first'),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.error,
                           fontWeight: FontWeight.bold,
@@ -946,19 +927,18 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  if (_tossWinnerId == null) const Text('• Select toss winner', style: TextStyle(fontSize: 13)),
-                  if (int.tryParse(_overs.text) == null || int.parse(_overs.text) <= 0) const Text('• Enter valid overs', style: TextStyle(fontSize: 13)),
-                  if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
-                  if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
-                  if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                  if (_tossWinnerId == null) Text(trId('select_toss_winner'), style: TextStyle(fontSize: 13)),
+                  if (int.tryParse(_overs.text) == null || int.parse(_overs.text) <= 0) Text(trId('enter_valid_overs'), style: TextStyle(fontSize: 13)),
+                  if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: TextStyle(fontSize: 13)),
+                  if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: TextStyle(fontSize: 13)),
+                  if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: TextStyle(fontSize: 13)),
                   if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
-                    const Text('• Striker and non-striker must be different players', style: TextStyle(fontSize: 13)),
+                    Text(trId('striker_and_non_striker_must_be_differen'), style: TextStyle(fontSize: 13)),
                 ],
               ),
             ),
           _gradientCTA(
-            label: tr(en: 'Start scoring', ta: 'ஸ்கோரிங் தொடங்கு',
-                hi: 'स्कोरिंग शुरू करें', ml: 'സ്കോറിംഗ് ആരംഭിക്കുക'),
+            label: trId('start_scoring'),
             icon: Icons.sports_cricket_rounded,
             onPressed: _valid
                 ? () => context.read<CricketScoringCubit>().initMatch(
@@ -1097,8 +1077,7 @@ class _ResultCard extends StatelessWidget {
 
   String _resultText() {
     if (ms.target == null) {
-      return tr(en: 'Match completed', ta: 'போட்டி முடிந்தது',
-          hi: 'मैच समाप्त', ml: 'മത്സരം പൂർത്തിയായി');
+      return trId('match_completed');
     }
     if (ms.score >= ms.target!) {
       final byWkts = 10 - ms.wickets;
@@ -1111,7 +1090,7 @@ class _ResultCard extends StatelessWidget {
       );
     }
     if (ms.score == ms.target! - 1) {
-      return tr(en: 'Match tied', ta: 'போட்டி சமன்', hi: 'मैच टाई', ml: 'മത്സരം സമനില');
+      return trId('match_tied');
     }
     final byRuns = ms.target! - 1 - ms.score;
     final name = teamName(ms.bowlingTeamId);
@@ -1189,8 +1168,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              tr(en: 'Innings break', ta: 'இன்னிங்ஸ் இடைவேளை',
-                  hi: 'पारी विश्राम', ml: 'ഇന്നിംഗ്സ് ഇടവേള'),
+              trId('innings_break_2'),
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -1208,8 +1186,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
             TextField(
               controller: _striker,
               decoration: InputDecoration(
-                labelText: tr(en: 'Striker name', ta: 'ஸ்ட்ரைக்கர் பெயர்',
-                    hi: 'स्ट्राइकर का नाम', ml: 'സ്ട്രൈക്കർ പേര്'),
+                labelText: trId('striker_name'),
                 border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
@@ -1218,8 +1195,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
             TextField(
               controller: _nonStriker,
               decoration: InputDecoration(
-                labelText: tr(en: 'Non-striker name', ta: 'நான்-ஸ்ட்ரைக்கர் பெயர்',
-                    hi: 'नॉन-स्ट्राइकर का नाम', ml: 'നോൺ-സ്ട്രൈക്കർ പേര്'),
+                labelText: trId('non_striker_name'),
                 border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
@@ -1228,8 +1204,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
             TextField(
               controller: _bowler,
               decoration: InputDecoration(
-                labelText: tr(en: 'Opening bowler name', ta: 'தொடக்க பந்துவீச்சாளர்',
-                    hi: 'गेंदबाज़ का नाम', ml: 'ഓപ്പണിംഗ് ബൗളർ'),
+                labelText: trId('opening_bowler_name'),
                 border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
@@ -1253,7 +1228,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                         Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Complete match setup first',
+                          trId('complete_match_setup_first'),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                             fontWeight: FontWeight.bold,
@@ -1262,17 +1237,16 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (_striker.text.trim().isEmpty) const Text('• Select opening striker', style: TextStyle(fontSize: 13)),
-                    if (_nonStriker.text.trim().isEmpty) const Text('• Select opening non-striker', style: TextStyle(fontSize: 13)),
-                    if (_bowler.text.trim().isEmpty) const Text('• Select opening bowler', style: TextStyle(fontSize: 13)),
+                    if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: TextStyle(fontSize: 13)),
+                    if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: TextStyle(fontSize: 13)),
+                    if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: TextStyle(fontSize: 13)),
                     if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
-                      const Text('• Striker and non-striker must be different players', style: TextStyle(fontSize: 13)),
+                      Text(trId('striker_and_non_striker_must_be_differen'), style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
             _gradientCTA(
-              label: tr(en: 'Start 2nd innings', ta: '2-வது இன்னிங்ஸ் தொடங்கு',
-                  hi: 'दूसरी पारी शुरू करें', ml: 'രണ്ടാം ഇന്നിംഗ്സ് ആരംഭിക്കുക'),
+              label: trId('start_2nd_innings'),
               icon: Icons.sports_cricket_rounded,
               onPressed: _valid
                   ? () => context.read<CricketScoringCubit>().startSecondInnings(
@@ -1387,10 +1361,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                tr(en: 'No player found. Tap "Undo Last Ball" above to fix the previous delivery.',
-                    ta: 'வீரர் இல்லை. மேலே "Undo Last Ball" தட்டி முந்தைய பந்தை சரிசெய்யவும்.',
-                    hi: 'खिलाड़ी नहीं मिला। ऊपर "Undo Last Ball" दबाकर पिछली गेंद ठीक करें।',
-                    ml: 'കളിക്കാരനെ കണ്ടെത്തിയില്ല. മുകളിലെ "Undo Last Ball" അമർത്തി മുൻ ബോൾ ശരിയാക്കുക.'),
+                trId('no_player_found_tap_undo_last_ball_above'),
                 style: const TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
               ),
             ),
@@ -1430,27 +1401,25 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  tr(en: 'Confirm current players', ta: 'தற்போதைய வீரர்களை உறுதிசெய்க',
-                      hi: 'वर्तमान खिलाड़ी चुनें', ml: 'നിലവിലെ കളിക്കാരെ സ്ഥിരീകരിക്കുക'),
+                  trId('confirm_current_players'),
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
                 ),
               ),
             ]),
             const SizedBox(height: 16),
-            Text(tr(en: 'Striker', ta: 'ஸ்ட்ரைக்கர்', hi: 'स्ट्राइकर', ml: 'സ്ട്രൈക്കർ'),
+            Text(trId('striker'),
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
             const SizedBox(height: 6),
             chips(battingOptions, _strikerId, (id) => _strikerId = id,
                 disabled: {if (_nonStrikerId != null) _nonStrikerId!}),
             const SizedBox(height: 14),
-            Text(tr(en: 'Non-striker', ta: 'நான்-ஸ்ட்ரைக்கர்',
-                hi: 'नॉन-स्ट्राइकर', ml: 'നോൺ-സ്ട്രൈക്കർ'),
+            Text(trId('non_striker'),
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
             const SizedBox(height: 6),
             chips(battingOptions, _nonStrikerId, (id) => _nonStrikerId = id,
                 disabled: {if (_strikerId != null) _strikerId!}),
             const SizedBox(height: 14),
-            Text(tr(en: 'Bowler', ta: 'பந்துவீச்சாளர்', hi: 'गेंदबाज़', ml: 'ബൗളർ'),
+            Text(trId('bowler'),
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
             const SizedBox(height: 6),
             chips(bowlingOptions, _bowlerId, (id) => _bowlerId = id),
@@ -1473,7 +1442,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                         Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Complete match setup first',
+                          trId('complete_match_setup_first'),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                             fontWeight: FontWeight.bold,
@@ -1482,16 +1451,15 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (_strikerId == null) const Text('• Select striker', style: TextStyle(fontSize: 13)),
-                    if (_nonStrikerId == null) const Text('• Select non-striker', style: TextStyle(fontSize: 13)),
-                    if (_strikerId != null && _strikerId == _nonStrikerId) const Text('• Striker and non-striker must be different', style: TextStyle(fontSize: 13)),
-                    if (_bowlerId == null) const Text('• Select bowler', style: TextStyle(fontSize: 13)),
+                    if (_strikerId == null) Text(trId('select_striker'), style: TextStyle(fontSize: 13)),
+                    if (_nonStrikerId == null) Text(trId('select_non_striker'), style: TextStyle(fontSize: 13)),
+                    if (_strikerId != null && _strikerId == _nonStrikerId) Text(trId('striker_and_non_striker_must_be_differen_2'), style: TextStyle(fontSize: 13)),
+                    if (_bowlerId == null) Text(trId('select_bowler'), style: TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
             _gradientCTA(
-              label: tr(en: 'Continue scoring', ta: 'ஸ்கோரிங் தொடர்க',
-                  hi: 'स्कोरिंग जारी रखें', ml: 'സ്കോറിംഗ് തുടരുക'),
+              label: trId('continue_scoring'),
               icon: Icons.check_circle_rounded,
               onPressed: (_strikerId != null &&
                       _nonStrikerId != null &&
@@ -1638,10 +1606,7 @@ class _ScoringPad extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            tr(en: 'Over complete — tap to pick the next bowler',
-                                ta: 'ஓவர் முடிந்தது — அடுத்த பந்துவீச்சாளரைத் தேர்ந்தெடுக்கத் தட்டவும்',
-                                hi: 'ओवर पूरा — अगला गेंदबाज़ चुनने के लिए टैप करें',
-                                ml: 'ഓവർ പൂർത്തിയായി — അടുത്ത ബൗളറെ തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യുക'),
+                            trId('over_complete_tap_to_pick_the_next_bowle'),
                             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF92400E)),
                           ),
                         ),
@@ -1718,7 +1683,7 @@ class _ScoringPad extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () => _wicketDialog(context),
-              child: const Text('WICKET', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+              child: Text(trId('wicket_3'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
         ),
@@ -1765,16 +1730,14 @@ class _ScoringPad extends StatelessWidget {
     final isWideOrNoBall = type == 'WIDE' || type == 'NO_BALL';
     final options = isWideOrNoBall ? const [0, 1, 2, 3, 4, 5, 6] : const [1, 2, 3, 4, 5, 6];
     final title = {
-      'WIDE': tr(en: 'Wide', ta: 'வைடு', hi: 'वाइड', ml: 'വൈഡ്'),
-      'NO_BALL': tr(en: 'No ball', ta: 'நோ பால்', hi: 'नो बॉल', ml: 'നോ ബോൾ'),
-      'BYE': tr(en: 'Bye', ta: 'பை', hi: 'बाई', ml: 'ബൈ'),
-      'LEG_BYE': tr(en: 'Leg bye', ta: 'லெக் பை', hi: 'लेग बाई', ml: 'ലെഗ് ബൈ'),
+      'WIDE': trId('wide'),
+      'NO_BALL': trId('no_ball'),
+      'BYE': trId('bye'),
+      'LEG_BYE': trId('leg_bye'),
     }[type]!;
     final hint = isWideOrNoBall
-        ? tr(en: 'Runs run off it (0 = none)', ta: 'ஓடிய ரன்கள் (0 = இல்லை)',
-            hi: 'इस पर बने रन (0 = कोई नहीं)', ml: 'ഓടിയ റൺസ് (0 = ഇല്ല)')
-        : tr(en: 'How many runs were run?', ta: 'எத்தனை ரன்கள் ஓடினர்?',
-            hi: 'कितने रन बने?', ml: 'എത്ര റൺസ് ഓടി?');
+        ? trId('runs_run_off_it_0_none')
+        : trId('how_many_runs_were_run');
 
     final picked = await showModalBottomSheet<int>(
       context: context,
@@ -1840,7 +1803,7 @@ class _ScoringPad extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(tr(en: 'Wicket', ta: 'விக்கெட்', hi: 'विकेट', ml: 'വിക്കറ്റ്')),
+          title: Text(trId('wicket')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1849,13 +1812,13 @@ class _ScoringPad extends StatelessWidget {
                 DropdownButtonFormField<String>(
                   value: wicketType,
                   decoration: const InputDecoration(border: OutlineInputBorder()),
-                  items: const [
-                    DropdownMenuItem(value: 'BOWLED', child: Text('Bowled')),
-                    DropdownMenuItem(value: 'CAUGHT', child: Text('Caught')),
-                    DropdownMenuItem(value: 'LBW', child: Text('LBW')),
-                    DropdownMenuItem(value: 'STUMPED', child: Text('Stumped')),
-                    DropdownMenuItem(value: 'RUN_OUT', child: Text('Run out')),
-                    DropdownMenuItem(value: 'HIT_WICKET', child: Text('Hit wicket')),
+                  items: [
+                    DropdownMenuItem(value: 'BOWLED', child: Text(trId('bowled'))),
+                    DropdownMenuItem(value: 'CAUGHT', child: Text(trId('caught'))),
+                    DropdownMenuItem(value: 'LBW', child: Text(trId('lbw'))),
+                    DropdownMenuItem(value: 'STUMPED', child: Text(trId('stumped'))),
+                    DropdownMenuItem(value: 'RUN_OUT', child: Text(trId('run_out'))),
+                    DropdownMenuItem(value: 'HIT_WICKET', child: Text(trId('hit_wicket'))),
                   ],
                   onChanged: (v) => setDialogState(() => wicketType = v ?? 'BOWLED'),
                 ),
@@ -1863,7 +1826,7 @@ class _ScoringPad extends StatelessWidget {
                 // count. The backend credits runs_batter alongside the wicket.
                 if (wicketType == 'RUN_OUT') ...[
                   const SizedBox(height: 14),
-                  const Text('Runs completed', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(trId('runs_completed'), style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -1883,7 +1846,7 @@ class _ScoringPad extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                const Text('Who is out?', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(trId('who_is_out'), style: TextStyle(fontWeight: FontWeight.bold)),
                 RadioListTile<String>(
                   dense: true,
                   title: Text('${players.strikerName} *'),
@@ -1902,8 +1865,8 @@ class _ScoringPad extends StatelessWidget {
                   const SizedBox(height: 16),
                   TextField(
                     controller: newBatter,
-                    decoration: const InputDecoration(
-                      labelText: 'New batter name',
+                    decoration: InputDecoration(
+                      labelText: trId('new_batter_name'),
                       border: OutlineInputBorder(),
                     ),
                     // Live-revalidate so Confirm enables/disables as they type —
@@ -1918,16 +1881,16 @@ class _ScoringPad extends StatelessWidget {
                         : players.strikerName;
                     final typed = newBatter.text.trim();
                     if (typed.isEmpty) {
-                      return const Padding(
+                      return Padding(
                         padding: EdgeInsets.only(top: 6),
-                        child: Text('Required — who is replacing them?',
+                        child: Text(trId('required_who_is_replacing_them'),
                             style: TextStyle(fontSize: 12, color: Color(0xFF92400E))),
                       );
                     }
                     if (_sameName(typed, survivingName)) {
-                      return const Padding(
+                      return Padding(
                         padding: EdgeInsets.only(top: 6),
-                        child: Text('Must be different from the other batter on the crease',
+                        child: Text(trId('must_be_different_from_the_other_batter'),
                             style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
                       );
                     }
@@ -1940,7 +1903,7 @@ class _ScoringPad extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(trId('cancel_2')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
@@ -1951,7 +1914,7 @@ class _ScoringPad extends StatelessWidget {
                               dismissedId == players.strikerId ? players.nonStrikerName : players.strikerName)))
                   ? () => Navigator.pop(ctx, true)
                   : null,
-              child: const Text('Confirm Wicket'),
+              child: Text(trId('confirm_wicket')),
             ),
           ],
         ),
@@ -1991,7 +1954,7 @@ class _Scorecard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionLabel(tr(en: 'Batting', ta: 'பேட்டிங்', hi: 'बल्लेबाज़ी', ml: 'ബാറ്റിംഗ്')),
+            _sectionLabel(trId('batting')),
             const SizedBox(height: 6),
             ...ms.batters.map((b) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2016,12 +1979,12 @@ class _Scorecard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  '${tr(en: 'Extras', ta: 'எக்ஸ்ட்ராஸ்', hi: 'अतिरिक्त', ml: 'എക്സ്ട്രാസ്')}: ${ms.extrasTotal}',
+                  '${trId('extras')}: ${ms.extrasTotal}',
                   style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: muted),
                 ),
               ),
             const Divider(height: 24),
-            _sectionLabel(tr(en: 'Bowling', ta: 'பந்துவீச்சு', hi: 'गेंदबाज़ी', ml: 'ബൗളിംഗ്')),
+            _sectionLabel(trId('bowling')),
             const SizedBox(height: 6),
             ...ms.bowlers.map((b) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),

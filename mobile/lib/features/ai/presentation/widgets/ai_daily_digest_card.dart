@@ -89,12 +89,12 @@ class AiDailyDigestCard extends ConsumerWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.25)),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               AiSparkle(size: 15),
               SizedBox(width: 6),
-              Text('FYC AI',
+              Text(trId('fyc_ai'),
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.4)),
             ],
           ),
@@ -123,7 +123,7 @@ class AiDailyDigestCard extends ConsumerWidget {
           children: [
             Icon(Icons.bolt_rounded, size: 14, color: Colors.white.withOpacity(0.75)),
             const SizedBox(width: 4),
-            Text('Generated for FYC · refreshes daily',
+            Text(trId('generated_for_fyc_refreshes_daily'),
                 style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11, fontWeight: FontWeight.w600)),
           ],
         ),
@@ -143,7 +143,7 @@ class AiDailyDigestCard extends ConsumerWidget {
         const SizedBox(height: 9),
         const AiSkeletonBar(widthFactor: 0.6),
         const SizedBox(height: 14),
-        Text('Preparing today’s briefing…',
+        Text(trId('preparing_today_s_briefing'),
             style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600)),
       ],
     );

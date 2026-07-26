@@ -42,7 +42,7 @@ class ServeHubScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: false,
         title: Text(
-          tr(en: 'Serve / Help', ta: 'சேவை / உதவி', hi: 'सेवा / मदद', ml: 'സേവനം / സഹായം'),
+          trId('serve_help'),
           style: TextStyle(color: context.cText, fontWeight: FontWeight.w700),
         ),
       ),
@@ -55,19 +55,19 @@ class ServeHubScreen extends StatelessWidget {
               _Action(
                 icon: Icons.bloodtype_rounded,
                 tint: const Color(0xFFE53935),
-                label: tr(en: 'Blood', ta: 'இரத்தம்', hi: 'रक्त', ml: 'രക്തം'),
+                label: trId('blood'),
                 onTap: () => context.push('/blood-donation'),
               ),
               _Action(
                 icon: Icons.report_problem_rounded,
                 tint: const Color(0xFFF59E0B),
-                label: tr(en: 'Report', ta: 'புகார்', hi: 'शिकायत', ml: 'റിപ്പോർട്ട്'),
+                label: trId('report'),
                 onTap: () => context.push('/issues'),
               ),
               _Action(
                 icon: Icons.volunteer_activism_rounded,
                 tint: const Color(0xFF14B891),
-                label: tr(en: 'Volunteer', ta: 'தொண்டு', hi: 'स्वयंसेवक', ml: 'സന്നദ്ധം'),
+                label: trId('volunteer_4'),
                 onTap: () => context.push('/events'),
               ),
             ],
@@ -75,31 +75,29 @@ class ServeHubScreen extends StatelessWidget {
           const SizedBox(height: 28),
           // ── Marketplace: two first-class peers ───────────────────────────
           Text(
-            tr(en: 'Marketplace', ta: 'சந்தை', hi: 'बाज़ार', ml: 'മാർക്കറ്റ്'),
+            trId('marketplace'),
             style: TextStyle(color: context.cText, fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           _PeerCard(
             icon: Icons.work_rounded,
             tint: const Color(0xFF16255A),
-            title: tr(en: 'Jobs & Gigs', ta: 'வேலைகள் & பணிகள்', hi: 'नौकरियाँ और काम', ml: 'ജോലികളും ഗിഗുകളും'),
-            subtitle: tr(en: 'Find work · post a job', ta: 'வேலை தேடு · பதிவிடு',
-                hi: 'काम खोजें · नौकरी पोस्ट करें', ml: 'ജോലി കണ്ടെത്തൂ · പോസ്റ്റ് ചെയ്യൂ'),
+            title: trId('jobs_gigs'),
+            subtitle: trId('find_work_post_a_job'),
             onTap: () => context.push('/opportunities'),
           ),
           const SizedBox(height: 12),
           _PeerCard(
             icon: Icons.handyman_rounded,
             tint: const Color(0xFF14B891),
-            title: tr(en: 'Skills Directory', ta: 'திறன் அடைவு', hi: 'कौशल निर्देशिका', ml: 'നൈപുണ്യ ഡയറക്ടറി'),
-            subtitle: tr(en: 'Hire local skills · offer yours', ta: 'திறன்களை பாருங்கள் · வழங்குங்கள்',
-                hi: 'स्थानीय कौशल किराए पर लें', ml: 'പ്രാദേശിക നൈപുണ്യം · നിങ്ങളുടേത് നൽകൂ'),
+            title: trId('skills_directory'),
+            subtitle: trId('hire_local_skills_offer_yours'),
             onTap: () => context.push('/community'),
           ),
           const SizedBox(height: 28),
           // ── Emergency numbers ────────────────────────────────────────────
           Text(
-            tr(en: 'Emergency Numbers', ta: 'அவசர எண்கள்', hi: 'आपातकालीन नंबर', ml: 'അടിയന്തര നമ്പറുകൾ'),
+            trId('emergency_numbers'),
             style: TextStyle(
               color: context.cText,
               fontSize: 16,

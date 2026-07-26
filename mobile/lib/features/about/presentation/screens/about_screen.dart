@@ -72,11 +72,7 @@ class AboutScreen extends StatelessWidget {
     final lang = _lang;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(
-            en: 'About FYC',
-            ta: 'எங்களை பற்றி',
-            hi: 'FYC के बारे में',
-            ml: 'FYC-നെ കുറിച്ച്')),
+        title: Text(trId('about_fyc_2')),
       ),
       body: ListView(
         children: [
@@ -86,32 +82,10 @@ class AboutScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionTitle(tr(
-                    en: 'Our Mission',
-                    ta: 'எங்கள் நோக்கம்',
-                    hi: 'हमारा उद्देश्य',
-                    ml: 'ഞങ്ങളുടെ ലക്ഷ്യം')),
+                _SectionTitle(trId('our_mission')),
                 const SizedBox(height: 10),
                 Text(
-                  tr(
-                    en: 'Based in Nagercoil, Friends Youth Club harnesses the energy '
-                        'of young people to strengthen our community. Through blood '
-                        'donation, environmental care, educational support and '
-                        'emergency relief, we work to build a dignified life for all.',
-                    ta: 'நாகர்கோவிலை மையமாகக் கொண்ட Friends Youth Club, இளைஞர்களின் '
-                        'சக்தியால் சமூகத்தை வலுப்படுத்தி, இரத்த தானம், சுற்றுச்சூழல் '
-                        'பாதுகாப்பு, கல்வி உதவி மற்றும் அவசர நேர சேவைகள் மூலம் '
-                        'அனைவருக்கும் கண்ணியமான வாழ்வை உருவாக்க உழைக்கிறது.',
-                    hi: 'नागरकोइल में स्थित Friends Youth Club युवाओं की ऊर्जा से '
-                        'हमारे समुदाय को मजबूत बनाता है। रक्तदान, पर्यावरण देखभाल, '
-                        'शैक्षिक सहायता और आपातकालीन राहत के माध्यम से हम सभी के लिए '
-                        'एक सम्मानजनक जीवन बनाने का प्रयास करते हैं।',
-                    ml: 'നാഗർകോവിൽ ആസ്ഥാനമായ Friends Youth Club യുവജനങ്ങളുടെ '
-                        'ഊർജ്ജത്താൽ നമ്മുടെ സമൂഹത്തെ ശക്തിപ്പെടുത്തുന്നു. രക്തദാനം, '
-                        'പരിസ്ഥിതി സംരക്ഷണം, വിദ്യാഭ്യാസ സഹായം, അടിയന്തര സഹായം '
-                        'എന്നിവയിലൂടെ എല്ലാവർക്കും അന്തസ്സുള്ള ജീവിതം '
-                        'കെട്ടിപ്പടുക്കാൻ ഞങ്ങൾ പ്രവർത്തിക്കുന്നു.',
-                  ),
+                  trId('based_in_nagercoil_friends_youth_club_ha'),
                   style: const TextStyle(
                     fontSize: 14,
                     height: 1.55,
@@ -119,11 +93,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 28),
-                _SectionTitle(tr(
-                    en: 'Our Values',
-                    ta: 'எங்கள் மதிப்புகள்',
-                    hi: 'हमारे मूल्य',
-                    ml: 'ഞങ്ങളുടെ മൂല്യങ്ങൾ')),
+                _SectionTitle(trId('our_values')),
                 const SizedBox(height: 14),
                 GridView.count(
                   crossAxisCount: 2,
@@ -137,11 +107,7 @@ class AboutScreen extends StatelessWidget {
                       .toList(),
                 ),
                 const SizedBox(height: 28),
-                _SectionTitle(tr(
-                    en: 'Our Journey',
-                    ta: 'எங்கள் பயணம்',
-                    hi: 'हमारी यात्रा',
-                    ml: 'ഞങ്ങളുടെ യാത്ര')),
+                _SectionTitle(trId('our_journey')),
                 const SizedBox(height: 14),
                 ..._milestones.asMap().entries.map(
                       (e) => _TimelineTile(
@@ -181,11 +147,7 @@ class _Hero extends StatelessWidget {
           const Text('🎗️', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 12),
           Text(
-            tr(
-                en: 'About FYC',
-                ta: 'எங்களை பற்றி',
-                hi: 'FYC के बारे में',
-                ml: 'FYC-നെ കുറിച്ച്'),
+            trId('about_fyc_2'),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -194,11 +156,7 @@ class _Hero extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            tr(
-                en: 'Friends Youth Club · Nagercoil',
-                ta: 'Friends Youth Club · நாகர்கோவில்',
-                hi: 'Friends Youth Club · नागरकोइल',
-                ml: 'Friends Youth Club · നാഗർകോവിൽ'),
+            trId('friends_youth_club_nagercoil'),
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],

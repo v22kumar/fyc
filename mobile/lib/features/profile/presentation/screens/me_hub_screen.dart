@@ -24,14 +24,14 @@ class MeHubScreen extends StatelessWidget {
         backgroundColor: context.cBackground,
         elevation: 0,
         title: Text(
-          '${tr(en: 'Me', ta: 'என்', hi: 'मैं', ml: 'ഞാൻ')} ',
+          '${trId('me')} ',
           style: TextStyle(color: context.cText, fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.settings_rounded, color: context.cText),
             onPressed: () => context.push('/settings'),
-            tooltip: tr(en: 'Settings', ta: 'அமைப்புகள்'),
+            tooltip: trId('settings_2'),
           ),
         ],
       ),
@@ -45,32 +45,32 @@ class MeHubScreen extends StatelessWidget {
               const SizedBox(height: 20),
               _MeTile(
                 icon: Icons.person_rounded,
-                label: tr(en: 'My Profile', ta: 'என் சுயவிவரம்', hi: 'मेरी प्रोफ़ाइल', ml: 'എന്റെ പ്രൊഫൈൽ'),
+                label: trId('my_profile'),
                 onTap: () => context.push('/profile'),
               ),
               _MeTile(
                 icon: Icons.badge_rounded,
-                label: tr(en: 'Membership Card', ta: 'உறுப்பினர் அட்டை', hi: 'सदस्यता कार्ड', ml: 'അംഗത്വ കാർഡ്'),
+                label: trId('membership_card_2'),
                 onTap: () => context.push('/membership'),
               ),
               _MeTile(
                 icon: Icons.groups_rounded,
-                label: tr(en: 'Member Directory', ta: 'உறுப்பினர் பட்டியல்', hi: 'सदस्य निर्देशिका', ml: 'അംഗ ഡയറക്ടറി'),
+                label: trId('member_directory'),
                 onTap: () => context.push('/members'),
               ),
               _MeTile(
                 icon: Icons.event_available_rounded,
-                label: tr(en: 'My Event Registrations', ta: 'என் நிகழ்வு பதிவுகள்', hi: 'मेरे इवेंट पंजीकरण', ml: 'എന്റെ ഇവന്റ് രജിസ്ട്രേഷനുകൾ'),
+                label: trId('my_event_registrations'),
                 onTap: () => context.push('/events'),
               ),
               _MeTile(
                 icon: Icons.settings_rounded,
-                label: tr(en: 'Settings', ta: 'அமைப்புகள்', hi: 'सेटिंग्स', ml: 'ക്രമീകരണങ്ങൾ'),
+                label: trId('settings'),
                 onTap: () => context.push('/settings'),
               ),
               _MeTile(
                 icon: Icons.help_outline_rounded,
-                label: tr(en: 'Help & Support', ta: 'உதவி & ஆதரவு', hi: 'सहायता और समर्थन', ml: 'സഹായം & പിന്തുണ'),
+                label: trId('help_support'),
                 onTap: () => context.push('/about'),
               ),
             ],
@@ -116,9 +116,9 @@ class _ProfileCardState extends State<_ProfileCard> {
 
   String get _roleLabel {
     if (user == null) return '';
-    if (user!.isAdmin) return tr(en: 'Club Official', ta: 'கழக அதிகாரி');
-    if (user!.isVolunteer) return tr(en: 'Volunteer', ta: 'தொண்டர்');
-    return tr(en: 'Member', ta: 'உறுப்பினர்');
+    if (user!.isAdmin) return trId('club_official');
+    if (user!.isVolunteer) return trId('volunteer_6');
+    return trId('member_2');
   }
 
   String _monthYear(DateTime d) => '${_months[d.month - 1]} ${d.year}';
@@ -167,9 +167,9 @@ class _ProfileCardState extends State<_ProfileCard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (card != null) ...[
-                  _line('${tr(en: 'Member ID', ta: 'உறுப்பினர் எண்', hi: 'सदस्य आईडी', ml: 'അംഗ ഐഡി')}: ${card.membershipNumber}'),
+                  _line('${trId('member_id')}: ${card.membershipNumber}'),
                   if (card.issuedAt != null)
-                    _line('${tr(en: 'Member Since', ta: 'உறுப்பினரானது', hi: 'सदस्य से', ml: 'അംഗമായത്')}: ${_monthYear(card.issuedAt!)}'),
+                    _line('${trId('member_since')}: ${_monthYear(card.issuedAt!)}'),
                 ] else ...[
                   const SizedBox(height: 3),
                   Text(_roleLabel, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
@@ -196,7 +196,7 @@ class _ProfileCardState extends State<_ProfileCard> {
               if (card != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '${tr(en: 'Valid till', ta: 'செல்லுபடி', hi: 'मान्य', ml: 'സാധുത')} ${_dmy(card.expiresAt)}',
+                  '${trId('valid_till')} ${_dmy(card.expiresAt)}',
                   style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 8.5),
                 ),
               ],

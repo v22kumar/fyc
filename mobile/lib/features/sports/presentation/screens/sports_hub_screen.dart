@@ -95,11 +95,11 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
     final isAdmin = _isAdmin;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(en: 'Sports Hub', ta: 'விளையாட்டு மையம்', hi: 'खेल केंद्र', ml: 'കായിക കേന്ദ്രം')),
+        title: Text(trId('sports_hub')),
         actions: [
           if (isAdmin)
             IconButton(
-              tooltip: tr(en: 'Score Approvals', ta: 'மதிப்பீடுகள்', hi: 'स्कोर अनुमोदन', ml: 'സ്കോർ അംഗീകാരം'),
+              tooltip: trId('score_approvals'),
               icon: const Icon(Icons.fact_check_outlined),
               onPressed: () => context.push('/sports/approvals'),
             ),
@@ -111,7 +111,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
-                tr(en: 'Schedule Game', ta: 'விளையாட்டு உருவாக்கு', hi: 'गेम शेड्यूल करें', ml: 'ഗെയിം ഷെഡ്യൂൾ ചെയ്യുക'),
+                trId('schedule_game'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             )
@@ -121,7 +121,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   backgroundColor: AppColors.primary,
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: Text(
-                    tr(en: 'Create', ta: 'போட்டி உருவாக்கு', hi: 'बनाएं', ml: 'സൃഷ്ടിക്കുക'),
+                    trId('create_2'),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                   ),
                 )
@@ -157,7 +157,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   left: 16,
                   bottom: 12,
                   child: Text(
-                    tr(en: 'Play. Compete. Win.', ta: 'விளையாடு · வெல்', hi: 'खेलें · प्रतिस्पर्धा · जीतें', ml: 'കളിക്കൂ · മത്സരിക്കൂ · ജയിക്കൂ'),
+                    trId('play_compete_win'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
@@ -186,9 +186,9 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                     if (state.weeklyGames.isEmpty) {
                       return EmptyState(
                         icon: Icons.local_fire_department_rounded,
-                        title: tr(en: 'No Weekly Games', ta: 'வாராந்திர விளையாட்டுகள் இல்லை', hi: 'कोई साप्ताहिक खेल नहीं', ml: 'പ്രതിവാര ഗെയിമുകളൊന്നുമില്ല'),
-                        message: tr(en: 'There are no weekly games scheduled at the moment.', ta: 'தற்போது வாராந்திர விளையாட்டுகள் எதுவும் திட்டமிடப்படவில்லை.', hi: 'इस समय कोई साप्ताहिक खेल निर्धारित नहीं है।', ml: 'ഇപ്പോൾ പ്രതിവാര ഗെയിമുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.'),
-                        buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
+                        title: trId('no_weekly_games'),
+                        message: trId('there_are_no_weekly_games_scheduled_at_t'),
+                        buttonText: trId('refresh'),
                         onAction: () => _selectSport(_selectedSport),
                       );
                     }
@@ -215,9 +215,9 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   if (state.tournaments.isEmpty) {
                     return EmptyState(
                       icon: Icons.emoji_events_rounded,
-                      title: tr(en: 'No Tournaments', ta: 'போட்டிகள் இல்லை', hi: 'कोई टूर्नामेंट नहीं', ml: 'ടൂർണമെന്റുകളൊന്നുമില്ല'),
-                      message: tr(en: 'There are no active sports tournaments at the moment.', ta: 'தற்போது விளையாட்டுப் போட்டிகள் எதுவும் இல்லை.', hi: 'इस समय कोई सक्रिय खेल टूर्नामेंट नहीं है।', ml: 'ഇപ്പോൾ സജീവമായ കായിക ടൂർണമെന്റുകളൊന്നുമില്ല.'),
-                      buttonText: tr(en: 'Refresh', ta: 'புதுப்பிக்கவும்', hi: 'ताज़ा करें', ml: 'പുതുക്കുക'),
+                      title: trId('no_tournaments'),
+                      message: trId('there_are_no_active_sports_tournaments_a'),
+                      buttonText: trId('refresh'),
                       onAction: () => _selectSport(_selectedSport),
                     );
                   }
@@ -260,7 +260,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => _selectSport(_selectedSport),
-                          child: Text(tr(en: 'Retry', ta: 'மீண்டும் முயற்சிக்கவும்', hi: 'पुनः प्रयास करें', ml: 'വീണ്ടും ശ്രമിക്കുക')),
+                          child: Text(trId('retry')),
                         ),
                       ],
                     ),
@@ -412,7 +412,7 @@ class _TournamentCard extends StatelessWidget {
                       const Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
                       const SizedBox(width: 8),
                       Text(
-                        tr(en: 'Registration Open', ta: 'பதிவு திறக்கப்பட்டுள்ளது', hi: 'पंजीकरण खुला है', ml: 'രജിസ്ട്രേഷൻ തുറന്നിരിക്കുന്നു'),
+                        trId('registration_open_2'),
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
@@ -439,7 +439,7 @@ class _TournamentCard extends StatelessWidget {
                     const Icon(Icons.play_circle_fill, size: 16, color: AppColors.success),
                     const SizedBox(width: 8),
                     Text(
-                      tr(en: 'Tournament is Live', ta: 'போட்டி நடக்கிறது', hi: 'टूर्नामेंट लाइव है', ml: 'ടൂർണമെന്റ് നടക്കുന്നു'),
+                      trId('tournament_is_live'),
                       style: const TextStyle(
                         color: AppColors.success,
                         fontSize: 13,

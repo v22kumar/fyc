@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fyc_connect/core/design_system/shell/app_shell_v2.dart';
+import 'package:fyc_connect/core/storage/local_storage.dart';
+import 'package:fyc_connect/service_locator.dart';
 
 void main() {
+  setUpAll(() async {
+    // The shell's strings resolve via trId → LocalStorage; register it and pin
+    // English so these assertions are locale-deterministic.
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    if (!sl.isRegistered<LocalStorage>()) {
+      sl.registerSingleton<LocalStorage>(LocalStorage(prefs));
+    }
+    await sl<LocalStorage>().saveLang('en');
+  });
+
   setUp(() {
     // The SOS sheet reads trusted contacts from SharedPreferences on open.
     SharedPreferences.setMockInitialValues({});

@@ -119,10 +119,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (!mounted) return;
       setState(() => _posting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr(en: "Couldn't post. Please try again.",
-            ta: 'இட முடியவில்லை. மீண்டும் முயற்சி.',
-            hi: 'पोस्ट नहीं हुआ। पुनः प्रयास करें।',
-            ml: 'പോസ്റ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.')),
+        content: Text(trId('couldn_t_post_please_try_again')),
         backgroundColor: AppColors.accent,
       ));
     }
@@ -137,8 +134,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         backgroundColor: context.cSurface,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-        title: Text(tr(en: 'Create Post', ta: 'இடுகையை உருவாக்கு',
-            hi: 'पोस्ट बनाएं', ml: 'പോസ്റ്റ് സൃഷ്ടിക്കുക'),
+        title: Text(trId('create_post'),
             style: TextStyle(color: context.cText, fontWeight: FontWeight.w800, fontSize: 17)),
         centerTitle: true,
         actions: [
@@ -155,7 +151,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               child: _posting
                   ? const SizedBox(width: 16, height: 16,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text(tr(en: 'Post', ta: 'இடு', hi: 'पोस्ट', ml: 'പോസ്റ്റ്'),
+                  : Text(trId('post_2'),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
             ),
           ),
@@ -177,7 +173,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ? const SizedBox(width: 24, height: 24,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                 : Text(
-                    tr(en: 'Post Update', ta: 'இடுகையை வெளியிடு', hi: 'पोस्ट करें', ml: 'പോസ്റ്റ് ചെയ്യുക'),
+                    trId('post_update'),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
                   ),
           ),
@@ -222,7 +218,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 child: Row(children: [
                   const Icon(Icons.public, size: 15),
                   const SizedBox(width: 5),
-                  Text(tr(en: 'Public', ta: 'பொது', hi: 'सार्वजनिक', ml: 'പൊതു'),
+                  Text(trId('public'),
                       style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.cText)),
                 ]),
               ),
@@ -250,10 +246,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   onChanged: (_) => setState(() {}),
                   style: TextStyle(fontSize: 15, color: context.cText),
                   decoration: InputDecoration(
-                    hintText: tr(en: "What's happening in your community?",
-                        ta: 'உங்கள் சமூகத்தில் என்ன நடக்கிறது?',
-                        hi: 'आपके समुदाय में क्या हो रहा है?',
-                        ml: 'നിങ്ങളുടെ സമൂഹത്തിൽ എന്താണ്?'),
+                    hintText: trId('what_s_happening_in_your_community'),
                     border: InputBorder.none,
                     isDense: true,
                   ),
@@ -292,16 +285,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
           _OutlineAction(
             icon: Icons.image_outlined,
-            label: tr(en: 'Add Photos / Videos', ta: 'படங்கள் / வீடியோ சேர்',
-                hi: 'फ़ोटो / वीडियो जोड़ें', ml: 'ഫോട്ടോ / വീഡിയോ ചേർക്കുക'),
+            label: trId('add_photos_videos'),
             onTap: _images.length >= 4 ? null : _pickImage,
           ),
           const SizedBox(height: 10),
           _OutlineAction(
             icon: Icons.location_on_outlined,
             label: _showLocation
-                ? tr(en: 'Remove Location', ta: 'இடத்தை நீக்கு', hi: 'स्थान हटाएं', ml: 'സ്ഥലം നീക്കുക')
-                : tr(en: 'Add Location', ta: 'இடத்தைச் சேர்', hi: 'स्थान जोड़ें', ml: 'സ്ഥലം ചേർക്കുക'),
+                ? trId('remove_location')
+                : trId('add_location'),
             onTap: () => setState(() => _showLocation = !_showLocation),
           ),
           if (_showLocation) ...[
@@ -309,7 +301,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             TextField(
               controller: _locationCtrl,
               decoration: InputDecoration(
-                hintText: tr(en: 'Where?', ta: 'எங்கே?', hi: 'कहाँ?', ml: 'എവിടെ?'),
+                hintText: trId('where'),
                 prefixIcon: const Icon(Icons.place_outlined, size: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
@@ -319,7 +311,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           const SizedBox(height: 16),
 
           // Quick actions (Sprint 4: Poll, Event, Tournament, Volunteer)
-          Text('Quick Actions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
+          Text(trId('quick_actions'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
           const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -329,7 +321,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   icon: Icons.poll_outlined,
                   color: const Color(0xFF3B82F6),
                   label: 'Poll',
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon: Create Poll'))),
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('coming_soon_create_poll')))),
                 ),
                 _QuickActionBtn(
                   icon: Icons.event_outlined,
@@ -375,13 +367,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 secondary: const Icon(Icons.camera_alt_outlined, color: Color(0xFFC13584)),
-                title: Text(tr(en: 'Also share to Instagram', ta: 'இன்ஸ்டாகிராமிலும் பகிர்',
-                    hi: 'इंस्टाग्राम पर भी साझा करें', ml: 'ഇൻസ്റ്റാഗ്രാമിലും പങ്കിടുക'),
+                title: Text(trId('also_share_to_instagram'),
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.cText)),
-                subtitle: Text(tr(en: 'If you add media, it will also be posted to the club Instagram page.',
-                    ta: 'படம் சேர்த்தால் கிளப் இன்ஸ்டாகிராமிலும் இடப்படும்.',
-                    hi: 'मीडिया जोड़ने पर क्लब इंस्टाग्राम पर भी पोस्ट होगा।',
-                    ml: 'മീഡിയ ചേർത്താൽ ക്ലബ് ഇൻസ്റ്റാഗ്രാമിലും പോസ്റ്റ് ചെയ്യും.'),
+                subtitle: Text(trId('if_you_add_media_it_will_also_be_posted'),
                     style: TextStyle(fontSize: 11.5, color: context.cTextSecondary)),
                 value: _shareToInstagram,
                 onChanged: (v) => setState(() => _shareToInstagram = v),
@@ -390,8 +378,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           if (_isManager) const SizedBox(height: 18),
 
           // Category
-          Text(tr(en: 'Choose Category', ta: 'வகையைத் தேர்ந்தெடு',
-              hi: 'श्रेणी चुनें', ml: 'വിഭാഗം തിരഞ്ഞെടുക്കുക'),
+          Text(trId('choose_category'),
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
           const SizedBox(height: 10),
           Wrap(
@@ -427,23 +414,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Text(tr(en: 'How it works', ta: 'எப்படி வேலை செய்கிறது',
-                      hi: 'यह कैसे काम करता है', ml: 'എങ്ങനെ പ്രവർത്തിക്കുന്നു'),
+                  Text(trId('how_it_works'),
                       style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
                   const Spacer(),
                   Icon(Icons.info_outline, size: 16, color: context.cTextSecondary),
                 ]),
                 const SizedBox(height: 10),
                 _HowRow(icon: Icons.chat_bubble_outline, iconColor: AppColors.primary,
-                    title: tr(en: 'Text only', ta: 'உரை மட்டும்', hi: 'केवल टेक्स्ट', ml: 'ടെക്സ്റ്റ് മാത്രം'),
-                    subtitle: tr(en: 'Posted to Thread (Community Feed)', ta: 'சுவரில் இடப்படும்',
-                        hi: 'थ्रेड में पोस्ट', ml: 'ത്രെഡിൽ പോസ്റ്റ്')),
+                    title: trId('text_only'),
+                    subtitle: trId('posted_to_thread_community_feed')),
                 const SizedBox(height: 10),
                 _HowRow(icon: Icons.camera_alt_outlined, iconColor: const Color(0xFFC13584),
-                    title: tr(en: 'With Photos / Videos', ta: 'படம் / வீடியோவுடன்',
-                        hi: 'फ़ोटो / वीडियो के साथ', ml: 'ഫോട്ടോ / വീഡിയോയോടെ'),
-                    subtitle: tr(en: 'Posted to Instagram + Thread', ta: 'இன்ஸ்டாகிராம் + சுவர்',
-                        hi: 'इंस्टाग्राम + थ्रेड', ml: 'ഇൻസ്റ്റാഗ്രാം + ത്രെഡ്')),
+                    title: trId('with_photos_videos'),
+                    subtitle: trId('posted_to_instagram_thread')),
               ],
             ),
           ),
@@ -460,19 +443,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tr(en: 'Community Guidelines', ta: 'சமூக வழிகாட்டுதல்கள்',
-                    hi: 'समुदाय दिशानिर्देश', ml: 'കമ്മ്യൂണിറ്റി മാർഗ്ഗനിർദ്ദേശങ്ങൾ'),
+                Text(trId('community_guidelines'),
                     style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
                 const SizedBox(height: 8),
                 for (final g in [
-                  tr(en: 'Be respectful and positive', ta: 'மரியாதையாக இருங்கள்',
-                      hi: 'सम्मानजनक रहें', ml: 'ബഹുമാനത്തോടെ ഇരിക്കുക'),
-                  tr(en: 'No hate speech or bullying', ta: 'வெறுப்பு பேச்சு வேண்டாம்',
-                      hi: 'नफ़रत नहीं', ml: 'വിദ്വേഷം വേണ്ട'),
-                  tr(en: 'No spam or irrelevant content', ta: 'ஸ்பேம் வேண்டாம்',
-                      hi: 'स्पैम नहीं', ml: 'സ്പാം വേണ്ട'),
-                  tr(en: 'Keep our community clean and safe', ta: 'சமூகத்தை பாதுகாப்பாக வைக்கவும்',
-                      hi: 'समुदाय को सुरक्षित रखें', ml: 'സമൂഹത്തെ സുരക്ഷിതമായി സൂക്ഷിക്കുക'),
+                  trId('be_respectful_and_positive'),
+                  trId('no_hate_speech_or_bullying'),
+                  trId('no_spam_or_irrelevant_content'),
+                  trId('keep_our_community_clean_and_safe'),
                 ])
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -489,8 +467,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
           // Recent hashtags
           if (_recentTags.isNotEmpty) ...[
-            Text(tr(en: 'Recent Hashtags', ta: 'சமீபத்திய ஹேஷ்டேக்',
-                hi: 'हाल के हैशटैग', ml: 'സമീപകാല ഹാഷ്ടാഗുകൾ'),
+            Text(trId('recent_hashtags'),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
             const SizedBox(height: 10),
             Wrap(

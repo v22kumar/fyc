@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/l10n/tr.dart';
 import 'package:flutter/services.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
@@ -94,8 +95,8 @@ class _AppShellV2State extends State<AppShellV2> {
     _lastBackPress = now;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(
-        content: Text('Press back again to exit'),
+      ..showSnackBar(SnackBar(
+        content: Text(trId('press_back_again_to_exit')),
         duration: Duration(seconds: 2),
       ));
   }

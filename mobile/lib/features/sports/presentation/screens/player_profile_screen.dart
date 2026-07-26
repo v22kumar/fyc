@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import '../../domain/entities/player_entity.dart';
 
 class PlayerProfileScreen extends StatelessWidget {
@@ -45,8 +46,8 @@ class PlayerProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'Statistics',
+            Text(
+              trId('statistics'),
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -57,8 +58,8 @@ class PlayerProfileScreen extends StatelessWidget {
             _buildStatCard('Sportsmanship Score', player.sportsmanshipScore.toString()),
             if (player.battingStyle != null || player.bowlingStyle != null) ...[
               const SizedBox(height: 32),
-              const Text(
-                'Play Style',
+              Text(
+                trId('play_style'),
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -38,8 +39,8 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Game History',
+        title: Text(
+          trId('game_history'),
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
@@ -73,7 +74,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                         const Icon(Icons.wifi_off_rounded,
                             color: AppColors.textSecondary, size: 48),
                         const SizedBox(height: 12),
-                        Text('Could not load games',
+                        Text(trId('could_not_load_games'),
                             style: const TextStyle(color: AppColors.textSecondary)),
                       ],
                     ),
@@ -81,19 +82,19 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                 }
                 final games = snap.data ?? [];
                 if (games.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('♟', style: TextStyle(fontSize: 48)),
                         SizedBox(height: 12),
-                        Text('No games yet',
+                        Text(trId('no_games_yet'),
                             style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600)),
                         SizedBox(height: 6),
-                        Text('Play your first game!',
+                        Text(trId('play_your_first_game'),
                             style: TextStyle(color: AppColors.textSecondary)),
                       ],
                     ),
@@ -298,8 +299,8 @@ class _GameTile extends StatelessWidget {
                       border: Border.all(
                           color: AppColors.primary.withOpacity(0.3)),
                     ),
-                    child: const Text(
-                      'Replay',
+                    child: Text(
+                      trId('replay'),
                       style: TextStyle(
                           color: AppColors.primary,
                           fontSize: 11,
