@@ -51,3 +51,5 @@ Thumbs.db
 /update_categories.py
 /update_sos_sheet.py
 *.zip
+*.db-wal
+*.db-shm

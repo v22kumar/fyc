@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, JSON, DateTime, ForeignKey, Numeric, UniqueConstraint, func, Date
+from sqlalchemy import Column, String, Boolean, JSON, DateTime, ForeignKey, Numeric, UniqueConstraint, func, Date, Integer
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -19,6 +19,10 @@ class User(Base, TimestampMixin, TenantModelMixin):
     is_verified = Column(Boolean(), default=False)
     preferred_language = Column(String(5), default="ta")  # 'ta' or 'en'
     fcm_token = Column(String(255), nullable=True)
+    # Bumped to revoke ALL of a user's outstanding refresh tokens at once
+    # (logout-everywhere, password reset, account disable). Refresh tokens carry
+    # this value as a `tv` claim; /auth/refresh rejects any whose tv != this.
+    token_version = Column(Integer, nullable=False, server_default="0", default=0)
     # Where this account came from. NULL = a real self-registered user; a value
     # like 'F2S_IMPORT' marks a directory contact imported from Friends2Support
     # (a donor-only entry, not a real app user/member). Used to keep imported

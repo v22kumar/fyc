@@ -119,7 +119,7 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/register", response_model=Token)
@@ -206,7 +206,7 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
 
 
 from google.oauth2 import id_token
@@ -336,7 +336,7 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/login/password", response_model=Token)
@@ -364,7 +364,7 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
     )
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id), token_type="bearer", user=_build_user_out(user, profile))
+    return Token(access_token=access_token, refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
 
 
 @router.post("/refresh", response_model=AccessTokenResponse)
@@ -383,12 +383,30 @@ def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db))
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User no longer exists")
 
+    # Revocation check: a refresh token is only valid while its `tv` claim
+    # matches the user's current token_version. Logout / password-reset bump
+    # token_version, instantly invalidating every outstanding refresh token.
+    # Tokens minted before this feature carry no `tv` → treated as 0, which
+    # matches the default so existing sessions are grandfathered in.
+    if int(data.get("tv", 0)) != int(user.token_version or 0):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has been revoked")
+
     access_token = create_access_token(
         subject=user.id,
         role=user.role,
         organization_id=str(user.organization_id),
     )
     return AccessTokenResponse(access_token=access_token)
+
+
+@router.post("/logout")
+def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Log out everywhere: bump the user's token_version so every outstanding
+    refresh token is immediately revoked (they can no longer mint access
+    tokens). The client should also discard its stored tokens."""
+    current_user.token_version = int(current_user.token_version or 0) + 1
+    db.commit()
+    return {"status": "ok", "message": "Logged out on all devices."}
 
 
 
