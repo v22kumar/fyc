@@ -10,7 +10,14 @@ import '../../../../core/constants/api_constants.dart';
 /// drops idle WebSocket connections after ~60 s).
 class ChessWsClient {
   final String gameId;
-  final String token;
+
+  /// Resolves the auth token FRESH on every (re)connect. Reading it per-attempt
+  /// (instead of capturing one string) fixes two real bugs: a deep-link/push
+  /// that opened the game with an empty token (→ server 4001 → reconnect loop),
+  /// and a long game where the captured token expired after ~60 min while the
+  /// socket kept reconnecting with the dead token. The background 401 refresh
+  /// keeps storage's token current, so each reconnect picks up the latest.
+  final Future<String?> Function() tokenProvider;
 
   WebSocketChannel? _channel;
   StreamController<Map<String, dynamic>>? _controller;
@@ -18,16 +25,18 @@ class ChessWsClient {
   bool _disposed = false;
   int _reconnectDelay = 1; // seconds
 
-  ChessWsClient({required this.gameId, required this.token});
+  ChessWsClient({required this.gameId, required this.tokenProvider});
 
   Stream<Map<String, dynamic>> get messages {
     _controller ??= StreamController<Map<String, dynamic>>.broadcast();
     return _controller!.stream;
   }
 
-  void connect() {
+  Future<void> connect() async {
     if (_disposed) return;
     _cancelPingTimer();
+    final token = (await tokenProvider()) ?? '';
+    if (_disposed) return;
     final uri = Uri.parse('${ApiConstants.chessGameWs(gameId)}?token=$token');
     _channel = IOWebSocketChannel.connect(uri);
     _channel!.stream.listen(

@@ -14,6 +14,8 @@ import 'core/theme/app_theme.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
 import 'core/widgets/offline_banner.dart';
+import 'features/chess/presentation/active_game_watcher.dart';
+import 'features/chess/presentation/widgets/chess_game_ready_banner.dart';
 import 'core/network/api_client.dart';
 import 'core/constants/api_constants.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -77,6 +79,10 @@ void main() async {
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
   
   _warmUpBackend();
+  // Poll "do I have a chess game to join?" app-wide, so a player is pulled into
+  // an accepted game from any screen (no reliance on the challenge screen or a
+  // best-effort push). Self-guards on auth state, so it's a no-op when logged out.
+  ChessActiveGameWatcher.instance.start();
   runApp(
     const ProviderScope(
       child: FycApp(),
@@ -188,6 +194,7 @@ class _FycAppState extends State<FycApp> {
                 builder: (context, child) => Column(
                   children: [
                     const OfflineBanner(),
+                    const ChessGameReadyBanner(),
                     Expanded(child: child ?? const SizedBox()),
                   ],
                 ),

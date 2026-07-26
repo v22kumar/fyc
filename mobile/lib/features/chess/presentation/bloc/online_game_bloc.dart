@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
+import '../../../../core/storage/local_storage.dart';
+import '../../../../service_locator.dart';
 import '../../data/datasources/chess_ws_client.dart';
 import 'online_game_event.dart';
 import 'online_game_state.dart';
@@ -40,7 +42,16 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     _myColor = event.myColor;
     emit(const OnlineGameConnecting());
 
-    _wsClient = ChessWsClient(gameId: event.gameId, token: event.token);
+    _wsClient = ChessWsClient(
+      gameId: event.gameId,
+      // Read the token fresh from storage each connect; fall back to the token
+      // passed at navigation. This makes push/deep-link entry (which carries no
+      // token) work, and keeps reconnects using a non-expired token.
+      tokenProvider: () async {
+        final stored = await sl<LocalStorage>().getToken();
+        return (stored != null && stored.isNotEmpty) ? stored : event.token;
+      },
+    );
     _wsSub = _wsClient!.messages.listen(
       (msg) => add(ServerMessage(msg)),
     );
