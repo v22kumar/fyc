@@ -240,6 +240,33 @@ def my_games(
     return [_game_out(db, g) for g in games]
 
 
+@router.get("/games/active", response_model=Optional[ChessGameOut])
+def active_game(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """The player's current joinable game (status waiting or in_progress), if any.
+
+    This is the reliable, poll-anywhere signal that a game is ready — the app
+    polls it globally so the CHALLENGER always gets pulled into the game even if
+    they left the challenge screen or the accept push never arrived (push is
+    best-effort and off unless Firebase is configured). Returns null when the
+    player has no game to join.
+    """
+    g = (
+        db.query(ChessGame)
+        .filter(
+            ChessGame.organization_id == tenant_id,
+            ChessGame.status.in_(("waiting", "in_progress")),
+            (ChessGame.white_id == current_user.id) | (ChessGame.black_id == current_user.id),
+        )
+        .order_by(ChessGame.created_at.desc())
+        .first()
+    )
+    return _game_out(db, g) if g else None
+
+
 @router.get("/games/live", response_model=List[LiveGameOut])
 def list_live_games(
     db: Session = Depends(get_db),

@@ -106,3 +106,36 @@ def test_accept_notifies_the_challenger(client, db):
     assert len(accept_notes) == 1, "the challenger must be told their challenge was accepted"
     assert accept_notes[0].data.get("type") == "chess_accept"
     assert accept_notes[0].data.get("game_id") == str(game_id)
+
+
+def test_active_game_gives_challenger_a_reliable_join_signal(client, db):
+    """After a challenge is accepted, BOTH players must be able to discover the
+    resulting game by polling /chess/games/active — this is the fix for the
+    challenger (who only got a best-effort push before) never joining, leaving
+    the opponent stuck on 'waiting for opponent'."""
+    org = _make_org(db)
+    alice = _make_user(db, org.id, "9100000101", name="Alice")
+    bob = _make_user(db, org.id, "9100000102", name="Bob")
+    alice_tok = _login(client, org.id, "9100000101")
+    bob_tok = _login(client, org.id, "9100000102")
+
+    # No game yet → null for both.
+    assert client.get("/api/v1/chess/games/active", headers=_h(org.id, alice_tok)).json() is None
+
+    # Alice challenges Bob; Bob accepts → a waiting game is created.
+    ch = client.post("/api/v1/chess/challenges",
+                     json={"challenged_id": str(bob.id), "time_control": "untimed"},
+                     headers=_h(org.id, alice_tok)).json()
+    acc = client.post(f"/api/v1/chess/challenges/{ch['id']}/accept", headers=_h(org.id, bob_tok))
+    assert acc.status_code == 200, acc.text
+    game_id = acc.json()["game_id"]
+
+    # The CHALLENGER (Alice) can now discover the game without any push.
+    a = client.get("/api/v1/chess/games/active", headers=_h(org.id, alice_tok))
+    assert a.status_code == 200
+    assert a.json() is not None and a.json()["id"] == game_id
+    assert a.json()["status"] == "waiting"
+
+    # And so can the accepter (Bob).
+    b = client.get("/api/v1/chess/games/active", headers=_h(org.id, bob_tok))
+    assert b.json() is not None and b.json()["id"] == game_id
