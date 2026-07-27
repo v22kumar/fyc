@@ -3,7 +3,9 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -32,6 +34,8 @@ from app.core.short_code import generate_unique_short_code
 from app.core.config import settings
 
 router = APIRouter(prefix="/chess/tournaments", tags=["Chess Tournaments"])
+# Disabled under TESTING (shared client address would trip the shared counter).
+limiter = Limiter(key_func=get_remote_address, enabled=not settings.TESTING)
 
 require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
@@ -324,7 +328,9 @@ def create_tournament(
 
 
 @router.post("/{tour_id}/register", response_model=ChessTournamentOut)
+@limiter.limit("30/minute")
 def register(
+    request: Request,
     tour_id: uuid.UUID,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),

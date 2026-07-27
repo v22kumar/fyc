@@ -1,9 +1,13 @@
 import uuid
 import logging
+import time
+from collections import deque
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
@@ -24,7 +28,12 @@ from app.services.chess_ws_manager import ws_manager
 from app.services.glicko2 import update as glicko2_update, PlayerRating, prestige_title, title_emoji
 
 logger = logging.getLogger(__name__)
+from app.core.config import settings as _settings
+
 router = APIRouter(prefix="/chess", tags=["Chess"])
+# Disabled under TESTING so the in-memory counter can't trip across the suite's
+# shared client address; enforced in every real deployment.
+limiter = Limiter(key_func=get_remote_address, enabled=not _settings.TESTING)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -306,7 +315,9 @@ def list_live_games(
 
 
 @router.get("/public/games/live", response_model=List[LiveGameOut])
+@limiter.limit("60/minute")
 def list_public_live_games(
+    request: Request,
     tournament: Optional[uuid.UUID] = None,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
@@ -623,7 +634,9 @@ def chess_members(
 # ── Challenges ─────────────────────────────────────────────────────────────────
 
 @router.post("/challenges", response_model=ChallengeOut, status_code=201)
+@limiter.limit("20/minute")
 def create_challenge(
+    request: Request,
     payload: ChallengeCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -1035,9 +1048,17 @@ async def game_websocket(
         await session.send_to(uid, {"type": "waiting", "color": session.get_color(uid)})
 
     # ── Message loop ──────────────────────────────────────────────────────────
+    # Per-connection flood guard: legitimate play is a few messages/sec, so >30
+    # in a rolling second is abusive — drop the excess instead of letting one
+    # client spin the loop (and the DB) at will.
+    _recent = deque(maxlen=30)
     try:
         while True:
             raw = await websocket.receive_text()
+            _mt = time.monotonic()
+            _recent.append(_mt)
+            if len(_recent) == _recent.maxlen and (_mt - _recent[0]) < 1.0:
+                continue
             try:
                 msg = __import__("json").loads(raw)
             except Exception:
