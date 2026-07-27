@@ -15,15 +15,14 @@ pip install websockets chess
 ```
 
 ## 0. Get an admin JWT (for metrics + backend confirmation)
-Log into the admin web app as a SUPER_ADMIN and copy `fyc_token` from
-`localStorage`, or mint one in the container:
+> `flyctl ssh console -C` runs ONE binary — no shell, so no `cd` / `&&`. Use the
+> absolute script path. Connection chatter goes to stderr, so `2>/dev/null | tail -1`
+> grabs just the payload.
+
 ```bash
-flyctl ssh console -a fyc-backend -C \
-  "python -c \"from app.core.security import create_access_token as t; \
-   from app.core.database import SessionLocal; from app.models.user import User; \
-   s=SessionLocal(); u=s.query(User).filter(User.role.in_(['SUPER_ADMIN','ADMIN'])).first(); \
-   print(t(str(u.id),u.role,str(u.organization_id)))\""
-export ADMIN="<paste the jwt>"
+export ADMIN=$(flyctl ssh console -a fyc-backend -C \
+  "python /app/scripts/mint_admin_token.py" 2>/dev/null | tail -1)
+echo "$ADMIN"     # should be a long eyJ... JWT
 ```
 
 ## 1. Confirm the backend is Postgres + Redis
@@ -38,7 +37,7 @@ If you see `sqlite` or `in-memory fallback`, **stop** — prod isn't on Postgres
 ## 2. Seed 35 games INSIDE the container (prod Postgres)
 ```bash
 flyctl ssh console -a fyc-backend -C \
-  "cd /app && python scripts/chess_load_test.py --seed-only --games 35" > seed.json
+  "python /app/scripts/chess_load_test.py --seed-only --games 35" 2>/dev/null | tail -1 > seed.json
 python3 -c "import json;d=json.load(open('seed.json'));print('org',d['org_id'],'games',len(d['games']))"
 ```
 
@@ -57,7 +56,7 @@ PAUSED**, and sampled server host-CPU% + process-RSS-MB (via `/system/health`).
 ```bash
 ORG=$(python3 -c "import json;print(json.load(open('seed.json'))['org_id'])")
 flyctl ssh console -a fyc-backend -C \
-  "cd /app && python scripts/chess_load_test.py --cleanup-only --org $ORG"
+  "python /app/scripts/chess_load_test.py --cleanup-only --org $ORG"
 ```
 
 ## 5. (Optional) Cross-check CPU/mem from Fly
