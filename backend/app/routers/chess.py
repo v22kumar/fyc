@@ -1112,16 +1112,33 @@ async def game_websocket(
                 ply = len(session.san_list)
                 turn = "white" if session.board.turn else "black"
 
-                # Persist move to DB (off the event loop — this is the hot path;
-                # a move commit on the loop would stall every other socket).
                 org_id = game_org_id
 
+                # ── Broadcast FIRST, persist second ──────────────────────────
+                # The board is already validated + applied in memory (the source
+                # of truth for a live game), so echo the move immediately — move
+                # latency is then pure network, independent of DB write latency
+                # (which matters a lot with an external/remote Postgres). Durable
+                # persistence happens right after, off the event loop; if it ever
+                # fails we roll the move back and pause + resync (below), so the
+                # board can never *permanently* diverge from the database.
+                move_msg: dict = {
+                    "type": "move",
+                    "uci": uci,
+                    "san": san,
+                    "fen": fen,
+                    "ply": ply,
+                    "turn": turn,
+                }
+                clock = session.clock_snapshot()
+                if clock:
+                    move_msg["clock"] = clock
+                await session.broadcast(move_msg)
+
                 def _persist_move() -> bool:
-                    # Durably persist the move BEFORE it is broadcast, so the DB
-                    # never lags the board. Retries transient SQLite write
-                    # contention; a unique (game_id, ply) violation means the move
-                    # is already stored (a reconnect race) and counts as success.
-                    # Returns True on durable success, False only when the move is
+                    # Retries transient write contention; a unique (game_id, ply)
+                    # violation means the move is already stored (a reconnect race)
+                    # and counts as success. Returns False only when the move is
                     # genuinely not saved after retries.
                     import time as _t
                     for _attempt in range(3):
@@ -1151,32 +1168,28 @@ async def game_websocket(
 
                 persisted = await run_in_threadpool(_persist_move)
                 if not persisted:
-                    # Never let the board diverge from the DB: undo the move
-                    # in-memory, freeze the game, and alert (structured error log +
-                    # a game_paused broadcast the clients surface to an organizer).
+                    # Rare: the move was shown but couldn't be saved. Undo it in
+                    # memory, RESYNC every client to the authoritative pre-move
+                    # board, freeze the game, and alert. The phantom move is thus
+                    # rolled back everywhere; the game can never permanently
+                    # diverge from what's durably stored.
                     session.rollback_last()
                     session.paused = True
                     logger.error(f"[chess-persist] GAME PAUSED (persist failed) game={gid} ply={ply} — organizer must resolve")
-                    await session.send_to(uid, {
-                        "type": "error",
-                        "message": "Your move could not be saved — the game is paused. An organizer has been alerted.",
-                    })
+                    for _uid in list(session.connections.keys()):
+                        await session.send_to(_uid, session.state_snapshot(_uid))
+                    for _sid in list(session.spectators.keys()):
+                        _sws = session.spectators.get(_sid)
+                        if _sws:
+                            try:
+                                await _sws.send_text(__import__("json").dumps(session.spectator_snapshot()))
+                            except Exception:
+                                pass
                     await session.broadcast({"type": "game_paused", "reason": "persist_failed", "ply": ply - 1})
                     continue
 
-                move_msg: dict = {
-                    "type": "move",
-                    "uci": uci,
-                    "san": san,
-                    "fen": fen,
-                    "ply": ply,
-                    "turn": turn,
-                }
-                clock = session.clock_snapshot()
-                if clock:
-                    move_msg["clock"] = clock
-                await session.broadcast(move_msg)
-
+                # Game-over is only declared after the deciding move is durably
+                # stored, so a "checkmate" is never announced on an unsaved move.
                 over = session.game_over_result()
                 if over:
                     _r, _reason, _tm = over["result"], over.get("reason"), ply
