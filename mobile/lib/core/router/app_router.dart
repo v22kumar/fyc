@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/language_select_screen.dart';
 import '../../features/auth/presentation/screens/otp_login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -117,6 +118,18 @@ final appRouter = GoRouter(
     if (!isAuth && !publicRoutes.contains(state.matchedLocation)) {
       return '/lang-select';
     }
+    // Onboarding gate: a signed-in, non-admin user whose profile is incomplete
+    // (missing name / DOB / gender / phone) must finish it before using the app —
+    // so no dataless account can slip through, on OTP or Google alike. Admins are
+    // exempt so the owner is never locked out.
+    if (isAuth) {
+      final user = authState.user;
+      if (!user.isProfileComplete &&
+          !user.isAdmin &&
+          state.matchedLocation != '/complete-profile') {
+        return '/complete-profile';
+      }
+    }
     return null;
   },
   routes: [
@@ -131,6 +144,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/login',
       builder: (context, state) => const OtpLoginScreen(),
+    ),
+    GoRoute(
+      path: '/complete-profile',
+      builder: (context, state) => const CompleteProfileScreen(),
     ),
     GoRoute(
       path: '/register',
