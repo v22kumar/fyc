@@ -375,3 +375,30 @@ def test_registrations_csv_requires_admin(client, db):
     res = client.get(f"/api/v1/events/{event_id}/registrations.csv",
                      headers={"X-Organization-ID": str(org.id)})
     assert res.status_code in (401, 403)
+
+
+def test_event_gets_short_code_and_resolves(client, db):
+    """A created event carries a short public code, and the public by-code
+    endpoint resolves that code back to the event id with no auth/tenant."""
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919333333340")
+    token = _login(client, org.id, "+919333333340")
+
+    res = client.post(
+        "/api/v1/events",
+        json=_event_payload(),
+        headers={"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)},
+    )
+    assert res.status_code == 201
+    data = res.json()
+    code = data["short_code"]
+    assert code and 4 <= len(code) <= 7
+
+    # Public resolve — deliberately WITHOUT auth or X-Organization-ID.
+    r2 = client.get(f"/api/v1/events/by-code/{code}")
+    assert r2.status_code == 200
+    assert r2.json()["id"] == data["id"]
+
+    # Case-insensitive + unknown code -> 404.
+    assert client.get(f"/api/v1/events/by-code/{code.lower()}").json()["id"] == data["id"]
+    assert client.get("/api/v1/events/by-code/ZZZZZ").status_code == 404

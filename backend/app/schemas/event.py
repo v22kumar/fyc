@@ -40,6 +40,7 @@ class EventOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    short_code: Optional[str] = None
     title_ta: str
     title_en: str
     description_ta: str

@@ -22,6 +22,7 @@ from app.schemas.sports import (
 from app.dependencies import get_current_user, RoleChecker
 from app.middleware.tenant import require_tenant_id
 from app.services.nrr import compute_nrr
+from app.core.short_code import generate_unique_short_code
 from app.services.notification_service import NotificationService
 from app.schemas.notification import NotificationCategory
 from app.services.whatsapp_service import whatsapp_queue
@@ -246,6 +247,7 @@ def create_tournament(
         organization_id=current_user.organization_id,
         created_by_id=current_user.id,
         status=status,
+        short_code=generate_unique_short_code(db, Tournament),
         **payload.model_dump(),
     )
     db.add(t)
@@ -257,20 +259,41 @@ def create_tournament(
     if status == "UPCOMING":
         from app.services.auto_announce import auto_announce
         from app.models.announcement import AnnouncementCategory
+        from app.core.config import settings
         sport = (payload.sport or "").title()
+        # Short, typeable link for the notice/banner (…/t/K7P2, not a UUID URL).
+        _link = f"{settings.WEB_BASE_URL.rstrip('/')}/t/{t.short_code}" if t.short_code else ""
+        _link_line = f"\n\n🔗 {_link}" if _link else ""
         auto_announce(
             db,
             org_id=current_user.organization_id,
             category=AnnouncementCategory.EVENT,
             title_ta=f"🏆 {payload.name_ta} — பதிவு தொடங்கியது",
             title_en=f"🏆 {payload.name_en} — registration open",
-            body_ta=f"{payload.name_ta} ({sport}) போட்டிக்கான பதிவு தொடங்கிவிட்டது. Play → Sports Hub-இல் அணியை பதிவு செய்யுங்கள்.",
-            body_en=f"Registration for {payload.name_en} ({sport}) has opened. Register your team in Play → Sports Hub.",
+            body_ta=f"{payload.name_ta} ({sport}) போட்டிக்கான பதிவு தொடங்கிவிட்டது. Play → Sports Hub-இல் அணியை பதிவு செய்யுங்கள்.{_link_line}",
+            body_en=f"Registration for {payload.name_en} ({sport}) has opened. Register your team in Play → Sports Hub.{_link_line}",
             expires_at=payload.registration_close_date,
             created_by_user_id=current_user.id,
         )
     t.phase = _tournament_phase(db, t)
     return t
+
+
+@router.get("/tournaments/by-code/{code}")
+def resolve_tournament_code(code: str, db: Session = Depends(get_db)):
+    """Public: resolve a short share code (…/t/K7P2) to its tournament id.
+
+    No auth or tenant scope — codes are globally unique so the printed link works
+    for anyone. The web resolver uses the id to redirect to tournament-detail.
+    """
+    t = (
+        db.query(Tournament.id)
+        .filter(func.upper(Tournament.short_code) == code.strip().upper())
+        .first()
+    )
+    if not t:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown code")
+    return {"id": str(t[0]), "type": "tournament"}
 
 
 @router.get("/tournaments/{tournament_id}", response_model=TournamentOut)

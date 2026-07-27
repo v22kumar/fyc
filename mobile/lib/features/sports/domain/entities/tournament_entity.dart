@@ -31,6 +31,9 @@ class TournamentEntity extends Equatable {
   final bool villageWides;
   final bool showPrizeDetails;
 
+  /// Short, typeable public share code (…/t/K7P2). May be null for old rows.
+  final String? shortCode;
+
   const TournamentEntity({
     required this.id,
     required this.nameTa,
@@ -39,6 +42,7 @@ class TournamentEntity extends Equatable {
     required this.year,
     required this.format,
     required this.status,
+    this.shortCode,
     this.phase,
     this.descriptionTa,
     this.descriptionEn,

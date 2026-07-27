@@ -2,6 +2,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Event } from '@/types';
+import { ShareLinkBadge } from '@/components/ShareLinkBadge';
 import toast from 'react-hot-toast';
 import { CalendarX, Loader2 } from 'lucide-react';
 
@@ -210,6 +211,7 @@ function Section({ title, events }: { title: string; events: Event[] }) {
               {new Date(e.event_start).toLocaleString()} → {new Date(e.event_end).toLocaleString()}
             </p>
             <p className="text-sm text-gray-600 mt-2 line-clamp-2">{e.description_en}</p>
+            <ShareLinkBadge kind="e" code={e.short_code} />
           </div>
         ))}
       </div>

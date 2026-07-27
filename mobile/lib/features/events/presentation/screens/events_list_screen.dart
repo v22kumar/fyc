@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -369,28 +370,39 @@ class _EventCard extends StatelessWidget {
                             color: context.cText),
                       ),
                     ),
-                    if (isAdmin)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (onViewParticipants != null)
-                            GestureDetector(
-                              onTap: onViewParticipants,
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 8.0),
-                                child: Icon(Icons.people_outline, size: 20, color: Colors.blue),
-                              ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (event.shortCode != null && event.shortCode!.isNotEmpty)
+                          GestureDetector(
+                            onTap: () => showShareLinkSheet(
+                              context,
+                              path: '/e/${event.shortCode}',
+                              title: event.displayTitle(lang),
                             ),
-                          if (onDelete != null)
-                            GestureDetector(
-                              onTap: onDelete,
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 12.0),
-                                child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                              ),
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: Icon(Icons.qr_code_2, size: 20, color: Color(0xFF0B6E4F)),
                             ),
-                        ],
-                      ),
+                          ),
+                        if (isAdmin && onViewParticipants != null)
+                          GestureDetector(
+                            onTap: onViewParticipants,
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: Icon(Icons.people_outline, size: 20, color: Colors.blue),
+                            ),
+                          ),
+                        if (isAdmin && onDelete != null)
+                          GestureDetector(
+                            onTap: onDelete,
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 12.0),
+                              child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),

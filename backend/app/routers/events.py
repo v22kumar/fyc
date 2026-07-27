@@ -14,6 +14,7 @@ from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOu
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
 from app.services.notification_service import NotificationService
+from app.core.short_code import generate_unique_short_code
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -67,7 +68,8 @@ def create_event(
         registration_type=payload.registration_type,
         status="active",
         competition_categories=payload.competition_categories,
-        created_by_user_id=current_user.id
+        created_by_user_id=current_user.id,
+        short_code=generate_unique_short_code(db, Event),
     )
     db.add(event)
     db.commit()
@@ -79,14 +81,19 @@ def create_event(
     if payload.is_published:
         from app.services.auto_announce import auto_announce
         from app.models.announcement import AnnouncementCategory
+        from app.core.config import settings
+        # Print the short, typeable link right in the notice so it can be read
+        # aloud or copied onto a banner (…/e/K7P2 instead of a raw UUID URL).
+        _link = f"{settings.WEB_BASE_URL.rstrip('/')}/e/{event.short_code}" if event.short_code else ""
+        _link_line = f"\n\n🔗 {_link}" if _link else ""
         auto_announce(
             db,
             org_id=current_user.organization_id,
             category=AnnouncementCategory.EVENT,
             title_ta=f"📅 {payload.title_ta}",
             title_en=f"📅 {payload.title_en}",
-            body_ta=payload.description_ta or payload.title_ta,
-            body_en=payload.description_en or payload.title_en,
+            body_ta=(payload.description_ta or payload.title_ta) + _link_line,
+            body_en=(payload.description_en or payload.title_en) + _link_line,
             expires_at=payload.event_end,
             created_by_user_id=current_user.id,
         )
@@ -151,6 +158,25 @@ def list_all_events(
     """List all events (including drafts) for admin."""
     query = db.query(Event).filter(Event.organization_id == current_user.organization_id, Event.status != "deleted")
     return _attach_registration_counts(db, query.order_by(Event.event_start.desc()).all())
+
+@router.get("/by-code/{code}")
+def resolve_event_code(code: str, db: Session = Depends(get_db)):
+    """Public: resolve a short share code (…/e/K7P2) to its event id.
+
+    No auth or tenant scope — short codes are globally unique and exist precisely
+    so anyone with the printed link can reach the event. Returns just the id the
+    web resolver needs to redirect to the full detail page.
+    """
+    event = (
+        db.query(Event.id)
+        .filter(func.upper(Event.short_code) == code.strip().upper(),
+                Event.status != "deleted")
+        .first()
+    )
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown code")
+    return {"id": str(event[0]), "type": "event"}
+
 
 @router.get("/{event_id}", response_model=EventOut)
 def get_event(

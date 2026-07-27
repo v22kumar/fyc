@@ -33,6 +33,7 @@ class TournamentQuickComplete(BaseModel):
 
 class TournamentOut(BaseModel):
     id: UUID
+    short_code: Optional[str] = None
     name_ta: str
     name_en: str
     sport: str

@@ -21,3 +21,4 @@ firebase-admin>=6.5.0
 psutil
 redis>=5.0.0
 asyncpg>=0.29.0
+segno>=1.6.0

@@ -44,6 +44,7 @@ class GameSession:
         white_name: str,
         black_name: str,
         time_control: str = "untimed",
+        initial_uci: Optional[list] = None,
     ):
         self.game_id = game_id
         self.white_id = str(white_id)
@@ -58,6 +59,14 @@ class GameSession:
         self.san_list: list[str] = []
         self.uci_list: list[str] = []
         self.fen_list: list[str] = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]
+
+        # Rebuild the position from the persisted moves when a session is
+        # (re)created — e.g. after a redeploy or a spectator attaching to a game
+        # whose in-memory session was lost. Without this, reconnecting silently
+        # reset the board to move 1 and duplicated ply numbers in the DB.
+        if initial_uci:
+            for _uci in initial_uci:
+                self.apply_move(_uci)
 
         self.draw_offered_by: Optional[str] = None
         self._disconnect_tasks: Dict[str, asyncio.Task] = {}
@@ -274,9 +283,11 @@ class GameWSManager:
         white_name: str,
         black_name: str,
         time_control: str = "untimed",
+        initial_uci: Optional[list] = None,
     ) -> GameSession:
         session = GameSession(
-            game_id, white_id, black_id, white_name, black_name, time_control
+            game_id, white_id, black_id, white_name, black_name, time_control,
+            initial_uci=initial_uci,
         )
         self._sessions[str(game_id)] = session
         return session
@@ -292,11 +303,13 @@ class GameWSManager:
         white_name: str,
         black_name: str,
         time_control: str = "untimed",
+        initial_uci: Optional[list] = None,
     ) -> GameSession:
         existing = self.get(game_id)
         if existing:
             return existing
-        return self.create(game_id, white_id, black_id, white_name, black_name, time_control)
+        return self.create(game_id, white_id, black_id, white_name, black_name,
+                           time_control, initial_uci=initial_uci)
 
     def remove(self, game_id: str) -> None:
         self._sessions.pop(str(game_id), None)
