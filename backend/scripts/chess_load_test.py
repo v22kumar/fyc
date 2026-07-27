@@ -223,13 +223,28 @@ def cleanup(org_id):
         s.commit()
 
 
+def _jwt_org(token):
+    """Best-effort extract organization_id from a JWT payload (no verification)."""
+    try:
+        import base64
+        p = token.split(".")[1]
+        p += "=" * (-len(p) % 4)
+        return json.loads(base64.urlsafe_b64decode(p)).get("organization_id")
+    except Exception:
+        return None
+
+
 def fetch_health(http_base, admin_token):
-    """GET the admin /system/health once — returns the parsed dict (or None)."""
+    """GET the admin /system/health once — returns the parsed dict (or None).
+    Sends X-Organization-ID (from the token) to satisfy the tenant guard."""
     import urllib.request
-    req = urllib.request.Request(
-        f"{http_base}/api/v1/system/health",
-        headers={"Authorization": f"Bearer {admin_token}"} if admin_token else {},
-    )
+    headers = {}
+    if admin_token:
+        headers["Authorization"] = f"Bearer {admin_token}"
+        org = _jwt_org(admin_token)
+        if org:
+            headers["X-Organization-ID"] = org
+    req = urllib.request.Request(f"{http_base}/api/v1/system/health", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=8) as r:
             return json.loads(r.read().decode())
