@@ -1046,6 +1046,9 @@ async def game_websocket(
             msg_type = msg.get("type")
 
             if msg_type == "move":
+                if session.paused:
+                    await session.send_to(uid, {"type": "error", "message": "Game is paused — an organizer has been alerted."})
+                    continue
                 if not session.is_user_turn(uid):
                     await session.send_to(uid, {"type": "error", "message": "Not your turn"})
                     continue
@@ -1067,13 +1070,13 @@ async def game_websocket(
                 # a move commit on the loop would stall every other socket).
                 org_id = game_org_id
 
-                def _persist_move():
-                    # Retry a transient write contention (SQLite "database is
-                    # locked" under tournament load) instead of letting it raise
-                    # out of the message loop — an uncaught error there would fall
-                    # through to the disconnect handler and FALSE-FORFEIT a live
-                    # game. On persistent failure we log and keep the game running
-                    # (the in-memory board stays authoritative for this session).
+                def _persist_move() -> bool:
+                    # Durably persist the move BEFORE it is broadcast, so the DB
+                    # never lags the board. Retries transient SQLite write
+                    # contention; a unique (game_id, ply) violation means the move
+                    # is already stored (a reconnect race) and counts as success.
+                    # Returns True on durable success, False only when the move is
+                    # genuinely not saved after retries.
                     import time as _t
                     for _attempt in range(3):
                         try:
@@ -1088,14 +1091,32 @@ async def game_websocket(
                                     fen_after=fen,
                                 ))
                                 s.commit()
-                            return
+                            return True
                         except Exception as _e:  # noqa: BLE001
+                            _m = str(_e).lower()
+                            if "unique" in _m or "duplicate" in _m:
+                                logger.info(f"[chess-persist] ply already stored game={gid} ply={ply}")
+                                return True
                             if _attempt < 2:
                                 _t.sleep(0.15)
                                 continue
-                            logger.error(f"chess move persist failed after retries (game {gid}): {_e}")
+                            logger.error(f"[chess-persist] UNRECOVERABLE game={gid} ply={ply}: {_e}")
+                            return False
 
-                await run_in_threadpool(_persist_move)
+                persisted = await run_in_threadpool(_persist_move)
+                if not persisted:
+                    # Never let the board diverge from the DB: undo the move
+                    # in-memory, freeze the game, and alert (structured error log +
+                    # a game_paused broadcast the clients surface to an organizer).
+                    session.rollback_last()
+                    session.paused = True
+                    logger.error(f"[chess-persist] GAME PAUSED (persist failed) game={gid} ply={ply} — organizer must resolve")
+                    await session.send_to(uid, {
+                        "type": "error",
+                        "message": "Your move could not be saved — the game is paused. An organizer has been alerted.",
+                    })
+                    await session.broadcast({"type": "game_paused", "reason": "persist_failed", "ply": ply - 1})
+                    continue
 
                 move_msg: dict = {
                     "type": "move",

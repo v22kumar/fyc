@@ -71,6 +71,11 @@ class GameSession:
         self.draw_offered_by: Optional[str] = None
         self._disconnect_tasks: Dict[str, asyncio.Task] = {}
 
+        # Set when a move could not be durably persisted: the game is frozen and
+        # rejects further moves until an organizer intervenes, so the in-memory
+        # board can never drift ahead of the database.
+        self.paused: bool = False
+
         # Clock state (None = untimed)
         _ms = _initial_time_ms(time_control)
         self.white_time_ms: Optional[int] = _ms
@@ -216,6 +221,20 @@ class GameSession:
         self.uci_list.append(uci)
         self.fen_list.append(self.board.fen())
         return move
+
+    def rollback_last(self) -> None:
+        """Undo the most recently applied move — used when its DB persistence
+        fails, so the live board stays in lockstep with what's durably stored."""
+        if not self.uci_list:
+            return
+        try:
+            self.board.pop()
+        except Exception:
+            return
+        self.san_list.pop()
+        self.uci_list.pop()
+        if len(self.fen_list) > 1:
+            self.fen_list.pop()
 
     def game_over_result(self) -> Optional[dict]:
         if self.board.is_checkmate():

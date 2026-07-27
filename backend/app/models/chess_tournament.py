@@ -73,6 +73,7 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
         GUID(),
         ForeignKey("chess_tournaments.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,  # every bracket/detail query filters by tournament
     )
     round = Column(Integer, nullable=False)
     slot = Column(Integer, nullable=False)
@@ -83,7 +84,8 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     game_id = Column(
-        GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"),
+        nullable=True, index=True,  # tournament→live-games join
     )
     winner_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True

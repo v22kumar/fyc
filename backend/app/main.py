@@ -373,6 +373,27 @@ async def lifespan(app: FastAPI):
         except Exception as _sce:
             logger.warning(f"[short-code] backfill block failed: {_sce}")
 
+        # Chess hot-path indexes + move uniqueness (CRITICAL#3). create_all only
+        # indexes brand-new tables, so the long-lived prod chess tables need these
+        # created explicitly. Best-effort: a pre-existing duplicate (game_id, ply)
+        # would make the unique index fail — logged, not fatal.
+        try:
+            from sqlalchemy import text as _cx_text
+            _chess_ddl = [
+                "CREATE INDEX IF NOT EXISTS ix_chess_games_org_status ON chess_games (organization_id, status)",
+                "CREATE INDEX IF NOT EXISTS ix_ctm_tournament_id ON chess_tournament_matches (tournament_id)",
+                "CREATE INDEX IF NOT EXISTS ix_ctm_game_id ON chess_tournament_matches (game_id)",
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_chess_move_game_ply ON chess_moves (game_id, ply)",
+            ]
+            for _ddl in _chess_ddl:
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(_cx_text(_ddl))
+                except Exception as _ce:
+                    logger.warning(f"[chess-index] failed ({_ddl.split(' ON ')[-1]}): {_ce}")
+        except Exception as _cie:
+            logger.warning(f"[chess-index] block failed: {_cie}")
+
         # Repair the cricket_balls FK: the live prod table was created with player
         # FKs pointing at the since-removed cricket_players table, so with FK
         # enforcement on, every ball insert fails ("Unable to record this ball").

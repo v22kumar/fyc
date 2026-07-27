@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, ForeignKey, DateTime, Float
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, DateTime, Float, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -14,6 +14,11 @@ CHALLENGE_STATUSES = ["pending", "accepted", "declined", "expired"]
 
 class ChessGame(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "chess_games"
+    # Live-game/tenant listings filter (organization_id, status) and order by
+    # started_at — a composite index keeps those off a full scan under load.
+    __table_args__ = (
+        Index("ix_chess_games_org_status", "organization_id", "status"),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
@@ -47,6 +52,12 @@ class ChessGame(Base, TimestampMixin, TenantModelMixin):
 
 class ChessMove(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "chess_moves"
+    # One row per half-move: (game_id, ply) is unique. This both indexes the hot
+    # per-game ordered-move query AND makes a double-persist (e.g. a reconnect
+    # race) a no-op conflict instead of a silent duplicate ply.
+    __table_args__ = (
+        UniqueConstraint("game_id", "ply", name="uq_chess_move_game_ply"),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     game_id = Column(GUID(), ForeignKey("chess_games.id", ondelete="CASCADE"),

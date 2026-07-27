@@ -29,3 +29,50 @@ def test_illegal_stored_move_is_skipped_not_crashed():
     s = GameSession("g", "w", "b", "W", "B", "untimed",
                     initial_uci=["e2e4", "zzzz", "e7e5"])
     assert "e4" in s.san_list and "e5" in s.san_list
+
+
+def test_rollback_last_keeps_board_consistent():
+    """When a move's persistence fails, rollback_last must undo it in memory so the
+    board matches the database (no divergence)."""
+    s = GameSession("g", "w", "b", "W", "B", "untimed", initial_uci=["e2e4", "e7e5"])
+    assert len(s.san_list) == 2
+    fen_before = s.board.fen()
+    s.apply_move("g1f3")
+    assert len(s.san_list) == 3
+    s.rollback_last()
+    assert s.san_list == ["e4", "e5"]
+    assert s.uci_list == ["e2e4", "e7e5"]
+    assert s.board.fen() == fen_before   # position fully restored
+    assert s.board.turn is True          # white to move again
+    # rollback_last on the start position is a safe no-op.
+    empty = GameSession("g2", "w", "b", "W", "B", "untimed")
+    empty.rollback_last()
+    assert empty.san_list == []
+
+
+def test_paused_flag_default_false():
+    s = GameSession("g", "w", "b", "W", "B", "untimed")
+    assert s.paused is False
+
+
+def test_duplicate_ply_rejected(db):
+    """The (game_id, ply) unique constraint turns a double-persist into a conflict
+    instead of a silent duplicate row."""
+    import uuid
+    import pytest
+    from sqlalchemy.exc import IntegrityError
+    from app.models.tenant import Organization
+    from app.models.chess import ChessGame, ChessMove
+
+    org = Organization(id=uuid.uuid4(), slug=f"o-{uuid.uuid4().hex[:6]}", name_ta="x", name_en="x")
+    db.add(org)
+    db.commit()
+    g = ChessGame(id=uuid.uuid4(), organization_id=org.id, mode="online", status="in_progress")
+    db.add(g)
+    db.commit()
+    db.add(ChessMove(id=uuid.uuid4(), organization_id=org.id, game_id=g.id, ply=1, uci="e2e4", san="e4"))
+    db.commit()
+    db.add(ChessMove(id=uuid.uuid4(), organization_id=org.id, game_id=g.id, ply=1, uci="d2d4", san="d4"))
+    with pytest.raises(IntegrityError):
+        db.commit()
+    db.rollback()
