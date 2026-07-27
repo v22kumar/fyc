@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     # links (…/e/K7P2) and the QR codes that encode them.
     WEB_BASE_URL: str = "https://fyc-web.fly.dev"
 
+    # Chess tournament no-show policy: minutes a present, ready player must wait
+    # after their round is activated before they may claim a walkover against an
+    # opponent who never marked ready. Keeps one absent player from stalling the
+    # whole bracket.
+    CHESS_READY_TIMEOUT_MINUTES: int = 10
+
     # Connection-pool sizing for a REMOTE Postgres (e.g. Supabase). Ignored for
     # SQLite. Each threadpooled sync request checks out one connection, so the
     # pool should be sized against FastAPI's threadpool (~40) AND your Postgres

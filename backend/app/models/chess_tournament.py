@@ -99,6 +99,9 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
     # Round activation: a match only becomes playable once the manager starts its
     # round ("Start Next Round"). Round 1 is activated when the tournament starts.
     activated = Column(Boolean, default=False)
+    # When this match's round was activated (Round 1 at start, later rounds at
+    # "Start Next Round"). Anchors the no-show ready-timeout window.
+    activated_at = Column(DateTime(timezone=True), nullable=True)
     # Per-player "Ready" acknowledgement before an online match can begin. Both
     # players must be ready to open the board. Nullable → treated as False.
     a_ready = Column(Boolean, default=False)

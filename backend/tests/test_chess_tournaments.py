@@ -204,3 +204,53 @@ def test_physical_conduct_sets_venue(client, db):
     tok_a = next(t for u, t in players if str(u.id) == match["player_a"]["id"])
     r = client.post(f"/api/v1/chess/tournaments/{tid}/matches/{mid}/play", headers=_h(org.id, tok_a))
     assert r.status_code == 400
+
+
+def test_no_show_walkover(client, db):
+    """A present, ready player can claim a walkover once the opponent has failed to
+    ready within the timeout — so one no-show cannot stall the bracket."""
+    import uuid as _uuid
+    from datetime import datetime, timezone, timedelta
+    from app.models.chess_tournament import ChessTournamentMatch
+    from app.models.audit import AuditLog
+
+    org, mgr, mgr_tok, players = _setup(client, db, n_players=2)
+    tid = _create(client, org.id, mgr_tok)
+    for u, tok in players:
+        client.post(f"/api/v1/chess/tournaments/{tid}/register", headers=_h(org.id, tok))
+        client.post(f"/api/v1/chess/tournaments/{tid}/registrations/{u.id}/decision",
+                    json={"approve": True}, headers=_h(org.id, mgr_tok))
+    client.post(f"/api/v1/chess/tournaments/{tid}/close", headers=_h(org.id, mgr_tok))
+    r = client.post(f"/api/v1/chess/tournaments/{tid}/start", headers=_h(org.id, mgr_tok))
+    match = [m for m in r.json()["matches"] if m["round"] == 1][0]
+    mid = match["id"]
+    id_a = match["player_a"]["id"]
+    tok_a = next(t for u, t in players if str(u.id) == id_a)
+
+    # Too early: opponent hasn't timed out yet -> 409, not a walkover.
+    r = client.post(f"/api/v1/chess/tournaments/{tid}/matches/{mid}/claim-walkover",
+                    headers=_h(org.id, tok_a))
+    assert r.status_code == 409, r.text
+
+    # Simulate the ready-timeout window elapsing.
+    m = db.query(ChessTournamentMatch).filter(ChessTournamentMatch.id == _uuid.UUID(mid)).first()
+    m.activated_at = datetime.now(timezone.utc) - timedelta(minutes=30)
+    db.commit()
+
+    # Present player claims the walkover -> wins and (2-player bracket) is champion.
+    r = client.post(f"/api/v1/chess/tournaments/{tid}/matches/{mid}/claim-walkover",
+                    headers=_h(org.id, tok_a))
+    assert r.status_code == 200, r.text
+    done = r.json()
+    assert done["status"] == "COMPLETED"
+    assert done["champion"]["id"] == id_a
+
+    # A second claim on a decided match is rejected.
+    r = client.post(f"/api/v1/chess/tournaments/{tid}/matches/{mid}/claim-walkover",
+                    headers=_h(org.id, tok_a))
+    assert r.status_code == 400
+
+    # The walkover was audited.
+    db.expire_all()
+    logs = db.query(AuditLog).filter(AuditLog.action_type == "CHESS_WALKOVER_CLAIMED").all()
+    assert len(logs) == 1
