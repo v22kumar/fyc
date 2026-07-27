@@ -47,6 +47,66 @@ def _display_name(db: Session, user: Optional[User]) -> Optional[str]:
     return None
 
 
+def _display_names(db: Session, user_ids) -> dict:
+    """Resolve many display names in ONE query (kills the per-game N+1 in live/
+    list endpoints). Returns {user_id: name}; missing ids are simply absent."""
+    ids = {u for u in user_ids if u}
+    if not ids:
+        return {}
+    rows = (
+        db.query(UserProfile.user_id, UserProfile.full_name_en, UserProfile.full_name_ta)
+        .filter(UserProfile.user_id.in_(ids))
+        .all()
+    )
+    return {uid: (en or ta) for uid, en, ta in rows}
+
+
+def _move_counts(db: Session, game_ids) -> dict:
+    """Count moves for many games in ONE grouped query instead of a COUNT per
+    game. Returns {game_id: ply_count}."""
+    ids = {g for g in game_ids if g}
+    if not ids:
+        return {}
+    from sqlalchemy import func as _func
+    rows = (
+        db.query(ChessMove.game_id, _func.count(ChessMove.id))
+        .filter(ChessMove.game_id.in_(ids))
+        .group_by(ChessMove.game_id)
+        .all()
+    )
+    return {gid: c for gid, c in rows}
+
+
+def _live_games_out(db: Session, games) -> list:
+    """Serialise live ChessGames to LiveGameOut with batched name + move-count
+    lookups — 2 queries total regardless of how many games (was 3×N)."""
+    if not games:
+        return []
+    names = _display_names(db, [g.white_id for g in games] + [g.black_id for g in games])
+    # Move counts only needed for games with no in-memory session (else we use
+    # the live ply). Batch-count just those.
+    no_session_ids = [g.id for g in games if ws_manager.get(str(g.id)) is None]
+    counts = _move_counts(db, no_session_ids)
+    out = []
+    for g in games:
+        session = ws_manager.get(str(g.id))
+        if session:
+            ply = len(session.san_list)
+            spec = session.spectator_count
+        else:
+            ply = counts.get(g.id, 0)
+            spec = 0
+        out.append(LiveGameOut(
+            id=g.id,
+            white_name=names.get(g.white_id) or "White",
+            black_name=names.get(g.black_id) or "Black",
+            ply=ply,
+            time_control=g.time_control,
+            spectator_count=spec,
+        ))
+    return out
+
+
 def _notify_chess(
     db: Session,
     *,
@@ -293,25 +353,7 @@ def list_live_games(
         .limit(50)
         .all()
     )
-    result = []
-    for g in games:
-        gid = str(g.id)
-        session = ws_manager.get(gid)
-        if session:
-            ply = len(session.san_list)
-            spec_count = session.spectator_count
-        else:
-            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
-            spec_count = 0
-        result.append(LiveGameOut(
-            id=g.id,
-            white_name=_display_name(db, g.white) or "White",
-            black_name=_display_name(db, g.black) or "Black",
-            ply=ply,
-            time_control=g.time_control,
-            spectator_count=spec_count,
-        ))
-    return result
+    return _live_games_out(db, games)
 
 
 @router.get("/public/games/live", response_model=List[LiveGameOut])
@@ -342,24 +384,7 @@ def list_public_live_games(
             return []
         q = q.filter(ChessGame.id.in_(game_ids))
     games = q.order_by(ChessGame.started_at.desc()).limit(50).all()
-    result = []
-    for g in games:
-        session = ws_manager.get(str(g.id))
-        if session:
-            ply = len(session.san_list)
-            spec_count = session.spectator_count
-        else:
-            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
-            spec_count = 0
-        result.append(LiveGameOut(
-            id=g.id,
-            white_name=_display_name(db, g.white) or "White",
-            black_name=_display_name(db, g.black) or "Black",
-            ply=ply,
-            time_control=g.time_control,
-            spectator_count=spec_count,
-        ))
-    return result
+    return _live_games_out(db, games)
 
 
 @router.get("/games", response_model=List[ChessGameOut])

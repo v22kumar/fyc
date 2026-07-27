@@ -76,3 +76,44 @@ def test_duplicate_ply_rejected(db):
     with pytest.raises(IntegrityError):
         db.commit()
     db.rollback()
+
+
+def test_public_live_games_batched(client, db):
+    """The live-games list resolves names + move counts in batch (no per-game
+    N+1) and returns correct values."""
+    import uuid
+    from app.models.tenant import Organization
+    from app.models.user import User, UserProfile
+    from app.models.chess import ChessGame, ChessMove
+    from app.core.security import get_password_hash
+
+    org = Organization(id=uuid.uuid4(), slug=f"o-{uuid.uuid4().hex[:6]}", name_ta="x", name_en="x")
+    db.add(org)
+    db.commit()
+
+    def _mk(name, phone):
+        u = User(organization_id=org.id, phone_number=phone,
+                 password_hash=get_password_hash("x"), role="VOLUNTEER", is_verified=True)
+        db.add(u)
+        db.flush()
+        db.add(UserProfile(user_id=u.id, full_name_en=name, full_name_ta=name))
+        return u
+
+    w = _mk("Alice", "9100000001")
+    b = _mk("Bob", "9100000002")
+    db.commit()
+    g = ChessGame(id=uuid.uuid4(), organization_id=org.id, white_id=w.id, black_id=b.id,
+                  mode="online", status="in_progress")
+    db.add(g)
+    db.commit()
+    db.add(ChessMove(id=uuid.uuid4(), organization_id=org.id, game_id=g.id, ply=1, uci="e2e4", san="e4"))
+    db.add(ChessMove(id=uuid.uuid4(), organization_id=org.id, game_id=g.id, ply=2, uci="e7e5", san="e5"))
+    db.commit()
+
+    r = client.get("/api/v1/chess/public/games/live", headers={"X-Organization-ID": str(org.id)})
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert len(data) == 1
+    assert data[0]["white_name"] == "Alice"
+    assert data[0]["black_name"] == "Bob"
+    assert data[0]["ply"] == 2
