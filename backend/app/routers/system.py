@@ -62,14 +62,45 @@ def system_health(
         "system_metrics": {}
     }
     
-    # Check Database
+    # Check Database — report the actual backend so prod can be confirmed as
+    # PostgreSQL (vs a silent SQLite fallback).
     try:
         db.execute(text("SELECT 1"))
         health_status["database"] = "connected"
+        try:
+            health_status["db_dialect"] = db.bind.dialect.name  # 'postgresql' / 'sqlite'
+        except Exception:
+            health_status["db_dialect"] = "unknown"
     except Exception as e:
         health_status["database"] = "disconnected"
         health_status["status"] = "degraded"
-        
+
+    # Check cache backend — connected Valkey/Redis vs the in-memory fallback.
+    try:
+        from app.core.livecache import _client
+        _r = _client()
+        if _r is not None:
+            _r.ping()
+            health_status["cache"] = "valkey/redis connected"
+        else:
+            health_status["cache"] = "in-memory fallback (no VALKEY_URL/REDIS_URL)"
+    except Exception as _ce:
+        health_status["cache"] = f"error: {str(_ce)[:80]}"
+
+    # Live chess load — active in-memory game sessions + spectators (lets a load
+    # test confirm the server actually holds the games it is driving).
+    try:
+        from app.services.chess_ws_manager import ws_manager
+        _sessions = list(ws_manager._sessions.values())
+        health_status["chess"] = {
+            "active_sessions": len(_sessions),
+            "connected_players": sum(len(s.connections) for s in _sessions),
+            "spectators": sum(len(s.spectators) for s in _sessions),
+            "paused_games": sum(1 for s in _sessions if getattr(s, "paused", False)),
+        }
+    except Exception:
+        pass
+
     # Check Storage
     try:
         # Check if uploads directory is writable
@@ -85,11 +116,18 @@ def system_health(
         health_status["storage"] = "error"
         health_status["status"] = "degraded"
         
-    # Basic system metrics (memory, cpu)
+    # System metrics — host cpu/mem plus this process's RSS (absolute MB), so a
+    # load test can chart the server's CPU/memory while it drives games.
     try:
+        _vm = psutil.virtual_memory()
+        _proc = psutil.Process()
         health_status["system_metrics"] = {
             "cpu_percent": psutil.cpu_percent(),
-            "memory_percent": psutil.virtual_memory().percent
+            "memory_percent": _vm.percent,
+            "memory_used_mb": round(_vm.used / (1024 * 1024), 1),
+            "memory_total_mb": round(_vm.total / (1024 * 1024), 1),
+            "process_rss_mb": round(_proc.memory_info().rss / (1024 * 1024), 1),
+            "process_cpu_percent": _proc.cpu_percent(),
         }
     except Exception:
         pass
