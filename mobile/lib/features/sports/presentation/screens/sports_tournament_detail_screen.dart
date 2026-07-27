@@ -285,6 +285,11 @@ class _SportsTournamentDetailScreenState
       }
     }
     b.writeln('');
+    // Short, typeable link so recipients can open the tournament directly.
+    if (t.shortCode != null && t.shortCode!.isNotEmpty) {
+      b.writeln('🔗 ${ApiConstants.webBaseUrl}/t/${t.shortCode}');
+      b.writeln('');
+    }
     b.writeln('— FYC Connect');
     Share.share(b.toString(), subject: '${t.nameEn} — ${trId('scoreboard')}');
   }
