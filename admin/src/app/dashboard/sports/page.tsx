@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { Tournament, Team, Fixture, ChallengeMatch } from '@/types';
+import { ShareLinkBadge } from '@/components/ShareLinkBadge';
 import toast from 'react-hot-toast';
 import { Trophy, Users, CalendarDays, Swords } from 'lucide-react';
 
@@ -419,7 +420,8 @@ export default function SportsPage() {
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{selectedTournament.name_en}</h2>
                     <p className="text-sm text-gray-500 mt-1">{selectedTournament.sport} • {selectedTournament.year} • {selectedTournament.format}</p>
-                    
+                    <ShareLinkBadge kind="t" code={selectedTournament.short_code} />
+
                     <div className="mt-4 flex flex-wrap gap-4 text-sm">
                       {selectedTournament.registration_close_date && (
                         <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">

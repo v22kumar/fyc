@@ -17,6 +17,7 @@ class EventModel extends EventEntity {
     super.maxParticipants,
     super.registrationDeadline,
     super.status,
+    super.shortCode,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +41,7 @@ class EventModel extends EventEntity {
           ? DateTime.parse(json['registration_deadline'] as String) 
           : null,
       status: json['status'] as String? ?? 'active',
+      shortCode: json['short_code'] as String?,
     );
   }
 

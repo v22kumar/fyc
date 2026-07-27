@@ -17,6 +17,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -305,10 +306,26 @@ class _SportsTournamentDetailScreenState
           BlocBuilder<SportsBloc, SportsState>(
             builder: (context, state) {
               if (state is SportsDetailLoaded) {
-                return IconButton(
-                  icon: const Icon(Icons.share_outlined),
-                  tooltip: trId('share_scoreboard'),
-                  onPressed: () => _shareScoreboard(state.tournament, state.standings),
+                final code = state.tournament.shortCode;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (code != null && code.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.qr_code_2),
+                        tooltip: trId('share_link'),
+                        onPressed: () => showShareLinkSheet(
+                          context,
+                          path: '/t/$code',
+                          title: state.tournament.nameEn,
+                        ),
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.share_outlined),
+                      tooltip: trId('share_scoreboard'),
+                      onPressed: () => _shareScoreboard(state.tournament, state.standings),
+                    ),
+                  ],
                 );
               }
               return const SizedBox.shrink();

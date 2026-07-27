@@ -17,6 +17,9 @@ class EventEntity extends Equatable {
   final DateTime? registrationDeadline;
   final String status;
 
+  /// Short, typeable public share code (…/e/K7P2). May be null for old rows.
+  final String? shortCode;
+
   const EventEntity({
     required this.id,
     required this.titleTa,
@@ -33,6 +36,7 @@ class EventEntity extends Equatable {
     this.maxParticipants,
     this.registrationDeadline,
     this.status = 'active',
+    this.shortCode,
   });
 
   bool get isUpcoming => eventStart.isAfter(DateTime.now());

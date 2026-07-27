@@ -31,6 +31,7 @@ export interface Issue {
 
 export interface Event {
   id: string;
+  short_code?: string | null;
   title_ta: string;
   title_en: string;
   description_ta: string;
@@ -109,6 +110,7 @@ export interface CommunityProfile {
 
 export interface Tournament {
   id: string;
+  short_code?: string | null;
   name_ta: string;
   name_en: string;
   sport: string;
