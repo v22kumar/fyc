@@ -124,10 +124,11 @@ import { API_BASE } from '../lib/config';
             </div>
           </div>
 
-          <!-- Phone (optional, only shown when no phone set) -->
+          <!-- Phone (required, only shown when no phone set — e.g. Google login) -->
           <div id="phone-field" class="hidden">
             <label for="phone_number" class="block text-sm font-semibold text-gray-700 mb-1.5">
-              <span data-ta="கைபேசி எண் (விரும்பினால்)" data-en="Phone Number (optional)">கைபேசி எண் (விரும்பினால்)</span>
+              <span data-ta="கைபேசி எண்" data-en="Phone Number">கைபேசி எண்</span>
+              <span class="text-red-500 ml-0.5">*</span>
             </label>
             <input
               type="tel"
@@ -156,12 +157,6 @@ import { API_BASE } from '../lib/config';
         </form>
       </div>
 
-      <!-- Skip link -->
-      <div class="text-center mt-4">
-        <a href="/" class="text-xs text-gray-400 hover:text-gray-600 underline" data-ta="இப்போது வேண்டாம், பிறகு நிரப்புவேன்" data-en="Skip for now, I'll complete it later">
-          இப்போது வேண்டாம், பிறகு நிரப்புவேன்
-        </a>
-      </div>
     </div>
   </section>
 
@@ -243,6 +238,14 @@ import { API_BASE } from '../lib/config';
         errorMsg.classList.remove('hidden');
         return;
       }
+      // Phone is mandatory whenever the field is shown (accounts with no phone
+      // yet, e.g. Google sign-in) — no user should exist without a phone number.
+      const phoneFieldVisible = !document.getElementById('phone-field').classList.contains('hidden');
+      if (phoneFieldVisible && !phone_number) {
+        errorMsg.textContent = 'கைபேசி எண் தேவை. / Phone number is required.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
 
       // Loading state
       submitBtn.disabled = true;
@@ -264,7 +267,13 @@ import { API_BASE } from '../lib/config';
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || `HTTP ${res.status}`);
+          // FastAPI 422s return `detail` as an array of {msg,...}; a plain
+          // `throw new Error(detail)` on that rendered "[object Object]".
+          // Normalise to a readable string.
+          let msg = err.detail;
+          if (Array.isArray(msg)) msg = msg.map(e => (e && e.msg) ? e.msg : JSON.stringify(e)).join(', ');
+          else if (msg && typeof msg === 'object') msg = msg.msg || JSON.stringify(msg);
+          throw new Error(msg || `HTTP ${res.status}`);
         }
 
         const updatedUser = await res.json();
