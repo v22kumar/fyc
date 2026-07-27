@@ -307,22 +307,30 @@ def list_live_games(
 
 @router.get("/public/games/live", response_model=List[LiveGameOut])
 def list_public_live_games(
+    tournament: Optional[uuid.UUID] = None,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     """Public telecast: all in-progress games for the org, no auth required, so a
     web/Android 'Live now' list can show games to anyone. Tenant comes from the
-    X-Organization-ID header (same as other public endpoints)."""
-    games = (
-        db.query(ChessGame)
-        .filter(
-            ChessGame.organization_id == tenant_id,
-            ChessGame.status == "in_progress",
-        )
-        .order_by(ChessGame.started_at.desc())
-        .limit(50)
-        .all()
+    X-Organization-ID header (same as other public endpoints). Pass ?tournament=
+    to scope to one chess tournament's live games (for its share-link telecast)."""
+    q = db.query(ChessGame).filter(
+        ChessGame.organization_id == tenant_id,
+        ChessGame.status == "in_progress",
     )
+    if tournament is not None:
+        from app.models.chess_tournament import ChessTournamentMatch
+        game_ids = [
+            m.game_id for m in db.query(ChessTournamentMatch.game_id)
+            .filter(ChessTournamentMatch.tournament_id == tournament,
+                    ChessTournamentMatch.game_id.isnot(None))
+            .all()
+        ]
+        if not game_ids:
+            return []
+        q = q.filter(ChessGame.id.in_(game_ids))
+    games = q.order_by(ChessGame.started_at.desc()).limit(50).all()
     result = []
     for g in games:
         session = ws_manager.get(str(g.id))

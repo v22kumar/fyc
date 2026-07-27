@@ -57,6 +57,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
     const params = new URLSearchParams(location.search);
     const gameId = params.get('id');
+    const tournamentId = params.get('tournament');
     const GLYPH = { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' };
     const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
 
@@ -88,8 +89,14 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
     // ── LIST MODE ────────────────────────────────────────────────────────────
     async function loadList() {
+      if (tournamentId) {
+        document.getElementById('sub').textContent = 'Tournament — live games';
+      }
       try {
-        const res = await fetch(`${API_BASE}/api/v1/chess/public/games/live`, {
+        const url = tournamentId
+          ? `${API_BASE}/api/v1/chess/public/games/live?tournament=${encodeURIComponent(tournamentId)}`
+          : `${API_BASE}/api/v1/chess/public/games/live`;
+        const res = await fetch(url, {
           headers: { 'X-Organization-ID': DEFAULT_ORG_ID },
         });
         const games = res.ok ? await res.json() : [];

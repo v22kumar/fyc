@@ -21,6 +21,8 @@ class ChessTournament(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "chess_tournaments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    # Short, typeable public code for the telecast share link (…/t/K7P2).
+    short_code = Column(String(12), unique=True, index=True, nullable=True)
     name = Column(String(150), nullable=False)
     description = Column(Text, nullable=True)
     # REGISTRATION_OPEN → REGISTRATION_CLOSED → IN_PROGRESS → COMPLETED
