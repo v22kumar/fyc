@@ -48,12 +48,13 @@ kill_timeout = "30s"
     path = "/api/health/ready"
 
 [[vm]]
-  size = "shared-cpu-1x"
-  # 1 GB headroom for live events: ~25 in-memory python-chess boards + WAL page
-  # cache + keepalive/scheduler. For a big event also bump CPU for the day:
-  #   flyctl scale vm shared-cpu-2x --app fyc-backend   (scale back after)
-  memory = "1024mb"
-  cpus = 1
+  # 2 shared vCPUs — the 35-game load test saturated a single vCPU at 100% under
+  # a synthetic all-players-moving-at-once burst; 2x gives headroom so move RTT
+  # stays low during a live tournament. Single fixed machine (auto_stop off,
+  # min_machines_running=1) — NOT autoscaling.
+  size = "shared-cpu-2x"
+  memory = "2048mb"
+  cpus = 2
 
 [mounts]
   source = "fyc_data"
