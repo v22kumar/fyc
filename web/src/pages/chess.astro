@@ -1,0 +1,170 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+<BaseLayout title="Live Chess — FYC Connect" description="Watch FYC chess games live.">
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="text-3xl">♟️</span>
+      <div>
+        <h1 class="text-2xl font-black text-gray-900">Live Chess</h1>
+        <p class="text-sm text-gray-500" id="sub">Games being played right now</p>
+      </div>
+    </div>
+
+    <!-- LIST MODE -->
+    <div id="list-view">
+      <div id="list-loading" class="text-center text-gray-400 py-16">Loading live games…</div>
+      <div id="list-empty" class="hidden text-center text-gray-400 py-16">
+        <div class="text-4xl mb-2">🫙</div>No games are live right now. Check back soon.
+      </div>
+      <div id="list" class="grid gap-3 sm:grid-cols-2"></div>
+    </div>
+
+    <!-- BOARD MODE -->
+    <div id="board-view" class="hidden">
+      <a href="/chess" class="inline-block mb-4 text-sm text-[#0F5132] font-bold hover:underline">← All live games</a>
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-gray-900" id="b-black">Black</div>
+          <div id="b-status" class="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">● LIVE</div>
+        </div>
+        <div id="board" class="mx-auto select-none"></div>
+        <div class="flex items-center justify-between mt-3">
+          <div class="font-bold text-gray-900" id="b-white">White</div>
+          <div class="text-xs text-gray-500" id="b-turn"></div>
+        </div>
+        <div id="b-result" class="hidden mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold text-center"></div>
+        <div class="mt-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Moves</div>
+          <div id="b-moves" class="text-sm text-gray-700 leading-relaxed font-mono break-words"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    #board { width: min(92vw, 440px); }
+    .cbrow { display: flex; }
+    .cbsq { width: 12.5%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            font-size: min(9vw, 40px); line-height: 1; }
+    .cbsq.light { background: #EEF2E9; }
+    .cbsq.dark  { background: #7C9A6B; }
+    .cbsq .wp { color: #ffffff; text-shadow: 0 0 1px #333, 0 1px 2px rgba(0,0,0,.4); }
+    .cbsq .bp { color: #1a1a1a; }
+  </style>
+
+  <script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+    const params = new URLSearchParams(location.search);
+    const gameId = params.get('id');
+    const GLYPH = { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' };
+    const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+
+    function renderBoard(fen) {
+      const placement = (fen || '').split(' ')[0];
+      const ranks = placement.split('/');
+      let html = '';
+      for (let r = 0; r < 8; r++) {
+        html += '<div class="cbrow">';
+        let file = 0;
+        for (const ch of (ranks[r] || '')) {
+          if (/\d/.test(ch)) {
+            for (let k = 0; k < parseInt(ch, 10); k++) {
+              const dark = (r + file) % 2 === 1;
+              html += `<div class="cbsq ${dark ? 'dark' : 'light'}"></div>`;
+              file++;
+            }
+          } else {
+            const dark = (r + file) % 2 === 1;
+            const white = ch === ch.toUpperCase();
+            html += `<div class="cbsq ${dark ? 'dark' : 'light'}"><span class="${white ? 'wp' : 'bp'}">${GLYPH[ch.toLowerCase()] || ''}</span></div>`;
+            file++;
+          }
+        }
+        html += '</div>';
+      }
+      document.getElementById('board').innerHTML = html;
+    }
+
+    // ── LIST MODE ────────────────────────────────────────────────────────────
+    async function loadList() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/chess/public/games/live`, {
+          headers: { 'X-Organization-ID': DEFAULT_ORG_ID },
+        });
+        const games = res.ok ? await res.json() : [];
+        document.getElementById('list-loading').classList.add('hidden');
+        if (!Array.isArray(games) || games.length === 0) {
+          document.getElementById('list-empty').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('list').innerHTML = games.map((g) => `
+          <a href="/chess?id=${encodeURIComponent(g.id)}" class="block bg-white rounded-2xl border border-gray-200 shadow-sm p-4 hover:border-[#0F5132] transition-colors">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">● LIVE</span>
+              <span class="text-[11px] text-gray-400">${g.spectator_count || 0} watching · ${g.ply || 0} moves</span>
+            </div>
+            <div class="font-bold text-gray-900 text-sm">${esc(g.white_name)}</div>
+            <div class="text-xs text-gray-400 my-0.5">vs</div>
+            <div class="font-bold text-gray-900 text-sm">${esc(g.black_name)}</div>
+          </a>`).join('');
+      } catch (_e) {
+        document.getElementById('list-loading').classList.add('hidden');
+        document.getElementById('list-empty').classList.remove('hidden');
+      }
+    }
+
+    // ── BOARD MODE ───────────────────────────────────────────────────────────
+    function watchGame(id) {
+      document.getElementById('list-view').classList.add('hidden');
+      document.getElementById('board-view').classList.remove('hidden');
+      document.getElementById('sub').textContent = 'Live telecast';
+      renderBoard('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+
+      const moves = [];
+      const renderMoves = () => {
+        let out = '';
+        for (let i = 0; i < moves.length; i += 2) {
+          out += `${i / 2 + 1}. ${esc(moves[i] || '')} ${esc(moves[i + 1] || '')} `;
+        }
+        document.getElementById('b-moves').textContent = '';
+        document.getElementById('b-moves').innerHTML = out || '—';
+      };
+
+      const wsBase = API_BASE.replace(/^http/, 'ws');
+      let ws;
+      const connect = () => {
+        ws = new WebSocket(`${wsBase}/api/v1/chess/games/${encodeURIComponent(id)}/spectate`);
+        ws.onmessage = (ev) => {
+          let m; try { m = JSON.parse(ev.data); } catch { return; }
+          if (m.type === 'state') {
+            document.getElementById('b-white').textContent = m.white_name || 'White';
+            document.getElementById('b-black').textContent = m.black_name || 'Black';
+            renderBoard(m.fen);
+            moves.length = 0;
+            (m.moves || []).forEach((mv) => moves.push(mv.san));
+            renderMoves();
+            document.getElementById('b-turn').textContent = (m.turn === 'white' ? 'White' : 'Black') + ' to move';
+          } else if (m.type === 'move') {
+            renderBoard(m.fen);
+            if (m.san) { moves.push(m.san); renderMoves(); }
+            document.getElementById('b-turn').textContent = (m.turn === 'white' ? 'White' : 'Black') + ' to move';
+          } else if (m.type === 'game_over') {
+            const st = document.getElementById('b-status');
+            st.textContent = 'ENDED'; st.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600';
+            const res = document.getElementById('b-result');
+            const label = (m.result || '').replace('_', ' ') + (m.reason ? ` · ${String(m.reason).replace(/_/g, ' ')}` : '');
+            res.textContent = label; res.classList.remove('hidden');
+            document.getElementById('b-turn').textContent = '';
+          } else if (m.type === 'waiting') {
+            document.getElementById('b-turn').textContent = 'Waiting for the game to start…';
+          }
+        };
+        ws.onclose = () => { /* game ended or server closed — leave final state */ };
+      };
+      connect();
+    }
+
+    if (gameId) watchGame(gameId); else loadList();
+  </script>
+</BaseLayout>
