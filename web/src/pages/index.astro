@@ -61,26 +61,6 @@ const modules = [
   },
 ];
 
-const updates = [
-  { avatar: '👨‍💼', name: 'R. Prathap', role: 'Club President', time: '2 hours ago',
-    ta: 'நாகர்கோவில் கிரிக்கெட் கோப்பை 2026 போட்டிக்கான பதிவுகள் ஆரம்பம்! உங்கள் அணியை இப்போதே பதிவு செய்யுங்கள்.',
-    en: 'Nagercoil Cricket Cup 2026 registrations are now open! Register your team today.',
-    ml: 'നഗർകോവിൽ ക്രിക്കറ്റ് കപ്പ് 2026 രജിസ്ട്രേഷൻ ആരംഭിച്ചു!',
-    hi: 'नागरकोइल क्रिकेट कप 2026 पंजीकरण शुरू हो गया है!',
-    tag: 'Sports Hub' },
-  { avatar: '👩‍⚕️', name: 'Kavitha S.', role: 'Volunteer Coordinator', time: '5 hours ago',
-    ta: 'ஆசாத் நகர் பகுதியில் நட்ட மரக்கன்றுகளுக்கு நீர் ஊற்றும் பணி வெற்றிகரமாக முடிந்தது. தன்னார்வலர்களுக்கு நன்றி!',
-    en: 'Watering drive for planted saplings in Azad Nagar completed successfully. Thanks to all volunteers!',
-    ml: 'അസദ് നഗറിലെ തൈകൾക്ക് വെള്ളം ഒഴിക്കൽ വിജയകരമായി പൂർത്തിയായി.',
-    hi: 'अज़ाद नगर में लगाए गए पौधों की सिंचाई सफलतापूर्वक पूरी हुई।',
-    tag: 'Green FYC' },
-  { avatar: '🚧', name: 'Triage System', role: 'System Bot', time: '1 day ago',
-    ta: 'வார்டு 4-ல் பதிவான குடிநீர் குழாய் உடைப்பு பிரச்னை சரிசெய்யப்பட்டு "முடிந்தது" என மாற்றப்பட்டது.',
-    en: 'Water pipeline leak reported in Ward 4 has been repaired and marked as RESOLVED.',
-    ml: 'വാർഡ് 4-ൽ റിപ്പോർട്ട് ചെയ്ത ജലക്കുഴൽ ചോർച്ച നന്നാക്കി പരിഹരിച്ചു.',
-    hi: 'वार्ड 4 में रिपोर्ट की गई जल पाइप लीक की मरम्मत की गई।',
-    tag: 'Civic Triage' },
-];
 ---
 
 <BaseLayout title="FYC Connect — Unite · Play · Thrive">
@@ -235,15 +215,15 @@ const updates = [
         </div>
 
         <!-- Floating stat pills -->
-        <div class="flex flex-wrap justify-center gap-3 pt-4 reveal">
+        <div id="stat-pills" class="hidden flex-wrap justify-center gap-3 pt-4 reveal">
           {[
-            { n:'1,500+', ta:'மரங்கள்', en:'Trees', ml:'മരങ്ങൾ', hi:'पेड़', c:'text-green-400' },
-            { n:'1,200+', ta:'இரத்த கொடையாளர்', en:'Blood Donors', ml:'രക്തദാതാ', hi:'रक्तदाता', c:'text-rose-400' },
-            { n:'80+', ta:'நிகழ்வுகள்', en:'Events', ml:'ഇവന്റ്', hi:'कार्यक्रम', c:'text-amber-400' },
-            { n:'5,000+', ta:'பயன் பெற்றோர்', en:'Lives Impacted', ml:'ഗുണഭോക്തൃ', hi:'लाभान्वित', c:'text-blue-400' },
+            { key:'trees', ta:'மரங்கள்', en:'Trees', ml:'മരങ്ങൾ', hi:'पेड़', c:'text-green-400' },
+            { key:'blood_donors', ta:'இரத்த கொடையாளர்', en:'Blood Donors', ml:'രക്തദാതാ', hi:'रक्तदाता', c:'text-rose-400' },
+            { key:'events', ta:'நிகழ்வுகள்', en:'Events', ml:'ഇവന്റ്', hi:'कार्यक्रम', c:'text-amber-400' },
+            { key:'members', ta:'உறுப்பினர்கள்', en:'Members', ml:'അംഗങ്ങൾ', hi:'सदस्य', c:'text-blue-400' },
           ].map(s => (
             <div class="flex items-center gap-2 bg-white/8 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2">
-              <span class={`text-sm font-black ${s.c}`}>{s.n}</span>
+              <span class={`stat-pill text-sm font-black ${s.c}`} data-stat={s.key}>0</span>
               <span class="text-xs text-white/60" data-ta={s.ta} data-en={s.en} data-ml={s.ml} data-hi={s.hi}>{s.en}</span>
             </div>
           ))}
@@ -274,28 +254,28 @@ const updates = [
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           <div class="text-center reveal">
-            <div class="stat-num text-5xl lg:text-6xl font-black text-[#0F5132] counter" data-target="1500" data-suffix="+">0</div>
+            <div class="stat-num text-5xl lg:text-6xl font-black text-[#0F5132] counter" data-stat="trees" data-target="0" data-suffix="+">0</div>
             <div class="w-10 h-1 bg-[#0F5132]/20 rounded-full mx-auto my-2"></div>
             <div class="text-sm text-gray-500 font-medium"
               data-ta="நட்ட மரங்கள்" data-en="Trees Planted" data-ml="നട്ട മരങ്ങൾ" data-hi="लगाए पेड़">Trees Planted</div>
           </div>
           <div class="text-center reveal">
-            <div class="stat-num text-5xl lg:text-6xl font-black text-rose-600 counter" data-target="1200" data-suffix="+">0</div>
+            <div class="stat-num text-5xl lg:text-6xl font-black text-rose-600 counter" data-stat="blood_donors" data-target="0" data-suffix="+">0</div>
             <div class="w-10 h-1 bg-rose-200 rounded-full mx-auto my-2"></div>
             <div class="text-sm text-gray-500 font-medium"
               data-ta="இரத்த கொடையாளர்கள்" data-en="Blood Donors" data-ml="രക്തദാതാക്കൾ" data-hi="रक्तदाता">Blood Donors</div>
           </div>
           <div class="text-center reveal">
-            <div class="stat-num text-5xl lg:text-6xl font-black text-amber-600 counter" data-target="80" data-suffix="+">0</div>
+            <div class="stat-num text-5xl lg:text-6xl font-black text-amber-600 counter" data-stat="events" data-target="0" data-suffix="+">0</div>
             <div class="w-10 h-1 bg-amber-200 rounded-full mx-auto my-2"></div>
             <div class="text-sm text-gray-500 font-medium"
               data-ta="நடத்திய நிகழ்வுகள்" data-en="Events Hosted" data-ml="ഇവന്റുകൾ" data-hi="आयोजन">Events Hosted</div>
           </div>
           <div class="text-center reveal">
-            <div class="stat-num text-5xl lg:text-6xl font-black text-blue-600 counter" data-target="5000" data-suffix="+">0</div>
+            <div class="stat-num text-5xl lg:text-6xl font-black text-blue-600 counter" data-stat="members" data-target="0" data-suffix="+">0</div>
             <div class="w-10 h-1 bg-blue-200 rounded-full mx-auto my-2"></div>
             <div class="text-sm text-gray-500 font-medium"
-              data-ta="பயன் பெற்றோர்" data-en="Lives Impacted" data-ml="ഗുണഭോക്താക്കൾ" data-hi="लाभान्वित जीवन">Lives Impacted</div>
+              data-ta="உறுப்பினர்கள்" data-en="Members" data-ml="അംഗങ്ങൾ" data-hi="सदस्य">Members</div>
           </div>
         </div>
       </div>
@@ -378,14 +358,14 @@ const updates = [
         </div>
         <div class="grid grid-cols-2 gap-4 reveal">
           {[
-            { icon: '🌱', n: '1,500+', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', c: 'bg-green-50 border-green-100' },
-            { icon: '🩸', n: '1,200+', ta: 'இரத்த கொடையாளர்', en: 'Blood Donors', c: 'bg-rose-50 border-rose-100' },
-            { icon: '⚽', n: '80+', ta: 'நிகழ்வுகள்', en: 'Events Hosted', c: 'bg-amber-50 border-amber-100' },
-            { icon: '❤️', n: '5,000+', ta: 'பயன் பெற்றோர்', en: 'Lives Impacted', c: 'bg-blue-50 border-blue-100' },
+            { icon: '🌱', key: 'trees', ta: 'நட்ட மரங்கள்', en: 'Trees Planted', c: 'bg-green-50 border-green-100' },
+            { icon: '🩸', key: 'blood_donors', ta: 'இரத்த கொடையாளர்', en: 'Blood Donors', c: 'bg-rose-50 border-rose-100' },
+            { icon: '⚽', key: 'events', ta: 'நிகழ்வுகள்', en: 'Events Hosted', c: 'bg-amber-50 border-amber-100' },
+            { icon: '👥', key: 'members', ta: 'உறுப்பினர்கள்', en: 'Members', c: 'bg-blue-50 border-blue-100' },
           ].map(s => (
             <div class={`${s.c} border rounded-2xl p-5 text-center`}>
               <div class="text-3xl mb-2">{s.icon}</div>
-              <div class="text-2xl font-black text-gray-900">{s.n}</div>
+              <div class="stat-pill text-2xl font-black text-gray-900" data-stat={s.key}>0</div>
               <div class="text-xs text-gray-500 mt-1 font-medium" data-ta={s.ta} data-en={s.en}>{s.en}</div>
             </div>
           ))}
@@ -644,25 +624,11 @@ const updates = [
               <span>📢</span>
               <span data-ta="சமீபத்திய அறிவிப்புகள்" data-en="Recent Activity" data-ml="സമീപ പ്രവർത്തനം" data-hi="हाल की गतिविधि">Recent Activity</span>
             </h2>
-            <div class="space-y-3">
-              {updates.map((up) => (
-                <div class="bg-white border border-gray-200/80 rounded-2xl p-5 hover:border-gray-300 transition-colors shadow-sm space-y-3">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl border border-gray-200">{up.avatar}</div>
-                      <div>
-                        <div class="font-bold text-gray-900 text-sm">{up.name}</div>
-                        <div class="text-xs text-gray-400">{up.role}</div>
-                      </div>
-                    </div>
-                    <div class="text-right">
-                      <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">{up.tag}</span>
-                      <div class="text-[10px] text-gray-400 mt-1">{up.time}</div>
-                    </div>
-                  </div>
-                  <p class="text-sm text-gray-700 leading-relaxed" data-ta={up.ta} data-en={up.en} data-ml={up.ml} data-hi={up.hi}>{up.en}</p>
-                </div>
-              ))}
+            <!-- Populated live from the public announcements API (real notice
+                 board). No hardcoded activity. -->
+            <div id="activity-feed" class="space-y-3">
+              <div id="activity-loading" class="text-sm text-gray-400 py-6 text-center">Loading…</div>
+              <div id="activity-empty" class="hidden text-sm text-gray-400 py-6 text-center">No recent announcements yet.</div>
             </div>
           </div>
 
@@ -910,6 +876,86 @@ const updates = [
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); revealObserver.unobserve(e.target); } });
     }, { threshold: 0.12 });
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── Live impact stats (real DB counts, no hardcoded numbers) ──────
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/system/impact-stats`, {
+          headers: { 'X-Organization-ID': DEFAULT_ORG_ID },
+        });
+        if (!res.ok) return;
+        const stats = await res.json();
+        // Hero pills (visible immediately).
+        document.querySelectorAll('.stat-pill').forEach(el => {
+          const v = stats[el.dataset.stat] ?? 0;
+          el.textContent = v.toLocaleString();
+        });
+        const pills = document.getElementById('stat-pills');
+        if (pills) { pills.classList.remove('hidden'); pills.classList.add('flex'); }
+        // Impact-section counters — set the real target; the observer animates
+        // to it when the section scrolls into view.
+        document.querySelectorAll('.counter[data-stat]').forEach(el => {
+          el.dataset.target = String(stats[el.dataset.stat] ?? 0);
+        });
+      } catch (_e) { /* leave pills hidden / counters at 0 on failure */ }
+    })();
+
+    // ── Recent Activity — live from the public announcements API ──────
+    (async () => {
+      const feed = document.getElementById('activity-feed');
+      const loading = document.getElementById('activity-loading');
+      const empty = document.getElementById('activity-empty');
+      const CAT = {
+        EVENT: { icon: '📅', tag: 'Events' },
+        GREEN_DRIVE: { icon: '🌱', tag: 'Green FYC' },
+        BLOOD_REQUEST: { icon: '🩸', tag: 'Blood' },
+        OPPORTUNITY: { icon: '💼', tag: 'Opportunity' },
+        ALERT: { icon: '⚠️', tag: 'Alert' },
+        GENERAL: { icon: '📢', tag: 'Announcement' },
+      };
+      const rel = (iso) => {
+        const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+        if (s < 3600) return `${Math.floor(s / 60) || 1} min ago`;
+        if (s < 86400) return `${Math.floor(s / 3600)} hr ago`;
+        return `${Math.floor(s / 86400)} day${Math.floor(s / 86400) > 1 ? 's' : ''} ago`;
+      };
+      const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/announcements`, {
+          headers: { 'X-Organization-ID': DEFAULT_ORG_ID },
+        });
+        const all = res.ok ? await res.json() : [];
+        const items = Array.isArray(all) ? all.slice(0, 6) : [];
+        if (loading) loading.remove();
+        if (items.length === 0) {
+          if (empty) empty.classList.remove('hidden');
+          return;
+        }
+        const html = items.map((a) => {
+          const meta = CAT[a.category] || CAT.GENERAL;
+          const title = esc(a.title_en || a.title_ta || '');
+          const body = esc(a.body_en || a.body_ta || '');
+          return `
+            <div class="bg-white border border-gray-200/80 rounded-2xl p-5 hover:border-gray-300 transition-colors shadow-sm space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl border border-gray-200">${meta.icon}</div>
+                  <div><div class="font-bold text-gray-900 text-sm">${title}</div></div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">${meta.tag}</span>
+                  <div class="text-[10px] text-gray-400 mt-1">${rel(a.created_at)}</div>
+                </div>
+              </div>
+              <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">${body}</p>
+            </div>`;
+        }).join('');
+        feed.insertAdjacentHTML('beforeend', html);
+      } catch (_e) {
+        if (loading) loading.remove();
+        if (empty) empty.classList.remove('hidden');
+      }
+    })();
 
     // ── Counter animation ────────────────────────────────────────────
     const counterObserver = new IntersectionObserver((entries) => {

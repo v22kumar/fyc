@@ -114,11 +114,16 @@ class GoogleLoginRequest(BaseModel):
 
 def _build_user_out(user, profile=None):
     """Build UserOut from User + optional UserProfile."""
+    # A profile is "complete" only when we have the full mandatory set: name,
+    # date of birth, gender AND a phone number. Google-only accounts (no phone)
+    # therefore stay incomplete until they add one, so the onboarding gate keeps
+    # asking — no dataless users slip into the database.
     is_complete = bool(
         profile
         and (profile.full_name_en or profile.full_name_ta)
         and profile.date_of_birth
         and profile.gender
+        and user.phone_number
     )
     return UserOut(
         id=user.id,

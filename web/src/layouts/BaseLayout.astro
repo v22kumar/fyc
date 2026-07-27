@@ -221,6 +221,29 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
       })();
     </script>
 
+    <!-- Onboarding gate: a signed-in user whose profile is incomplete (missing
+         name / DOB / gender / phone) is forced to /complete-profile before using
+         the app, so no dataless accounts slip through. Admins are exempt so the
+         owner can never be locked out of the dashboard. -->
+    <script>
+      (function () {
+        try {
+          if (!localStorage.getItem('fyc_token')) return;
+          const raw = localStorage.getItem('fyc_user');
+          if (!raw) return;
+          const u = JSON.parse(raw);
+          const role = String(u.role || '').toUpperCase();
+          if (role === 'ADMIN' || role === 'SUPER_ADMIN') return;
+          if (u.is_profile_complete === false) {
+            const path = (location.pathname.replace(/\/+$/, '') || '/');
+            if (path !== '/complete-profile' && path !== '/login') {
+              window.location.replace('/complete-profile');
+            }
+          }
+        } catch (_e) { /* never block rendering on a parse error */ }
+      })();
+    </script>
+
     <!-- Protected link interceptor for guests -->
     <script>
       (function () {

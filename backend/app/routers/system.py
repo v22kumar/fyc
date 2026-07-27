@@ -1,13 +1,43 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
 from app.core.database import get_db
 from app.dependencies import RoleChecker
+from app.middleware.tenant import require_tenant_id
 from app.models.user import User
 import psutil
 import os
 
 router = APIRouter(prefix="/system", tags=["System & Health"])
+
+
+@router.get("/impact-stats")
+def impact_stats(db: Session = Depends(get_db), tenant_id=Depends(require_tenant_id)):
+    """Public: real community-impact counts for the marketing homepage.
+
+    Every figure is a live COUNT of actual rows for this tenant — no hardcoded
+    numbers. Each count is guarded so a missing/!-yet-created table can never
+    500 the public homepage; it just contributes 0.
+    """
+    from app.models.blood_donor import BloodDonor
+    from app.models.event import Event
+    from app.models.green_fyc import TreeRegistration
+
+    def _count(model, *filters) -> int:
+        try:
+            q = db.query(func.count(model.id)).filter(model.organization_id == tenant_id)
+            for f in filters:
+                q = q.filter(f)
+            return int(q.scalar() or 0)
+        except Exception:
+            return 0
+
+    return {
+        "trees": _count(TreeRegistration),
+        "blood_donors": _count(BloodDonor),
+        "events": _count(Event, Event.status != "deleted"),
+        "members": _count(User),
+    }
 
 # Both endpoints expose infrastructure internals / cross-table data — admin only.
 require_admin = RoleChecker(["ADMIN", "SUPER_ADMIN"])
