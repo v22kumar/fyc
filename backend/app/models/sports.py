@@ -17,6 +17,8 @@ class Tournament(Base, TimestampMixin, TenantModelMixin):
     __tablename__ = "tournaments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    # Short, typeable public code for share links (…/t/K7P2). Assigned on create.
+    short_code = Column(String(12), unique=True, index=True, nullable=True)
     name_ta = Column(String(200), nullable=False)
     name_en = Column(String(200), nullable=False)
     sport = Column(String(30), nullable=False)

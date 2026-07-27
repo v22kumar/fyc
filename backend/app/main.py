@@ -342,6 +342,36 @@ async def lifespan(app: FastAPI):
         except Exception as _ide:
             logger.warning(f"[idempotency-index] block failed: {_ide}")
 
+        # Backfill short public share codes for events + tournaments created
+        # before the feature existed, then enforce uniqueness. The column itself
+        # is added by the schema-reconcile above; here we fill NULLs and add the
+        # unique index (create_all only indexes brand-new tables). Best-effort.
+        try:
+            from app.core.short_code import generate_unique_short_code
+            from app.models.event import Event as _Ev
+            from app.models.sports import Tournament as _Tn
+            from sqlalchemy import text as _sc_text
+            with SessionLocal() as _s:
+                _filled = 0
+                for _model in (_Ev, _Tn):
+                    for _row in _s.query(_model).filter(_model.short_code.is_(None)).all():
+                        _row.short_code = generate_unique_short_code(_s, _model)
+                        _filled += 1
+                    _s.commit()
+                if _filled:
+                    logger.info(f"[short-code] backfilled {_filled} share code(s)")
+            for _tbl in ("events", "tournaments"):
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(_sc_text(
+                            f"CREATE UNIQUE INDEX IF NOT EXISTS ux_{_tbl}_short_code "
+                            f"ON {_tbl} (short_code) WHERE short_code IS NOT NULL"
+                        ))
+                except Exception as _sie:
+                    logger.warning(f"[short-code] index {_tbl}: {_sie}")
+        except Exception as _sce:
+            logger.warning(f"[short-code] backfill block failed: {_sce}")
+
         # Repair the cricket_balls FK: the live prod table was created with player
         # FKs pointing at the since-removed cricket_players table, so with FK
         # enforcement on, every ball insert fails ("Unable to record this ball").
