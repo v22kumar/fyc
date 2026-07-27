@@ -213,12 +213,17 @@ class _Header extends StatelessWidget {
           if (parts.isNotEmpty && parts.first.isNotEmpty) firstName = parts.first;
         }
 
-        final hour = DateTime.now().hour;
+        final _now = DateTime.now();
+        final hour = _now.hour;
         final greetingEn = hour < 12
             ? trId('good_morning')
             : hour < 17
                 ? trId('good_afternoon')
                 : trId('good_evening');
+        // Today's date — more useful than a generic tagline in the header.
+        const _wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const _mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final dateLine = '${_wd[_now.weekday - 1]}, ${_now.day} ${_mo[_now.month - 1]} ${_now.year}';
 
         // V2 1.1 — compact collapsing header. The toolbar row (brand · language
         // · bell · avatar) and the search pill stay pinned; the aurora backdrop
@@ -336,10 +341,14 @@ class _Header extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                         const SizedBox(height: 3),
-                        Text(trId('everything_you_need_all_in_one_place'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white60, fontSize: 12.5, fontWeight: FontWeight.w400)),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today_rounded, color: Colors.white54, size: 12),
+                            const SizedBox(width: 6),
+                            Text(dateLine,
+                                style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500, letterSpacing: 0.2)),
+                          ],
+                        ),
                       ],
                     ),
                   ),

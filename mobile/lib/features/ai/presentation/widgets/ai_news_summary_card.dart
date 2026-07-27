@@ -64,7 +64,7 @@ class AiNewsSummaryCard extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const AiSparkle(size: 17),
+          child: const Icon(Icons.newspaper_rounded, size: 18, color: Colors.white),
         ),
         const SizedBox(width: 12),
         Expanded(

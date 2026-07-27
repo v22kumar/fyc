@@ -136,35 +136,93 @@ class AIService:
         # field must not abort the whole digest (this is why it was silently
         # empty — Event has title_en/title_ta, not `title`, so `e.title` raised
         # for every org that had any events).
-        context = "Today's Community Data:\\n"
+        # Gather what members can ACT ON today — open registrations, live
+        # tournaments, blood availability — not just titles. Each block is
+        # defensive so one bad field can't blank the whole digest.
+        context = "Today's Community Data (tell members what's happening and what they can DO today):\\n"
         try:
             from app.models.event import Event
-            from app.models.sports import Fixture
+            from app.models.sports import Tournament
             from app.models.blood_donor import BloodDonor
+            from sqlalchemy import func as _func
 
-            events = self.db.query(Event).filter(Event.organization_id == organization_id).limit(3).all()
-            fixtures = self.db.query(Fixture).filter(Fixture.tournament_id != None).limit(3).all()
-            blood_requests = self.db.query(BloodDonor).filter(BloodDonor.is_available == True).limit(2).all()
+            # Upcoming / registration-open events.
+            events = (
+                self.db.query(Event)
+                .filter(
+                    Event.organization_id == organization_id,
+                    Event.status == "active",
+                    Event.is_published == True,
+                    Event.event_end >= today,
+                )
+                .order_by(Event.event_start.asc())
+                .limit(5)
+                .all()
+            )
+            ev_lines = []
+            for e in events:
+                title = e.title_en or e.title_ta or ""
+                if not title:
+                    continue
+                when = e.event_start.strftime("%d %b") if e.event_start else ""
+                reg = "registration OPEN — invite members to register" if getattr(e, "registration_enabled", False) else "details only"
+                ev_lines.append(f"{title} ({when}; {reg})")
+            if ev_lines:
+                context += "Events: " + "; ".join(ev_lines) + "\\n"
 
-            event_titles = [(e.title_en or e.title_ta or "") for e in events]
-            context += "Events: " + ", ".join(t for t in event_titles if t) + "\\n"
-            context += "Sports: " + ", ".join(f"{f.team_a_score} vs {f.team_b_score}" for f in fixtures if f.team_a_score) + "\\n"
-            context += "Blood Donors: " + ", ".join(f"Available: {br.blood_group}" for br in blood_requests) + "\\n"
+            # Tournaments open for team registration or live now.
+            tournaments = (
+                self.db.query(Tournament)
+                .filter(
+                    Tournament.organization_id == organization_id,
+                    Tournament.status.in_(["UPCOMING", "ONGOING"]),
+                )
+                .limit(4)
+                .all()
+            )
+            t_lines = []
+            for t in tournaments:
+                nm = t.name_en or t.name_ta or ""
+                if not nm:
+                    continue
+                state = "LIVE now — invite members to watch" if t.status == "ONGOING" else "registration open — invite teams to enter"
+                t_lines.append(f"{nm} ({t.sport}; {state})")
+            if t_lines:
+                context += "Tournaments: " + "; ".join(t_lines) + "\\n"
+
+            # Blood availability by group.
+            bd = (
+                self.db.query(BloodDonor.blood_group, _func.count(BloodDonor.id))
+                .filter(
+                    BloodDonor.organization_id == organization_id,
+                    BloodDonor.is_available == True,
+                )
+                .group_by(BloodDonor.blood_group)
+                .all()
+            )
+            groups = [f"{g} ({c} ready)" for g, c in bd if g]
+            if groups:
+                context += "Blood donors available: " + ", ".join(groups) + "\\n"
         except Exception as e:
             logger.warning(f"Daily digest data aggregation partial failure: {e}")
 
         prompt = f"""
-        You are the FYC Connect community AI assistant. Based on the data below,
-        write a concise, engaging, community-focused daily digest (max 3 sentences).
-        Provide it in BOTH English and Tamil.
+        You are the FYC Connect community assistant. Using ONLY the data below,
+        write a warm, concise daily briefing (2-4 short sentences) that tells
+        members what is happening and, crucially, what they can DO today. When a
+        registration is OPEN, explicitly invite them to register/enter; when a
+        tournament is LIVE, invite them to watch; if blood donors are listed,
+        mention support is available. Do NOT invent anything not in the data. If
+        there is little data, keep it short and welcoming. Provide BOTH English
+        and Tamil.
 
         Data:
         {context}
 
         Return ONLY JSON (no markdown):
         {{
-            "summary_en": "the digest in English",
-            "summary_ta": "the same digest written in Tamil (தமிழில்)"
+            "summary_en": "the briefing in English",
+            "summary_ta": "the same briefing written in Tamil (தமிழில்)"
         }}
         """
 

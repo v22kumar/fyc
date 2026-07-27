@@ -83,26 +83,20 @@ class AiDailyDigestCard extends ConsumerWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.18),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(0.25)),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AiSparkle(size: 15),
-              SizedBox(width: 6),
-              Text(trId('fyc_ai'),
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.4)),
-            ],
-          ),
+          child: const Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 18),
         ),
         const SizedBox(width: 10),
-        const Expanded(
-          child: Text("Today's Briefing",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+        Expanded(
+          child: Text(trId('todays_summary'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
         ),
       ],
     );
