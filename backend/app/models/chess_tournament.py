@@ -73,6 +73,7 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
         GUID(),
         ForeignKey("chess_tournaments.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,  # every bracket/detail query filters by tournament
     )
     round = Column(Integer, nullable=False)
     slot = Column(Integer, nullable=False)
@@ -83,7 +84,8 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     game_id = Column(
-        GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"),
+        nullable=True, index=True,  # tournament→live-games join
     )
     winner_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
@@ -99,6 +101,9 @@ class ChessTournamentMatch(Base, TimestampMixin, TenantModelMixin):
     # Round activation: a match only becomes playable once the manager starts its
     # round ("Start Next Round"). Round 1 is activated when the tournament starts.
     activated = Column(Boolean, default=False)
+    # When this match's round was activated (Round 1 at start, later rounds at
+    # "Start Next Round"). Anchors the no-show ready-timeout window.
+    activated_at = Column(DateTime(timezone=True), nullable=True)
     # Per-player "Ready" acknowledgement before an online match can begin. Both
     # players must be ready to open the board. Nullable → treated as False.
     a_ready = Column(Boolean, default=False)

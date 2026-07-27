@@ -1,9 +1,11 @@
 import random
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -32,6 +34,8 @@ from app.core.short_code import generate_unique_short_code
 from app.core.config import settings
 
 router = APIRouter(prefix="/chess/tournaments", tags=["Chess Tournaments"])
+# Disabled under TESTING (shared client address would trip the shared counter).
+limiter = Limiter(key_func=get_remote_address, enabled=not settings.TESTING)
 
 require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
@@ -85,6 +89,32 @@ def _notify(db: Session, org_id, user_id, title_en, title_ta, body_en, body_ta, 
 
 
 # ── bracket helpers ──────────────────────────────────────────────────────────
+def _audit(db: Session, org_id, user_id, action_type: str, match_id, old_values=None, new_values=None):
+    """Append a critical-action audit row to the CURRENT transaction (committed by
+    the caller, so the audit is atomic with the state change). Best-effort — never
+    breaks the primary action."""
+    try:
+        from app.models.audit import AuditLog
+        db.add(AuditLog(
+            organization_id=org_id,
+            user_id=user_id,
+            action_type=action_type,
+            target_table="chess_tournament_matches",
+            target_id=match_id,
+            old_values=old_values,
+            new_values=new_values,
+        ))
+    except Exception:
+        pass
+
+
+def _aware(dt):
+    """Normalise a possibly-naive DB datetime (SQLite) to timezone-aware UTC."""
+    if dt is None:
+        return None
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
 def _advance(db: Session, tour: ChessTournament, match: ChessTournamentMatch, winner_id):
     """Record a winner and place them in the next round slot. Does NOT activate
     the next round — that is the manager's manual "Start Next Round" decision.
@@ -298,7 +328,9 @@ def create_tournament(
 
 
 @router.post("/{tour_id}/register", response_model=ChessTournamentOut)
+@limiter.limit("30/minute")
 def register(
+    request: Request,
     tour_id: uuid.UUID,
     db: Session = Depends(get_db),
     tenant_id: uuid.UUID = Depends(require_tenant_id),
@@ -484,6 +516,7 @@ def start_tournament(
         m.player_a_id = a
         m.player_b_id = b
         m.activated = True  # round 1 goes live when the tournament starts
+        m.activated_at = datetime.now(timezone.utc)
         if a and b:
             m.status = "READY"
         elif a and not b:
@@ -553,6 +586,7 @@ def start_next_round(
         if m.round != nxt:
             continue
         m.activated = True
+        m.activated_at = datetime.now(timezone.utc)
         if m.player_a_id and m.player_b_id and m.winner_id is None:
             m.status = "READY"
             activated_players += [m.player_a_id, m.player_b_id]
@@ -712,7 +746,92 @@ def report_result(
         raise HTTPException(status_code=400, detail="Match already decided")
     if payload.winner_id not in (m.player_a_id, m.player_b_id):
         raise HTTPException(status_code=400, detail="Winner must be one of the two players")
+    loser_id = m.player_b_id if payload.winner_id == m.player_a_id else m.player_a_id
     _advance(db, tour, m, payload.winner_id)
+    _audit(
+        db, tour.organization_id, current_user.id, "CHESS_MATCH_RESULT_OVERRIDE", match_id,
+        {"player_a": str(m.player_a_id), "player_b": str(m.player_b_id)},
+        {"winner_id": str(payload.winner_id), "decided_by": "admin"},
+    )
+    if loser_id:
+        _notify(
+            db, tour.organization_id, loser_id,
+            "Match result recorded", "ஆட்ட முடிவு பதிவு",
+            f"The organizer recorded the result of your match in {tour.name}.",
+            f"{tour.name} போட்டியில் உங்கள் ஆட்டத்தின் முடிவை அமைப்பாளர் பதிவு செய்தார்.",
+            {"route": f"/chess/tournaments/{tour.id}"},
+        )
+    db.commit()
+    return _detail(db, tour, current_user.id)
+
+
+@router.post("/{tour_id}/matches/{match_id}/claim-walkover", response_model=ChessTournamentDetailOut)
+def claim_walkover(
+    tour_id: uuid.UUID,
+    match_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """A present, ready player claims a walkover once the opponent has failed to
+    mark ready within CHESS_READY_TIMEOUT_MINUTES of the round being activated.
+    This is the safety valve that stops a single no-show from stalling the whole
+    bracket — the present player advances, the absent one forfeits."""
+    tour = _get_tour(db, tour_id, tenant_id)
+    m = (
+        db.query(ChessTournamentMatch)
+        .filter(
+            ChessTournamentMatch.id == match_id,
+            ChessTournamentMatch.tournament_id == tour_id,
+        )
+        .first()
+    )
+    if not m:
+        raise HTTPException(status_code=404, detail="Match not found")
+    if current_user.id not in (m.player_a_id, m.player_b_id):
+        raise HTTPException(status_code=403, detail="You are not in this match")
+    if m.winner_id:
+        raise HTTPException(status_code=400, detail="Match already decided")
+    if not _bool(m.activated):
+        raise HTTPException(status_code=400, detail="This round has not started yet")
+    if (m.conduct_mode or "APP") == "PHYSICAL":
+        raise HTTPException(status_code=400, detail="Physical match — the organizer records the result")
+
+    is_a = current_user.id == m.player_a_id
+    opponent_id = m.player_b_id if is_a else m.player_a_id
+    if opponent_id is None:
+        raise HTTPException(status_code=400, detail="This match has no opponent to walk over")
+    opponent_ready = _bool(m.b_ready) if is_a else _bool(m.a_ready)
+    if opponent_ready:
+        raise HTTPException(status_code=409, detail="Your opponent is ready — play the match")
+
+    anchor = _aware(m.activated_at) or _aware(m.reporting_time)
+    if anchor is None:
+        raise HTTPException(status_code=409, detail="Walkover is not available for this match yet")
+    deadline = anchor + timedelta(minutes=settings.CHESS_READY_TIMEOUT_MINUTES)
+    now = datetime.now(timezone.utc)
+    if now < deadline:
+        wait = int((deadline - now).total_seconds() // 60) + 1
+        raise HTTPException(status_code=409, detail=f"Please wait ~{wait} more minute(s) for your opponent")
+
+    # Walkover: the claimant is (by definition) ready and present.
+    if is_a:
+        m.a_ready = True
+    else:
+        m.b_ready = True
+    _advance(db, tour, m, current_user.id)
+    _audit(
+        db, tour.organization_id, current_user.id, "CHESS_WALKOVER_CLAIMED", match_id,
+        {"absent_player_id": str(opponent_id)},
+        {"winner_id": str(current_user.id), "reason": "no_show"},
+    )
+    _notify(
+        db, tour.organization_id, opponent_id,
+        "Match forfeited — no-show", "ஆட்டம் இழப்பு — வரவில்லை",
+        f"You did not mark ready in time, so your {tour.name} match was awarded to your opponent.",
+        f"நேரத்தில் தயாராகாததால், {tour.name} போட்டியில் உங்கள் ஆட்டம் எதிராளிக்கு வழங்கப்பட்டது.",
+        {"route": f"/chess/tournaments/{tour.id}"},
+    )
     db.commit()
     return _detail(db, tour, current_user.id)
 
