@@ -711,7 +711,7 @@ from app.routers import (
     events, issues, club_requests,
     opportunities, community, blood_donors,
     geography, green_fyc, instagram, sports, chess,
-    search, follows, comments, attachments, system
+    search, follows, comments, attachments, system, share
 )
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
@@ -720,6 +720,7 @@ app.include_router(geography.router, prefix="/api/v1")
 app.include_router(blood_donors.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
+app.include_router(share.router, prefix="/api/v1")
 app.include_router(membership.router, prefix="/api/v1")
 app.include_router(community_router.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")

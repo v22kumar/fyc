@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     # The app is fully compatible with PostgreSQL if you ever decide to upgrade.
     DATABASE_URL: str = "sqlite:////app/data/fyc_connect.db"
 
+    # Public base URL of the Astro web app — used to build absolute short share
+    # links (…/e/K7P2) and the QR codes that encode them.
+    WEB_BASE_URL: str = "https://fyc-web.fly.dev"
+
     # Connection-pool sizing for a REMOTE Postgres (e.g. Supabase). Ignored for
     # SQLite. Each threadpooled sync request checks out one connection, so the
     # pool should be sized against FastAPI's threadpool (~40) AND your Postgres
