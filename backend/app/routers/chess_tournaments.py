@@ -28,6 +28,8 @@ from app.schemas.chess_tournament import (
 )
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
+from app.core.short_code import generate_unique_short_code
+from app.core.config import settings
 
 router = APIRouter(prefix="/chess/tournaments", tags=["Chess Tournaments"])
 
@@ -190,6 +192,7 @@ def _serialize(db: Session, tour: ChessTournament, user_id) -> ChessTournamentOu
                 break
     return ChessTournamentOut(
         id=tour.id,
+        short_code=tour.short_code,
         name=tour.name,
         description=tour.description,
         status=tour.status,
@@ -216,6 +219,21 @@ def _get_tour(db, tour_id, tenant_id) -> ChessTournament:
 
 
 # ── endpoints ────────────────────────────────────────────────────────────────
+@router.get("/by-code/{code}")
+def resolve_chess_tournament_code(code: str, db: Session = Depends(get_db)):
+    """Public: resolve a short share code (…/t/K7P2) to its chess-tournament id.
+    No auth/tenant — codes are globally unique. The web resolver redirects to the
+    telecast view scoped to this tournament's live games."""
+    t = (
+        db.query(ChessTournament.id)
+        .filter(func.upper(ChessTournament.short_code) == code.strip().upper())
+        .first()
+    )
+    if not t:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown code")
+    return {"id": str(t[0]), "type": "chess_tournament"}
+
+
 @router.get("", response_model=List[ChessTournamentOut])
 def list_tournaments(
     db: Session = Depends(get_db),
@@ -245,6 +263,7 @@ def create_tournament(
     tour = ChessTournament(
         id=uuid.uuid4(),
         organization_id=tenant_id,
+        short_code=generate_unique_short_code(db, ChessTournament),
         name=name,
         description=(payload.description or "").strip() or None,
         registration_deadline=payload.registration_deadline,
@@ -256,6 +275,10 @@ def create_tournament(
     db.commit()
     db.refresh(tour)
 
+    # Short, typeable telecast link for the notice/banner (…/t/K7P2).
+    _link = f"{settings.WEB_BASE_URL.rstrip('/')}/t/{tour.short_code}" if tour.short_code else ""
+    _link_line = f"\n\n🔗 {_link}" if _link else ""
+
     # A tournament opening for registration IS club news — put it on the
     # notice board automatically instead of relying on a separate admin post.
     from app.services.auto_announce import auto_announce
@@ -266,8 +289,8 @@ def create_tournament(
         category=AnnouncementCategory.EVENT,
         title_ta=f"♟️ {name} — பதிவு தொடங்கியது",
         title_en=f"♟️ {name} — registration open",
-        body_ta=f"{name} சதுரங்கப் போட்டிக்கான பதிவு இப்போது திறந்துள்ளது. Play → Chess → Tournaments-இல் பதிவு செய்யுங்கள்.",
-        body_en=f"Registration for the {name} chess tournament is now open. Register in Play → Chess → Tournaments.",
+        body_ta=f"{name} சதுரங்கப் போட்டிக்கான பதிவு இப்போது திறந்துள்ளது. Play → Chess → Tournaments-இல் பதிவு செய்யுங்கள்.{_link_line}",
+        body_en=f"Registration for the {name} chess tournament is now open. Register in Play → Chess → Tournaments.{_link_line}",
         expires_at=payload.registration_deadline,
         created_by_user_id=current_user.id,
     )

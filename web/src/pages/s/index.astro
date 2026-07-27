@@ -41,17 +41,26 @@ import { API_BASE } from '../../lib/config';
       };
       if (!m) return fail();
       const [, kind, code] = m;
-      const url = kind === 'e'
-        ? `${API_BASE}/api/v1/events/by-code/${code}`
-        : `${API_BASE}/api/v1/sports/tournaments/by-code/${code}`;
       try {
-        const res = await fetch(url);
-        if (!res.ok) return fail();
-        const { id } = await res.json();
-        const dest = kind === 'e'
-          ? `/event-detail?id=${encodeURIComponent(id)}`
-          : `/tournament-detail?id=${encodeURIComponent(id)}`;
-        window.location.replace(dest);
+        if (kind === 'e') {
+          const res = await fetch(`${API_BASE}/api/v1/events/by-code/${code}`);
+          if (!res.ok) return fail();
+          const { id } = await res.json();
+          return window.location.replace(`/event-detail?id=${encodeURIComponent(id)}`);
+        }
+        // kind === 't': a sports tournament OR a chess tournament share the /t/
+        // namespace. Try sports first, then chess (→ live telecast view).
+        const sport = await fetch(`${API_BASE}/api/v1/sports/tournaments/by-code/${code}`);
+        if (sport.ok) {
+          const { id } = await sport.json();
+          return window.location.replace(`/tournament-detail?id=${encodeURIComponent(id)}`);
+        }
+        const chess = await fetch(`${API_BASE}/api/v1/chess/tournaments/by-code/${code}`);
+        if (chess.ok) {
+          const { id } = await chess.json();
+          return window.location.replace(`/chess?tournament=${encodeURIComponent(id)}`);
+        }
+        fail();
       } catch (_e) {
         fail();
       }

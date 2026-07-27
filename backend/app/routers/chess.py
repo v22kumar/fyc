@@ -305,6 +305,52 @@ def list_live_games(
     return result
 
 
+@router.get("/public/games/live", response_model=List[LiveGameOut])
+def list_public_live_games(
+    tournament: Optional[uuid.UUID] = None,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Public telecast: all in-progress games for the org, no auth required, so a
+    web/Android 'Live now' list can show games to anyone. Tenant comes from the
+    X-Organization-ID header (same as other public endpoints). Pass ?tournament=
+    to scope to one chess tournament's live games (for its share-link telecast)."""
+    q = db.query(ChessGame).filter(
+        ChessGame.organization_id == tenant_id,
+        ChessGame.status == "in_progress",
+    )
+    if tournament is not None:
+        from app.models.chess_tournament import ChessTournamentMatch
+        game_ids = [
+            m.game_id for m in db.query(ChessTournamentMatch.game_id)
+            .filter(ChessTournamentMatch.tournament_id == tournament,
+                    ChessTournamentMatch.game_id.isnot(None))
+            .all()
+        ]
+        if not game_ids:
+            return []
+        q = q.filter(ChessGame.id.in_(game_ids))
+    games = q.order_by(ChessGame.started_at.desc()).limit(50).all()
+    result = []
+    for g in games:
+        session = ws_manager.get(str(g.id))
+        if session:
+            ply = len(session.san_list)
+            spec_count = session.spectator_count
+        else:
+            ply = db.query(ChessMove).filter(ChessMove.game_id == g.id).count()
+            spec_count = 0
+        result.append(LiveGameOut(
+            id=g.id,
+            white_name=_display_name(db, g.white) or "White",
+            black_name=_display_name(db, g.black) or "Black",
+            ply=ply,
+            time_control=g.time_control,
+            spectator_count=spec_count,
+        ))
+    return result
+
+
 @router.get("/games", response_model=List[ChessGameOut])
 def list_games(
     player_id: Optional[uuid.UUID] = Query(None),
@@ -747,19 +793,24 @@ def decline_challenge(
 async def spectate_websocket(
     game_id: str,
     websocket: WebSocket,
-    token: str = Query(...),
+    token: str = Query(None),
 ):
     # A WebSocket lives for minutes; taking Depends(get_db) would pin one of the
     # (30) pooled DB connections for the whole time, and enough open sockets
     # would starve the pool and stall ball-scoring. Instead every DB touch uses
     # a short-lived SessionLocal() opened off the event loop, then closed.
-    # ── Auth ──────────────────────────────────────────────────────────────────
-    try:
-        payload = decode_token(token)
-        user_id = str(payload["sub"])
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
+    # ── Identity (public telecast: token OPTIONAL) ─────────────────────────────
+    # Spectating is public — anyone with the link can watch. A token, if present,
+    # only labels the viewer; anonymous viewers get a unique ephemeral id so they
+    # don't collide in the spectators map.
+    user_id: Optional[str] = None
+    if token:
+        try:
+            user_id = str(decode_token(token)["sub"])
+        except Exception:
+            user_id = None
+    if not user_id:
+        user_id = f"anon_{uuid.uuid4().hex[:12]}"
 
     # ── Load game ─────────────────────────────────────────────────────────────
     try:
@@ -768,32 +819,52 @@ async def spectate_websocket(
         await websocket.close(code=4002, reason="Invalid game_id")
         return
 
-    def _load_status():
+    # Load everything needed to (re)build a live session from the DB, so a
+    # spectator can attach even after a redeploy wiped the in-memory session.
+    def _load_game():
         with SessionLocal() as s:
             g = s.query(ChessGame).filter(ChessGame.id == gid).first()
-            return g.status if g else None
+            if g is None:
+                return None
+            moves = [
+                m.uci for m in s.query(ChessMove)
+                .filter(ChessMove.game_id == gid)
+                .order_by(ChessMove.ply.asc())
+                .all()
+            ]
+            return {
+                "status": g.status,
+                "white_id": str(g.white_id) if g.white_id else "",
+                "black_id": str(g.black_id) if g.black_id else "",
+                "white_name": _display_name(s, g.white) or "White",
+                "black_name": _display_name(s, g.black) or "Black",
+                "time_control": g.time_control,
+                "moves": moves,
+            }
 
-    status = await run_in_threadpool(_load_status)
-    if status is None:
+    loaded = await run_in_threadpool(_load_game)
+    if loaded is None:
         await websocket.close(code=4003, reason="Game not found")
         return
-
-    if status not in ("waiting", "in_progress"):
+    if loaded["status"] not in ("waiting", "in_progress"):
         await websocket.close(code=4005, reason="Game is not live")
         return
 
     # ── Accept + register as spectator ────────────────────────────────────────
     await websocket.accept()
 
-    session = ws_manager.get(str(gid))
-    if not session:
-        # Game exists in DB but session hasn't started yet — send minimal snapshot
-        await websocket.send_text(__import__("json").dumps({
-            "type": "waiting",
-            "role": "spectator",
-        }))
-        await websocket.close()
-        return
+    # Reuse the live session if present; otherwise rebuild it from the persisted
+    # moves so the telecast shows the true position (survives redeploys). Only
+    # seeds on create — a live game is never re-replayed.
+    session = ws_manager.get_or_create(
+        game_id=str(gid),
+        white_id=loaded["white_id"],
+        black_id=loaded["black_id"],
+        white_name=loaded["white_name"],
+        black_name=loaded["black_name"],
+        time_control=loaded["time_control"],
+        initial_uci=loaded["moves"],
+    )
 
     await session.add_spectator(user_id, websocket)
 

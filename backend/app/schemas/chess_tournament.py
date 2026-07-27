@@ -25,6 +25,7 @@ class EntryOut(BaseModel):
 
 class ChessTournamentOut(BaseModel):
     id: UUID
+    short_code: Optional[str] = None
     name: str
     description: Optional[str]
     status: str

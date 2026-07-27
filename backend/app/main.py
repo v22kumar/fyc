@@ -350,17 +350,18 @@ async def lifespan(app: FastAPI):
             from app.core.short_code import generate_unique_short_code
             from app.models.event import Event as _Ev
             from app.models.sports import Tournament as _Tn
+            from app.models.chess_tournament import ChessTournament as _Ct
             from sqlalchemy import text as _sc_text
             with SessionLocal() as _s:
                 _filled = 0
-                for _model in (_Ev, _Tn):
+                for _model in (_Ev, _Tn, _Ct):
                     for _row in _s.query(_model).filter(_model.short_code.is_(None)).all():
                         _row.short_code = generate_unique_short_code(_s, _model)
                         _filled += 1
                     _s.commit()
                 if _filled:
                     logger.info(f"[short-code] backfilled {_filled} share code(s)")
-            for _tbl in ("events", "tournaments"):
+            for _tbl in ("events", "tournaments", "chess_tournaments"):
                 try:
                     with engine.begin() as conn:
                         conn.execute(_sc_text(
