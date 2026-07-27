@@ -85,6 +85,24 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateEvent: (
+    id: string,
+    payload: Partial<{
+      title_ta: string;
+      title_en: string;
+      description_ta: string;
+      description_en: string;
+      event_start: string;
+      event_end: string;
+      registration_enabled: boolean;
+    }>,
+  ) =>
+    request<import('@/types').Event>(`/api/v1/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteEvent: (id: string) =>
+    request<{ message: string }>(`/api/v1/events/${id}`, { method: 'DELETE' }),
 
   // Members
   listMembers: (role?: string) =>

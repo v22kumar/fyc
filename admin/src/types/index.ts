@@ -39,6 +39,7 @@ export interface Event {
   event_start: string;
   event_end: string;
   requires_registration: boolean | null;
+  registration_enabled?: boolean | null;
   banner_url: string | null;
   created_by_user_id: string | null;
   created_at: string;
