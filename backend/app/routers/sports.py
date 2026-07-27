@@ -259,15 +259,19 @@ def create_tournament(
     if status == "UPCOMING":
         from app.services.auto_announce import auto_announce
         from app.models.announcement import AnnouncementCategory
+        from app.core.config import settings
         sport = (payload.sport or "").title()
+        # Short, typeable link for the notice/banner (…/t/K7P2, not a UUID URL).
+        _link = f"{settings.WEB_BASE_URL.rstrip('/')}/t/{t.short_code}" if t.short_code else ""
+        _link_line = f"\n\n🔗 {_link}" if _link else ""
         auto_announce(
             db,
             org_id=current_user.organization_id,
             category=AnnouncementCategory.EVENT,
             title_ta=f"🏆 {payload.name_ta} — பதிவு தொடங்கியது",
             title_en=f"🏆 {payload.name_en} — registration open",
-            body_ta=f"{payload.name_ta} ({sport}) போட்டிக்கான பதிவு தொடங்கிவிட்டது. Play → Sports Hub-இல் அணியை பதிவு செய்யுங்கள்.",
-            body_en=f"Registration for {payload.name_en} ({sport}) has opened. Register your team in Play → Sports Hub.",
+            body_ta=f"{payload.name_ta} ({sport}) போட்டிக்கான பதிவு தொடங்கிவிட்டது. Play → Sports Hub-இல் அணியை பதிவு செய்யுங்கள்.{_link_line}",
+            body_en=f"Registration for {payload.name_en} ({sport}) has opened. Register your team in Play → Sports Hub.{_link_line}",
             expires_at=payload.registration_close_date,
             created_by_user_id=current_user.id,
         )

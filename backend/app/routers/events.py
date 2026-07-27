@@ -81,14 +81,19 @@ def create_event(
     if payload.is_published:
         from app.services.auto_announce import auto_announce
         from app.models.announcement import AnnouncementCategory
+        from app.core.config import settings
+        # Print the short, typeable link right in the notice so it can be read
+        # aloud or copied onto a banner (…/e/K7P2 instead of a raw UUID URL).
+        _link = f"{settings.WEB_BASE_URL.rstrip('/')}/e/{event.short_code}" if event.short_code else ""
+        _link_line = f"\n\n🔗 {_link}" if _link else ""
         auto_announce(
             db,
             org_id=current_user.organization_id,
             category=AnnouncementCategory.EVENT,
             title_ta=f"📅 {payload.title_ta}",
             title_en=f"📅 {payload.title_en}",
-            body_ta=payload.description_ta or payload.title_ta,
-            body_en=payload.description_en or payload.title_en,
+            body_ta=(payload.description_ta or payload.title_ta) + _link_line,
+            body_en=(payload.description_en or payload.title_en) + _link_line,
             expires_at=payload.event_end,
             created_by_user_id=current_user.id,
         )
