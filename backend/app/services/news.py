@@ -168,6 +168,118 @@ async def get_central_jobs_news(limit: int = MAX_CENTRAL_JOBS_ITEMS) -> list[dic
     return await _get_cached(_central_jobs_cache, CENTRAL_JOBS_RSS_URL, min(limit, MAX_CENTRAL_JOBS_ITEMS))
 
 
+import os
+
+_firecrawl_cache: dict = {"items": [], "fetched_at": None}
+
+async def _fetch_firecrawl(query: str, limit: int) -> list[dict]:
+    api_key = os.getenv("FIRECRAWL_API_KEY")
+    if not api_key:
+        return []
+        
+    url = "https://api.firecrawl.dev/v1/search"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "query": query,
+        "limit": limit
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                url, 
+                json=payload, 
+                headers=headers, 
+                timeout=_REQUEST_TIMEOUT,
+                follow_redirects=True
+            )
+        res.raise_for_status()
+        data = res.json().get("data", [])
+        
+        items = []
+        for item in data:
+            title = item.get("title")
+            link = item.get("url")
+            if not title or not link:
+                continue
+            
+            # Firecrawl search might not provide published_at, we default to now or omit
+            items.append({
+                "title": title,
+                "source": "Firecrawl",
+                "link": link,
+                "published_at": datetime.now(timezone.utc),
+            })
+        return items
+    except Exception as e:
+        logger.warning(f"Firecrawl API failed: {e}")
+        return []
+
+async def _get_cached_firecrawl(cache_dict: dict, query: str, limit: int) -> list[dict]:
+    from app.core.cache import get_valkey
+    valkey = get_valkey()
+    cache_key = f"news_cache:firecrawl:{query}"
+    
+    if valkey:
+        cached_data = valkey.get(cache_key)
+        if cached_data:
+            try:
+                items = json.loads(cached_data)
+                for item in items:
+                    if item.get("published_at"):
+                        item["published_at"] = datetime.fromisoformat(item["published_at"])
+                return items[:limit]
+            except Exception as e:
+                logger.warning(f"Valkey cache parse error for Firecrawl {query}: {e}")
+                
+    now = datetime.now(timezone.utc)
+    is_stale = cache_dict["fetched_at"] is None or now - cache_dict["fetched_at"] > _CACHE_TTL
+    if is_stale:
+        items = await _fetch_firecrawl(query, limit)
+        # Even if items is empty, we update cache so we don't spam the API on failure
+        cache_dict["items"] = items
+        cache_dict["fetched_at"] = now
+        
+        if valkey and items:
+            class DateTimeEncoder(json.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, datetime):
+                        return obj.isoformat()
+                    return super().default(obj)
+            valkey.setex(cache_key, int(_CACHE_TTL.total_seconds()), json.dumps(items, cls=DateTimeEncoder))
+            
+    return cache_dict["items"][:limit]
+
+
 async def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]:
     """Return up to `limit` Kanyakumari/Kanniyakumari local headlines (Tamil)."""
-    return await _get_cached(_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL, min(limit, MAX_KANYAKUMARI_ITEMS))
+    # Fetch from both Google News RSS and Firecrawl concurrently
+    rss_task = _get_cached(_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL, limit)
+    fc_task = _get_cached_firecrawl(_firecrawl_cache, "Kanyakumari news", limit)
+    
+    rss_items, fc_items = await asyncio.gather(rss_task, fc_task, return_exceptions=True)
+    
+    combined = []
+    seen_urls = set()
+    
+    if not isinstance(rss_items, Exception):
+        for item in rss_items:
+            combined.append(item)
+            seen_urls.add(item["link"])
+            
+    if not isinstance(fc_items, Exception):
+        for item in fc_items:
+            if item["link"] not in seen_urls:
+                combined.append(item)
+                seen_urls.add(item["link"])
+                
+    # Sort by published_at descending if available
+    combined.sort(
+        key=lambda x: x.get("published_at") or datetime.min.replace(tzinfo=timezone.utc), 
+        reverse=True
+    )
+    
+    return combined[:limit]
