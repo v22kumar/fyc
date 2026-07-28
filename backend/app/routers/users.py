@@ -472,3 +472,33 @@ def block_user(
             # UniqueConstraint(blocker_id, blocked_id) fired. Treat as success.
             db.rollback()
     return {"status": "blocked"}
+
+
+class AdminBlockPayload(_BaseModel):
+    is_blocked: bool
+
+
+@router.post("/{user_id}/admin-block")
+def admin_block_user(
+    user_id: UUID,
+    payload: AdminBlockPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Admin: block or unblock a user from logging into the platform."""
+    target = db.query(User).filter(
+        User.id == user_id,
+        User.organization_id == current_user.organization_id,
+    ).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+        
+    target.is_blocked = payload.is_blocked
+    # If blocking, bump token version to revoke existing sessions immediately
+    if payload.is_blocked:
+        target.token_version = int(target.token_version or 0) + 1
+        
+    db.commit()
+    return {"ok": True, "user_id": str(user_id), "is_blocked": target.is_blocked}

@@ -112,7 +112,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: AppColors.textSecondary[100],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -120,7 +120,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'monospace',
-                  color: Colors.grey[700],
+                  color: AppColors.textSecondary[700],
                 ),
               ),
             ),
@@ -151,19 +151,19 @@ class _QrScanScreenState extends State<QrScanScreen> {
   Widget build(BuildContext context) {
     final isTa = _lang == 'ta';
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.textPrimary,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.textPrimary,
         title: Text(
           trId('scan_qr_code'),
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.background),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: AppColors.background),
         actions: [
           IconButton(
             icon: Icon(
               _torchOn ? Icons.flash_off : Icons.flash_on,
-              color: Colors.white,
+              color: AppColors.background,
             ),
             onPressed: () {
               _controller.toggleTorch();
@@ -205,7 +205,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               trId('place_the_fyc_qr_code_inside_the_frame'),
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.background,
                 fontSize: 13,
                 backgroundColor: Colors.black54,
               ),

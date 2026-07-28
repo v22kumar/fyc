@@ -82,7 +82,7 @@ class KolamBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final ink = color ?? (dark ? Colors.white : const Color(0xFF0A1128));
+    final ink = color ?? (dark ? AppColors.background : Color(0xFF0A1128));
     final op = opacity ?? (dark ? 0.04 : 0.03);
     return Stack(
       children: [

@@ -32,8 +32,10 @@ abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,

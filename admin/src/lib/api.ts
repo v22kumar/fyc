@@ -114,6 +114,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ role }),
     }),
+  blockUser: (userId: string) =>
+    request<{ ok: boolean }>(`/api/v1/users/${userId}/admin-block`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'block' }),
+    }),
+  unblockUser: (userId: string) =>
+    request<{ ok: boolean }>(`/api/v1/users/${userId}/admin-block`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'unblock' }),
+    }),
   createUser: (payload: {
     phone_number?: string;
     email?: string;

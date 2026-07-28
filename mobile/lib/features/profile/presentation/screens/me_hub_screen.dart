@@ -127,7 +127,7 @@ class _ProfileCardState extends State<_ProfileCard> {
   Widget _line(String text) => Padding(
         padding: const EdgeInsets.only(top: 2),
         child: Text(text,
-            style: TextStyle(color: Colors.white.withOpacity(0.82), fontSize: 11.5),
+            style: TextStyle(color: AppColors.background.withOpacity(0.82), fontSize: 11.5),
             maxLines: 1, overflow: TextOverflow.ellipsis),
       );
 
@@ -149,10 +149,10 @@ class _ProfileCardState extends State<_ProfileCard> {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: Colors.white.withOpacity(0.2),
+            backgroundColor: AppColors.background.withOpacity(0.2),
             child: Text(
               _initials,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 19),
+              style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 19),
             ),
           ),
           const SizedBox(width: 14),
@@ -162,7 +162,7 @@ class _ProfileCardState extends State<_ProfileCard> {
               children: [
                 Text(
                   _name,
-                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+                  style: TextStyle(color: AppColors.background, fontSize: 17, fontWeight: FontWeight.w800),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -172,7 +172,7 @@ class _ProfileCardState extends State<_ProfileCard> {
                     _line('${trId('member_since')}: ${_monthYear(card.issuedAt!)}'),
                 ] else ...[
                   const SizedBox(height: 3),
-                  Text(_roleLabel, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
+                  Text(_roleLabel, style: TextStyle(color: AppColors.background.withOpacity(0.85), fontSize: 13)),
                   if (user?.phoneNumber != null) _line(user!.phoneNumber!),
                 ],
               ],
@@ -184,7 +184,7 @@ class _ProfileCardState extends State<_ProfileCard> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: QrImageView(
@@ -197,7 +197,7 @@ class _ProfileCardState extends State<_ProfileCard> {
                 const SizedBox(height: 4),
                 Text(
                   '${trId('valid_till')} ${_dmy(card.expiresAt)}',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 8.5),
+                  style: TextStyle(color: AppColors.background.withOpacity(0.8), fontSize: 8.5),
                 ),
               ],
             ],

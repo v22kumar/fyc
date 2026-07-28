@@ -131,7 +131,7 @@ class _AppShellV2State extends State<AppShellV2> {
             : FloatingActionButton(
                 onPressed: widget.onCreate,
                 backgroundColor: DSColors.amber500,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.background,
                 elevation: DSElevation.floating,
                 shape: const CircleBorder(),
                 child: const Icon(Icons.add_rounded, size: 30),
@@ -172,7 +172,7 @@ class _SosButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: const Padding(
           padding: EdgeInsets.all(14),
-          child: Icon(Icons.sos_rounded, color: Colors.white, size: 22),
+          child: Icon(Icons.sos_rounded, color: AppColors.background, size: 22),
         ),
       ),
     );

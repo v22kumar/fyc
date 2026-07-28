@@ -144,7 +144,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
           const SizedBox(height: 18),
           Row(
             children: [
-              const Icon(Icons.bolt_rounded, color: AppColors.primary, size: 20),
+              Icon(Icons.bolt_rounded, color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 '${trId('enter_score')} · ${scoring.unitLabel()}',
@@ -166,7 +166,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
               Expanded(child: _ScoreField(label: teamA, controller: _scoreACtrl, hint: scoring.hint)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text(trId('vs_2'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey)),
+                child: Text(trId('vs_2'), style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
               Expanded(child: _ScoreField(label: teamB, controller: _scoreBCtrl, hint: scoring.hint)),
             ],
@@ -211,12 +211,12 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
                 elevation: 0,
               ),
               child: _submitting
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                  ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2.5))
                   : Text(
                       widget.isManager
                           ? trId('save_result')
                           : trId('submit_for_approval'),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                      style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700, fontSize: 15)),
             ),
           ),
         ],

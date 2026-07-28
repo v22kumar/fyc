@@ -134,7 +134,7 @@ class _FeedScreenState extends State<FeedScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openCreate,
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.edit, color: Colors.white),
+        child: Icon(Icons.edit, color: AppColors.background),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -357,7 +357,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           child: KolamBackground(
-            color: Colors.white,
+            color: AppColors.background,
             opacity: 0.06,
             child: Padding(
               padding: EdgeInsets.only(
@@ -370,7 +370,7 @@ class _Header extends StatelessWidget {
                 child: Image.asset('assets/images/fyc_mark.png',
                     width: 40, height: 40,
                     errorBuilder: (_, __, ___) => const Icon(Icons.shield,
-                        color: Colors.white, size: 36)),
+                        color: AppColors.background, size: 36)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -379,18 +379,18 @@ class _Header extends StatelessWidget {
                   children: [
                     Text(
                       trId('community_feed_3'),
-                      style: const TextStyle(color: Colors.white, fontSize: 20,
+                      style: TextStyle(color: AppColors.background, fontSize: 20,
                           fontWeight: FontWeight.w800),
                     ),
                     Text(
                       trId('stay_connected_share_inspire'),
-                      style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12),
+                      style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 12),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                icon: Icon(Icons.notifications_none_rounded, color: AppColors.background),
                 onPressed: () => context.push('/notifications'),
               ),
             ],
@@ -415,7 +415,7 @@ class _Header extends StatelessWidget {
                     CircleAvatar(
                       radius: 18,
                       backgroundColor: AppColors.primary.withOpacity(0.15),
-                      child: const Icon(Icons.person, color: AppColors.primary, size: 20),
+                      child: Icon(Icons.person, color: AppColors.primary, size: 20),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -434,10 +434,10 @@ class _Header extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.edit, color: Colors.white, size: 14),
+                          Icon(Icons.edit, color: AppColors.background, size: 14),
                           const SizedBox(width: 5),
                           Text(trId('post_2'),
-                              style: const TextStyle(color: Colors.white,
+                              style: TextStyle(color: AppColors.background,
                                   fontWeight: FontWeight.w700, fontSize: 12.5)),
                         ],
                       ),
@@ -548,13 +548,13 @@ class _FilterChips extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(_filters[i].$2, size: 14,
-                            color: active == i ? Colors.white : context.cTextSecondary),
+                            color: active == i ? AppColors.background : context.cTextSecondary),
                         const SizedBox(width: 5),
                         Text(label(_filters[i].$1),
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: active == i ? Colors.white : context.cText,
+                              color: active == i ? AppColors.background : context.cText,
                             )),
                       ],
                     ),
@@ -668,7 +668,7 @@ class _PostCardState extends State<_PostCard> {
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+              leading: Icon(Icons.flag_outlined, color: AppColors.warning),
               title: Text(trId('report_post')),
               onTap: () async {
                 Navigator.pop(context);
@@ -682,7 +682,7 @@ class _PostCardState extends State<_PostCard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.block, color: Colors.red),
+              leading: Icon(Icons.block, color: AppColors.danger),
               title: Text('Block ${p.author.name}'),
               onTap: () async {
                 Navigator.pop(context);
@@ -697,7 +697,7 @@ class _PostCardState extends State<_PostCard> {
             ),
             if (isAdmin)
               ListTile(
-                leading: const Icon(Icons.visibility_off, color: Colors.orange),
+                leading: Icon(Icons.visibility_off, color: AppColors.warning),
                 title: Text(trId('hide_post_admin')),
                 onTap: () async {
                   Navigator.pop(context);
@@ -711,7 +711,7 @@ class _PostCardState extends State<_PostCard> {
               ),
             if (isAdmin || isAuthor)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: Icon(Icons.delete_outline, color: AppColors.danger),
                 title: Text(trId('delete_post_admin_author')),
                 onTap: () async {
                   Navigator.pop(context);
@@ -1006,7 +1006,7 @@ class _PostImages extends StatelessWidget {
                             color: Colors.black54,
                             alignment: Alignment.center,
                             child: Text('+$extra',
-                                style: const TextStyle(color: Colors.white,
+                                style: TextStyle(color: AppColors.background,
                                     fontWeight: FontWeight.w800, fontSize: 18)),
                           ),
                       ]),
@@ -1023,7 +1023,7 @@ class _PostImages extends StatelessWidget {
       content,
       const Positioned(
         right: 8, bottom: 8,
-        child: Icon(Icons.camera_alt, color: Colors.white, size: 18),
+        child: Icon(Icons.camera_alt, color: AppColors.background, size: 18),
       ),
     ]);
   }
@@ -1134,7 +1134,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                       child: Text(
                                           c.authorName.isNotEmpty
                                               ? c.authorName[0].toUpperCase() : '?',
-                                          style: const TextStyle(color: AppColors.primary,
+                                          style: TextStyle(color: AppColors.primary,
                                               fontWeight: FontWeight.w700, fontSize: 13))),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -1189,7 +1189,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       icon: _sending
                           ? const SizedBox(width: 18, height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.send_rounded, color: AppColors.primary),
+                          : Icon(Icons.send_rounded, color: AppColors.primary),
                     ),
                   ],
                 ),

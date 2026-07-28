@@ -145,7 +145,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                 backgroundColor: AppColors.accent,
                 action: SnackBarAction(
                   label: trId('retry_4'),
-                  textColor: Colors.white,
+                  textColor: AppColors.background,
                   onPressed: _submit,
                 ),
               ),
@@ -330,7 +330,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                   child: ElevatedButton(
                     onPressed: isSubmitting ? null : _submit,
                     child: isSubmitting
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? CircularProgressIndicator(color: AppColors.background)
                         : Text(
                             trId('register_tree'),
                             style: const TextStyle(fontSize: 16),
@@ -377,7 +377,7 @@ class _DatePickerField extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, color: Colors.grey),
+            Icon(Icons.calendar_today, color: AppColors.textSecondary),
             const SizedBox(width: 12),
             Text(
               label,

@@ -120,7 +120,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
             child: Container(color: Colors.transparent),
           ),
           // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
-          const KolamTextureLayer(color: Colors.white),
+          KolamTextureLayer(color: AppColors.background),
 
           // Content
           FadeTransition(
@@ -136,9 +136,9 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.08),
+                        color: AppColors.background.withOpacity(0.08),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.18),
+                          color: AppColors.background.withOpacity(0.18),
                           width: 1,
                         ),
                         boxShadow: [
@@ -161,7 +161,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                     Text(
                       trId('fyc_connect'),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.3,
@@ -172,7 +172,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                       _kAppSubtitle[_selectedLang] ?? _kAppSubtitle['en']!,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.65),
+                        color: AppColors.background.withOpacity(0.65),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         height: 1.4,
@@ -189,11 +189,11 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                       child: Text(
                         _kWhatIsThis[_selectedLang] ?? _kWhatIsThis['en']!,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: AppColors.background.withOpacity(0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           decoration: TextDecoration.underline,
-                          decorationColor: Colors.white.withOpacity(0.4),
+                          decorationColor: AppColors.background.withOpacity(0.4),
                         ),
                       ),
                     ),
@@ -201,7 +201,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                     Text(
                       isTa ? 'மொழியை தேர்ந்தெடுக்கவும்' : 'Select your language',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
+                        color: AppColors.background.withOpacity(0.55),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -231,7 +231,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         onPressed: _proceed,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryLight,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.background,
                           minimumSize: const Size(double.infinity, 52),
                           shape: RoundedRectangleBorder(
                             borderRadius:
@@ -293,13 +293,13 @@ class _LangCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white.withOpacity(0.92)
-              : Colors.white.withOpacity(0.08),
+              ? AppColors.background.withOpacity(0.92)
+              : AppColors.background.withOpacity(0.08),
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           border: Border.all(
             color: isSelected
-                ? Colors.white
-                : Colors.white.withOpacity(0.20),
+                ? AppColors.background
+                : AppColors.background.withOpacity(0.20),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
@@ -339,7 +339,7 @@ class _LangCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color:
-                        isSelected ? AppColors.primary : Colors.white,
+                        isSelected ? AppColors.primary : AppColors.background,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),

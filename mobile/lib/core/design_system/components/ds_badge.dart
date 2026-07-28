@@ -67,17 +67,17 @@ class _DSBadgeState extends State<DSBadge> with SingleTickerProviderStateMixin {
               child: Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
               ),
             ),
             const SizedBox(width: 6),
           ] else if (style.icon != null) ...[
-            Icon(style.icon, size: 12, color: Colors.white),
+            Icon(style.icon, size: 12, color: AppColors.background),
             const SizedBox(width: 4),
           ],
           Text(
             widget.labelOverride ?? style.label,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+            style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.3),
           ),
         ],
       ),

@@ -160,7 +160,7 @@ class _MemberTile extends StatelessWidget {
             child: hasPhoto
                 ? null
                 : Text(initial,
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 18)),
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 18)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -191,7 +191,7 @@ class _RoleBadge extends StatelessWidget {
       case 'VOLUNTEER':
         return (trId('volunteer'), const Color(0xFF16A34A));
       default:
-        return (role, Colors.grey);
+        return (role, AppColors.textSecondary);
     }
   }
 

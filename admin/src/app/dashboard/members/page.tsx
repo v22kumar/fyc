@@ -215,6 +215,33 @@ export default function MembersPage() {
                             </option>
                           ))}
                         </select>
+                        <button
+                          disabled={promotingId === m.id}
+                          onClick={async () => {
+                            setPromotingId(m.id);
+                            try {
+                              if (m.is_blocked) {
+                                await api.unblockUser(m.id);
+                              } else {
+                                await api.blockUser(m.id);
+                              }
+                              setMembers((prev) =>
+                                prev.map((u) => (u.id === m.id ? { ...u, is_blocked: !m.is_blocked } : u))
+                              );
+                            } catch (err: any) {
+                              alert(err.message ?? 'Failed to update block status');
+                            } finally {
+                              setPromotingId(null);
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                            m.is_blocked 
+                              ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' 
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          {m.is_blocked ? 'Unblock' : 'Block'}
+                        </button>
                         {promotingId === m.id && (
                           <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                         )}

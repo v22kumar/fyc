@@ -11,6 +11,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/router/app_router.dart';
 import 'core/services/local_notifications.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_manager.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/storage/local_storage.dart';
 import 'core/widgets/offline_banner.dart';
@@ -33,7 +34,6 @@ ThemeMode themeModeFromString(String s) => switch (s) {
       'light' => ThemeMode.light,
       _ => ThemeMode.system,
     };
-
 
 @pragma('vm:entry-point')
 Future<void> _onBackgroundMessage(RemoteMessage message) async {
@@ -77,6 +77,8 @@ void main() async {
   SyncService.triggerSync();
   localeNotifier.value = Locale(sl<LocalStorage>().getLang());
   themeModeNotifier.value = themeModeFromString(sl<LocalStorage>().getTheme());
+  
+  await ThemeManager.instance.init();
   
   _warmUpBackend();
   // Poll "do I have a chess game to join?" app-wide, so a player is pulled into
@@ -172,14 +174,17 @@ class _FycAppState extends State<FycApp> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: sl<AuthBloc>(),
-      child: ValueListenableBuilder<Locale>(
-        valueListenable: localeNotifier,
-        builder: (context, locale, _) {
-          return ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeModeNotifier,
-            builder: (context, themeMode, __) {
-              return MaterialApp.router(
-                title: 'FYC',
+      child: ValueListenableBuilder<SemanticColors>(
+        valueListenable: ThemeManager.instance.notifier,
+        builder: (context, semanticColors, _) {
+          return ValueListenableBuilder<Locale>(
+            valueListenable: localeNotifier,
+            builder: (context, locale, _) {
+              return ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeModeNotifier,
+                builder: (context, themeMode, __) {
+                  return MaterialApp.router(
+                    title: 'FYC',
                 debugShowCheckedModeBanner: false,
                 // Theme is rebuilt per language so the correct script font
                 // (Plus Jakarta / Noto Sans Tamil-Devanagari-Malayalam) is
@@ -202,6 +207,8 @@ class _FycAppState extends State<FycApp> {
             },
           );
         },
+      );
+      },
       ),
     );
   }

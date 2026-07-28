@@ -108,7 +108,7 @@ class LegendsPage extends StatelessWidget {
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +196,7 @@ class _LegendCardState extends State<_LegendCard> {
                           Text(
                             l.name,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.background,
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
                             ),

@@ -69,7 +69,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -148,7 +148,7 @@ class _ProfileCard extends StatelessWidget {
                 if (!profile.isAvailable)
                   _Tag(
                     text: trId('unavailable'),
-                    color: Colors.grey,
+                    color: AppColors.textSecondary,
                   ),
                 if (profile.yearsExperience != null)
                   _Tag(
@@ -165,7 +165,7 @@ class _ProfileCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 desc,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: AppColors.textSecondary[600], fontSize: 13),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -176,12 +176,12 @@ class _ProfileCard extends StatelessWidget {
               Row(
                 children: [
                   const Icon(Icons.place_outlined,
-                      size: 14, color: Colors.grey),
+                      size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       profile.serviceArea!,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -247,13 +247,13 @@ class _Empty extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               trId('no_local_services_listed_yet'),
-              style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               trId('this_is_a_directory_of_tradespeople_and'),
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary[600]),
               textAlign: TextAlign.center,
             ),
           ],

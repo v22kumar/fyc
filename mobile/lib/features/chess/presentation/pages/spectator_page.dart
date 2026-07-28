@@ -25,7 +25,7 @@ class SpectatorPage extends StatelessWidget {
       backgroundColor: _kBg,
       appBar: AppBar(
         backgroundColor: _kBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
@@ -58,11 +58,11 @@ class SpectatorPage extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 12),
                 child: Chip(
                   avatar:
-                      const Icon(Icons.visibility, size: 14, color: Colors.white),
+                      Icon(Icons.visibility, size: 14, color: AppColors.background),
                   label: Text(
                     '${state.spectatorCount}',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.background,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -186,7 +186,7 @@ class SpectatorPage extends StatelessWidget {
               Text(
                 state.resultLabel,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
@@ -205,7 +205,7 @@ class SpectatorPage extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -279,17 +279,17 @@ class _SpectatorClock extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
-            ? (isLow ? Colors.red.shade800 : _kGreen)
+            ? (isLow ? AppColors.danger.shade800 : _kGreen)
             : const Color(0xFF1E1B18),
         borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: Colors.red.shade400, width: 1.5)
+            ? Border.all(color: AppColors.danger.shade400, width: 1.5)
             : null,
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isActive ? Colors.white : const Color(0xFF6B6762),
+          color: isActive ? AppColors.background : Color(0xFF6B6762),
           fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
           fontSize: 15,
           fontFeatures: const [FontFeature.tabularFigures()],

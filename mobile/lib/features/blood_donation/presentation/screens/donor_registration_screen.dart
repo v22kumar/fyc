@@ -135,7 +135,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                           state is BloodDonorLoading ? null : _submit,
                       child: state is BloodDonorLoading
                           ? const CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.background,
                             )
                           : Text(
                               trId('register_as_donor_3'),
@@ -169,7 +169,7 @@ class _InfoBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: AppColors.primary),
+          Icon(Icons.info_outline, color: AppColors.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -210,10 +210,10 @@ class _BloodGroupGrid extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.accent : Colors.grey[100],
+              color: isSelected ? AppColors.accent : AppColors.textSecondary[100],
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : Colors.grey[300]!,
+                color: isSelected ? AppColors.accent : AppColors.textSecondary[300]!,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -223,7 +223,7 @@ class _BloodGroupGrid extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : Colors.grey[700],
+                  color: isSelected ? AppColors.background : AppColors.textSecondary[700],
                 ),
               ),
             ),
@@ -251,13 +251,13 @@ class _AvailabilityToggle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppColors.textSecondary[300]!),
       ),
       child: Row(
         children: [
           Icon(
             value ? Icons.check_circle : Icons.cancel,
-            color: value ? Colors.green : Colors.grey,
+            color: value ? AppColors.success : AppColors.textSecondary,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -298,11 +298,11 @@ class _DatePickerField extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.textSecondary[300]!),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, color: Colors.grey),
+            Icon(Icons.calendar_today, color: AppColors.textSecondary),
             const SizedBox(width: 12),
             Text(
               date != null
@@ -310,7 +310,7 @@ class _DatePickerField extends StatelessWidget {
                   : trId('select_date_optional'),
               style: TextStyle(
                 fontSize: 15,
-                color: date != null ? Colors.black87 : Colors.grey,
+                color: date != null ? Colors.black87 : AppColors.textSecondary,
               ),
             ),
           ],

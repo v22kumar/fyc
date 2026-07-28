@@ -84,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context.read<AuthBloc>().add(const AuthLogoutRequested());
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
-            child: Text(trId('log_out_2'), style: const TextStyle(color: Colors.white)),
+            child: Text(trId('log_out_2'), style: TextStyle(color: AppColors.background)),
           ),
         ],
       ),
@@ -138,12 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
+                    color: AppColors.background.withOpacity(0.18),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                    border: Border.all(color: AppColors.background.withOpacity(0.4), width: 2),
                   ),
                   alignment: Alignment.center,
-                  child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                  child: Text(initial, style: TextStyle(color: AppColors.background, fontSize: 28, fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -151,17 +151,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(name,
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                          style: TextStyle(color: AppColors.background, fontSize: 20, fontWeight: FontWeight.w800),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
+                          color: AppColors.background.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(_prettyRole(role),
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                            style: TextStyle(color: AppColors.background, fontSize: 12, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -200,9 +200,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _confirmLogout,
-              icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.accent),
+              icon: Icon(Icons.logout_rounded, size: 18, color: AppColors.accent),
               label: Text(trId('log_out_2'),
-                  style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.accent.withOpacity(0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 14),

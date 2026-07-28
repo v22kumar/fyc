@@ -65,9 +65,9 @@ class _MembershipCardScreenState extends State<MembershipCardScreen>
         elevation: 0,
         title: Text(
           trId('my_membership_card'),
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.background),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: AppColors.background),
       ),
       body: BlocBuilder<MembershipBloc, MembershipState>(
         builder: (context, state) {
@@ -197,7 +197,7 @@ class _CardFront extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: AppColors.background.withOpacity(0.05),
               ),
             ),
           ),
@@ -209,7 +209,7 @@ class _CardFront extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.04),
+                color: AppColors.background.withOpacity(0.04),
               ),
             ),
           ),
@@ -252,13 +252,13 @@ class _CardFront extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: AppColors.background.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Center(
                             child: Text(trId('fyc'),
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.background,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13)),
                           ),
@@ -272,7 +272,7 @@ class _CardFront extends StatelessWidget {
                         Text(
                           trId('friends_youth_club'),
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.background,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -281,7 +281,7 @@ class _CardFront extends StatelessWidget {
                         Text(
                           'நண்பர்கள் இளைஞர் மன்றம்',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
+                            color: AppColors.background.withOpacity(0.75),
                             fontSize: 9,
                           ),
                         ),
@@ -311,7 +311,7 @@ class _CardFront extends StatelessWidget {
                 Text(
                   card.membershipNumber,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
@@ -327,7 +327,7 @@ class _CardFront extends StatelessWidget {
                         Text(
                           trId('valid_thru'),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
+                            color: AppColors.background.withOpacity(0.6),
                             fontSize: 8,
                             letterSpacing: 1,
                           ),
@@ -335,7 +335,7 @@ class _CardFront extends StatelessWidget {
                         Text(
                           expiry,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.background,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -402,7 +402,7 @@ class _CardBack extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: AppColors.textPrimary.withOpacity(0.5),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -438,7 +438,7 @@ class _CardBack extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: QrImageView(
@@ -483,7 +483,7 @@ class _CardBack extends StatelessWidget {
                       Text(
                         trId('fyc2000_org'),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
+                          color: AppColors.background.withOpacity(0.4),
                           fontSize: 9,
                         ),
                       ),
@@ -584,9 +584,9 @@ class _DetailsList extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: AppColors.background.withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: AppColors.background.withOpacity(0.08)),
           ),
           child: Row(
             children: [
@@ -599,7 +599,7 @@ class _DetailsList extends StatelessWidget {
               Text(
                 row.$2,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -637,7 +637,7 @@ class _NoCardView extends StatelessWidget {
             Text(
               trId('no_membership_card_found'),
               style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,

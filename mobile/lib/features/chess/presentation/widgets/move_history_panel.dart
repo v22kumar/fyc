@@ -125,7 +125,7 @@ class _MoveChip extends StatelessWidget {
       child: Text(
         san,
         style: TextStyle(
-          color: isLatest ? Colors.white : AppColors.textPrimary,
+          color: isLatest ? AppColors.background : AppColors.textPrimary,
           fontSize: 12,
           fontWeight: isLatest ? FontWeight.w700 : FontWeight.w500,
           fontFeatures: const [FontFeature.tabularFigures()],

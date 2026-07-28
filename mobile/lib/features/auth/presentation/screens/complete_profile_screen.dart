@@ -133,7 +133,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         backgroundColor: green,
         automaticallyImplyLeading: false,
         title: Text(trId('complete_your_profile'),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: ListView(
@@ -141,7 +141,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           children: [
             const SizedBox(height: 4),
             Text(trId('complete_profile_hint'),
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSecondary.shade600, fontSize: 13)),
             const SizedBox(height: 20),
             if (_error != null)
               Container(
@@ -169,7 +169,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   _dob == null
                       ? trId('date_of_birth')
                       : '${_dob!.day.toString().padLeft(2, '0')}/${_dob!.month.toString().padLeft(2, '0')}/${_dob!.year}',
-                  style: TextStyle(color: _dob == null ? Colors.grey : Colors.black87),
+                  style: TextStyle(color: _dob == null ? AppColors.textSecondary : Colors.black87),
                 ),
               ),
             ),
@@ -197,9 +197,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 ),
                 onPressed: _saving ? null : _submit,
                 child: _saving
-                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                     : Text(trId('save_and_continue'),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],
@@ -217,10 +217,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   InputDecoration _decoration({String? hint}) => InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.shade300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.shade300)),
       );
 
   Widget _field(TextEditingController c,
@@ -242,13 +242,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF0F5132) : Colors.white,
-            border: Border.all(color: selected ? const Color(0xFF0F5132) : Colors.grey.shade300),
+            color: selected ? Color(0xFF0F5132) : AppColors.background,
+            border: Border.all(color: selected ? Color(0xFF0F5132) : AppColors.textSecondary.shade300),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(label,
               style: TextStyle(
-                  color: selected ? Colors.white : Colors.black87,
+                  color: selected ? AppColors.background : Colors.black87,
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
         ),
       ),

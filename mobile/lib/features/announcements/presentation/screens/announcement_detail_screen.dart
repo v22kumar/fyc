@@ -37,7 +37,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                 color: AppColors.background,
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined,
-                    size: 48, color: Colors.grey),
+                    size: 48, color: AppColors.textSecondary),
               ),
             ),
           Padding(
@@ -79,11 +79,11 @@ class AnnouncementDetailScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 14, color: Colors.grey),
+                    Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       fmt.format(announcement.createdAt.toLocal()),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),

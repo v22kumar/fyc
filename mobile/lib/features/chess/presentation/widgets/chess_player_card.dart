@@ -57,12 +57,12 @@ class ChessPlayerCard extends StatelessWidget {
           top: BorderSide(
             color: isActive
                 ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : Colors.white.withOpacity(0.04),
+                : AppColors.background.withOpacity(0.04),
           ),
           bottom: BorderSide(
             color: isActive
                 ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : Colors.white.withOpacity(0.04),
+                : AppColors.background.withOpacity(0.04),
           ),
         ),
       ),
@@ -84,7 +84,7 @@ class ChessPlayerCard extends StatelessWidget {
                   Text(
                     avatarLetter ?? (name.isNotEmpty ? name[0].toUpperCase() : '?'),
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontWeight: FontWeight.w800,
                         fontSize: 16),
                   ),
@@ -104,7 +104,7 @@ class ChessPlayerCard extends StatelessWidget {
                       child: Text(
                         name,
                         style: TextStyle(
-                          color: isActive ? Colors.white : Colors.white60,
+                          color: isActive ? AppColors.background : Colors.white60,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -118,7 +118,7 @@ class ChessPlayerCard extends StatelessWidget {
                       Text(
                         '$thinkingText…',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.45),
+                          color: AppColors.background.withOpacity(0.45),
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
                         ),
@@ -138,7 +138,7 @@ class ChessPlayerCard extends StatelessWidget {
                           Text(
                             'Rating $rating',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.42),
+                              color: AppColors.background.withOpacity(0.42),
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -152,7 +152,7 @@ class ChessPlayerCard extends StatelessWidget {
                           captured.join(''),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withOpacity(0.50),
+                            color: AppColors.background.withOpacity(0.50),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -175,7 +175,7 @@ class ChessPlayerCard extends StatelessWidget {
               child: Text(
                 trId('your_turn'),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
@@ -196,7 +196,7 @@ class ChessPlayerCard extends StatelessWidget {
                 child: Text(
                   trId('your_turn'),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                   ),
@@ -227,7 +227,7 @@ class _ClockChip extends StatelessWidget {
         ? (isLow ? const Color(0xFF8E1B1B) : const Color(0xFF2A3A2C))
         : const Color(0xFF1A1D1E);
     final fg = isActive
-        ? (isLow ? Colors.red.shade200 : Colors.white)
+        ? (isLow ? AppColors.danger.shade200 : AppColors.background)
         : const Color(0xFF7C8A80);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -237,7 +237,7 @@ class _ClockChip extends StatelessWidget {
         border: isActive
             ? Border.all(
                 color: isLow
-                    ? Colors.red.shade400
+                    ? AppColors.danger.shade400
                     : const Color(0xFF4A7C59).withOpacity(0.7),
                 width: 1)
             : null,

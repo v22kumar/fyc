@@ -74,7 +74,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -152,7 +152,7 @@ class _EmptyGallery extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             trId('no_photos_yet'),
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
         ],
       ),

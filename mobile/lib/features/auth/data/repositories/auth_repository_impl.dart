@@ -36,10 +36,15 @@ class AuthRepositoryImpl implements AuthRepository {
     required String otpCode,
   }) async {
     try {
-      final token = await _remote.verifyOtp(
+      final result = await _remote.verifyOtp(
         verificationId: verificationId,
         otpCode: otpCode,
       );
+      if (result.needsRegistration) {
+        // Special signal used by the Bloc to trigger the registration flow
+        return Left(ValidationFailure('User not registered. registration_token:${result.registrationToken}'));
+      }
+      final token = result.token!;
       await _storage.saveToken(token.accessToken);
       if (token.refreshToken != null) {
         await _storage.saveRefreshToken(token.refreshToken!);
@@ -58,8 +63,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -69,8 +76,10 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await _remote.registerUser(
         organizationId: organizationId,
         phoneNumber: phoneNumber,
+        registrationToken: registrationToken,
         email: email,
         dateOfBirth: dateOfBirth,
+        bloodGroup: bloodGroup,
         role: role,
         fullNameTa: fullNameTa,
         fullNameEn: fullNameEn,

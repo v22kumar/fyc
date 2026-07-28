@@ -109,20 +109,20 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => _showCreateWeeklyGameSheet(context),
               backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
+              icon: Icon(Icons.add, color: AppColors.background),
               label: Text(
                 trId('schedule_game'),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700),
               ),
             )
           : isAdmin
               ? FloatingActionButton.extended(
                   onPressed: () => context.push('/sports/create'),
                   backgroundColor: AppColors.primary,
-                  icon: const Icon(Icons.add, color: Colors.white),
+                  icon: Icon(Icons.add, color: AppColors.background),
                   label: Text(
                     trId('create_2'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700),
                   ),
                 )
               : null,
@@ -147,8 +147,8 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.0),
-                        Colors.black.withOpacity(0.45),
+                        AppColors.textPrimary.withOpacity(0.0),
+                        AppColors.textPrimary.withOpacity(0.45),
                       ],
                     ),
                   ),
@@ -159,7 +159,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   child: Text(
                     trId('play_compete_win'),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.background,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
@@ -306,10 +306,10 @@ class _SportTabs extends StatelessWidget {
                 selected: isSelected,
                 onSelected: (_) => onSelect(f.value),
                 avatar: Icon(f.icon, size: 16,
-                    color: isSelected ? Colors.white : context.cTextSecondary),
+                    color: isSelected ? AppColors.background : context.cTextSecondary),
                 label: Text(lang == 'ta' ? f.labelTa : f.labelEn),
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : context.cText,
+                  color: isSelected ? AppColors.background : context.cText,
                   fontWeight: FontWeight.w600,
                 ),
                 selectedColor: AppColors.primary,
@@ -384,7 +384,7 @@ class _TournamentCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.emoji_events_rounded, size: 14, color: AppColors.accent),
+                            Icon(Icons.emoji_events_rounded, size: 14, color: AppColors.accent),
                             const SizedBox(width: 4),
                             Text(
                               '${tournament.sport} · ${tournament.year}',
@@ -409,7 +409,7 @@ class _TournamentCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
+                      Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
                       const SizedBox(width: 8),
                       Text(
                         trId('registration_open_2'),
@@ -436,7 +436,7 @@ class _TournamentCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    const Icon(Icons.play_circle_fill, size: 16, color: AppColors.success),
+                    Icon(Icons.play_circle_fill, size: 16, color: AppColors.success),
                     const SizedBox(width: 8),
                     Text(
                       trId('tournament_is_live'),

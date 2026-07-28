@@ -242,7 +242,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(trId('delete'), style: const TextStyle(color: Colors.red)),
+            child: Text(trId('delete'), style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -280,11 +280,11 @@ class _EventCard extends StatelessWidget {
     
     final now = DateTime.now();
     String statusText = trId('upcoming_2');
-    Color statusColor = Colors.blue;
+    Color statusColor = AppColors.info;
     
     if (now.isAfter(event.eventEnd)) {
       statusText = trId('completed');
-      statusColor = Colors.grey;
+      statusColor = AppColors.textSecondary;
     } else if (now.isAfter(event.eventStart) && now.isBefore(event.eventEnd)) {
       statusText = trId('live');
       statusColor = AppColors.success;
@@ -316,7 +316,7 @@ class _EventCard extends StatelessWidget {
                 width: double.infinity,
                 child: ColorFiltered(
                   colorFilter: isPast
-                      ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+                      ? const ColorFilter.mode(AppColors.textSecondary, BlendMode.saturation)
                       : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
                   child: (event.bannerUrl != null && event.bannerUrl!.isNotEmpty)
                       ? Image.network(
@@ -346,7 +346,7 @@ class _EventCard extends StatelessWidget {
                   ),
                   child: Text(statusText,
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.background,
                           fontSize: 10,
                           fontWeight: FontWeight.bold)),
                 ),
@@ -390,7 +390,7 @@ class _EventCard extends StatelessWidget {
                             onTap: onViewParticipants,
                             child: const Padding(
                               padding: EdgeInsets.only(left: 8.0),
-                              child: Icon(Icons.people_outline, size: 20, color: Colors.blue),
+                              child: Icon(Icons.people_outline, size: 20, color: AppColors.info),
                             ),
                           ),
                         if (isAdmin && onDelete != null)
@@ -398,7 +398,7 @@ class _EventCard extends StatelessWidget {
                             onTap: onDelete,
                             child: const Padding(
                               padding: EdgeInsets.only(left: 12.0),
-                              child: Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                              child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
                             ),
                           ),
                       ],
@@ -473,7 +473,7 @@ class _EventCard extends StatelessWidget {
                             ),
                             child: Text(trId('register_now'),
                                 style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.background,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13)),
                           ),
@@ -520,7 +520,7 @@ class _DateBadge extends StatelessWidget {
             child: Text(month,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 11,
                     fontWeight: FontWeight.w800)),
           ),
@@ -574,7 +574,7 @@ class _GoingRow extends StatelessWidget {
                         border: Border.all(color: context.cSurface, width: 2),
                       ),
                       child: const Icon(Icons.person,
-                          size: 15, color: Colors.white),
+                          size: 15, color: AppColors.background),
                     ),
                   ),
               ],
@@ -911,11 +911,11 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2, color: AppColors.background),
                         )
                       : Text(trId('confirm_registration'),
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.background,
                               fontWeight: FontWeight.w700)),
                 ),
               ),
@@ -991,7 +991,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
             Expanded(
                 child: Center(
                     child: Text(_error!,
-                        style: const TextStyle(color: AppColors.accent))))
+                        style: TextStyle(color: AppColors.accent))))
           else if (_names == null)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_names!.isEmpty)

@@ -91,7 +91,7 @@ class _ReplayPageState extends State<ReplayPage> {
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           _game != null
@@ -123,11 +123,11 @@ class _ReplayPageState extends State<ReplayPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.warning, size: 48),
+          Icon(Icons.error_outline, color: AppColors.warning, size: 48),
           const SizedBox(height: 12),
           Text(trId('could_not_load_game'),
               style: TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  color: AppColors.background, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 8),
           Text(_error ?? '',
               style: const TextStyle(color: Colors.white54, fontSize: 12)),
@@ -166,8 +166,8 @@ class _ReplayPageState extends State<ReplayPage> {
                       lightSquare: const Color(0xFFF0D9B5),
                       darkSquare: const Color(0xFFB58863),
                       selected: Colors.transparent,
-                      check: Colors.red.withOpacity(0.6),
-                      checkmate: Colors.red.withOpacity(0.6),
+                      check: AppColors.danger.withOpacity(0.6),
+                      checkmate: AppColors.danger.withOpacity(0.6),
                       previous: AppColors.gold.withOpacity(0.5),
                       premove: Colors.transparent,
                     ),
@@ -263,7 +263,7 @@ class _PlayerBar extends StatelessWidget {
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontWeight: FontWeight.w700,
                   fontSize: 14),
             ),
@@ -272,7 +272,7 @@ class _PlayerBar extends StatelessWidget {
           Text(
             name,
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                color: AppColors.background, fontWeight: FontWeight.w600, fontSize: 14),
           ),
           const Spacer(),
           Text(
@@ -393,7 +393,7 @@ class _MovePill extends StatelessWidget {
         child: Text(
           san,
           style: TextStyle(
-            color: active ? Colors.white : Colors.white70,
+            color: active ? AppColors.background : Colors.white70,
             fontWeight: active ? FontWeight.w700 : FontWeight.w400,
             fontSize: 13,
           ),
@@ -414,7 +414,7 @@ class _ControlBtn extends StatelessWidget {
     return IconButton(
       icon: Icon(icon,
           size: large ? 36 : 28,
-          color: onPressed != null ? Colors.white : Colors.white24),
+          color: onPressed != null ? AppColors.background : Colors.white24),
       onPressed: onPressed,
       splashRadius: 24,
     );

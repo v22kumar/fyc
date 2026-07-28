@@ -150,9 +150,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               child: _posting
                   ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2))
                   : Text(trId('post_2'),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800)),
             ),
           ),
         ],
@@ -171,10 +171,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
             child: _posting
                 ? const SizedBox(width: 24, height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2.5))
                 : Text(
                     trId('post_update'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                    style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 16),
                   ),
           ),
         ),
@@ -188,7 +188,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               CircleAvatar(radius: 22,
                   backgroundColor: AppColors.primary.withOpacity(0.15),
                   child: Text(_authorName.isNotEmpty ? _authorName[0].toUpperCase() : '?',
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800))),
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800))),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -273,7 +273,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         child: Container(
                           decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
                           padding: const EdgeInsets.all(2),
-                          child: const Icon(Icons.close, color: Colors.white, size: 15),
+                          child: Icon(Icons.close, color: AppColors.background, size: 15),
                         ),
                       ),
                     ),
@@ -395,7 +395,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     border: Border.all(color: selected ? AppColors.primary : context.cBorder),
                   ),
                   child: Text(c, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
-                      color: selected ? Colors.white : context.cText)),
+                      color: selected ? AppColors.background : context.cText)),
                 ),
               );
             }).toList(),
@@ -455,7 +455,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(children: [
-                      const Icon(Icons.check, size: 15, color: AppColors.primary),
+                      Icon(Icons.check, size: 15, color: AppColors.primary),
                       const SizedBox(width: 8),
                       Expanded(child: Text(g, style: TextStyle(fontSize: 12.5, color: context.cText))),
                     ]),

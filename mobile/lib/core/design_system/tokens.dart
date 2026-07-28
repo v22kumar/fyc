@@ -108,7 +108,7 @@ class DSElevation {
 
   static List<BoxShadow> shadowFor(double level, {bool dark = false}) {
     if (level <= surface) return const [];
-    final base = dark ? Colors.black : const Color(0xFF0A1128);
+    final base = dark ? AppColors.textPrimary : Color(0xFF0A1128);
     if (level <= card) {
       return [
         BoxShadow(color: base.withOpacity(dark ? 0.35 : 0.06), blurRadius: 16, offset: const Offset(0, 4)),

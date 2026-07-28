@@ -30,12 +30,12 @@ class _JourneyScreenState extends State<JourneyScreen> {
         title: Text(trId('my_journey')),
         elevation: 0,
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primary, Colors.white],
+            colors: [AppColors.primary, AppColors.background],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: const [0.0, 0.2],
@@ -44,7 +44,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         child: BlocBuilder<JourneyBloc, JourneyState>(
           builder: (context, state) {
             if (state is JourneyLoading || state is JourneyInitial) {
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
+              return Center(child: CircularProgressIndicator(color: AppColors.background));
             } else if (state is JourneyLoaded) {
               final j = state.journey;
               return RefreshIndicator(
@@ -71,7 +71,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         ),
                         _ImpactCard(
                           icon: Icons.check_circle,
-                          color: Colors.green,
+                          color: AppColors.success,
                           title: trId('issues_resolved'),
                           value: j.issuesHelped.toString(),
                         ),
@@ -83,19 +83,19 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         ),
                         _ImpactCard(
                           icon: Icons.water_drop,
-                          color: Colors.redAccent,
+                          color: AppColors.danger,
                           title: trId('blood_donations'),
                           value: j.bloodDonations.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.sports_soccer,
-                          color: Colors.orange,
+                          color: AppColors.warning,
                           title: trId('sports_matches'),
                           value: j.sportsMatchesPlayed.toString(),
                         ),
                         _ImpactCard(
                           icon: Icons.timer,
-                          color: Colors.blueAccent,
+                          color: AppColors.info,
                           title: trId('volunteer_hours'),
                           value: '${j.volunteerHours}h',
                         ),
@@ -111,7 +111,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                    Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                     const SizedBox(height: 16),
                     Text(state.message, style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 16),
@@ -136,11 +136,11 @@ class _JourneyScreenState extends State<JourneyScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.textPrimary.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -151,7 +151,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
           const CircleAvatar(
             radius: 40,
             backgroundColor: AppColors.background,
-            child: Icon(Icons.emoji_events, size: 40, color: Colors.amber),
+            child: Icon(Icons.emoji_events, size: 40, color: AppColors.warning),
           ),
           const SizedBox(height: 16),
           Text(
@@ -162,7 +162,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
           Text(
             trId('your_contributions_are_making_a_real_dif'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary[600]),
           ),
         ],
       ),
@@ -188,7 +188,7 @@ class _ImpactCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -226,7 +226,7 @@ class _ImpactCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+              color: AppColors.textSecondary[600],
             ),
           ),
         ],

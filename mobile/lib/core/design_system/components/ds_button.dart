@@ -97,7 +97,7 @@ class DSButton extends StatelessWidget {
           onPressed: _disabled ? null : onPressed,
           style: FilledButton.styleFrom(
             backgroundColor: context.dsAccent,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.background,
             disabledBackgroundColor: context.dsAccent.withOpacity(0.4),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
@@ -136,7 +136,7 @@ class DSButton extends StatelessWidget {
           onPressed: _disabled ? null : onPressed,
           style: FilledButton.styleFrom(
             backgroundColor: DSColors.danger,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.background,
             disabledBackgroundColor: DSColors.danger.withOpacity(0.4),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
@@ -153,7 +153,7 @@ class DSButton extends StatelessWidget {
     switch (variant) {
       case DSButtonVariant.filled:
       case DSButtonVariant.danger:
-        return Colors.white;
+        return AppColors.background;
       case DSButtonVariant.outlined:
       case DSButtonVariant.text:
         return context.dsPrimary;

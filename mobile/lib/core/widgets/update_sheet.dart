@@ -147,7 +147,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                 ),
                 child: Image.asset('assets/images/fyc_mark.png',
                     errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.system_update, color: Colors.white)),
+                        Icon(Icons.system_update, color: AppColors.background)),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -248,7 +248,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           children: [
             Text(
               trId('download_failed_try_via_your_browser_ins'),
-              style: const TextStyle(fontSize: 12.5, color: AppColors.accent),
+              style: TextStyle(fontSize: 12.5, color: AppColors.accent),
             ),
             const SizedBox(height: 10),
             _primaryButton(
@@ -289,10 +289,10 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
         ),
         child: ElevatedButton.icon(
           onPressed: onTap,
-          icon: const Icon(Icons.download_rounded, color: Colors.white, size: 19),
+          icon: Icon(Icons.download_rounded, color: AppColors.background, size: 19),
           label: Text(label,
               style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontWeight: FontWeight.w800,
                   fontSize: 14.5)),
           style: ElevatedButton.styleFrom(

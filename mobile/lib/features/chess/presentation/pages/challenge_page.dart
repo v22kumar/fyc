@@ -174,14 +174,14 @@ class _ChallengePageState extends State<ChallengePage>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         title: Text(trId('online_match'),
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         bottom: TabBar(
           controller: _tabs,
           indicatorColor: AppColors.gold,
-          labelColor: Colors.white,
+          labelColor: AppColors.background,
           unselectedLabelColor: Colors.white54,
           tabs: const [
             Tab(text: '⚔️  Challenge'),
@@ -231,7 +231,7 @@ class _ChallengePageState extends State<ChallengePage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -256,7 +256,7 @@ class _ChallengePageState extends State<ChallengePage>
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.danger),
       );
     }
   }
@@ -409,7 +409,7 @@ class _TimeChip extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.white60,
+            color: selected ? AppColors.background : Colors.white60,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 12,
           ),
@@ -474,7 +474,7 @@ class _MemberTile extends StatelessWidget {
             onPressed: sending ? null : onChallenge,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.background,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               shape: RoundedRectangleBorder(
@@ -620,7 +620,7 @@ class _ChallengeTile extends StatelessWidget {
                   onPressed: onDecline,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                   ),
                   child: Text(trId('decline')),
                 ),
@@ -631,7 +631,7 @@ class _ChallengeTile extends StatelessWidget {
                   onPressed: onAccept,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                   ),
                   child: Text(trId('accept')),
                 ),

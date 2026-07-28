@@ -17,18 +17,18 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 Color announcementCategoryColor(String category) {
   switch (category) {
     case 'BLOOD_REQUEST':
-      return Colors.red;
+      return AppColors.danger;
     case 'EVENT':
       return Colors.purple;
     case 'OPPORTUNITY':
-      return Colors.blue;
+      return AppColors.info;
     case 'ALERT':
-      return Colors.orange;
+      return AppColors.warning;
     case 'GREEN_DRIVE':
-      return Colors.green;
+      return AppColors.success;
     case 'GENERAL':
     default:
-      return Colors.grey;
+      return AppColors.textSecondary;
   }
 }
 
@@ -170,7 +170,7 @@ class _AnnouncementCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (announcement.isPinned)
-                    const Icon(Icons.push_pin_rounded, size: 16, color: AppColors.warning),
+                    Icon(Icons.push_pin_rounded, size: 16, color: AppColors.warning),
                 ],
               ),
               const SizedBox(height: 10),

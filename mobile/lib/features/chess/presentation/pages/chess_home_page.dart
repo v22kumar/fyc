@@ -174,7 +174,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                       '♛',
                       style: TextStyle(
                         fontSize: 160,
-                        color: Colors.white,
+                        color: AppColors.background,
                       ),
                     ),
                   ),
@@ -197,12 +197,12 @@ class _ChessHomePageState extends State<ChessHomePage>
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: AppColors.background.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
                           Icons.arrow_back,
-                          color: Colors.white,
+                          color: AppColors.background,
                           size: 18,
                         ),
                       ),
@@ -225,7 +225,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 Text(
                   trId('fyc'),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 38,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 4,
@@ -236,7 +236,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 Text(
                   trId('chess_arena'),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 3,
@@ -393,7 +393,7 @@ class _ChessHomePageState extends State<ChessHomePage>
     required String icon,
     required String value,
     required String label,
-    Color valueColor = Colors.white,
+    Color valueColor = AppColors.background,
   }) {
     return Column(
       children: [
@@ -401,7 +401,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: AppColors.background.withOpacity(0.05),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -456,7 +456,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                   Text(
                     trId('start_your_chess_journey'),
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.background,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
@@ -648,7 +648,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                         Text(
                           trId('chess_aspirant'),
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.background,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
@@ -674,7 +674,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: xp / 10.0,
-                              backgroundColor: Colors.white.withOpacity(0.08),
+                              backgroundColor: AppColors.background.withOpacity(0.08),
                               valueColor: const AlwaysStoppedAnimation<Color>(_kGreen),
                               minHeight: 5,
                             ),
@@ -700,7 +700,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: AppColors.background.withOpacity(0.04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _kCardBorder),
                 ),
@@ -768,13 +768,13 @@ class _ChessHomePageState extends State<ChessHomePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(trId('chess_tournaments'),
-                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                          style: TextStyle(color: AppColors.background, fontSize: 15, fontWeight: FontWeight.w800)),
                       Text(trId('compete_in_the_fyc_arena'),
                           style: TextStyle(color: Colors.white70, fontSize: 12)),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, color: Colors.white),
+                Icon(Icons.chevron_right, color: AppColors.background),
               ],
             ),
           ),
@@ -889,7 +889,7 @@ class _PlayModeCard extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withOpacity(0.07),
+            color: AppColors.background.withOpacity(0.07),
             width: 1,
           ),
         ),
@@ -907,7 +907,7 @@ class _PlayModeCard extends StatelessWidget {
                     emoji,
                     style: const TextStyle(
                       fontSize: 72,
-                      color: Colors.white,
+                      color: AppColors.background,
                     ),
                   ),
                 ),
@@ -949,7 +949,7 @@ class _PlayModeCard extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1005,7 +1005,7 @@ class _BottomGridCard extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.background,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -1071,7 +1071,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: AppColors.background,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -1084,7 +1084,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: AppColors.danger,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1138,7 +1138,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                     Text(
                       trId('no_live_games_right_now'),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1204,7 +1204,7 @@ class _LiveGameTile extends StatelessWidget {
       child: Row(
         children: [
           const Text('♟',
-              style: TextStyle(fontSize: 20, color: Colors.white)),
+              style: TextStyle(fontSize: 20, color: AppColors.background)),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1215,7 +1215,7 @@ class _LiveGameTile extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: Colors.white,
+                    color: AppColors.background,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1251,7 +1251,7 @@ class _LiveGameTile extends StatelessWidget {
             onPressed: () => _watch(context, game),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.background,
               minimumSize: const Size(64, 34),
               padding: const EdgeInsets.symmetric(horizontal: 14),
               textStyle: const TextStyle(
@@ -1355,7 +1355,7 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.background,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
           ),
@@ -1435,7 +1435,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
                   child: Text(
                     '${d.emoji} ${d.label}',
                     style: TextStyle(
-                      color: selected ? Colors.white : AppColors.textPrimary,
+                      color: selected ? AppColors.background : AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -1484,7 +1484,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.background,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn)),
           ),
@@ -1520,7 +1520,7 @@ class _ColorChip extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: selected ? Colors.white : AppColors.textPrimary,
+            color: selected ? AppColors.background : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),

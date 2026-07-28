@@ -70,21 +70,21 @@ class IssueEntity extends Equatable {
   Color get statusColor {
     switch (status) {
       case 'NEW':
-        return Colors.blue;
+        return AppColors.info;
       case 'ASSIGNED':
         return Colors.indigo;
       case 'UNDER_REVIEW':
-        return Colors.amber;
+        return AppColors.warning;
       case 'ESCALATED':
-        return Colors.orange;
+        return AppColors.warning;
       case 'RESOLVED':
-        return Colors.green;
+        return AppColors.success;
       case 'CLOSED':
-        return Colors.grey;
+        return AppColors.textSecondary;
       case 'REJECTED':
-        return Colors.red;
+        return AppColors.danger;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 
@@ -127,21 +127,21 @@ const List<String> kIssueStatuses = [
 Color issueStatusColor(String status) {
   switch (status) {
     case 'NEW':
-      return Colors.blue;
+      return AppColors.info;
     case 'ASSIGNED':
       return Colors.indigo;
     case 'UNDER_REVIEW':
-      return Colors.amber;
+      return AppColors.warning;
     case 'ESCALATED':
-      return Colors.orange;
+      return AppColors.warning;
     case 'RESOLVED':
-      return Colors.green;
+      return AppColors.success;
     case 'CLOSED':
-      return Colors.grey;
+      return AppColors.textSecondary;
     case 'REJECTED':
-      return Colors.red;
+      return AppColors.danger;
     default:
-      return Colors.grey;
+      return AppColors.textSecondary;
   }
 }
 

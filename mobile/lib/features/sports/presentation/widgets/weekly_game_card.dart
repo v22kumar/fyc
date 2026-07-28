@@ -48,7 +48,7 @@ class WeeklyGameCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('delete')),
           ),
         ],
@@ -122,7 +122,7 @@ class WeeklyGameCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppColors.textPrimary.withOpacity(0.05),
                           blurRadius: 5,
                         ),
                       ],
@@ -169,7 +169,7 @@ class WeeklyGameCard extends StatelessWidget {
                         if (isOrganizer || isAdmin) ...[
                           const SizedBox(width: 4),
                           PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 20, color: Colors.grey),
+                            icon: Icon(Icons.more_vert, size: 20, color: AppColors.textSecondary),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             onSelected: (val) {
@@ -194,9 +194,9 @@ class WeeklyGameCard extends StatelessWidget {
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete, color: Colors.red, size: 16),
+                                    Icon(Icons.delete, color: AppColors.danger, size: 16),
                                     SizedBox(width: 8),
-                                    Text(trId('delete'), style: TextStyle(color: Colors.red, fontSize: 13)),
+                                    Text(trId('delete'), style: TextStyle(color: AppColors.danger, fontSize: 13)),
                                   ],
                                 ),
                               ),
@@ -290,7 +290,7 @@ class WeeklyGameCard extends StatelessWidget {
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: hasJoined ? context.cSurface : AppColors.primary,
-                              foregroundColor: hasJoined ? context.cTextSecondary : Colors.white,
+                              foregroundColor: hasJoined ? context.cTextSecondary : AppColors.background,
                               elevation: hasJoined ? 0 : 4,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -314,7 +314,7 @@ class WeeklyGameCard extends StatelessWidget {
                                 : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.accent,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.background,
                               elevation: 4,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
@@ -332,11 +332,11 @@ class WeeklyGameCard extends StatelessWidget {
                         onPressed: () {
                           context.push('/sports/fixture/${game.fixtureId}/live');
                         },
-                        icon: const Icon(Icons.analytics, color: Colors.white),
+                        icon: Icon(Icons.analytics, color: AppColors.background),
                         label: Text(trId('view_live_score'), style: TextStyle(fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade600,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.danger.shade600,
+                          foregroundColor: AppColors.background,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -364,12 +364,12 @@ class _StatusBadge extends StatelessWidget {
     String label;
     
     if (status == 'LIVE') {
-      bg = Colors.red.withOpacity(0.15);
-      fg = Colors.red.shade700;
+      bg = AppColors.danger.withOpacity(0.15);
+      fg = AppColors.danger.shade700;
       label = 'LIVE';
     } else if (status == 'COMPLETED') {
-      bg = Colors.green.withOpacity(0.15);
-      fg = Colors.green.shade700;
+      bg = AppColors.success.withOpacity(0.15);
+      fg = AppColors.success.shade700;
       label = 'COMPLETED';
     } else {
       bg = AppColors.primary.withOpacity(0.15);

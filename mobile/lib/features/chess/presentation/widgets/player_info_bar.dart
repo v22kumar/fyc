@@ -45,7 +45,7 @@ class PlayerInfoBar extends StatelessWidget {
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: TextStyle(
-                  color: isActive ? Colors.white : AppColors.textSecondary,
+                  color: isActive ? AppColors.background : AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -70,7 +70,7 @@ class PlayerInfoBar extends StatelessWidget {
                 if (captured.isNotEmpty)
                   Text(
                     captured.join(' '),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
               ],
             ),
@@ -85,7 +85,7 @@ class PlayerInfoBar extends StatelessWidget {
               child: Text(
                 trId('your_turn'),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),

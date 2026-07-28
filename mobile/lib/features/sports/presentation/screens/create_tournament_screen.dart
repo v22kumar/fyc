@@ -271,7 +271,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         action: onRetry != null
             ? SnackBarAction(
                 label: 'Retry',
-                textColor: Colors.white,
+                textColor: AppColors.background,
                 onPressed: onRetry,
               )
             : null,
@@ -328,7 +328,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   elevation: 0,
                 ),
                 child: Text(trId('manage_tournament'),
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -370,7 +370,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   onSelected: (_) => _onSportChanged(s.value),
                   label: Text('${s.emoji} ${s.labelEn}'),
                   labelStyle: TextStyle(
-                      color: sel ? Colors.white : context.cText, fontWeight: FontWeight.w600, fontSize: 12),
+                      color: sel ? AppColors.background : context.cText, fontWeight: FontWeight.w600, fontSize: 12),
                   selectedColor: AppColors.primary,
                   backgroundColor: context.cSurface,
                 );
@@ -423,7 +423,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               children: [
                 Text(
                   _showAdvanced ? 'Hide Advanced Settings' : 'Show Advanced Settings',
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
                 ),
                 Icon(
                   _showAdvanced ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -575,7 +575,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               children: [
                 _Label('Description (Markdown Supported)'),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
+                  icon: Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
                   tooltip: trId('templates'),
                   onSelected: (template) {
                     setState(() {
@@ -663,14 +663,14 @@ Join us for our yearly gathering!
                 elevation: 0,
               ),
               child: _submitting
-                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                  ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2.5))
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.emoji_events, color: Colors.white, size: 18),
+                        Icon(Icons.emoji_events, color: AppColors.background, size: 18),
                         const SizedBox(width: 10),
                         Text(widget.tournament != null ? 'Save Changes' : 'Create Tournament',
-                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                            style: TextStyle(color: AppColors.background, fontSize: 15, fontWeight: FontWeight.w700)),
                       ],
                     ),
             ),
@@ -954,7 +954,7 @@ class _HowItWorks extends StatelessWidget {
                       height: 22,
                       decoration: const BoxDecoration(color: Color(0xFF2563EB), shape: BoxShape.circle),
                       alignment: Alignment.center,
-                      child: Text(s.$1, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                      child: Text(s.$1, style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w800)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

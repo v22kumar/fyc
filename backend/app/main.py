@@ -733,9 +733,10 @@ from app.routers import (
     events, issues, club_requests,
     opportunities, community, blood_donors,
     geography, green_fyc, instagram, sports, chess,
-    search, follows, comments, attachments, system, share
+    search, follows, comments, attachments, system, share, theme
 )
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(theme.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(organizations.router, prefix="/api/v1")
 app.include_router(geography.router, prefix="/api/v1")

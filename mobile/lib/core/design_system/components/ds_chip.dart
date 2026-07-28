@@ -63,7 +63,7 @@ class DSChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = color ?? _chipDefaults[kind]!;
     final bg = selected ? base : base.withOpacity(0.12);
-    final fg = selected ? Colors.white : base;
+    final fg = selected ? AppColors.background : base;
     return Material(
       color: Colors.transparent,
       child: InkWell(

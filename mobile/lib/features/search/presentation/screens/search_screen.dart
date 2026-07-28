@@ -353,9 +353,9 @@ class _SearchScreenState extends State<SearchScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _error.isNotEmpty
-              ? Center(child: Text(_error, style: TextStyle(color: Colors.red)))
+              ? Center(child: Text(_error, style: TextStyle(color: AppColors.danger)))
               : _searchController.text.isEmpty
                   ? _buildEmptyState()
                   : _results.isEmpty

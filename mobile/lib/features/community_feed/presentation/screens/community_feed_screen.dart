@@ -33,7 +33,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       appBar: AppBar(
         title: Text(trId('community_feed')),
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
       ),
       body: BlocBuilder<CommunityFeedBloc, CommunityFeedState>(
         builder: (context, state) {
@@ -66,7 +66,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
                   const SizedBox(height: 16),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -115,8 +115,8 @@ class _FeedCard extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 width: double.infinity,
                 height: 150,
-                color: Colors.grey[200],
-                child: const Icon(Icons.broken_image, color: Colors.grey),
+                color: AppColors.textSecondary[200],
+                child: Icon(Icons.broken_image, color: AppColors.textSecondary),
               ),
             ),
           Padding(
@@ -136,18 +136,18 @@ class _FeedCard extends StatelessWidget {
                   lang == 'ta' ? item.displaySubtitleTa : item.displaySubtitleEn,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[800],
+                    color: AppColors.textSecondary[800],
                     height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                    Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       fmt.format(dateObj),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -167,7 +167,7 @@ class _FeedCard extends StatelessWidget {
     switch (item.itemType) {
       case 'NEWS':
         icon = Icons.article;
-        color = Colors.blue;
+        color = AppColors.info;
         label = trId('news');
         break;
       case 'EVENT':
@@ -177,12 +177,12 @@ class _FeedCard extends StatelessWidget {
         break;
       case 'TOURNAMENT':
         icon = Icons.emoji_events;
-        color = Colors.amber.shade700;
+        color = AppColors.warning.shade700;
         label = trId('tournament');
         break;
       case 'ISSUE':
         icon = Icons.report_problem;
-        color = Colors.red;
+        color = AppColors.danger;
         label = trId('issue');
         break;
       case 'ANNOUNCEMENT':

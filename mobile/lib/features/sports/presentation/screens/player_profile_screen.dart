@@ -42,7 +42,7 @@ class PlayerProfileScreen extends StatelessWidget {
             Center(
               child: Text(
                 player.role ?? 'Player',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
               ),
             ),
             const SizedBox(height: 32),

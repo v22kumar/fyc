@@ -139,7 +139,7 @@ class _SosSheetState extends State<_SosSheet> {
                   const SizedBox(width: 10),
                   Text(trId('safety_center'),
                       style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.background,
                           fontSize: 20,
                           fontWeight: FontWeight.w700)),
                   const Spacer(),
@@ -171,7 +171,7 @@ class _SosSheetState extends State<_SosSheet> {
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                              strokeWidth: 2, color: AppColors.background))
                       : const Icon(Icons.send_rounded),
                   label: Text(_busy ? 'Getting location…' : 'Send SOS to my contacts'),
                 ),
@@ -181,7 +181,7 @@ class _SosSheetState extends State<_SosSheet> {
                 height: 50,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     side: const BorderSide(color: Colors.white24),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
@@ -196,7 +196,7 @@ class _SosSheetState extends State<_SosSheet> {
                 height: 50,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     side: const BorderSide(color: Colors.white24),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),

@@ -43,7 +43,7 @@ class _LegacyPageState extends State<LegacyPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         title: Text(
           trId('hall_of_fame_awards'),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
@@ -370,7 +370,7 @@ class _ErrorCard extends StatelessWidget {
       ),
       child: Text(
         trId('could_not_load_data_please_try_again'),
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
       ),
     );
   }

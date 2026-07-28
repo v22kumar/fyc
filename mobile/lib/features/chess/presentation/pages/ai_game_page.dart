@@ -214,7 +214,7 @@ class _AiGamePageState extends State<AiGamePage>
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Colors.white),
+                size: 18, color: AppColors.background),
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(
@@ -229,7 +229,7 @@ class _AiGamePageState extends State<AiGamePage>
                       const TextSpan(
                         text: 'vs ',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.background,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -344,7 +344,7 @@ class _AiGamePageState extends State<AiGamePage>
                               spreadRadius: 2,
                             ),
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.5),
+                              color: AppColors.textPrimary.withOpacity(0.5),
                               blurRadius: 18,
                               offset: const Offset(0, 12),
                             ),
@@ -450,9 +450,9 @@ class _AiGamePageState extends State<AiGamePage>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.35),
+        color: AppColors.textPrimary.withOpacity(0.35),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: AppColors.background.withOpacity(0.06)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -499,7 +499,7 @@ class _AiGamePageState extends State<AiGamePage>
           children: [
             Text(state.resultLabel,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 22,
                     fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center),
@@ -517,7 +517,7 @@ class _AiGamePageState extends State<AiGamePage>
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kGreen,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.background,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -549,7 +549,7 @@ class _AiGamePageState extends State<AiGamePage>
           children: [
             Text(trId('board_theme'),
                 style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 16,
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
@@ -593,7 +593,7 @@ class _AiGamePageState extends State<AiGamePage>
                       const SizedBox(height: 6),
                       Text(s.name,
                           style: TextStyle(
-                              color: selected ? Colors.white : Colors.white60,
+                              color: selected ? AppColors.background : Colors.white60,
                               fontSize: 12,
                               fontWeight: selected
                                   ? FontWeight.w700
@@ -626,7 +626,7 @@ class _AiGamePageState extends State<AiGamePage>
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(trId('resign_2'),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text('Forfeit this game to ${s.aiName}?',
             style: const TextStyle(color: Color(0xFF8B9A8E))),
         actions: [
@@ -640,7 +640,7 @@ class _AiGamePageState extends State<AiGamePage>
               Navigator.pop(ctx);
               context.read<AiGameBloc>().add(const ResignToAi());
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
@@ -678,7 +678,7 @@ class _KnightAvatar extends StatelessWidget {
     return const Text('♞',
         style: TextStyle(
           fontSize: 24,
-          color: Colors.white,
+          color: AppColors.background,
           height: 1.1,
         ));
   }
@@ -734,7 +734,7 @@ class _ToolBtn extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: highlighted ? Colors.white : Colors.white70,
+            color: highlighted ? AppColors.background : Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
@@ -787,9 +787,9 @@ class _ViewToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.35),
+        color: AppColors.textPrimary.withOpacity(0.35),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: AppColors.background.withOpacity(0.06)),
       ),
       child: Row(
         children: [
@@ -814,7 +814,7 @@ class _ViewToggle extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.white : Colors.white60,
+            color: active ? AppColors.background : Colors.white60,
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
@@ -840,16 +840,16 @@ class _BoardDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.35),
+          color: AppColors.textPrimary.withOpacity(0.35),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: AppColors.background.withOpacity(0.06)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(trId('board'),
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: AppColors.background.withOpacity(0.85),
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
             const SizedBox(width: 4),
@@ -884,8 +884,8 @@ class _ActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.40),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+        color: AppColors.textPrimary.withOpacity(0.40),
+        border: Border(top: BorderSide(color: AppColors.background.withOpacity(0.05))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -957,12 +957,12 @@ class _ActionBtn extends StatelessWidget {
                   BoxShadow(color: _kGreen.withOpacity(0.5), blurRadius: 12),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: AppColors.background, size: 22),
             ),
             const SizedBox(height: 3),
             Text(label,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700)),
           ],
@@ -1014,7 +1014,7 @@ class _AiResultSheet extends StatelessWidget {
     final emoji = isDraw ? '🤝' : (playerWon ? '🏆' : '🤖');
     final resultColor = isDraw
         ? const Color(0xFF8B9A8E)
-        : (playerWon ? _kGreen : Colors.red[400]!);
+        : (playerWon ? _kGreen : AppColors.danger[400]!);
 
     return Container(
       decoration: const BoxDecoration(
@@ -1067,7 +1067,7 @@ class _AiResultSheet extends StatelessWidget {
                   onPressed: onPlayAgain,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),

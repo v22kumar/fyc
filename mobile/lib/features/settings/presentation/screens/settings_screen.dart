@@ -96,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.shield_outlined, color: AppColors.primary),
+                  Icon(Icons.shield_outlined, color: AppColors.primary),
                   const SizedBox(width: 10),
                   Text(
                     ta ? 'தனியுரிமை & பாதுகாப்பு' : 'Privacy & Security',
@@ -214,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context.read<AuthBloc>().add(const AuthLogoutRequested());
                           context.go('/login');
                         },
-                        child: Text(trId('logout'), style: TextStyle(color: Colors.red)),
+                        child: Text(trId('logout'), style: TextStyle(color: AppColors.danger)),
                       ),
                     ],
                   ),
@@ -294,7 +294,7 @@ class _LangOption extends StatelessWidget {
       ),
       title: Text(native, style: TextStyle(fontWeight: FontWeight.w700, color: context.cText)),
       subtitle: Text(english, style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
-      trailing: selected ? const Icon(Icons.check_circle, color: AppColors.primaryLight) : null,
+      trailing: selected ? Icon(Icons.check_circle, color: AppColors.primaryLight) : null,
     );
   }
 }

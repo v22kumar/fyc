@@ -36,7 +36,7 @@ Widget _themedChip(BuildContext context, {required String label, required bool s
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: selected ? const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]) : null,
+          gradient: selected ? LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]) : null,
           color: selected ? null : (disabled ? const Color(0xFFF5F6FA) : const Color(0xFFEFF2FA)),
           borderRadius: BorderRadius.circular(999),
           border: selected ? null : Border.all(color: disabled ? const Color(0xFFE8EBF2) : const Color(0xFFD7DCEA)),
@@ -46,7 +46,7 @@ Widget _themedChip(BuildContext context, {required String label, required bool s
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : (disabled ? const Color(0xFFB4B9C8) : const Color(0xFF0A1128)),
+            color: selected ? AppColors.background : (disabled ? Color(0xFFB4B9C8) : Color(0xFF0A1128)),
           ),
         ),
       ),
@@ -78,14 +78,14 @@ Widget _gradientCTA({required String label, required VoidCallback? onPressed, Ic
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: enabled
-                ? [BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))]
+                ? [BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 16, offset: Offset(0, 6))]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[Icon(icon, color: Colors.white, size: 19), const SizedBox(width: 8)],
-              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15.5)),
+              if (icon != null) ...[Icon(icon, color: AppColors.background, size: 19), SizedBox(width: 8)],
+              Text(label, style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15.5)),
             ],
           ),
         ),
@@ -341,7 +341,7 @@ class _CricketScoringView extends StatelessWidget {
                       color: Theme.of(context).colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppColors.textPrimary.withOpacity(0.05),
                           blurRadius: 10,
                           offset: const Offset(0, -4),
                         ),
@@ -448,13 +448,13 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 34),
+                Icon(Icons.emoji_events_rounded, color: AppColors.background, size: 34),
                 const SizedBox(height: 10),
                 Text(
                   _notes ??
                       trId('match_completed'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 18),
                 ),
               ],
             ),
@@ -511,7 +511,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
       child: Row(
         children: [
           Expanded(child: Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)))),
-          Text(score ?? '—', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
+          Text(score ?? '—', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
         ],
       ),
     );
@@ -700,7 +700,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)),
                 child: _saving
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                     : Text(trId('save_result'),
                         style: const TextStyle(fontWeight: FontWeight.w800)),
               ),
@@ -981,7 +981,7 @@ class _ScoreHeader extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.32), blurRadius: 26, offset: const Offset(0, 12)),
+          BoxShadow(color: AppColors.primary.withOpacity(0.32), blurRadius: 26, offset: Offset(0, 12)),
         ],
       ),
       padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
@@ -998,49 +998,49 @@ class _ScoreHeader extends StatelessWidget {
               const SizedBox(width: 9),
               Text(
                 teamName(ms.battingTeamId).toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.4),
+                style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.4),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
             '${ms.score}/${ms.wickets}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 72, height: 1.0, letterSpacing: -1.5),
+            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w900, fontSize: 72, height: 1.0, letterSpacing: -1.5),
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Overs ${ms.oversText}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
+                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w600, fontSize: 15)),
               const SizedBox(width: 16),
               Text('CRR ${rr.toStringAsFixed(1)}',
-                  style: TextStyle(color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.w600, fontSize: 15)),
+                  style: TextStyle(color: AppColors.background.withOpacity(0.75), fontWeight: FontWeight.w600, fontSize: 15)),
             ],
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: AppColors.background.withOpacity(0.18),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text('Innings ${ms.innings}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 13)),
           ),
           if (ms.target != null && !ms.isCompleted) ...[
             const SizedBox(height: 16),
-            Divider(color: Colors.white.withOpacity(0.2)),
+            Divider(color: AppColors.background.withOpacity(0.2)),
             const SizedBox(height: 8),
             Text('Need ${needed! > 0 ? needed : 0} runs',
                 style: const TextStyle(color: Color(0xFFFFD37A), fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 4),
             Text('Target ${ms.target}',
-                style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13.5)),
+                style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 13.5)),
           ],
           if (ms.recentBalls.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Divider(color: Colors.white.withOpacity(0.2)),
+            Divider(color: AppColors.background.withOpacity(0.2)),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1053,11 +1053,11 @@ class _ScoreHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: b == 'W'
                         ? const Color(0xFFF43F5E)
-                        : (b.contains('w') || b.contains('n') ? const Color(0xFFF59E0B) : Colors.white.withOpacity(0.16)),
+                        : (b.contains('w') || b.contains('n') ? Color(0xFFF59E0B) : AppColors.background.withOpacity(0.16)),
                     shape: BoxShape.circle,
                   ),
                   child: Text(b,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12.5)),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.background, fontSize: 12.5)),
                 ),
               )).toList(),
             ),
@@ -1393,10 +1393,10 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
+                  gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.sports_cricket_rounded, color: Colors.white, size: 18),
+                child: Icon(Icons.sports_cricket_rounded, color: AppColors.background, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1647,7 +1647,7 @@ class _ScoringPad extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [BoxShadow(color: grad.last.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
                         ),
-                        child: Text('$runs', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white)),
+                        child: Text('$runs', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: AppColors.background)),
                       ),
                     ),
                   ),
@@ -1741,7 +1741,7 @@ class _ScoringPad extends StatelessWidget {
 
     final picked = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
@@ -1770,11 +1770,11 @@ class _ScoringPad extends StatelessWidget {
                               height: 58,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
+                                gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                                 borderRadius: BorderRadius.circular(14),
-                                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))],
+                                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: Offset(0, 3))],
                               ),
-                              child: Text('$r', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                              child: Text('$r', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.background)),
                             ),
                           ),
                         ),
@@ -1836,7 +1836,7 @@ class _ScoringPad extends StatelessWidget {
                               label: Text('$r',
                                   style: TextStyle(
                                       fontWeight: FontWeight.w700,
-                                      color: runOutRuns == r ? Colors.white : const Color(0xFF0A1128))),
+                                      color: runOutRuns == r ? AppColors.background : Color(0xFF0A1128))),
                               selected: runOutRuns == r,
                               selectedColor: AppColors.primary,
                               backgroundColor: const Color(0xFFEFF2FA),
@@ -2004,6 +2004,6 @@ class _Scorecard extends StatelessWidget {
 
   Widget _sectionLabel(String text) => Text(
         text.toUpperCase(),
-        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
+        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
       );
 }

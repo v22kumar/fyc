@@ -156,6 +156,7 @@ final appRouter = GoRouter(
         return RegisterScreen(
           organizationId: extra?['organizationId'] as String? ?? '',
           phoneNumber: extra?['phoneNumber'] as String? ?? '',
+          registrationToken: extra?['registrationToken'] as String? ?? '',
           prefillEmail: extra?['email'] as String?,
           prefillName: extra?['fullName'] as String?,
         );

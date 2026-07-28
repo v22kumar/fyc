@@ -33,7 +33,7 @@ class StatusBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: soft ? color : Colors.white,
+          color: soft ? color : AppColors.background,
           fontSize: 11,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.3,

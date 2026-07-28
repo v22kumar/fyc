@@ -128,10 +128,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
         actions: [
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
-            icon: const Icon(Icons.volunteer_activism, color: Colors.white),
+            icon: Icon(Icons.volunteer_activism, color: AppColors.background),
             label: Text(
               trId('register'),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.background),
             ),
           ),
         ],
@@ -158,8 +158,8 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.05),
-                        Colors.black.withOpacity(0.55),
+                        AppColors.textPrimary.withOpacity(0.05),
+                        AppColors.textPrimary.withOpacity(0.55),
                       ],
                     ),
                   ),
@@ -171,7 +171,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   child: Text(
                     trId('your_one_donation_can_save_up_to_3_lives'),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
@@ -269,8 +269,8 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _launchPhone(state.phoneNumber),
-                    icon: const Icon(Icons.call, color: Colors.white),
-                    label: Text(trId('call_2'), style: const TextStyle(color: Colors.white)),
+                    icon: Icon(Icons.call, color: AppColors.background),
+                    label: Text(trId('call_2'), style: TextStyle(color: AppColors.background)),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                   ),
                 ),
@@ -289,8 +289,8 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _launchWhatsApp(state.whatsappLink),
-                icon: const Icon(Icons.chat, color: Colors.white),
-                label: Text(trId('whatsapp'), style: TextStyle(color: Colors.white)),
+                icon: Icon(Icons.chat, color: AppColors.background),
+                label: Text(trId('whatsapp'), style: TextStyle(color: AppColors.background)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF25D366),
                 ),
@@ -334,7 +334,7 @@ class _EmergencyBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.emergency, color: Colors.white, size: 28),
+            Icon(Icons.emergency, color: AppColors.background, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -342,7 +342,7 @@ class _EmergencyBanner extends StatelessWidget {
                 children: [
                   Text(
                     trId('emergency_blood_needed'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                    style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                   Text(
                     trId('tap_to_alert_all_eligible_donors_in_your'),
@@ -351,7 +351,7 @@ class _EmergencyBanner extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white),
+            Icon(Icons.chevron_right, color: AppColors.background),
           ],
         ),
       ),
@@ -382,7 +382,7 @@ class _FilterRow extends StatelessWidget {
             labelStyle: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: sel ? Colors.white : AppColors.accent,
+              color: sel ? AppColors.background : AppColors.accent,
             ),
             selectedColor: AppColors.accent,
             backgroundColor: AppColors.accent.withOpacity(0.10),
@@ -614,7 +614,7 @@ class _DonorCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.call, size: 15, color: AppColors.primaryLight),
+                    Icon(Icons.call, size: 15, color: AppColors.primaryLight),
                     const SizedBox(width: 5),
                     Text(
                       trId('contact'),
@@ -651,7 +651,7 @@ class _EmptyDonors extends StatelessWidget {
             width: 150,
             height: 150,
             errorBuilder: (_, __, ___) =>
-                const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                Icon(Icons.favorite_border, size: 64, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
           Text(
@@ -680,7 +680,7 @@ class _EmptyDonors extends StatelessWidget {
               ),
               child: Text(
                 trId('register_as_donor'),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
           ),

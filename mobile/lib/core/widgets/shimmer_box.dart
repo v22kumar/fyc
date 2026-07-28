@@ -58,7 +58,7 @@ class _ShimmerBoxState extends State<ShimmerBox> with SingleTickerProviderStateM
             width: widget.width,
             height: widget.height,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.background,
               borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
             ),
           ),

@@ -170,7 +170,7 @@ class _HomeBackdrop extends StatelessWidget {
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: KolamPattern(
-                    color: (dark ? Colors.white : const Color(0xFF0A1128))
+                    color: (dark ? AppColors.background : Color(0xFF0A1128))
                         .withOpacity(dark ? 0.045 : 0.03),
                   ),
                 ),
@@ -242,9 +242,9 @@ class _Header extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: AppColors.background.withOpacity(0.12),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.25)),
+                  border: Border.all(color: AppColors.background.withOpacity(0.25)),
                 ),
                 child: Image.asset(
                   'assets/images/fyc_mark.png',
@@ -255,7 +255,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(trId('fyc_connect'),
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
+                  style: TextStyle(color: AppColors.background, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
             ],
           ),
           actions: [
@@ -271,10 +271,10 @@ class _Header extends StatelessWidget {
               onTap: () => context.push('/me'),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: Colors.white.withOpacity(0.15),
+                backgroundColor: AppColors.background.withOpacity(0.15),
                 child: Text(
                   firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -339,7 +339,7 @@ class _Header extends StatelessWidget {
                         Text('$greetingEn, $firstName!',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                            style: TextStyle(color: AppColors.background, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                         const SizedBox(height: 3),
                         Row(
                           children: [
@@ -365,9 +365,9 @@ class _Header extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.10),
+                    color: AppColors.background.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.16)),
+                    border: Border.all(color: AppColors.background.withOpacity(0.16)),
                   ),
                   child: Row(
                     children: [
@@ -377,9 +377,9 @@ class _Header extends StatelessWidget {
                         child: Text(trId('search_services_events_and_more'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
+                            style: TextStyle(color: AppColors.background.withOpacity(0.55), fontSize: 13)),
                       ),
-                      Icon(Icons.tune_rounded, color: Colors.white.withOpacity(0.5), size: 18),
+                      Icon(Icons.tune_rounded, color: AppColors.background.withOpacity(0.5), size: 18),
                     ],
                   ),
                 ),
@@ -417,10 +417,10 @@ class _CircleBtn extends StatelessWidget {
         padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.10),
-          border: Border.all(color: Colors.white.withOpacity(0.20)),
+          color: AppColors.background.withOpacity(0.10),
+          border: Border.all(color: AppColors.background.withOpacity(0.20)),
         ),
-        child: Icon(icon, size: 18, color: Colors.white),
+        child: Icon(icon, size: 18, color: AppColors.background),
       ),
     );
     return tooltip != null ? Tooltip(message: tooltip!, child: btn) : btn;
@@ -483,7 +483,7 @@ class _NotificationBellState extends State<_NotificationBell> {
               child: Text(
                 _unread > 9 ? '9+' : '$_unread',
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 9,
                     fontWeight: FontWeight.w800),
               ),
@@ -523,17 +523,17 @@ class _BeAHeroCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(trId('be_a_hero'),
-                        style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                        style: TextStyle(color: AppColors.background, fontSize: 17, fontWeight: FontWeight.w800)),
                     const SizedBox(width: 6),
-                    Icon(Icons.favorite, color: Colors.white.withOpacity(0.85), size: 15),
+                    Icon(Icons.favorite, color: AppColors.background.withOpacity(0.85), size: 15),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text(trId('donate_blood_save_lives'),
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppColors.background, fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(trId('your_one_donation_can_save_up_to_3_lives_2'),
-                    style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11)),
+                    style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 11)),
                 const SizedBox(height: 14),
                 Pressable(
                   child: GestureDetector(
@@ -541,7 +541,7 @@ class _BeAHeroCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.background,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -578,7 +578,7 @@ class _BloodBagPainter extends CustomPainter {
 
     // Heartbeat line
     final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.55)
+      ..color = AppColors.background.withOpacity(0.55)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
@@ -597,7 +597,7 @@ class _BloodBagPainter extends CustomPainter {
       Rect.fromLTWH(w * 0.30, h * 0.06, w * 0.42, h * 0.56),
       const Radius.circular(10),
     );
-    canvas.drawRRect(bagRect, Paint()..color = Colors.white.withOpacity(0.95));
+    canvas.drawRRect(bagRect, Paint()..color = AppColors.background.withOpacity(0.95));
 
     // Red fill in bag
     final fillRect = RRect.fromRectAndCorners(
@@ -616,12 +616,12 @@ class _BloodBagPainter extends CustomPainter {
     // Hanger nub
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.46, h * 0.0, w * 0.10, h * 0.07), const Radius.circular(3)),
-      Paint()..color = Colors.white.withOpacity(0.9),
+      Paint()..color = AppColors.background.withOpacity(0.9),
     );
 
     // Drip tube
     canvas.drawLine(Offset(w * 0.51, h * 0.62), Offset(w * 0.51, h * 0.74),
-        Paint()..color = Colors.white.withOpacity(0.7)..strokeWidth = 2);
+        Paint()..color = AppColors.background.withOpacity(0.7)..strokeWidth = 2);
   }
 
   @override
@@ -781,7 +781,7 @@ class _FeaturedSportsHero extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 20, offset: Offset(0, 10)),
         ],
       ),
       child: Material(
@@ -816,35 +816,35 @@ class _FeaturedSportsHero extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text(
                               trId('live_sports'),
-                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                              style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
                           trId('sports_arena_2'),
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                          style: TextStyle(color: AppColors.background, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           trId('tournaments_chess_live_scores'),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: AppColors.background.withOpacity(0.85), fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999)),
+                          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(999)),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 trId('watch_live'),
-                                style: const TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primary),
+                              Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -921,7 +921,7 @@ class _QuickActions extends StatelessWidget {
                           end: Alignment.bottomRight,
                           colors: context.isDark
                               ? [color.withOpacity(0.20), context.cSurface]
-                              : [color.withOpacity(0.10), Colors.white],
+                              : [color.withOpacity(0.10), AppColors.background],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
@@ -943,12 +943,12 @@ class _QuickActions extends StatelessWidget {
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [color, Color.lerp(color, Colors.black, 0.18)!],
+                                    colors: [color, Color.lerp(color, AppColors.textPrimary, 0.18)!],
                                   ),
                                   borderRadius: BorderRadius.circular(14),
                                   boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
                                 ),
-                                child: Icon(icon, color: Colors.white, size: 24),
+                                child: Icon(icon, color: AppColors.background, size: 24),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -1448,7 +1448,7 @@ class _MoreSheet extends StatelessWidget {
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.logout, color: AppColors.accent),
+              leading: Icon(Icons.logout, color: AppColors.accent),
               title: Text(l.logout, style: TextStyle(fontWeight: FontWeight.bold, color: context.cText)),
               onTap: () {
                 showDialog(
@@ -1465,7 +1465,7 @@ class _MoreSheet extends StatelessWidget {
                           Navigator.pop(context);
                           context.read<AuthBloc>().add(const AuthLogoutRequested());
                         },
-                        child: Text(trId('logout'), style: TextStyle(color: Colors.red)),
+                        child: Text(trId('logout'), style: TextStyle(color: AppColors.danger)),
                       ),
                     ],
                   ),
@@ -1512,7 +1512,7 @@ class _BentoTile extends StatelessWidget {
                     height: 46,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [item.color, Color.lerp(item.color, Colors.black, 0.30)!],
+                        colors: [item.color, Color.lerp(item.color, AppColors.textPrimary, 0.30)!],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -1525,7 +1525,7 @@ class _BentoTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(item.icon, color: Colors.white, size: 22),
+                    child: Icon(item.icon, color: AppColors.background, size: 22),
                   ),
                   const SizedBox(height: 8),
                   Text(item.label,
@@ -1696,7 +1696,7 @@ class _NextEventCardState extends State<_NextEventCard> {
                 ),
                 child: Text(ta ? 'பதிவு' : 'Register',
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5)),
               ),
@@ -2025,7 +2025,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                 padding: const EdgeInsets.only(left: 4, bottom: 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
+                    Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
                     const SizedBox(width: 6),
                     Text(
                       ta ? 'நமது சமூகத் தாக்கம்' : 'Our Community Impact',
@@ -2260,7 +2260,7 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
               behavior: HitTestBehavior.opaque,
               child: Text(
                 trId('view_all'),
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
               ),
             ),
           ],

@@ -24,13 +24,21 @@ class OTPResponse(BaseModel):
 class OTPVerify(BaseModel):
     verification_id: str
     otp_code: str = Field(..., min_length=6, max_length=6)
+    
+
+class OTPVerifySuccess(BaseModel):
+    message: str
+    registration_token: str
+    phone_number: str
 
 
 class UserRegister(BaseModel):
     organization_id: UUID
     phone_number: str
+    registration_token: str = Field(..., description="JWT token proving the phone number was verified via OTP")
     email: str = Field(..., description="Required — member contact email")
     date_of_birth: date = Field(..., description="Required — used for age")
+    blood_group: Optional[str] = Field(None, description="Optional blood group")
     role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$")
     full_name_ta: str
     full_name_en: str
@@ -71,11 +79,13 @@ class UserOut(BaseModel):
     email: Optional[str] = None
     role: str
     is_verified: bool
+    is_blocked: bool = False
     preferred_language: str
     full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
     date_of_birth: Optional[date] = None
     gender: Optional[str] = None
+    blood_group: Optional[str] = None
     is_profile_complete: bool = False     # True when name + DOB + gender all set
 
 
@@ -131,10 +141,12 @@ def _build_user_out(user, profile=None):
         email=user.email,
         role=user.role,
         is_verified=user.is_verified,
+        is_blocked=getattr(user, 'is_blocked', False),
         preferred_language=user.preferred_language,
         full_name_en=profile.full_name_en if profile else None,
         full_name_ta=profile.full_name_ta if profile else None,
         date_of_birth=profile.date_of_birth if profile else None,
         gender=profile.gender if profile else None,
+        blood_group=profile.blood_group if profile else None,
         is_profile_complete=is_complete,
     )

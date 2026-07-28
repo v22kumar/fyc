@@ -17,6 +17,7 @@ class User(Base, TimestampMixin, TenantModelMixin):
     password_hash = Column(String(255), nullable=True)
     role = Column(String(30), nullable=False)  # 'PUBLIC_CITIZEN', 'VOLUNTEER', 'CLUB_MEMBER', 'EXECUTIVE_MEMBER', 'ADMIN', 'SUPER_ADMIN'
     is_verified = Column(Boolean(), default=False)
+    is_blocked = Column(Boolean(), default=False)
     preferred_language = Column(String(5), default="ta")  # 'ta' or 'en'
     fcm_token = Column(String(255), nullable=True)
     # Bumped to revoke ALL of a user's outstanding refresh tokens at once
@@ -53,6 +54,7 @@ class UserProfile(Base):
     address_line_en = Column(String(255), nullable=True)
     geography_id = Column(GUID(), nullable=True)  # Links to geographic hierarchy node
     gender = Column(String(20), nullable=True)  # 'MALE', 'FEMALE', or 'OTHER'
+    blood_group = Column(String(10), nullable=True)
     date_of_birth = Column(Date, nullable=True)
     profile_image_url = Column(String(255), nullable=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)

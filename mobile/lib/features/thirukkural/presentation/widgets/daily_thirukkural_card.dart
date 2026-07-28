@@ -204,7 +204,7 @@ class _ThirukkuralContent extends StatelessWidget {
                     fontSize: 90,
                     height: 0.9,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white.withOpacity(0.07),
+                    color: AppColors.background.withOpacity(0.07),
                     fontFamily: 'serif',
                   )),
             ),
@@ -220,7 +220,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: AppColors.background.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text('📜', style: TextStyle(fontSize: 18)),
@@ -235,7 +235,7 @@ class _ThirukkuralContent extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: AppColors.background,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -253,14 +253,14 @@ class _ThirukkuralContent extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
+                          color: AppColors.background.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withOpacity(0.30)),
+                          border: Border.all(color: AppColors.background.withOpacity(0.30)),
                         ),
                         child: Text(
                           'குறள் #${kural.number}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.background,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -275,9 +275,9 @@ class _ThirukkuralContent extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.10),
+                      color: AppColors.background.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                      border: Border.all(color: AppColors.background.withOpacity(0.15)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +288,7 @@ class _ThirukkuralContent extends StatelessWidget {
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             height: 1.6,
-                            color: Colors.white,
+                            color: AppColors.background,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -298,7 +298,7 @@ class _ThirukkuralContent extends StatelessWidget {
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             height: 1.6,
-                            color: Colors.white,
+                            color: AppColors.background,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -314,12 +314,12 @@ class _ThirukkuralContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.55,
-                      color: Colors.white.withOpacity(0.80),
+                      color: AppColors.background.withOpacity(0.80),
                     ),
                   ),
 
                   const SizedBox(height: 14),
-                  Divider(height: 1, color: Colors.white.withOpacity(0.15)),
+                  Divider(height: 1, color: AppColors.background.withOpacity(0.15)),
                   const SizedBox(height: 14),
 
                   // English couplet
@@ -330,7 +330,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
                       height: 1.5,
-                      color: Colors.white.withOpacity(0.90),
+                      color: AppColors.background.withOpacity(0.90),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -339,7 +339,7 @@ class _ThirukkuralContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       height: 1.5,
-                      color: Colors.white.withOpacity(0.65),
+                      color: AppColors.background.withOpacity(0.65),
                     ),
                   ),
 
@@ -348,23 +348,23 @@ class _ThirukkuralContent extends StatelessWidget {
                   // Footer
                   Row(
                     children: [
-                      Icon(Icons.menu_book_outlined, size: 13, color: Colors.white.withOpacity(0.55)),
+                      Icon(Icons.menu_book_outlined, size: 13, color: AppColors.background.withOpacity(0.55)),
                       const SizedBox(width: 6),
                       Text(
                         '${kural.paalTa}  •  ${kural.paalEn}',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white.withOpacity(0.55),
+                          color: AppColors.background.withOpacity(0.55),
                         ),
                       ),
                       if (!isLive) ...[
                         const Spacer(),
-                        Icon(Icons.cloud_off_rounded, size: 12, color: Colors.white.withOpacity(0.35)),
+                        Icon(Icons.cloud_off_rounded, size: 12, color: AppColors.background.withOpacity(0.35)),
                         const SizedBox(width: 4),
                         Text(
                           trId('offline'),
-                          style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.35)),
+                          style: TextStyle(fontSize: 10, color: AppColors.background.withOpacity(0.35)),
                         ),
                       ],
                     ],
@@ -386,14 +386,14 @@ class _KuralBgPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity)
+      ..color = AppColors.background.withOpacity(opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     final cx = size.width / 2, cy = size.height / 2;
     for (int i = 0; i < 5; i++) {
       canvas.drawCircle(Offset(cx, cy), (i + 1) * size.width / 6, paint);
     }
-    final dotPaint = Paint()..color = Colors.white.withOpacity(opacity * 1.5);
+    final dotPaint = Paint()..color = AppColors.background.withOpacity(opacity * 1.5);
     for (int i = 0; i < 8; i++) {
       final angle = i * math.pi / 4;
       canvas.drawCircle(

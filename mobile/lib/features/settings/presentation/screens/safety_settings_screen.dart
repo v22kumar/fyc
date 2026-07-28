@@ -137,10 +137,10 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                         ..._contacts.map((c) => Column(
                               children: [
                                 ListTile(
-                                  leading: const Icon(Icons.person_rounded, color: AppColors.primary),
+                                  leading: Icon(Icons.person_rounded, color: AppColors.primary),
                                   title: Text(c, style: TextStyle(color: context.cText)),
                                   trailing: IconButton(
-                                    icon: const Icon(Icons.close_rounded, color: Colors.red),
+                                    icon: Icon(Icons.close_rounded, color: AppColors.danger),
                                     onPressed: () => _removeContact(c),
                                   ),
                                 ),

@@ -168,7 +168,7 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       trId('fyc_connect'),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -181,7 +181,7 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'சமூக சேவையில் இணைவோம்',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.60),
+                        color: AppColors.background.withOpacity(0.60),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,

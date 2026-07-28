@@ -64,7 +64,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
           }
         } else if (state is IssueDetailActionFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: AppColors.danger),
           );
         }
       },
@@ -98,7 +98,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                             const SizedBox(height: 4),
                             Text(
                               fmt.format(_currentIssue.createdAt.toLocal()),
-                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                              style: TextStyle(color: AppColors.textSecondary[600], fontSize: 14),
                             ),
                           ],
                         ),
@@ -119,7 +119,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                           height: 250,
                           color: AppColors.background,
                           alignment: Alignment.center,
-                          child: const Icon(Icons.broken_image, color: Colors.grey, size: 50),
+                          child: Icon(Icons.broken_image, color: AppColors.textSecondary, size: 50),
                         ),
                       ),
                     ),
@@ -149,8 +149,8 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                         icon: const Icon(Icons.check_circle_outline),
                         label: Text(trId('mark_as_resolved')),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.success,
+                          foregroundColor: AppColors.background,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
@@ -167,7 +167,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                       label: Text(trId('log_email_sent_to_authorities')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
+                        side: BorderSide(color: AppColors.primary),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {

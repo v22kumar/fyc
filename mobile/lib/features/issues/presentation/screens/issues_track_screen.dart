@@ -87,7 +87,7 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.error_outline,
-                            size: 48, color: Colors.grey),
+                            size: 48, color: AppColors.textSecondary),
                         const SizedBox(height: 12),
                         Text(state.message),
                         const SizedBox(height: 16),
@@ -186,7 +186,7 @@ class _Chip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : color,
+            color: selected ? AppColors.background : color,
           ),
         ),
       ),
@@ -244,7 +244,7 @@ class _IssueCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         issue.displayDescription(lang),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        style: TextStyle(color: AppColors.textSecondary[600], fontSize: 13),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -268,7 +268,7 @@ class _IssueCard extends StatelessWidget {
                     height: 140,
                     color: AppColors.background,
                     alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                    child: Icon(Icons.broken_image, color: AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -276,11 +276,11 @@ class _IssueCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule, size: 14, color: Colors.grey),
+                Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   fmt.format(issue.createdAt.toLocal()),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -309,7 +309,7 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         issue.statusLabel(lang),
         style: const TextStyle(
-          color: Colors.white,
+          color: AppColors.background,
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),

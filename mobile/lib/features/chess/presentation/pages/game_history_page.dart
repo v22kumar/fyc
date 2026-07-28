@@ -33,7 +33,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -75,7 +75,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                             color: AppColors.textSecondary, size: 48),
                         const SizedBox(height: 12),
                         Text(trId('could_not_load_games'),
-                            style: const TextStyle(color: AppColors.textSecondary)),
+                            style: TextStyle(color: AppColors.textSecondary)),
                       ],
                     ),
                   );
@@ -180,7 +180,7 @@ class _Stat extends StatelessWidget {
       children: [
         Text(value,
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w800, fontSize: 22)),
+                color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22)),
         Text(label,
             style: const TextStyle(color: Colors.white70, fontSize: 11)),
         const SizedBox(height: 2),

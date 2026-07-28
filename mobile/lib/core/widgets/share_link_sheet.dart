@@ -35,7 +35,7 @@ Future<void> showShareLinkSheet(
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFD1FAE5)),
               ),
@@ -43,7 +43,7 @@ Future<void> showShareLinkSheet(
                 data: url,
                 size: 200,
                 version: QrVersions.auto,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.background,
                 eyeStyle: const QrEyeStyle(
                   eyeShape: QrEyeShape.square,
                   color: Color(0xFF0F172A),
@@ -64,7 +64,7 @@ Future<void> showShareLinkSheet(
             Text(
               trId('scan_to_open'),
               textAlign: TextAlign.center,
-              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.shade600),
             ),
             const SizedBox(height: 18),
             Row(

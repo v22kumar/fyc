@@ -81,11 +81,11 @@ class _OverCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE9ECF4)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.textPrimary.withOpacity(0.03), blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -110,7 +110,7 @@ class _OverCard extends StatelessWidget {
                 Text(trId('over'),
                     style: TextStyle(color: Colors.white70, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.5, height: 1)),
                 Text('${over.overIndex + 1}',
-                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, height: 1.15)),
+                    style: TextStyle(color: AppColors.background, fontSize: 17, fontWeight: FontWeight.w900, height: 1.15)),
               ],
             ),
           ),
@@ -171,15 +171,15 @@ class _BallCircle extends StatelessWidget {
     late final Color border;
     if (isWicket) {
       bg = const Color(0xFFF43F5E);
-      fg = Colors.white;
+      fg = AppColors.background;
       border = const Color(0xFFF43F5E);
     } else if (isExtra) {
       bg = const Color(0xFFF59E0B);
-      fg = Colors.white;
+      fg = AppColors.background;
       border = const Color(0xFFF59E0B);
     } else if (isBoundary) {
       bg = AppColors.primary;
-      fg = Colors.white;
+      fg = AppColors.background;
       border = AppColors.primary;
     } else {
       bg = const Color(0xFFEFF2FA);
@@ -200,7 +200,7 @@ class _BallCircle extends StatelessWidget {
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.textPrimary.withOpacity(0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             )
@@ -292,16 +292,16 @@ class _EditBallSheetState extends State<_EditBallSheet> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : const Color(0xFFEFF2FA),
+          color: selected ? AppColors.primary : Color(0xFFEFF2FA),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? AppColors.primary : const Color(0xFFD7DCEA)),
+          border: Border.all(color: selected ? AppColors.primary : Color(0xFFD7DCEA)),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : const Color(0xFF0A1128),
+            color: selected ? AppColors.background : Color(0xFF0A1128),
           ),
         ),
       ),

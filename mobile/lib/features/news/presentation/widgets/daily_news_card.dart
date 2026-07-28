@@ -252,8 +252,8 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-            label: Text(trId('retry_6'), style: TextStyle(color: Colors.white)),
+            icon: Icon(Icons.refresh_rounded, size: 16, color: AppColors.background),
+            label: Text(trId('retry_6'), style: TextStyle(color: AppColors.background)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -288,8 +288,8 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-            label: Text(trId('retry_6'), style: TextStyle(color: Colors.white)),
+            icon: Icon(Icons.refresh_rounded, size: 16, color: AppColors.background),
+            label: Text(trId('retry_6'), style: TextStyle(color: AppColors.background)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

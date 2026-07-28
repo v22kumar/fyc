@@ -68,7 +68,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
       backgroundColor: _kBg,
       appBar: AppBar(
         backgroundColor: _kBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
@@ -78,7 +78,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         title: Text(
           trId('local_game'),
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.background,
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
@@ -207,7 +207,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
               Text(
                 state.resultLabel,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.background,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
@@ -224,7 +224,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -248,7 +248,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(trId('resign_2'),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text(
           '${state.currentPlayerName} will forfeit this game.',
           style: const TextStyle(color: Color(0xFF8B8682)),
@@ -266,7 +266,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   .read<GameBloc>()
                   .add(Resign(whiteResigns: state.isWhiteTurn));
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
@@ -301,7 +301,7 @@ class _LocalActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: 'Resign',
             onTap: onResign,
-            color: Colors.red[400],
+            color: AppColors.danger[400],
           ),
         ],
       ),

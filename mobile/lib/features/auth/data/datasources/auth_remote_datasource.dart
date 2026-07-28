@@ -22,7 +22,7 @@ abstract class AuthRemoteDataSource {
   /// everywhere). Best-effort — a network failure must not block local logout.
   Future<void> serverLogout();
 
-  Future<TokenModel> verifyOtp({
+  Future<OtpVerifyResult> verifyOtp({
     required String verificationId,
     required String otpCode,
   });
@@ -30,8 +30,10 @@ abstract class AuthRemoteDataSource {
   Future<TokenModel> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -69,7 +71,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<TokenModel> verifyOtp({
+  Future<OtpVerifyResult> verifyOtp({
     required String verificationId,
     required String otpCode,
   }) async {
@@ -78,7 +80,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ApiConstants.otpVerify,
         data: {'verification_id': verificationId, 'otp_code': otpCode},
       );
-      return TokenModel.fromJson(response.data as Map<String, dynamic>);
+      return OtpVerifyResult.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw mapDioException(e);
     }
@@ -88,8 +90,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<TokenModel> registerUser({
     required String organizationId,
     required String phoneNumber,
+    required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -101,8 +105,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {
           'organization_id': organizationId,
           'phone_number': phoneNumber,
+          'registration_token': registrationToken,
           'email': email,
           'date_of_birth': dateOfBirth,
+          if (bloodGroup != null) 'blood_group': bloodGroup,
           'role': role,
           'full_name_ta': fullNameTa,
           'full_name_en': fullNameEn,

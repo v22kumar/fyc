@@ -31,16 +31,16 @@ class ChessGameReadyBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: Row(
                 children: [
-                  const Text('♟', style: TextStyle(color: Colors.white, fontSize: 15)),
+                  Text('♟', style: TextStyle(color: AppColors.background, fontSize: 15)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       trId('your_chess_game_is_ready_tap_to_join'),
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                          color: AppColors.background, fontSize: 13, fontWeight: FontWeight.w700),
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                  Icon(Icons.arrow_forward_rounded, color: AppColors.background, size: 16),
                 ],
               ),
             ),

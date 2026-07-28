@@ -48,3 +48,25 @@ class GoogleAuthResult {
     return GoogleAuthResult(token: TokenModel.fromJson(json));
   }
 }
+
+class OtpVerifyResult {
+  final TokenModel? token;
+  final bool needsRegistration;
+  final String? registrationToken;
+
+  const OtpVerifyResult({
+    this.token,
+    this.needsRegistration = false,
+    this.registrationToken,
+  });
+
+  factory OtpVerifyResult.fromJson(Map<String, dynamic> json) {
+    if (json.containsKey('registration_token')) {
+      return OtpVerifyResult(
+        needsRegistration: true,
+        registrationToken: json['registration_token'] as String?,
+      );
+    }
+    return OtpVerifyResult(token: TokenModel.fromJson(json));
+  }
+}

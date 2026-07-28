@@ -43,9 +43,9 @@ class _OfflineBannerState extends State<OfflineBanner> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off, color: Colors.white, size: 14),
+            Icon(Icons.wifi_off, color: AppColors.background, size: 14),
             SizedBox(width: 8),
-            Text(trId('no_internet_connection'), style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(trId('no_internet_connection'), style: TextStyle(color: AppColors.background, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

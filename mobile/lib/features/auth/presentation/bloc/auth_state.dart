@@ -30,6 +30,7 @@ class AuthOtpSent extends AuthState {
 class AuthNeedsRegistration extends AuthState {
   final String organizationId;
   final String phoneNumber;
+  final String? registrationToken;
   // Pre-fill from Google sign-in (null for the OTP path, where only the phone
   // is known). phoneNumber is empty for the Google path (collected in the form).
   final String? email;
@@ -38,12 +39,13 @@ class AuthNeedsRegistration extends AuthState {
   const AuthNeedsRegistration({
     required this.organizationId,
     required this.phoneNumber,
+    this.registrationToken,
     this.email,
     this.fullName,
   });
 
   @override
-  List<Object?> get props => [organizationId, phoneNumber, email, fullName];
+  List<Object?> get props => [organizationId, phoneNumber, registrationToken, email, fullName];
 }
 
 class AuthAuthenticated extends AuthState {

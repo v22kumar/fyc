@@ -84,8 +84,8 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Colors.black.withOpacity(0.0),
-                                  Colors.black.withOpacity(0.5),
+                                  AppColors.textPrimary.withOpacity(0.0),
+                                  AppColors.textPrimary.withOpacity(0.5),
                                 ],
                               ),
                             ),
@@ -97,7 +97,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                             child: Text(
                               trId('every_tree_is_a_promise_to_tomorrow'),
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.background,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                                 shadows: [
@@ -131,7 +131,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(state.message),
                   const SizedBox(height: 16),

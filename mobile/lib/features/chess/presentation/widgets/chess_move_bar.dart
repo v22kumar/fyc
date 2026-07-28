@@ -152,7 +152,7 @@ class _MoveToken extends StatelessWidget {
       child: Text(
         san,
         style: TextStyle(
-          color: isLatest ? Colors.white : const Color(0xFFD0CEC9),
+          color: isLatest ? AppColors.background : Color(0xFFD0CEC9),
           fontSize: 12,
           fontWeight: isLatest ? FontWeight.w700 : FontWeight.w500,
           fontFeatures: const [FontFeature.tabularFigures()],

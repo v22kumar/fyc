@@ -26,7 +26,7 @@ class OnlineGamePage extends StatelessWidget {
       backgroundColor: _kBg,
       appBar: AppBar(
         backgroundColor: _kBg,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
@@ -76,12 +76,12 @@ class OnlineGamePage extends StatelessWidget {
                       PopupMenuItem(
                         value: 'draw',
                         child: Text(trId('offer_draw'),
-                            style: TextStyle(color: Colors.white)),
+                            style: TextStyle(color: AppColors.background)),
                       ),
                       PopupMenuItem(
                         value: 'resign',
                         child: Text(trId('resign'),
-                            style: TextStyle(color: Colors.red)),
+                            style: TextStyle(color: AppColors.danger)),
                       ),
                     ],
                   ),
@@ -250,13 +250,13 @@ class OnlineGamePage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.wifi_off, color: Colors.white, size: 18),
+                    Icon(Icons.wifi_off, color: AppColors.background, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         trId('opponent_disconnected_waiting_60s'),
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600),
+                            color: AppColors.background, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -283,7 +283,7 @@ class OnlineGamePage extends StatelessWidget {
                     Text(
                       trId('opponent_offers_a_draw'),
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w700),
+                          color: AppColors.background, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -308,7 +308,7 @@ class OnlineGamePage extends StatelessWidget {
                                 .add(const SendAcceptDraw()),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFD4AF37),
-                              foregroundColor: Colors.black,
+                              foregroundColor: AppColors.textPrimary,
                             ),
                             child: Text(trId('accept')),
                           ),
@@ -335,7 +335,7 @@ class OnlineGamePage extends StatelessWidget {
               Text(
                 state.resultLabel,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 22,
                     fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
@@ -347,7 +347,7 @@ class OnlineGamePage extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.background,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -389,7 +389,7 @@ class OnlineGamePage extends StatelessWidget {
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(trId('resign_2'),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text(trId('you_will_forfeit_this_game'),
             style: TextStyle(color: Color(0xFF8B8682))),
         actions: [
@@ -402,7 +402,7 @@ class OnlineGamePage extends StatelessWidget {
               Navigator.pop(ctx);
               context.read<OnlineGameBloc>().add(const SendResign());
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('resign'),
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
@@ -496,17 +496,17 @@ class _ChessClock extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
-            ? (isLow ? Colors.red.shade800 : _kGreen)
+            ? (isLow ? AppColors.danger.shade800 : _kGreen)
             : const Color(0xFF1E1B18),
         borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: Colors.red.shade400, width: 1.5)
+            ? Border.all(color: AppColors.danger.shade400, width: 1.5)
             : null,
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isActive ? Colors.white : const Color(0xFF6B6762),
+          color: isActive ? AppColors.background : Color(0xFF6B6762),
           fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
           fontSize: 15,
           fontFeatures: const [FontFeature.tabularFigures()],
@@ -548,7 +548,7 @@ class _OnlineActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: 'Resign',
             onTap: onResign,
-            color: Colors.red[400],
+            color: AppColors.danger[400],
           ),
         ],
       ),
@@ -649,7 +649,7 @@ class _OnlineResultSheet extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.background,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),

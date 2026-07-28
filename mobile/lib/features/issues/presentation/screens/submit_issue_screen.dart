@@ -265,7 +265,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
             icon: Icon(Icons.list_alt_rounded, size: 16, color: AppColors.primary),
             label: Text(
               trId('my_reports'),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
             ),
           ),
         ],
@@ -287,7 +287,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 backgroundColor: AppColors.accent,
                 action: SnackBarAction(
                   label: trId('retry_4'),
-                  textColor: Colors.white,
+                  textColor: AppColors.background,
                   onPressed: _submit,
                 ),
               ),
@@ -335,7 +335,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 children: [
                   Text(
                     _showAdvanced ? (trId('hide_details')) : (trId('add_details_optional')),
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
                   ),
                   Icon(
                     _showAdvanced ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -429,7 +429,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                   child: ElevatedButton(
                     onPressed: loading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isEmergency ? const Color(0xFFDC2626) : AppColors.primary,
+                      backgroundColor: _isEmergency ? Color(0xFFDC2626) : AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
@@ -437,7 +437,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                         ? const SizedBox(
                             width: 22,
                             height: 22,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                            child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2.5),
                           )
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -445,7 +445,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                               Icon(
                                 _isEmergency ? Icons.emergency_rounded : Icons.send_rounded,
                                 size: 18,
-                                color: Colors.white,
+                                color: AppColors.background,
                               ),
                               const SizedBox(width: 10),
                               Text(
@@ -453,7 +453,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                                     ? (trId('send_emergency_report'))
                                     : (trId('submit_issue')),
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.background,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -523,14 +523,14 @@ class _SectionLabel extends StatelessWidget {
               color: AppColors.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(badge!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
+            child: Text(badge!, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
           ),
         ],
         const Spacer(),
         if (trailing != null)
           GestureDetector(
             onTap: onTrailingTap,
-            child: Text(trailing!, style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
+            child: Text(trailing!, style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
           ),
       ],
     );
@@ -825,7 +825,7 @@ class _PhotoSection extends StatelessWidget {
             width: 110,
             height: 100,
             decoration: BoxDecoration(
-              color: context.isDark ? const Color(0xFF1E2020) : Colors.grey[50],
+              color: context.isDark ? Color(0xFF1E2020) : AppColors.textSecondary[50],
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: photo != null ? AppColors.primary : context.cBorder,
@@ -908,14 +908,14 @@ class _LocationCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (captured ? AppColors.primary : Colors.grey).withOpacity(0.12),
+              color: (captured ? AppColors.primary : AppColors.textSecondary).withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: locating
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : Icon(
                     captured ? Icons.location_on_rounded : Icons.location_off_rounded,
-                    color: captured ? AppColors.primary : Colors.grey,
+                    color: captured ? AppColors.primary : AppColors.textSecondary,
                     size: 18,
                   ),
           ),
@@ -973,7 +973,7 @@ class _WellDoTheRestCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.handshake_rounded, color: AppColors.primary, size: 18),
+              Icon(Icons.handshake_rounded, color: AppColors.primary, size: 18),
               const SizedBox(width: 8),
               Text(
                 trId('we_ll_do_the_rest'),
@@ -1056,12 +1056,12 @@ class _SuccessSheet extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isEmergency ? const Color(0xFFDC2626).withOpacity(0.12) : AppColors.primary.withOpacity(0.10),
+              color: isEmergency ? Color(0xFFDC2626).withOpacity(0.12) : AppColors.primary.withOpacity(0.10),
             ),
             child: Icon(
               isEmergency ? Icons.emergency_rounded : Icons.check_circle_rounded,
               size: 48,
-              color: isEmergency ? const Color(0xFFDC2626) : AppColors.primary,
+              color: isEmergency ? Color(0xFFDC2626) : AppColors.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -1117,7 +1117,7 @@ class _SuccessSheet extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(trId('done'),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

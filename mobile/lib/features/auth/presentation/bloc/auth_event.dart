@@ -39,8 +39,10 @@ class AuthVerifyOtpRequested extends AuthEvent {
 class AuthRegisterRequested extends AuthEvent {
   final String organizationId;
   final String phoneNumber;
+  final String registrationToken;
   final String email;
   final String dateOfBirth; // ISO yyyy-MM-dd
+  final String? bloodGroup;
   final String role;
   final String fullNameTa;
   final String fullNameEn;
@@ -49,8 +51,10 @@ class AuthRegisterRequested extends AuthEvent {
   const AuthRegisterRequested({
     required this.organizationId,
     required this.phoneNumber,
+    required this.registrationToken,
     required this.email,
     required this.dateOfBirth,
+    this.bloodGroup,
     required this.role,
     required this.fullNameTa,
     required this.fullNameEn,
@@ -59,7 +63,7 @@ class AuthRegisterRequested extends AuthEvent {
 
   @override
   List<Object?> get props =>
-      [organizationId, phoneNumber, email, dateOfBirth, role, fullNameTa, fullNameEn, preferredLanguage];
+      [organizationId, phoneNumber, registrationToken, email, dateOfBirth, bloodGroup, role, fullNameTa, fullNameEn, preferredLanguage];
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {

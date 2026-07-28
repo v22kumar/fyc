@@ -19,10 +19,10 @@ class PhotoViewerScreen extends StatelessWidget {
     final dateLabel = DateFormat('d MMM yyyy').format(date.toLocal());
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.textPrimary,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.textPrimary,
+        foregroundColor: AppColors.background,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.go('/gallery'),
@@ -40,7 +40,7 @@ class PhotoViewerScreen extends StatelessWidget {
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
                   return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child: CircularProgressIndicator(color: AppColors.background),
                   );
                 },
                 errorBuilder: (context, error, stack) => const Center(
@@ -74,7 +74,7 @@ class PhotoViewerScreen extends StatelessWidget {
                     Text(
                       caption,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),

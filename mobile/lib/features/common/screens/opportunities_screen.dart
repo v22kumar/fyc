@@ -73,7 +73,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
               SnackBar(
                 content: Row(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
+                    Icon(Icons.check_circle, color: AppColors.background),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -177,7 +177,7 @@ class _PremiumEmptyState extends StatelessWidget {
               color: AppColors.primary.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.work_outline_rounded, size: 48, color: AppColors.primary),
+            child: Icon(Icons.work_outline_rounded, size: 48, color: AppColors.primary),
           ),
           const SizedBox(height: 20),
           Text(
@@ -205,7 +205,7 @@ class _PremiumEmptyState extends StatelessWidget {
                 ),
                 child: Text(
                   trId('post_a_job_3'),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -243,7 +243,7 @@ class _SkillsPeerLink extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.16),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.handyman_rounded, color: AppColors.primary),
+              child: Icon(Icons.handyman_rounded, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -312,7 +312,7 @@ class _OpportunityCard extends StatelessWidget {
                 if (opp.budget.isNotEmpty)
                   Text(
                     opp.budget,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary),
                   )
                 else if (isVolunteer)
                   Text(
@@ -322,7 +322,7 @@ class _OpportunityCard extends StatelessWidget {
                 else if (opp.hours.isNotEmpty)
                   Text(
                     opp.hours,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent),
                   ),
               ],
             ),
@@ -402,7 +402,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : context.cText,
+            color: isSelected ? AppColors.background : context.cText,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

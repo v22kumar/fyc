@@ -100,7 +100,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 28),
@@ -174,7 +174,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
               child: ElevatedButton(
                 onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('save_changes'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                child: _submitting ? CircularProgressIndicator(color: AppColors.background) : Text(trId('save_changes'), style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

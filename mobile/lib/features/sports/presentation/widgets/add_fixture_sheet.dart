@@ -170,7 +170,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
                       _scheduledAt == null
                           ? 'Select Date/Time'
                           : '${_scheduledAt!.day}/${_scheduledAt!.month} ${_scheduledAt!.hour}:${_scheduledAt!.minute.toString().padLeft(2, '0')}',
-                      style: TextStyle(fontSize: 14, color: _scheduledAt == null ? Colors.grey : context.cText),
+                      style: TextStyle(fontSize: 14, color: _scheduledAt == null ? AppColors.textSecondary : context.cText),
                     ),
                   ),
                 ),
@@ -191,7 +191,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('schedule_fixture'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              child: _submitting ? CircularProgressIndicator(color: AppColors.background) : Text(trId('schedule_fixture'), style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
             ),
           ),
         ],

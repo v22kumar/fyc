@@ -1,11 +1,12 @@
 import random
 import uuid
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
+import jwt
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -16,7 +17,7 @@ from app.dependencies import get_current_user
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
-from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
+from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -71,10 +72,10 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     )
 
 
-@router.post("/otp/verify", response_model=Token)
+@router.post("/otp/verify", response_model=Union[Token, OTPVerifySuccess])
 def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
     """
-    Verify OTP. Returns JWT on success; 404 if user not yet registered.
+    Verify OTP. Returns JWT on success; or OTPVerifySuccess with a registration_token if user not yet registered.
     """
     stored = otp_store.get(payload.verification_id)
     if not stored:
@@ -104,13 +105,30 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
         User.phone_number == phone_number,
     ).first()
 
+    otp_store.pop(payload.verification_id, None)
+
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not registered. Please call /auth/register.",
+        # Generate a temporary token proving this phone number was verified
+        expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+        to_encode = {
+            "exp": expire,
+            "phone_number": phone_number,
+            "organization_id": str(org_id),
+            "type": "registration"
+        }
+        registration_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+        
+        return OTPVerifySuccess(
+            message="OTP verified. User not registered. Please call /auth/register.",
+            registration_token=registration_token,
+            phone_number=phone_number
         )
 
-    otp_store.pop(payload.verification_id, None)
+    if getattr(user, 'is_blocked', False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked by an administrator.",
+        )
 
     access_token = create_access_token(
         subject=user.id,
@@ -125,6 +143,28 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
 @router.post("/register", response_model=Token)
 def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new Citizen or Volunteer after OTP verification."""
+    
+    # 1. Validate the registration_token to ensure the phone number was verified
+    try:
+        token_data = jwt.decode(payload.registration_token, settings.SECRET_KEY, algorithms=["HS256"])
+        if token_data.get("type") != "registration":
+            raise ValueError("Invalid token type")
+        
+        # Verify the phone number matches the token payload
+        token_phone = token_data.get("phone_number")
+        if token_phone != payload.phone_number:
+            raise ValueError("Phone number mismatch")
+            
+        # Verify the org matches
+        if token_data.get("organization_id") != str(payload.organization_id):
+            raise ValueError("Organization mismatch")
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired registration token. Please verify your phone number again.",
+        )
+
     # Ensure phone number is E.164 formatted (default to +91 for India)
     if len(payload.phone_number) == 10 and payload.phone_number.isdigit():
         payload.phone_number = f"+91{payload.phone_number}"
@@ -182,6 +222,7 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
         full_name_ta=payload.full_name_ta,
         full_name_en=payload.full_name_en,
         date_of_birth=payload.date_of_birth,
+        blood_group=payload.blood_group,
         last_login_at=datetime.now(timezone.utc),
     )
     db.add(profile)
@@ -284,6 +325,12 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
     is_super_admin = email == "vrn2252@gmail.com"
 
+    if getattr(user, 'is_blocked', False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked by an administrator.",
+        )
+
     # New member (and not the owner bootstrap account): route them into
     # registration to collect the mandatory phone + date of birth rather than
     # creating an incomplete account. Name/email are pre-filled from Google.
@@ -356,6 +403,12 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
 
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
+        
+    if getattr(user, 'is_blocked', False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked by an administrator.",
+        )
 
     access_token = create_access_token(
         subject=user.id,

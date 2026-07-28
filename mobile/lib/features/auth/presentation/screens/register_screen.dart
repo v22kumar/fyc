@@ -16,7 +16,7 @@ import '../bloc/auth_state.dart';
 
 class RegisterScreen extends StatefulWidget {
   final String organizationId;
-  final String phoneNumber;
+  final String registrationToken;
   // Pre-filled from Google sign-in (null for the OTP path). When phoneNumber is
   // empty (Google), the form shows an editable phone field to collect it.
   final String? prefillEmail;
@@ -26,6 +26,7 @@ class RegisterScreen extends StatefulWidget {
     super.key,
     required this.organizationId,
     required this.phoneNumber,
+    required this.registrationToken,
     this.prefillEmail,
     this.prefillName,
   });
@@ -42,6 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   DateTime? _dob;
+  String? _bloodGroup;
   String _role = 'PUBLIC_CITIZEN';
 
   static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -51,6 +53,8 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool get _phoneEditable => widget.phoneNumber.trim().isEmpty;
 
   late AnimationController _aurora;
+
+  final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
   @override
   void initState() {
@@ -107,8 +111,10 @@ class _RegisterScreenState extends State<RegisterScreen>
     context.read<AuthBloc>().add(AuthRegisterRequested(
           organizationId: widget.organizationId,
           phoneNumber: phone,
+          registrationToken: widget.registrationToken,
           email: _emailCtrl.text.trim(),
           dateOfBirth: _fmtDob(_dob!),
+          bloodGroup: _bloodGroup,
           role: _role,
           fullNameTa: _nameTaCtrl.text.trim(),
           fullNameEn: _nameEnCtrl.text.trim(),
@@ -135,7 +141,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.background,
           elevation: 0,
         ),
         body: Stack(
@@ -193,7 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               child: Container(color: Colors.transparent),
             ),
           // Kolam texture over the aurora, under the content (MD3 redesign §3.4).
-          const KolamTextureLayer(color: Colors.white),
+          KolamTextureLayer(color: AppColors.background),
 
             // ── Form card ─────────────────────────────────────────────
             BlocBuilder<AuthBloc, AuthState>(
@@ -210,9 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.08),
+                            color: AppColors.background.withOpacity(0.08),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.18),
+                              color: AppColors.background.withOpacity(0.18),
                               width: 1,
                             ),
                             boxShadow: [
@@ -235,7 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         Text(
                           trId('fyc_connect'),
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.background,
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
@@ -245,7 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         Text(
                           trId('join_us_in_community_service'),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.55),
+                            color: AppColors.background.withOpacity(0.55),
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -259,14 +265,14 @@ class _RegisterScreenState extends State<RegisterScreen>
                             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.93),
+                                color: AppColors.background.withOpacity(0.93),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: AppColors.background.withOpacity(0.6),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.25),
+                                    color: AppColors.textPrimary.withOpacity(0.25),
                                     blurRadius: 40,
                                     offset: const Offset(0, 16),
                                   ),
@@ -390,6 +396,23 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(height: 16),
+
+                                    // Blood Group (Optional)
+                                    DropdownButtonFormField<String>(
+                                      value: _bloodGroup,
+                                      decoration: InputDecoration(
+                                        label: Text('Blood Group (Optional)'),
+                                        prefixIcon: Icon(Icons.bloodtype_outlined, color: AppColors.danger),
+                                      ),
+                                      items: _bloodGroups.map((bg) {
+                                        return DropdownMenuItem(
+                                          value: bg,
+                                          child: Text(bg),
+                                        );
+                                      }).toList(),
+                                      onChanged: (v) => setState(() => _bloodGroup = v),
+                                    ),
                                     const SizedBox(height: 24),
 
                                     // Role selection
@@ -434,7 +457,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                               height: 20,
                                               width: 20,
                                               child: CircularProgressIndicator(
-                                                  color: Colors.white, strokeWidth: 2))
+                                                  color: AppColors.background, strokeWidth: 2))
                                           : Text(l.register),
                                     ),
                                     const SizedBox(height: 16),

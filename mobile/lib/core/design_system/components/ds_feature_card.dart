@@ -74,7 +74,7 @@ class DSFeatureCard extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: dark
                   ? [tint.withOpacity(0.20), context.cSurface]
-                  : [tint.withOpacity(0.10), Colors.white],
+                  : [tint.withOpacity(0.10), AppColors.background],
             ),
             borderRadius: BorderRadius.circular(AppTheme.radiusCard),
             border: Border.all(color: dark ? context.cBorder : tint.withOpacity(0.22)),
@@ -116,12 +116,12 @@ class DSFeatureCard extends StatelessWidget {
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [tint, Color.lerp(tint, Colors.black, 0.18)!],
+                                colors: [tint, Color.lerp(tint, AppColors.textPrimary, 0.18)!],
                               ),
                               borderRadius: BorderRadius.circular(13),
                               boxShadow: [BoxShadow(color: tint.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
                             ),
-                            child: Icon(icon, color: Colors.white, size: 23),
+                            child: Icon(icon, color: AppColors.background, size: 23),
                           ),
                           const SizedBox(height: 12),
                           Text(

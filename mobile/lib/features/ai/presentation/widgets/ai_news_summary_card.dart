@@ -46,7 +46,7 @@ class AiNewsSummaryCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: context.cBorder),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 14, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.textPrimary.withOpacity(0.05), blurRadius: 14, offset: Offset(0, 4)),
         ],
       ),
       child: child,
@@ -64,7 +64,7 @@ class AiNewsSummaryCard extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.newspaper_rounded, size: 18, color: Colors.white),
+          child: Icon(Icons.newspaper_rounded, size: 18, color: AppColors.background),
         ),
         const SizedBox(width: 12),
         Expanded(

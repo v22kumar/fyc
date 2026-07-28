@@ -214,13 +214,13 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.background,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 4,
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? CircularProgressIndicator(color: AppColors.background)
                   : Text(widget.game != null ? 'Save Changes' : 'Schedule Game', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],

@@ -80,7 +80,7 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(trId('submit_registration'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              child: _submitting ? CircularProgressIndicator(color: AppColors.background) : Text(trId('submit_registration'), style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
             ),
           ),
         ],

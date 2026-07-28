@@ -27,7 +27,7 @@ class _DSSkeletonBlockState extends State<DSSkeletonBlock> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final base = context.dsIsDark ? DSColors.borderDark : DSColors.borderLight;
-    final highlight = context.dsIsDark ? DSColors.surfaceDarkSolid : Colors.white;
+    final highlight = context.dsIsDark ? DSColors.surfaceDarkSolid : AppColors.background;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {

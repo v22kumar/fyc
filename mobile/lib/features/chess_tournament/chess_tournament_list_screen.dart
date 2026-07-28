@@ -117,7 +117,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: Text(trId('create'), style: const TextStyle(color: Colors.white)),
+              child: Text(trId('create'), style: TextStyle(color: AppColors.background)),
             ),
           ],
         ),
@@ -150,15 +150,15 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
           ? FloatingActionButton.extended(
               onPressed: _createDialog,
               backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(trId('create'), style: const TextStyle(color: Colors.white)),
+              icon: Icon(Icons.add, color: AppColors.background),
+              label: Text(trId('create'), style: TextStyle(color: AppColors.background)),
             )
           : null,
       body: _items == null && !_error
           ? const DSSkeletonList()
           : _error
               ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.wifi_off_rounded, size: 40, color: Colors.grey),
+                  Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textSecondary),
                   const SizedBox(height: 10),
                   ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))),
                 ]))

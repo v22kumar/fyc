@@ -243,7 +243,7 @@ class _PriceRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isHighlight ? Colors.white : _goldColor,
+              color: isHighlight ? AppColors.background : _goldColor,
             ),
           ),
         ),

@@ -65,7 +65,7 @@ class AiDailyDigestCard extends ConsumerWidget {
           Positioned(
             right: 14,
             top: 14,
-            child: Icon(Icons.auto_awesome, size: 64, color: Colors.white.withOpacity(0.10)),
+            child: Icon(Icons.auto_awesome, size: 64, color: AppColors.background.withOpacity(0.10)),
           ),
           Padding(padding: const EdgeInsets.all(18.0), child: child),
         ],
@@ -76,7 +76,7 @@ class AiDailyDigestCard extends ConsumerWidget {
   Widget _orb(double d, double o) => Container(
         width: d,
         height: d,
-        decoration: BoxDecoration(color: Colors.white.withOpacity(o), shape: BoxShape.circle),
+        decoration: BoxDecoration(color: AppColors.background.withOpacity(o), shape: BoxShape.circle),
       );
 
   Widget _header() {
@@ -87,16 +87,16 @@ class AiDailyDigestCard extends ConsumerWidget {
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
+            color: AppColors.background.withOpacity(0.18),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: AppColors.background.withOpacity(0.25)),
           ),
-          child: const Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 18),
+          child: Icon(Icons.wb_sunny_rounded, color: AppColors.background, size: 18),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(trId('todays_summary'),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+              style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 16)),
         ),
       ],
     );
@@ -110,15 +110,15 @@ class AiDailyDigestCard extends ConsumerWidget {
         const SizedBox(height: 14),
         Text(
           summary,
-          style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.55, fontWeight: FontWeight.w500),
+          style: TextStyle(color: AppColors.background, fontSize: 14.5, height: 1.55, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 14),
         Row(
           children: [
-            Icon(Icons.bolt_rounded, size: 14, color: Colors.white.withOpacity(0.75)),
+            Icon(Icons.bolt_rounded, size: 14, color: AppColors.background.withOpacity(0.75)),
             const SizedBox(width: 4),
             Text(trId('generated_for_fyc_refreshes_daily'),
-                style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 11, fontWeight: FontWeight.w600)),
+                style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 11, fontWeight: FontWeight.w600)),
           ],
         ),
       ],
@@ -138,7 +138,7 @@ class AiDailyDigestCard extends ConsumerWidget {
         const AiSkeletonBar(widthFactor: 0.6),
         const SizedBox(height: 14),
         Text(trId('preparing_today_s_briefing'),
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600)),
+            style: TextStyle(color: AppColors.background.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600)),
       ],
     );
   }

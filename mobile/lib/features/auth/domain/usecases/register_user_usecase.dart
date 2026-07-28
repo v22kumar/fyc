@@ -12,8 +12,10 @@ class RegisterUserUseCase {
   Future<Either<Failure, UserEntity>> call({
     required String organizationId,
     required String phoneNumber,
+    required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
@@ -37,8 +39,10 @@ class RegisterUserUseCase {
     return repository.registerUser(
       organizationId: organizationId,
       phoneNumber: phoneNumber,
+      registrationToken: registrationToken,
       email: email.trim(),
       dateOfBirth: dateOfBirth.trim(),
+      bloodGroup: bloodGroup,
       role: role,
       fullNameTa: fullNameTa.trim(),
       fullNameEn: fullNameEn.trim(),

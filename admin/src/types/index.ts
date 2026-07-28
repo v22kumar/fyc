@@ -51,6 +51,7 @@ export interface Member {
   email?: string | null;
   role: string;
   is_verified: boolean;
+  is_blocked: boolean;
   preferred_language: string;
   full_name_ta: string | null;
   full_name_en: string | null;

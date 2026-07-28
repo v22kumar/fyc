@@ -83,7 +83,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) {
-        if (f.message.contains('register') || f.message.contains('not registered')) {
+        if (f.message.contains('registration_token:')) {
+          final token = f.message.split('registration_token:').last.trim();
+          emit(AuthNeedsRegistration(
+            organizationId: '', 
+            phoneNumber: '', 
+            registrationToken: token,
+            email: _pendingEmail,
+            fullName: _pendingFullName,
+          ));
+        } else if (f.message.contains('register') || f.message.contains('not registered')) {
           emit(const AuthNeedsRegistration(organizationId: '', phoneNumber: ''));
         } else {
           emit(AuthFailureState(f.message));
@@ -104,8 +113,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _registerUser(
       organizationId: event.organizationId,
       phoneNumber: event.phoneNumber,
+      registrationToken: event.registrationToken,
       email: event.email,
       dateOfBirth: event.dateOfBirth,
+      bloodGroup: event.bloodGroup,
       role: event.role,
       fullNameTa: event.fullNameTa,
       fullNameEn: event.fullNameEn,
@@ -120,6 +131,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
+  String? _pendingEmail;
+  String? _pendingFullName;
+
   Future<void> _onGoogleSignIn(
     AuthGoogleSignInRequested event,
     Emitter<AuthState> emit,
@@ -133,17 +147,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (outcome) {
         switch (outcome) {
           case GoogleAuthSuccess(:final user):
+            _pendingEmail = null;
+            _pendingFullName = null;
             emit(AuthAuthenticated(user));
             _registerFcmToken();
           case GoogleAuthNeedsProfile(:final email, :final fullName):
-            // New Google member — send them through registration to supply
-            // the mandatory phone + DOB, name/email pre-filled from Google.
-            emit(AuthNeedsRegistration(
-              organizationId: event.organizationId,
-              phoneNumber: '',
-              email: email,
-              fullName: fullName,
-            ));
+            // New Google member — must verify phone first!
+            _pendingEmail = email;
+            _pendingFullName = fullName;
+            emit(const AuthFailureState("Please verify your phone number to complete Google Sign-In."));
         }
       },
     );

@@ -91,7 +91,7 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
                     onSelected: (_) { setState(() => _filter = s); _load(); },
                     label: Text(s[0] + s.substring(1).toLowerCase()),
                     labelStyle: TextStyle(
-                        color: sel ? Colors.white : context.cText, fontWeight: FontWeight.w600, fontSize: 12),
+                        color: sel ? AppColors.background : context.cText, fontWeight: FontWeight.w600, fontSize: 12),
                     selectedColor: AppColors.primary,
                     backgroundColor: context.cBackground,
                   ),
@@ -174,13 +174,13 @@ class _EntryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('$scoreA',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 14),
-                child: Text(':', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                child: Text(':', style: TextStyle(fontSize: 20, color: AppColors.textSecondary)),
               ),
               Text('$scoreB',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
             ],
           ),
           if (notes != null && notes.isNotEmpty) ...[
@@ -222,9 +222,9 @@ class _EntryCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: busy ? null : onApprove,
                     icon: busy
-                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Icon(Icons.check_rounded, size: 16, color: Colors.white),
-                    label: Text(trId('approve'), style: TextStyle(color: Colors.white)),
+                        ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2))
+                        : Icon(Icons.check_rounded, size: 16, color: AppColors.background),
+                    label: Text(trId('approve'), style: TextStyle(color: AppColors.background)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -252,7 +252,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
-      child: Text(status, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+      child: Text(status, style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.bold)),
     );
   }
 }

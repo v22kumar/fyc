@@ -23,7 +23,7 @@ class SuccessSnackbar {
           ),
           child: Row(
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white, size: 28),
+              Icon(Icons.check_circle_outline, color: AppColors.background, size: 28),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -33,7 +33,7 @@ class SuccessSnackbar {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.background,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),

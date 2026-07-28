@@ -149,7 +149,7 @@ class _Hero extends StatelessWidget {
           Text(
             trId('about_fyc_2'),
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.background,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -246,7 +246,7 @@ class _TimelineTile extends StatelessWidget {
                 child: Text(
                   milestone.year,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.background,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
