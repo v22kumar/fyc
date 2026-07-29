@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearAuth } from '@/lib/auth';
-import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, LogOut } from 'lucide-react';
+import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, LogOut, Settings } from 'lucide-react';
 
 const NAV = [
   { href: '/dashboard',         label: 'Home',              icon: Home },
@@ -12,6 +12,7 @@ const NAV = [
   { href: '/dashboard/membership', label: 'Membership Cards',  icon: IdCard },
   { href: '/dashboard/directory',  label: 'Public Directory',  icon: BookOpen },
   { href: '/dashboard/sports',     label: 'Tournaments',       icon: Trophy },
+  { href: '/dashboard/settings',   label: 'Platform Settings', icon: Settings },
 ];
 
 export default function Sidebar() {

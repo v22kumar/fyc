@@ -46,6 +46,14 @@ export const api = {
       body: JSON.stringify({ organization_id: orgId, username, password }),
     }),
 
+  // Theme
+  getTheme: () => request<any>('/api/v1/theme'),
+  updateTheme: (payload: any) =>
+    request<any>('/api/v1/theme', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
   // Search
   globalSearch: (query: string) => request<any>(`/api/v1/search?q=${encodeURIComponent(query)}`),
 
