@@ -52,10 +52,10 @@ class _JourneyScreenState extends State<JourneyScreen> {
                   context.read<JourneyBloc>().add(const JourneyFetchRequested());
                 },
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     GridView.count(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
@@ -101,7 +101,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: 28),
                     _MilestonesSection(j: j),
                   ],
                 ),
@@ -112,9 +112,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-                    const SizedBox(height: 16),
-                    Text(state.message, style: const TextStyle(color: Colors.black54)),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
+                    Text(state.message, style: TextStyle(color: Colors.black54)),
+                    SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         context.read<JourneyBloc>().add(const JourneyFetchRequested());
@@ -125,7 +125,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 ),
               );
             }
-            return const SizedBox.shrink();
+            return SizedBox.shrink();
           },
         ),
       ),
@@ -134,7 +134,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
@@ -153,12 +153,12 @@ class _JourneyScreenState extends State<JourneyScreen> {
             backgroundColor: AppColors.background,
             child: Icon(Icons.emoji_events, size: 40, color: AppColors.warning),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             trId('your_community_impact'),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             trId('your_contributions_are_making_a_real_dif'),
             textAlign: TextAlign.center,
@@ -186,7 +186,7 @@ class _ImpactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
@@ -203,14 +203,14 @@ class _ImpactCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 32),
           ),
-          const Spacer(),
+          Spacer(),
           Text(
             value,
             style: TextStyle(
@@ -219,7 +219,7 @@ class _ImpactCard extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -271,12 +271,12 @@ class _MilestonesSection extends StatelessWidget {
           trId('milestones'),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           trId('badges_you_unlock_as_you_contribute'),
           style: TextStyle(fontSize: 13, color: context.cTextSecondary),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -310,7 +310,7 @@ class _MilestoneBadge extends StatelessWidget {
               ),
               child: Icon(m.unlocked ? m.icon : Icons.lock_outline_rounded, color: accent, size: 26),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               m.label,
               textAlign: TextAlign.center,

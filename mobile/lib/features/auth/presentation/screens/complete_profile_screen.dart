@@ -10,6 +10,7 @@ import '../../../../service_locator.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// One-time onboarding screen that forces a new user (Google or OTP, on any
 /// platform) to supply the mandatory profile data — name, date of birth, gender
@@ -137,23 +138,23 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           children: [
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(trId('complete_profile_hint'),
                 style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13)),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             if (_error != null)
               Container(
                 width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
+                margin: EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF2F2),
                   border: Border.all(color: const Color(0xFFFECACA)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(_error!, style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 13)),
+                child: Text(_error!, style: TextStyle(color: Color(0xFFB91C1C), fontSize: 13)),
               ),
             _label('${trId('full_name_tamil')} *'),
             _field(_nameTa, textInputAction: TextInputAction.next),
@@ -177,9 +178,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             Row(
               children: [
                 _genderChip('MALE', trId('male')),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _genderChip('FEMALE', trId('female')),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _genderChip('OTHER', trId('other')),
               ],
             ),
@@ -187,7 +188,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               _label('${trId('phone_number')} *'),
               _field(_phone, keyboardType: TextInputType.phone, hint: '+919876543210'),
             ],
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
             SizedBox(
               height: 52,
               child: FilledButton(
@@ -210,15 +211,15 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(top: 16, bottom: 6),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        padding: EdgeInsets.only(top: 16, bottom: 6),
+        child: Text(text, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
       );
 
   InputDecoration _decoration({String? hint}) => InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: AppColors.background,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
       );
@@ -239,7 +240,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         onTap: () => setState(() => _gender = value),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? Color(0xFF0F5132) : AppColors.background,

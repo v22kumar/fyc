@@ -74,7 +74,7 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                           .add(IssueListFetchRequested(status: _selectedStatus));
                     },
                     child: ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       children: state.issues
                           .map((i) => _IssueCard(issue: i, lang: _lang))
                           .toList(),
@@ -86,11 +86,11 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline,
+                        Icon(Icons.error_outline,
                             size: 48, color: AppColors.textSecondary),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(state.message),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => context
                               .read<IssueListBloc>()
@@ -103,7 +103,7 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                     ),
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
           ),
@@ -130,7 +130,7 @@ class _StatusFilterBar extends StatelessWidget {
       color: AppColors.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             _Chip(
@@ -141,7 +141,7 @@ class _StatusFilterBar extends StatelessWidget {
             ),
             ...kIssueStatuses.map(
               (s) => Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: EdgeInsets.only(left: 8),
                 child: _Chip(
                   label: issueStatusLabel(s, lang),
                   color: issueStatusColor(s),
@@ -175,7 +175,7 @@ class _Chip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? color : color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(50),
@@ -218,9 +218,9 @@ class _IssueCard extends StatelessWidget {
         );
       },
       child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -228,20 +228,20 @@ class _IssueCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(issue.categoryEmoji,
-                    style: const TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
+                    style: TextStyle(fontSize: 22)),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         issue.categoryLabel(lang),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         issue.displayDescription(lang),
                         style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13),
@@ -251,12 +251,12 @@ class _IssueCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _StatusBadge(issue: issue, lang: lang),
               ],
             ),
             if (issue.photoUrl != null && issue.photoUrl!.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
                 child: Image.network(
@@ -273,11 +273,11 @@ class _IssueCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               children: [
                 Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   fmt.format(issue.createdAt.toLocal()),
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -301,14 +301,14 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: issue.statusColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         issue.statusLabel(lang),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.background,
           fontSize: 11,
           fontWeight: FontWeight.bold,

@@ -7,6 +7,7 @@ import '../bloc/spectator_bloc.dart';
 import '../bloc/spectator_state.dart';
 import '../widgets/chess_player_card.dart';
 import '../widgets/chess_move_bar.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 const _kBg = Color(0xFF262421);
 const _kSurface = Color(0xFF312E2B);
@@ -29,7 +30,7 @@ class SpectatorPage extends StatelessWidget {
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: BlocBuilder<SpectatorBloc, SpectatorState>(
@@ -37,7 +38,7 @@ class SpectatorPage extends StatelessWidget {
             if (state is SpectatorWatching) {
               return Text(
                 '${state.whiteName} vs ${state.blackName}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -53,23 +54,23 @@ class SpectatorPage extends StatelessWidget {
         actions: [
           BlocBuilder<SpectatorBloc, SpectatorState>(
             builder: (context, state) {
-              if (state is! SpectatorWatching) return const SizedBox.shrink();
+              if (state is! SpectatorWatching) return SizedBox.shrink();
               return Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: EdgeInsets.only(right: 12),
                 child: Chip(
                   avatar:
                       Icon(Icons.visibility, size: 14, color: AppColors.background),
                   label: Text(
                     '${state.spectatorCount}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.background,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   backgroundColor: _kSurface,
-                  side: const BorderSide(color: Color(0xFF4A4440)),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  side: BorderSide(color: Color(0xFF4A4440)),
+                  padding: EdgeInsets.symmetric(horizontal: 4),
                 ),
               );
             },
@@ -158,11 +159,11 @@ class SpectatorPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
-                const SizedBox(width: 6),
+                Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
+                SizedBox(width: 6),
                 Text(
                   'Spectating · ${state.spectatorCount} watching',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF8B8682),
                     fontSize: 12,
                   ),
@@ -179,26 +180,26 @@ class SpectatorPage extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 state.resultLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.background,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 '${state.moveSans.length} moves',
                 style:
-                    const TextStyle(color: Color(0xFF8B8682), fontSize: 14),
+                    TextStyle(color: Color(0xFF8B8682), fontSize: 14),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -206,7 +207,7 @@ class SpectatorPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
@@ -276,7 +277,7 @@ class _SpectatorClock extends StatelessWidget {
     final isLow = ms < 30000;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
             ? (isLow ? AppColors.danger.withOpacity(0.8) : _kGreen)

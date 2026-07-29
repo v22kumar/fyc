@@ -6,6 +6,7 @@ import '../../services/sos_service.dart';
 import '../patterns/kolam_background.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// The live navigation shell (mounted at `/app`): 4 tabs (Home · Feed · Play ·
 /// Serve) + a persistent SOS control reachable from every tab. Account/profile
@@ -134,7 +135,7 @@ class _AppShellV2State extends State<AppShellV2> {
                 foregroundColor: AppColors.background,
                 elevation: DSElevation.floating,
                 shape: const CircleBorder(),
-                child: const Icon(Icons.add_rounded, size: 30),
+                child: Icon(Icons.add_rounded, size: 30),
               ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: NavigationBar(
@@ -170,7 +171,7 @@ class _SosButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.all(14),
           child: Icon(Icons.sos_rounded, color: AppColors.background, size: 22),
         ),

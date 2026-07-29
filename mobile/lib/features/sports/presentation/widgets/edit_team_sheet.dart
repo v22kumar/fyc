@@ -99,7 +99,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -110,31 +110,31 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             Text(trId('edit_team_standings'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(controller: _nameCtrl, decoration: InputDecoration(labelText: trId('team_name_2'))),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: _captainCtrl, decoration: InputDecoration(labelText: trId('captain_name'))),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: trId('contact_phone'))),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: TextField(controller: _winsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('wins')))),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(child: TextField(controller: _lossesCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('losses')))),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(child: TextField(controller: _drawsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('draws')))),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(child: TextField(controller: _pointsCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: trId('points')))),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             SwitchListTile(
               title: Text(trId('fyc_team'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               value: _isFycTeam,
@@ -148,7 +148,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
               activeColor: AppColors.accent,
               contentPadding: EdgeInsets.zero,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
@@ -159,7 +159,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
                   ),
                 ));
               },
-              icon: const Icon(Icons.groups_outlined, size: 18),
+              icon: Icon(Icons.groups_outlined, size: 18),
               label: Text(trId('manage_players')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
@@ -167,7 +167,7 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 48,

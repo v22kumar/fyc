@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Lichess-style horizontal move bar.
 /// Shows move pairs, auto-scrolls to the latest move, and displays a
@@ -77,9 +78,9 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                 : ListView.separated(
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: EdgeInsets.symmetric(horizontal: 10),
                     itemCount: pairs.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 4),
+                    separatorBuilder: (_, __) => SizedBox(width: 4),
                     itemBuilder: (context, i) {
                       final (white, black) = pairs[i];
                       final moveNum = i + 1;
@@ -92,19 +93,19 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                         children: [
                           Text(
                             '$moveNum.',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFF6B6762),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(width: 3),
+                          SizedBox(width: 3),
                           _MoveToken(
                             san: white,
                             isLatest: whiteIdx == lastIdx,
                           ),
                           if (black != null) ...[
-                            const SizedBox(width: 3),
+                            SizedBox(width: 3),
                             _MoveToken(
                               san: black,
                               isLatest: blackIdx == lastIdx,
@@ -112,7 +113,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                           ],
                           // Thinking indicator after last partial move
                           if (widget.isThinking && isLastPair && black == null) ...[
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             _ThinkingIndicator(label: widget.thinkingLabel),
                           ],
                         ],
@@ -124,7 +125,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
           // If thinking and no moves yet, show indicator at right
           if (widget.isThinking && widget.moveSans.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: EdgeInsets.only(right: 10),
               child: _ThinkingIndicator(label: widget.thinkingLabel),
             ),
         ],
@@ -142,7 +143,7 @@ class _MoveToken extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: isLatest
           ? BoxDecoration(
               color: const Color(0xFF4A7C59),
@@ -200,18 +201,18 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
       children: [
         FadeTransition(
           opacity: _anim,
-          child: const Icon(
+          child: Icon(
             Icons.circle,
             size: 6,
             color: Color(0xFF4A7C59),
           ),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: 5),
         Text(
           widget.label.isEmpty
               ? 'thinking…'
               : '${widget.label} is thinking…',
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF8B8682),
             fontSize: 11,
             fontStyle: FontStyle.italic,

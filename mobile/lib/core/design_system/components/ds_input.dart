@@ -51,7 +51,7 @@ class DSSearchField extends StatelessWidget {
       readOnly: readOnly,
       onTap: onTap,
       onChanged: onChanged,
-      decoration: _dsDecoration(context, hint: hint, prefixIcon: const Icon(Icons.search_rounded)),
+      decoration: _dsDecoration(context, hint: hint, prefixIcon: Icon(Icons.search_rounded)),
     );
   }
 }
@@ -80,7 +80,7 @@ class DSDropdown<T> extends StatelessWidget {
       children: [
         if (label != null) ...[
           Text(label!, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: context.dsTextSecondary)),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
         ],
         DropdownButtonFormField<T>(
           value: value,
@@ -182,7 +182,7 @@ class DSDateField extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(DSRadius.input),
       child: InputDecorator(
-        decoration: _dsDecoration(context, prefixIcon: const Icon(Icons.calendar_today_rounded)),
+        decoration: _dsDecoration(context, prefixIcon: Icon(Icons.calendar_today_rounded)),
         child: Text(
           value ?? hint,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -209,7 +209,7 @@ class DSLocationField extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(DSRadius.input),
       child: InputDecorator(
-        decoration: _dsDecoration(context, prefixIcon: const Icon(Icons.place_rounded)),
+        decoration: _dsDecoration(context, prefixIcon: Icon(Icons.place_rounded)),
         child: Text(
           value ?? hint,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(

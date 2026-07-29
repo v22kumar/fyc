@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../core/l10n/tr.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Shows a persistent red banner when the device has no internet.
 class OfflineBanner extends StatefulWidget {
@@ -32,14 +33,14 @@ class _OfflineBannerState extends State<OfflineBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_offline) return const SizedBox.shrink();
+    if (!_offline) return SizedBox.shrink();
     return Material(
       color: Colors.transparent,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         color: const Color(0xFFDC2626),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

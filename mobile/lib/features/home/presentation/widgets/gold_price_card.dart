@@ -123,7 +123,7 @@ class _GoldContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -137,14 +137,14 @@ class _GoldContent extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
                   color: _goldSurface,
                   shape: BoxShape.circle,
                 ),
-                child: const Text('🪙', style: TextStyle(fontSize: 18)),
+                child: Text('🪙', style: TextStyle(fontSize: 18)),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +170,7 @@ class _GoldContent extends StatelessWidget {
               ),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: _goldSurface,
                   borderRadius: BorderRadius.circular(20),
@@ -188,7 +188,7 @@ class _GoldContent extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
 
           // Price rows
           _PriceRow(
@@ -198,7 +198,7 @@ class _GoldContent extends StatelessWidget {
             isHighlight: true,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: context.cBorder),
           ),
           _PriceRow(
@@ -247,7 +247,7 @@ class _PriceRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
@@ -278,7 +278,7 @@ class _GoldError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -288,14 +288,14 @@ class _GoldError extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
               color: _goldSurface,
               shape: BoxShape.circle,
             ),
-            child: const Text('🪙', style: TextStyle(fontSize: 18)),
+            child: Text('🪙', style: TextStyle(fontSize: 18)),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(
             trId('gold_price_unavailable'),
             style: TextStyle(
@@ -317,7 +317,7 @@ class _GoldSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -334,8 +334,8 @@ class _GoldSkeleton extends StatelessWidget {
                 height: 34,
                 borderRadius: BorderRadius.circular(17),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -347,11 +347,11 @@ class _GoldSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           const ShimmerBox(height: 36),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           const ShimmerBox(height: 1),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           const ShimmerBox(height: 36),
         ],
       ),

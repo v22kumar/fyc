@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               SliverToBoxAdapter(
                 child: _HomeBackdrop(
                   child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           return _CitizenDashboard(l: l, refreshKey: _refreshKey, lastRefreshed: _lastRefreshed);
                         },
                       ),
-                      const SizedBox(height: 130),
+                      SizedBox(height: 130),
                     ],
                   ),
                   ),
@@ -145,7 +145,7 @@ class _HomeBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = context.isDark;
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -240,7 +240,7 @@ class _Header extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: AppColors.background.withOpacity(0.12),
                   shape: BoxShape.circle,
@@ -250,10 +250,10 @@ class _Header extends StatelessWidget {
                   'assets/images/fyc_mark.png',
                   width: 26,
                   height: 26,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.eco_rounded, size: 14, color: Colors.white70),
+                  errorBuilder: (_, __, ___) => Icon(Icons.eco_rounded, size: 14, color: Colors.white70),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Text(trId('fyc_connect'),
                   style: TextStyle(color: AppColors.background, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
             ],
@@ -264,9 +264,9 @@ class _Header extends StatelessWidget {
               tooltip: trId('change_language'),
               onTap: () => _showLanguagePicker(context),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             const _NotificationBell(),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             GestureDetector(
               onTap: () => context.push('/me'),
               child: CircleAvatar(
@@ -278,7 +278,7 @@ class _Header extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
           ],
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.pin,
@@ -294,7 +294,7 @@ class _Header extends StatelessWidget {
                       'assets/images/hero_community.png',
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, __, ___) => SizedBox.shrink(),
                     ),
                   ),
                 ),
@@ -331,7 +331,7 @@ class _Header extends StatelessWidget {
                 Align(
                   alignment: Alignment.bottomLeft,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 70),
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 70),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,13 +340,13 @@ class _Header extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.background, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today_rounded, color: Colors.white54, size: 12),
-                            const SizedBox(width: 6),
+                            Icon(Icons.calendar_today_rounded, color: Colors.white54, size: 12),
+                            SizedBox(width: 6),
                             Text(dateLine,
-                                style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500, letterSpacing: 0.2)),
+                                style: TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500, letterSpacing: 0.2)),
                           ],
                         ),
                       ],
@@ -359,11 +359,11 @@ class _Header extends StatelessWidget {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(62),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: GestureDetector(
                 onTap: () => context.push('/search'),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   decoration: BoxDecoration(
                     color: AppColors.background.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(14),
@@ -371,8 +371,8 @@ class _Header extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: Colors.white60, size: 20),
-                      const SizedBox(width: 10),
+                      Icon(Icons.search, color: Colors.white60, size: 20),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Text(trId('search_services_events_and_more'),
                             maxLines: 1,
@@ -414,7 +414,7 @@ class _CircleBtn extends StatelessWidget {
       onTap: onTap,
       customBorder: const CircleBorder(),
       child: Container(
-        padding: const EdgeInsets.all(9),
+        padding: EdgeInsets.all(9),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.background.withOpacity(0.10),
@@ -472,7 +472,7 @@ class _NotificationBellState extends State<_NotificationBell> {
             right: -2,
             top: -2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               decoration: BoxDecoration(
                 color: const Color(0xFFEF4444),
@@ -482,7 +482,7 @@ class _NotificationBellState extends State<_NotificationBell> {
               alignment: Alignment.center,
               child: Text(
                 _unread > 9 ? '9+' : '$_unread',
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.background,
                     fontSize: 9,
                     fontWeight: FontWeight.w800),
@@ -502,7 +502,7 @@ class _BeAHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
@@ -524,22 +524,22 @@ class _BeAHeroCard extends StatelessWidget {
                   children: [
                     Text(trId('be_a_hero'),
                         style: TextStyle(color: AppColors.background, fontSize: 17, fontWeight: FontWeight.w800)),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Icon(Icons.favorite, color: AppColors.background.withOpacity(0.85), size: 15),
                   ],
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(trId('donate_blood_save_lives'),
                     style: TextStyle(color: AppColors.background, fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(trId('your_one_donation_can_save_up_to_3_lives_2'),
                     style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 11)),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 Pressable(
                   child: GestureDetector(
                     onTap: () => context.push('/blood-donation'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppColors.background,
                         borderRadius: BorderRadius.circular(12),
@@ -548,9 +548,9 @@ class _BeAHeroCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(trId('find_blood_donors'),
-                              style: const TextStyle(color: Color(0xFFE11D48), fontSize: 13, fontWeight: FontWeight.w700)),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward, color: Color(0xFFE11D48), size: 16),
+                              style: TextStyle(color: Color(0xFFE11D48), fontSize: 13, fontWeight: FontWeight.w700)),
+                          SizedBox(width: 6),
+                          Icon(Icons.arrow_forward, color: Color(0xFFE11D48), size: 16),
                         ],
                       ),
                     ),
@@ -559,7 +559,7 @@ class _BeAHeroCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           SizedBox(
             width: 88,
             height: 96,
@@ -736,9 +736,9 @@ class _ServiceBento extends StatelessWidget {
           title: trId('explore_fyc'),
           onViewAll: () => _showMoreSheet(context),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         const _FeaturedSportsHero(),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -789,7 +789,7 @@ class _FeaturedSportsHero extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.primary, AppColors.primaryLight],
               begin: Alignment.topLeft,
@@ -801,7 +801,7 @@ class _FeaturedSportsHero extends StatelessWidget {
             borderRadius: BorderRadius.circular(22),
             onTap: () => context.push('/sports'),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 8, 16),
+              padding: EdgeInsets.fromLTRB(18, 16, 8, 16),
               child: Row(
                 children: [
                   Expanded(
@@ -813,28 +813,28 @@ class _FeaturedSportsHero extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const LivePulse(size: 22),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Text(
                               trId('live_sports'),
                               style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           trId('sports_arena_2'),
                           style: TextStyle(color: AppColors.background, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         Text(
                           trId('tournaments_chess_live_scores'),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: AppColors.background.withOpacity(0.85), fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w500),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(999)),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -843,7 +843,7 @@ class _FeaturedSportsHero extends StatelessWidget {
                                 trId('watch_live'),
                                 style: TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primary),
                             ],
                           ),
@@ -851,7 +851,7 @@ class _FeaturedSportsHero extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   const SpotIllustration('sports', size: 116),
                 ],
               ),
@@ -891,7 +891,7 @@ class _QuickActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: trId('quick_actions')),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -933,7 +933,7 @@ class _QuickActions extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         onTap: onTap,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                           child: Column(
                             children: [
                               Container(
@@ -950,7 +950,7 @@ class _QuickActions extends StatelessWidget {
                                 ),
                                 child: Icon(icon, color: AppColors.background, size: 24),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(
                                 label,
                                 textAlign: TextAlign.center,
@@ -988,7 +988,7 @@ class _AnnouncementsBar extends StatelessWidget {
       child: GestureDetector(
         onTap: () => context.push('/announcements'),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: context.isDark ? AppColors.primaryLight.withOpacity(0.12) : AppColors.primarySurface,
             borderRadius: BorderRadius.circular(14),
@@ -997,11 +997,11 @@ class _AnnouncementsBar extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.18), shape: BoxShape.circle),
                 child: Icon(Icons.campaign_rounded, color: context.isDark ? AppColors.primaryLight : AppColors.primary, size: 18),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1042,14 +1042,14 @@ class _ImpactStats extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionHeader(title: 'Our Impact'),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           children: stats.map((s) {
             final isLast = s == stats.last;
             return Expanded(
               child: Container(
                 margin: EdgeInsets.only(right: isLast ? 0 : 8),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 4),
                 decoration: BoxDecoration(
                   color: context.isDark ? s.$3.withOpacity(0.16) : s.$4,
                   borderRadius: BorderRadius.circular(16),
@@ -1068,7 +1068,7 @@ class _ImpactStats extends StatelessWidget {
                         value: s.$1,
                         suffix: '+',
                         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.isDark ? s.$3.withOpacity(0.95) : s.$3)),
-                    const SizedBox(height: 3),
+                    SizedBox(height: 3),
                     Text(s.$2,
                         style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
                         textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -1117,12 +1117,12 @@ class _MiniCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Pressable(
           child: GestureDetector(
             onTap: onTap,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: context.cSurface,
                 borderRadius: BorderRadius.circular(16),
@@ -1138,11 +1138,11 @@ class _MiniCard extends StatelessWidget {
                     decoration: BoxDecoration(color: iconColor.withOpacity(context.isDark ? 0.22 : 0.12), borderRadius: BorderRadius.circular(10)),
                     child: Icon(icon, color: iconColor, size: 18),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(title,
                       style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.cText),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(subtitle,
                       style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -1203,9 +1203,9 @@ void _showLanguagePicker(BuildContext context) {
         return Container(
           decoration: BoxDecoration(
             color: context.cBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1214,13 +1214,13 @@ void _showLanguagePicker(BuildContext context) {
                 child: Container(width: 40, height: 4,
                     decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               Text(trId('language'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               ...langs.map((lang) {
                 final selected = current == lang.$1;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.only(bottom: 10),
                   child: GestureDetector(
                     onTap: () async {
                       await storage.saveLang(lang.$1);
@@ -1231,7 +1231,7 @@ void _showLanguagePicker(BuildContext context) {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: selected ? lang.$5.withOpacity(0.10) : context.cSurface,
                         borderRadius: BorderRadius.circular(16),
@@ -1248,7 +1248,7 @@ void _showLanguagePicker(BuildContext context) {
                             child: Text(lang.$2,
                                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: lang.$5)),
                           ),
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1293,9 +1293,9 @@ void _showCreateSheet(BuildContext context) {
     builder: (_) => Container(
       decoration: BoxDecoration(
         color: context.cBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1303,11 +1303,11 @@ void _showCreateSheet(BuildContext context) {
           Center(
             child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Text(trId('create_2'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           ...actions.map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.only(bottom: 10),
                 child: Pressable(
                   child: GestureDetector(
                     onTap: () {
@@ -1315,7 +1315,7 @@ void _showCreateSheet(BuildContext context) {
                       context.push(a.$3);
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: context.cSurface,
                         borderRadius: BorderRadius.circular(16),
@@ -1329,9 +1329,9 @@ void _showCreateSheet(BuildContext context) {
                             decoration: BoxDecoration(color: a.$4.withOpacity(0.14), borderRadius: BorderRadius.circular(12)),
                             child: Icon(a.$1, color: a.$4, size: 20),
                           ),
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Text(a.$2, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.cText)),
-                          const Spacer(),
+                          Spacer(),
                           Icon(Icons.chevron_right, color: context.cTextSecondary),
                         ],
                       ),
@@ -1413,20 +1413,20 @@ class _MoreSheet extends StatelessWidget {
       builder: (_, scrollController) => Container(
         decoration: BoxDecoration(
           color: context.cBackground,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: ListView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 32),
           children: [
             Center(
               child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4))),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             for (final section in sections) ...[
               Text(section.$1,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.cTextSecondary, letterSpacing: 0.5)),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 3,
                 shrinkWrap: true,
@@ -1442,10 +1442,10 @@ class _MoreSheet extends StatelessWidget {
                         ))
                     .toList(),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
             Divider(color: context.cBorder),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.logout, color: AppColors.accent),
@@ -1503,7 +1503,7 @@ class _BentoTile extends StatelessWidget {
               context.push(item.route);
             },
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1527,7 +1527,7 @@ class _BentoTile extends StatelessWidget {
                     ),
                     child: Icon(item.icon, color: AppColors.background, size: 22),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(item.label,
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cText, height: 1.15),
                       textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -1597,7 +1597,7 @@ class _NextEventCardState extends State<_NextEventCard> {
       // genuinely no upcoming event).
       return const DSSkeletonBlock(width: double.infinity, height: 92, radius: 18);
     }
-    if (_event == null) return const SizedBox.shrink();
+    if (_event == null) return SizedBox.shrink();
     final e = _event!;
     final start = DateTime.parse(e['event_start']).toLocal();
     final title = (ta
@@ -1615,9 +1615,9 @@ class _NextEventCardState extends State<_NextEventCard> {
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: context.cText)),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: context.cSurface,
             borderRadius: BorderRadius.circular(18),
@@ -1632,11 +1632,11 @@ class _NextEventCardState extends State<_NextEventCard> {
                 decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Column(
                   children: [
                     Text(month,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primary)),
@@ -1648,7 +1648,7 @@ class _NextEventCardState extends State<_NextEventCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1660,12 +1660,12 @@ class _NextEventCardState extends State<_NextEventCard> {
                             color: context.cText),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.schedule,
                             size: 13, color: context.cTextSecondary),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           '${start.day} ${_monthAbbr(start.month, false)}, ${_time(start)}',
                           style: TextStyle(
@@ -1674,9 +1674,9 @@ class _NextEventCardState extends State<_NextEventCard> {
                       ],
                     ),
                     if (count > 0) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(ta ? '$count பேர் வருகிறார்கள்' : '$count Going',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF12A150))),
@@ -1684,18 +1684,18 @@ class _NextEventCardState extends State<_NextEventCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               ElevatedButton(
                 onPressed: () => context.push('/events'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
                 child: Text(ta ? 'பதிவு' : 'Register',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.background,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5)),
@@ -1792,7 +1792,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
   Widget build(BuildContext context) {
     final ta = _lang == 'ta';
     // Hide the section entirely when there's nothing to show.
-    if (_loaded && _items.isEmpty) return const SizedBox.shrink();
+    if (_loaded && _items.isEmpty) return SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1804,10 +1804,10 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                       color: Color(0xFFEF4444), shape: BoxShape.circle),
                 ),
-                const SizedBox(width: 7),
+                SizedBox(width: 7),
                 Text(ta ? 'நேரடி புதுப்பிப்புகள்' : 'Live Updates',
                     style: TextStyle(
                         fontSize: 15,
@@ -1818,14 +1818,14 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
             GestureDetector(
               onTap: () => context.push('/announcements'),
               child: Text(ta ? 'அனைத்தும்' : 'View All',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF12A150))),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         if (!_loaded)
           // Skeleton shaped like the real update rows — never a bare spinner.
           Column(
@@ -1836,7 +1836,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                 child: Row(
                   children: [
                     const DSSkeletonBlock(width: 40, height: 40, radius: 12),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1866,8 +1866,8 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                 '';
             final ago = _ago((it['created_at'] as String?) ?? '', ta);
             return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: 10),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: context.cSurface,
                 borderRadius: BorderRadius.circular(16),
@@ -1884,7 +1884,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                         borderRadius: BorderRadius.circular(12)),
                     child: Icon(s.icon, color: s.color, size: 20),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1897,7 +1897,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                         if (sub.isNotEmpty) ...[
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(sub,
                               style: TextStyle(
                                   fontSize: 11.5, color: context.cTextSecondary),
@@ -1908,7 +1908,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
                     ),
                   ),
                   if (ago.isNotEmpty) ...[
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(ago,
                         style: TextStyle(
                             fontSize: 10.5, color: context.cTextSecondary)),
@@ -1971,8 +1971,8 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
         // Location + live pill
         Row(
           children: [
-            const Icon(Icons.place_rounded, size: 16, color: Color(0xFF12A150)),
-            const SizedBox(width: 4),
+            Icon(Icons.place_rounded, size: 16, color: Color(0xFF12A150)),
+            SizedBox(width: 4),
             Text(
               ta ? 'நாகர்கோவில், கன்னியாகுமரி' : 'Nagercoil, Kanyakumari',
               style: TextStyle(
@@ -1980,9 +1980,9 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                   fontWeight: FontWeight.w700,
                   color: context.cTextSecondary),
             ),
-            const Spacer(),
+            Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFF12A150).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20),
@@ -1993,12 +1993,12 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                         color: Color(0xFF12A150), shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 5),
                   Text(ta ? 'நேரலை' : 'LIVE',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0B6E4F),
@@ -2008,10 +2008,10 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         // Community impact card
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
+          padding: EdgeInsets.symmetric(vertical: 18, horizontal: 14),
           decoration: BoxDecoration(
             color: context.cSurface,
             borderRadius: BorderRadius.circular(20),
@@ -2022,11 +2022,11 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 14),
+                padding: EdgeInsets.only(left: 4, bottom: 14),
                 child: Row(
                   children: [
                     Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       ta ? 'நமது சமூகத் தாக்கம்' : 'Our Community Impact',
                       style: TextStyle(
@@ -2049,7 +2049,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                       const Color(0xFF8B5CF6)),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   _metric(context, _volunteers.toString(),
@@ -2066,22 +2066,22 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         // Quick actions
         Row(
           children: [
             _quickAction(context, Icons.water_drop_rounded,
                 ta ? 'இரத்தம்' : 'Donate', const Color(0xFFEF4444),
                 () => context.push('/blood-donation')),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             _quickAction(context, Icons.campaign_rounded,
                 ta ? 'புகார்' : 'Report', const Color(0xFFEAB308),
                 () => context.push('/issues')),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             _quickAction(context, Icons.celebration_rounded,
                 ta ? 'நிகழ்வு' : 'Events', const Color(0xFF8B5CF6),
                 () => context.push('/events')),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             _quickAction(context, Icons.eco_rounded,
                 ta ? 'பசுமை' : 'Green', const Color(0xFF16A34A),
                 () => context.push('/green')),
@@ -2104,7 +2104,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                 borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 7),
+          SizedBox(height: 7),
           // Numeric metrics count up on first build; non-numeric values
           // ("24/7", em dash) render as plain text.
           Builder(builder: (context) {
@@ -2117,7 +2117,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                 ? DSAnimatedCounter(value: n, style: style)
                 : Text(value, style: style);
           }),
-          const SizedBox(height: 1),
+          SizedBox(height: 1),
           Text(label,
               style: TextStyle(fontSize: 10.5, color: context.cTextSecondary),
               maxLines: 1,
@@ -2134,7 +2134,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
               color: context.cSurface,
               borderRadius: BorderRadius.circular(16),
@@ -2151,7 +2151,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                       shape: BoxShape.circle),
                   child: Icon(icon, color: color, size: 21),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(label,
                     style: TextStyle(
                         fontSize: 11.5,
@@ -2223,7 +2223,7 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) return const SizedBox.shrink();
+    if (!_loaded) return SizedBox.shrink();
     // Precedence: live > recent > upcoming; hide only when all three are empty.
     final String mode;
     final List<Map<String, dynamic>> items;
@@ -2237,7 +2237,7 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
       mode = 'upcoming';
       items = _upcoming;
     } else {
-      return const SizedBox.shrink();
+      return SizedBox.shrink();
     }
     final title = mode == 'live'
         ? trId('live_now')
@@ -2251,10 +2251,10 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
           children: [
             if (mode == 'live') ...[
               const DSBadge(kind: DSBadgeKind.live),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
             Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText, letterSpacing: -0.3)),
-            const Spacer(),
+            Spacer(),
             GestureDetector(
               onTap: () => context.push('/sports'),
               behavior: HitTestBehavior.opaque,
@@ -2265,13 +2265,13 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         SizedBox(
           height: 128,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, __) => SizedBox(width: 10),
             itemBuilder: (_, i) => _MatchCard(data: items[i], mode: mode),
           ),
         ),
@@ -2334,7 +2334,7 @@ class _MatchCard extends StatelessWidget {
       },
       child: Container(
         width: 258,
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(16),
@@ -2349,7 +2349,7 @@ class _MatchCard extends StatelessWidget {
               children: [
                 if (live) ...[
                   const DSBadge(kind: DSBadgeKind.live),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                 ],
                 Expanded(
                   child: Text(
@@ -2361,14 +2361,14 @@ class _MatchCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               '${data['team_a']}  vs  ${data['team_b']}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: context.cText),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               scoreLine,
               maxLines: live ? 1 : 2,
@@ -2382,7 +2382,7 @@ class _MatchCard extends StatelessWidget {
               ),
             ),
             if (note != null) ...[
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 note,
                 maxLines: 1,
@@ -2466,9 +2466,9 @@ class _VolunteerDashboard extends StatelessWidget {
       children: [
         AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
         AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFF8B5CF6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
@@ -2476,8 +2476,8 @@ class _VolunteerDashboard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.volunteer_activism, color: Color(0xFF8B5CF6), size: 32),
-              const SizedBox(width: 16),
+              Icon(Icons.volunteer_activism, color: Color(0xFF8B5CF6), size: 32),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2488,17 +2488,17 @@ class _VolunteerDashboard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF8B5CF6)),
+                icon: Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF8B5CF6)),
                 onPressed: () => context.push('/journey'),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         const _ServiceBento(),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _SectionHeader(title: "Today's Activities"),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _MiniCard(
           sectionTitle: 'Activity',
           title: 'Green FYC Drives',
@@ -2508,19 +2508,19 @@ class _VolunteerDashboard extends StatelessWidget {
           onViewAll: () => context.push('/green'),
           onTap: () => context.push('/green'),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _SectionHeader(title: "My Contributions"),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _ImpactStats(l: l),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _SectionHeader(title: 'Today'),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         DailyNewsCard(key: ValueKey('news-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         GoldPriceCard(key: ValueKey('gold-$refreshKey')),
       ],
     );
@@ -2539,9 +2539,9 @@ class _ManagerDashboard extends StatelessWidget {
       children: [
         AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
         AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFFF59E0B).withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
@@ -2549,8 +2549,8 @@ class _ManagerDashboard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.admin_panel_settings, color: Color(0xFFF59E0B), size: 32),
-              const SizedBox(width: 16),
+              Icon(Icons.admin_panel_settings, color: Color(0xFFF59E0B), size: 32),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2563,9 +2563,9 @@ class _ManagerDashboard extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         const _ServiceBento(),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         Row(
           children: [
             Expanded(
@@ -2579,7 +2579,7 @@ class _ManagerDashboard extends StatelessWidget {
                 onTap: () => context.push('/sports'),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _MiniCard(
                 sectionTitle: 'Community',
@@ -2593,11 +2593,11 @@ class _ManagerDashboard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _ImpactStats(l: l),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _SectionHeader(title: 'Recent Reports'),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _MiniCard(
           sectionTitle: 'Issue',
           title: 'Track Reported Issues',
@@ -2607,15 +2607,15 @@ class _ManagerDashboard extends StatelessWidget {
           onViewAll: () => context.push('/issues/track'),
           onTap: () => context.push('/issues/track'),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         _SectionHeader(title: 'Today'),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         DailyNewsCard(key: ValueKey('news-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         WeatherCard(key: ValueKey('weather-$refreshKey')),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         GoldPriceCard(key: ValueKey('gold-$refreshKey')),
       ],
     );

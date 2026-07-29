@@ -54,7 +54,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested());
               },
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 itemCount: state.feed.length,
                 itemBuilder: (context, index) {
                   return _FeedCard(item: state.feed[index], lang: _lang);
@@ -67,9 +67,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
                       context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested());
@@ -80,7 +80,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -99,7 +99,7 @@ class _FeedCard extends StatelessWidget {
     final dateObj = DateTime.tryParse(item.createdAt)?.toLocal() ?? DateTime.now();
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: EdgeInsets.only(bottom: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: Column(
@@ -120,18 +120,18 @@ class _FeedCard extends StatelessWidget {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   lang == 'ta' ? item.displayTitleTa : item.displayTitleEn,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   lang == 'ta' ? item.displaySubtitleTa : item.displaySubtitleEn,
                   style: TextStyle(
@@ -140,11 +140,11 @@ class _FeedCard extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Row(
                   children: [
                     Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       fmt.format(dateObj),
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -194,7 +194,7 @@ class _FeedCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           CircleAvatar(
@@ -202,7 +202,7 @@ class _FeedCard extends StatelessWidget {
             backgroundColor: color.withOpacity(0.15),
             child: Icon(icon, size: 18, color: color),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Text(
             label,
             style: TextStyle(

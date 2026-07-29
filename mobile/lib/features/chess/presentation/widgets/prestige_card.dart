@@ -9,7 +9,7 @@ class PrestigeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(14),
@@ -35,10 +35,10 @@ class PrestigeCard extends StatelessWidget {
                   color: AppColors.gold.withOpacity(0.4), width: 1.5),
             ),
             child: Center(
-              child: Text(stats.titleEmoji, style: const TextStyle(fontSize: 26)),
+              child: Text(stats.titleEmoji, style: TextStyle(fontSize: 26)),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
 
           // Title + rating info
           Expanded(
@@ -47,17 +47,17 @@ class PrestigeCard extends StatelessWidget {
               children: [
                 Text(
                   stats.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.gold,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                     letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   'Rating ${stats.ratingDisplay} · RD ±${stats.glickoRd.round()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
                   ),
@@ -70,7 +70,7 @@ class PrestigeCard extends StatelessWidget {
           if (stats.currentStreak != 0)
             Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: stats.currentStreak > 0
                     ? AppColors.primaryLight.withOpacity(0.15)

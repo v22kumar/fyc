@@ -48,7 +48,7 @@ class DSEmptyState extends StatelessWidget {
             SizedBox(height: DSSpacing.sm),
             Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: context.dsText),
                 textAlign: TextAlign.center),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.dsTextSecondary),
                 textAlign: TextAlign.center),
             SizedBox(height: DSSpacing.md),
@@ -57,7 +57,7 @@ class DSEmptyState extends StatelessWidget {
               child: DSButton.filled(label: primaryLabel, onPressed: onPrimary, fullWidth: true),
             ),
             if (secondaryLabel != null && onSecondary != null) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               DSButton.text(label: secondaryLabel!, onPressed: onSecondary, fullWidth: false),
             ],
           ],
@@ -68,7 +68,7 @@ class DSEmptyState extends StatelessWidget {
 
   Widget _iconBubble(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(28),
       decoration: BoxDecoration(color: context.dsAccent.withOpacity(0.1), shape: BoxShape.circle),
       child: Icon(icon, size: 56, color: context.dsAccent),
     );

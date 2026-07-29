@@ -312,7 +312,7 @@ class _SportsTournamentDetailScreenState
                   children: [
                     if (code != null && code.isNotEmpty)
                       IconButton(
-                        icon: const Icon(Icons.qr_code_2),
+                        icon: Icon(Icons.qr_code_2),
                         tooltip: trId('share_link'),
                         onPressed: () => showShareLinkSheet(
                           context,
@@ -321,14 +321,14 @@ class _SportsTournamentDetailScreenState
                         ),
                       ),
                     IconButton(
-                      icon: const Icon(Icons.share_outlined),
+                      icon: Icon(Icons.share_outlined),
                       tooltip: trId('share_scoreboard'),
                       onPressed: () => _shareScoreboard(state.tournament, state.standings),
                     ),
                   ],
                 );
               }
-              return const SizedBox.shrink();
+              return SizedBox.shrink();
             },
           ),
           if (isAdmin)
@@ -336,7 +336,7 @@ class _SportsTournamentDetailScreenState
               builder: (context, state) {
                 if (state is SportsDetailLoaded) {
                   return IconButton(
-                    icon: const Icon(Icons.edit),
+                    icon: Icon(Icons.edit),
                     onPressed: () async {
                       final res = await Navigator.push(
                         context,
@@ -350,7 +350,7 @@ class _SportsTournamentDetailScreenState
                     },
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
         ],
@@ -358,7 +358,7 @@ class _SportsTournamentDetailScreenState
       body: BlocBuilder<SportsBloc, SportsState>(
         builder: (context, state) {
           if (state is SportsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (state is SportsDetailLoaded) {
             // NOTE: never gate the whole screen on fixtures/standings being
@@ -367,11 +367,11 @@ class _SportsTournamentDetailScreenState
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 children: [
                   // ── Tournament header ───────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF0B6E4F), Color(0xFF12A150)],
@@ -385,16 +385,16 @@ class _SportsTournamentDetailScreenState
                       children: [
                         Text(
                           state.tournament.displayName(_lang),
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppColors.background,
                               fontSize: 19,
                               fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: AppColors.background.withOpacity(0.18),
@@ -402,17 +402,17 @@ class _SportsTournamentDetailScreenState
                               ),
                               child: Text(
                                 '${state.tournament.sport} · ${state.tournament.year}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: AppColors.background,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Builder(builder: (_) {
                               final (label, color) = _phaseChip(state.tournament);
                               return Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
@@ -432,13 +432,13 @@ class _SportsTournamentDetailScreenState
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _SectionHeader(
                     label: trId('fixtures'),
                   ),
                   if (state.fixtures.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         trId('no_fixtures_scheduled'),
                         style: TextStyle(color: AppColors.textSecondary),
@@ -467,13 +467,13 @@ class _SportsTournamentDetailScreenState
                         );
                       },
                     ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   if (state.tournament.descriptionEn != null && state.tournament.descriptionEn!.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: EdgeInsets.only(bottom: 16),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: context.isDark ? AppColors.textSecondary.withOpacity(0.9) : AppColors.textSecondary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -493,7 +493,7 @@ class _SportsTournamentDetailScreenState
                   if ((state.tournament.isRegistrationOpen || isAdmin) &&
                       !state.tournament.isTournamentCompleted)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(bottom: 12),
                       child: SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -519,7 +519,7 @@ class _SportsTournamentDetailScreenState
                   // fixtures. Hidden once the tournament is completed.
                   if (isAdmin && !state.tournament.isTournamentCompleted)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
+                      padding: EdgeInsets.only(bottom: 24),
                       child: Column(
                         children: [
                           Row(
@@ -539,14 +539,14 @@ class _SportsTournamentDetailScreenState
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: _showAddFixtureSheet,
-                                  icon: const Icon(Icons.add_circle_outline),
+                                  icon: Icon(Icons.add_circle_outline),
                                   label: Text(
                                     trId('add_fixture'),
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -557,13 +557,13 @@ class _SportsTournamentDetailScreenState
                             ],
                           ),
                           if (state.tournament.isRegistrationOpen) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,
                               height: 48,
                               child: OutlinedButton.icon(
                                 onPressed: _closeRegistration,
-                                icon: const Icon(Icons.lock_clock_outlined),
+                                icon: Icon(Icons.lock_clock_outlined),
                                 label: Text(trId('close_registration_now')),
                               ),
                             ),
@@ -577,7 +577,7 @@ class _SportsTournamentDetailScreenState
                   ),
                   if (state.standings.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         trId('no_teams_yet_2'),
                         style: TextStyle(color: AppColors.textSecondary),
@@ -600,9 +600,9 @@ class _SportsTournamentDetailScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _reload,
                     child: Text(
@@ -612,7 +612,7 @@ class _SportsTournamentDetailScreenState
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -626,10 +626,10 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      padding: EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: AppColors.textSecondary,
@@ -664,9 +664,9 @@ class _FixtureCard extends StatelessWidget {
         (fixture.teamAScore != null) || (fixture.teamBScore != null);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -676,13 +676,13 @@ class _FixtureCard extends StatelessWidget {
                   Text(
                     (trId('match')) +
                         '${fixture.matchNumber}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: AppColors.textSecondary),
                   ),
-                const Spacer(),
+                Spacer(),
                 _FixtureStatusBadge(fixture: fixture, lang: lang),
                 if (onEditFixture != null || onDeleteFixture != null) ...[
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   PopupMenuButton<String>(
                     icon: Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
                     padding: EdgeInsets.zero,
@@ -720,13 +720,13 @@ class _FixtureCard extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     teamA,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -736,32 +736,32 @@ class _FixtureCard extends StatelessWidget {
                       '${fixture.teamAScore ?? '-'} : ${fixture.teamBScore ?? '-'}',
                       textAlign: TextAlign.center,
                       maxLines: 2,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12.5, fontWeight: FontWeight.bold),
                     ),
                   )
                 else
                   Text(
                     trId('vs_2'),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppColors.textSecondary),
                   ),
                 Expanded(
                   child: Text(
                     teamB,
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ),
             if (fixture.resultNotes != null && fixture.resultNotes!.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: [
                   Icon(Icons.emoji_events_rounded, size: 15, color: AppColors.primary),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       fixture.resultNotes!,
@@ -772,11 +772,11 @@ class _FixtureCard extends StatelessWidget {
               ),
             ],
             if (fixture.scheduledAt != null) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Row(
                 children: [
                   Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     fmt.format(fixture.scheduledAt!.toLocal()),
                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -785,11 +785,11 @@ class _FixtureCard extends StatelessWidget {
               ),
             ],
             if (fixture.venue != null && fixture.venue!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Row(
                 children: [
                   Icon(Icons.place, size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       fixture.venue!,
@@ -801,17 +801,17 @@ class _FixtureCard extends StatelessWidget {
             ],
             if (fixture.resultNotes != null &&
                 fixture.resultNotes!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(
                 fixture.resultNotes!,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic),
               ),
             ],
             if (onEnterScore != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -823,7 +823,7 @@ class _FixtureCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -854,14 +854,14 @@ class _FixtureStatusBadge extends StatelessWidget {
       color = AppColors.accent;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.background,
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -889,18 +889,18 @@ class _StandingsTable extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
               child: Row(
                 children: [
                   Expanded(
                     flex: 4,
                     child: Text(
                       trId('team'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textSecondary),
@@ -910,7 +910,7 @@ class _StandingsTable extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1),
             ...teams.map((t) => _StandingsRow(
                   team: t,
                   lang: lang,
@@ -929,7 +929,7 @@ class _StandingsTable extends StatelessWidget {
           child: Text(
             l,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textSecondary),
@@ -963,7 +963,7 @@ class _StandingsRow extends StatelessWidget {
         color: team.isFycTeam ? AppColors.primarySurface : null,
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 10),
       child: Row(
         children: [
           Expanded(
@@ -971,7 +971,7 @@ class _StandingsRow extends StatelessWidget {
             child: Row(
               children: [
                 if (team.isFycTeam)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(right: 4),
                     child: Text('⭐', style: TextStyle(fontSize: 12)),
                   ),
@@ -993,15 +993,15 @@ class _StandingsRow extends StatelessWidget {
                 ),
                 if (team.eliminated)
                   Container(
-                    margin: const EdgeInsets.only(left: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    margin: EdgeInsets.only(left: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       trId('out'),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.accent),
                     ),
                   ),
@@ -1070,8 +1070,8 @@ class _EmptyDetail extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🏟️', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
+          Text('🏟️', style: TextStyle(fontSize: 64)),
+          SizedBox(height: 16),
           Text(
             trId('no_details_available_yet'),
             style: TextStyle(fontSize: 16, color: AppColors.textSecondary),

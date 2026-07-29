@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 enum DSButtonVariant { filled, outlined, tonal, text, danger }
 
@@ -86,7 +87,7 @@ class DSButton extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 18),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
               Text(label),
             ],

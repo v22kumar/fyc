@@ -21,12 +21,12 @@ class DSSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           if (icon != null) ...[
             Icon(icon, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           Expanded(
             child: Text(
@@ -44,12 +44,12 @@ class DSSectionHeader extends StatelessWidget {
                 children: [
                   Text(
                     actionLabel!,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryLight),
                   ),
-                  const Icon(Icons.chevron_right_rounded,
+                  Icon(Icons.chevron_right_rounded,
                       size: 16, color: AppColors.primaryLight),
                 ],
               ),

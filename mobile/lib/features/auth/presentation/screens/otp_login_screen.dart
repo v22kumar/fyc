@@ -186,7 +186,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                 child: Image.asset(
                   'assets/images/auth_bg.png',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, __, ___) => SizedBox.shrink(),
                 ),
               ),
             ),
@@ -238,13 +238,13 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                 final isLoading = state is AuthLoading;
                 return SafeArea(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    padding: EdgeInsets.fromLTRB(20, 16, 20, 32),
                     child: Column(
                       children: [
                         // Logo + brand
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.background.withOpacity(0.08),
@@ -265,10 +265,10 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>
-                                const Text('🌱', style: TextStyle(fontSize: 36)),
+                                Text('🌱', style: TextStyle(fontSize: 36)),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           trId('fyc_connect'),
                           style: TextStyle(
@@ -278,7 +278,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             letterSpacing: -0.3,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           trId('joining_hands_in_social_service'),
                           style: TextStyle(
@@ -287,11 +287,11 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         TextButton(
                           onPressed: () => context.push('/about'),
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            padding: EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -306,7 +306,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
 
                         // Glass card
                         ClipRRect(
@@ -329,7 +329,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                   ),
                                 ],
                               ),
-                              padding: const EdgeInsets.all(24),
+                              padding: EdgeInsets.all(24),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -340,22 +340,22 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                         : (_otpSent
                                             ? l.enterOtp
                                             : l.enterPhoneNumber),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
                                   if (_otpSent) ...[
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     Text(
                                       '${l.otpSentTo} $_phoneNumber',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           color: AppColors.textSecondary,
                                           fontSize: 13),
                                     ),
                                   ],
-                                  const SizedBox(height: 20),
+                                  SizedBox(height: 20),
 
                                   // ── Password login ────────────────
                                   if (_isPasswordLogin) ...[
@@ -367,7 +367,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                             controller: _usernameCtrl,
                                             decoration: InputDecoration(
                                               hintText: trId('username_or_phone'),
-                                              prefixIcon: const Icon(
+                                              prefixIcon: Icon(
                                                   Icons.person_outline),
                                               label: Text(trId('username')),
                                             ),
@@ -376,13 +376,13 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                     ? trId('required')
                                                     : null,
                                           ),
-                                          const SizedBox(height: 14),
+                                          SizedBox(height: 14),
                                           TextFormField(
                                             controller: _passwordCtrl,
                                             obscureText: true,
                                             decoration: InputDecoration(
                                               hintText: trId('password'),
-                                              prefixIcon: const Icon(
+                                              prefixIcon: Icon(
                                                   Icons.lock_outline),
                                               label: Text(trId('password')),
                                             ),
@@ -391,13 +391,13 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                     ? trId('required')
                                                     : null,
                                           ),
-                                          const SizedBox(height: 20),
+                                          SizedBox(height: 20),
                                           ElevatedButton(
                                             onPressed: _localLoading
                                                 ? null
                                                 : _submitPasswordLogin,
                                             child: _localLoading
-                                                ? const SizedBox(
+                                                ? SizedBox(
                                                     height: 20,
                                                     width: 20,
                                                     child:
@@ -423,7 +423,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                 TextInputType.phone,
                                             decoration: InputDecoration(
                                               hintText: l.phoneHint,
-                                              prefixIcon: const Icon(
+                                              prefixIcon: Icon(
                                                   Icons.phone_outlined),
                                               label:
                                                   Text(l.enterPhoneNumber),
@@ -437,12 +437,12 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                     ? l.enterPhoneNumber
                                                     : null,
                                           ),
-                                          const SizedBox(height: 20),
+                                          SizedBox(height: 20),
                                           ElevatedButton(
                                             onPressed:
                                                 isLoading ? null : _sendOtp,
                                             child: isLoading
-                                                ? const SizedBox(
+                                                ? SizedBox(
                                                     height: 20,
                                                     width: 20,
                                                     child:
@@ -485,7 +485,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                               contentPadding:
                                                   EdgeInsets.zero,
                                             ),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -495,12 +495,12 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                         );
                                       }),
                                     ),
-                                    const SizedBox(height: 24),
+                                    SizedBox(height: 24),
                                     ElevatedButton(
                                       onPressed:
                                           isLoading ? null : _verifyOtp,
                                       child: isLoading
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               height: 20,
                                               width: 20,
                                               child:
@@ -510,7 +510,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                             )
                                           : Text(l.verifyOtp),
                                     ),
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Center(
                                       child: TextButton(
                                         onPressed:
@@ -522,7 +522,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
 
                                   // ── Toggle + extras (non-OTP steps) ─
                                   if (!_otpSent) ...[
-                                    const SizedBox(height: 16),
+                                    SizedBox(height: 16),
                                     Center(
                                       child: TextButton(
                                         onPressed: () => setState(() {
@@ -533,7 +533,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                           _isPasswordLogin
                                               ? trId('back_to_otp_login')
                                               : trId('club_official_login'),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -543,11 +543,11 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                   ],
 
                                   if (!_otpSent && !_isPasswordLogin) ...[
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     Row(children: [
-                                      const Expanded(child: Divider()),
+                                      Expanded(child: Divider()),
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(
+                                        padding: EdgeInsets.symmetric(
                                             horizontal: 12),
                                         child: Text(
                                           trId('or'),
@@ -556,9 +556,9 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                               fontSize: 12),
                                         ),
                                       ),
-                                      const Expanded(child: Divider()),
+                                      Expanded(child: Divider()),
                                     ]),
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     OutlinedButton.icon(
                                       onPressed: isLoading
                                           ? null
@@ -569,7 +569,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                                     organizationId: _orgId),
                                               ),
                                       icon: isLoading
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               width: 18,
                                               height: 18,
                                               child: CircularProgressIndicator(strokeWidth: 2),
@@ -578,7 +578,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                               'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                                               height: 18,
                                               errorBuilder: (_, __, ___) =>
-                                                  const Icon(
+                                                  Icon(
                                                       Icons.g_mobiledata,
                                                       size: 18),
                                             ),
@@ -586,18 +586,18 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                       style: OutlinedButton.styleFrom(
                                         minimumSize:
                                             const Size.fromHeight(48),
-                                        side: const BorderSide(
+                                        side: BorderSide(
                                             color: AppColors.textSecondary),
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           "Enter your phone number to get started",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: AppColors.textSecondary,
                                               fontSize: 13),
                                         ),

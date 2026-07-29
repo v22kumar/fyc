@@ -103,7 +103,7 @@ class DSFeatureCard extends StatelessWidget {
                     child: Icon(icon, size: 96, color: tint.withOpacity(dark ? 0.12 : 0.09)),
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(14),
                   child: Stack(
                     children: [
                       Column(
@@ -123,7 +123,7 @@ class DSFeatureCard extends StatelessWidget {
                             ),
                             child: Icon(icon, color: AppColors.background, size: 23),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(
                             title,
                             maxLines: 1,
@@ -134,7 +134,7 @@ class DSFeatureCard extends StatelessWidget {
                               color: context.cText,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          SizedBox(height: 3),
                           Expanded(
                             child: Text(
                               subtitle,
@@ -147,7 +147,7 @@ class DSFeatureCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -159,7 +159,7 @@ class DSFeatureCard extends StatelessWidget {
                                   color: tint,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Icon(Icons.arrow_forward_rounded, size: 13, color: tint),
                             ],
                           ),
@@ -170,7 +170,7 @@ class DSFeatureCard extends StatelessWidget {
                           top: 0,
                           right: 0,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
                               color: pill.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(7),

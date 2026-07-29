@@ -299,12 +299,12 @@ class _ChallengeTab extends StatelessWidget {
         // Time control selector
         Container(
           color: AppColors.darkBg,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
           child: Row(
             children: timeControls
                 .map((tc) => Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 4),
                         child: _TimeChip(
                           label: tc.$2,
                           selected: selectedTime == tc.$1,
@@ -321,25 +321,25 @@ class _ChallengeTab extends StatelessWidget {
           Container(
             width: double.infinity,
             color: AppColors.darkBg.withOpacity(0.5),
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: pending
                   .map((c) => Padding(
-                        padding: const EdgeInsets.only(top: 8),
+                        padding: EdgeInsets.only(top: 8),
                         child: Row(
                           children: [
-                            const SizedBox(
+                            SizedBox(
                               width: 14,
                               height: 14,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: AppColors.gold),
                             ),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Waiting for ${c.challengedName ?? 'opponent'} to accept…',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: Colors.white70, fontSize: 12),
                               ),
                             ),
@@ -355,7 +355,7 @@ class _ChallengeTab extends StatelessWidget {
             future: membersFuture,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(
+                return Center(
                     child: CircularProgressIndicator(color: AppColors.primaryLight));
               }
               if (snap.hasError) {
@@ -370,7 +370,7 @@ class _ChallengeTab extends StatelessWidget {
                         style: TextStyle(color: AppColors.textSecondary)));
               }
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 itemCount: members.length,
                 itemBuilder: (context, i) => _MemberTile(
                   member: members[i],
@@ -400,7 +400,7 @@ class _TimeChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.primaryLight : Colors.white12,
           borderRadius: BorderRadius.circular(10),
@@ -432,8 +432,8 @@ class _MemberTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -448,23 +448,23 @@ class _MemberTile extends StatelessWidget {
             backgroundColor: AppColors.primary.withOpacity(0.1),
             child: Text(
               member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.primary, fontWeight: FontWeight.w700),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(member.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                         color: AppColors.textPrimary)),
                 Text(
                   '${member.ratingDisplay} rating · ${member.gamesPlayed} games',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.textSecondary, fontSize: 12),
                 ),
               ],
@@ -475,12 +475,12 @@ class _MemberTile extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.background,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('⚔️', style: TextStyle(fontSize: 16)),
+            child: Text('⚔️', style: TextStyle(fontSize: 16)),
           ),
         ],
       ),
@@ -509,7 +509,7 @@ class _InboxTab extends StatelessWidget {
       future: incomingFuture,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
               child: CircularProgressIndicator(color: AppColors.primaryLight));
         }
         final challenges = snap.data ?? [];
@@ -518,17 +518,17 @@ class _InboxTab extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('📬', style: TextStyle(fontSize: 48)),
-                const SizedBox(height: 12),
+                Text('📬', style: TextStyle(fontSize: 48)),
+                SizedBox(height: 12),
                 Text(trId('no_pending_challenges'),
                     style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600)),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: onRefresh,
-                  icon: const Icon(Icons.refresh),
+                  icon: Icon(Icons.refresh),
                   label: Text(trId('refresh_2')),
                 ),
               ],
@@ -536,7 +536,7 @@ class _InboxTab extends StatelessWidget {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           itemCount: challenges.length,
           itemBuilder: (context, i) => _ChallengeTile(
             challenge: challenges[i],
@@ -563,8 +563,8 @@ class _ChallengeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final from = challenge.challengerName ?? 'Unknown';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -577,26 +577,26 @@ class _ChallengeTile extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('⚔️', style: TextStyle(fontSize: 20)),
+                child: Text('⚔️', style: TextStyle(fontSize: 20)),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('$from challenges you!',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                             color: AppColors.textPrimary)),
                     Text(
                       _timeLabel(challenge.timeControl),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ],
@@ -605,14 +605,14 @@ class _ChallengeTile extends StatelessWidget {
             ],
           ),
           if (challenge.message != null && challenge.message!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text('"${challenge.message}"',
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                     fontStyle: FontStyle.italic)),
           ],
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -625,7 +625,7 @@ class _ChallengeTile extends StatelessWidget {
                   child: Text(trId('decline')),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   onPressed: onAccept,

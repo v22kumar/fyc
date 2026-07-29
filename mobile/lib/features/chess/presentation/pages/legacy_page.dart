@@ -60,7 +60,7 @@ class _LegacyPageState extends State<LegacyPage> {
           });
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          padding: EdgeInsets.fromLTRB(16, 20, 16, 32),
           children: [
             // ── Weekly Spotlight ────────────────────────────────────────────
             Text(
@@ -71,7 +71,7 @@ class _LegacyPageState extends State<LegacyPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             FutureBuilder<WeeklyAwardsModel>(
               future: _awardsFuture,
               builder: (context, snap) {
@@ -93,7 +93,7 @@ class _LegacyPageState extends State<LegacyPage> {
                             winner: awards.topPlayer?.name,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: _AwardCard(
                             emoji: '⚡',
@@ -103,7 +103,7 @@ class _LegacyPageState extends State<LegacyPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -113,7 +113,7 @@ class _LegacyPageState extends State<LegacyPage> {
                             winner: awards.bestNewcomer?.name,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: _AwardCard(
                             emoji: '🧠',
@@ -128,7 +128,7 @@ class _LegacyPageState extends State<LegacyPage> {
               },
             ),
 
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
 
             // ── Leaderboard ─────────────────────────────────────────────────
             Text(
@@ -139,7 +139,7 @@ class _LegacyPageState extends State<LegacyPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             FutureBuilder<List<ChessMemberModel>>(
               future: _membersFuture,
               builder: (context, snap) {
@@ -154,7 +154,7 @@ class _LegacyPageState extends State<LegacyPage> {
 
                 if (members.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: EdgeInsets.symmetric(vertical: 24),
                     alignment: Alignment.center,
                     child: Text(
                       trId('no_ranked_players_yet'),
@@ -201,7 +201,7 @@ class _AwardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -211,17 +211,17 @@ class _AwardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 6),
+          Text(emoji, style: TextStyle(fontSize: 28)),
+          SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             winner ?? 'None yet',
             style: TextStyle(
@@ -262,8 +262,8 @@ class _LeaderboardTile extends StatelessWidget {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -285,14 +285,14 @@ class _LeaderboardTile extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   member.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: AppColors.textPrimary,
@@ -303,7 +303,7 @@ class _LeaderboardTile extends StatelessWidget {
                 if (member.area != null)
                   Text(
                     member.area!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -316,7 +316,7 @@ class _LeaderboardTile extends StatelessWidget {
             children: [
               Text(
                 '$emoji  ${member.ratingDisplay}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                   color: AppColors.textPrimary,
@@ -324,7 +324,7 @@ class _LeaderboardTile extends StatelessWidget {
               ),
               Text(
                 '${member.gamesPlayed} games',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textSecondary,
                 ),
@@ -345,9 +345,9 @@ class _LoadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: EdgeInsets.symmetric(vertical: 32),
       alignment: Alignment.center,
-      child: const CircularProgressIndicator(
+      child: CircularProgressIndicator(
         strokeWidth: 2,
         color: AppColors.primaryLight,
       ),
@@ -362,7 +362,7 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),

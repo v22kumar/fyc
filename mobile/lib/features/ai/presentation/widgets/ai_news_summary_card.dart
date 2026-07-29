@@ -28,19 +28,19 @@ class AiNewsSummaryCard extends ConsumerWidget {
     return aiNewsState.when(
       data: (data) {
         final summary = _localizedSummary(data);
-        if (summary.isEmpty) return const SizedBox.shrink();
+        if (summary.isEmpty) return SizedBox.shrink();
         final topics = List<String>.from(data['trending_topics'] ?? const []);
         return _shell(context, child: _content(context, summary, topics));
       },
       loading: () => _shell(context, child: _skeleton(context)),
-      error: (error, stack) => const SizedBox.shrink(),
+      error: (error, stack) => SizedBox.shrink(),
     );
   }
 
   Widget _shell(BuildContext context, {required Widget child}) {
     return Container(
-      margin: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-      padding: const EdgeInsets.all(18.0),
+      margin: EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+      padding: EdgeInsets.all(18.0),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(20),
@@ -59,14 +59,14 @@ class AiNewsSummaryCard extends ConsumerWidget {
         Container(
           width: 34,
           height: 34,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(colors: [_accent1, _accent2]),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Icon(Icons.newspaper_rounded, size: 18, color: AppColors.background),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,11 +87,11 @@ class AiNewsSummaryCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _header(context),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Text(summary,
             style: TextStyle(color: context.cText, fontSize: 14, height: 1.55, fontWeight: FontWeight.w500)),
         if (topics.isNotEmpty) ...[
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -105,14 +105,14 @@ class AiNewsSummaryCard extends ConsumerWidget {
   Widget _chip(String topic) {
     final label = topic.startsWith('#') ? topic : '#$topic';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [_accent1.withOpacity(0.12), _accent2.withOpacity(0.12)]),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _accent1.withOpacity(0.30)),
       ),
       child: Text(label,
-          style: const TextStyle(fontSize: 12, color: _accent1, fontWeight: FontWeight.w700)),
+          style: TextStyle(fontSize: 12, color: _accent1, fontWeight: FontWeight.w700)),
     );
   }
 
@@ -122,11 +122,11 @@ class AiNewsSummaryCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _header(context),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         AiSkeletonBar(widthFactor: 0.95, color: c),
-        const SizedBox(height: 9),
+        SizedBox(height: 9),
         AiSkeletonBar(widthFactor: 0.78, color: c),
-        const SizedBox(height: 9),
+        SizedBox(height: 9),
         AiSkeletonBar(widthFactor: 0.55, color: c),
       ],
     );

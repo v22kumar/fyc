@@ -118,9 +118,9 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                       children: [
                         Icon(Icons.error_outline,
                             size: 48, color: context.cTextSecondary),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(state.message),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => context.read<DirectoryBloc>().add(
                                 DirectoryFetchRequested(
@@ -132,7 +132,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                     ),
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
           ),
@@ -161,10 +161,10 @@ class _FilterRow extends StatelessWidget {
       height: 52,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(right: 8),
             child: FilterChip(
               label: Text(trId('all')),
               selected: selected == null,
@@ -173,7 +173,7 @@ class _FilterRow extends StatelessWidget {
           ),
           ...categories.map(
             (c) => Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: EdgeInsets.only(right: 8),
               child: FilterChip(
                 label: Text(
                   '${ContactEntity.categoryEmojiFor(c)} '
@@ -230,7 +230,7 @@ class _ContactList extends StatelessWidget {
     });
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       children: children,
     );
   }
@@ -243,7 +243,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      padding: EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
         style: TextStyle(
@@ -276,7 +276,7 @@ class _ContactCard extends StatelessWidget {
     final geography = contact.displayGeography(lang);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -284,7 +284,7 @@ class _ContactCard extends StatelessWidget {
         border: Border.all(color: context.cBorder, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -297,19 +297,19 @@ class _ContactCard extends StatelessWidget {
               ),
             ),
             if (designation != null && designation.isNotEmpty) ...[
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 designation,
                 style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               ),
             ],
             if (geography != null && geography.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Row(
                 children: [
                   Icon(Icons.place_outlined,
                       size: 14, color: context.cTextSecondary),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       geography,
@@ -320,18 +320,18 @@ class _ContactCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Row(
               children: [
                 Icon(Icons.phone_outlined, size: 14, color: context.cTextSecondary),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   contact.phonePrimary,
                   style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -339,7 +339,7 @@ class _ContactCard extends StatelessWidget {
                     onTap: onCall,
                     child: OutlinedButton.icon(
                       onPressed: onCall,
-                      icon: const Icon(Icons.phone, size: 16),
+                      icon: Icon(Icons.phone, size: 16),
                       label: Text(trId('call')),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 44),
@@ -348,13 +348,13 @@ class _ContactCard extends StatelessWidget {
                   ),
                 ),
                 if (onWhatsApp != null) ...[
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: ScaleOnTap(
                       onTap: onWhatsApp,
                       child: ElevatedButton.icon(
                         onPressed: onWhatsApp,
-                        icon: const Icon(Icons.chat, size: 16),
+                        icon: Icon(Icons.chat, size: 16),
                         label: Text(trId('whatsapp')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF25D366),
@@ -383,8 +383,8 @@ class _EmptyContacts extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('📇', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
+          Text('📇', style: TextStyle(fontSize: 64)),
+          SizedBox(height: 16),
           Text(
             trId('no_contacts_found'),
             style: TextStyle(fontSize: 16, color: context.cTextSecondary),

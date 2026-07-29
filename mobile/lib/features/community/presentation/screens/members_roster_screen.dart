@@ -70,19 +70,19 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
 
   Widget _buildBody(bool ta) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator());
     }
     if (_error) {
       return ListView(
         children: [
-          const SizedBox(height: 120),
+          SizedBox(height: 120),
           Center(
             child: Column(
               children: [
                 Icon(Icons.wifi_off_rounded, size: 44, color: context.cTextSecondary),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(trId('couldn_t_load_members')),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _load,
                   child: Text(trId('retry_2')),
@@ -96,17 +96,17 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
     if (_members.isEmpty) {
       return ListView(
         children: [
-          const SizedBox(height: 120),
+          SizedBox(height: 120),
           Center(
             child: Column(
               children: [
-                const Text('👥', style: TextStyle(fontSize: 56)),
-                const SizedBox(height: 14),
+                Text('👥', style: TextStyle(fontSize: 56)),
+                SizedBox(height: 14),
                 Text(trId('no_members_yet'),
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: context.cText)),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
                     trId('registered_club_members_will_appear_here'),
                     textAlign: TextAlign.center,
@@ -120,7 +120,7 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       itemCount: _members.length,
       itemBuilder: (context, i) => FadeSlideIn(
         delay: Duration(milliseconds: (i * 40).clamp(0, 400)),
@@ -142,8 +142,8 @@ class _MemberTile extends StatelessWidget {
     final photo = member.profileImageUrl;
     final hasPhoto = photo != null && photo.isNotEmpty;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(14),
@@ -162,7 +162,7 @@ class _MemberTile extends StatelessWidget {
                 : Text(initial,
                     style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 18)),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(name,
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: context.cText),
@@ -199,7 +199,7 @@ class _RoleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = _meta();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),

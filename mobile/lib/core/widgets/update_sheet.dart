@@ -103,7 +103,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
     return Container(
       decoration: BoxDecoration(
         color: context.cSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       padding: EdgeInsets.only(
         left: 22,
@@ -120,21 +120,21 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 18),
+                margin: EdgeInsets.only(bottom: 18),
                 decoration: BoxDecoration(
                     color: context.cBorder,
                     borderRadius: BorderRadius.circular(2)),
               ),
             )
           else
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
           // Icon + title
           Row(
             children: [
               Container(
                 width: 56,
                 height: 56,
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: AppTheme.gradientPrimary,
                   borderRadius: BorderRadius.circular(16),
@@ -149,7 +149,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                     errorBuilder: (_, __, ___) =>
                         Icon(Icons.system_update, color: AppColors.background)),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,16 +159,16 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: context.cText)),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('v${u.latestVersionName}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary)),
@@ -178,7 +178,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             u.notes.trim().isNotEmpty
                 ? u.notes
@@ -186,10 +186,10 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             style: TextStyle(
                 fontSize: 13.5, height: 1.4, color: context.cTextSecondary),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildAction(context, ta),
           if (u.mandatory) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Center(
               child: Text(
                 trId('this_update_is_required_to_continue'),
@@ -219,7 +219,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                     AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(tr(en: 'Downloading… $pct%', ta: 'பதிவிறக்குகிறது… $pct%', hi: 'डाउनलोड हो रहा है… $pct%', ml: 'ഡൗൺലോഡ് ചെയ്യുന്നു… $pct%'),
                 style: TextStyle(
                     fontSize: 12.5,
@@ -230,12 +230,12 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
       case _Phase.installing:
         return Row(
           children: [
-            const SizedBox(
+            SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: AppColors.primary)),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(trId('opening_installer'),
                 style: TextStyle(
                     fontSize: 13.5,
@@ -250,7 +250,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               trId('download_failed_try_via_your_browser_ins'),
               style: TextStyle(fontSize: 12.5, color: AppColors.accent),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _primaryButton(
                 trId('download_in_browser'),
                 _fallbackBrowser),
@@ -261,7 +261,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           children: [
             _primaryButton(trId('update_now'), _startUpdate),
             if (!widget.update.mandatory) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               TextButton(
                 onPressed: _later,
                 child: Text(trId('later'),
@@ -291,14 +291,14 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           onPressed: onTap,
           icon: Icon(Icons.download_rounded, color: AppColors.background, size: 19),
           label: Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.background,
                   fontWeight: FontWeight.w800,
                   fontSize: 14.5)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: EdgeInsets.symmetric(vertical: 14),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),

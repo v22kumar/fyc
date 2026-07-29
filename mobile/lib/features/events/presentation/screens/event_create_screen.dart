@@ -126,7 +126,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           children: [
             _field(_titleEn,
                 trId('title_english'),
@@ -162,11 +162,11 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
               value: _publishNow,
               onChanged: (v) => setState(() => _publishNow = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             FilledButton(
               onPressed: _saving ? null : _submit,
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : Text(trId('create')),
             ),
@@ -178,14 +178,14 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
 
   Widget _dateTile({required String label, String? value, required VoidCallback onTap}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: EdgeInsets.only(bottom: 4),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: const Icon(Icons.schedule),
+        leading: Icon(Icons.schedule),
         title: Text(label),
         subtitle: Text(value ??
             trId('tap_to_choose')),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Icon(Icons.chevron_right),
         onTap: onTap,
       ),
     );
@@ -194,7 +194,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
   Widget _field(TextEditingController c, String label,
       {bool required = false, int maxLines = 1}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: c,
         maxLines: maxLines,

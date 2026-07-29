@@ -9,6 +9,7 @@ import '../bloc/game_state.dart';
 import '../widgets/chess_player_card.dart';
 import '../widgets/chess_move_bar.dart';
 import '../widgets/game_result_sheet.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 const _kBg = Color(0xFF262421);
 const _kSurface = Color(0xFF312E2B);
@@ -72,7 +73,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -86,18 +87,18 @@ class _LocalGamePageState extends State<LocalGamePage> {
         actions: [
           BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
-              if (state is! GameInProgress) return const SizedBox.shrink();
+              if (state is! GameInProgress) return SizedBox.shrink();
               return Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.swap_vert_rounded,
+                    icon: Icon(Icons.swap_vert_rounded,
                         color: Colors.white54, size: 22),
                     tooltip: trId('flip_board'),
                     onPressed: () =>
                         context.read<GameBloc>().add(const FlipBoard()),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.flag_rounded,
+                    icon: Icon(Icons.flag_rounded,
                         color: Colors.white54, size: 22),
                     tooltip: trId('resign'),
                     onPressed: () => _confirmResign(context, state),
@@ -116,7 +117,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         builder: (context, state) {
           if (state is GameInProgress) return _buildGame(context, state);
           if (state is GameOver) return _buildGameOver(context, state);
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(color: _kGreen),
           );
         },
@@ -200,20 +201,20 @@ class _LocalGamePageState extends State<LocalGamePage> {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 state.resultLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.background,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -225,7 +226,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -251,7 +252,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text(
           '${state.currentPlayerName} will forfeit this game.',
-          style: const TextStyle(color: Color(0xFF8B8682)),
+          style: TextStyle(color: Color(0xFF8B8682)),
         ),
         actions: [
           TextButton(
@@ -329,12 +330,12 @@ class _Btn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 20, color: c),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(

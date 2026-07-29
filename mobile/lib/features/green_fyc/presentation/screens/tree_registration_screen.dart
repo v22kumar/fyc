@@ -159,46 +159,46 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
           final isSubmitting = state is GreenLoading;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Label(
                   text: trId('planted_date'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 _DatePickerField(
                   label: dateFmt.format(_plantedDate),
                   onTap: _pickDate,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _Label(
                   text: trId('species_tamil_optional'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: _speciesTaCtrl,
                   decoration: InputDecoration(
                     hintText: trId('e_g'),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _Label(
                   text: trId('species_english_optional'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: _speciesEnCtrl,
                   decoration: InputDecoration(
                     hintText: trId('e_g_neem'),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 if (drives.isNotEmpty) ...[
                   _Label(
                     text: trId('drive_optional'),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   DropdownButtonFormField<String?>(
                     value: _selectedDriveId,
                     isExpanded: true,
@@ -222,12 +222,12 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                     ],
                     onChanged: (v) => setState(() => _selectedDriveId = v),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                 ],
                 _Label(
                   text: trId('location_optional'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -242,7 +242,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         controller: _lonCtrl,
@@ -257,11 +257,11 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _Label(
                   text: trId('notes_optional_2'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: _notesCtrl,
                   maxLines: 3,
@@ -269,11 +269,11 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                     hintText: trId('additional_details'),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _Label(
                   text: trId('photo_optional'),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 GestureDetector(
                   onTap: _pickPhoto,
                   child: Container(
@@ -298,23 +298,23 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.add_photo_alternate_outlined,
                                 size: 40,
                                 color: Color(0xFF94A3B8),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(
                                 trId('tap_to_add_photo'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFF64748B),
                                   fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 trId('optional_helps_verify_the_planting'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFF94A3B8),
                                   fontSize: 11,
                                 ),
@@ -323,7 +323,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 36),
+                SizedBox(height: 36),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -333,7 +333,7 @@ class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
                         ? CircularProgressIndicator(color: AppColors.background)
                         : Text(
                             trId('register_tree'),
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16),
                           ),
                   ),
                 ),
@@ -354,7 +354,7 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
     );
   }
 }
@@ -369,7 +369,7 @@ class _DatePickerField extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
@@ -378,10 +378,10 @@ class _DatePickerField extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: AppColors.textSecondary),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               label,
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: Colors.black87),
             ),
           ],
         ),

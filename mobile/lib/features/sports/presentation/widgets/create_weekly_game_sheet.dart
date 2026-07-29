@@ -105,7 +105,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
       ),
       decoration: BoxDecoration(
         color: context.cSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Form(
         key: _formKey,
@@ -121,29 +121,29 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             TextFormField(
               initialValue: _title,
               decoration: InputDecoration(
                 labelText: trId('match_title'),
                 hintText: trId('e_g_sunday_morning_bash'),
-                prefixIcon: const Icon(Icons.title),
+                prefixIcon: Icon(Icons.title),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               onSaved: (v) => _title = v!,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _sport,
               decoration: InputDecoration(
                 labelText: trId('sport'),
-                prefixIcon: const Icon(Icons.sports),
+                prefixIcon: Icon(Icons.sports),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               items: [
@@ -152,18 +152,18 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
               ],
               onChanged: (v) => setState(() => _sport = v!),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               initialValue: _venue,
               decoration: InputDecoration(
                 labelText: trId('venue'),
                 hintText: trId('e_g_fyc_ground'),
-                prefixIcon: const Icon(Icons.location_on_outlined),
+                prefixIcon: Icon(Icons.location_on_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onSaved: (v) => _venue = v ?? '',
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -180,14 +180,14 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: trId('date'),
-                        prefixIcon: const Icon(Icons.calendar_today),
+                        prefixIcon: Icon(Icons.calendar_today),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text(_scheduledAt != null ? DateFormat('MMM d, yyyy').format(_scheduledAt!) : 'Select Date'),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: InkWell(
                     onTap: () async {
@@ -200,7 +200,7 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: trId('time'),
-                        prefixIcon: const Icon(Icons.access_time),
+                        prefixIcon: Icon(Icons.access_time),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text(_scheduledTime != null ? _scheduledTime!.format(context) : 'Select Time'),
@@ -209,19 +209,19 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             ElevatedButton(
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.background,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 4,
               ),
               child: _isLoading
                   ? CircularProgressIndicator(color: AppColors.background)
-                  : Text(widget.game != null ? 'Save Changes' : 'Schedule Game', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  : Text(widget.game != null ? 'Save Changes' : 'Schedule Game', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

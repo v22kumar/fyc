@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Lichess-style player card — shown above and below the board.
 /// Displays avatar, name, rating, active indicator, thinking spinner, clock.
@@ -48,7 +49,7 @@ class ChessPlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isActive
             ? const Color(0xFF1E2D1F).withOpacity(0.85)
@@ -83,14 +84,14 @@ class ChessPlayerCard extends StatelessWidget {
               child: avatarWidget ??
                   Text(
                     avatarLetter ?? (name.isNotEmpty ? name[0].toUpperCase() : '?'),
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.background,
                         fontWeight: FontWeight.w800,
                         fontSize: 16),
                   ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
 
           // Name + rating + captured
           Expanded(
@@ -112,9 +113,9 @@ class ChessPlayerCard extends StatelessWidget {
                       ),
                     ),
                     if (isThinking) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       const _ThinkingDots(),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         '$thinkingText…',
                         style: TextStyle(
@@ -126,15 +127,15 @@ class ChessPlayerCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Row(
                   children: [
                     if (rating != null)
                       Row(
                         children: [
-                          const Icon(Icons.shield_outlined,
+                          Icon(Icons.shield_outlined,
                               size: 11, color: Color(0xFF7C8A80)),
-                          const SizedBox(width: 3),
+                          SizedBox(width: 3),
                           Text(
                             'Rating $rating',
                             style: TextStyle(
@@ -146,7 +147,7 @@ class ChessPlayerCard extends StatelessWidget {
                         ],
                       ),
                     if (captured.isNotEmpty) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           captured.join(''),
@@ -167,7 +168,7 @@ class ChessPlayerCard extends StatelessWidget {
           // "Your turn" badge (only when active and no clock present)
           if (isActive && clock == null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFF4A7C59),
                 borderRadius: BorderRadius.circular(20),
@@ -187,8 +188,8 @@ class ChessPlayerCard extends StatelessWidget {
           if (clock != null) ...[
             if (isActive)
               Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                margin: EdgeInsets.only(right: 8),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4A7C59),
                   borderRadius: BorderRadius.circular(20),
@@ -230,7 +231,7 @@ class _ClockChip extends StatelessWidget {
         ? (isLow ? AppColors.danger.withOpacity(0.2) : AppColors.background)
         : const Color(0xFF7C8A80);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8),
@@ -292,7 +293,7 @@ class _ThinkingDotsState extends State<_ThinkingDots>
             final val = ((_ctrl.value + offset) % 1.0);
             final opacity = val < 0.5 ? val * 2 : 2 - val * 2;
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
+              padding: EdgeInsets.symmetric(horizontal: 1),
               child: Container(
                 width: 4,
                 height: 4,

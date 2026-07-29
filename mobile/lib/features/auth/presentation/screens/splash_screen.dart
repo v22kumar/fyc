@@ -154,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
                           // Transparent eagle mark — sits inside the pulsing ring.
                           'assets/images/fyc_mark.png',
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Text(
+                          errorBuilder: (_, __, ___) => Text(
                             '🌱',
                             style: TextStyle(fontSize: 46),
                           ),
@@ -162,7 +162,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 36),
+                    SizedBox(height: 36),
 
                     // App name
                     Text(
@@ -175,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
 
                     // Tamil tagline
                     Text(
@@ -188,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 60),
+                    SizedBox(height: 60),
 
                     // Animated dots loader
                     AnimatedBuilder(
@@ -204,7 +204,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     .clamp(0.25, 1.0);
                             return Container(
                               margin:
-                                  const EdgeInsets.symmetric(horizontal: 4),
+                                  EdgeInsets.symmetric(horizontal: 4),
                               width: 8,
                               height: 8,
                               decoration: BoxDecoration(

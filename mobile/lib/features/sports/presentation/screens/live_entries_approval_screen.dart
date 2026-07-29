@@ -80,12 +80,12 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
           // Filter chips
           Container(
             color: context.cSurface,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: ['PENDING', 'APPROVED', 'REJECTED'].map((s) {
                 final sel = _filter == s;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     selected: sel,
                     onSelected: (_) { setState(() => _filter = s); _load(); },
@@ -101,13 +101,13 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : _entries.isEmpty
                     ? _Empty(filter: _filter)
                     : RefreshIndicator(
                         onRefresh: _load,
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16),
                           itemCount: _entries.length,
                           itemBuilder: (_, i) => _EntryCard(
                             entry: _entries[i],
@@ -150,8 +150,8 @@ class _EntryCard extends StatelessWidget {
     try { created = DateTime.parse(entry['created_at']).toLocal(); } catch (_) {}
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(16),
@@ -169,13 +169,13 @@ class _EntryCard extends StatelessWidget {
               if (!showActions) _StatusPill(status: status),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('$scoreA',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 14),
                 child: Text(':', style: TextStyle(fontSize: 20, color: AppColors.textSecondary)),
               ),
@@ -184,40 +184,40 @@ class _EntryCard extends StatelessWidget {
             ],
           ),
           if (notes != null && notes.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(notes,
                 style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: context.cTextSecondary)),
           ],
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
               Icon(Icons.person_outline, size: 13, color: context.cTextSecondary),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(by, style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
-              const Spacer(),
+              Spacer(),
               if (created != null)
                 Text(DateFormat('d MMM, h:mm a').format(created),
                     style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
             ],
           ),
           if (showActions) ...[
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: busy ? null : onReject,
-                    icon: const Icon(Icons.close_rounded, size: 16),
+                    icon: Icon(Icons.close_rounded, size: 16),
                     label: Text(trId('reject')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.accent,
                       side: BorderSide(color: AppColors.accent.withOpacity(0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: busy ? null : onApprove,
@@ -227,7 +227,7 @@ class _EntryCard extends StatelessWidget {
                     label: Text(trId('approve'), style: TextStyle(color: AppColors.background)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
@@ -250,7 +250,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = status == 'APPROVED' ? AppColors.success : AppColors.accent;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
       child: Text(status, style: TextStyle(color: AppColors.background, fontSize: 9, fontWeight: FontWeight.bold)),
     );
@@ -267,8 +267,8 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(filter == 'PENDING' ? '✅' : '📭', style: const TextStyle(fontSize: 56)),
-          const SizedBox(height: 14),
+          Text(filter == 'PENDING' ? '✅' : '📭', style: TextStyle(fontSize: 56)),
+          SizedBox(height: 14),
           Text(
             filter == 'PENDING' ? 'No pending approvals' : 'Nothing here',
             style: TextStyle(fontSize: 15, color: context.cTextSecondary, fontWeight: FontWeight.w600),

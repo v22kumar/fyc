@@ -129,9 +129,9 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-          const SizedBox(height: 18),
-          Text(widget.fixture != null ? 'Edit Fixture' : 'Schedule Fixture', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 16),
+          SizedBox(height: 18),
+          Text(widget.fixture != null ? 'Edit Fixture' : 'Schedule Fixture', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          SizedBox(height: 16),
           
           DropdownButtonFormField<String>(
             value: _teamAId,
@@ -140,7 +140,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
             onChanged: (val) => setState(() => _teamAId = val),
             decoration: InputDecoration(labelText: trId('team_a_2')),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           
           DropdownButtonFormField<String>(
             value: _teamBId,
@@ -149,7 +149,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
             onChanged: (val) => setState(() => _teamBId = val),
             decoration: InputDecoration(labelText: trId('team_b_2')),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           Row(
             children: [
@@ -160,7 +160,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
                   decoration: InputDecoration(labelText: trId('match_number')),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: InkWell(
                   onTap: _selectDateTime,
@@ -177,13 +177,13 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           TextField(
             controller: _venueCtrl,
             decoration: InputDecoration(labelText: trId('venue')),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           
           SizedBox(
             width: double.infinity,

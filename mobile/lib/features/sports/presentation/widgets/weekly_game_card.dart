@@ -82,7 +82,7 @@ class WeeklyGameCard extends StatelessWidget {
     final bool isLive = game.status == 'LIVE';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(20),
@@ -101,7 +101,7 @@ class WeeklyGameCard extends StatelessWidget {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -116,7 +116,7 @@ class WeeklyGameCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: context.cSurface,
                       shape: BoxShape.circle,
@@ -127,25 +127,25 @@ class WeeklyGameCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Text('🔥', style: const TextStyle(fontSize: 18)),
+                    child: Text('🔥', style: TextStyle(fontSize: 18)),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           game.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Row(
                           children: [
                             Icon(Icons.sports_cricket, size: 14, color: AppColors.primary),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               game.sport.toUpperCase(),
                               style: TextStyle(
@@ -167,7 +167,7 @@ class WeeklyGameCard extends StatelessWidget {
                       children: [
                         _StatusBadge(status: game.status),
                         if (isOrganizer || isAdmin) ...[
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           PopupMenuButton<String>(
                             icon: Icon(Icons.more_vert, size: 20, color: AppColors.textSecondary),
                             padding: EdgeInsets.zero,
@@ -212,13 +212,13 @@ class WeeklyGameCard extends StatelessWidget {
             
             // Body
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 children: [
                   Row(
                     children: [
                       Icon(Icons.calendar_today_outlined, size: 18, color: context.cTextSecondary),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         DateFormat('EEE, MMM d • h:mm a').format(game.scheduledAt),
                         style: TextStyle(
@@ -229,11 +229,11 @@ class WeeklyGameCard extends StatelessWidget {
                     ],
                   ),
                   if (game.venue != null) ...[
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(Icons.location_on_outlined, size: 18, color: context.cTextSecondary),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           game.venue!,
                           style: TextStyle(color: context.cTextSecondary),
@@ -242,26 +242,26 @@ class WeeklyGameCard extends StatelessWidget {
                     ),
                   ],
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Players
                   Row(
                     children: [
-                      const Icon(Icons.group_outlined, size: 18),
-                      const SizedBox(width: 8),
+                      Icon(Icons.group_outlined, size: 18),
+                      SizedBox(width: 8),
                       Text(
                         '${game.players.length} Players RSVP\'d',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
                   if (game.players.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: game.players.map((p) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: context.cSurface,
                           borderRadius: BorderRadius.circular(12),
@@ -275,7 +275,7 @@ class WeeklyGameCard extends StatelessWidget {
                     ),
                   ],
                   
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   
                   // Actions
                   if (isUpcoming)
@@ -296,16 +296,16 @@ class WeeklyGameCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 side: hasJoined ? BorderSide(color: context.cBorder) : BorderSide.none,
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
                               hasJoined ? 'You\'re In! ✅' : 'Join Game',
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                             ),
                           ),
                         ),
                         if (isOrganizer) ...[
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           ElevatedButton(
                             onPressed: game.players.length >= 2
                                 ? () {
@@ -317,7 +317,7 @@ class WeeklyGameCard extends StatelessWidget {
                               foregroundColor: AppColors.background,
                               elevation: 4,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                             ),
                             child: Text(trId('start_game'), style: TextStyle(fontWeight: FontWeight.w700)),
                           ),
@@ -337,7 +337,7 @@ class WeeklyGameCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.danger.withOpacity(0.6),
                           foregroundColor: AppColors.background,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -378,7 +378,7 @@ class _StatusBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),

@@ -36,19 +36,19 @@ class AnnouncementDetailScreen extends StatelessWidget {
                 height: 200,
                 color: AppColors.background,
                 alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_outlined,
+                child: Icon(Icons.broken_image_outlined,
                     size: 48, color: AppColors.textSecondary),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(AppTheme.paddingPage),
+            padding: EdgeInsets.all(AppTheme.paddingPage),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.12),
@@ -63,34 +63,34 @@ class AnnouncementDetailScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    Spacer(),
                     if (announcement.isPinned)
-                      const Text('📌', style: TextStyle(fontSize: 18)),
+                      Text('📌', style: TextStyle(fontSize: 18)),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text(
                   announcement.displayTitle(_lang),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       fmt.format(announcement.createdAt.toLocal()),
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Text(
                   announcement.displayBody(_lang),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     height: 1.5,
                     color: AppColors.textPrimary,

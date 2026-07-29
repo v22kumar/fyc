@@ -86,45 +86,45 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
           }
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _InfoBanner(lang: lang),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 trId('select_blood_group'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _BloodGroupGrid(
                 groups: _groups,
                 selected: _selectedGroup,
                 onSelect: (g) => setState(() => _selectedGroup = g),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 trId('availability'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _AvailabilityToggle(
                 value: _isAvailable,
                 lang: lang,
                 onChanged: (v) => setState(() => _isAvailable = v),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 trId('last_donation_date_optional'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _DatePickerField(
                 date: _lastDonationDate,
                 lang: lang,
                 onTap: _pickDate,
               ),
-              const SizedBox(height: 36),
+              SizedBox(height: 36),
               BlocBuilder<BloodDonorBloc, BloodDonorState>(
                 builder: (context, state) {
                   return SizedBox(
@@ -134,12 +134,12 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                       onPressed:
                           state is BloodDonorLoading ? null : _submit,
                       child: state is BloodDonorLoading
-                          ? const CircularProgressIndicator(
+                          ? CircularProgressIndicator(
                               color: AppColors.background,
                             )
                           : Text(
                               trId('register_as_donor_3'),
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 16),
                             ),
                     ),
                   );
@@ -161,7 +161,7 @@ class _InfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
@@ -170,11 +170,11 @@ class _InfoBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.info_outline, color: AppColors.primary),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               trId('your_phone_number_will_only_be_shared_wh'),
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: 13),
             ),
           ),
         ],
@@ -248,7 +248,7 @@ class _AvailabilityToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
@@ -259,13 +259,13 @@ class _AvailabilityToggle extends StatelessWidget {
             value ? Icons.check_circle : Icons.cancel,
             color: value ? AppColors.success : AppColors.textSecondary,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               value
                   ? trId('i_am_available_to_donate')
                   : trId('not_available_right_now'),
-              style: const TextStyle(fontSize: 15),
+              style: TextStyle(fontSize: 15),
             ),
           ),
           Switch(
@@ -295,7 +295,7 @@ class _DatePickerField extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
@@ -303,7 +303,7 @@ class _DatePickerField extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: AppColors.textSecondary),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               date != null
                   ? '${date!.day}/${date!.month}/${date!.year}'

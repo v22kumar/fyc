@@ -30,8 +30,8 @@ class DSCard extends StatelessWidget {
   final DSCardKind kind;
   final Widget child;
   final VoidCallback? onTap;
-  final double elevation;
-  final EdgeInsetsGeometry padding;
+  final double? elevation;
+  final EdgeInsetsGeometry? padding;
   final bool showAccentBar;
 
   const DSCard({
@@ -39,8 +39,8 @@ class DSCard extends StatelessWidget {
     this.kind = DSCardKind.neutral,
     required this.child,
     this.onTap,
-    this.elevation = DSElevation.card,
-    this.padding = EdgeInsets.all(DSSpacing.sm),
+    this.elevation,
+    this.padding,
     this.showAccentBar = false,
   });
 
@@ -49,7 +49,9 @@ class DSCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shadows = DSElevation.shadowFor(elevation, dark: context.dsIsDark);
+    final resolvedElevation = elevation ?? DSElevation.card;
+    final resolvedPadding = padding ?? EdgeInsets.all(DSSpacing.sm);
+    final shadows = DSElevation.shadowFor(resolvedElevation, dark: context.dsIsDark);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -72,13 +74,13 @@ class DSCard extends StatelessWidget {
                   width: 4,
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: const BorderRadius.only(
+                    borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(DSRadius.card),
                       bottomLeft: Radius.circular(DSRadius.card),
                     ),
                   ),
                 ),
-              Expanded(child: Padding(padding: padding, child: child)),
+              Expanded(child: Padding(padding: resolvedPadding, child: child)),
             ],
           ),
         ),

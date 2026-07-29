@@ -33,12 +33,12 @@ class _DSCollapsibleSectionState extends State<DSCollapsibleSection> {
           onTap: () => setState(() => _expanded = !_expanded),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
                 if (widget.icon != null) ...[
                   Icon(widget.icon, size: 18, color: AppColors.primary),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
                 Expanded(
                   child: Text(
@@ -65,7 +65,7 @@ class _DSCollapsibleSectionState extends State<DSCollapsibleSection> {
           alignment: Alignment.topCenter,
           child: _expanded
               ? widget.child
-              : const SizedBox(width: double.infinity, height: 0),
+              : SizedBox(width: double.infinity, height: 0),
         ),
       ],
     );

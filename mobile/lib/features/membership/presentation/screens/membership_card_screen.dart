@@ -72,7 +72,7 @@ class _MembershipCardScreenState extends State<MembershipCardScreen>
       body: BlocBuilder<MembershipBloc, MembershipState>(
         builder: (context, state) {
           if (state is MembershipLoading || state is MembershipInitial) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
@@ -88,7 +88,7 @@ class _MembershipCardScreenState extends State<MembershipCardScreen>
               onFlip: _flipCard,
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -113,16 +113,16 @@ class _CardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Flip hint
           Text(
             trId('tap_card_to_flip'),
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Animated flip card
           GestureDetector(
@@ -149,9 +149,9 @@ class _CardView extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _StatusBanner(card: card, isTa: isTa),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _DetailsList(card: card, isTa: isTa),
         ],
       ),
@@ -221,7 +221,7 @@ class _CardFront extends StatelessWidget {
             child: Container(
               height: 4,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFFD97706).withOpacity(0.8),
@@ -234,7 +234,7 @@ class _CardFront extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -265,7 +265,7 @@ class _CardFront extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -297,27 +297,27 @@ class _CardFront extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Spacer(),
+                Spacer(),
                 Text(
                   card.displayDesignation(isTa ? 'ta' : 'en').toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFFFBBF24),
                     fontSize: 10,
                     letterSpacing: 2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   card.membershipNumber,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.background,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -334,7 +334,7 @@ class _CardFront extends StatelessWidget {
                         ),
                         Text(
                           expiry,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.background,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -343,7 +343,7 @@ class _CardFront extends StatelessWidget {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: card.isActive && !card.isExpired
@@ -419,7 +419,7 @@ class _CardBack extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 borderRadius:
-                    const BorderRadius.vertical(bottom: Radius.circular(20)),
+                    BorderRadius.vertical(bottom: Radius.circular(20)),
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFFD97706).withOpacity(0.8),
@@ -431,12 +431,12 @@ class _CardBack extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             child: Row(
               children: [
                 // QR Code
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
@@ -455,7 +455,7 @@ class _CardBack extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,13 +463,13 @@ class _CardBack extends StatelessWidget {
                     children: [
                       Text(
                         trId('scan_this_qr_code_to_verify_membership_a'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white70,
                           fontSize: 10,
                           height: 1.5,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         trId('unite_play_thrive'),
                         style: TextStyle(
@@ -479,7 +479,7 @@ class _CardBack extends StatelessWidget {
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         trId('fyc2000_org'),
                         style: TextStyle(
@@ -510,7 +510,7 @@ class _StatusBanner extends StatelessWidget {
     final isValid = card.isActive && !card.isExpired;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: isValid
             ? AppColors.primary.withOpacity(0.15)
@@ -530,7 +530,7 @@ class _StatusBanner extends StatelessWidget {
             color: isValid ? const Color(0xFF10B981) : const Color(0xFFEF4444),
             size: 20,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             isValid
                 ? trId('valid_membership_card')
@@ -581,8 +581,8 @@ class _DetailsList extends StatelessWidget {
     return Column(
       children: rows.map((row) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.background.withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
@@ -592,13 +592,13 @@ class _DetailsList extends StatelessWidget {
             children: [
               Text(
                 row.$1,
-                style: const TextStyle(
+                style: TextStyle(
                     color: Colors.white54, fontSize: 12),
               ),
-              const Spacer(),
+              Spacer(),
               Text(
                 row.$2,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.background,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -622,7 +622,7 @@ class _NoCardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -631,27 +631,27 @@ class _NoCardView extends StatelessWidget {
               width: 80,
               height: 80,
               errorBuilder: (_, __, ___) =>
-                  const Text('🪪', style: TextStyle(fontSize: 60)),
+                  Text('🪪', style: TextStyle(fontSize: 60)),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               trId('no_membership_card_found'),
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.background,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               message,
-              style: const TextStyle(color: Colors.white54, fontSize: 13),
+              style: TextStyle(color: Colors.white54, fontSize: 13),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               trId('contact_your_administrator_to_get_your_d'),
-              style: const TextStyle(color: Colors.white38, fontSize: 11),
+              style: TextStyle(color: Colors.white38, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ],

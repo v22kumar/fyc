@@ -170,7 +170,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   bottom: 12,
                   child: Text(
                     trId('your_one_donation_can_save_up_to_3_lives'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.background,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -227,7 +227,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   return RefreshIndicator(
                     onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       itemCount: state.donors.length,
                       itemBuilder: (context, i) => _DonorCard(
                         donor: state.donors[i],
@@ -237,7 +237,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                     ),
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
           ),
@@ -253,17 +253,17 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               trId('contact_donor'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-            Text(state.phoneNumber, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 20),
+            SizedBox(height: 16),
+            Text(state.phoneNumber, style: TextStyle(fontSize: 20)),
+            SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -274,17 +274,17 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _launchSms(state.phoneNumber),
-                    icon: const Icon(Icons.sms_outlined),
+                    icon: Icon(Icons.sms_outlined),
                     label: Text(trId('message')),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -296,7 +296,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -314,8 +314,8 @@ class _EmergencyBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           // Rose is the app's single blood/urgency (danger) role — the banner
           // used off-palette #DC2626/#EF4444 while the chips used the rose
@@ -335,7 +335,7 @@ class _EmergencyBanner extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.emergency, color: AppColors.background, size: 28),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +346,7 @@ class _EmergencyBanner extends StatelessWidget {
                   ),
                   Text(
                     trId('tap_to_alert_all_eligible_donors_in_your'),
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
@@ -374,7 +374,7 @@ class _FilterRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = sl<LocalStorage>().getLang();
     Widget chip(String text, bool sel, VoidCallback onTap) => Padding(
-          padding: const EdgeInsets.only(right: 8),
+          padding: EdgeInsets.only(right: 8),
           child: ChoiceChip(
             label: Text(text),
             selected: sel,
@@ -387,7 +387,7 @@ class _FilterRow extends StatelessWidget {
             selectedColor: AppColors.accent,
             backgroundColor: AppColors.accent.withOpacity(0.10),
             shape: StadiumBorder(side: BorderSide(color: AppColors.accent.withOpacity(0.35))),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             showCheckmark: false,
           ),
         );
@@ -395,7 +395,7 @@ class _FilterRow extends StatelessWidget {
       height: 60,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           chip(trId('all'), selected == null, () => onSelect(null)),
           ...groups.map((g) => chip(g, selected == g, () => onSelect(selected == g ? null : g))),
@@ -433,7 +433,7 @@ class _LocationFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     final ta = lang == 'ta';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      padding: EdgeInsets.fromLTRB(12, 0, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -441,7 +441,7 @@ class _LocationFilter extends StatelessWidget {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     color: context.cSurface,
                     borderRadius: BorderRadius.circular(12),
@@ -458,12 +458,12 @@ class _LocationFilter extends StatelessWidget {
                         DropdownMenuItem<String?>(
                           value: null,
                           child: Text(trId('all_locations'),
-                              style: const TextStyle(fontSize: 14)),
+                              style: TextStyle(fontSize: 14)),
                         ),
                         ...taluks.map((t) => DropdownMenuItem<String?>(
                               value: t.id,
                               child: Text(ta ? (t.nameTa.isNotEmpty ? t.nameTa : t.nameEn) : t.nameEn,
-                                  style: const TextStyle(fontSize: 14)),
+                                  style: TextStyle(fontSize: 14)),
                             )),
                       ],
                       onChanged: onSelect,
@@ -475,7 +475,7 @@ class _LocationFilter extends StatelessWidget {
           ),
           if (selectedId != null)
             Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: EdgeInsets.only(top: 2),
               child: Row(
                 children: [
                   Checkbox(
@@ -509,7 +509,7 @@ class _DonorCard extends StatelessWidget {
     return ScaleOnTap(
       onTap: onContact,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -517,7 +517,7 @@ class _DonorCard extends StatelessWidget {
           border: Border.all(color: context.cBorder, width: 1),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Row(
             children: [
               CircleAvatar(
@@ -525,14 +525,14 @@ class _DonorCard extends StatelessWidget {
                 radius: 28,
                 child: Text(
                   donor.bloodGroup,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.accent,
                     fontWeight: FontWeight.w800,
                     fontSize: 17,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,19 +553,19 @@ class _DonorCard extends StatelessWidget {
                           ),
                         ),
                         if (isVerified) ...[
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Tooltip(
                             message: trId('verified_member'),
-                            child: const Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
+                            child: Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    SizedBox(height: 5),
                     Row(
                       children: [
                         Icon(Icons.place_outlined, size: 15, color: context.cTextSecondary),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             donor.displayLocation(lang),
@@ -583,9 +583,9 @@ class _DonorCard extends StatelessWidget {
                     // Directory contacts imported from Friends2Support are
                     // labelled so they read as a donor listing, not an app member.
                     if (donor.isImported) ...[
-                      const SizedBox(height: 7),
+                      SizedBox(height: 7),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF3E0),
                           borderRadius: BorderRadius.circular(6),
@@ -593,7 +593,7 @@ class _DonorCard extends StatelessWidget {
                         ),
                         child: Text(
                           trId('friends2support'),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.3, color: Color(0xFFB45309)),
                         ),
                       ),
@@ -601,9 +601,9 @@ class _DonorCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   // Contact is the one action on a donor card — it reads as
                   // the CTA in mint (the system's single call-to-action colour),
@@ -615,10 +615,10 @@ class _DonorCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.call, size: 15, color: AppColors.primaryLight),
-                    const SizedBox(width: 5),
+                    SizedBox(width: 5),
                     Text(
                       trId('contact'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryLight,
@@ -653,27 +653,27 @@ class _EmptyDonors extends StatelessWidget {
             errorBuilder: (_, __, ___) =>
                 Icon(Icons.favorite_border, size: 64, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             group != null
                 ? tr(en: 'No donors found', ta: 'இப்போது $group கொடையாளர்கள் இல்லை', hi: 'अभी $group दाता नहीं मिले', ml: 'ഇപ്പോൾ $group ദാതാക്കളെ കണ്ടെത്തിയില്ല')
                 : trId('no_donors_found'),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.cText),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               trId('try_a_different_blood_group_or_be_the_fi'),
               style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           GestureDetector(
             onTap: () => context.push('/blood-donation/register'),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(24),

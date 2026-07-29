@@ -36,7 +36,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
         foregroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -50,7 +50,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
           FutureBuilder<ChessStatsModel>(
             future: _statsFuture,
             builder: (context, snap) {
-              if (!snap.hasData) return const SizedBox(height: 72);
+              if (!snap.hasData) return SizedBox(height: 72);
               final s = snap.data!;
               return _StatsBanner(stats: s);
             },
@@ -62,7 +62,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(color: AppColors.primaryLight),
                   );
                 }
@@ -71,9 +71,9 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.wifi_off_rounded,
+                        Icon(Icons.wifi_off_rounded,
                             color: AppColors.textSecondary, size: 48),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(trId('could_not_load_games'),
                             style: TextStyle(color: AppColors.textSecondary)),
                       ],
@@ -101,7 +101,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   itemCount: games.length,
                   itemBuilder: (context, i) => _GameTile(game: games[i]),
                 );
@@ -122,16 +122,16 @@ class _StatsBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.darkBg,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Column(
         children: [
           // Prestige title card
           PrestigeCard(stats: stats),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Win / Games / Rate row
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: AppTheme.gradientPrimary,
               borderRadius: BorderRadius.circular(16),
@@ -179,13 +179,13 @@ class _Stat extends StatelessWidget {
     return Column(
       children: [
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22)),
         Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 11)),
-        const SizedBox(height: 2),
+            style: TextStyle(color: Colors.white70, fontSize: 11)),
+        SizedBox(height: 2),
         Text(sub,
-            style: const TextStyle(color: Colors.white54, fontSize: 10)),
+            style: TextStyle(color: Colors.white54, fontSize: 10)),
       ],
     );
   }
@@ -218,7 +218,7 @@ class _GameTile extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -226,7 +226,7 @@ class _GameTile extends StatelessWidget {
         boxShadow: AppTheme.cardShadow,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         child: Row(
           children: [
             // Result badge
@@ -240,11 +240,11 @@ class _GameTile extends StatelessWidget {
               child: Center(
                 child: Text(
                   game.resultEmoji,
-                  style: const TextStyle(fontSize: 20),
+                  style: TextStyle(fontSize: 20),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
 
             // Players + result
             Expanded(
@@ -253,7 +253,7 @@ class _GameTile extends StatelessWidget {
                 children: [
                   Text(
                     '$white vs $black',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: AppColors.textPrimary,
@@ -261,7 +261,7 @@ class _GameTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     game.resultLabel,
                     style: TextStyle(
@@ -279,19 +279,19 @@ class _GameTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(dateStr,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 11)),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '${game.totalMoves} moves',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.textSecondary, fontSize: 11),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 GestureDetector(
                   onTap: () => context.push('/chess/replay/${game.id}'),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),

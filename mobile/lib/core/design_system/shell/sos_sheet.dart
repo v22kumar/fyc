@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/tr.dart';
 
 import '../../services/sos_service.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Shows the SOS action sheet: send a location SMS to trusted contacts and/or
 /// dial the emergency number. Trusted contacts are stored on-device.
@@ -91,13 +92,13 @@ class _SosSheetState extends State<_SosSheet> {
 
   List<Widget> _feature(IconData icon, String text) => [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
+          padding: EdgeInsets.symmetric(vertical: 3),
           child: Row(children: [
             Icon(icon, color: const Color(0xFF16A34A), size: 16),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
                 child: Text(text,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12.5))),
+                    style: TextStyle(color: Colors.white70, fontSize: 12.5))),
           ]),
         ),
       ];
@@ -108,11 +109,11 @@ class _SosSheetState extends State<_SosSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Color(0xFF0B1220),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(
@@ -126,7 +127,7 @@ class _SosSheetState extends State<_SosSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(2),
@@ -135,26 +136,26 @@ class _SosSheetState extends State<_SosSheet> {
               ),
               Row(
                 children: [
-                  const Icon(Icons.health_and_safety_rounded, color: Color(0xFFDC2626), size: 26),
-                  const SizedBox(width: 10),
+                  Icon(Icons.health_and_safety_rounded, color: Color(0xFFDC2626), size: 26),
+                  SizedBox(width: 10),
                   Text(trId('safety_center'),
                       style: TextStyle(
                           color: AppColors.background,
                           fontSize: 20,
                           fontWeight: FontWeight.w700)),
-                  const Spacer(),
+                  Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                    icon: Icon(Icons.close_rounded, color: Colors.white54),
                   ),
                 ],
               ),
-              const Text(
+              Text(
                 'Alert your trusted contacts and nearby FYC members, or call the '
                 'emergency number.',
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
 
               // Primary action — send SOS SMS.
               SizedBox(
@@ -167,47 +168,47 @@ class _SosSheetState extends State<_SosSheet> {
                   ),
                   onPressed: _busy ? null : _sendSos,
                   icon: _busy
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: AppColors.background))
-                      : const Icon(Icons.send_rounded),
+                      : Icon(Icons.send_rounded),
                   label: Text(_busy ? 'Getting location…' : 'Send SOS to my contacts'),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               SizedBox(
                 height: 50,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.background,
-                    side: const BorderSide(color: Colors.white24),
+                    side: BorderSide(color: Colors.white24),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: _callEmergency,
-                  icon: const Icon(Icons.call_rounded),
-                  label: const Text('Call ${SosService.emergencyNumber}'),
+                  icon: Icon(Icons.call_rounded),
+                  label: Text('Call ${SosService.emergencyNumber}'),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               SizedBox(
                 height: 50,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.background,
-                    side: const BorderSide(color: Colors.white24),
+                    side: BorderSide(color: Colors.white24),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: _busy ? null : _alertMembers,
-                  icon: const Icon(Icons.campaign_rounded),
+                  icon: Icon(Icons.campaign_rounded),
                   label: Text(trId('alert_nearby_fyc_members')),
                 ),
               ),
 
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               ..._feature(Icons.location_on_rounded, 'Share live location'),
               ..._feature(Icons.contacts_rounded, 'Alert trusted contacts'),
               ..._feature(Icons.groups_rounded, 'Notify nearby FYC members'),

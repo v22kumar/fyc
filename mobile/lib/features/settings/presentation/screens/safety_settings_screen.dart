@@ -70,9 +70,9 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
         elevation: 0,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               children: [
                 Container(
                   decoration: BoxDecoration(
@@ -114,11 +114,11 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(trId('trusted_contacts'),
                     style: TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: context.cTextSecondary)),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
                     color: context.cSurface,
@@ -129,7 +129,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                     children: [
                       if (_contacts.isEmpty)
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16),
                           child: Text(trId('no_contacts_yet_add_a_phone_number_below'),
                               style: TextStyle(color: context.cTextSecondary, fontSize: 13)),
                         )
@@ -150,7 +150,7 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                             )),
                       Divider(height: 1, thickness: 1, color: context.cBorder),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         child: Row(
                           children: [
                             Expanded(
@@ -167,14 +167,14 @@ class _SafetySettingsScreenState extends State<SafetySettingsScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
                                   ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             IconButton(
                               onPressed: _addContact,
-                              icon: const Icon(Icons.add_circle_rounded, color: Color(0xFF16A34A), size: 32),
+                              icon: Icon(Icons.add_circle_rounded, color: Color(0xFF16A34A), size: 32),
                             ),
                           ],
                         ),

@@ -28,9 +28,9 @@ class DSErrorState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               decoration: BoxDecoration(color: DSColors.dangerSurface, shape: BoxShape.circle),
-              child: const Icon(Icons.cloud_off_rounded, size: 48, color: DSColors.danger),
+              child: Icon(Icons.cloud_off_rounded, size: 48, color: DSColors.danger),
             ),
             SizedBox(height: DSSpacing.sm),
             Text(
@@ -41,7 +41,7 @@ class DSErrorState extends StatelessWidget {
             SizedBox(height: DSSpacing.md),
             SizedBox(width: 200, child: DSButton.filled(label: 'Retry', icon: Icons.refresh_rounded, onPressed: onRetry)),
             if (secondaryLabel != null && onSecondary != null) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               DSButton.text(label: secondaryLabel!, onPressed: onSecondary, fullWidth: false),
             ],
           ],

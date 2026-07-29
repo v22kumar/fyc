@@ -97,13 +97,13 @@ class _ReplayPageState extends State<ReplayPage> {
           _game != null
               ? '${_game!.whiteName ?? "White"} vs ${_game!.blackName ?? "Black"}'
               : 'Game Replay',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
           if (_game != null)
             IconButton(
-              icon: const Icon(Icons.share_rounded, color: Colors.white70),
+              icon: Icon(Icons.share_rounded, color: Colors.white70),
               tooltip: trId('share_pgn'),
               onPressed: () => _sharePgn(_game!),
             ),
@@ -112,7 +112,7 @@ class _ReplayPageState extends State<ReplayPage> {
       body: _error != null
           ? _buildError()
           : _game == null
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(color: AppColors.primaryLight))
               : _buildReplay(_game!),
     );
@@ -124,13 +124,13 @@ class _ReplayPageState extends State<ReplayPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.error_outline, color: AppColors.warning, size: 48),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(trId('could_not_load_game'),
               style: TextStyle(
                   color: AppColors.background, fontWeight: FontWeight.w700, fontSize: 16)),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(_error ?? '',
-              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              style: TextStyle(color: Colors.white54, fontSize: 12)),
         ],
       ),
     );
@@ -152,7 +152,7 @@ class _ReplayPageState extends State<ReplayPage> {
           // Board (read-only)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
@@ -190,7 +190,7 @@ class _ReplayPageState extends State<ReplayPage> {
 
           // Controls
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -198,35 +198,35 @@ class _ReplayPageState extends State<ReplayPage> {
                   icon: Icons.skip_previous_rounded,
                   onPressed: canBack ? () => _goTo(0) : null,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _ControlBtn(
                   icon: Icons.chevron_left_rounded,
                   onPressed: canBack ? () => _goTo(_ply - 1) : null,
                   large: true,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.darkSurface,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${(_ply / 2).ceil()} / ${(total / 2).ceil()}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
                         fontWeight: FontWeight.w600),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 _ControlBtn(
                   icon: Icons.chevron_right_rounded,
                   onPressed: canForward ? () => _goTo(_ply + 1) : null,
                   large: true,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _ControlBtn(
                   icon: Icons.skip_next_rounded,
                   onPressed: canForward ? () => _goTo(total) : null,
@@ -262,22 +262,22 @@ class _PlayerBar extends StatelessWidget {
             backgroundColor: AppColors.primary.withOpacity(0.2),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppColors.background,
                   fontWeight: FontWeight.w700,
                   fontSize: 14),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Text(
             name,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.background, fontWeight: FontWeight.w600, fontSize: 14),
           ),
-          const Spacer(),
+          Spacer(),
           Text(
             isTop ? '♚ Black' : '♔ White',
-            style: const TextStyle(color: Colors.white38, fontSize: 12),
+            style: TextStyle(color: Colors.white38, fontSize: 12),
           ),
         ],
       ),
@@ -338,9 +338,9 @@ class _ReplayMoveListState extends State<_ReplayMoveList> {
       child: ListView.separated(
         controller: _scroll,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         itemCount: pairs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 4),
+        separatorBuilder: (_, __) => SizedBox(width: 4),
         itemBuilder: (context, i) {
           final (moveNum, white, black) = pairs[i];
           final whitePly = i * 2 + 1;
@@ -348,16 +348,16 @@ class _ReplayMoveListState extends State<_ReplayMoveList> {
           return Row(
             children: [
               Text('$moveNum.',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: Colors.white38, fontSize: 12)),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               _MovePill(
                 san: white,
                 active: widget.currentPly == whitePly,
                 onTap: () => widget.onTap(whitePly),
               ),
               if (black != null) ...[
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _MovePill(
                   san: black,
                   active: widget.currentPly == blackPly,
@@ -385,7 +385,7 @@ class _MovePill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: active ? AppColors.primaryLight : Colors.transparent,
           borderRadius: BorderRadius.circular(6),

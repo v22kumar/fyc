@@ -178,8 +178,8 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () => _openResult(category, item),
       child: Pressable(
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(16),
@@ -197,7 +197,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               child: Icon(icon, color: iconColor, size: 22),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +213,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (subtitle != null && subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: TextStyle(
@@ -236,13 +236,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildCategorySection(String category, List<dynamic> items) {
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (items.isEmpty) return SizedBox.shrink();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
+          padding: EdgeInsets.only(left: 4, bottom: 12, top: 8),
           child: Text(
             category.toUpperCase(),
             style: TextStyle(
@@ -254,7 +254,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         ...items.map((item) => _buildResultItem(category, item)),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
       ],
     );
   }
@@ -266,7 +266,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       children: [
         if (_recent.isNotEmpty) ...[
           _sectionLabel(trId('recent')),
@@ -275,7 +275,7 @@ class _SearchScreenState extends State<SearchScreen> {
             runSpacing: 8,
             children: _recent.map((q) => _chip(q, () => run(q))).toList(),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
         _sectionLabel(trId('suggested')),
         Wrap(
@@ -288,7 +288,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _sectionLabel(String text) => Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 12),
+        padding: EdgeInsets.only(left: 4, bottom: 12),
         child: Text(
           text,
           style: TextStyle(
@@ -304,7 +304,7 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: context.cSurface,
             borderRadius: BorderRadius.circular(20),
@@ -314,7 +314,7 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.search, size: 15, color: context.cTextSecondary),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(label, style: TextStyle(color: context.cText, fontSize: 13)),
             ],
           ),
@@ -363,7 +363,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: Text(trId('no_results_found'), style: TextStyle(color: context.cTextSecondary, fontSize: 16)),
                         )
                       : ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16),
                           children: _results.entries
                               .map((entry) => _buildCategorySection(entry.key, entry.value))
                               .toList(),

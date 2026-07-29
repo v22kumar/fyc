@@ -18,7 +18,7 @@ class DSCarousel extends StatefulWidget {
     required this.itemBuilder,
     this.height = 150,
     this.interval = const Duration(seconds: 5),
-    this.itemPadding = const EdgeInsets.symmetric(horizontal: 16),
+    this.itemPadding = EdgeInsets.symmetric(horizontal: 16),
   });
 
   @override
@@ -81,14 +81,14 @@ class _DSCarouselState extends State<DSCarousel> {
           ),
         ),
         if (widget.itemCount > 1) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(widget.itemCount, (i) {
               final active = i == _index;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
+                margin: EdgeInsets.symmetric(horizontal: 3),
                 width: active ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(

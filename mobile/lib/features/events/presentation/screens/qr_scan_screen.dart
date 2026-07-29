@@ -97,20 +97,20 @@ class _QrScanScreenState extends State<QrScanScreen> {
               color: success ? AppColors.primary : AppColors.accent,
               size: 24,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
                 child: Text(title,
-                    style: const TextStyle(fontSize: 16))),
+                    style: TextStyle(fontSize: 16))),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(message, style: const TextStyle(fontSize: 14)),
-            const SizedBox(height: 8),
+            Text(message, style: TextStyle(fontSize: 14)),
+            SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: AppColors.textSecondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -204,7 +204,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             child: Text(
               trId('place_the_fyc_qr_code_inside_the_frame'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.background,
                 fontSize: 13,
                 backgroundColor: Colors.black54,

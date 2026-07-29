@@ -103,7 +103,7 @@ class _State extends State<ChessTournamentDetailScreen> {
       backgroundColor: context.cBackground,
       appBar: AppBar(title: Text(_t?.name ?? trId('tournament_3'))),
       body: _t == null && !_error
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : _error
               ? Center(child: ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))))
               : RefreshIndicator(onRefresh: _load, child: _body(_t!)),
@@ -116,7 +116,7 @@ class _State extends State<ChessTournamentDetailScreen> {
     if (t.champion != null) children.add(_championBanner(t));
 
     if (t.description != null && t.description!.isNotEmpty) {
-      children.add(Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(t.description!, style: TextStyle(color: context.cTextSecondary, height: 1.4))));
+      children.add(Padding(padding: EdgeInsets.only(bottom: 12), child: Text(t.description!, style: TextStyle(color: context.cTextSecondary, height: 1.4))));
     }
 
     if (t.isOpen || t.isClosed) children.add(_registrationCard(t));
@@ -126,10 +126,10 @@ class _State extends State<ChessTournamentDetailScreen> {
 
     // Bracket
     if (t.matches.isNotEmpty) {
-      children.add(const SizedBox(height: 16));
+      children.add(SizedBox(height: 16));
       children.add(Text(trId('tournament_bracket'),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)));
-      children.add(const SizedBox(height: 16));
+      children.add(SizedBox(height: 16));
       
       final bracketWidget = SizedBox(
         height: 600, // Fixed height for panning area
@@ -142,12 +142,12 @@ class _State extends State<ChessTournamentDetailScreen> {
             ),
             child: InteractiveViewer(
               constrained: false,
-              boundaryMargin: const EdgeInsets.all(120),
+              boundaryMargin: EdgeInsets.all(120),
               minScale: 0.3,
               maxScale: 2.0,
               // We could use a TransformationController to auto-focus on t.currentRound here
               child: Padding(
-                padding: const EdgeInsets.all(32),
+                padding: EdgeInsets.all(32),
                 child: _buildHorizontalBracketGraph(t),
               ),
             ),
@@ -160,31 +160,31 @@ class _State extends State<ChessTournamentDetailScreen> {
     // Manager: Start Next Round
     if (_isAdmin && t.inProgress) {
       final btn = _nextRoundButton(t);
-      if (btn != null) children.add(Padding(padding: const EdgeInsets.only(top: 16), child: btn));
+      if (btn != null) children.add(Padding(padding: EdgeInsets.only(top: 16), child: btn));
     }
 
-    return ListView(padding: const EdgeInsets.all(16), children: children);
+    return ListView(padding: EdgeInsets.all(16), children: children);
   }
 
   Widget _championBanner(ChessTournamentDetail t) => Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [Color(0xFFD4AF37), Color(0xFFF0C75E)]),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(children: [
-          const Text('🏆', style: TextStyle(fontSize: 32)),
-          const SizedBox(width: 12),
+          Text('🏆', style: TextStyle(fontSize: 32)),
+          SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(trId('champion'), style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(trId('champion'), style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
             Text(t.champion!.name, style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.w900)),
           ])),
         ]),
       );
 
   Widget _roundBadge(String label, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(color: color.withOpacity(0.14), borderRadius: BorderRadius.circular(20)),
         child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
       );
@@ -192,20 +192,20 @@ class _State extends State<ChessTournamentDetailScreen> {
   // ── Registration / manager controls ─────────────────────────────────────────
   Widget _registrationCard(ChessTournamentDetail t) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Text('${t.entryCount} ${trId('approved')}',
               style: TextStyle(fontWeight: FontWeight.w800, color: context.cText, fontSize: 15)),
           if (t.pendingCount > 0) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _roundBadge('${t.pendingCount} ${trId('pending')}', const Color(0xFFF59E0B)),
           ],
-          const Spacer(),
+          Spacer(),
           if (t.isClosed) _roundBadge(trId('registration_closed_4'), context.cTextSecondary),
         ]),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
 
         // Player-facing registration state.
         if (!t.isRegistered && t.isOpen)
@@ -220,11 +220,11 @@ class _State extends State<ChessTournamentDetailScreen> {
 
         // Manager controls.
         if (_isAdmin) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           if (t.isOpen)
             SizedBox(width: double.infinity, child: OutlinedButton.icon(
               onPressed: _busy ? null : () => _run(() async { await ChessTournamentApi.closeRegistration(t.id); }),
-              icon: const Icon(Icons.lock_clock),
+              icon: Icon(Icons.lock_clock),
               label: Text(trId('close_registration_3')),
             )),
           if (t.isClosed) ...[
@@ -235,10 +235,10 @@ class _State extends State<ChessTournamentDetailScreen> {
               label: Text(trId('start_tournament_draw_bracket'), style: TextStyle(color: AppColors.background)),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: EdgeInsets.symmetric(vertical: 12)),
             )),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             SizedBox(width: double.infinity, child: TextButton.icon(
               onPressed: _busy ? null : () => _run(() async { await ChessTournamentApi.reopenRegistration(t.id); }),
-              icon: const Icon(Icons.lock_open, size: 18),
+              icon: Icon(Icons.lock_open, size: 18),
               label: Text(trId('reopen_registration')),
             )),
           ],
@@ -266,32 +266,32 @@ class _State extends State<ChessTournamentDetailScreen> {
     }
     return Row(children: [
       Icon(icon, color: color, size: 20),
-      const SizedBox(width: 8),
+      SizedBox(width: 8),
       Expanded(child: Text(label, style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
     ]);
   }
 
   Widget _approvalsCard(ChessTournamentDetail t) {
     return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(top: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(trId('pending_approvals'),
             style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(trId('only_approved_players_enter_the_bracket'),
             style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         ...t.pendingEntries.map((e) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: EdgeInsets.symmetric(vertical: 4),
               child: Row(children: [
                 Expanded(child: Text(e.name, style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: trId('approve'),
                   onPressed: _busy ? null : () => _run(() => ChessTournamentApi.decide(t.id, e.id, true)),
-                  icon: const Icon(Icons.check_circle, color: Color(0xFF16A34A)),
+                  icon: Icon(Icons.check_circle, color: Color(0xFF16A34A)),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
@@ -333,7 +333,7 @@ class _State extends State<ChessTournamentDetailScreen> {
 
     Widget side(PlayerRef? p, bool isWinner) => Expanded(
           child: Row(children: [
-            if (isWinner) const Padding(padding: EdgeInsets.only(right: 4), child: Text('👑', style: TextStyle(fontSize: 14))),
+            if (isWinner) Padding(padding: EdgeInsets.only(right: 4), child: Text('👑', style: TextStyle(fontSize: 14))),
             Expanded(child: Text(p?.name ?? (m.status == 'BYE' ? trId('bye') : trId('tbd')),
                 style: TextStyle(fontWeight: isWinner ? FontWeight.w800 : FontWeight.w500, color: p == null ? context.cTextSecondary : context.cText), maxLines: 1, overflow: TextOverflow.ellipsis)),
           ]),
@@ -341,23 +341,23 @@ class _State extends State<ChessTournamentDetailScreen> {
 
     return Container(
       // Removing bottom margin so it centers perfectly in the bracket graph
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(color: context.cSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: context.cBorder)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           side(m.playerA, decided && m.winnerId == m.playerA?.id),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(trId('vs_2'), style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
+          Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text(trId('vs_2'), style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
           side(m.playerB, decided && m.winnerId == m.playerB?.id),
         ]),
 
         if (showConductToggle) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(children: [
             Text('${trId('conduct')}:', style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _conductChip(trId('in_app'), !m.isPhysical,
                 () => _run(() => ChessTournamentApi.setConduct(t.id, m.id, 'APP'))),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             _conductChip(trId('in_person'), m.isPhysical,
                 () => _pickPhysical(t, m)),
           ]),
@@ -365,10 +365,10 @@ class _State extends State<ChessTournamentDetailScreen> {
 
         // Physical logistics.
         if (m.isPhysical && !decided) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(children: [
             Icon(Icons.groups_rounded, size: 15, color: context.cTextSecondary),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Expanded(child: Text(
                 m.venue != null && m.venue!.isNotEmpty
                     ? '${trId('in_person_2')} · ${m.venue}'
@@ -382,22 +382,22 @@ class _State extends State<ChessTournamentDetailScreen> {
 
         // Round-not-started hint (activated flag false, both players known).
         if (iAmIn && !m.activated && bothSet && !decided) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(trId('waiting_for_the_organizer_to_start_this'),
               style: TextStyle(fontSize: 11.5, color: context.cTextSecondary, fontStyle: FontStyle.italic)),
         ],
 
         if (adminCanDecide) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(children: [
             Expanded(child: OutlinedButton(
               onPressed: _busy ? null : () => _run(() => ChessTournamentApi.reportResult(t.id, m.id, m.playerA!.id)),
-              child: Text('${trId('win')}: ${m.playerA!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+              child: Text('${trId('win')}: ${m.playerA!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11)),
             )),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(child: OutlinedButton(
               onPressed: _busy ? null : () => _run(() => ChessTournamentApi.reportResult(t.id, m.id, m.playerB!.id)),
-              child: Text('${trId('win')}: ${m.playerB!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+              child: Text('${trId('win')}: ${m.playerB!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11)),
             )),
           ]),
         ],
@@ -407,10 +407,10 @@ class _State extends State<ChessTournamentDetailScreen> {
 
   /// The online play/ready control for a player in an activated, undecided match.
   Widget _playArea(ChessTournamentDetail t, BracketMatch m) {
-    if (!m.activated || !(m.playerA != null && m.playerB != null)) return const SizedBox.shrink();
+    if (!m.activated || !(m.playerA != null && m.playerB != null)) return SizedBox.shrink();
     if (m.status == 'LIVE') {
       return Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: EdgeInsets.only(top: 10),
         child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: _busy ? null : () => _playMatch(m),
           icon: Icon(Icons.sports_esports, color: AppColors.background, size: 18),
@@ -419,35 +419,35 @@ class _State extends State<ChessTournamentDetailScreen> {
         )),
       );
     }
-    if (m.status != 'READY') return const SizedBox.shrink();
+    if (m.status != 'READY') return SizedBox.shrink();
 
     final iAmReady = m.readyFor(_uid);
     final oppReady = m.opponentReadyFor(_uid);
 
     if (!iAmReady) {
       return Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: EdgeInsets.only(top: 10),
         child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: _busy ? null : () => _run(() => ChessTournamentApi.markReady(t.id, m.id)),
           icon: Icon(Icons.check, color: AppColors.background, size: 18),
           label: Text(trId('i_m_ready'), style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 10)),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: EdgeInsets.symmetric(vertical: 10)),
         )),
       );
     }
     if (!oppReady) {
       return Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: EdgeInsets.only(top: 10),
         child: Row(children: [
-          const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
-          const SizedBox(width: 6),
+          Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+          SizedBox(width: 6),
           Expanded(child: Text(trId('you_re_ready_waiting_for_your_opponent'),
               style: TextStyle(fontSize: 12, color: context.cTextSecondary))),
         ]),
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: 10),
       child: SizedBox(width: double.infinity, child: ElevatedButton.icon(
         onPressed: _busy ? null : () => _playMatch(m),
         icon: Icon(Icons.sports_esports, color: AppColors.background, size: 18),
@@ -486,7 +486,7 @@ class _State extends State<ChessTournamentDetailScreen> {
       borderRadius: BorderRadius.circular(20),
       onTap: _busy ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -533,7 +533,7 @@ class _State extends State<ChessTournamentDetailScreen> {
               Container(
                 height: 40,
                 alignment: Alignment.center,
-                margin: const EdgeInsets.only(bottom: 24),
+                margin: EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
                   color: r <= t.currentRound ? AppColors.primary.withOpacity(0.1) : context.cBackground,
                   borderRadius: BorderRadius.circular(20),

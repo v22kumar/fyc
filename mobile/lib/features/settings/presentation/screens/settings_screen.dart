@@ -89,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,14 +97,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Row(
                 children: [
                   Icon(Icons.shield_outlined, color: AppColors.primary),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Text(
                     ta ? 'தனியுரிமை & பாதுகாப்பு' : 'Privacy & Security',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.cText),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               Text(
                 ta
                     ? 'FYC Connect உங்கள் பெயர், தொலைபேசி எண் மற்றும் சுயவிவரத் தகவல்களை உறுப்பினர் சேவைகளுக்காக மட்டுமே சேமிக்கிறது.\n\n'
@@ -119,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         '• To delete your account or data, contact the club admin.',
                 style: TextStyle(fontSize: 13, height: 1.5, color: context.cTextSecondary),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -147,10 +147,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
           _SectionLabel('Language', context),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _Card(
             context: context,
             child: Column(
@@ -170,9 +170,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _SectionLabel('More', context),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _Card(
             context: context,
             child: Column(
@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _Card(
             context: context,
             child: _LinkRow(
@@ -223,12 +223,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context: context,
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Center(
             child: Text('FYC Connect · $_version',
                 style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Lightweight shimmer effect for loading placeholders, built without an
 /// external package: a gradient sweeps across the box on a loop via

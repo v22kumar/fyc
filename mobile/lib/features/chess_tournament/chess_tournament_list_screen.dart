@@ -82,9 +82,9 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(controller: nameC, decoration: InputDecoration(labelText: trId('name'))),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextField(controller: descC, decoration: InputDecoration(labelText: trId('description_2'))),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -92,7 +92,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
                       deadline == null
                           ? trId('registration_deadline_optional')
                           : '${deadline!.day}/${deadline!.month}/${deadline!.year}',
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12),
                     ),
                   ),
                   TextButton(
@@ -159,27 +159,27 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
           : _error
               ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textSecondary),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))),
                 ]))
               : RefreshIndicator(
                   onRefresh: _load,
                   child: (_items!.isEmpty)
                       ? ListView(children: [
-                          const SizedBox(height: 80),
-                          const Center(child: Text('♟️', style: TextStyle(fontSize: 56))),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 80),
+                          Center(child: Text('♟️', style: TextStyle(fontSize: 56))),
+                          SizedBox(height: 12),
                           Center(child: Text(trId('no_tournaments_yet'), style: TextStyle(color: context.cTextSecondary))),
                         ])
                       : ListView.builder(
-                          padding: const EdgeInsets.all(14),
+                          padding: EdgeInsets.all(14),
                           itemCount: _items!.length,
                           itemBuilder: (_, i) {
                             final t = _items![i];
                             return FadeSlideIn(
                               delay: Duration(milliseconds: (i * 45).clamp(0, 400)),
                               child: Container(
-                              margin: const EdgeInsets.only(bottom: 12),
+                              margin: EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 color: context.cSurface,
                                 borderRadius: BorderRadius.circular(16),
@@ -187,22 +187,22 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
                                 boxShadow: context.isDark ? null : AppTheme.cardShadow,
                               ),
                               child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                leading: const Text('♟️', style: TextStyle(fontSize: 28)),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                leading: Text('♟️', style: TextStyle(fontSize: 28)),
                                 title: Text(t.name, style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
                                 subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 6),
+                                  padding: EdgeInsets.only(top: 6),
                                   child: Row(children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(color: _statusColor(t.status).withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
                                       child: Text(_statusLabel(t.status), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _statusColor(t.status))),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     Text('${t.entryCount} ${trId('players')}', style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
                                     if (t.isRegistered) ...[
-                                      const SizedBox(width: 8),
-                                      const Icon(Icons.check_circle, size: 14, color: Color(0xFF16A34A)),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.check_circle, size: 14, color: Color(0xFF16A34A)),
                                     ],
                                   ]),
                                 ),

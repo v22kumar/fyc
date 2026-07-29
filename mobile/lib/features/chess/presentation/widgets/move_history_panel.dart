@@ -72,9 +72,9 @@ class _MoveHistoryPanelState extends State<MoveHistoryPanel> {
       child: ListView.separated(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: EdgeInsets.symmetric(horizontal: 10),
         itemCount: pairs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 2),
+        separatorBuilder: (_, __) => SizedBox(width: 2),
         itemBuilder: (context, i) {
           final (white, black) = pairs[i];
           final moveNum = i + 1;
@@ -85,17 +85,17 @@ class _MoveHistoryPanelState extends State<MoveHistoryPanel> {
               Center(
                 child: Text(
                   '$moveNum.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              const SizedBox(width: 2),
+              SizedBox(width: 2),
               _MoveChip(san: white, isLatest: isLast && widget.moveSans.length.isOdd),
               if (black != null) ...[
-                const SizedBox(width: 2),
+                SizedBox(width: 2),
                 _MoveChip(san: black, isLatest: isLast),
               ],
             ],
@@ -115,7 +115,7 @@ class _MoveChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: isLatest
           ? BoxDecoration(
               color: AppColors.primaryLight,

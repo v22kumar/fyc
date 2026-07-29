@@ -27,26 +27,26 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null)
               Icon(icon, size: 56, color: AppColors.textSecondary)
             else if (emoji != null)
-              Text(emoji!, style: const TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
+              Text(emoji!, style: TextStyle(fontSize: 64)),
+            SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,

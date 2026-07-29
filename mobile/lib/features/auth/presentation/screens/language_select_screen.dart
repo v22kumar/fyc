@@ -127,13 +127,13 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
             opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Logo
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.background.withOpacity(0.08),
@@ -154,10 +154,10 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         width: 72,
                         height: 72,
                         errorBuilder: (_, __, ___) =>
-                            const Text('🌱', style: TextStyle(fontSize: 40)),
+                            Text('🌱', style: TextStyle(fontSize: 40)),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     Text(
                       trId('fyc_connect'),
                       style: TextStyle(
@@ -167,7 +167,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       _kAppSubtitle[_selectedLang] ?? _kAppSubtitle['en']!,
                       textAlign: TextAlign.center,
@@ -178,11 +178,11 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     TextButton(
                       onPressed: () => context.push('/about'),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: EdgeInsets.symmetric(vertical: 4),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -197,7 +197,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     Text(
                       isTa ? 'மொழியை தேர்ந்தெடுக்கவும்' : 'Select your language',
                       style: TextStyle(
@@ -206,7 +206,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     // Language cards
                     for (final lang in _kLangs) ...[
@@ -219,10 +219,10 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         isSelected: _selectedLang == lang.$1,
                         onTap: () => setState(() => _selectedLang = lang.$1),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                     ],
 
-                    const SizedBox(height: 28),
+                    SizedBox(height: 28),
 
                     // Continue button
                     SizedBox(
@@ -247,7 +247,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                                   : _selectedLang == 'hi'
                                       ? 'जारी रखें'
                                       : 'Continue',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -290,7 +290,7 @@ class _LangCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.background.withOpacity(0.92)
@@ -331,7 +331,7 @@ class _LangCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -355,9 +355,9 @@ class _LangCard extends StatelessWidget {
                 ),
               ],
             ),
-            const Spacer(),
+            Spacer(),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded,
+              Icon(Icons.check_circle_rounded,
                   color: AppColors.primary, size: 22),
           ],
         ),

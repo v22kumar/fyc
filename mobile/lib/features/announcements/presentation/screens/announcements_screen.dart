@@ -76,7 +76,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     .add(const AnnouncementFetchRequested());
               },
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 itemCount: state.announcements.length,
                 itemBuilder: (context, index) {
                   final announcement = state.announcements[index];
@@ -98,9 +98,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: context.cTextSecondary),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<AnnouncementBloc>()
@@ -112,7 +112,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -138,7 +138,7 @@ class _AnnouncementCard extends StatelessWidget {
     return ScaleOnTap(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -146,14 +146,14 @@ class _AnnouncementCard extends StatelessWidget {
           border: Border.all(color: context.cBorder, width: 1),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.12),
@@ -168,12 +168,12 @@ class _AnnouncementCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   if (announcement.isPinned)
                     Icon(Icons.push_pin_rounded, size: 16, color: AppColors.warning),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Text(
                 announcement.displayTitle(lang),
                 style: TextStyle(
@@ -182,18 +182,18 @@ class _AnnouncementCard extends StatelessWidget {
                   color: context.cText,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(
                 announcement.displayBody(lang),
                 style: TextStyle(color: context.cTextSecondary, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Row(
                 children: [
                   Icon(Icons.schedule, size: 14, color: context.cTextSecondary),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     fmt.format(announcement.createdAt.toLocal()),
                     style: TextStyle(fontSize: 12, color: context.cTextSecondary),

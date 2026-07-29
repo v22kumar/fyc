@@ -75,27 +75,27 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
         body: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(_currentIssue.categoryEmoji, style: const TextStyle(fontSize: 40)),
-                      const SizedBox(width: 16),
+                      Text(_currentIssue.categoryEmoji, style: TextStyle(fontSize: 40)),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               _currentIssue.categoryLabel(_lang),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               fmt.format(_currentIssue.createdAt.toLocal()),
                               style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 14),
@@ -106,7 +106,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                       _StatusBadge(issue: _currentIssue, lang: _lang),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   if (_currentIssue.photoUrl != null && _currentIssue.photoUrl!.isNotEmpty) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
@@ -123,59 +123,59 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
                   Text(
                     trId('description_2'),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     _currentIssue.displayDescription(_lang),
-                    style: const TextStyle(fontSize: 16, height: 1.5),
+                    style: TextStyle(fontSize: 16, height: 1.5),
                   ),
-                  const SizedBox(height: 32),
-                  const Divider(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 32),
+                  Divider(),
+                  SizedBox(height: 16),
                   Text(
                     trId('actions'),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   if (_currentIssue.status != 'RESOLVED') ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.check_circle_outline),
+                        icon: Icon(Icons.check_circle_outline),
                         label: Text(trId('mark_as_resolved')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
                           foregroundColor: AppColors.background,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
                           context.read<IssueDetailBloc>().add(IssueMarkResolvedRequested(_currentIssue.id));
                         },
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                   ],
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.email_outlined),
+                      icon: Icon(Icons.email_outlined),
                       label: Text(trId('log_email_sent_to_authorities')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
                         context.read<IssueDetailBloc>().add(IssueLogEmailRequested(_currentIssue.id));
                       },
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                 ],
               ),
             ),
@@ -184,10 +184,10 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                 if (state is IssueDetailLoading) {
                   return Container(
                     color: Colors.black26,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
           ],
@@ -206,7 +206,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: issue.statusColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),

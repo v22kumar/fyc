@@ -202,7 +202,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
       ),
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,13 +211,13 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 trId('category_examples'),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.cText),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ..._categories.map((c) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
                         Icon(c.icon, size: 20, color: c.color),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,15 +295,15 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
           }
         },
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           children: [
             // Stats row
             _StatsRow(stats: _stats),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // 3-step process banner
             const _ProcessBanner(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Emergency button
             _EmergencyBanner(
@@ -311,7 +311,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
               isTa: _isTa,
               onToggle: (v) => setState(() => _isEmergency = v),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Category grid
             _SectionLabel(
@@ -319,13 +319,13 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
               trailing: _isTa ? null : trId('not_sure_see_examples'),
               onTrailingTap: _showCategoryExamples,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _CategoryGrid(
               selected: _selectedCategory,
               isTa: _isTa,
               onSelect: (c) => setState(() => _selectedCategory = c),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Advanced settings toggle
             GestureDetector(
@@ -344,12 +344,12 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
 
             if (_showAdvanced) ...[
               // Description — Tamil
               _SectionLabel(trId('description_tamil')),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextField(
                 controller: _descTaCtrl,
                 maxLines: 3,
@@ -363,11 +363,11 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
 
               // Description — English
               _SectionLabel(trId('description_english')),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextField(
                 controller: _descEnCtrl,
                 maxLines: 3,
@@ -381,7 +381,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
             ],
 
             // Photo Evidence
@@ -389,21 +389,21 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
               trId('photo_evidence'),
               badge: trId('captured_automatically'),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _PhotoSection(
               photo: _photo,
               uploading: _uploading,
               onPick: _pickPhoto,
               isTa: _isTa,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Location
             _SectionLabel(
               trId('auto_location'),
               badge: _locCaptured ? (trId('captured_automatically_2')) : null,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _LocationCard(
               lat: _lat,
               lng: _lng,
@@ -413,11 +413,11 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
               onRecapture: _fetchLocation,
               isTa: _isTa,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // "We'll do the rest" footer
             const _WellDoTheRestCard(),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Submit
             BlocBuilder<IssueBloc, IssueState>(
@@ -434,7 +434,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                       elevation: 0,
                     ),
                     child: loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 22,
                             height: 22,
                             child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 2.5),
@@ -447,12 +447,12 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                                 size: 18,
                                 color: AppColors.background,
                               ),
-                              const SizedBox(width: 10),
+                              SizedBox(width: 10),
                               Text(
                                 _isEmergency
                                     ? (trId('send_emergency_report'))
                                     : (trId('submit_issue')),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.background,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -464,7 +464,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 );
               },
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Center(
               child: Text(
                 trId('your_data_is_safe_with_us_we_never_share'),
@@ -472,7 +472,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
           ],
         ),
       ),
@@ -516,9 +516,9 @@ class _SectionLabel extends StatelessWidget {
       children: [
         Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: context.cText)),
         if (badge != null) ...[
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(20),
@@ -526,7 +526,7 @@ class _SectionLabel extends StatelessWidget {
             child: Text(badge!, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
           ),
         ],
-        const Spacer(),
+        Spacer(),
         if (trailing != null)
           GestureDetector(
             onTap: onTrailingTap,
@@ -564,7 +564,7 @@ class _StatsRow extends StatelessWidget {
         return Expanded(
           child: Container(
             margin: EdgeInsets.only(right: s == items.last ? 0 : 8),
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
               color: context.isDark ? s.$3.withOpacity(0.15) : s.$4,
               borderRadius: BorderRadius.circular(14),
@@ -574,7 +574,7 @@ class _StatsRow extends StatelessWidget {
               children: [
                 Text(s.$1,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: s.$3)),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(s.$2,
                     style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
                     textAlign: TextAlign.center, maxLines: 2),
@@ -595,7 +595,7 @@ class _ProcessBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF0F2D1A) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(16),
@@ -612,7 +612,7 @@ class _ProcessBanner extends StatelessWidget {
               color: context.isDark ? AppColors.primaryLight : AppColors.primary,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: const [
               _Step(icon: Icons.location_on_rounded,    label: 'Auto Location\nCaptured',    color: Color(0xFF16A34A)),
@@ -648,7 +648,7 @@ class _Step extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(label,
               style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
               textAlign: TextAlign.center),
@@ -663,7 +663,7 @@ class _StepArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 18),
+        padding: EdgeInsets.only(bottom: 18),
         child: Icon(Icons.chevron_right_rounded, color: context.cTextSecondary, size: 20),
       );
 }
@@ -681,7 +681,7 @@ class _EmergencyBanner extends StatelessWidget {
       onTap: () => onToggle(!isActive),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFFDC2626).withOpacity(0.12) : const Color(0xFFFEF2F2),
           borderRadius: BorderRadius.circular(14),
@@ -693,21 +693,21 @@ class _EmergencyBanner extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFFDC2626).withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.emergency_rounded, color: Color(0xFFDC2626), size: 20),
+              child: Icon(Icons.emergency_rounded, color: Color(0xFFDC2626), size: 20),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     trId('emergency_issue'),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFDC2626)),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFDC2626)),
                   ),
                   Text(
                     trId('report_urgent_hazards_that_need_immediat'),
@@ -766,7 +766,7 @@ class _CategoryGrid extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(cat.icon, size: 26, color: cat.color),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   isTa ? cat.labelTa : cat.labelEn,
                   style: TextStyle(
@@ -817,7 +817,7 @@ class _PhotoSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         // Photo widget
         GestureDetector(
           onTap: uploading ? null : onPick,
@@ -833,7 +833,7 @@ class _PhotoSection extends StatelessWidget {
               ),
             ),
             child: uploading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : photo != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(13),
@@ -843,7 +843,7 @@ class _PhotoSection extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.camera_alt_rounded, color: context.cTextSecondary, size: 28),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             trId('take_photo'),
                             style: TextStyle(fontSize: 10, color: context.cTextSecondary, fontWeight: FontWeight.w600),
@@ -865,11 +865,11 @@ class _Hint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
           Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Expanded(child: Text(text, style: TextStyle(fontSize: 11, color: context.cTextSecondary))),
         ],
       ),
@@ -897,7 +897,7 @@ class _LocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(14),
@@ -906,20 +906,20 @@ class _LocationCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: (captured ? AppColors.primary : AppColors.textSecondary).withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: locating
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : Icon(
                     captured ? Icons.location_on_rounded : Icons.location_off_rounded,
                     color: captured ? AppColors.primary : AppColors.textSecondary,
                     size: 18,
                   ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,11 +941,11 @@ class _LocationCard extends StatelessWidget {
             onPressed: locating ? null : onRecapture,
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
             child: Text(
               trId('re_capture'),
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -962,7 +962,7 @@ class _WellDoTheRestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF0F2D1A) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(16),
@@ -974,7 +974,7 @@ class _WellDoTheRestCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.handshake_rounded, color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 trId('we_ll_do_the_rest'),
                 style: TextStyle(
@@ -985,7 +985,7 @@ class _WellDoTheRestCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: const [
@@ -1011,11 +1011,11 @@ class _RestStep extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
           child: Icon(icon, color: color, size: 20),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text(label,
             style: TextStyle(fontSize: 9.5, color: context.cTextSecondary, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center),
@@ -1044,16 +1044,16 @@ class _SuccessSheet extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 32),
       decoration: BoxDecoration(
         color: context.cBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Center(child: Container(width: 40, height: 4,
               decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isEmergency ? Color(0xFFDC2626).withOpacity(0.12) : AppColors.primary.withOpacity(0.10),
@@ -1064,7 +1064,7 @@ class _SuccessSheet extends StatelessWidget {
               color: isEmergency ? Color(0xFFDC2626) : AppColors.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             isEmergency
                 ? (trId('emergency_reported'))
@@ -1072,9 +1072,9 @@ class _SuccessSheet extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: context.cSurface,
               borderRadius: BorderRadius.circular(20),
@@ -1082,16 +1082,16 @@ class _SuccessSheet extends StatelessWidget {
             ),
             child: Text(
               'Issue ID: #$issueId',
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 13, fontWeight: FontWeight.w700),
+              style: TextStyle(fontFamily: 'monospace', fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
             trId('our_team_will_review_and_act_within_24_h'),
             style: TextStyle(fontSize: 12.5, color: context.cTextSecondary, height: 1.5),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -1100,20 +1100,20 @@ class _SuccessSheet extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text(trId('track_issue'),
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                      style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   onPressed: onDone,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
                   child: Text(trId('done'),

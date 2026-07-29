@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../design_system/typography.dart';
 import '../design_system/tokens.dart';
 import 'theme_manager.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Semantic aliases over the dynamic [ThemeManager] color scale.
 /// Instead of hardcoded constants, this reads from the live backend-driven theme.
@@ -61,7 +62,7 @@ extension AppColorsX on BuildContext {
 class AppTheme {
   AppTheme._();
 
-  static double radiusCard = DSRadius.card; // single-sourced (v2 0.3)
+  static double get radiusCard => DSRadius.card; // single-sourced (v2 0.3)
   static const double radiusBtn = 16.0;
   static const double paddingPage = 20.0;
 
@@ -200,7 +201,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide(color: AppColors.accent, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           hintStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
           labelStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
@@ -224,7 +225,7 @@ class AppTheme {
           backgroundColor: AppColors.background,
           selectedColor: AppColors.primary,
           labelStyle: _font(lang, fontSize: 14, fontWeight: FontWeight.bold),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
@@ -278,7 +279,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide(color: AppColors.primaryLight, width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           hintStyle: _font(lang, color: AppColors.darkTextSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
         cardTheme: CardThemeData(

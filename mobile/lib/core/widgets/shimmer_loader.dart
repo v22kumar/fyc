@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 class ShimmerSkeleton extends StatefulWidget {
   final double width;
@@ -79,12 +80,12 @@ class ShimmerCardList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       itemCount: itemCount,
       itemBuilder: (context, index) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(20),
@@ -100,11 +101,11 @@ class ShimmerCardList extends StatelessWidget {
                   ShimmerSkeleton(width: 60, height: 16, borderRadius: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               const ShimmerSkeleton(width: double.infinity, height: 16, borderRadius: 8),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               const ShimmerSkeleton(width: 180, height: 16, borderRadius: 8),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: const [
                   ShimmerSkeleton(width: 110, height: 14, borderRadius: 7),

@@ -13,6 +13,7 @@ import '../bloc/ai_game_state.dart';
 import '../widgets/chess_player_card.dart';
 import '../widgets/chess_move_bar.dart';
 import '../widgets/chess_arena_background.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _kGreen = Color(0xFF4A7C59);
@@ -209,11 +210,11 @@ class _AiGamePageState extends State<AiGamePage>
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+      padding: EdgeInsets.fromLTRB(4, 4, 8, 4),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
                 size: 18, color: AppColors.background),
             onPressed: () => Navigator.pop(context),
           ),
@@ -236,7 +237,7 @@ class _AiGamePageState extends State<AiGamePage>
                       ),
                       TextSpan(
                         text: name.replaceFirst('Stockfish ', 'Stockfish ('),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: _kGreenBright,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -323,7 +324,7 @@ class _AiGamePageState extends State<AiGamePage>
             children: [
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 10, 44, 10),
+                  padding: EdgeInsets.fromLTRB(8, 10, 44, 10),
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: AnimatedBuilder(
@@ -390,13 +391,13 @@ class _AiGamePageState extends State<AiGamePage>
 
         // 2D/3D pills + Board dropdown
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 6),
           child: Row(
             children: [
               _ViewToggle(is3D: _is3D, onChanged: (v) {
                 if (v != _is3D) _toggle3D();
               }),
-              const Spacer(),
+              Spacer(),
               _BoardDropdown(
                 current: skin.name,
                 onTap: () => _showBoardSheet(context),
@@ -448,7 +449,7 @@ class _AiGamePageState extends State<AiGamePage>
 
   Widget _buildRightToolbar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.textPrimary.withOpacity(0.35),
         borderRadius: BorderRadius.circular(22),
@@ -493,20 +494,20 @@ class _AiGamePageState extends State<AiGamePage>
   Widget _buildOver(BuildContext context, AiGameOver state) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(state.resultLabel,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.background,
                     fontSize: 22,
                     fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text('${state.moveSans.length} moves played',
-                style: const TextStyle(color: Color(0xFF8B9A8E), fontSize: 14)),
-            const SizedBox(height: 32),
+                style: TextStyle(color: Color(0xFF8B9A8E), fontSize: 14)),
+            SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -518,7 +519,7 @@ class _AiGamePageState extends State<AiGamePage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kGreen,
                   foregroundColor: AppColors.background,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
@@ -542,7 +543,7 @@ class _AiGamePageState extends State<AiGamePage>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +553,7 @@ class _AiGamePageState extends State<AiGamePage>
                     color: AppColors.background,
                     fontSize: 16,
                     fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -590,7 +591,7 @@ class _AiGamePageState extends State<AiGamePage>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(s.name,
                           style: TextStyle(
                               color: selected ? AppColors.background : Colors.white60,
@@ -628,7 +629,7 @@ class _AiGamePageState extends State<AiGamePage>
         title: Text(trId('resign_2'),
             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text('Forfeit this game to ${s.aiName}?',
-            style: const TextStyle(color: Color(0xFF8B9A8E))),
+            style: TextStyle(color: Color(0xFF8B9A8E))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -675,7 +676,7 @@ class _KnightAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text('♞',
+    return Text('♞',
         style: TextStyle(
           fontSize: 24,
           color: AppColors.background,
@@ -720,7 +721,7 @@ class _ToolBtn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
+        margin: EdgeInsets.symmetric(vertical: 5),
         width: 34,
         height: 34,
         decoration: BoxDecoration(
@@ -763,7 +764,7 @@ class _ToolIcon extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 5),
+          margin: EdgeInsets.symmetric(vertical: 5),
           width: 34,
           height: 34,
           alignment: Alignment.center,
@@ -785,7 +786,7 @@ class _ViewToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.textPrimary.withOpacity(0.35),
         borderRadius: BorderRadius.circular(20),
@@ -806,7 +807,7 @@ class _ViewToggle extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: active ? _kGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -838,7 +839,7 @@ class _BoardDropdown extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: AppColors.textPrimary.withOpacity(0.35),
           borderRadius: BorderRadius.circular(20),
@@ -852,8 +853,8 @@ class _BoardDropdown extends StatelessWidget {
                     color: AppColors.background.withOpacity(0.85),
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded,
+            SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down_rounded,
                 color: Colors.white60, size: 18),
           ],
         ),
@@ -882,7 +883,7 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.textPrimary.withOpacity(0.40),
         border: Border(top: BorderSide(color: AppColors.background.withOpacity(0.05))),
@@ -959,9 +960,9 @@ class _ActionBtn extends StatelessWidget {
               ),
               child: Icon(icon, color: AppColors.background, size: 22),
             ),
-            const SizedBox(height: 3),
+            SizedBox(height: 3),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.background,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700)),
@@ -976,12 +977,12 @@ class _ActionBtn extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 22, color: color),
-            const SizedBox(height: 5),
+            SizedBox(height: 5),
             Text(label,
                 style: TextStyle(
                     color: color,
@@ -1017,11 +1018,11 @@ class _AiResultSheet extends StatelessWidget {
         : (playerWon ? _kGreen : AppColors.danger.withOpacity(0.4));
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _kSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1033,19 +1034,19 @@ class _AiResultSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(emoji, style: const TextStyle(fontSize: 52)),
-          const SizedBox(height: 12),
+          SizedBox(height: 24),
+          Text(emoji, style: TextStyle(fontSize: 52)),
+          SizedBox(height: 12),
           Text(
             state.resultLabel,
             style: TextStyle(
                 color: resultColor, fontSize: 18, fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text('${state.moveSans.length} moves',
-              style: const TextStyle(color: Color(0xFF8B9A8E), fontSize: 14)),
-          const SizedBox(height: 28),
+              style: TextStyle(color: Color(0xFF8B9A8E), fontSize: 14)),
+          SizedBox(height: 28),
           Row(
             children: [
               Expanded(
@@ -1053,22 +1054,22 @@ class _AiResultSheet extends StatelessWidget {
                   onPressed: onClose,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF8B9A8E),
-                    side: const BorderSide(color: Color(0xFF3A463E)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Color(0xFF3A463E)),
+                    padding: EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(trId('review')),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   onPressed: onPlayAgain,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),

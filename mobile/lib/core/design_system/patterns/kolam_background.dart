@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Kolam-inspired background texture — a *pulli* (dot) grid with
 /// quarter-circle loops around alternating dots, the simplest classical

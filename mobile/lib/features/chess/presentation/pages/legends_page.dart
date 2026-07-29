@@ -125,9 +125,9 @@ class LegendsPage extends StatelessWidget {
         ),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 32),
         itemCount: _legends.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        separatorBuilder: (_, __) => SizedBox(height: 14),
         itemBuilder: (context, i) => _LegendCard(legend: _legends[i]),
       ),
     );
@@ -171,7 +171,7 @@ class _LegendCardState extends State<_LegendCard> {
             children: [
               // Header row
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Row(
                   children: [
                     Container(
@@ -185,17 +185,17 @@ class _LegendCardState extends State<_LegendCard> {
                       ),
                       child: Center(
                         child: Text(l.emoji,
-                            style: const TextStyle(fontSize: 26)),
+                            style: TextStyle(fontSize: 26)),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             l.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.background,
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
@@ -207,10 +207,10 @@ class _LegendCardState extends State<_LegendCard> {
                                 color: l.accent.withOpacity(0.8),
                                 fontSize: 12),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             l.years,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: Colors.white38, fontSize: 11),
                           ),
                         ],
@@ -228,10 +228,10 @@ class _LegendCardState extends State<_LegendCard> {
 
               // Title badge
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: l.accent.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(8),
@@ -250,24 +250,24 @@ class _LegendCardState extends State<_LegendCard> {
               // Expandable facts
               if (_expanded)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         height: 1,
                         color: l.accent.withOpacity(0.15),
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: EdgeInsets.only(bottom: 12),
                       ),
                       Text(
                         l.factEn,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white70,
                           fontSize: 13,
                           height: 1.5,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Text(
                         l.factTa,
                         style: TextStyle(
@@ -281,7 +281,7 @@ class _LegendCardState extends State<_LegendCard> {
                   ),
                 )
               else
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
             ],
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/thirukkural_datasource.dart';
 import '../../data/models/thirukkural_model.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 // Seed kurals shown instantly while the API loads (offline-first).
 // Picked by day-of-year so the same kural shows all day.
@@ -169,7 +170,7 @@ class _ThirukkuralContent extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0D3D26), Color(0xFF145C36), Color(0xFF1A7A47)],
             begin: Alignment.topLeft,
@@ -210,7 +211,7 @@ class _ThirukkuralContent extends StatelessWidget {
             ),
             // Content
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -218,14 +219,14 @@ class _ThirukkuralContent extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppColors.background.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Text('📜', style: TextStyle(fontSize: 18)),
+                        child: Text('📜', style: TextStyle(fontSize: 18)),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,7 +252,7 @@ class _ThirukkuralContent extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppColors.background.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
@@ -259,7 +260,7 @@ class _ThirukkuralContent extends StatelessWidget {
                         ),
                         child: Text(
                           'குறள் #${kural.number}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.background,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -269,11 +270,11 @@ class _ThirukkuralContent extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
 
                   // Tamil couplet
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppColors.background.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(12),
@@ -284,7 +285,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       children: [
                         Text(
                           kural.line1,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             height: 1.6,
@@ -294,7 +295,7 @@ class _ThirukkuralContent extends StatelessWidget {
                         ),
                         Text(
                           kural.line2,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             height: 1.6,
@@ -306,7 +307,7 @@ class _ThirukkuralContent extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
 
                   // Tamil meaning
                   Text(
@@ -318,9 +319,9 @@ class _ThirukkuralContent extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   Divider(height: 1, color: AppColors.background.withOpacity(0.15)),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   // English couplet
                   Text(
@@ -333,7 +334,7 @@ class _ThirukkuralContent extends StatelessWidget {
                       color: AppColors.background.withOpacity(0.90),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
                     kural.englishMeaning,
                     style: TextStyle(
@@ -343,13 +344,13 @@ class _ThirukkuralContent extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   // Footer
                   Row(
                     children: [
                       Icon(Icons.menu_book_outlined, size: 13, color: AppColors.background.withOpacity(0.55)),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         '${kural.paalTa}  •  ${kural.paalEn}',
                         style: TextStyle(
@@ -359,9 +360,9 @@ class _ThirukkuralContent extends StatelessWidget {
                         ),
                       ),
                       if (!isLive) ...[
-                        const Spacer(),
+                        Spacer(),
                         Icon(Icons.cloud_off_rounded, size: 12, color: AppColors.background.withOpacity(0.35)),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           trId('offline'),
                           style: TextStyle(fontSize: 10, color: AppColors.background.withOpacity(0.35)),

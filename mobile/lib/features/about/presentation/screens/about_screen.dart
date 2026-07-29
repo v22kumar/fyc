@@ -78,23 +78,23 @@ class AboutScreen extends StatelessWidget {
         children: [
           _Hero(lang: lang),
           Padding(
-            padding: const EdgeInsets.all(AppTheme.paddingPage),
+            padding: EdgeInsets.all(AppTheme.paddingPage),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SectionTitle(trId('our_mission')),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Text(
                   trId('based_in_nagercoil_friends_youth_club_ha'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.55,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
                 _SectionTitle(trId('our_values')),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -106,9 +106,9 @@ class AboutScreen extends StatelessWidget {
                       .map((v) => _ValueCard(value: v, lang: lang))
                       .toList(),
                 ),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
                 _SectionTitle(trId('our_journey')),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 ..._milestones.asMap().entries.map(
                       (e) => _TimelineTile(
                         milestone: e.value,
@@ -116,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                         isLast: e.key == _milestones.length - 1,
                       ),
                     ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
               ],
             ),
           ),
@@ -134,8 +134,8 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
@@ -144,20 +144,20 @@ class _Hero extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text('🎗️', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 12),
+          Text('🎗️', style: TextStyle(fontSize: 56)),
+          SizedBox(height: 12),
           Text(
             trId('about_fyc_2'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.background,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             trId('friends_youth_club_nagercoil'),
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
@@ -173,7 +173,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: AppColors.primary,
@@ -190,7 +190,7 @@ class _ValueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -199,12 +199,12 @@ class _ValueCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value.emoji, style: const TextStyle(fontSize: 30)),
-          const SizedBox(height: 8),
+          Text(value.emoji, style: TextStyle(fontSize: 30)),
+          SizedBox(height: 8),
           Text(
             tr(en: value.en, ta: value.ta, hi: value.hi, ml: value.ml),
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -237,7 +237,7 @@ class _TimelineTile extends StatelessWidget {
             children: [
               Container(
                 width: 52,
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(20),
@@ -245,7 +245,7 @@ class _TimelineTile extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   milestone.year,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.background,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -261,17 +261,17 @@ class _TimelineTile extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 20, top: 2),
+              padding: EdgeInsets.only(bottom: 20, top: 2),
               child: Text(
                 tr(
                     en: milestone.en,
                     ta: milestone.ta,
                     hi: milestone.hi,
                     ml: milestone.ml),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
                   color: AppColors.textPrimary,

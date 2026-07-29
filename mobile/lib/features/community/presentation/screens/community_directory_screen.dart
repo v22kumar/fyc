@@ -52,7 +52,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                     .add(const CommunityFetchRequested());
               },
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 children: state.profiles
                     .asMap()
                     .entries
@@ -70,9 +70,9 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<CommunityBloc>()
@@ -83,7 +83,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -113,9 +113,9 @@ class _ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final desc = profile.displayDescription(lang);
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -125,21 +125,21 @@ class _ProfileCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     profile.displayName(lang),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 if (profile.isVerified)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(left: 6),
                     child: Icon(Icons.verified,
                         size: 18, color: AppColors.primaryLight),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -162,7 +162,7 @@ class _ProfileCard extends StatelessWidget {
               ],
             ),
             if (desc != null && desc.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 desc,
                 style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13),
@@ -172,12 +172,12 @@ class _ProfileCard extends StatelessWidget {
             ],
             if (profile.serviceArea != null &&
                 profile.serviceArea!.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.place_outlined,
+                  Icon(Icons.place_outlined,
                       size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       profile.serviceArea!,
@@ -188,12 +188,12 @@ class _ProfileCard extends StatelessWidget {
               ),
             ],
             if (profile.hasPhone) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => _call(context),
-                  icon: const Icon(Icons.call, size: 16),
+                  icon: Icon(Icons.call, size: 16),
                   label: Text(trId('call')),
                 ),
               ),
@@ -213,7 +213,7 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
@@ -239,18 +239,18 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('👥', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
+            Text('👥', style: TextStyle(fontSize: 64)),
+            SizedBox(height: 16),
             Text(
               trId('no_local_services_listed_yet'),
               style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               trId('this_is_a_directory_of_tradespeople_and'),
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withOpacity(0.6)),

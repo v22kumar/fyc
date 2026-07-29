@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// The six badge kinds the spec calls out. Fixed color + icon per kind so a
 /// "LIVE" badge is visually identical everywhere in the app.
@@ -56,7 +57,7 @@ class _DSBadgeState extends State<DSBadge> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final style = _badgeStyles[widget.kind]!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: style.color, borderRadius: BorderRadius.circular(DSRadius.chip)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -70,10 +71,10 @@ class _DSBadgeState extends State<DSBadge> with SingleTickerProviderStateMixin {
                 decoration: BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
           ] else if (style.icon != null) ...[
             Icon(style.icon, size: 12, color: AppColors.background),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
           ],
           Text(
             widget.labelOverride ?? style.label,

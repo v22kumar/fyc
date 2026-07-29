@@ -158,7 +158,7 @@ class _WeatherContent extends StatelessWidget {
         : data.description[0].toUpperCase() + data.description.substring(1);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -171,12 +171,12 @@ class _WeatherContent extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                     color: AppColors.primarySurface, shape: BoxShape.circle),
-                child: const Text('🌤', style: TextStyle(fontSize: 18)),
+                child: Text('🌤', style: TextStyle(fontSize: 18)),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,23 +200,23 @@ class _WeatherContent extends StatelessWidget {
                 Image.network(_iconUrl,
                     width: 44,
                     height: 44,
-                    errorBuilder: (_, __, ___) => const SizedBox(width: 44)),
+                    errorBuilder: (_, __, ___) => SizedBox(width: 44)),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(tempStr,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                       height: 1)),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: EdgeInsets.only(bottom: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -237,7 +237,7 @@ class _WeatherContent extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               _StatChip(
@@ -245,7 +245,7 @@ class _WeatherContent extends StatelessWidget {
                 label: data.humidity != null ? '${data.humidity}%' : '--',
                 hint: 'Humidity',
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               _StatChip(
                 icon: Icons.air,
                 label: data.windSpeed != null
@@ -274,13 +274,13 @@ class _StatChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: context.cTextSecondary),
-        const SizedBox(width: 4),
+        SizedBox(width: 4),
         Text(label,
             style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: context.cText)),
-        const SizedBox(width: 3),
+        SizedBox(width: 3),
         Text(hint,
             style: TextStyle(
                 fontSize: 11, color: context.cTextSecondary)),
@@ -297,7 +297,7 @@ class _WeatherError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -307,12 +307,12 @@ class _WeatherError extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
                 color: AppColors.primarySurface, shape: BoxShape.circle),
-            child: const Text('🌤', style: TextStyle(fontSize: 18)),
+            child: Text('🌤', style: TextStyle(fontSize: 18)),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(trId('weather_unavailable'),
               style: TextStyle(fontSize: 14, color: context.cTextSecondary)),
         ],
@@ -327,7 +327,7 @@ class _WeatherSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -343,8 +343,8 @@ class _WeatherSkeleton extends StatelessWidget {
                   width: 34,
                   height: 34,
                   borderRadius: BorderRadius.circular(17)),
-              const SizedBox(width: 12),
-              const Expanded(
+              SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -357,10 +357,10 @@ class _WeatherSkeleton extends StatelessWidget {
               const ShimmerBox(height: 44, width: 44),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           const ShimmerBox(height: 36, width: 100),
-          const SizedBox(height: 14),
-          const Row(children: [
+          SizedBox(height: 14),
+          Row(children: [
             ShimmerBox(height: 12, width: 80),
             SizedBox(width: 16),
             ShimmerBox(height: 12, width: 80),

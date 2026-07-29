@@ -62,7 +62,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
       floatingActionButton: _canPost
           ? FloatingActionButton.extended(
               onPressed: _openCreate,
-              icon: const Icon(Icons.add),
+              icon: Icon(Icons.add),
               label: Text(trId('post_a_job_2')),
             )
           : null,
@@ -74,7 +74,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 content: Row(
                   children: [
                     Icon(Icons.check_circle, color: AppColors.background),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         trId('success_your_application_has_been_submit'),
@@ -94,7 +94,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
         },
         builder: (context, state) {
           if (state is OpportunityLoading || state is OpportunityInitial) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (state is OpportunityFailure) {
             return Center(
@@ -102,7 +102,7 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(state.message),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => context.read<OpportunityBloc>().add(const OpportunityFetchRequested()),
                     child: Text(trId('retry_5')),
@@ -122,27 +122,27 @@ class _OpportunitiesViewState extends State<_OpportunitiesView> {
             child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
                     _FilterChip('ALL', trId('all'), _selectedTab, (v) => setState(() => _selectedTab = v)),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _FilterChip('JOB', trId('jobs'), _selectedTab, (v) => setState(() => _selectedTab = v)),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _FilterChip('VOLUNTEER', trId('volunteer_7'), _selectedTab, (v) => setState(() => _selectedTab = v)),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   children: [
                     // Skills Directory is the marketplace's supply side — a
                     // first-class peer, not a buried link. "Hiring? Browse the
                     // people offering skills."
                     _SkillsPeerLink(onTap: () => context.push('/community')),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     if (filtered.isNotEmpty)
                       ...filtered.map((opp) => _OpportunityCard(opp: opp, isTa: isTa))
                     else
@@ -167,26 +167,26 @@ class _PremiumEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 32),
+      padding: EdgeInsets.only(top: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.work_outline_rounded, size: 48, color: AppColors.primary),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
             trId('no_jobs_yet'),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.cText),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
+            padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               trId('be_the_first_to_post_a_job_or_volunteer'),
               textAlign: TextAlign.center,
@@ -194,11 +194,11 @@ class _PremiumEmptyState extends StatelessWidget {
             ),
           ),
           if (onPost != null) ...[
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             GestureDetector(
               onTap: onPost,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(24),
@@ -228,7 +228,7 @@ class _SkillsPeerLink extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.primary.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
@@ -245,7 +245,7 @@ class _SkillsPeerLink extends StatelessWidget {
               ),
               child: Icon(Icons.handyman_rounded, color: AppColors.primary),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,7 +254,7 @@ class _SkillsPeerLink extends StatelessWidget {
                     trId('skills_directory'),
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.cText),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     trId('hiring_browse_carpenters_electricians_tu'),
                     style: TextStyle(fontSize: 12.5, color: context.cTextSecondary),
@@ -281,7 +281,7 @@ class _OpportunityCard extends StatelessWidget {
     final typeColor = isVolunteer ? AppColors.primaryLight : AppColors.primary;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -289,7 +289,7 @@ class _OpportunityCard extends StatelessWidget {
         boxShadow: context.isDark ? null : AppTheme.cardShadow,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -297,7 +297,7 @@ class _OpportunityCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: typeColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(12),
@@ -326,21 +326,21 @@ class _OpportunityCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               opp.displayTitle(isTa ? 'ta' : 'en'),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.cText),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               '${opp.displayOrganizer(isTa ? 'ta' : 'en')} • ${opp.displayCategory(isTa ? 'ta' : 'en')}',
               style: TextStyle(fontSize: 12, color: context.cTextSecondary, fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Icon(Icons.location_on_outlined, size: 14, color: context.cTextSecondary),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     opp.displayLocation(isTa ? 'ta' : 'en'),
@@ -349,12 +349,12 @@ class _OpportunityCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               opp.displayDescription(isTa ? 'ta' : 'en'),
               style: TextStyle(fontSize: 13, color: context.cTextSecondary, height: 1.4),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -367,7 +367,7 @@ class _OpportunityCard extends StatelessWidget {
                   isVolunteer
                       ? trId('apply_to_volunteer')
                       : trId('apply_now'),
-                  style: const TextStyle(fontSize: 14),
+                  style: TextStyle(fontSize: 14),
                 ),
               ),
             ),
@@ -392,7 +392,7 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onTap(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : context.cSurface,
           borderRadius: BorderRadius.circular(24),

@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../constants/api_constants.dart';
 import '../l10n/tr.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Bottom sheet showing a short, typeable share link and a scannable QR for an
 /// event or tournament, so an admin can display, copy, or forward it — or point
@@ -22,7 +23,7 @@ Future<void> showShareLinkSheet(
     showDragHandle: true,
     builder: (ctx) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
+        padding: EdgeInsets.fromLTRB(24, 4, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -31,9 +32,9 @@ Future<void> showShareLinkSheet(
               style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
@@ -54,24 +55,24 @@ Future<void> showShareLinkSheet(
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             SelectableText(
               url,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               trId('scan_to_open'),
               textAlign: TextAlign.center,
               style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.withOpacity(0.6)),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.copy, size: 18),
+                    icon: Icon(Icons.copy, size: 18),
                     label: Text(trId('copy_link')),
                     onPressed: () async {
                       final messenger = ScaffoldMessenger.of(ctx);
@@ -82,10 +83,10 @@ Future<void> showShareLinkSheet(
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    icon: const Icon(Icons.share, size: 18),
+                    icon: Icon(Icons.share, size: 18),
                     label: Text(trId('share_link')),
                     onPressed: () => Share.share(url),
                   ),

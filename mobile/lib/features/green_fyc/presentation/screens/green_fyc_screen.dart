@@ -38,7 +38,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/green/register'),
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.park_rounded),
+        icon: Icon(Icons.park_rounded),
         label: Text(trId('register_a_tree')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
@@ -54,7 +54,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
         },
         builder: (context, state) {
           if (state is GreenLoading || state is GreenInitial) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (state is GreenLoaded) {
             return RefreshIndicator(
@@ -62,7 +62,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                 context.read<GreenBloc>().add(const GreenFetchRequested());
               },
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(18),
@@ -96,7 +96,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                             bottom: 14,
                             child: Text(
                               trId('every_tree_is_a_promise_to_tomorrow'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.background,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -110,9 +110,9 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _StatsHeader(stats: state.stats, lang: lang),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _SectionHeader(
                     label: trId('plantation_drives'),
                   ),
@@ -132,9 +132,9 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<GreenBloc>()
@@ -146,7 +146,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -211,7 +211,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -224,10 +224,10 @@ class _StatCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 22, color: AppColors.primary),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 '$value',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
@@ -235,7 +235,7 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
@@ -256,7 +256,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      padding: EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
         style: TextStyle(
@@ -281,13 +281,13 @@ class _DriveCard extends StatelessWidget {
     final location = drive.displayLocation(lang);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (drive.bannerUrl != null && drive.bannerUrl!.isNotEmpty)
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(
+              borderRadius: BorderRadius.vertical(
                 top: Radius.circular(AppTheme.radiusCard),
               ),
               child: Image.network(
@@ -298,30 +298,30 @@ class _DriveCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 140,
                   color: AppColors.primarySurface,
-                  child: const Center(
+                  child: Center(
                     child: Icon(Icons.park_rounded, size: 40, color: AppColors.primary),
                   ),
                 ),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   drive.displayTitle(lang),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(Icons.calendar_today,
                         size: 14, color: context.cTextSecondary),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       fmt.format(drive.driveDate.toLocal()),
                       style:
@@ -330,12 +330,12 @@ class _DriveCard extends StatelessWidget {
                   ],
                 ),
                 if (location != null && location.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(Icons.location_on_outlined,
                           size: 14, color: context.cTextSecondary),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           location,
@@ -346,7 +346,7 @@ class _DriveCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
@@ -358,7 +358,7 @@ class _DriveCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   tr(
                     en: '${drive.treeCount} / ${drive.targetCount} trees',
@@ -387,13 +387,13 @@ class _EmptyDrives extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: EdgeInsets.symmetric(vertical: 32),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.park_rounded, size: 64, color: AppColors.primary.withOpacity(0.6)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               trId('no_plantation_drives_yet'),
               style: TextStyle(fontSize: 16, color: context.cTextSecondary),

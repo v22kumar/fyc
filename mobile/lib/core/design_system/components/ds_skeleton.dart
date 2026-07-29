@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// A single shimmering block. Compose these into skeleton layouts that match
 /// the real content's shape — never a full-screen spinner (spec §20).
@@ -82,9 +83,9 @@ class DSSkeletonList extends StatelessWidget {
                   Expanded(child: DSSkeletonBlock(width: double.infinity, height: 14)),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               const DSSkeletonBlock(width: double.infinity, height: 14),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               const DSSkeletonBlock(width: 160, height: 14),
             ],
           ),

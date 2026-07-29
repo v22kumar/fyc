@@ -24,14 +24,14 @@ class CricketOversHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (ms.oversHistory.isEmpty) return const SizedBox.shrink();
+    if (ms.oversHistory.isEmpty) return SizedBox.shrink();
     
     return Card(
-      margin: const EdgeInsets.only(top: 16),
+      margin: EdgeInsets.only(top: 16),
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFFE3E7F0))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -41,14 +41,14 @@ class CricketOversHistory extends StatelessWidget {
                   trId('overs_log'),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.primary),
                 ),
-                const Spacer(),
+                Spacer(),
                 Text(
                   '${ms.oversHistory.length} ${ms.oversHistory.length == 1 ? 'over' : 'overs'}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8A93A6)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8A93A6)),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             // Rack of over cards, newest on top — each card is one over's stack
             // of deliveries, always visible (no tap-to-expand).
             ...[
@@ -78,8 +78,8 @@ class _OverCard extends StatelessWidget {
     final bowler = over.balls.isNotEmpty ? over.balls.last.bowlerName : '';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
@@ -114,7 +114,7 @@ class _OverCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,12 +125,12 @@ class _OverCard extends StatelessWidget {
                     children: over.balls.map((b) => _BallCircle(ball: b, onTap: () => onBallTap(b))).toList(),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     Text(
                       '$runsInOver ${runsInOver == 1 ? 'run' : 'runs'}${wicketsInOver > 0 ? ' · $wicketsInOver W' : ''}',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
                     ),
                     if (bowler.isNotEmpty)
                       Expanded(
@@ -138,7 +138,7 @@ class _OverCard extends StatelessWidget {
                           bowler,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.end,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
                         ),
                       ),
                   ],
@@ -190,7 +190,7 @@ class _BallCircle extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 7),
+        margin: EdgeInsets.only(right: 7),
         width: 38,
         height: 38,
         alignment: Alignment.center,
@@ -255,7 +255,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(trId('edit_delivery')),
-        content: const Text(
+        content: Text(
           'Editing this delivery will automatically recalculate the entire innings. '
           'All subsequent strike rotations, runs, and bowler figures will be adjusted. Are you sure?',
         ),
@@ -290,7 +290,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : Color(0xFFEFF2FA),
           borderRadius: BorderRadius.circular(999),
@@ -316,7 +316,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         left: 24,
@@ -337,19 +337,19 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               '${b.bowlerName} to ${b.strikerName}',
               style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
             ),
-            const Divider(height: 32),
+            Divider(height: 32),
             Text(trId('batter_runs'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -357,9 +357,9 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                   .map((r) => _chip('$r', _runs == r, () => setState(() => _runs = r)))
                   .toList(),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(trId('extras'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5B6478))),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -377,13 +377,13 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               ],
             ),
             if (_extrasType != null && _extrasType != 'NONE') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Text(
                     _extrasType == 'WIDE' || _extrasType == 'NO_BALL' ? 'Runs run off it: ' : 'Extra Runs: ',
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   DropdownButton<int>(
                     value: _extrasRuns,
                     items: [0, 1, 2, 3, 4, 5, 6].map((e) => DropdownMenuItem(value: e, child: Text('$e'))).toList(),
@@ -392,14 +392,14 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                 ],
               ),
             ],
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SwitchListTile(
               title: Text(trId('wicket_2')),
               contentPadding: EdgeInsets.zero,
               value: _isWicket,
               onChanged: (v) => setState(() => _isWicket = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: _notesCtrl,
               decoration: InputDecoration(
@@ -409,7 +409,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
               ),
               maxLines: 2,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Row(
               children: [
                 if (widget.ball.hasEditHistory) ...[
@@ -422,7 +422,7 @@ class _EditBallSheetState extends State<_EditBallSheet> {
                       child: Text(trId('undo_last_edit')),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                 ],
                 Expanded(
                   flex: 2,

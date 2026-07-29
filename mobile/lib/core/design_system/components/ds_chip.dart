@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// The five chip contexts the spec calls out. Each has a sensible default
 /// color; pass [color] to override for a specific value (e.g. a particular
@@ -71,14 +72,14 @@ class DSChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(DSRadius.chip),
         child: AnimatedContainer(
           duration: DSMotion.standard,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(DSRadius.chip)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 14, color: fg),
-                const SizedBox(width: 5),
+                SizedBox(width: 5),
               ],
               Text(
                 label,

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/photo_entity.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/theme/app_theme.dart';
 
 class PhotoViewerScreen extends StatelessWidget {
   final PhotoEntity photo;
@@ -24,7 +25,7 @@ class PhotoViewerScreen extends StatelessWidget {
         backgroundColor: AppColors.textPrimary,
         foregroundColor: AppColors.background,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close),
           onPressed: () => context.go('/gallery'),
         ),
       ),
@@ -39,11 +40,11 @@ class PhotoViewerScreen extends StatelessWidget {
                 fit: BoxFit.contain,
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(color: AppColors.background),
                   );
                 },
-                errorBuilder: (context, error, stack) => const Center(
+                errorBuilder: (context, error, stack) => Center(
                   child: Icon(
                     Icons.broken_image_outlined,
                     color: Colors.white54,
@@ -58,8 +59,8 @@ class PhotoViewerScreen extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.fromLTRB(20, 24, 20, 32),
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -73,22 +74,22 @@ class PhotoViewerScreen extends StatelessWidget {
                   if (caption.isNotEmpty) ...[
                     Text(
                       caption,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.background,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                   ],
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today,
+                      Icon(Icons.calendar_today,
                           size: 13, color: Colors.white70),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         dateLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),

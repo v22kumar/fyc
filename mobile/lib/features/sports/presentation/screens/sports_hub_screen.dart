@@ -100,7 +100,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
           if (isAdmin)
             IconButton(
               tooltip: trId('score_approvals'),
-              icon: const Icon(Icons.fact_check_outlined),
+              icon: Icon(Icons.fact_check_outlined),
               onPressed: () => context.push('/sports/approvals'),
             ),
         ],
@@ -158,7 +158,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                   bottom: 12,
                   child: Text(
                     trId('play_compete_win'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.background,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -197,7 +197,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                         context.read<SportsBloc>().add(const SportsFetchRequested(filter: 'weekly_games'));
                       },
                       child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         itemCount: state.weeklyGames.length,
                         itemBuilder: (context, i) {
                           final g = state.weeklyGames[i];
@@ -232,7 +232,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                           );
                     },
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       itemCount: state.tournaments.length,
                       itemBuilder: (context, i) {
                         final t = state.tournaments[i];
@@ -255,9 +255,9 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                       children: [
                         Icon(Icons.error_outline,
                             size: 48, color: context.cTextSecondary),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(state.message),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => _selectSport(_selectedSport),
                           child: Text(trId('retry')),
@@ -266,7 +266,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
                     ),
                   );
                 }
-                return const SizedBox.shrink();
+                return SizedBox.shrink();
               },
             ),
           ),
@@ -293,15 +293,15 @@ class _SportTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: context.cSurface,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(vertical: 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: filters.map((f) {
             final isSelected = f.value == selected;
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 selected: isSelected,
                 onSelected: (_) => onSelect(f.value),
@@ -338,7 +338,7 @@ class _TournamentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOpen = tournament.isRegistrationOpen;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         side: isOpen
@@ -349,7 +349,7 @@ class _TournamentCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -369,23 +369,23 @@ class _TournamentCard extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           tournament.displayName(lang),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Row(
                           children: [
                             Icon(Icons.emoji_events_rounded, size: 14, color: AppColors.accent),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               '${tournament.sport} · ${tournament.year}',
                               style: TextStyle(
@@ -399,9 +399,9 @@ class _TournamentCard extends StatelessWidget {
                 ],
               ),
               if (isOpen) ...[
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -410,17 +410,17 @@ class _TournamentCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.how_to_reg, size: 16, color: AppColors.primary),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         trId('registration_open_2'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       if (tournament.registrationCloseDate != null) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '• closes ${DateFormat('MMM d').format(tournament.registrationCloseDate!.toLocal())}',
                           style: TextStyle(
@@ -433,14 +433,14 @@ class _TournamentCard extends StatelessWidget {
                   ),
                 ),
               ] else if (tournament.isOngoing) ...[
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 Row(
                   children: [
                     Icon(Icons.play_circle_fill, size: 16, color: AppColors.success),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       trId('tournament_is_live'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.success,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

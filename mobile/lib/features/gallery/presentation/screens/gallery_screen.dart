@@ -35,7 +35,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       body: BlocBuilder<GalleryBloc, GalleryState>(
         builder: (context, state) {
           if (state is GalleryLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (state is GalleryLoaded) {
             if (state.photos.isEmpty) {
@@ -49,7 +49,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 builder: (context, constraints) {
                   final crossAxisCount = constraints.maxWidth >= 600 ? 3 : 2;
                   return GridView.builder(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12),
                     physics: const AlwaysScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
@@ -75,9 +75,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(state.message),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<GalleryBloc>()
@@ -89,7 +89,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
             );
           }
-          return const SizedBox.shrink();
+          return SizedBox.shrink();
         },
       ),
     );
@@ -115,7 +115,7 @@ class _PhotoThumbnail extends StatelessWidget {
             if (progress == null) return child;
             return Container(
               color: AppColors.border,
-              child: const Center(
+              child: Center(
                 child: SizedBox(
                   width: 24,
                   height: 24,
@@ -126,7 +126,7 @@ class _PhotoThumbnail extends StatelessWidget {
           },
           errorBuilder: (context, error, stack) => Container(
             color: AppColors.border,
-            child: const Icon(
+            child: Icon(
               Icons.broken_image_outlined,
               color: AppColors.textSecondary,
               size: 32,
@@ -148,8 +148,8 @@ class _EmptyGallery extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('📷', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
+          Text('📷', style: TextStyle(fontSize: 64)),
+          SizedBox(height: 16),
           Text(
             trId('no_photos_yet'),
             style: TextStyle(fontSize: 16, color: AppColors.textSecondary),

@@ -15,7 +15,7 @@ class SectionHeader extends StatelessWidget {
     super.key,
     required this.label,
     this.trailing,
-    this.padding = const EdgeInsets.only(bottom: 10, top: 4),
+    this.padding = EdgeInsets.only(bottom: 10, top: 4),
   });
 
   @override
@@ -27,7 +27,7 @@ class SectionHeader extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: AppColors.textSecondary,
