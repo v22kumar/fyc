@@ -21,6 +21,8 @@ class RegisterScreen extends StatefulWidget {
   // empty (Google), the form shows an editable phone field to collect it.
   final String? prefillEmail;
   final String? prefillName;
+  final String phoneNumber;
+  final String registrationToken;
 
   const RegisterScreen({
     super.key,

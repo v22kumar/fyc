@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme_manager.dart';
 
 /// FYC Connect Design System v2 — tokens.
 ///
@@ -73,10 +74,7 @@ extension DSColorsX on BuildContext {
   Color get dsTextSecondary => dsIsDark ? DSColors.textSecondaryDark : DSColors.textSecondaryLight;
   Color get dsPrimary => dsIsDark ? DSColors.navy500 : DSColors.navy700;
   Color get dsAccent => DSColors.mint600;
-  Color get dsHighlight => DSColors.amber500;
-}
 
-import '../theme/theme_manager.dart';
 
 /// Spacing scale mapped from ThemeManager.
 class DSSpacing {

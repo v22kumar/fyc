@@ -335,7 +335,7 @@ class WeeklyGameCard extends StatelessWidget {
                         icon: Icon(Icons.analytics, color: AppColors.background),
                         label: Text(trId('view_live_score'), style: TextStyle(fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.danger.shade600,
+                          backgroundColor: AppColors.danger.withOpacity(0.6),
                           foregroundColor: AppColors.background,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -365,11 +365,11 @@ class _StatusBadge extends StatelessWidget {
     
     if (status == 'LIVE') {
       bg = AppColors.danger.withOpacity(0.15);
-      fg = AppColors.danger.shade700;
+      fg = AppColors.danger.withOpacity(0.7);
       label = 'LIVE';
     } else if (status == 'COMPLETED') {
       bg = AppColors.success.withOpacity(0.15);
-      fg = AppColors.success.shade700;
+      fg = AppColors.success.withOpacity(0.7);
       label = 'COMPLETED';
     } else {
       bg = AppColors.primary.withOpacity(0.15);

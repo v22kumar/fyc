@@ -210,10 +210,10 @@ class _BloodGroupGrid extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.accent : AppColors.textSecondary[100],
+              color: isSelected ? AppColors.accent : AppColors.textSecondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : AppColors.textSecondary[300]!,
+                color: isSelected ? AppColors.accent : AppColors.textSecondary.withOpacity(0.3),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -223,7 +223,7 @@ class _BloodGroupGrid extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.background : AppColors.textSecondary[700],
+                  color: isSelected ? AppColors.background : AppColors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ),
@@ -251,7 +251,7 @@ class _AvailabilityToggle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.textSecondary[300]!),
+        border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -298,7 +298,7 @@ class _DatePickerField extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.textSecondary[300]!),
+          border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
         ),
         child: Row(
           children: [

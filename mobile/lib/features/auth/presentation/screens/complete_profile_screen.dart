@@ -141,7 +141,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           children: [
             const SizedBox(height: 4),
             Text(trId('complete_profile_hint'),
-                style: TextStyle(color: AppColors.textSecondary.shade600, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13)),
             const SizedBox(height: 20),
             if (_error != null)
               Container(
@@ -219,8 +219,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         filled: true,
         fillColor: AppColors.background,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
       );
 
   Widget _field(TextEditingController c,
@@ -243,7 +243,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? Color(0xFF0F5132) : AppColors.background,
-            border: Border.all(color: selected ? Color(0xFF0F5132) : AppColors.textSecondary.shade300),
+            border: Border.all(color: selected ? Color(0xFF0F5132) : AppColors.textSecondary.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(label,

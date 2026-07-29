@@ -112,7 +112,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.textSecondary[100],
+                color: AppColors.textSecondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -120,7 +120,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'monospace',
-                  color: AppColors.textSecondary[700],
+                  color: AppColors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ),

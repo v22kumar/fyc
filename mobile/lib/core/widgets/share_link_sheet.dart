@@ -64,7 +64,7 @@ Future<void> showShareLinkSheet(
             Text(
               trId('scan_to_open'),
               textAlign: TextAlign.center,
-              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.shade600),
+              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.withOpacity(0.6)),
             ),
             const SizedBox(height: 18),
             Row(

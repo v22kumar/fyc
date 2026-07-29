@@ -496,11 +496,11 @@ class _ChessClock extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
-            ? (isLow ? AppColors.danger.shade800 : _kGreen)
+            ? (isLow ? AppColors.danger.withOpacity(0.8) : _kGreen)
             : const Color(0xFF1E1B18),
         borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: AppColors.danger.shade400, width: 1.5)
+            ? Border.all(color: AppColors.danger.withOpacity(0.4), width: 1.5)
             : null,
       ),
       child: Text(
@@ -548,7 +548,7 @@ class _OnlineActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: 'Resign',
             onTap: onResign,
-            color: AppColors.danger[400],
+            color: AppColors.danger.withOpacity(0.4),
           ),
         ],
       ),

@@ -301,7 +301,7 @@ class _LocalActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: 'Resign',
             onTap: onResign,
-            color: AppColors.danger[400],
+            color: AppColors.danger.withOpacity(0.4),
           ),
         ],
       ),

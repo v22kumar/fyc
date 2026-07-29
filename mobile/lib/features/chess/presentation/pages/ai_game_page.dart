@@ -1014,7 +1014,7 @@ class _AiResultSheet extends StatelessWidget {
     final emoji = isDraw ? '🤝' : (playerWon ? '🏆' : '🤖');
     final resultColor = isDraw
         ? const Color(0xFF8B9A8E)
-        : (playerWon ? _kGreen : AppColors.danger[400]!);
+        : (playerWon ? _kGreen : AppColors.danger.withOpacity(0.4));
 
     return Container(
       decoration: const BoxDecoration(

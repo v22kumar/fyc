@@ -162,7 +162,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
           Text(
             trId('your_contributions_are_making_a_real_dif'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary[600]),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary.withOpacity(0.6)),
           ),
         ],
       ),
@@ -226,7 +226,7 @@ class _ImpactCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary[600],
+              color: AppColors.textSecondary.withOpacity(0.6),
             ),
           ),
         ],

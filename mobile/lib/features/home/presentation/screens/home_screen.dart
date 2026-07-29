@@ -152,7 +152,7 @@ class _HomeBackdrop extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: dark
-                ? const [Color(0xFF10162E), AppColors.darkBackground]
+                ? [Color(0xFF10162E), AppColors.darkBackground]
                 : const [Color(0xFFF1F5FF), Color(0xFFFBFCFF)],
           ),
         ),

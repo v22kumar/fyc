@@ -216,7 +216,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                 minHeight: 10,
                 backgroundColor: context.cBorder,
                 valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
             const SizedBox(height: 8),

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
-import '../storage/secure_storage_helper.dart';
+import '../../service_locator.dart';
+import '../storage/local_storage.dart';
 
 Color _parseColor(String? hexString, String defaultHex) {
   final hex = hexString ?? defaultHex;
@@ -277,10 +278,10 @@ class ThemeManager {
 
   Future<void> _fetchTheme(SharedPreferences prefs) async {
     try {
-      final token = await SecureStorageHelper.getToken();
+      final token = await sl<LocalStorage>().getToken();
       final headers = {
         'Content-Type': 'application/json',
-        'X-Organization-ID': ApiConstants.organizationId,
+        'X-Organization-ID': ApiConstants.defaultOrgId,
       };
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';

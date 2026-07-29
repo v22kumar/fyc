@@ -71,7 +71,7 @@ Widget _gradientCTA({required String label, required VoidCallback? onPressed, Ic
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: enabled
-                  ? const [AppColors.primary, AppColors.primaryLight]
+                  ? [AppColors.primary, AppColors.primaryLight]
                   : const [Color(0xFFAEB4C4), Color(0xFFAEB4C4)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -698,7 +698,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
-                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)),
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: EdgeInsets.symmetric(vertical: 15)),
                 child: _saving
                     ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                     : Text(trId('save_result'),
@@ -1628,7 +1628,7 @@ class _ScoringPad extends StatelessWidget {
                 : runs == 6
                     ? const [Color(0xFFF59E0B), Color(0xFFB45309)]
                     : isBoundary
-                        ? const [AppColors.primary, AppColors.primaryLight]
+                        ? [AppColors.primary, AppColors.primaryLight]
                         : const [Color(0xFF14B891), Color(0xFF0F9B7E)];
             return Expanded(
               child: Padding(

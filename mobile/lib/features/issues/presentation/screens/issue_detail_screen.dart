@@ -98,7 +98,7 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                             const SizedBox(height: 4),
                             Text(
                               fmt.format(_currentIssue.createdAt.toLocal()),
-                              style: TextStyle(color: AppColors.textSecondary[600], fontSize: 14),
+                              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 14),
                             ),
                           ],
                         ),

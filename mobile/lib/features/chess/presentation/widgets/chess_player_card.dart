@@ -227,7 +227,7 @@ class _ClockChip extends StatelessWidget {
         ? (isLow ? const Color(0xFF8E1B1B) : const Color(0xFF2A3A2C))
         : const Color(0xFF1A1D1E);
     final fg = isActive
-        ? (isLow ? AppColors.danger.shade200 : AppColors.background)
+        ? (isLow ? AppColors.danger.withOpacity(0.2) : AppColors.background)
         : const Color(0xFF7C8A80);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -237,7 +237,7 @@ class _ClockChip extends StatelessWidget {
         border: isActive
             ? Border.all(
                 color: isLow
-                    ? AppColors.danger.shade400
+                    ? AppColors.danger.withOpacity(0.4)
                     : const Color(0xFF4A7C59).withOpacity(0.7),
                 width: 1)
             : null,

@@ -115,7 +115,7 @@ class _FeedCard extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 width: double.infinity,
                 height: 150,
-                color: AppColors.textSecondary[200],
+                color: AppColors.textSecondary.withOpacity(0.2),
                 child: Icon(Icons.broken_image, color: AppColors.textSecondary),
               ),
             ),
@@ -136,7 +136,7 @@ class _FeedCard extends StatelessWidget {
                   lang == 'ta' ? item.displaySubtitleTa : item.displaySubtitleEn,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textSecondary[800],
+                    color: AppColors.textSecondary.withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
@@ -177,7 +177,7 @@ class _FeedCard extends StatelessWidget {
         break;
       case 'TOURNAMENT':
         icon = Icons.emoji_events;
-        color = AppColors.warning.shade700;
+        color = AppColors.warning.withOpacity(0.7);
         label = trId('tournament');
         break;
       case 'ISSUE':

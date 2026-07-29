@@ -825,7 +825,7 @@ class _PhotoSection extends StatelessWidget {
             width: 110,
             height: 100,
             decoration: BoxDecoration(
-              color: context.isDark ? Color(0xFF1E2020) : AppColors.textSecondary[50],
+              color: context.isDark ? Color(0xFF1E2020) : AppColors.textSecondary.withOpacity(0.5),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: photo != null ? AppColors.primary : context.cBorder,

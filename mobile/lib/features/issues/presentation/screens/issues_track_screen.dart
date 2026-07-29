@@ -244,7 +244,7 @@ class _IssueCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         issue.displayDescription(lang),
-                        style: TextStyle(color: AppColors.textSecondary[600], fontSize: 13),
+                        style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

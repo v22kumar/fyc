@@ -316,7 +316,7 @@ class _EventCard extends StatelessWidget {
                 width: double.infinity,
                 child: ColorFiltered(
                   colorFilter: isPast
-                      ? const ColorFilter.mode(AppColors.textSecondary, BlendMode.saturation)
+                      ? ColorFilter.mode(AppColors.textSecondary, BlendMode.saturation)
                       : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
                   child: (event.bannerUrl != null && event.bannerUrl!.isNotEmpty)
                       ? Image.network(

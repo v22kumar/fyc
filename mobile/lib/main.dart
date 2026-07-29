@@ -174,9 +174,9 @@ class _FycAppState extends State<FycApp> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: sl<AuthBloc>(),
-      child: ValueListenableBuilder<SemanticColors>(
+      child: ValueListenableBuilder<DesignTokens>(
         valueListenable: ThemeManager.instance.notifier,
-        builder: (context, semanticColors, _) {
+        builder: (context, tokens, _) {
           return ValueListenableBuilder<Locale>(
             valueListenable: localeNotifier,
             builder: (context, locale, _) {

@@ -165,7 +165,7 @@ class _ProfileCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 desc,
-                style: TextStyle(color: AppColors.textSecondary[600], fontSize: 13),
+                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -253,7 +253,7 @@ class _Empty extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               trId('this_is_a_directory_of_tradespeople_and'),
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary[600]),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withOpacity(0.6)),
               textAlign: TextAlign.center,
             ),
           ],

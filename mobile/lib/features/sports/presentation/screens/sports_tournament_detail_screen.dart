@@ -475,7 +475,7 @@ class _SportsTournamentDetailScreenState
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: context.isDark ? AppColors.textSecondary[900] : AppColors.textSecondary[100],
+                          color: context.isDark ? AppColors.textSecondary.withOpacity(0.9) : AppColors.textSecondary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: context.cBorder),
                         ),
