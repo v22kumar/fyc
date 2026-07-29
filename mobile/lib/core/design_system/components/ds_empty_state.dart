@@ -32,7 +32,7 @@ class DSEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(DSSpacing.md),
+        padding: EdgeInsets.all(DSSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -45,13 +45,13 @@ class DSEmptyState extends StatelessWidget {
               )
             else
               _iconBubble(context),
-            const SizedBox(height: DSSpacing.sm),
+            SizedBox(height: DSSpacing.sm),
             Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: context.dsText),
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.dsTextSecondary),
                 textAlign: TextAlign.center),
-            const SizedBox(height: DSSpacing.md),
+            SizedBox(height: DSSpacing.md),
             SizedBox(
               width: 220,
               child: DSButton.filled(label: primaryLabel, onPressed: onPrimary, fullWidth: true),

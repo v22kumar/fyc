@@ -40,7 +40,7 @@ class DSCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.elevation = DSElevation.card,
-    this.padding = const EdgeInsets.all(DSSpacing.sm),
+    this.padding = EdgeInsets.all(DSSpacing.sm),
     this.showAccentBar = false,
   });
 

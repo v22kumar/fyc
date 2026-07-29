@@ -76,26 +76,26 @@ extension DSColorsX on BuildContext {
   Color get dsHighlight => DSColors.amber500;
 }
 
-/// 8dp grid. No spacing value outside this scale is used in design-system
-/// components.
+import '../theme/theme_manager.dart';
+
+/// Spacing scale mapped from ThemeManager.
 class DSSpacing {
   DSSpacing._();
-  static const double xs = 8;
-  static const double sm = 16;
-  static const double md = 24;
-  static const double lg = 32;
-  static const double xl = 48;
+  static double get xs => ThemeManager.instance.tokens.spacing.xs;
+  static double get sm => ThemeManager.instance.tokens.spacing.sm;
+  static double get md => ThemeManager.instance.tokens.spacing.md;
+  static double get lg => ThemeManager.instance.tokens.spacing.lg;
+  static double get xl => ThemeManager.instance.tokens.spacing.xl;
 }
 
-/// Fixed radius scale. `card` matches `AppTheme.radiusCard` (20) — the single
-/// value every shipping card uses; the two are kept equal so they cannot drift.
+/// Radius scale mapped from ThemeManager. `card` is mapped to `xl` by default if not set.
 class DSRadius {
   DSRadius._();
-  static const double card = 20;
-  static const double button = 20;
-  static const double dialog = 28;
-  static const double chip = 999; // pill
-  static const double input = 16;
+  static double get card => ThemeManager.instance.tokens.radius.xl; // 24
+  static double get button => ThemeManager.instance.tokens.radius.lg; // 18
+  static double get dialog => ThemeManager.instance.tokens.radius.xl;
+  static const double chip = 999; // pill stays const
+  static double get input => ThemeManager.instance.tokens.radius.md; // 14
 }
 
 /// Exactly three elevation levels — no ad-hoc shadow tuning per screen.

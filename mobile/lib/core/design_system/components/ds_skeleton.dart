@@ -61,12 +61,12 @@ class DSSkeletonList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(DSSpacing.sm),
+      padding: EdgeInsets.all(DSSpacing.sm),
       itemCount: itemCount,
       itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: DSSpacing.xs),
+        padding: EdgeInsets.only(bottom: DSSpacing.xs),
         child: Container(
-          padding: const EdgeInsets.all(DSSpacing.sm),
+          padding: EdgeInsets.all(DSSpacing.sm),
           decoration: BoxDecoration(
             color: context.dsSurface,
             borderRadius: BorderRadius.circular(DSRadius.card),

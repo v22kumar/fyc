@@ -23,7 +23,7 @@ class DSErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(DSSpacing.md),
+        padding: EdgeInsets.all(DSSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -32,13 +32,13 @@ class DSErrorState extends StatelessWidget {
               decoration: BoxDecoration(color: DSColors.dangerSurface, shape: BoxShape.circle),
               child: const Icon(Icons.cloud_off_rounded, size: 48, color: DSColors.danger),
             ),
-            const SizedBox(height: DSSpacing.sm),
+            SizedBox(height: DSSpacing.sm),
             Text(
               message,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: context.dsText),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: DSSpacing.md),
+            SizedBox(height: DSSpacing.md),
             SizedBox(width: 200, child: DSButton.filled(label: 'Retry', icon: Icons.refresh_rounded, onPressed: onRetry)),
             if (secondaryLabel != null && onSecondary != null) ...[
               const SizedBox(height: 8),

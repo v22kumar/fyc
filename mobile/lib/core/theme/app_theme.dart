@@ -61,7 +61,7 @@ extension AppColorsX on BuildContext {
 class AppTheme {
   AppTheme._();
 
-  static const double radiusCard = DSRadius.card; // single-sourced (v2 0.3)
+  static double radiusCard = DSRadius.card; // single-sourced (v2 0.3)
   static const double radiusBtn = 16.0;
   static const double paddingPage = 20.0;
 

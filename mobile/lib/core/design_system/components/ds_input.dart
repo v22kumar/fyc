@@ -19,7 +19,7 @@ InputDecoration _dsDecoration(
     filled: true,
     fillColor: context.dsSurface,
     isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: DSSpacing.sm, vertical: 14),
+    contentPadding: EdgeInsets.symmetric(horizontal: DSSpacing.sm, vertical: 14),
     border: border,
     enabledBorder: border,
     focusedBorder: border.copyWith(borderSide: BorderSide(color: context.dsAccent, width: 1.6)),

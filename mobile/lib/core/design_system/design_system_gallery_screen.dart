@@ -73,7 +73,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.all(DSSpacing.sm),
+            padding: EdgeInsets.all(DSSpacing.sm),
             children: [
               const _SectionLabel('Buttons'),
               DSButton.filled(label: 'Filled', onPressed: () {}),
@@ -89,7 +89,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
               const DSButton(label: 'Loading', onPressed: null, loading: true),
               const SizedBox(height: 8),
               const DSButton(label: 'Disabled', onPressed: null),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Cards'),
               for (final kind in DSCardKind.values) ...[
@@ -115,7 +115,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
-              const SizedBox(height: DSSpacing.sm),
+              SizedBox(height: DSSpacing.sm),
 
               const _SectionLabel('Inputs'),
               const DSSearchField(hint: 'Search members, events, teams…'),
@@ -148,7 +148,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
               ),
               const SizedBox(height: 12),
               DSLocationField(onTap: () {}),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Chips'),
               Wrap(
@@ -169,7 +169,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Badges'),
               const Wrap(
@@ -184,7 +184,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   DSBadge(kind: DSBadgeKind.volunteer),
                 ],
               ),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Empty state'),
               SizedBox(
@@ -199,11 +199,11 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   onSecondary: () {},
                 ),
               ),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Skeleton loading'),
               const DSSkeletonList(itemCount: 2),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Error state'),
               SizedBox(
@@ -215,7 +215,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   onSecondary: () {},
                 ),
               ),
-              const SizedBox(height: DSSpacing.md),
+              SizedBox(height: DSSpacing.md),
 
               const _SectionLabel('Navigation shell preview'),
               DSButton.outlined(
@@ -225,7 +225,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   MaterialPageRoute(builder: (_) => Theme(data: _themeData, child: const AppShellV2())),
                 ),
               ),
-              const SizedBox(height: DSSpacing.xl),
+              SizedBox(height: DSSpacing.xl),
             ],
           ),
         );
