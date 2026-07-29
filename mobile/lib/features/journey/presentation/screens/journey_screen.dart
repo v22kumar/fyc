@@ -148,7 +148,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
       ),
       child: Column(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 40,
             backgroundColor: AppColors.background,
             child: Icon(Icons.emoji_events, size: 40, color: AppColors.warning),

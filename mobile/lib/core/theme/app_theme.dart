@@ -214,7 +214,7 @@ class AppTheme {
           ),
           margin: EdgeInsets.zero,
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.textSecondary,
@@ -291,7 +291,7 @@ class AppTheme {
           ),
           margin: EdgeInsets.zero,
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: AppColors.darkCard,
           selectedItemColor: AppColors.primaryLight,
           unselectedItemColor: AppColors.darkTextSecondary,

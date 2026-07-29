@@ -227,7 +227,7 @@ class _AiGamePageState extends State<AiGamePage>
                   overflow: TextOverflow.ellipsis,
                   text: TextSpan(
                     children: [
-                      const TextSpan(
+                      TextSpan(
                         text: 'vs ',
                         style: TextStyle(
                           color: AppColors.background,

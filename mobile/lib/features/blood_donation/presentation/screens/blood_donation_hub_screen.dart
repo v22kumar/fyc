@@ -320,7 +320,7 @@ class _EmergencyBanner extends StatelessWidget {
           // Rose is the app's single blood/urgency (danger) role — the banner
           // used off-palette #DC2626/#EF4444 while the chips used the rose
           // accent, so this life-critical screen showed two different reds.
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             colors: [AppColors.accent, Color(0xFFFB7185)],
           ),
           borderRadius: BorderRadius.circular(16),

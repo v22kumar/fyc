@@ -353,7 +353,7 @@ class _DriveCard extends StatelessWidget {
                     value: drive.progress,
                     minHeight: 8,
                     backgroundColor: context.cBorder,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
+                    valueColor: AlwaysStoppedAnimation<Color>(
                       AppColors.primaryLight,
                     ),
                   ),

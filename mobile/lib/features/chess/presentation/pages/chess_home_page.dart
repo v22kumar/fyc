@@ -393,8 +393,9 @@ class _ChessHomePageState extends State<ChessHomePage>
     required String icon,
     required String value,
     required String label,
-    Color valueColor = AppColors.background,
+    Color? valueColor,
   }) {
+    valueColor ??= AppColors.background;
     return Column(
       children: [
         Container(

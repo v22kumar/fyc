@@ -22,7 +22,6 @@ class RegisterScreen extends StatefulWidget {
   final String? prefillEmail;
   final String? prefillName;
   final String phoneNumber;
-  final String registrationToken;
 
   const RegisterScreen({
     super.key,
