@@ -103,6 +103,8 @@ dependencies:
   flutter_riverpod: ^2.5.1
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
