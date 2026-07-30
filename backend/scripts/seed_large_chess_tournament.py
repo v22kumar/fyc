@@ -4,7 +4,7 @@ import uuid
 import random
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../backend')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.core.database import SessionLocal
 from app.models.user import User, UserProfile
