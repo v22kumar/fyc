@@ -479,7 +479,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
         const role = localStorage.getItem('fyc_role');
         const isAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'EXECUTIVE_MEMBER';
-        const adminUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://fyc-admin.fly.dev';
+        const adminUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://admin.fycconnect.com';
 
         container.innerHTML = `<div class="flex flex-col gap-4">` + fixtures.map((f) => {
             const showAdminControls = isAdmin;

@@ -15,7 +15,7 @@ class ApiConstants {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://fyc-backend.fly.dev',
+    defaultValue: 'https://api.fycconnect.com',
   );
 
   static const String defaultOrgId = String.fromEnvironment(
@@ -26,7 +26,7 @@ class ApiConstants {
   /// Public web app base — used to build short share links (…/e/K7P2, …/t/K7P2).
   static const String webBaseUrl = String.fromEnvironment(
     'WEB_BASE_URL',
-    defaultValue: 'https://fyc-web.fly.dev',
+    defaultValue: 'https://fycconnect.com',
   );
 
   static const String googleWebClientId = String.fromEnvironment(

@@ -9,7 +9,7 @@ interface Props {
 
 const { title, description = 'FYC Connect - Community Service Platform by Friends Youth Club, Nagercoil' } = Astro.props;
 const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
-const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://fyc-backend.fly.dev';
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://api.fycconnect.com';
 const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
 ---
 
@@ -150,7 +150,7 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     <!-- Header weather + gold price -->
     <script>
       (function () {
-        const API = 'https://fyc-backend.fly.dev';
+        const API = 'https://api.fycconnect.com';
         const wEl = document.getElementById('hdr-weather');
         const gEl = document.getElementById('hdr-gold');
         const fmt = (n: number | null) => {

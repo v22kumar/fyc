@@ -3,4 +3,4 @@ export const DEFAULT_ORG_ID =
 
 // Fallback must match the real backend Fly app (also used in BaseLayout.astro).
 export const API_BASE =
-  import.meta.env.PUBLIC_API_BASE ?? 'https://fyc-backend.fly.dev';
+  import.meta.env.PUBLIC_API_BASE ?? 'https://api.fycconnect.com';

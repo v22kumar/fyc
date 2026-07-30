@@ -99,7 +99,7 @@ def auth_instagram(request: Request, db: Session = Depends(get_db),
     """Redirect to Instagram Business Login to authorize App."""
     _require_meta_config(IG_APP_ID, IG_APP_SECRET, "Instagram")
     base_url = str(request.base_url).rstrip("/")
-    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+    if "fly.dev" in base_url or "fycconnect.com" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
 
     redirect_uri = f"{base_url}/api/v1/social/auth/instagram/callback"
@@ -121,7 +121,7 @@ def auth_instagram_callback(request: Request, code: str = Query(...),
     _require_meta_config(IG_APP_ID, IG_APP_SECRET, "Instagram")
     org_id = _verify_state(state, "instagram")
     base_url = str(request.base_url).rstrip("/")
-    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+    if "fly.dev" in base_url or "fycconnect.com" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
         
     redirect_uri = f"{base_url}/api/v1/social/auth/instagram/callback"
@@ -176,7 +176,7 @@ def auth_threads(request: Request, db: Session = Depends(get_db),
     """Redirect to Threads Login to authorize App."""
     _require_meta_config(THREADS_APP_ID, THREADS_APP_SECRET, "Threads")
     base_url = str(request.base_url).rstrip("/")
-    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+    if "fly.dev" in base_url or "fycconnect.com" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
 
     redirect_uri = f"{base_url}/api/v1/social/auth/threads/callback"
@@ -195,7 +195,7 @@ def auth_threads_callback(request: Request, code: str = Query(...),
     _require_meta_config(THREADS_APP_ID, THREADS_APP_SECRET, "Threads")
     org_id = _verify_state(state, "threads")
     base_url = str(request.base_url).rstrip("/")
-    if "fly.dev" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
+    if "fly.dev" in base_url or "fycconnect.com" in base_url or os.getenv("ENFORCE_HTTPS", "true").lower() == "true":
         base_url = base_url.replace("http://", "https://")
         
     redirect_uri = f"{base_url}/api/v1/social/auth/threads/callback"

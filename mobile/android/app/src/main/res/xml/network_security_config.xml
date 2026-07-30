@@ -2,6 +2,6 @@
 <network-security-config>
     <base-config cleartextTrafficPermitted="true" />
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">fyc-backend.fly.dev</domain>
+        <domain includeSubdomains="true">api.fycconnect.com</domain>
     </domain-config>
 </network-security-config>

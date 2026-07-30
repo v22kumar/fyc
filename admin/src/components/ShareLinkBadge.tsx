@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { API_BASE } from '@/lib/api';
 
-const WEB_BASE = process.env.NEXT_PUBLIC_WEB_BASE ?? 'https://fyc-web.fly.dev';
+const WEB_BASE = process.env.NEXT_PUBLIC_WEB_BASE ?? 'https://fycconnect.com';
 
 /**
  * Short share link + scannable QR for an event ('e') or tournament ('t'),

@@ -60,7 +60,7 @@ async def compose_morning_message() -> str:
         source = item.get("source") or ""
         lines.append(f"{i}. {title} — {source}")
 
-    lines += ["", "🔗 fyc-web.fly.dev"]
+    lines += ["", "🔗 fycconnect.com"]
     return "\n".join(lines)
 
 

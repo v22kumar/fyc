@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     # Public base URL of the Astro web app — used to build absolute short share
     # links (…/e/K7P2) and the QR codes that encode them.
-    WEB_BASE_URL: str = "https://fyc-web.fly.dev"
+    WEB_BASE_URL: str = "https://fycconnect.com"
 
     # Chess tournament no-show policy: minutes a present, ready player must wait
     # after their round is activated before they may claim a walkover against an
@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     BOOTSTRAP_ADMIN_PASSWORD: str = ""
 
     # Comma-separated list of allowed CORS origins, e.g. "https://fycconnect.org,https://admin.fycconnect.org"
-    ALLOWED_ORIGINS: str = "*"
+    ALLOWED_ORIGINS: str = "https://fycconnect.com,https://www.fycconnect.com,https://admin.fycconnect.com,https://fyc-web.fly.dev,https://fyc-admin.fly.dev"
 
     # Set to a fixed value in tests/dev to skip random OTP generation.
     # Leave unset in production so real random OTPs are generated.

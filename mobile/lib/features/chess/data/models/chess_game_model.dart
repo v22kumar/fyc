@@ -309,7 +309,7 @@ class ChessGameDetailModel extends ChessGameModel {
             : '1/2-1/2';
 
     final header = '[Event "FYC Chess"]\n'
-        '[Site "fyc-web.fly.dev"]\n'
+        '[Site "fycconnect.com"]\n'
         '[Date "$date"]\n'
         '[White "$white"]\n'
         '[Black "$black"]\n'
