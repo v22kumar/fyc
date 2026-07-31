@@ -51,6 +51,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "986299606001-0mn6dd1e34jomr14ov33kdeqpcnbn0jk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fycconnect.app",
+            "certificate_hash": "aed4c410c5f05766540542a876ace80f3d0f53d8"
+          }
+        },
+        {
           "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
           "client_type": 3
         }
