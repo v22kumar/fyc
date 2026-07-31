@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId = "com.fycconnect.app"
         minSdk = flutter.minSdkVersion   // Required by firebase_messaging, google_sign_in
-        targetSdk = 34 // Required for new Play Store submissions (2024+)
+        targetSdk = 35 // Required for new Play Store submissions (2026+)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
