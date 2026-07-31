@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:986299606001:android:36c0433860771e7535da50",
         "android_client_info": {
-          "package_name": "com.fycconnect.app"
+          "package_name": "com.example.fyc_connect"
         }
       },
       "oauth_client": [
@@ -17,10 +17,39 @@
           "client_id": "986299606001-oh67pthinjmt9b16r0ohqr9jphf41kdl.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.fycconnect.app",
+            "package_name": "com.example.fyc_connect",
             "certificate_hash": "bbda573dcd4a7ee3ed3e882ea9abb1d449c72d7b"
           }
         },
+        {
+          "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlfpkHow8xOM72bD8pkMyo6ZDoEDDU3is"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986299606001:android:86a021e80e400b6b35da50",
+        "android_client_info": {
+          "package_name": "com.fycconnect.app"
+        }
+      },
+      "oauth_client": [
         {
           "client_id": "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",
           "client_type": 3
