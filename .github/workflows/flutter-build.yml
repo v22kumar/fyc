@@ -26,7 +26,7 @@ jobs:
       # (e.g. 68) is LOWER than an installed 2067 and updates never fire. Base
       # 100000 clears that ceiling with headroom and stays monotonic.
       - name: Compute versionCode
-        run: echo "FYC_BUILD_NUM=$((100000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+        run: echo "FYC_BUILD_NUM=$((200000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
 
       # ── 2. Flutter SDK ───────────────────────────────────────────────────────
       - name: Set up Flutter (stable)
