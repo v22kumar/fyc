@@ -293,3 +293,12 @@ jobs:
             sleep 20
           done
           echo "::warning::version publish did not succeed after retries (non-fatal)"
+
+      # ── 12. Upload to Google Play Console ───────────────────────────────────────
+      - name: Upload to Google Play Console (Internal Testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: com.fycconnect.app
+          releaseFiles: mobile/build/app/outputs/bundle/release/app-release.aab
+          tracks: internal
