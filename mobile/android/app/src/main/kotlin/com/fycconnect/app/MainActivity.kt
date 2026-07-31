@@ -1,4 +1,4 @@
-package com.example.fyc_connect
+package com.fycconnect.app
 
 import io.flutter.embedding.android.FlutterActivity
 
