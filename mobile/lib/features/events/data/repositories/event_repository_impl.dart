@@ -2,7 +2,6 @@ import 'package:dartz/dartz.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:convert';
 import '../../../../core/error/failures.dart';
-import '../../../../core/network/network_info.dart';
 import '../../domain/entities/event_entity.dart';
 import '../../domain/entities/public_registrant.dart';
 import '../../domain/repositories/event_repository.dart';
