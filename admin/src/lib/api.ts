@@ -109,6 +109,8 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),
+  getEventRegistrations: (id: string) =>
+    request<import('@/types').EventRegistration[]>(`/api/v1/events/${id}/registrations`),
   deleteEvent: (id: string) =>
     request<{ message: string }>(`/api/v1/events/${id}`, { method: 'DELETE' }),
 

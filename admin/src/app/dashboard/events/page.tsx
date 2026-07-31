@@ -1,10 +1,11 @@
 'use client';
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { Event } from '@/types';
+import type { Event, EventRegistration } from '@/types';
 import { ShareLinkBadge } from '@/components/ShareLinkBadge';
 import toast from 'react-hot-toast';
-import { CalendarX, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { CalendarX, Loader2, Pencil, Trash2, Users, Download, X } from 'lucide-react';
+import { API_BASE } from '@/lib/api';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -21,6 +22,24 @@ export default function EventsPage() {
   };
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
+  
+  const [viewingRegistrationsFor, setViewingRegistrationsFor] = useState<Event | null>(null);
+  const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+
+  async function handleViewRegistrations(ev: Event) {
+    setViewingRegistrationsFor(ev);
+    setLoadingRegistrations(true);
+    setRegistrations([]);
+    try {
+      const data = await api.getEventRegistrations(ev.id);
+      setRegistrations(data);
+    } catch (err: any) {
+      toast.error('Failed to load registrations');
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  }
 
   // datetime-local wants "YYYY-MM-DDTHH:mm" in local time, not an ISO string.
   function toLocalInput(iso: string): string {
@@ -222,10 +241,10 @@ export default function EventsPage() {
       ) : (
         <>
           {upcoming.length > 0 && (
-            <Section title="Upcoming" events={upcoming} onEdit={startEdit} onDelete={handleDelete} />
+            <Section title="Upcoming" events={upcoming} onEdit={startEdit} onDelete={handleDelete} onViewRegistrations={handleViewRegistrations} />
           )}
           {past.length > 0 && (
-            <Section title="Past" events={past} onEdit={startEdit} onDelete={handleDelete} />
+            <Section title="Past" events={past} onEdit={startEdit} onDelete={handleDelete} onViewRegistrations={handleViewRegistrations} />
           )}
           {events.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-xl border border-gray-100 shadow-sm border-dashed">
@@ -241,6 +260,71 @@ export default function EventsPage() {
           )}
         </>
       )}
+
+      {/* Registrations Modal */}
+      {viewingRegistrationsFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h3 className="font-semibold text-gray-900 text-lg">Registrations: {viewingRegistrationsFor.title_en}</h3>
+                <p className="text-sm text-gray-500 mt-0.5">{registrations.length} people registered</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={`${API_BASE}/api/v1/events/${viewingRegistrationsFor.id}/registrations.csv`}
+                  target="_blank"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors"
+                  download
+                >
+                  <Download className="w-4 h-4" /> Download CSV
+                </a>
+                <button
+                  onClick={() => setViewingRegistrationsFor(null)}
+                  className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-0 overflow-y-auto flex-1">
+              {loadingRegistrations ? (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+                  <p>Loading registrations...</p>
+                </div>
+              ) : registrations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                  <Users className="w-12 h-12 text-gray-300 mb-4" />
+                  <p>No registrations yet.</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50 sticky top-0 text-xs uppercase text-gray-500 font-medium border-b border-gray-200 shadow-sm">
+                    <tr>
+                      <th className="px-6 py-4">Name</th>
+                      <th className="px-6 py-4">Mobile</th>
+                      <th className="px-6 py-4">Gender</th>
+                      <th className="px-6 py-4">DOB</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-sm">
+                    {registrations.map(r => (
+                      <tr key={r.id} className="hover:bg-gray-50/50">
+                        <td className="px-6 py-4 font-medium text-gray-900">{r.name}</td>
+                        <td className="px-6 py-4 text-gray-600">{r.mobile_number || '-'}</td>
+                        <td className="px-6 py-4 text-gray-600">{r.gender || '-'}</td>
+                        <td className="px-6 py-4 text-gray-600">{new Date(r.dob).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -250,11 +334,13 @@ function Section({
   events,
   onEdit,
   onDelete,
+  onViewRegistrations,
 }: {
   title: string;
   events: Event[];
   onEdit: (e: Event) => void;
   onDelete: (id: string) => void;
+  onViewRegistrations: (e: Event) => void;
 }) {
   return (
     <div className="mb-6">
@@ -268,6 +354,14 @@ function Section({
                 <p className="text-sm text-gray-500 mt-0.5">{e.title_ta}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onViewRegistrations(e)}
+                  title="View Registrations"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 hover:text-gray-900 transition-colors mr-2"
+                >
+                  <Users className="w-3.5 h-3.5" /> Registrations
+                </button>
                 <button
                   type="button"
                   onClick={() => onEdit(e)}

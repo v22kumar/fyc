@@ -45,6 +45,17 @@ export interface Event {
   created_at: string;
 }
 
+export interface EventRegistration {
+  id: string;
+  event_id: string;
+  user_id: string | null;
+  name: string;
+  dob: string;
+  gender: string | null;
+  mobile_number: string | null;
+  email: string | null;
+}
+
 export interface Member {
   id: string;
   phone_number: string;

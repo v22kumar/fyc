@@ -22,6 +22,7 @@ import '../../../../core/widgets/success_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import 'event_create_screen.dart';
+import 'event_registrations_screen.dart';
 
 class EventsListScreen extends StatefulWidget {
   const EventsListScreen({super.key});
@@ -183,6 +184,16 @@ class _EventsListScreenState extends State<EventsListScreen> {
                   onViewParticipants: entry.value.registrationEnabled
                       ? () => _openParticipants(entry.value)
                       : null,
+                  onViewAdminRegistrations: _canCreate
+                      ? () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => EventRegistrationsScreen(
+                              event: entry.value,
+                              lang: _lang,
+                            ),
+                          ));
+                        }
+                      : null,
                 ),
               )),
         ],
@@ -260,6 +271,7 @@ class _EventCard extends StatelessWidget {
   final VoidCallback? onRegister;
   final VoidCallback? onDelete;
   final VoidCallback? onViewParticipants;
+  final VoidCallback? onViewAdminRegistrations;
   final bool isAdmin;
 
   const _EventCard({
@@ -269,6 +281,7 @@ class _EventCard extends StatelessWidget {
     this.onRegister,
     this.onDelete,
     this.onViewParticipants,
+    this.onViewAdminRegistrations,
     this.isAdmin = false,
   });
 
@@ -385,9 +398,9 @@ class _EventCard extends StatelessWidget {
                               child: Icon(Icons.qr_code_2, size: 20, color: Color(0xFF0B6E4F)),
                             ),
                           ),
-                        if (isAdmin && onViewParticipants != null)
+                        if (isAdmin && onViewAdminRegistrations != null)
                           GestureDetector(
-                            onTap: onViewParticipants,
+                            onTap: onViewAdminRegistrations,
                             child: Padding(
                               padding: EdgeInsets.only(left: 8.0),
                               child: Icon(Icons.people_outline, size: 20, color: AppColors.info),
