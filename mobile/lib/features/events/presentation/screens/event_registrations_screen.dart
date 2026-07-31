@@ -107,7 +107,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
             backgroundColor: AppColors.primary.withOpacity(0.1),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(color: AppColors.primary),
+              style: TextStyle(color: AppColors.primary),
             ),
           ),
         );

@@ -367,14 +367,28 @@ def get_event_registrants(
     if not event or not event.is_published:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    names = [
-        row[0]
-        for row in db.query(EventRegistration.name)
+    from datetime import date
+    
+    registrations = (
+        db.query(EventRegistration)
         .filter(EventRegistration.event_id == event_id)
         .order_by(EventRegistration.created_at.asc())
         .all()
-    ]
-    return EventRegistrantsOut(count=len(names), names=names)
+    )
+    
+    today = date.today()
+    participants = []
+    for reg in registrations:
+        age = None
+        if reg.dob:
+            age = today.year - reg.dob.year - ((today.month, today.day) < (reg.dob.month, reg.dob.day))
+        participants.append({
+            "name": reg.name,
+            "age": age,
+            "class_grade": reg.class_grade,
+        })
+        
+    return EventRegistrantsOut(count=len(participants), participants=participants)
 
 @router.get("/{event_id}/analytics")
 def get_event_analytics(

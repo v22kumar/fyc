@@ -2,11 +2,13 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/network/api_client.dart';
+import '../../domain/entities/event_entity.dart';
+import '../../domain/entities/public_registrant.dart';
 import '../models/event_model.dart';
 
 abstract class EventDataSource {
   Future<List<EventModel>> fetchEvents();
-  Future<List<String>> fetchEventRegistrants(String eventId);
+  Future<List<PublicRegistrant>> fetchEventRegistrants(String eventId);
   Future<Map<String, dynamic>> checkinEvent(String eventId);
   Future<EventModel> createEvent(Map<String, dynamic> body);
   Future<void> deleteEvent(String eventId);
@@ -30,12 +32,13 @@ class EventDataSourceImpl implements EventDataSource {
   }
 
   @override
-  Future<List<String>> fetchEventRegistrants(String eventId) async {
+  Future<List<PublicRegistrant>> fetchEventRegistrants(String eventId) async {
     try {
       final response = await _client.dio
           .get('${ApiConstants.events}/$eventId/registrants');
       final data = response.data as Map<String, dynamic>;
-      return (data['names'] as List<dynamic>).map((e) => e.toString()).toList();
+      final list = data['participants'] as List<dynamic>? ?? [];
+      return list.map((e) => PublicRegistrant.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw mapDioException(e);
     }

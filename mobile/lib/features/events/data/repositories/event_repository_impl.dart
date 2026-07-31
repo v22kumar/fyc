@@ -2,7 +2,9 @@ import 'package:dartz/dartz.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:convert';
 import '../../../../core/error/failures.dart';
+import '../../../../core/network/network_info.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/entities/public_registrant.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_datasource.dart';
 import '../models/event_model.dart';
@@ -49,7 +51,7 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
-  Future<Either<Failure, List<String>>> fetchEventRegistrants(String eventId) async {
+  Future<Either<Failure, List<PublicRegistrant>>> fetchEventRegistrants(String eventId) async {
     try {
       final names = await _remote.fetchEventRegistrants(eventId);
       return Right(names);

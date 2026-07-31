@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/entities/public_registrant.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../bloc/event_bloc.dart';
 import '../bloc/event_event.dart';
@@ -952,7 +953,7 @@ class _EventParticipantsSheet extends StatefulWidget {
 }
 
 class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
-  List<String>? _names;
+  List<PublicRegistrant>? _names;
   String? _error;
 
   @override
@@ -1032,30 +1033,42 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
               ),
             ),
             SizedBox(height: 8),
-            // Names only — the member-facing list never shows phone numbers
-            // or other personal details.
+            // Names, Age, Class Grade — the member-facing list never shows phone numbers
+            // or other personal details like exact DOB.
             Expanded(
               child: ListView.separated(
                 itemCount: _names!.length,
                 separatorBuilder: (_, __) => Divider(color: context.cBorder),
-                itemBuilder: (ctx, i) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  leading: CircleAvatar(
-                    radius: 15,
-                    backgroundColor: AppColors.primary.withOpacity(0.10),
-                    child: Text(
-                      _names![i].isEmpty ? '?' : _names![i][0].toUpperCase(),
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary),
+                itemBuilder: (ctx, i) {
+                  final p = _names![i];
+                  final details = [
+                    if (p.age != null) '${p.age} years',
+                    if (p.classGrade != null && p.classGrade!.isNotEmpty) p.classGrade,
+                  ].join(' • ');
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: AppColors.primary.withOpacity(0.10),
+                      child: Text(
+                        p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary),
+                      ),
                     ),
-                  ),
-                  title: Text(_names![i],
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, color: context.cText)),
-                ),
+                    title: Text(p.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, color: context.cText)),
+                    subtitle: details.isNotEmpty
+                        ? Text(details,
+                            style: TextStyle(fontSize: 11, color: context.cTextSecondary))
+                        : null,
+                  );
+                },
               ),
             ),
           ],

@@ -85,10 +85,15 @@ class EventRegistrationCreate(BaseModel):
     competition_category: Optional[List[str]] = None
     remarks: Optional[str] = None
 
+class PublicRegistrant(BaseModel):
+    name: str
+    age: Optional[int] = None
+    class_grade: Optional[str] = None
+
 class EventRegistrantsOut(BaseModel):
-    """Names-only registrant list — the public-safe projection (no PII)."""
+    """Public-safe projection of registrants (no PII like phone/email)."""
     count: int
-    names: List[str]
+    participants: List[PublicRegistrant]
 
 class EventRegistrationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

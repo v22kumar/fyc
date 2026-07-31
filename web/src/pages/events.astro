@@ -91,6 +91,27 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       </div>
     </div>
   </section>
+
+  <!-- Participants Modal -->
+  <div id="participants-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
+        <h3 class="font-bold text-gray-900 text-lg" id="pm-title">Participants</h3>
+        <button onclick="closeParticipantsModal()" class="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-0 overflow-y-auto flex-1">
+        <div id="pm-loading" class="hidden flex flex-col items-center justify-center py-12 text-gray-500">
+          <svg class="w-8 h-8 animate-spin mb-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <p>Loading...</p>
+        </div>
+        <div id="pm-error" class="hidden py-12 text-center text-red-500 text-sm">Failed to load participants.</div>
+        <div id="pm-empty" class="hidden py-12 text-center text-gray-500 text-sm">No participants yet.</div>
+        <ul id="pm-list" class="divide-y divide-gray-100"></ul>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
@@ -176,9 +197,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
               <span class="text-xs font-bold px-2.5 py-1 rounded-full ${statusClass}">
                 ${statusText}
               </span>
-              <span class="text-xs font-medium text-gray-600 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
-                ${event.registration_count || 0} Registered
-              </span>
+              <button onclick="event.preventDefault(); openParticipantsModal('${event.id}', '${title}')" class="text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-100 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                ${event.registration_count || 0} ${t('பதிவு', 'Registered')}
+              </button>
             </div>
             <h3 class="font-bold text-gray-900 text-lg mb-2 leading-snug group-hover:text-primary transition-colors">${title}</h3>
             <p class="text-sm text-gray-600 mb-3 line-clamp-2">${desc}</p>
@@ -249,4 +271,65 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   }
 
   loadEvents();
+
+  window.openParticipantsModal = async function(eventId, eventTitle) {
+    const modal = document.getElementById('participants-modal');
+    document.getElementById('pm-title').textContent = eventTitle;
+    
+    const loading = document.getElementById('pm-loading');
+    const error = document.getElementById('pm-error');
+    const empty = document.getElementById('pm-empty');
+    const list = document.getElementById('pm-list');
+    
+    list.innerHTML = '';
+    loading.classList.remove('hidden');
+    error.classList.add('hidden');
+    empty.classList.add('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/events/${eventId}/registrants`, {
+        headers: { 'X-Organization-ID': DEFAULT_ORG_ID }
+      });
+      if (!response.ok) throw new Error('Failed');
+      
+      const data = await response.json();
+      loading.classList.add('hidden');
+      
+      const participants = data.participants || [];
+      if (participants.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      list.innerHTML = participants.map(p => {
+        let details = [];
+        if (p.age != null) details.push(`${p.age} years`);
+        if (p.class_grade) details.push(p.class_grade);
+        const detailsText = details.length > 0 ? `<div class="text-xs text-gray-500 mt-0.5">${details.join(' • ')}</div>` : '';
+        
+        return `
+          <li class="px-4 py-3 hover:bg-gray-50/50 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center text-xs shrink-0">
+              ${p.name ? p.name.charAt(0).toUpperCase() : '?'}
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-gray-900">${p.name}</div>
+              ${detailsText}
+            </div>
+          </li>
+        `;
+      }).join('');
+      
+    } catch (e) {
+      loading.classList.add('hidden');
+      error.classList.remove('hidden');
+    }
+  };
+
+  window.closeParticipantsModal = function() {
+    document.getElementById('participants-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  };
 </script>
