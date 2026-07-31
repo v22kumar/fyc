@@ -107,8 +107,9 @@ jobs:
         env:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
+          AAB_BUILD_NUM=$(( FYC_BUILD_NUM + 4000 ))
           flutter build appbundle --release \
-            --build-number=${{ env.FYC_BUILD_NUM }} \
+            --build-number=${AAB_BUILD_NUM} \
             --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://api.fycconnect.com \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
