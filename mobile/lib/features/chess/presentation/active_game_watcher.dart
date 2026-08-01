@@ -33,7 +33,9 @@ class ChessActiveGameWatcher {
   Timer? _timer;
 
   void start() {
-    _timer ??= Timer.periodic(const Duration(seconds: 7), (_) => _poll());
+    // 3s so a player is pulled into an accepted game quickly (was 7s, which made
+    // matchmaking feel slow). The endpoint is a single indexed query.
+    _timer ??= Timer.periodic(const Duration(seconds: 3), (_) => _poll());
     _poll();
   }
 
