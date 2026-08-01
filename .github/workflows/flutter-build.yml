@@ -296,10 +296,45 @@ jobs:
           echo "::warning::version publish did not succeed after retries (non-fatal)"
 
       # ── 12. Upload to Google Play Console ───────────────────────────────────────
+      # Preflight surfaces the REAL cause of r0adkll's generic "Unknown error
+      # occurred." before the upload: a missing/invalid service-account key, the
+      # wrong key type, or a missing AAB. It also prints the service-account email
+      # + GCP project so you can verify the Play Console invite + that the Google
+      # Play Android Developer API is enabled.
+      - name: Preflight — validate Play upload prerequisites
+        env:
+          SA: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: |
+          AAB="mobile/build/app/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$AAB" ]; then
+            echo "::error::AAB not found at $AAB"; exit 1
+          fi
+          echo "AAB present: $(du -h "$AAB" | cut -f1)"
+          if [ -z "$SA" ]; then
+            echo "::error::SERVICE_ACCOUNT_JSON secret is empty. Add the Play service-account JSON key under Settings → Secrets → Actions."
+            exit 1
+          fi
+          printf '%s' "$SA" > /tmp/sa.json
+          python3 - <<'PY'
+          import json, sys
+          try:
+              d = json.load(open("/tmp/sa.json"))
+          except Exception as e:
+              print(f"::error::SERVICE_ACCOUNT_JSON is not valid JSON ({e}). Paste the raw key file contents, not base64.")
+              sys.exit(1)
+          if d.get("type") != "service_account":
+              print(f"::error::Key type is {d.get('type')!r}, expected 'service_account'. Use a service-account key, not an OAuth client.")
+              sys.exit(1)
+          print(f"::notice::Service account = {d.get('client_email')}  — this MUST be invited in Play Console → Users & permissions with 'Release to testing tracks' for com.fycconnect.app")
+          print(f"::notice::GCP project = {d.get('project_id')}  — the 'Google Play Android Developer API' must be enabled there, and the account linked under Play Console → API access")
+          PY
+          rm -f /tmp/sa.json
+
       - name: Upload to Google Play Console (Internal Testing)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: com.fycconnect.app
           releaseFiles: mobile/build/app/outputs/bundle/release/app-release.aab
-          track: internal
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: ${{ vars.PLAY_STATUS || 'completed' }}
