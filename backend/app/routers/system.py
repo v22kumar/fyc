@@ -101,6 +101,21 @@ def system_health(
     except Exception:
         pass
 
+    # Auth providers — report whether the login channels are actually configured
+    # on THIS running instance. A missing/shadowed secret is the usual cause of
+    # "Google/OTP down": if these are false in prod, set the Fly secrets. (Only
+    # booleans — never echo the secret values.)
+    try:
+        from app.core.config import settings as _s
+        health_status["auth"] = {
+            "google": bool(_s.GOOGLE_CLIENT_ID or _s.GOOGLE_WEB_CLIENT_ID),
+            "twilio_account": bool(_s.TWILIO_ACCOUNT_SID and _s.TWILIO_AUTH_TOKEN),
+            "twilio_verify": bool(_s.TWILIO_VERIFY_SID),
+            "smtp_email": bool(_s.SMTP_USER and _s.SMTP_PASSWORD),
+        }
+    except Exception:
+        pass
+
     # Check Storage
     try:
         # Check if uploads directory is writable

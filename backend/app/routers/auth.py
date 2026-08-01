@@ -58,13 +58,30 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
     if settings.TWILIO_VERIFY_SID:
-        # Twilio Verify manages the OTP — we only track phone+org
-        send_verify_otp(payload.phone_number)
+        # Twilio Verify manages the OTP — we only track phone+org. If the send
+        # actually fails (bad/expired credentials, unverified trial number,
+        # Twilio outage), surface it instead of returning a fake success — a
+        # silent failure looked to users like "OTP is down" with no signal, and
+        # left the verification_id pointing at an SMS that never arrived.
+        if not send_verify_otp(payload.phone_number):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Couldn't send the OTP right now. Please try again shortly.",
+            )
         otp_store[verification_id] = (payload.phone_number, None, payload.organization_id, expires_at)
     else:
         otp_code = _generate_otp()
         otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
-        deliver_otp(payload.phone_number, otp_code, email=payload.email)
+        results = deliver_otp(payload.phone_number, otp_code, email=payload.email)
+        # No Twilio Verify AND no other channel worked → nothing was delivered.
+        # Don't pretend it was sent (the dev log-fallback path is only acceptable
+        # when a bypass code is configured, i.e. dev/staging).
+        if not any(results.values()) and not settings.OTP_BYPASS_CODE:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="OTP delivery is not configured on the server. "
+                       "Set TWILIO_VERIFY_SID (or SMTP) as a secret.",
+            )
 
     return OTPResponse(
         message="OTP sent successfully",
