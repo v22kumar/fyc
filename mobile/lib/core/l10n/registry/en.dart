@@ -774,6 +774,7 @@ const Map<String, String> kEn = {
   'compete_in_the_fyc_arena': 'Compete in the FYC Arena',
   'complete_match_setup_first': 'Complete match setup first',
   'connecting': 'Connecting…',
+  'reconnecting': 'Reconnecting…',
   'could_not_load_data_please_try_again': 'Could not load data. Please try again.',
   'could_not_load_game': 'Could not load game',
   'could_not_load_games': 'Could not load games',

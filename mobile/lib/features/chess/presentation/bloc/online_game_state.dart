@@ -10,7 +10,13 @@ abstract class OnlineGameState extends Equatable {
 }
 
 class OnlineGameConnecting extends OnlineGameState {
-  const OnlineGameConnecting();
+  /// True when this is a mid-game reconnect (the socket dropped after play had
+  /// started) rather than the very first connect — lets the UI say
+  /// "Reconnecting…" instead of "Connecting…".
+  final bool reconnecting;
+  const OnlineGameConnecting({this.reconnecting = false});
+  @override
+  List<Object?> get props => [reconnecting];
 }
 
 class OnlineGameWaiting extends OnlineGameState {
@@ -32,6 +38,7 @@ class OnlineGameInProgress extends OnlineGameState {
   final bool drawOffered;        // opponent offered draw
   final bool moveInFlight;       // we sent a move, waiting for server confirmation
   final bool opponentDisconnected;
+  final bool reconnecting;       // OUR socket dropped; client is auto-reconnecting
   final String timeControl;      // "untimed" | "blitz_5_0" | "rapid_10_0"
   final int? whiteTimeMs;        // null = untimed
   final int? blackTimeMs;
@@ -48,6 +55,7 @@ class OnlineGameInProgress extends OnlineGameState {
     this.drawOffered = false,
     this.moveInFlight = false,
     this.opponentDisconnected = false,
+    this.reconnecting = false,
     this.timeControl = 'untimed',
     this.whiteTimeMs,
     this.blackTimeMs,
@@ -64,6 +72,7 @@ class OnlineGameInProgress extends OnlineGameState {
     bool? drawOffered,
     bool? moveInFlight,
     bool? opponentDisconnected,
+    bool? reconnecting,
     String? timeControl,
     int? whiteTimeMs,
     int? blackTimeMs,
@@ -82,6 +91,7 @@ class OnlineGameInProgress extends OnlineGameState {
       drawOffered: drawOffered ?? this.drawOffered,
       moveInFlight: moveInFlight ?? this.moveInFlight,
       opponentDisconnected: opponentDisconnected ?? this.opponentDisconnected,
+      reconnecting: reconnecting ?? this.reconnecting,
       timeControl: timeControl ?? this.timeControl,
       whiteTimeMs: clearWhiteTime ? null : (whiteTimeMs ?? this.whiteTimeMs),
       blackTimeMs: clearBlackTime ? null : (blackTimeMs ?? this.blackTimeMs),
@@ -90,7 +100,7 @@ class OnlineGameInProgress extends OnlineGameState {
 
   @override
   List<Object?> get props => [boardState, moveSans, isMyTurn, drawOffered,
-                               moveInFlight, opponentDisconnected,
+                               moveInFlight, opponentDisconnected, reconnecting,
                                whiteTimeMs, blackTimeMs];
 }
 

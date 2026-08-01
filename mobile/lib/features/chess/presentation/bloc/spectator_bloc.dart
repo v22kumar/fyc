@@ -169,6 +169,16 @@ class SpectatorBloc extends Bloc<SpectatorEvent, SpectatorState> {
           final count = msg['count'] as int? ?? s.spectatorCount;
           emit(s.copyWith(spectatorCount: count));
         }
+
+      case 'disconnected':
+      case 'connection_error':
+        // The spectate feed dropped; the client auto-reconnects. Keep showing
+        // the last board but flag it as stale so the UI can say "reconnecting…".
+        // A fresh 'state'/'move' on the new socket clears the flag.
+        final s = state;
+        if (s is SpectatorWatching && !s.reconnecting) {
+          emit(s.copyWith(reconnecting: true));
+        }
     }
   }
 
@@ -243,6 +253,7 @@ class SpectatorBloc extends Bloc<SpectatorEvent, SpectatorState> {
       currentTurn: currentTurn,
       whiteTimeMs: newWhiteMs ?? s.whiteTimeMs,
       blackTimeMs: newBlackMs ?? s.blackTimeMs,
+      reconnecting: false, // a live move means the feed is healthy again
     ));
   }
 
