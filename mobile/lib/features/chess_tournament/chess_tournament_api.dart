@@ -85,6 +85,15 @@ class ChessTournamentApi {
     return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
+  /// A present, ready player claims a walkover when the opponent never marked
+  /// ready within the timeout. The backend enforces the wait window and returns
+  /// a 409 with a human message if it's too early — surface that to the caller.
+  static Future<ChessTournamentDetail> claimWalkover(
+      String tourId, String matchId) async {
+    final res = await _dio.post('$_base/$tourId/matches/$matchId/claim-walkover');
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
   /// Organizer sets how a match is conducted: 'APP' (online) or 'PHYSICAL'.
   /// For a physical match an optional venue + reporting time is attached and
   /// both players are notified.

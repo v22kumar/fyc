@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -87,6 +88,37 @@ class _State extends State<ChessTournamentDetailScreen> {
       _snack(waiting
           ? trId('waiting_for_your_opponent_to_be_ready')
           : trId('could_not_open_the_board'));
+    }
+  }
+
+  /// Present, ready player claims a walkover for a no-show opponent. The backend
+  /// enforces the wait window and returns a 409 with a human message ("Please
+  /// wait ~N more minutes") if it's too early — surface that verbatim.
+  Future<void> _claimWalkover(ChessTournamentDetail t, BracketMatch m) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(trId('claim_walkover')),
+        content: Text(trId('claim_walkover_confirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(trId('cancel_2'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(trId('claim_walkover'))),
+        ],
+      ),
+    );
+    if (confirm != true || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await ChessTournamentApi.claimWalkover(t.id, m.id);
+      await _load();
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final detail = (data is Map) ? data['detail']?.toString() : null;
+      _snack(detail ?? trId('action_failed_try_again'));
+    } catch (_) {
+      _snack(trId('action_failed_try_again'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -438,11 +470,31 @@ class _State extends State<ChessTournamentDetailScreen> {
     if (!oppReady) {
       return Padding(
         padding: EdgeInsets.only(top: 10),
-        child: Row(children: [
-          Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
-          SizedBox(width: 6),
-          Expanded(child: Text(trId('you_re_ready_waiting_for_your_opponent'),
-              style: TextStyle(fontSize: 12, color: context.cTextSecondary))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+            SizedBox(width: 6),
+            Expanded(child: Text(trId('you_re_ready_waiting_for_your_opponent'),
+                style: TextStyle(fontSize: 12, color: context.cTextSecondary))),
+          ]),
+          SizedBox(height: 6),
+          // No-show safety valve: after the ready-timeout the present player can
+          // claim the match so one absentee can't stall the whole bracket. The
+          // backend gates the timing and explains if it's still too early.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _busy ? null : () => _claimWalkover(t, m),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: Icon(Icons.timer_off_rounded, size: 16, color: AppColors.accent),
+              label: Text(trId('opponent_no_show_claim_walkover'),
+                  style: TextStyle(fontSize: 11.5, color: AppColors.accent, fontWeight: FontWeight.w700)),
+            ),
+          ),
         ]),
       );
     }
