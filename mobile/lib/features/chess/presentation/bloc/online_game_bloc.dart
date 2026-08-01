@@ -112,6 +112,9 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
 
     switch (type) {
       case 'waiting':
+        // 'waiting' also carries the authoritative colour — adopt it.
+        final wc = msg['color'] as String?;
+        if (wc == 'white' || wc == 'black') _myColor = wc!;
         emit(OnlineGameWaiting(myColor: _myColor));
 
       case 'game_start':
@@ -180,6 +183,13 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   }
 
   void _handleStateOrStart(Map<String, dynamic> msg, Emitter<OnlineGameState> emit) {
+    // The server is authoritative for OUR colour: the per-user 'state' snapshot
+    // carries "color" (the shared 'game_start' broadcast does not). Trust it over
+    // the connect-time guess — otherwise a wrong guess flips orientation and turn,
+    // and both players end up stuck seeing "your turn" unable to move.
+    final serverColor = msg['color'] as String?;
+    if (serverColor == 'white' || serverColor == 'black') _myColor = serverColor!;
+
     final whiteName = msg['white_name'] as String? ?? 'White';
     final blackName = msg['black_name'] as String? ?? 'Black';
     final rawMoves = msg['moves'] as List?;
