@@ -2,12 +2,15 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const categories = [
-  { value: 'ROAD',         ta: 'சாலை',         en: 'Road' },
-  { value: 'WATER',        ta: 'குடிநீர்',       en: 'Water Supply' },
-  { value: 'STREET_LIGHT', ta: 'தெரு விளக்கு',   en: 'Street Light' },
-  { value: 'GARBAGE',      ta: 'குப்பை',         en: 'Garbage' },
-  { value: 'SAFETY',       ta: 'பாதுகாப்பு',     en: 'Safety' },
-  { value: 'OTHER',        ta: 'மற்றவை',         en: 'Other' },
+  { value: 'ROAD_TRAFFIC',  ta: 'சாலை / போக்குவரத்து', en: 'Road / Traffic' },
+  { value: 'POWER_CUT',     ta: 'மின் தடை',            en: 'Power Cut' },
+  { value: 'WATER',         ta: 'குடிநீர்',             en: 'Water Supply' },
+  { value: 'SANITATION',    ta: 'துப்புரவு / குப்பை',   en: 'Sanitation / Garbage' },
+  { value: 'STREET_LIGHT',  ta: 'தெரு விளக்கு',        en: 'Street Light' },
+  { value: 'PUBLIC_HEALTH', ta: 'பொது சுகாதாரம்',      en: 'Public Health' },
+  { value: 'ENCROACHMENT',  ta: 'ஆக்கிரமிப்பு',         en: 'Encroachment' },
+  { value: 'SAFETY',        ta: 'பாதுகாப்பு',          en: 'Safety' },
+  { value: 'OTHER',         ta: 'மற்றவை',              en: 'Other' },
 ];
 
 import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
@@ -149,6 +152,21 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
               placeholder="There is a pothole on the road..."
               class="w-full px-4 py-2.5 border border-gray-200 rounded-card text-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors resize-none"
             ></textarea>
+            <button
+              type="button"
+              id="ai-btn"
+              onclick="improveWithAI()"
+              class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 text-primary border border-primary-200 rounded-full text-xs font-semibold hover:bg-primary-100 transition-colors"
+            >
+              <span>✨</span>
+              <span id="ai-label" data-ta="AI மூலம் புகாரை மேம்படுத்து" data-en="Improve complaint with AI">AI மூலம் புகாரை மேம்படுத்து</span>
+            </button>
+            <!-- AI draft + routed department -->
+            <div id="ai-panel" class="hidden mt-3 p-3 bg-primary-50 border border-primary-200 rounded-card text-xs text-gray-700">
+              <p class="font-semibold text-primary mb-1" data-ta="இந்தத் துறைக்கு அனுப்பப்படும்:" data-en="Will be routed to:">Will be routed to:</p>
+              <p id="ai-dept" class="text-gray-800 font-medium"></p>
+              <p id="ai-dept-contact" class="text-gray-500 mt-0.5"></p>
+            </div>
           </div>
 
           <!-- Photo URL -->
@@ -208,6 +226,9 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
                 />
               </div>
             </div>
+            <p id="location-name" class="hidden mt-2 text-xs text-gray-600 flex items-start gap-1">
+              <span>📌</span><span id="location-name-text"></span>
+            </p>
           </div>
 
           <!-- Submit -->
@@ -275,6 +296,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
         btn.innerHTML = `<span>✅</span> <span>${t('இடம் கண்டுபிடிக்கப்பட்டது', 'Location detected')}</span>`;
         btn.disabled = false;
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       },
       () => {
         btn.innerHTML = originalContent;
@@ -283,6 +305,65 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       },
       { timeout: 10000 }
     );
+  };
+
+  // Reverse-geocode GPS → a readable address (OSM Nominatim, browser-side).
+  window.reverseGeocode = async function (lat, lng) {
+    const el = document.getElementById('location-name');
+    const txt = document.getElementById('location-name-text');
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&zoom=18`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      const d = await r.json();
+      if (d && d.display_name) { txt.textContent = d.display_name; el.classList.remove('hidden'); }
+    } catch (_) {}
+  };
+
+  // AI-improve the complaint + reveal the routed department (POST /issues/draft).
+  window.improveWithAI = async function () {
+    const category = document.getElementById('category').value;
+    const descTa = document.getElementById('desc-ta').value.trim();
+    const descEn = document.getElementById('desc-en').value.trim();
+    const desc = descEn || descTa;
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    if (!category) { alert(t('முதலில் வகையைத் தேர்ந்தெடுக்கவும்', 'Please choose a category first')); return; }
+    if (!desc) { alert(t('சிக்கலை விவரிக்கவும்', 'Please describe the issue first')); return; }
+    const btn = document.getElementById('ai-btn');
+    const label = document.getElementById('ai-label');
+    const orig = label.textContent;
+    btn.disabled = true; label.textContent = t('எழுதுகிறது...', 'Writing…');
+    try {
+      const body = { category, description: desc, is_emergency: false };
+      if (lat && lng) { body.latitude = parseFloat(lat); body.longitude = parseFloat(lng); }
+      const r = await fetch(`${API_BASE}/api/v1/issues/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Organization-ID': DEFAULT_ORG_ID },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || 'AI draft failed');
+      if (d.body_en) document.getElementById('desc-en').value = d.body_en;
+      if (d.body_ta) document.getElementById('desc-ta').value = d.body_ta;
+      if (d.location_name) {
+        document.getElementById('location-name-text').textContent = d.location_name;
+        document.getElementById('location-name').classList.remove('hidden');
+      }
+      if (d.department) {
+        document.getElementById('ai-dept').textContent = d.department.name_en || '';
+        const contact = [
+          d.department.helpline ? `☎ ${d.department.helpline}` : '',
+          d.department.portal_url || '',
+        ].filter(Boolean).join('  ·  ');
+        document.getElementById('ai-dept-contact').textContent = contact;
+        document.getElementById('ai-panel').classList.remove('hidden');
+      }
+    } catch (e) {
+      alert(e.message || t('பிழை', 'Error'));
+    } finally {
+      btn.disabled = false; label.textContent = orig;
+    }
   };
 
   // Form submission
