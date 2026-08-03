@@ -62,6 +62,11 @@ export const api = {
   listBloodRequests: (status = 'OPEN') =>
     request<any[]>(`/api/v1/blood-requests?status_filter=${status}`),
 
+  // Complaint routing (department directory)
+  listComplaintDepartments: () => request<any[]>('/api/v1/issues/departments'),
+  patchComplaintDepartment: (id: string, payload: any) =>
+    request<any>(`/api/v1/issues/departments/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+
 
   // Issues
   listIssues: (status?: string) =>
