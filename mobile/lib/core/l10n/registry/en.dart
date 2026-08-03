@@ -398,6 +398,8 @@ const Map<String, String> kEn = {
   'please_select_your_blood_group': 'Please select your blood group',
   'please_select_your_date_of_birth': 'Please select your date of birth',
   'please_select_your_gender': 'Please select your gender',
+  'verify_phone_to_finish_google': 'Verify your phone number to finish signing up with Google.',
+  'enter_phone_to_get_started': 'Enter your phone number to get started',
   'points': 'Points',
   'popular': 'Popular',
   'post': 'Post',
