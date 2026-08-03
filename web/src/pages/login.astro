@@ -142,14 +142,33 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
             <div class="space-y-3">
               <div>
                 <label class="block text-xs font-bold text-gray-600 mb-1.5"
-                  data-ta="பெயர் (தமிழில்)" data-en="Name in Tamil" data-ml="പേര് (തമിഴ്)" data-hi="नाम (तमिल में)">Name in Tamil</label>
-                <input id="reg-name-ta" type="text" placeholder="உதா: வருண் குமார்"
+                  data-ta="முழு பெயர்" data-en="Full name" data-ml="പൂർണ്ണ നാമം" data-hi="पूरा नाम">Full name</label>
+                <input id="reg-name" type="text" placeholder="உதா: வருண் குமார் / e.g. Varun Kumar"
                   class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 mb-1.5"
+                    data-ta="பிறந்த தேதி" data-en="Date of birth" data-ml="ജനന തീയതി" data-hi="जन्म तिथि">Date of birth</label>
+                  <input id="reg-dob" type="date"
+                    class="w-full px-3 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 mb-1.5"
+                    data-ta="பாலினம்" data-en="Gender" data-ml="ലിംഗം" data-hi="लिंग">Gender</label>
+                  <select id="reg-gender"
+                    class="w-full px-3 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all">
+                    <option value="">—</option>
+                    <option value="MALE">ஆண் / Male</option>
+                    <option value="FEMALE">பெண் / Female</option>
+                    <option value="OTHER">மற்றவை / Other</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label class="block text-xs font-bold text-gray-600 mb-1.5"
-                  data-ta="பெயர் (ஆங்கிலத்தில்)" data-en="Name in English" data-ml="പേര് (ഇംഗ്ലീഷ്)" data-hi="नाम (अंग्रेजी में)">Name in English</label>
-                <input id="reg-name-en" type="text" placeholder="e.g. Varun Kumar"
+                  data-ta="மின்னஞ்சல் (விருப்பம்)" data-en="Email (optional)" data-ml="ഇമെയിൽ (ഐച്ഛികം)" data-hi="ईमेल (वैकल्पिक)">Email (optional)</label>
+                <input id="reg-email" type="email" placeholder="you@example.com"
                   class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F5132]/25 focus:border-[#0F5132] bg-gray-50 transition-all" />
               </div>
               <div>
@@ -276,6 +295,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   // ── OTP flow ───────────────────────────────────────────────────────────
   let _verificationId = '';
   let _phoneForRegister = '';
+  let _registrationToken = '';
 
   window.sendOtp = async function () {
     const raw = document.getElementById('phone-input').value.trim().replace(/\s/g, '');
@@ -314,12 +334,20 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
         body: JSON.stringify({ verification_id: _verificationId, otp_code: otp }),
       });
       const data = await res.json();
-      if (res.status === 404 && data.detail?.toLowerCase().includes('register')) {
-        _phoneForRegister = document.getElementById('otp-phone-display').textContent.trim();
+      // New user: the backend verifies the OTP and returns 200 with a
+      // registration_token (OTPVerifySuccess) — no account yet. (Older builds
+      // returned 404 with a "register" detail; keep that as a fallback.) Either
+      // way, collect the full profile in ONE step here so there's no second
+      // "complete profile" screen afterward.
+      const isNew = !!data.registration_token ||
+        (res.status === 404 && data.detail?.toLowerCase().includes('register'));
+      if (isNew) {
+        _registrationToken = data.registration_token || '';
+        _phoneForRegister = (data.phone_number || document.getElementById('otp-phone-display').textContent).trim();
         document.getElementById('step-otp').classList.add('hidden');
         document.getElementById('step-register').classList.remove('hidden');
         document.getElementById('login-error').classList.add('hidden');
-        document.getElementById('reg-name-en').focus();
+        document.getElementById('reg-name').focus();
         return;
       }
       if (!res.ok) throw new Error(data.detail || 'OTP verification failed');
@@ -332,11 +360,14 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   };
 
   window.registerUser = async function () {
-    const nameTa = document.getElementById('reg-name-ta').value.trim();
-    const nameEn = document.getElementById('reg-name-en').value.trim();
+    const name = document.getElementById('reg-name').value.trim();
+    const dob = document.getElementById('reg-dob').value;          // yyyy-mm-dd
+    const gender = document.getElementById('reg-gender').value;
+    const email = document.getElementById('reg-email').value.trim();
     const role = document.getElementById('reg-role').value;
-    if (!nameEn) { showError('Please enter your name in English.'); return; }
-    if (!nameTa) { showError('Please enter your name in Tamil.'); return; }
+    if (!name) { showError('Please enter your name.'); return; }
+    if (!dob) { showError('Please enter your date of birth.'); return; }
+    if (!gender) { showError('Please select your gender.'); return; }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
@@ -345,14 +376,20 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
         body: JSON.stringify({
           organization_id: DEFAULT_ORG_ID,
           phone_number: _phoneForRegister,
+          registration_token: _registrationToken,
           role,
-          full_name_ta: nameTa,
-          full_name_en: nameEn,
+          // One name field, stored to both language columns server-side.
+          full_name_en: name,
+          date_of_birth: dob,
+          gender,
+          ...(email ? { email } : {}),
           preferred_language: localStorage.getItem('fyc_lang') || 'ta',
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Registration failed');
+      // Profile is now complete (name + DOB + gender + phone) — no bounce to
+      // /complete-profile.
       onAuthSuccess(data);
     } catch (e) {
       showError(e.message);
@@ -364,6 +401,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
   window.resetToPhone = function () {
     _verificationId = '';
     _phoneForRegister = '';
+    _registrationToken = '';
     ['step-otp', 'step-register'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById('step-phone').classList.remove('hidden');
     document.getElementById('login-error').classList.add('hidden');
