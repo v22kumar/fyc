@@ -214,6 +214,24 @@ const ORG_ID = DEFAULT_ORG_ID;
     errorEl.classList.add('hidden');
   }
 
+  // Persist the session (like the main login page) so the user is actually
+  // signed in everywhere — the header, gates and other pages all read fyc_token.
+  function persistAuth(data) {
+    if (data.access_token) localStorage.setItem('fyc_token', data.access_token);
+    if (data.user) localStorage.setItem('fyc_user', JSON.stringify(data.user));
+    if (data.user && data.user.role) localStorage.setItem('fyc_role', data.user.role);
+    authToken = data.access_token || authToken;
+  }
+
+  // Already signed in? Skip the phone/OTP step and go straight to the skill form.
+  authToken = localStorage.getItem('fyc_token') || '';
+  if (authToken) {
+    try {
+      userPhone = (JSON.parse(localStorage.getItem('fyc_user') || '{}').phone_number) || '';
+    } catch (_) {}
+    proceedToForm();
+  }
+
   // ── OTP Request ────────────────────────────────────────────────────────────
   document.getElementById('send-otp-btn').addEventListener('click', async () => {
     hideError();
@@ -281,7 +299,7 @@ const ORG_ID = DEFAULT_ORG_ID;
     spinner.classList.remove('hidden');
 
     try {
-      // 1. Verify OTP
+      // Verify OTP
       const res = await fetch(`${API_BASE}/api/v1/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -290,17 +308,19 @@ const ORG_ID = DEFAULT_ORG_ID;
           otp_code: code
         })
       });
+      const data = await res.json().catch(() => ({}));
 
-      if (res.status === 404) {
-        // User not registered — register them now
-        await registerNewUser();
-      } else if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'OTP verification failed');
-      } else {
-        const data = await res.json();
-        authToken = data.access_token;
+      if (res.ok && data.access_token) {
+        // Existing member — persist the session (so they're logged in app-wide)
+        // and continue to the skill form.
+        persistAuth(data);
         proceedToForm();
+      } else if ((res.ok && data.registration_token) || res.status === 404) {
+        // New user — finish a full signup (name / DOB / gender) on the main
+        // login page, then come back here already signed in.
+        location.href = '/login?next=' + encodeURIComponent('/directory/register');
+      } else {
+        throw new Error(data.detail || 'OTP verification failed');
       }
     } catch (e) {
       showError(e.message);
@@ -308,31 +328,6 @@ const ORG_ID = DEFAULT_ORG_ID;
       spinner.classList.add('hidden');
     }
   });
-
-  async function registerNewUser() {
-    const name = document.getElementById('auth-name').value.trim();
-    const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        organization_id: ORG_ID,
-        phone_number: userPhone,
-        role: 'PUBLIC_CITIZEN',
-        full_name_ta: name,
-        full_name_en: name,
-        preferred_language: localStorage.getItem('fyc_lang') || 'ta'
-      })
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Registration failed');
-    }
-
-    const data = await res.json();
-    authToken = data.access_token;
-    proceedToForm();
-  }
 
   function proceedToForm() {
     document.getElementById('step-auth').classList.add('hidden');
