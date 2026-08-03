@@ -12,6 +12,13 @@ class BloodDonorModel extends BloodDonorEntity {
     super.fullNameTa,
     super.phoneNumber,
     super.isImported,
+    super.tier,
+    super.isEligible,
+    super.eligibleOn,
+    super.distanceKm,
+    super.hasLocation,
+    super.approxLat,
+    super.approxLng,
   });
 
   factory BloodDonorModel.fromJson(Map<String, dynamic> json) =>
@@ -26,5 +33,12 @@ class BloodDonorModel extends BloodDonorEntity {
         fullNameTa: json['full_name_ta'] as String?,
         phoneNumber: json['phone_number'] as String?,
         isImported: json['is_imported'] as bool? ?? false,
+        tier: json['tier'] as String? ?? 'fyc',
+        isEligible: json['is_eligible'] as bool? ?? true,
+        eligibleOn: json['eligible_on'] as String?,
+        distanceKm: (json['distance_km'] as num?)?.toDouble(),
+        hasLocation: json['has_location'] as bool? ?? false,
+        approxLat: (json['approx_latitude'] as num?)?.toDouble(),
+        approxLng: (json['approx_longitude'] as num?)?.toDouble(),
       );
 }

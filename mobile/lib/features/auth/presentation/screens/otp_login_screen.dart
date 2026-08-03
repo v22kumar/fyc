@@ -38,9 +38,14 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
   final _passwordCtrl = TextEditingController();
   final _pwdFormKey = GlobalKey<FormState>();
 
-  final List<TextEditingController> _otpCtrls =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocus = List.generate(6, (_) => FocusNode());
+  // Single underlying OTP field (Pinput-style) so paste + SMS autofill deliver
+  // the whole 6-digit code at once; six visual boxes are painted over it.
+  final TextEditingController _otpCtrl = TextEditingController();
+  final FocusNode _otpFocus = FocusNode();
+
+  // Set when a brand-new Google sign-up is finishing via phone verification —
+  // shows a banner so the user knows why they're being asked for a phone.
+  String? _googleFinishName;
 
   late AnimationController _aurora;
 
@@ -58,18 +63,19 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
     _phoneCtrl.dispose();
     _usernameCtrl.dispose();
     _passwordCtrl.dispose();
-    for (final c in _otpCtrls) c.dispose();
-    for (final f in _otpFocus) f.dispose();
+    _otpCtrl.dispose();
+    _otpFocus.dispose();
     _aurora.dispose();
     super.dispose();
   }
 
-  String get _otpCode => _otpCtrls.map((c) => c.text).join();
+  String get _otpCode => _otpCtrl.text;
 
-  void _onOtpDigit(int index, String value) {
-    if (value.isNotEmpty && index < 5) _otpFocus[index + 1].requestFocus();
-    if (value.isEmpty && index > 0) _otpFocus[index - 1].requestFocus();
-    if (_otpCode.length == 6) _verifyOtp();
+  void _onOtpChanged(String value) {
+    // Auto-submit as soon as the full code is present (typed, pasted, or
+    // delivered by SMS autofill).
+    setState(() {});
+    if (value.length == 6) _verifyOtp();
   }
 
   void _sendOtp() {
@@ -116,6 +122,78 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
     );
   }
 
+  /// Six visual boxes painted over a single transparent field, so a pasted code
+  /// or an SMS-autofilled code (AutofillHints.oneTimeCode) fills all six at once
+  /// — while still looking like separate OTP boxes. Tapping anywhere focuses it.
+  Widget _buildOtpField() {
+    final code = _otpCtrl.text;
+    return AutofillGroup(
+      child: GestureDetector(
+        onTap: () => _otpFocus.requestFocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(6, (i) {
+                final filled = i < code.length;
+                final isCurrent = i == code.length;
+                return Container(
+                  width: 44,
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: (isCurrent && _otpFocus.hasFocus)
+                          ? AppColors.primary
+                          : AppColors.border,
+                      width: (isCurrent && _otpFocus.hasFocus) ? 2 : 1,
+                    ),
+                  ),
+                  child: Text(
+                    filled ? code[i] : '',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                );
+              }),
+            ),
+            // Transparent capture field on top of the boxes.
+            Positioned.fill(
+              child: TextField(
+                controller: _otpCtrl,
+                focusNode: _otpFocus,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                showCursor: false,
+                enableInteractiveSelection: false,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(6),
+                ],
+                style: const TextStyle(color: Colors.transparent, height: 0.01),
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: _onOtpChanged,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -128,6 +206,15 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
             _otpSent = true;
             _verificationId = state.verificationId;
             _phoneNumber = state.phoneNumber;
+          });
+        } else if (state is AuthGoogleNeedsPhone) {
+          // New Google account: drop the user on the phone step to verify a
+          // number; the Google name/email is carried through to registration.
+          setState(() {
+            _isPasswordLogin = false;
+            _otpSent = false;
+            _otpCtrl.clear();
+            _googleFinishName = state.fullName.isNotEmpty ? state.fullName : state.email;
           });
         } else if (state is AuthAuthenticated) {
           context.go(ApiConstants.useAppShellV2 ? '/app' : '/home');
@@ -170,7 +257,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                   icon: Icon(Icons.arrow_back, color: AppColors.background),
                   onPressed: () => setState(() {
                     _otpSent = false;
-                    for (final c in _otpCtrls) c.clear();
+                    _otpCtrl.clear();
                   }),
                 )
               : null,
@@ -413,6 +500,33 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
 
                                   // ── Phone step ────────────────────
                                   ] else if (!_otpSent) ...[
+                                    if (_googleFinishName != null) ...[
+                                      Container(
+                                        padding: EdgeInsets.all(12),
+                                        margin: EdgeInsets.only(bottom: 16),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primarySurface,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: AppColors.primary),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.verified_user_rounded,
+                                                color: AppColors.primary, size: 20),
+                                            SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                trId('verify_phone_to_finish_google'),
+                                                style: TextStyle(
+                                                    color: AppColors.textPrimary,
+                                                    fontSize: 12.5,
+                                                    fontWeight: FontWeight.w600),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                     Form(
                                       key: _formKey,
                                       child: Column(
@@ -458,43 +572,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
 
                                   // ── OTP step ──────────────────────
                                   ] else ...[
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: List.generate(6, (i) {
-                                        return SizedBox(
-                                          width: 44,
-                                          height: 54,
-                                          child: TextFormField(
-                                            controller: _otpCtrls[i],
-                                            focusNode: _otpFocus[i],
-                                            textAlign: TextAlign.center,
-                                            keyboardType:
-                                                TextInputType.number,
-                                            maxLength: 1,
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly,
-                                            ],
-                                            decoration: InputDecoration(
-                                              counterText: '',
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              contentPadding:
-                                                  EdgeInsets.zero,
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            onChanged: (v) =>
-                                                _onOtpDigit(i, v),
-                                          ),
-                                        );
-                                      }),
-                                    ),
+                                    _buildOtpField(),
                                     SizedBox(height: 24),
                                     ElevatedButton(
                                       onPressed:
@@ -574,14 +652,10 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                               height: 18,
                                               child: CircularProgressIndicator(strokeWidth: 2),
                                             )
-                                          : Image.network(
-                                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                                              height: 18,
-                                              errorBuilder: (_, __, ___) =>
-                                                  Icon(
-                                                      Icons.g_mobiledata,
-                                                      size: 18),
-                                            ),
+                                          // Bundled icon, not a network image —
+                                          // village connections are slow/offline
+                                          // and a network logo often failed to load.
+                                          : Icon(Icons.g_mobiledata, size: 24, color: AppColors.primary),
                                       label: Text(trId('continue_with_google')),
                                       style: OutlinedButton.styleFrom(
                                         minimumSize:
@@ -596,7 +670,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          "Enter your phone number to get started",
+                                          trId('enter_phone_to_get_started'),
                                           style: TextStyle(
                                               color: AppColors.textSecondary,
                                               fontSize: 13),

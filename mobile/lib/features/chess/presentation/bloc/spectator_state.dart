@@ -25,6 +25,7 @@ class SpectatorWatching extends SpectatorState {
   final int? blackTimeMs;
   final String timeControl;
   final int spectatorCount;
+  final bool reconnecting; // the spectate feed dropped; client is reconnecting
 
   const SpectatorWatching({
     required this.engine,
@@ -37,6 +38,7 @@ class SpectatorWatching extends SpectatorState {
     this.blackTimeMs,
     required this.timeControl,
     required this.spectatorCount,
+    this.reconnecting = false,
   });
 
   bool get isTimed => timeControl != 'untimed' && whiteTimeMs != null;
@@ -50,6 +52,7 @@ class SpectatorWatching extends SpectatorState {
     int? blackTimeMs,
     String? timeControl,
     int? spectatorCount,
+    bool? reconnecting,
     bool clearWhiteTime = false,
     bool clearBlackTime = false,
   }) {
@@ -64,6 +67,7 @@ class SpectatorWatching extends SpectatorState {
       blackTimeMs: clearBlackTime ? null : (blackTimeMs ?? this.blackTimeMs),
       timeControl: timeControl ?? this.timeControl,
       spectatorCount: spectatorCount ?? this.spectatorCount,
+      reconnecting: reconnecting ?? this.reconnecting,
     );
   }
 
@@ -75,6 +79,7 @@ class SpectatorWatching extends SpectatorState {
         whiteTimeMs,
         blackTimeMs,
         spectatorCount,
+        reconnecting,
       ];
 }
 

@@ -97,11 +97,12 @@ class OnlineGamePage extends StatelessWidget {
           if (state is OnlineGameOver) _showResult(context, state);
         },
         builder: (context, state) {
-          if (state is OnlineGameConnecting) return _buildConnecting();
+          if (state is OnlineGameConnecting) return _buildConnecting(state.reconnecting);
           if (state is OnlineGameWaiting) return _buildWaiting(state);
           if (state is OnlineGameInProgress) return _buildGame(context, state);
           if (state is OnlineGameOver) return _buildOver(context, state);
-          return _buildConnecting();
+          if (state is OnlineGameError) return _buildError(context, state);
+          return _buildConnecting(false);
         },
       ),
     );
@@ -109,16 +110,57 @@ class OnlineGamePage extends StatelessWidget {
 
   // ── States ─────────────────────────────────────────────────────────────────
 
-  Widget _buildConnecting() {
+  Widget _buildConnecting(bool reconnecting) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircularProgressIndicator(color: _kGreen),
           SizedBox(height: 16),
-          Text(trId('connecting'),
+          Text(reconnecting ? trId('reconnecting') : trId('connecting'),
               style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildError(BuildContext context, OnlineGameError state) {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.wifi_off_rounded, color: Color(0xFF8B8682), size: 48),
+              SizedBox(height: 16),
+              Text(
+                state.message,
+                style: TextStyle(
+                    color: AppColors.background,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: AppColors.background,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text(trId('back_to_chess'),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -192,7 +234,9 @@ class OnlineGamePage extends StatelessWidget {
                       state: state.boardState.board,
                       playState: state.boardState.state,
                       moves: state.boardState.moves,
-                      onMove: (state.isMyTurn && !state.moveInFlight)
+                      onMove: (state.isMyTurn &&
+                              !state.moveInFlight &&
+                              !state.reconnecting)
                           ? (move) => context
                               .read<OnlineGameBloc>()
                               .add(SendMove(move))
@@ -237,8 +281,42 @@ class OnlineGamePage extends StatelessWidget {
             ],
           ),
 
+          // Our-own-connection-lost banner (we are auto-reconnecting)
+          if (state.reconnecting)
+            Positioned(
+              top: 80,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1B18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFB45309)),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Color(0xFFB45309)),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        trId('reconnecting'),
+                        style: TextStyle(
+                            color: AppColors.background, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Opponent disconnected banner
-          if (state.opponentDisconnected)
+          if (state.opponentDisconnected && !state.reconnecting)
             Positioned(
               top: 80,
               left: 16,

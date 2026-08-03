@@ -151,25 +151,47 @@ class SpectatorPage extends StatelessWidget {
             timeMs: state.isTimed ? (state.whiteTimeMs ?? 0) : null,
           ),
 
-          // Spectating label bar
+          // Spectating label bar (or a "reconnecting…" indicator when the feed
+          // has dropped — the board stays visible but is flagged as stale).
           Container(
             height: 40,
             color: const Color(0xFF1E1B18),
             alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
-                SizedBox(width: 6),
-                Text(
-                  'Spectating · ${state.spectatorCount} watching',
-                  style: TextStyle(
-                    color: Color(0xFF8B8682),
-                    fontSize: 12,
+            child: state.reconnecting
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 13,
+                        height: 13,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Color(0xFFB45309)),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        trId('reconnecting'),
+                        style: TextStyle(
+                          color: Color(0xFFB45309),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Spectating · ${state.spectatorCount} watching',
+                        style: TextStyle(
+                          color: Color(0xFF8B8682),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

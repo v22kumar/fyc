@@ -35,6 +35,7 @@ abstract class AuthRepository {
     required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? gender,
     String? bloodGroup,
     required String role,
     required String fullNameTa,

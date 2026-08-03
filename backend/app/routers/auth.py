@@ -58,13 +58,30 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
     if settings.TWILIO_VERIFY_SID:
-        # Twilio Verify manages the OTP — we only track phone+org
-        send_verify_otp(payload.phone_number)
+        # Twilio Verify manages the OTP — we only track phone+org. If the send
+        # actually fails (bad/expired credentials, unverified trial number,
+        # Twilio outage), surface it instead of returning a fake success — a
+        # silent failure looked to users like "OTP is down" with no signal, and
+        # left the verification_id pointing at an SMS that never arrived.
+        if not send_verify_otp(payload.phone_number):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Couldn't send the OTP right now. Please try again shortly.",
+            )
         otp_store[verification_id] = (payload.phone_number, None, payload.organization_id, expires_at)
     else:
         otp_code = _generate_otp()
         otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
-        deliver_otp(payload.phone_number, otp_code, email=payload.email)
+        results = deliver_otp(payload.phone_number, otp_code, email=payload.email)
+        # No Twilio Verify AND no other channel worked → nothing was delivered.
+        # Don't pretend it was sent (the dev log-fallback path is only acceptable
+        # when a bypass code is configured, i.e. dev/staging).
+        if not any(results.values()) and not settings.OTP_BYPASS_CODE:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="OTP delivery is not configured on the server. "
+                       "Set TWILIO_VERIFY_SID (or SMTP) as a secret.",
+            )
 
     return OTPResponse(
         message="OTP sent successfully",
@@ -186,20 +203,20 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
             detail="Phone number already registered under this organization",
         )
 
-    # Email is now mandatory (validated in the schema). Reject a duplicate
-    # within this org so two members can't claim the same contact email. Not a
-    # DB-level unique constraint (existing accounts have NULL/duplicate emails,
-    # so a migration would fail) — an app-level guard for new registrations.
-    email = payload.email  # already normalised (trimmed + lowercased) by the schema
-    email_taken = db.query(User).filter(
-        User.organization_id == payload.organization_id,
-        User.email == email,
-    ).first()
-    if email_taken:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered under this organization",
-        )
+    # Email is OPTIONAL now. When one IS supplied, reject a duplicate within this
+    # org so two members can't claim the same contact email (app-level guard —
+    # not a DB unique constraint, since legacy rows have NULL/duplicate emails).
+    email = payload.email  # normalised (trimmed + lowercased) or None
+    if email:
+        email_taken = db.query(User).filter(
+            User.organization_id == payload.organization_id,
+            User.email == email,
+        ).first()
+        if email_taken:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered under this organization",
+            )
 
     # CLUB_MEMBER registrations are held in a PENDING approval queue.
     # The user account is created with PUBLIC_CITIZEN so they can use
@@ -219,9 +236,12 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
 
     profile = UserProfile(
         user_id=user.id,
-        full_name_ta=payload.full_name_ta,
+        # Single-name UX: the client sends one name; store it to both the English
+        # and Tamil columns when only one is provided, so display works either way.
+        full_name_ta=payload.full_name_ta or payload.full_name_en,
         full_name_en=payload.full_name_en,
         date_of_birth=payload.date_of_birth,
+        gender=payload.gender,
         blood_group=payload.blood_group,
         last_login_at=datetime.now(timezone.utc),
     )

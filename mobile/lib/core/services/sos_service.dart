@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,38 +60,104 @@ class SosService {
   // ── Shake to trigger ─────────────────────────────────────────────────────
   static const _shakeKey = 'sos_shake_to_trigger';
 
+  /// Live shake-to-trigger state. The app shell listens to this so toggling the
+  /// setting starts/stops the shake detector immediately, without an app
+  /// restart. Seeded from storage by [getShakeToTrigger]; updated by
+  /// [setShakeToTrigger].
+  static final ValueNotifier<bool> shakeToTriggerListenable =
+      ValueNotifier<bool>(true);
+
   static Future<bool> getShakeToTrigger() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_shakeKey) ?? true;
+    final on = prefs.getBool(_shakeKey) ?? true;
+    shakeToTriggerListenable.value = on;
+    return on;
   }
 
   static Future<void> setShakeToTrigger(bool on) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_shakeKey, on);
+    shakeToTriggerListenable.value = on;
   }
 
-  /// A burst of heavy haptic pulses layered with the device's built-in system
-  /// alert tone (SystemSoundType.alert — no bundled audio asset required).
-  /// No-op in Silent mode.
-  ///
-  /// This is NOT a bundled siren sound file: the repo has no licensed audio
-  /// asset to ship, and one shouldn't be fabricated. SystemSound.play gives a
-  /// real, audible component (not just vibration) using only what Flutter
-  /// already provides. Swapping in a proper siren asset (via a real audio
-  /// player) remains a genuine upgrade if/when a licensed sound file is
-  /// available — see the audioplayers-based siren note in this file's history
-  /// if revisiting this.
-  static Future<void> triggerSiren() async {
+  // ── Loud siren ──────────────────────────────────────────────────────────────
+  // A real, continuously-looping alarm — NOT a couple of quiet system beeps.
+  // Plays a bundled two-tone siren asset through the device ALARM channel at
+  // full volume (so it's loud even when media/ring volume is low), layered with
+  // a heavy-haptic pulse. It keeps blaring until stopSiren() is called, which is
+  // what an emergency alarm needs (attract attention / deter a threat).
+  static AudioPlayer? _sirenPlayer;
+  static Timer? _hapticTimer;
+  static bool _sirenOn = false;
+
+  static bool get isSirenPlaying => _sirenOn;
+
+  /// Start the looping siren + haptic pulses. Idempotent. No-op in Silent mode.
+  /// Falls back to the built-in system alert tone if the audio player can't
+  /// start (e.g. widget tests / unsupported build), so there is always *some*
+  /// audible signal.
+  static Future<void> startSiren() async {
+    if (_sirenOn) return;
     if (!await getLoudSiren()) return;
-    for (var i = 0; i < 6; i++) {
+    _sirenOn = true;
+
+    // Heavy-haptic pulse train — fires regardless of whether audio starts.
+    _hapticTimer?.cancel();
+    _hapticTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
+      if (!_sirenOn) return;
       HapticFeedback.heavyImpact();
+    });
+
+    try {
+      final player = _sirenPlayer ??= AudioPlayer();
+      await player.setReleaseMode(ReleaseMode.loop);
+      // Route through the ALARM usage on Android so it plays loudly even on a
+      // muted ringer; playback category on iOS so it sounds with the app active.
       try {
-        await SystemSound.play(SystemSoundType.alert);
+        await player.setAudioContext(AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.sonification,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gain,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: const {AVAudioSessionOptions.mixWithOthers},
+          ),
+        ));
       } catch (_) {
-        // Unsupported platform/build (e.g. widget tests) — haptics still fire.
+        // Older/newer plugin API mismatch must not stop playback entirely.
       }
-      await Future.delayed(const Duration(milliseconds: 350));
+      await player.setVolume(1.0);
+      await player.play(AssetSource('audio/sos_siren.wav'), volume: 1.0);
+    } catch (_) {
+      // Audio unavailable — degrade to the system alert tone loop so the alarm
+      // is never completely silent.
+      _fallbackBeep();
     }
+  }
+
+  /// Stop the siren + haptics.
+  static Future<void> stopSiren() async {
+    _sirenOn = false;
+    _hapticTimer?.cancel();
+    _hapticTimer = null;
+    try {
+      await _sirenPlayer?.stop();
+    } catch (_) {}
+  }
+
+  static void _fallbackBeep() {
+    // Keep beeping via the system alert tone while the siren is "on".
+    Timer.periodic(const Duration(milliseconds: 500), (t) {
+      if (!_sirenOn) {
+        t.cancel();
+        return;
+      }
+      SystemSound.play(SystemSoundType.alert).catchError((_) {});
+    });
   }
 
   /// Broadcast an SOS to fellow FYC members in the org (Notify Nearby Members).

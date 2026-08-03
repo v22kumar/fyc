@@ -403,6 +403,15 @@ async def lifespan(app: FastAPI):
         except Exception as _cbe:
             logger.warning(f"[schema-repair] cricket_balls rebuild skipped: {_cbe}")
 
+        # Retrofit FK constraints added to the models after the prod tables were
+        # first created (user_profiles.geography_id, opportunities/opportunity_
+        # applications). Best-effort + idempotent; Postgres-only.
+        try:
+            from app.db_repairs import add_missing_foreign_keys_postgres
+            add_missing_foreign_keys_postgres(engine)
+        except Exception as _fke:
+            logger.warning(f"[schema-repair] FK retrofit skipped: {_fke}")
+
         # Backfill: events created before the registration_enabled column
         # existed carry NULL, which the register gate and the app both read as
         # "registration closed" — hiding the Register button on legacy events.
@@ -731,7 +740,7 @@ from app.routers import (
     users, auth, directory,
     news, announcements, gallery,
     events, issues, club_requests,
-    opportunities, community, blood_donors,
+    opportunities, community, blood_donors, blood_requests,
     geography, green_fyc, instagram, sports, chess,
     search, follows, comments, attachments, system, share, theme
 )
@@ -741,6 +750,7 @@ app.include_router(system.router, prefix="/api/v1")
 app.include_router(organizations.router, prefix="/api/v1")
 app.include_router(geography.router, prefix="/api/v1")
 app.include_router(blood_donors.router, prefix="/api/v1")
+app.include_router(blood_requests.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(share.router, prefix="/api/v1")

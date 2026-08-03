@@ -52,6 +52,8 @@ class _AppShellV2State extends State<AppShellV2> {
   void initState() {
     super.initState();
     _initShake();
+    // React live to the Safety-settings toggle — no app restart needed.
+    SosService.shakeToTriggerListenable.addListener(_applyShakePref);
   }
 
   // Shake-to-trigger opens the same Safety Center sheet as the SOS button —
@@ -61,17 +63,30 @@ class _AppShellV2State extends State<AppShellV2> {
   // never crash the shell, only silently skip the feature.
   Future<void> _initShake() async {
     try {
-      final enabled = await SosService.getShakeToTrigger();
-      if (!mounted || !enabled) return;
-      _shake = ShakeDetector(onShake: () {
-        if (mounted) showSosSheet(context);
-      });
-      _shake!.start();
+      // Seed the live notifier from storage, then apply. (getShakeToTrigger
+      // updates the notifier; call apply directly since the value may be
+      // unchanged from its default and so wouldn't notify.)
+      await SosService.getShakeToTrigger();
+      _applyShakePref();
+    } catch (_) {}
+  }
+
+  void _applyShakePref() {
+    try {
+      if (SosService.shakeToTriggerListenable.value) {
+        _shake ??= ShakeDetector(onShake: () {
+          if (mounted) showSosSheet(context);
+        });
+        _shake!.start();
+      } else {
+        _shake?.stop();
+      }
     } catch (_) {}
   }
 
   @override
   void dispose() {
+    SosService.shakeToTriggerListenable.removeListener(_applyShakePref);
     _shake?.stop();
     super.dispose();
   }

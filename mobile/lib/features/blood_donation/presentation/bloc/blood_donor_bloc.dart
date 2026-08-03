@@ -53,6 +53,10 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
       bloodGroup: event.bloodGroup,
       isAvailable: event.isAvailable,
       lastDonationDate: event.lastDonationDate,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      locationConsent: event.locationConsent,
+      notifyOptIn: event.notifyOptIn,
     );
     result.fold(
       (f) => emit(BloodDonorFailure(f.message)),

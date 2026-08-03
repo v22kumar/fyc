@@ -52,7 +52,11 @@ class UserProfile(Base):
     full_name_en = Column(String(150), nullable=False)
     address_line_ta = Column(String(255), nullable=True)
     address_line_en = Column(String(255), nullable=True)
-    geography_id = Column(GUID(), nullable=True)  # Links to geographic hierarchy node
+    geography_id = Column(
+        GUID(),
+        ForeignKey("geographic_nodes.id", ondelete="SET NULL"),
+        nullable=True,
+    )  # Links to geographic hierarchy node
     gender = Column(String(20), nullable=True)  # 'MALE', 'FEMALE', or 'OTHER'
     blood_group = Column(String(10), nullable=True)
     date_of_birth = Column(Date, nullable=True)

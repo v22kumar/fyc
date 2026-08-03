@@ -15,6 +15,10 @@ abstract class BloodDonorRepository {
     bool isAvailable = true,
     String? geographyId,
     DateTime? lastDonationDate,
+    double? latitude,
+    double? longitude,
+    bool locationConsent = false,
+    bool notifyOptIn = true,
   });
 
   Future<Either<Failure, Map<String, String>>> requestContact(String donorId);

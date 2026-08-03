@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Date, ForeignKey, Index
+from sqlalchemy import Column, String, Boolean, Date, Float, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -17,6 +17,15 @@ class BloodDonor(Base, TimestampMixin, TenantModelMixin):
     geography_id = Column(GUID(), ForeignKey("geographic_nodes.id", ondelete="SET NULL"), nullable=True)
     is_available = Column(Boolean(), default=True)
     last_donation_date = Column(Date, nullable=True)
+
+    # Opt-in base location (captured ONCE at donor sign-up — a home/base point,
+    # not continuous tracking) so emergencies can rank donors by real distance.
+    # Only used when location_consent is true; nullable for F2S imports and
+    # donors who decline. notify_opt_in gates emergency push alerts.
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    location_consent = Column(Boolean(), default=False)
+    notify_opt_in = Column(Boolean(), default=True)
 
     user = relationship("User", foreign_keys=[user_id])
     geography = relationship("GeographicNode", foreign_keys=[geography_id])

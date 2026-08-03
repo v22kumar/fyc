@@ -116,6 +116,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       registrationToken: event.registrationToken,
       email: event.email,
       dateOfBirth: event.dateOfBirth,
+      gender: event.gender,
       bloodGroup: event.bloodGroup,
       role: event.role,
       fullNameTa: event.fullNameTa,
@@ -152,10 +153,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             emit(AuthAuthenticated(user));
             _registerFcmToken();
           case GoogleAuthNeedsProfile(:final email, :final fullName):
-            // New Google member — must verify phone first!
+            // New Google member — carry the Google name/email and route them to
+            // phone verification (the account is created only after OTP), rather
+            // than dead-ending in a snackbar.
             _pendingEmail = email;
             _pendingFullName = fullName;
-            emit(const AuthFailureState("Please verify your phone number to complete Google Sign-In."));
+            emit(AuthGoogleNeedsPhone(email: email, fullName: fullName));
         }
       },
     );

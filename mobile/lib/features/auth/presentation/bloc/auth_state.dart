@@ -48,6 +48,19 @@ class AuthNeedsRegistration extends AuthState {
   List<Object?> get props => [organizationId, phoneNumber, registrationToken, email, fullName];
 }
 
+/// A brand-new Google account was verified, but we still need a verified phone
+/// before creating the account (industry-standard: Google gives identity + name
+/// + email; a phone is collected and OTP-verified to finish). The login screen
+/// switches to the phone step with the Google name/email carried through.
+class AuthGoogleNeedsPhone extends AuthState {
+  final String email;
+  final String fullName;
+  const AuthGoogleNeedsPhone({required this.email, required this.fullName});
+
+  @override
+  List<Object?> get props => [email, fullName];
+}
+
 class AuthAuthenticated extends AuthState {
   final UserEntity user;
   const AuthAuthenticated(this.user);

@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Boolean, Enum as SAEnum
+from sqlalchemy import Column, String, Boolean, ForeignKey, Enum as SAEnum
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
 
@@ -40,15 +40,22 @@ class Opportunity(Base, TimestampMixin, TenantModelMixin):
     # public list, only via the authenticated detail endpoint.
     contact_phone = Column(String(15), nullable=True)
     # The member who posted this (marketplace authorship). Null for legacy rows.
-    posted_by = Column(GUID(), nullable=True)
+    posted_by = Column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     is_active = Column(Boolean, nullable=False, default=True)
 
 
-class OpportunityApplication(Base, TimestampMixin):
+class OpportunityApplication(Base, TimestampMixin, TenantModelMixin):
     """Records a user's application/enrollment for an opportunity."""
     __tablename__ = "opportunity_applications"
 
+    # TenantModelMixin supplies organization_id (FK organizations, CASCADE) so
+    # these rows sit inside the same enforced tenant isolation as everything else.
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    opportunity_id = Column(GUID(), nullable=False)
-    user_id = Column(GUID(), nullable=False)
-    organization_id = Column(GUID(), nullable=False)
+    opportunity_id = Column(
+        GUID(), ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )

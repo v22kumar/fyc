@@ -172,8 +172,18 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
 
       case 'disconnected':
       case 'connection_error':
-        // Client auto-reconnects; pause the clock to avoid unfair deduction
+        // Client auto-reconnects; pause the clock to avoid unfair deduction and
+        // surface a "Reconnecting…" state so the player knows the board is
+        // temporarily frozen (not that the app hung). Any authoritative message
+        // that arrives on the fresh socket clears it — the reconnect always
+        // replays a full 'state' snapshot, and 'move'/'game_over' clear it too.
         _stopClockTimer();
+        final s = state;
+        if (s is OnlineGameInProgress) {
+          if (!s.reconnecting) emit(s.copyWith(reconnecting: true));
+        } else if (s is OnlineGameConnecting) {
+          if (!s.reconnecting) emit(const OnlineGameConnecting(reconnecting: true));
+        }
 
       // pong and spectator_count are no-ops for the player client
       case 'pong':
@@ -257,6 +267,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       moveSans: newSans,
       isMyTurn: isMyTurn,
       moveInFlight: false,
+      reconnecting: false, // a live move means the socket is healthy again
       whiteTimeMs: newWhiteMs ?? s.whiteTimeMs,
       blackTimeMs: newBlackMs ?? s.blackTimeMs,
     ));

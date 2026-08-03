@@ -37,6 +37,10 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
     bool isAvailable = true,
     String? geographyId,
     DateTime? lastDonationDate,
+    double? latitude,
+    double? longitude,
+    bool locationConsent = false,
+    bool notifyOptIn = true,
   }) async {
     try {
       final donor = await _remote.registerAsDonor(
@@ -44,6 +48,10 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
         isAvailable: isAvailable,
         geographyId: geographyId,
         lastDonationDate: lastDonationDate?.toIso8601String().substring(0, 10),
+        latitude: latitude,
+        longitude: longitude,
+        locationConsent: locationConsent,
+        notifyOptIn: notifyOptIn,
       );
       return Right(donor);
     } on Failure catch (f) {

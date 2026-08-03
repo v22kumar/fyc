@@ -15,18 +15,20 @@ class RegisterUserUseCase {
     required String registrationToken,
     required String email,
     required String dateOfBirth,
+    String? gender,
     String? bloodGroup,
     required String role,
     required String fullNameTa,
     required String fullNameEn,
     required String preferredLanguage,
   }) {
-    if (fullNameTa.trim().isEmpty || fullNameEn.trim().isEmpty) {
+    if (fullNameEn.trim().isEmpty) {
       return Future.value(
-        const Left(ValidationFailure('Name in both Tamil and English is required')),
+        const Left(ValidationFailure('Name is required')),
       );
     }
-    if (!_emailRe.hasMatch(email.trim())) {
+    // Email is optional — only validate the format when one was entered.
+    if (email.trim().isNotEmpty && !_emailRe.hasMatch(email.trim())) {
       return Future.value(
         const Left(ValidationFailure('Enter a valid email address')),
       );
@@ -42,6 +44,7 @@ class RegisterUserUseCase {
       registrationToken: registrationToken,
       email: email.trim(),
       dateOfBirth: dateOfBirth.trim(),
+      gender: gender,
       bloodGroup: bloodGroup,
       role: role,
       fullNameTa: fullNameTa.trim(),

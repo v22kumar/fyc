@@ -36,28 +36,49 @@ class UserRegister(BaseModel):
     organization_id: UUID
     phone_number: str
     registration_token: str = Field(..., description="JWT token proving the phone number was verified via OTP")
-    email: str = Field(..., description="Required — member contact email")
+    # Email is now OPTIONAL — many OTP members don't have one; Google prefills it
+    # when present. A single 'full_name' is enough (the app stores it to both the
+    # Tamil and English name columns), so full_name_ta is optional and defaults to
+    # the English name server-side.
+    email: Optional[str] = Field(None, description="Optional — member contact email")
     date_of_birth: date = Field(..., description="Required — used for age")
+    # Optional at the API for backward compatibility, but the app now collects it
+    # at signup and sends it here so the user isn't bounced to a second "complete
+    # profile" screen just to pick a gender. When absent, the completeness gate
+    # still asks for it later (old behaviour) — so this is non-breaking.
+    gender: Optional[str] = Field(None, pattern="^(MALE|FEMALE|OTHER)$", description="MALE/FEMALE/OTHER")
     blood_group: Optional[str] = Field(None, description="Optional blood group")
     role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$")
-    full_name_ta: str
     full_name_en: str
+    full_name_ta: Optional[str] = None
     preferred_language: Optional[str] = "ta"
 
     @field_validator("email")
     @classmethod
-    def _email_valid(cls, v: str) -> str:
+    def _email_valid(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
         v = v.strip().lower()
+        if not v:
+            return None
         if not _EMAIL_RE.match(v):
             raise ValueError("Enter a valid email address")
         return v
 
-    @field_validator("full_name_ta", "full_name_en")
+    @field_validator("full_name_en")
     @classmethod
     def _name_required(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Name is required")
         return v.strip()
+
+    @field_validator("full_name_ta")
+    @classmethod
+    def _name_ta_clean(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
 
     @field_validator("date_of_birth")
     @classmethod
