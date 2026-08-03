@@ -46,9 +46,16 @@ def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
     return [current.id] + [t.id for t in taluks]
 
 
-def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None) -> BloodDonorPublicOut:
+def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
+                with_approx_location: bool = False) -> BloodDonorPublicOut:
     """Build the public donor view with the derived tier / eligibility fields."""
     imported = bool(user and getattr(user, "source", None) == "F2S_IMPORT")
+    approx_lat = approx_lng = None
+    if with_approx_location and getattr(donor, "latitude", None) is not None \
+            and getattr(donor, "longitude", None) is not None:
+        # Round to ~1.1 km so pins cluster by area without pinpointing a home.
+        approx_lat = round(donor.latitude, 2)
+        approx_lng = round(donor.longitude, 2)
     return BloodDonorPublicOut(
         id=donor.id,
         blood_group=donor.blood_group,
@@ -68,6 +75,8 @@ def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None) 
             and getattr(donor, "longitude", None) is not None
             and getattr(donor, "location_consent", False)
         ),
+        approx_latitude=approx_lat,
+        approx_longitude=approx_lng,
     )
 
 
@@ -190,7 +199,10 @@ def nearby_donors(
         scored.append((0 if exact else 1, dist, donor, profile, geo, user))
 
     scored.sort(key=lambda t: (t[0], t[1]))  # exact group first, then nearest
-    return [_public_out(d, p, g, u, distance_km=dist) for _, dist, d, p, g, u in scored[:limit]]
+    return [
+        _public_out(d, p, g, u, distance_km=dist, with_approx_location=True)
+        for _, dist, d, p, g, u in scored[:limit]
+    ]
 
 @router.post("/register", response_model=BloodDonorPublicOut, status_code=status.HTTP_201_CREATED)
 def register_donor(

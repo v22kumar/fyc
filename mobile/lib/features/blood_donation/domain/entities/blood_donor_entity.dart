@@ -22,6 +22,9 @@ class BloodDonorEntity extends Equatable {
   /// Distance from the query point in km — only set on nearby results.
   final double? distanceKm;
   final bool hasLocation;
+  /// Coarse (~1 km) coordinates for the map view — only set on nearby results.
+  final double? approxLat;
+  final double? approxLng;
 
   const BloodDonorEntity({
     required this.id,
@@ -39,6 +42,8 @@ class BloodDonorEntity extends Equatable {
     this.eligibleOn,
     this.distanceKm,
     this.hasLocation = false,
+    this.approxLat,
+    this.approxLng,
   });
 
   String displayName(String lang) =>

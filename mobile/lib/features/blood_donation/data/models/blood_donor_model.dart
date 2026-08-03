@@ -17,6 +17,8 @@ class BloodDonorModel extends BloodDonorEntity {
     super.eligibleOn,
     super.distanceKm,
     super.hasLocation,
+    super.approxLat,
+    super.approxLng,
   });
 
   factory BloodDonorModel.fromJson(Map<String, dynamic> json) =>
@@ -36,5 +38,7 @@ class BloodDonorModel extends BloodDonorEntity {
         eligibleOn: json['eligible_on'] as String?,
         distanceKm: (json['distance_km'] as num?)?.toDouble(),
         hasLocation: json['has_location'] as bool? ?? false,
+        approxLat: (json['approx_latitude'] as num?)?.toDouble(),
+        approxLng: (json['approx_longitude'] as num?)?.toDouble(),
       );
 }

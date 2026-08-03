@@ -61,8 +61,12 @@ class BloodDonorPublicOut(BaseModel):
     # Distance from the query point in km — only present on /nearby results.
     distance_km: Optional[float] = None
     # Whether this donor has an opt-in location on file (drives "on map" vs
-    # "area only"). Never exposes the coordinates themselves.
+    # "area only").
     has_location: bool = False
+    # COARSE coordinates (~1 km grid) for the map view — only on /nearby, only
+    # for donors who consented. Deliberately rounded so a home is never pinpointed.
+    approx_latitude: Optional[float] = None
+    approx_longitude: Optional[float] = None
 
 class ContactRequestOut(BaseModel):
     message: str

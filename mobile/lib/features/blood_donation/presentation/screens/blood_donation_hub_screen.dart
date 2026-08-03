@@ -7,6 +7,7 @@ import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
+import 'donor_map_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -127,6 +128,13 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       appBar: AppBar(
         title: Text(trId('blood_donation_hub')),
         actions: [
+          IconButton(
+            tooltip: trId('map'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DonorMapScreen()),
+            ),
+            icon: Icon(Icons.map_rounded, color: AppColors.background),
+          ),
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
             icon: Icon(Icons.volunteer_activism, color: AppColors.background),
