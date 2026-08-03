@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -172,6 +173,76 @@ def list_requests(
         q = q.filter(BloodRequest.status == status_filter.upper())
     reqs = q.order_by(BloodRequest.created_at.desc()).limit(limit).all()
     return [_out(db, r) for r in reqs]
+
+
+@router.get("/stats")
+def blood_stats(
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Admin oversight: donor coverage + emergency response analytics."""
+    if (current_user.role or "").upper() not in ("ADMIN", "SUPER_ADMIN", "EXECUTIVE_MEMBER"):
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    donors = db.query(BloodDonor).filter(BloodDonor.organization_id == tenant_id).all()
+    total_donors = len(donors)
+    with_location = sum(
+        1 for d in donors
+        if d.latitude is not None and d.longitude is not None and d.location_consent
+    )
+    available = sum(1 for d in donors if d.is_available)
+    eligible = sum(1 for d in donors if bm.is_eligible(d.last_donation_date))
+    imported = (
+        db.query(func.count(BloodDonor.id))
+        .join(User, User.id == BloodDonor.user_id)
+        .filter(BloodDonor.organization_id == tenant_id, User.source == "F2S_IMPORT")
+        .scalar()
+    ) or 0
+    fyc_donors = total_donors - imported
+
+    # Blood-group coverage (how many available donors per group).
+    coverage: dict[str, int] = {}
+    for d in donors:
+        if d.is_available:
+            coverage[d.blood_group] = coverage.get(d.blood_group, 0) + 1
+
+    reqs = db.query(BloodRequest).filter(BloodRequest.organization_id == tenant_id).all()
+    total_requests = len(reqs)
+    open_requests = sum(1 for r in reqs if r.status == "OPEN")
+    fulfilled_requests = sum(1 for r in reqs if r.status == "FULFILLED")
+    notified_total = sum((r.notified_count or 0) for r in reqs)
+
+    pledges = db.query(BloodPledge).filter(BloodPledge.organization_id == tenant_id).all()
+    accepted = sum(1 for p in pledges if p.status == "ACCEPTED")
+    donated = sum(1 for p in pledges if p.status == "DONATED")
+
+    response_rate = round(100.0 * accepted / notified_total, 1) if notified_total else 0.0
+    lives_helped = sum((r.units_needed or 1) for r in reqs if r.status == "FULFILLED")
+
+    return {
+        "donors": {
+            "total": total_donors,
+            "fyc": fyc_donors,
+            "imported": imported,
+            "with_location": with_location,
+            "available": available,
+            "eligible": eligible,
+            "coverage": coverage,
+        },
+        "requests": {
+            "total": total_requests,
+            "open": open_requests,
+            "fulfilled": fulfilled_requests,
+            "notified_total": notified_total,
+        },
+        "responses": {
+            "accepted": accepted,
+            "donated": donated,
+            "response_rate_pct": response_rate,
+        },
+        "lives_helped": lives_helped,
+    }
 
 
 @router.get("/{request_id}", response_model=BloodRequestDetailOut)

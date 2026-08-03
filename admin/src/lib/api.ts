@@ -57,6 +57,11 @@ export const api = {
   // Search
   globalSearch: (query: string) => request<any>(`/api/v1/search?q=${encodeURIComponent(query)}`),
 
+  // Blood donation
+  bloodStats: () => request<any>('/api/v1/blood-requests/stats'),
+  listBloodRequests: (status = 'OPEN') =>
+    request<any[]>(`/api/v1/blood-requests?status_filter=${status}`),
+
 
   // Issues
   listIssues: (status?: string) =>
