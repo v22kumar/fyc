@@ -5,7 +5,7 @@ from app.models.audit import AuditLog
 from app.models.geography import GeographicNode, GeoLevel
 from app.models.blood_donor import BloodDonor
 from app.models.blood_request import BloodRequest, BloodPledge
-from app.models.issue import PublicIssue, IssueEmailLog, IssueStatus, IssueCategory
+from app.models.issue import PublicIssue, IssueEmailLog, ComplaintDepartment, IssueStatus, IssueCategory
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.community import CommunityProfile
 from app.models.sports import Tournament, Team, Fixture, LiveScoreEntry, ChallengeMatch, Player
@@ -43,6 +43,7 @@ __all__ = [
     "BloodPledge",
     "PublicIssue",
     "IssueEmailLog",
+    "ComplaintDepartment",
     "IssueStatus",
     "IssueCategory",
     "Event",

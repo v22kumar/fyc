@@ -72,6 +72,53 @@ class AIService:
             logger.error(f"Gemini API Error: {e}")
             return None
 
+    def draft_complaint(
+        self,
+        category_label: str,
+        description: str,
+        location_name: Optional[str] = None,
+        is_emergency: bool = False,
+    ) -> Optional[Dict[str, str]]:
+        """Turn a citizen's short note into a formal civic complaint (bilingual).
+        Returns {subject, body_en, body_ta} or None if AI is unavailable — the
+        caller then falls back to the raw description."""
+        loc = location_name or "the location indicated by the attached GPS coordinates"
+        urgency = "This is an EMERGENCY needing immediate attention. " if is_emergency else ""
+        prompt = (
+            "You are drafting a formal civic complaint on behalf of a resident of "
+            "Nagercoil, Kanyakumari District, Tamil Nadu, addressed to the concerned "
+            "government department. Write it polite, specific and firm, requesting "
+            "prompt action and an acknowledgement.\n"
+            f"Complaint category: {category_label}\n"
+            f"Location: {loc}\n"
+            f"{urgency}Resident's description: {description}\n\n"
+            "Return ONLY a JSON object with keys: subject (short email subject line), "
+            "body_en (a complete complaint email in English, referencing the location, "
+            "signed 'A concerned resident (via FYC Connect)'), and body_ta (a faithful "
+            "Tamil translation of the same complaint). No markdown, no extra text."
+        )
+        text = self._call_gemini(prompt)
+        if not text:
+            return None
+        try:
+            cleaned = text.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]
+            if cleaned.startswith("```"):
+                cleaned = cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+            parsed = json.loads(cleaned.strip())
+            subject = (parsed.get("subject") or "").strip()
+            body_en = (parsed.get("body_en") or "").strip()
+            body_ta = (parsed.get("body_ta") or "").strip()
+            if not (subject and body_en):
+                return None
+            return {"subject": subject, "body_en": body_en, "body_ta": body_ta}
+        except Exception as e:
+            logger.warning(f"draft_complaint parse failed: {e}")
+            return None
+
     def generate_smart_notification(self, original_title: str, original_body: str, notification_type: str = "") -> Dict[str, str]:
         """Rewrites a static notification into a smart, engaging AI notification."""
         if not self.api_key:
