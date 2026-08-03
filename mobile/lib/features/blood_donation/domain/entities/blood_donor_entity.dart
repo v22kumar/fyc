@@ -13,6 +13,15 @@ class BloodDonorEntity extends Equatable {
   /// True for a directory contact imported from Friends2Support (vs a donor who
   /// registered in the app) — drives the "Friends2Support" badge.
   final bool isImported;
+  /// 'fyc' (app user — in-app reachable / may be location-aware) or 'imported'
+  /// (F2S contact — call only).
+  final String tier;
+  /// Donation eligibility (90-day cooldown).
+  final bool isEligible;
+  final String? eligibleOn; // ISO date the donor becomes eligible again
+  /// Distance from the query point in km — only set on nearby results.
+  final double? distanceKm;
+  final bool hasLocation;
 
   const BloodDonorEntity({
     required this.id,
@@ -25,6 +34,11 @@ class BloodDonorEntity extends Equatable {
     this.fullNameTa,
     this.phoneNumber,
     this.isImported = false,
+    this.tier = 'fyc',
+    this.isEligible = true,
+    this.eligibleOn,
+    this.distanceKm,
+    this.hasLocation = false,
   });
 
   String displayName(String lang) =>

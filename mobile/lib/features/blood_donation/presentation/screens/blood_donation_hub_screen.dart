@@ -6,6 +6,7 @@ import '../../domain/entities/blood_donor_entity.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
+import 'blood_request_flow.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
@@ -182,7 +183,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
             ),
           ),
           _EmergencyBanner(onTap: () {
-            context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
+            showRaiseRequestSheet(
+              context,
+              initialGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+            );
           }),
           _FilterRow(
             groups: _groups,
