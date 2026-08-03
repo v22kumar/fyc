@@ -27,6 +27,7 @@ class _SosSheetState extends State<_SosSheet> {
   List<String> _contacts = [];
   bool _loading = true;
   bool _busy = false;
+  bool _sirenOn = false;
 
   @override
   void initState() {
@@ -36,7 +37,18 @@ class _SosSheetState extends State<_SosSheet> {
 
   @override
   void dispose() {
+    // Never leave the alarm blaring once the Safety Center is dismissed.
+    SosService.stopSiren();
     super.dispose();
+  }
+
+  Future<void> _toggleAlarm() async {
+    if (_sirenOn) {
+      await SosService.stopSiren();
+    } else {
+      await SosService.startSiren();
+    }
+    if (mounted) setState(() => _sirenOn = SosService.isSirenPlaying);
   }
 
   Future<void> _load() async {
@@ -51,7 +63,8 @@ class _SosSheetState extends State<_SosSheet> {
   Future<void> _alertMembers() async {
     setState(() => _busy = true);
     final pos = await SosService.currentLocation();
-    SosService.triggerSiren();
+    SosService.startSiren();
+    if (mounted) setState(() => _sirenOn = SosService.isSirenPlaying);
     final ok = await SosService.alertMembers(pos: pos);
     if (!mounted) return;
     setState(() => _busy = false);
@@ -67,7 +80,8 @@ class _SosSheetState extends State<_SosSheet> {
     }
     setState(() => _busy = true);
     final pos = await SosService.currentLocation();
-    SosService.triggerSiren();
+    SosService.startSiren();
+    if (mounted) setState(() => _sirenOn = SosService.isSirenPlaying);
     final msg = SosService.buildMessage(name: widget.memberName, pos: pos);
     final ok = await SosService.sendSms(_contacts, msg);
     if (!mounted) return;
@@ -205,6 +219,26 @@ class _SosSheetState extends State<_SosSheet> {
                   onPressed: _busy ? null : _alertMembers,
                   icon: Icon(Icons.campaign_rounded),
                   label: Text(trId('alert_nearby_fyc_members')),
+                ),
+              ),
+              SizedBox(height: 10),
+
+              // Loud alarm — a first-class control so the user can blare a
+              // siren instantly (to attract attention / deter a threat) and
+              // stop it. Turns amber and pulses while sounding.
+              SizedBox(
+                height: 50,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _sirenOn ? const Color(0xFFF59E0B) : AppColors.background,
+                    backgroundColor: _sirenOn ? const Color(0x22F59E0B) : null,
+                    side: BorderSide(color: _sirenOn ? const Color(0xFFF59E0B) : Colors.white24),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: _toggleAlarm,
+                  icon: Icon(_sirenOn ? Icons.volume_off_rounded : Icons.volume_up_rounded),
+                  label: Text(_sirenOn ? trId('stop_alarm') : trId('sound_loud_alarm')),
                 ),
               ),
 

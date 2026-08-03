@@ -652,6 +652,8 @@ const Map<String, String> kEn = {
   'add_phone_number': 'Add phone number',
   'add_player': 'Add Player',
   'alert_nearby_fyc_members': 'Alert nearby FYC members',
+  'sound_loud_alarm': 'Sound loud alarm',
+  'stop_alarm': 'Stop alarm',
   'analysis': 'Analysis',
   'are_you_sure_you_want_to_delete_this_fix': 'Are you sure you want to delete this fixture?',
   'are_you_sure_you_want_to_delete_this_wee': 'Are you sure you want to delete this weekly game match?',
