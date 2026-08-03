@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,14 +60,24 @@ class SosService {
   // ── Shake to trigger ─────────────────────────────────────────────────────
   static const _shakeKey = 'sos_shake_to_trigger';
 
+  /// Live shake-to-trigger state. The app shell listens to this so toggling the
+  /// setting starts/stops the shake detector immediately, without an app
+  /// restart. Seeded from storage by [getShakeToTrigger]; updated by
+  /// [setShakeToTrigger].
+  static final ValueNotifier<bool> shakeToTriggerListenable =
+      ValueNotifier<bool>(true);
+
   static Future<bool> getShakeToTrigger() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_shakeKey) ?? true;
+    final on = prefs.getBool(_shakeKey) ?? true;
+    shakeToTriggerListenable.value = on;
+    return on;
   }
 
   static Future<void> setShakeToTrigger(bool on) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_shakeKey, on);
+    shakeToTriggerListenable.value = on;
   }
 
   // ── Loud siren ──────────────────────────────────────────────────────────────
