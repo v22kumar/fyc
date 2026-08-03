@@ -740,7 +740,7 @@ from app.routers import (
     users, auth, directory,
     news, announcements, gallery,
     events, issues, club_requests,
-    opportunities, community, blood_donors,
+    opportunities, community, blood_donors, blood_requests,
     geography, green_fyc, instagram, sports, chess,
     search, follows, comments, attachments, system, share, theme
 )
@@ -750,6 +750,7 @@ app.include_router(system.router, prefix="/api/v1")
 app.include_router(organizations.router, prefix="/api/v1")
 app.include_router(geography.router, prefix="/api/v1")
 app.include_router(blood_donors.router, prefix="/api/v1")
+app.include_router(blood_requests.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(share.router, prefix="/api/v1")

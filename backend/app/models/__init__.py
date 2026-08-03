@@ -4,6 +4,7 @@ from app.models.user import User, UserProfile, MembershipCard, VolunteerMetadata
 from app.models.audit import AuditLog
 from app.models.geography import GeographicNode, GeoLevel
 from app.models.blood_donor import BloodDonor
+from app.models.blood_request import BloodRequest, BloodPledge
 from app.models.issue import PublicIssue, IssueEmailLog, IssueStatus, IssueCategory
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.community import CommunityProfile
@@ -38,6 +39,8 @@ __all__ = [
     "GeographicNode",
     "GeoLevel",
     "BloodDonor",
+    "BloodRequest",
+    "BloodPledge",
     "PublicIssue",
     "IssueEmailLog",
     "IssueStatus",
