@@ -40,6 +40,58 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     </div>
   </section>
 
+  <!-- Emergency requests board -->
+  <section class="py-6 px-4 bg-red-50 border-b border-red-100">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex items-center justify-between mb-4 gap-3">
+        <h2 class="text-lg font-bold text-red-800"
+          data-ta="அவசர ரத்த கோரிக்கைகள்" data-en="Active blood requests"
+          data-ml="സജീവ രക്ത അഭ്യർത്ഥനകൾ" data-hi="सक्रिय रक्त अनुरोध">Active blood requests</h2>
+        <button id="raise-request-btn"
+          class="px-4 py-2 rounded-full bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors whitespace-nowrap">
+          <span data-ta="ரத்தம் கோருக" data-en="Request Blood" data-ml="രക്തം അഭ്യർത്ഥിക്കുക" data-hi="रक्त अनुरोध करें">Request Blood</span>
+        </button>
+      </div>
+      <div id="requests-board" class="grid gap-3 sm:grid-cols-2"></div>
+      <p id="requests-empty" class="text-sm text-red-700 opacity-70 hidden"
+        data-ta="தற்போது திறந்த கோரிக்கைகள் இல்லை" data-en="No open requests right now."
+        data-ml="ഇപ്പോൾ തുറന്ന അഭ്യർത്ഥനകളൊന്നുമില്ല." data-hi="अभी कोई खुला अनुरोध नहीं।">No open requests right now.</p>
+    </div>
+  </section>
+
+  <!-- Request modal -->
+  <div id="request-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+      <h3 class="text-lg font-bold mb-4 text-gray-900" data-ta="ரத்தம் கோருக" data-en="Request Blood">Request Blood</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1" data-ta="ரத்த வகை" data-en="Blood group">Blood group</label>
+          <select id="req-group" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option selected>O+</option><option>O-</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1" data-ta="அவசரம்" data-en="Urgency">Urgency</label>
+          <select id="req-urgency" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="CRITICAL">Critical</option>
+            <option value="URGENT" selected>Urgent</option>
+            <option value="ROUTINE">Routine</option>
+          </select>
+        </div>
+      </div>
+      <label class="block text-xs font-bold text-gray-600 mb-1 mt-3" data-ta="மருத்துவமனை" data-en="Hospital (optional)">Hospital (optional)</label>
+      <input id="req-hospital" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <label class="block text-xs font-bold text-gray-600 mb-1 mt-3" data-ta="யூனிட்கள்" data-en="Units">Units</label>
+      <input id="req-units" type="number" min="1" max="20" value="1" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <p id="req-error" class="text-red-600 text-sm mt-3 hidden"></p>
+      <div class="flex gap-3 mt-5">
+        <button id="req-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm" data-en="Cancel">Cancel</button>
+        <button id="req-submit" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm" data-en="Send request">Send request</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Search Section -->
   <section class="py-6 px-4 bg-white border-b border-gray-100 sticky top-16 z-40 shadow-sm">
     <div class="max-w-4xl mx-auto flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
@@ -496,6 +548,87 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       if (typeof originalToggleLang === 'function') originalToggleLang();
       loadDonors(currentFilter, selectedGeographyId, includeNearby);
     };
+
+    // ── Emergency requests board ───────────────────────────────────────────
+    function reqHeaders() {
+      const h = { 'X-Organization-ID': DEFAULT_ORG_ID, 'Content-Type': 'application/json' };
+      const t = localStorage.getItem('fyc_token');
+      if (t) h['Authorization'] = 'Bearer ' + t;
+      return h;
+    }
+    async function loadRequests() {
+      const board = document.getElementById('requests-board');
+      const empty = document.getElementById('requests-empty');
+      if (!board) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/blood-requests?status_filter=OPEN`,
+          { headers: { 'X-Organization-ID': DEFAULT_ORG_ID } });
+        const items = res.ok ? await res.json() : [];
+        if (!Array.isArray(items) || items.length === 0) {
+          board.innerHTML = '';
+          empty && empty.classList.remove('hidden');
+          return;
+        }
+        empty && empty.classList.add('hidden');
+        board.innerHTML = items.map((r) => {
+          const uc = r.urgency === 'CRITICAL' ? 'bg-red-600'
+            : r.urgency === 'URGENT' ? 'bg-orange-500' : 'bg-gray-500';
+          const hosp = r.hospital_name ? String(r.hospital_name).replace(/</g, '&lt;') : '';
+          return `<div class="bg-white rounded-xl border border-red-100 p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-red-100 text-red-700 font-extrabold flex items-center justify-center">${r.patient_blood_group || ''}</div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-gray-900 text-sm">${r.units_needed || 1} unit(s) <span class="text-white text-[10px] px-2 py-0.5 rounded-full ${uc} align-middle">${r.urgency || ''}</span></div>
+                <div class="text-xs text-gray-500 truncate">${hosp}</div>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-green-700 font-semibold">${r.accepted_count || 0} responding · ${r.notified_count || 0} notified</div>
+          </div>`;
+        }).join('');
+      } catch (_) {}
+    }
+    function openRequestModal() {
+      if (!localStorage.getItem('fyc_token')) { location.href = '/login?next=/blood-donors'; return; }
+      const m = document.getElementById('request-modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function closeRequestModal() {
+      const m = document.getElementById('request-modal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    async function submitRequest() {
+      const err = document.getElementById('req-error'); err.classList.add('hidden');
+      const btn = document.getElementById('req-submit'); btn.disabled = true;
+      const body = {
+        patient_blood_group: document.getElementById('req-group').value,
+        urgency: document.getElementById('req-urgency').value,
+        units_needed: parseInt(document.getElementById('req-units').value, 10) || 1,
+        hospital_name: document.getElementById('req-hospital').value.trim() || null,
+      };
+      try {
+        const pos = await new Promise((resolve) => {
+          if (!navigator.geolocation) return resolve(null);
+          navigator.geolocation.getCurrentPosition((p) => resolve(p), () => resolve(null), { timeout: 8000 });
+        });
+        if (pos) { body.latitude = pos.coords.latitude; body.longitude = pos.coords.longitude; }
+      } catch (_) {}
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/blood-requests`,
+          { method: 'POST', headers: reqHeaders(), body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || 'Failed to send request');
+        closeRequestModal();
+        loadRequests();
+      } catch (e) {
+        err.textContent = e.message; err.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    document.getElementById('raise-request-btn')?.addEventListener('click', openRequestModal);
+    document.getElementById('req-cancel')?.addEventListener('click', closeRequestModal);
+    document.getElementById('req-submit')?.addEventListener('click', submitRequest);
+    loadRequests();
 
     // Initial load
     loadDonors();

@@ -505,6 +505,21 @@ class _DonorCard extends StatelessWidget {
 
   const _DonorCard({required this.donor, required this.onContact});
 
+  Widget _badge(String text, Color color, IconData icon) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withOpacity(0.5)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 11, color: color),
+          SizedBox(width: 3),
+          Text(text,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+        ]),
+      );
+
   @override
   Widget build(BuildContext context) {
     final lang = sl<LocalStorage>().getLang();
@@ -584,24 +599,21 @@ class _DonorCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // Directory contacts imported from Friends2Support are
-                    // labelled so they read as a donor listing, not an app member.
-                    if (donor.isImported) ...[
-                      SizedBox(height: 7),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFF0B44A)),
-                        ),
-                        child: Text(
-                          trId('friends2support'),
-                          style: TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.3, color: Color(0xFFB45309)),
-                        ),
-                      ),
-                    ],
+                    // Eligibility / distance / reachability badges (P1 data).
+                    SizedBox(height: 7),
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      if (donor.distanceKm != null)
+                        _badge('${donor.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}',
+                            const Color(0xFF2563EB), Icons.near_me_rounded),
+                      if (donor.isEligible)
+                        _badge(trId('eligible_now'), const Color(0xFF16A34A), Icons.check_circle)
+                      else
+                        _badge(trId('eligible_soon'), const Color(0xFFB45309), Icons.schedule),
+                      if (donor.isImported)
+                        _badge(trId('friends2support'), const Color(0xFFB45309), Icons.contacts_rounded)
+                      else
+                        _badge(trId('in_app'), AppColors.primary, Icons.smartphone_rounded),
+                    ]),
                   ],
                 ),
               ),
