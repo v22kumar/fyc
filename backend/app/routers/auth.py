@@ -203,20 +203,20 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
             detail="Phone number already registered under this organization",
         )
 
-    # Email is now mandatory (validated in the schema). Reject a duplicate
-    # within this org so two members can't claim the same contact email. Not a
-    # DB-level unique constraint (existing accounts have NULL/duplicate emails,
-    # so a migration would fail) — an app-level guard for new registrations.
-    email = payload.email  # already normalised (trimmed + lowercased) by the schema
-    email_taken = db.query(User).filter(
-        User.organization_id == payload.organization_id,
-        User.email == email,
-    ).first()
-    if email_taken:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered under this organization",
-        )
+    # Email is OPTIONAL now. When one IS supplied, reject a duplicate within this
+    # org so two members can't claim the same contact email (app-level guard —
+    # not a DB unique constraint, since legacy rows have NULL/duplicate emails).
+    email = payload.email  # normalised (trimmed + lowercased) or None
+    if email:
+        email_taken = db.query(User).filter(
+            User.organization_id == payload.organization_id,
+            User.email == email,
+        ).first()
+        if email_taken:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered under this organization",
+            )
 
     # CLUB_MEMBER registrations are held in a PENDING approval queue.
     # The user account is created with PUBLIC_CITIZEN so they can use
@@ -236,9 +236,12 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
 
     profile = UserProfile(
         user_id=user.id,
-        full_name_ta=payload.full_name_ta,
+        # Single-name UX: the client sends one name; store it to both the English
+        # and Tamil columns when only one is provided, so display works either way.
+        full_name_ta=payload.full_name_ta or payload.full_name_en,
         full_name_en=payload.full_name_en,
         date_of_birth=payload.date_of_birth,
+        gender=payload.gender,
         blood_group=payload.blood_group,
         last_login_at=datetime.now(timezone.utc),
     )

@@ -71,3 +71,51 @@ def repair_cricket_balls_fk(engine) -> bool:
 
     logger.info("[schema-repair] rebuilt cricket_balls with FK -> players")
     return True
+
+
+def add_missing_foreign_keys_postgres(engine) -> None:
+    """Best-effort: add FK constraints that were only added to the models later,
+    onto the long-lived PostgreSQL tables (create_all only builds them for brand-
+    new tables). Postgres-only — SQLite can't ALTER-ADD a FK, and its tables are
+    rebuilt by the dedicated repairs above / recreated fresh in dev.
+
+    Each ADD is idempotent (skipped when a constraint of that name already exists)
+    and individually guarded: if pre-existing orphan rows would violate the new
+    constraint, that one ADD is logged and skipped rather than crashing startup —
+    so the constraints land wherever the data is already clean.
+    """
+    if engine.dialect.name != "postgresql":
+        return
+
+    # (table, constraint_name, DDL). Names are stable so re-runs no-op.
+    wanted = [
+        ("user_profiles", "fk_user_profiles_geography",
+         "ALTER TABLE user_profiles ADD CONSTRAINT fk_user_profiles_geography "
+         "FOREIGN KEY (geography_id) REFERENCES geographic_nodes(id) ON DELETE SET NULL"),
+        ("opportunities", "fk_opportunities_posted_by",
+         "ALTER TABLE opportunities ADD CONSTRAINT fk_opportunities_posted_by "
+         "FOREIGN KEY (posted_by) REFERENCES users(id) ON DELETE SET NULL"),
+        ("opportunity_applications", "fk_opp_app_opportunity",
+         "ALTER TABLE opportunity_applications ADD CONSTRAINT fk_opp_app_opportunity "
+         "FOREIGN KEY (opportunity_id) REFERENCES opportunities(id) ON DELETE CASCADE"),
+        ("opportunity_applications", "fk_opp_app_user",
+         "ALTER TABLE opportunity_applications ADD CONSTRAINT fk_opp_app_user "
+         "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"),
+        ("opportunity_applications", "fk_opp_app_org",
+         "ALTER TABLE opportunity_applications ADD CONSTRAINT fk_opp_app_org "
+         "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"),
+    ]
+
+    insp = inspect(engine)
+    for table, name, ddl in wanted:
+        try:
+            if not insp.has_table(table):
+                continue
+            existing = {fk.get("name") for fk in insp.get_foreign_keys(table)}
+            if name in existing:
+                continue
+            with engine.begin() as conn:
+                conn.execute(text(ddl))
+            logger.info("[schema-repair] added FK %s on %s", name, table)
+        except Exception as e:  # orphan rows / permissions — never block startup
+            logger.warning("[schema-repair] FK %s on %s skipped: %s", name, table, e)
