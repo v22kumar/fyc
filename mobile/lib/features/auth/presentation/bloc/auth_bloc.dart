@@ -116,6 +116,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       registrationToken: event.registrationToken,
       email: event.email,
       dateOfBirth: event.dateOfBirth,
+      gender: event.gender,
       bloodGroup: event.bloodGroup,
       role: event.role,
       fullNameTa: event.fullNameTa,

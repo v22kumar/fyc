@@ -39,11 +39,11 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _nameTaCtrl = TextEditingController();
-  final _nameEnCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   DateTime? _dob;
+  String? _gender; // MALE / FEMALE / OTHER
   String? _bloodGroup;
   String _role = 'PUBLIC_CITIZEN';
 
@@ -62,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     super.initState();
     // Pre-fill whatever Google gave us; the user completes the rest.
     _emailCtrl.text = widget.prefillEmail ?? '';
-    _nameEnCtrl.text = widget.prefillName ?? '';
+    _nameCtrl.text = widget.prefillName ?? '';
     _aurora = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 14),
@@ -71,8 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   void dispose() {
-    _nameTaCtrl.dispose();
-    _nameEnCtrl.dispose();
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _aurora.dispose();
@@ -106,19 +105,31 @@ class _RegisterScreenState extends State<RegisterScreen>
       );
       return;
     }
+    if (_gender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(trId('please_select_your_gender')),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+      return;
+    }
     if (!formOk) return;
     final lang = sl<LocalStorage>().getLang();
     final phone = _phoneEditable ? _phoneCtrl.text.trim() : widget.phoneNumber;
+    final name = _nameCtrl.text.trim();
     context.read<AuthBloc>().add(AuthRegisterRequested(
           organizationId: widget.organizationId,
           phoneNumber: phone,
           registrationToken: widget.registrationToken,
           email: _emailCtrl.text.trim(),
           dateOfBirth: _fmtDob(_dob!),
+          gender: _gender,
           bloodGroup: _bloodGroup,
           role: _role,
-          fullNameTa: _nameTaCtrl.text.trim(),
-          fullNameEn: _nameEnCtrl.text.trim(),
+          // Single name field → stored to both language columns server-side.
+          fullNameTa: name,
+          fullNameEn: name,
           preferredLanguage: lang,
         ));
   }
@@ -328,52 +339,94 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       ),
                                     SizedBox(height: 20),
 
-                                    // Tamil name
+                                    // Full name — one field (stored to both the
+                                    // Tamil and English name columns server-side).
                                     TextFormField(
-                                      controller: _nameTaCtrl,
+                                      controller: _nameCtrl,
+                                      textCapitalization: TextCapitalization.words,
+                                      autofillHints: const [AutofillHints.name],
                                       decoration: InputDecoration(
-                                        label: Text(l.nameInTamil),
-                                        hintText: trId('e_g_karthik_j'),
-                                        prefixIcon: Icon(Icons.person_outline),
-                                      ),
-                                      validator: (v) =>
-                                          v == null || v.trim().isEmpty ? l.nameInTamil : null,
-                                    ),
-                                    SizedBox(height: 16),
-
-                                    // English name
-                                    TextFormField(
-                                      controller: _nameEnCtrl,
-                                      decoration: InputDecoration(
-                                        label: Text(l.nameInEnglish),
+                                        label: Text(trId('full_name')),
                                         hintText: trId('e_g_karthik_j_2'),
                                         prefixIcon: Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
-                                          v == null || v.trim().isEmpty ? l.nameInEnglish : null,
+                                          v == null || v.trim().isEmpty ? trId('full_name') : null,
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Email (mandatory)
+                                    // Email (optional)
                                     TextFormField(
                                       controller: _emailCtrl,
                                       keyboardType: TextInputType.emailAddress,
                                       autofillHints: const [AutofillHints.email],
                                       decoration: InputDecoration(
-                                        label: Text(trId('email')),
+                                        label: Text(trId('email_optional')),
                                         hintText: trId('name_example_com'),
                                         prefixIcon: Icon(Icons.email_outlined),
                                       ),
                                       validator: (v) {
                                         final t = (v ?? '').trim();
-                                        if (t.isEmpty) {
-                                          return trId('email_is_required');
-                                        }
+                                        if (t.isEmpty) return null; // optional
                                         if (!_emailRe.hasMatch(t)) {
                                           return trId('enter_a_valid_email');
                                         }
                                         return null;
                                       },
+                                    ),
+                                    SizedBox(height: 16),
+
+                                    // Gender (required) — one-tap chips.
+                                    Text(
+                                      trId('gender'),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        for (final g in const [
+                                          ['MALE', 'male'],
+                                          ['FEMALE', 'female'],
+                                          ['OTHER', 'other'],
+                                        ]) ...[
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () => setState(() => _gender = g[0]),
+                                              child: AnimatedContainer(
+                                                duration: const Duration(milliseconds: 150),
+                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                margin: EdgeInsets.only(right: g[0] == 'OTHER' ? 0 : 8),
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: _gender == g[0]
+                                                      ? AppColors.primarySurface
+                                                      : AppColors.surface,
+                                                  borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                                                  border: Border.all(
+                                                    color: _gender == g[0]
+                                                        ? AppColors.primary
+                                                        : AppColors.border,
+                                                    width: _gender == g[0] ? 2 : 1,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  trId(g[1]),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: _gender == g[0]
+                                                        ? AppColors.primary
+                                                        : AppColors.textPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     SizedBox(height: 16),
 

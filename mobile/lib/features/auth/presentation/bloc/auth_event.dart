@@ -42,6 +42,7 @@ class AuthRegisterRequested extends AuthEvent {
   final String registrationToken;
   final String email;
   final String dateOfBirth; // ISO yyyy-MM-dd
+  final String? gender; // MALE / FEMALE / OTHER
   final String? bloodGroup;
   final String role;
   final String fullNameTa;
@@ -54,6 +55,7 @@ class AuthRegisterRequested extends AuthEvent {
     required this.registrationToken,
     required this.email,
     required this.dateOfBirth,
+    this.gender,
     this.bloodGroup,
     required this.role,
     required this.fullNameTa,
@@ -63,7 +65,7 @@ class AuthRegisterRequested extends AuthEvent {
 
   @override
   List<Object?> get props =>
-      [organizationId, phoneNumber, registrationToken, email, dateOfBirth, bloodGroup, role, fullNameTa, fullNameEn, preferredLanguage];
+      [organizationId, phoneNumber, registrationToken, email, dateOfBirth, gender, bloodGroup, role, fullNameTa, fullNameEn, preferredLanguage];
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {

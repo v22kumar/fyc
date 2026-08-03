@@ -397,6 +397,7 @@ const Map<String, String> kEn = {
   'please_describe_the_issue_before_submitt': 'Please describe the issue before submitting',
   'please_select_your_blood_group': 'Please select your blood group',
   'please_select_your_date_of_birth': 'Please select your date of birth',
+  'please_select_your_gender': 'Please select your gender',
   'points': 'Points',
   'popular': 'Popular',
   'post': 'Post',
