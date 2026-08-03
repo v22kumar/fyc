@@ -17,6 +17,10 @@ abstract class BloodDonorDataSource {
     bool isAvailable = true,
     String? geographyId,
     String? lastDonationDate,
+    double? latitude,
+    double? longitude,
+    bool locationConsent = false,
+    bool notifyOptIn = true,
   });
 
   Future<Map<String, String>> requestContact(String donorId);
@@ -67,14 +71,24 @@ class BloodDonorDataSourceImpl implements BloodDonorDataSource {
     bool isAvailable = true,
     String? geographyId,
     String? lastDonationDate,
+    double? latitude,
+    double? longitude,
+    bool locationConsent = false,
+    bool notifyOptIn = true,
   }) async {
     try {
       final body = <String, dynamic>{
         'blood_group': bloodGroup,
         'is_available': isAvailable,
+        'location_consent': locationConsent,
+        'notify_opt_in': notifyOptIn,
       };
       if (geographyId != null) body['geography_id'] = geographyId;
       if (lastDonationDate != null) body['last_donation_date'] = lastDonationDate;
+      if (locationConsent && latitude != null && longitude != null) {
+        body['latitude'] = latitude;
+        body['longitude'] = longitude;
+      }
 
       final response = await _client.dio.post(
         ApiConstants.registerDonor,

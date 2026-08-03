@@ -26,15 +26,24 @@ class BloodDonorRegisterRequested extends BloodDonorEvent {
   final String bloodGroup;
   final bool isAvailable;
   final DateTime? lastDonationDate;
+  final double? latitude;
+  final double? longitude;
+  final bool locationConsent;
+  final bool notifyOptIn;
 
   const BloodDonorRegisterRequested({
     required this.bloodGroup,
     this.isAvailable = true,
     this.lastDonationDate,
+    this.latitude,
+    this.longitude,
+    this.locationConsent = false,
+    this.notifyOptIn = true,
   });
 
   @override
-  List<Object?> get props => [bloodGroup, isAvailable, lastDonationDate];
+  List<Object?> get props =>
+      [bloodGroup, isAvailable, lastDonationDate, latitude, longitude, locationConsent, notifyOptIn];
 }
 
 class BloodDonorContactRequested extends BloodDonorEvent {

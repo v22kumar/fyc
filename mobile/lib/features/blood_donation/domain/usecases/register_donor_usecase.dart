@@ -12,6 +12,10 @@ class RegisterDonorUseCase {
     bool isAvailable = true,
     String? geographyId,
     DateTime? lastDonationDate,
+    double? latitude,
+    double? longitude,
+    bool locationConsent = false,
+    bool notifyOptIn = true,
   }) {
     if (bloodGroup.isEmpty) {
       return Future.value(
@@ -23,6 +27,10 @@ class RegisterDonorUseCase {
       isAvailable: isAvailable,
       geographyId: geographyId,
       lastDonationDate: lastDonationDate,
+      latitude: latitude,
+      longitude: longitude,
+      locationConsent: locationConsent,
+      notifyOptIn: notifyOptIn,
     );
   }
 }

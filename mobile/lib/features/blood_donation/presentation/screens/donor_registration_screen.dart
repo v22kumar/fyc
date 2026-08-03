@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
@@ -25,6 +26,35 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
   String? _selectedGroup;
   bool _isAvailable = true;
   DateTime? _lastDonationDate;
+  bool _shareLocation = false;
+  bool _capturing = false;
+  double? _lat;
+  double? _lng;
+
+  Future<void> _toggleLocation(bool on) async {
+    if (!on) {
+      setState(() { _shareLocation = false; _lat = null; _lng = null; });
+      return;
+    }
+    setState(() => _capturing = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) throw 'off';
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) throw 'denied';
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+      );
+      if (!mounted) return;
+      setState(() { _shareLocation = true; _lat = pos.latitude; _lng = pos.longitude; _capturing = false; });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _shareLocation = false; _capturing = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('couldn_t_get_location'))),
+      );
+    }
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -52,6 +82,9 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
             bloodGroup: _selectedGroup!,
             isAvailable: _isAvailable,
             lastDonationDate: _lastDonationDate,
+            latitude: _lat,
+            longitude: _lng,
+            locationConsent: _shareLocation && _lat != null && _lng != null,
           ),
         );
   }
@@ -123,6 +156,53 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                 date: _lastDonationDate,
                 lang: lang,
                 onTap: _pickDate,
+              ),
+              SizedBox(height: 24),
+              // Opt-in location — lets emergencies find nearby donors by real
+              // distance. Privacy-first: off by default, a single base point,
+              // never continuous tracking.
+              Container(
+                padding: EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _shareLocation
+                        ? AppColors.primary
+                        : AppColors.textSecondary.withOpacity(0.3),
+                  ),
+                  color: _shareLocation ? AppColors.primary.withOpacity(0.06) : null,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.my_location_rounded,
+                            color: _shareLocation ? AppColors.primary : AppColors.textSecondary),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(trId('share_location_for_emergencies'),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        ),
+                        if (_capturing)
+                          SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        else
+                          Switch(
+                            value: _shareLocation,
+                            activeColor: AppColors.primary,
+                            onChanged: (v) => _toggleLocation(v),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      _shareLocation
+                          ? trId('location_captured_nearby_alerts_on')
+                          : trId('used_only_to_alert_you_when_blood_is_needed_nearby'),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 36),
               BlocBuilder<BloodDonorBloc, BloodDonorState>(
