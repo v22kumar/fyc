@@ -36,6 +36,17 @@ class ChessGame(Base, TimestampMixin, TenantModelMixin):
     final_fen = Column(Text, nullable=True)
     total_moves = Column(Integer, default=0)
 
+    # ── Durable clock ─────────────────────────────────────────────────────────
+    # Remaining milliseconds per side, plus when the clock last changed hands.
+    # Previously the clock lived ONLY in the in-memory GameSession, so any
+    # redeploy handed both players a full clock back mid-game. Persisting it
+    # here lets a restarted process resume the true times. Nullable: untimed
+    # games leave these null, and the startup schema-reconcile can add them to
+    # existing rows.
+    white_time_ms = Column(Integer, nullable=True)
+    black_time_ms = Column(Integer, nullable=True)
+    last_move_at = Column(DateTime(timezone=True), nullable=True)
+
     white_rating_before = Column(Float, nullable=True)
     black_rating_before = Column(Float, nullable=True)
     white_rating_after = Column(Float, nullable=True)

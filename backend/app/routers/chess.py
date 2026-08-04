@@ -878,6 +878,11 @@ async def spectate_websocket(
                 "black_name": _display_name(s, g.black) or "Black",
                 "time_control": g.time_control,
                 "moves": moves,
+                "clock": {
+                    "white_time_ms": g.white_time_ms,
+                    "black_time_ms": g.black_time_ms,
+                    "last_move_at": g.last_move_at,
+                },
             }
 
     loaded = await run_in_threadpool(_load_game)
@@ -902,6 +907,7 @@ async def spectate_websocket(
         black_name=loaded["black_name"],
         time_control=loaded["time_control"],
         initial_uci=loaded["moves"],
+        initial_clock=loaded["clock"],
     )
 
     await session.add_spectator(user_id, websocket)
@@ -988,6 +994,13 @@ async def game_websocket(
                 "white_name": _display_name(s, g.white) or "White",
                 "black_name": _display_name(s, g.black) or "Black",
                 "moves": moves,
+                # Durable clock, so a restarted process resumes the real times
+                # instead of handing both players a fresh full clock.
+                "clock": {
+                    "white_time_ms": g.white_time_ms,
+                    "black_time_ms": g.black_time_ms,
+                    "last_move_at": g.last_move_at,
+                },
             }
 
     loaded = await run_in_threadpool(_load_game)
@@ -1037,6 +1050,7 @@ async def game_websocket(
         black_name=black_name,
         time_control=game_time_control,
         initial_uci=game_moves,
+        initial_clock=loaded["clock"],
     )
 
     session.cancel_disconnect_timer(uid)
@@ -1100,12 +1114,33 @@ async def game_websocket(
                     continue
 
                 uci = msg.get("uci", "")
-                # Deduct time before applying move (measures thinking time)
-                session.deduct_time(uid)
+
+                # Adjudicate the clock BEFORE accepting the move: a player whose
+                # time already expired cannot rescue themselves by finally
+                # moving. Previously time was only ever charged on a move, so a
+                # player could stall indefinitely and never flag.
+                flagged = session.flagged_color()
+                if flagged is not None:
+                    _r = "black_wins" if flagged == "white" else "white_wins"
+                    _tm = len(session.san_list)
+                    await run_in_threadpool(lambda: _end_game_db(_r, "time", _tm))
+                    await session.broadcast(
+                        {"type": "game_over", "result": _r, "reason": "time"}
+                    )
+                    ws_manager.remove(str(gid))
+                    break
+
                 move = session.apply_move(uci)
                 if move is None:
                     await session.send_to(uid, {"type": "error", "message": f"Illegal move: {uci}"})
                     continue
+
+                # Commit thinking time + grant the increment only now that the
+                # move is known legal, so illegal attempts can't farm increments.
+                session.deduct_time(uid)
+                # Playing on answers any outstanding draw offer — otherwise the
+                # offer stayed live and could be accepted 30 moves later.
+                session.draw_offered_by = None
 
                 san = session.san_list[-1]
                 fen = session.board.fen()
@@ -1135,6 +1170,8 @@ async def game_websocket(
                     move_msg["clock"] = clock
                 await session.broadcast(move_msg)
 
+                clock_state = session.clock_for_db()
+
                 def _persist_move() -> bool:
                     # Retries transient write contention; a unique (game_id, ply)
                     # violation means the move is already stored (a reconnect race)
@@ -1153,6 +1190,18 @@ async def game_websocket(
                                     san=san,
                                     fen_after=fen,
                                 ))
+                                # Persist the clock in the SAME transaction as the
+                                # move, so the stored times always correspond to
+                                # the stored position — a restart resumes exactly
+                                # where play left off.
+                                if clock_state["white_time_ms"] is not None:
+                                    s.query(ChessGame).filter(
+                                        ChessGame.id == gid
+                                    ).update({
+                                        ChessGame.white_time_ms: clock_state["white_time_ms"],
+                                        ChessGame.black_time_ms: clock_state["black_time_ms"],
+                                        ChessGame.last_move_at: clock_state["last_move_at"],
+                                    }, synchronize_session=False)
                                 s.commit()
                             return True
                         except Exception as _e:  # noqa: BLE001
@@ -1199,11 +1248,16 @@ async def game_websocket(
                     break
 
             elif msg_type == "flag":
-                # Client claims opponent/self has run out of time
-                color = session.get_color(uid)
-                if color and session.is_flagged(color):
-                    # Our own flag: we lose
-                    result = "black_wins" if color == "white" else "white_wins"
+                # A flag claim from EITHER player. The server decides purely from
+                # its own authoritative clock who (if anyone) is actually out of
+                # time — so a claim about the opponent is honoured, and a false
+                # claim is rejected. The old code compared only against the
+                # claimant's own colour AND against a clock that was never
+                # decremented, so every real claim was discarded as "spurious"
+                # and timed-out games hung forever.
+                flagged = session.flagged_color()
+                if flagged is not None:
+                    result = "black_wins" if flagged == "white" else "white_wins"
                     _tm = len(session.san_list)
                     await run_in_threadpool(lambda: _end_game_db(result, "time", _tm))
                     await session.broadcast({
@@ -1213,9 +1267,9 @@ async def game_websocket(
                     })
                     ws_manager.remove(str(gid))
                     break
-                else:
-                    # Spurious flag claim — ignore
-                    pass
+                # Nobody has actually flagged — resync the claimant so their UI
+                # stops showing a phantom 0:00 instead of leaving them stuck.
+                await session.send_to(uid, session.state_snapshot(uid))
 
             elif msg_type == "resign":
                 color = session.get_color(uid)

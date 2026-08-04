@@ -652,6 +652,14 @@ async def lifespan(app: FastAPI):
 
         from app.services.keepalive import run_keepalive
         scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
+
+        # Safety net for live chess: adjudicates games whose clock expired while
+        # nobody was connected, closes out abandoned boards, advances any
+        # tournament bracket left waiting on them, and evicts idle sessions.
+        # Without this a single stalled board blocks an entire knockout round.
+        from app.services.chess_reaper import run_chess_reaper
+        scheduler.add_job(run_chess_reaper, "interval", minutes=2,
+                          id="chess_reaper", replace_existing=True)
         # Only ONE instance may actually run the scheduler — otherwise every Fly
         # machine fires the same cron jobs (duplicate pushes / WhatsApp blasts to
         # the whole member base). Jobs are still persisted to the shared jobstore

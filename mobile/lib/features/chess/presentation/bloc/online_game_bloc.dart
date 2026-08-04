@@ -90,13 +90,15 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
 
     emit(s.copyWith(whiteTimeMs: newWhite, blackTimeMs: newBlack));
 
-    // Auto-flag when our clock hits 0
-    if (s.isMyTurn) {
-      final myTime = isWhite ? newWhite : newBlack;
-      if (myTime == 0) {
-        _stopClockTimer();
-        add(const SendFlag());
-      }
+    // Claim the flag when the clock of whoever is ON MOVE hits zero — ours OR
+    // the opponent's. Previously only our own flag was reported, so a player
+    // waiting on a stalling opponent had no way to end the game. The server
+    // re-checks against its own authoritative clock, so a premature or false
+    // claim is simply rejected and resynced.
+    final activeTime = activeWhite ? newWhite : newBlack;
+    if (activeTime == 0) {
+      _stopClockTimer();
+      add(const SendFlag());
     }
   }
 
@@ -167,7 +169,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
         if (s is OnlineGameInProgress) {
           emit(s.copyWith(moveInFlight: false));
           // Restart clock if it was stopped optimistically
-          if (s.isTimed && s.isMyTurn) _startClockTimer();
+          if (s.isTimed) _startClockTimer();
         }
 
       case 'disconnected':
@@ -236,8 +238,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       blackTimeMs: blackMs,
     ));
 
-    // Start clock if timed and it's my turn
-    if (tc != 'untimed' && whiteMs != null && isMyTurn) {
+    // Run the ticker for the whole game, not just our own turn — otherwise the
+    // opponent's clock appears frozen while they think, and their flag can
+    // never be noticed. Whose clock actually decrements is decided per tick.
+    if (tc != 'untimed' && whiteMs != null) {
       _startClockTimer();
     } else {
       _stopClockTimer();
@@ -272,14 +276,9 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
       blackTimeMs: newBlackMs ?? s.blackTimeMs,
     ));
 
-    // Manage clock timer
-    if (s.isTimed) {
-      if (isMyTurn) {
-        _startClockTimer();
-      } else {
-        _stopClockTimer();
-      }
-    }
+    // Keep ticking for both sides — the tick handler decrements whichever clock
+    // is running, so the opponent's time visibly counts down too.
+    if (s.isTimed) _startClockTimer();
   }
 
   // ── Outgoing moves ─────────────────────────────────────────────────────────
