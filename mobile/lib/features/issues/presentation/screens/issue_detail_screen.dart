@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../data/issue_complaint_api.dart';
 import '../../domain/entities/issue_entity.dart';
 import '../bloc/issue_detail_bloc.dart';
 import '../bloc/issue_list_bloc.dart';
@@ -35,12 +37,84 @@ class _IssueDetailView extends StatefulWidget {
 
 class _IssueDetailViewState extends State<_IssueDetailView> {
   late IssueEntity _currentIssue;
+  bool _forwarding = false;
   String get _lang => sl<LocalStorage>().getLang();
 
   @override
   void initState() {
     super.initState();
     _currentIssue = widget.issue;
+  }
+
+  Future<void> _launch(Uri uri) async {
+    try {
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  Future<void> _forwardToDepartment() async {
+    if (_forwarding) return;
+    setState(() => _forwarding = true);
+    try {
+      final r = await IssueComplaintApi.forward(_currentIssue.id);
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(r.sent ? Icons.mark_email_read_rounded : Icons.info_outline,
+                  color: r.sent ? AppColors.success : AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  r.sent
+                      ? '${trId('complaint_emailed_to')} ${r.departmentName ?? ''}'
+                      : '${trId('reach_the_department_directly')} — ${r.departmentName ?? ''}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                ),
+              ),
+            ]),
+            if (!r.sent) ...[
+              const SizedBox(height: 6),
+              Text(trId('no_department_email_set_yet'),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              const SizedBox(height: 14),
+              if (r.helpline != null && r.helpline!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _launch(Uri(scheme: 'tel', path: r.helpline)),
+                    icon: const Icon(Icons.call),
+                    label: Text('${trId('call')} ${r.helpline}'),
+                  ),
+                ),
+              if (r.portalUrl != null && r.portalUrl!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _launch(Uri.parse(r.portalUrl!)),
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(trId('open_grievance_portal')),
+                  ),
+                ),
+              ],
+            ],
+          ]),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(trId('action_failed_try_again')), backgroundColor: AppColors.accent),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _forwarding = false);
+    }
   }
 
   @override
@@ -162,18 +236,24 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
                   ],
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: Icon(Icons.email_outlined),
-                      label: Text(trId('log_email_sent_to_authorities')),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: BorderSide(color: AppColors.primary),
+                    child: FilledButton.icon(
+                      icon: _forwarding
+                          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
+                          : Icon(Icons.send_rounded),
+                      label: Text(trId('forward_to_department')),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
                         padding: EdgeInsets.symmetric(vertical: 16),
                       ),
-                      onPressed: () {
-                        context.read<IssueDetailBloc>().add(IssueLogEmailRequested(_currentIssue.id));
-                      },
+                      onPressed: _forwarding ? null : _forwardToDepartment,
                     ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    trId('an_ai_drafted_complaint_with_your_location_will_be_sent'),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 40),
                 ],

@@ -2,11 +2,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearAuth } from '@/lib/auth';
-import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, LogOut, Settings } from 'lucide-react';
+import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, Megaphone, LogOut, Settings } from 'lucide-react';
 
 const NAV = [
   { href: '/dashboard',         label: 'Home',              icon: Home },
   { href: '/dashboard/issues',  label: 'Triage',            icon: LifeBuoy },
+  { href: '/dashboard/complaints', label: 'Complaint Routing', icon: Megaphone },
   { href: '/dashboard/events',  label: 'Community Events',  icon: Calendar },
   { href: '/dashboard/members',    label: 'Member Directory',  icon: Users },
   { href: '/dashboard/membership', label: 'Membership Cards',  icon: IdCard },

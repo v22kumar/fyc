@@ -32,6 +32,7 @@ class IssueOut(BaseModel):
     latitude: float
     longitude: float
     geography_id: Optional[UUID]
+    location_name: Optional[str] = None
     photo_url: Optional[str]
     verification_photo_url: Optional[str]
     is_emergency: Optional[bool] = False
@@ -63,6 +64,81 @@ class IssueEmailOut(BaseModel):
     subject: str
     body: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+# ── Complaint departments (routing directory) ────────────────────────────────
+class DepartmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    category: str
+    name_en: str
+    name_ta: Optional[str] = None
+    email: Optional[str] = None
+    cc_emails: Optional[str] = None
+    phone: Optional[str] = None
+    helpline: Optional[str] = None
+    portal_url: Optional[str] = None
+    is_active: bool = True
+
+
+class DepartmentUpsert(BaseModel):
+    category: str
+    name_en: str
+    name_ta: Optional[str] = None
+    email: Optional[str] = None
+    cc_emails: Optional[str] = None
+    phone: Optional[str] = None
+    helpline: Optional[str] = None
+    portal_url: Optional[str] = None
+    is_active: bool = True
+
+
+class DepartmentPatch(BaseModel):
+    name_en: Optional[str] = None
+    name_ta: Optional[str] = None
+    email: Optional[str] = None
+    cc_emails: Optional[str] = None
+    phone: Optional[str] = None
+    helpline: Optional[str] = None
+    portal_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+# ── AI complaint draft (preview before forwarding) ───────────────────────────
+class ComplaintDraftIn(BaseModel):
+    category: IssueCategory
+    description: str
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
+    is_emergency: bool = False
+
+
+class ComplaintDraftOut(BaseModel):
+    subject: str
+    body_en: str
+    body_ta: Optional[str] = None
+    location_name: Optional[str] = None
+    department: Optional[DepartmentOut] = None
+    ai_used: bool = False
+
+
+class ForwardIn(BaseModel):
+    # Optional overrides — when omitted, the router AI-drafts (or falls back to
+    # the raw description) and routes by category.
+    subject: Optional[str] = None
+    body: Optional[str] = None
+    use_ai: bool = True
+
+
+class ForwardOut(BaseModel):
+    sent: bool                      # True if actually emailed via SMTP
+    recipient: Optional[str] = None
+    department: Optional[DepartmentOut] = None
+    needs_manual: bool = False      # True → no dept email; show phone/portal to citizen
+    helpline: Optional[str] = None
+    portal_url: Optional[str] = None
+    subject: str
+    email_log_id: Optional[UUID] = None

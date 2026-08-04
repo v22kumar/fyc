@@ -13,6 +13,11 @@ class IssueCategory(str, enum.Enum):
     ROAD_TRAFFIC = "ROAD_TRAFFIC"
     POWER_CUT = "POWER_CUT"
     WATER = "WATER"
+    SANITATION = "SANITATION"       # garbage, drainage, public cleanliness
+    STREET_LIGHT = "STREET_LIGHT"
+    PUBLIC_HEALTH = "PUBLIC_HEALTH"  # mosquitoes, stray animals, health hazards
+    ENCROACHMENT = "ENCROACHMENT"    # illegal construction / obstruction
+    SAFETY = "SAFETY"                # public safety, hazards, law & order
     OTHER = "OTHER"
 
 class IssueStatus(str, enum.Enum):
@@ -42,6 +47,9 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     description_en = Column(Text, nullable=False)
     latitude = Column(Numeric(10, 8), nullable=False)
     longitude = Column(Numeric(11, 8), nullable=False)
+    # Human-readable address reverse-geocoded from lat/lng (added to the complaint
+    # + the department email). Nullable: geocoding is best-effort.
+    location_name = Column(Text, nullable=True)
     geography_id = Column(GUID(), ForeignKey("geographic_nodes.id", ondelete="SET NULL"), nullable=True)
     photo_url = Column(Text, nullable=True)
     verification_photo_url = Column(Text, nullable=True)
@@ -68,3 +76,24 @@ class IssueEmailLog(Base, TimestampMixin, TenantModelMixin):
     
     issue = relationship("PublicIssue")
     sender = relationship("User")
+
+
+class ComplaintDepartment(Base, TimestampMixin, TenantModelMixin):
+    """The routing directory: which department/officer a complaint category goes
+    to. Seeded with the real TN public channels (CM Helpline 1100, TANGEDCO 1912,
+    TWAD, Highways/Municipality, Police 100); admins fill in the actual local
+    officer email so complaints are dispatched by SMTP. Where no email is set, the
+    app surfaces the phone/portal so the citizen is never left with a dead end."""
+
+    __tablename__ = "complaint_departments"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    category = Column(String(50), nullable=False, index=True)
+    name_en = Column(String(150), nullable=False)
+    name_ta = Column(String(150), nullable=True)
+    email = Column(String(255), nullable=True)        # official officer email (admin-set)
+    cc_emails = Column(String(500), nullable=True)     # comma-separated extra recipients
+    phone = Column(String(50), nullable=True)
+    helpline = Column(String(50), nullable=True)       # e.g. 1100 / 1912
+    portal_url = Column(String(300), nullable=True)    # official grievance portal
+    is_active = Column(Boolean, nullable=False, default=True)
