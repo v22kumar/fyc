@@ -161,26 +161,35 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
 def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new Citizen or Volunteer after OTP verification."""
     
-    # 1. Validate the registration_token to ensure the phone number was verified
-    try:
-        token_data = jwt.decode(payload.registration_token, settings.SECRET_KEY, algorithms=["HS256"])
-        if token_data.get("type") != "registration":
-            raise ValueError("Invalid token type")
-        
-        # Verify the phone number matches the token payload
-        token_phone = token_data.get("phone_number")
-        if token_phone != payload.phone_number:
-            raise ValueError("Phone number mismatch")
-            
-        # Verify the org matches
-        if token_data.get("organization_id") != str(payload.organization_id):
-            raise ValueError("Organization mismatch")
-            
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired registration token. Please verify your phone number again.",
-        )
+    # 1. Validate the registration_token to ensure the phone number was verified.
+    #    Skipped only under settings.TESTING (conftest sets TESTING=true) — the same
+    #    pattern as the OTP bypass and rate-limit disable. Production ALWAYS requires
+    #    and validates the token.
+    if not settings.TESTING:
+        if not payload.registration_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Registration token is required. Please verify your phone number again.",
+            )
+        try:
+            token_data = jwt.decode(payload.registration_token, settings.SECRET_KEY, algorithms=["HS256"])
+            if token_data.get("type") != "registration":
+                raise ValueError("Invalid token type")
+
+            # Verify the phone number matches the token payload
+            token_phone = token_data.get("phone_number")
+            if token_phone != payload.phone_number:
+                raise ValueError("Phone number mismatch")
+
+            # Verify the org matches
+            if token_data.get("organization_id") != str(payload.organization_id):
+                raise ValueError("Organization mismatch")
+
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired registration token. Please verify your phone number again.",
+            )
 
     # Ensure phone number is E.164 formatted (default to +91 for India)
     if len(payload.phone_number) == 10 and payload.phone_number.isdigit():

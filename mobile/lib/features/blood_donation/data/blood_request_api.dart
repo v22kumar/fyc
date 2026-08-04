@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../service_locator.dart';
-import 'blood_donor_model.dart';
+import 'models/blood_donor_model.dart';
 import 'blood_request_models.dart';
 
 /// Thin direct-Dio client for the blood emergency endpoints (P2 backend).

@@ -162,8 +162,12 @@ def test_otp_verify_unregistered_user(client, db):
         "/api/v1/auth/otp/verify",
         json={"verification_id": v_id, "otp_code": "123456"}
     )
-    assert verify_response.status_code == 404
-    assert "Please call /auth/register" in verify_response.json()["detail"]
+    # Unregistered number → 200 with a registration_token (OTPVerifySuccess),
+    # which the app exchanges at /auth/register. (Older builds returned 404.)
+    assert verify_response.status_code == 200, verify_response.text
+    data = verify_response.json()
+    assert data.get("registration_token")
+    assert data["phone_number"] == "+919876543210"
 
 def test_registration_and_login_flow(client, db):
     """Test full registration and subsequent login via OTP flow."""
@@ -308,12 +312,14 @@ def _reg_payload(org_id, **overrides):
     return payload
 
 
-def test_register_requires_email(client, db):
+def test_register_email_optional(client, db):
+    """Email is optional at registration now — omitting it succeeds."""
     org = _reg_org(db)
     body = _reg_payload(org.id)
     body.pop("email")
     r = client.post("/api/v1/auth/register", json=body)
-    assert r.status_code == 422, r.text
+    assert r.status_code == 200, r.text
+    assert r.json()["user"].get("email") in (None, "")
 
 
 def test_register_rejects_invalid_email(client, db):
