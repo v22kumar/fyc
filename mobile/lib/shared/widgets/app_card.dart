@@ -11,7 +11,9 @@ class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
-  final Color backgroundColor;
+  // Nullable so they can default to the (runtime, non-const) theme colours,
+  // resolved in build() — a theme getter can't be a const default value.
+  final Color? backgroundColor;
   final Color? borderColor;
   final VoidCallback? onTap;
 
@@ -20,8 +22,8 @@ class AppCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.margin = const EdgeInsets.only(bottom: 12),
-    this.backgroundColor = AppColors.surface,
-    this.borderColor = AppColors.border,
+    this.backgroundColor,
+    this.borderColor,
     this.onTap,
   });
 
@@ -30,9 +32,9 @@ class AppCard extends StatelessWidget {
     final card = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor ?? AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: borderColor != null ? Border.all(color: borderColor!) : null,
+        border: Border.all(color: borderColor ?? AppColors.border),
       ),
       child: child,
     );
