@@ -18,7 +18,7 @@ class DSCarousel extends StatefulWidget {
     required this.itemBuilder,
     this.height = 150,
     this.interval = const Duration(seconds: 5),
-    this.itemPadding = EdgeInsets.symmetric(horizontal: 16),
+    this.itemPadding = const EdgeInsets.symmetric(horizontal: 16),
   });
 
   @override
