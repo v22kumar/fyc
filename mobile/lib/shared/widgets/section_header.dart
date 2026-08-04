@@ -15,7 +15,7 @@ class SectionHeader extends StatelessWidget {
     super.key,
     required this.label,
     this.trailing,
-    this.padding = EdgeInsets.only(bottom: 10, top: 4),
+    this.padding = const EdgeInsets.only(bottom: 10, top: 4),
   });
 
   @override
