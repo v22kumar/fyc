@@ -270,7 +270,9 @@ def test_registrants_names_only(client, db):
     assert res.status_code == 200
     body = res.json()
     assert body["count"] == 2
-    assert body["names"] == ["Kumar", "Priya"]
+    # The public projection returns participant objects (name + age + class), not
+    # a bare name list — assert the names come through in order, still no PII.
+    assert [p["name"] for p in body["participants"]] == ["Kumar", "Priya"]
     assert "+919000000001" not in str(body)  # no PII on the public projection
 
 

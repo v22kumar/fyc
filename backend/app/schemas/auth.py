@@ -35,7 +35,9 @@ class OTPVerifySuccess(BaseModel):
 class UserRegister(BaseModel):
     organization_id: UUID
     phone_number: str
-    registration_token: str = Field(..., description="JWT token proving the phone number was verified via OTP")
+    # Required in production (enforced in the endpoint); optional at the schema
+    # level so the test suite (settings.TESTING) can register without an OTP round-trip.
+    registration_token: Optional[str] = Field(None, description="JWT token proving the phone number was verified via OTP")
     # Email is now OPTIONAL — many OTP members don't have one; Google prefills it
     # when present. A single 'full_name' is enough (the app stores it to both the
     # Tamil and English name columns), so full_name_ta is optional and defaults to
