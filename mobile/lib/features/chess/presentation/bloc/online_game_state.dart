@@ -39,6 +39,9 @@ class OnlineGameInProgress extends OnlineGameState {
   final bool moveInFlight;       // we sent a move, waiting for server confirmation
   final bool opponentDisconnected;
   final bool reconnecting;       // OUR socket dropped; client is auto-reconnecting
+  /// The server froze the game (a move could not be durably saved) and an
+  /// organizer has been alerted. Moves are refused until it is resolved.
+  final bool paused;
   final String timeControl;      // "untimed" | "blitz_5_0" | "rapid_10_0"
   final int? whiteTimeMs;        // null = untimed
   final int? blackTimeMs;
@@ -56,6 +59,7 @@ class OnlineGameInProgress extends OnlineGameState {
     this.moveInFlight = false,
     this.opponentDisconnected = false,
     this.reconnecting = false,
+    this.paused = false,
     this.timeControl = 'untimed',
     this.whiteTimeMs,
     this.blackTimeMs,
@@ -73,6 +77,7 @@ class OnlineGameInProgress extends OnlineGameState {
     bool? moveInFlight,
     bool? opponentDisconnected,
     bool? reconnecting,
+    bool? paused,
     String? timeControl,
     int? whiteTimeMs,
     int? blackTimeMs,
@@ -92,6 +97,7 @@ class OnlineGameInProgress extends OnlineGameState {
       moveInFlight: moveInFlight ?? this.moveInFlight,
       opponentDisconnected: opponentDisconnected ?? this.opponentDisconnected,
       reconnecting: reconnecting ?? this.reconnecting,
+      paused: paused ?? this.paused,
       timeControl: timeControl ?? this.timeControl,
       whiteTimeMs: clearWhiteTime ? null : (whiteTimeMs ?? this.whiteTimeMs),
       blackTimeMs: clearBlackTime ? null : (blackTimeMs ?? this.blackTimeMs),
@@ -101,7 +107,7 @@ class OnlineGameInProgress extends OnlineGameState {
   @override
   List<Object?> get props => [boardState, moveSans, isMyTurn, drawOffered,
                                moveInFlight, opponentDisconnected, reconnecting,
-                               whiteTimeMs, blackTimeMs];
+                               paused, whiteTimeMs, blackTimeMs];
 }
 
 class OnlineGameOver extends OnlineGameState {

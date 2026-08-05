@@ -108,6 +108,14 @@ class GameSession:
         self.draw_offered_by: Optional[str] = None
         self._disconnect_tasks: Dict[str, asyncio.Task] = {}
 
+        # Players whose opponent has been shown a "disconnected — forfeits in
+        # 60s" warning. Without this the warning was never withdrawn when they
+        # came back: the server quietly cancelled the forfeit timer but told
+        # nobody, so the opponent sat watching a countdown that would never
+        # fire. Especially visible in cross-platform games, where one side is on
+        # mobile data and drops routinely.
+        self.disconnect_notified: set = set()
+
         # Set when a move could not be durably persisted: the game is frozen and
         # rejects further moves until an organizer intervenes, so the in-memory
         # board can never drift ahead of the database.

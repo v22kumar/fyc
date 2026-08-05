@@ -1,3 +1,4 @@
+import logging
 import random
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -113,6 +114,8 @@ def _audit(db: Session, org_id, user_id, action_type: str, match_id, old_values=
     except Exception:
         pass
 
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_TIME_CONTROL = "rapid_10_0"
 
@@ -676,7 +679,16 @@ def get_tournament(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     tour = _get_tour(db, tour_id, tenant_id)
-    _auto_resolve(db, tour)  # pick up finished Arena games
+    # Pick up finished Arena games. This is opportunistic housekeeping, not the
+    # point of the request: if advancing the bracket fails (a write conflict, a
+    # notification that cannot be delivered), the player must still get to see
+    # the tournament. Failing the whole read would leave them staring at an
+    # error page mid-event. The reaper retries resolution every two minutes.
+    try:
+        _auto_resolve(db, tour)
+    except Exception as e:  # noqa: BLE001
+        db.rollback()
+        logger.warning(f"[chess-tournament] auto-resolve failed for {tour_id}: {e}")
     return _detail(db, tour, current_user.id if current_user else None)
 
 

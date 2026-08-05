@@ -281,6 +281,40 @@ class OnlineGamePage extends StatelessWidget {
             ],
           ),
 
+          // Server froze the board (a move could not be saved). Takes priority
+          // over the connection banners: the socket is fine, the game is not.
+          if (state.paused)
+            Positioned(
+              top: 80,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1B18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFB3261E)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.pause_circle_outline,
+                        size: 18, color: const Color(0xFFF1746A)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        trId('game_paused_organizer'),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Our-own-connection-lost banner (we are auto-reconnecting)
           if (state.reconnecting)
             Positioned(

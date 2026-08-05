@@ -461,6 +461,11 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       $('top-note').textContent = `Disconnected — forfeits in ${m.seconds_until_forfeit ?? 60}s`;
     });
 
+    socket.on('opponent_reconnected', () => {
+      // Withdraw the forfeit countdown — they made it back.
+      $('top-note').textContent = '';
+    });
+
     socket.on('spectator_count', (m) => {
       $('watchers').textContent = m.count ? `${m.count} watching` : '';
     });

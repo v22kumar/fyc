@@ -24,7 +24,7 @@ from app.schemas.chess import (
     ChallengeCreate, ChallengeOut, ChallengeAcceptOut,
     LiveGameOut, PlayerProfileOut,
 )
-from app.services.chess_ws_manager import ws_manager
+from app.services.chess_ws_manager import ws_manager, DISCONNECT_GRACE_SECONDS
 from app.services.glicko2 import update as glicko2_update, PlayerRating, prestige_title, title_emoji
 
 logger = logging.getLogger(__name__)
@@ -1059,6 +1059,15 @@ async def game_websocket(
     # Sync state for reconnecting player
     await session.send_to(uid, session.state_snapshot(uid))
 
+    # Withdraw the forfeit warning if one was shown for this player. The timer
+    # was already cancelled above, but until now nothing told the opponent, so
+    # their screen kept counting down to a forfeit that would never happen.
+    if uid in session.disconnect_notified:
+        session.disconnect_notified.discard(uid)
+        _opp = session.opponent_id(uid)
+        if _opp:
+            await session.send_to(_opp, {"type": "opponent_reconnected"})
+
     # Notify both when game is fully connected
     if session.both_connected():
         # Start the clock first so the opening window is part of the state we
@@ -1336,8 +1345,11 @@ async def game_websocket(
         if opp in session.connections:
             await session.send_to(opp, {
                 "type": "opponent_disconnected",
-                "seconds_until_forfeit": 60,
+                "seconds_until_forfeit": DISCONNECT_GRACE_SECONDS,
             })
+            # Remember that a warning is on screen, so it can be withdrawn if
+            # this player reconnects before the timer fires.
+            session.disconnect_notified.add(uid)
 
             async def forfeit(disconnected_uid: str):
                 color = session.get_color(disconnected_uid)

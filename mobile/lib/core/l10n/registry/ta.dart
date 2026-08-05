@@ -315,6 +315,7 @@ const Map<String, String> kTa = {
   'new_2': 'புதியது',
   'new_chess_tournament': 'புதிய சதுரங்கப் போட்டி',
   'time_control': 'நேர அளவு (ஒவ்வொரு ஆட்டமும்)',
+  'game_paused_organizer': 'ஆட்டம் இடைநிறுத்தப்பட்டது — அமைப்பாளருக்குத் தெரிவிக்கப்பட்டது.',
   'change': 'மாற்று',
   'something_went_wrong': 'ஏதோ தவறு நடந்தது',
   'news': 'செய்திகள்',

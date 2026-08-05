@@ -352,6 +352,7 @@ const Map<String, String> kEn = {
   'new_2': 'New',
   'new_chess_tournament': 'New Chess Tournament',
   'time_control': 'Time control (every match)',
+  'game_paused_organizer': 'Game paused — an organizer has been alerted.',
   'change': 'Change',
   'something_went_wrong': 'Something went wrong',
   'news': 'News',
