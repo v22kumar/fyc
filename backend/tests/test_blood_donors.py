@@ -420,3 +420,101 @@ def test_the_pin_sits_where_the_distance_was_measured_from(client, db):
     assert hit["location_basis"] == "live"
     assert abs(hit["approx_latitude"] - 8.18) < 0.005, "pin fell back to the home area"
     assert abs(hit["approx_longitude"] - 77.41) < 0.005
+
+
+def test_a_directory_contact_who_signs_in_becomes_a_member(client, db):
+    """Joining FYC is what takes someone off the cold-call list.
+
+    The directory is phone numbers the club collected from a public source.
+    Once one of those people installs the app and proves the number is theirs,
+    they are reachable in the app — and leaving them filed as an import would
+    keep offering them to strangers to ring out of the blue."""
+    import uuid
+    from app.models.user import User, UserProfile
+    from app.models.blood_donor import BloodDonor
+    from app.routers.auth import _graduate_from_directory
+    from app.core.security import get_password_hash
+
+    org = _make_org(db)
+    u = User(id=uuid.uuid4(), organization_id=org.id,
+             phone_number="+919600000012", email="joiner@import.local",
+             password_hash=get_password_hash("x"), role="PUBLIC_CITIZEN",
+             is_verified=True, source="F2S_IMPORT")
+    db.add(u); db.flush()
+    db.add(UserProfile(user_id=u.id, full_name_en="Joiner",
+                       full_name_ta="சேர்ந்தவர்"))
+    db.add(BloodDonor(id=uuid.uuid4(), organization_id=org.id, user_id=u.id,
+                      blood_group="O+", is_available=True))
+    db.commit()
+
+    h = {"X-Organization-ID": str(org.id)}
+    before = client.get("/api/v1/blood-donors?source=imported", headers=h).json()
+    assert any(d["full_name_en"] == "Joiner" for d in before)
+
+    _graduate_from_directory(db, u)
+
+    assert u.source is None
+    assert u.role == "PUBLIC_CITIZEN", "graduating must not change privileges"
+    after_imported = client.get("/api/v1/blood-donors?source=imported", headers=h).json()
+    after_club = client.get("/api/v1/blood-donors?source=club", headers=h).json()
+    assert not any(d["full_name_en"] == "Joiner" for d in after_imported)
+    assert any(d["full_name_en"] == "Joiner" for d in after_club)
+
+
+def test_directory_contacts_segregate_by_taluk_and_neighbours(client, db):
+    """The directory is organised by taluk, with the option to widen to the
+    rest of the district — someone in Nagercoil looking for a rare group needs
+    Thovalai and Agastheeswaram too, and nobody in Chennai."""
+    import uuid
+    from app.models.user import User, UserProfile
+    from app.models.blood_donor import BloodDonor
+    from app.models.geography import GeographicNode, GeoLevel
+    from app.core.security import get_password_hash
+
+    org = _make_org(db)
+    state = GeographicNode(id=uuid.uuid4(), level=GeoLevel.STATE,
+                           name_en="Tamil Nadu", name_ta="தமிழ்நாடு")
+    db.add(state); db.flush()
+    kk = GeographicNode(id=uuid.uuid4(), parent_id=state.id,
+                        level=GeoLevel.DISTRICT, name_en="Kanyakumari",
+                        name_ta="கன்னியாகுமரி")
+    far = GeographicNode(id=uuid.uuid4(), parent_id=state.id,
+                         level=GeoLevel.DISTRICT, name_en="Chennai",
+                         name_ta="சென்னை")
+    db.add_all([kk, far]); db.flush()
+    nagercoil = GeographicNode(id=uuid.uuid4(), parent_id=kk.id,
+                               level=GeoLevel.TALUK, name_en="Nagercoil",
+                               name_ta="நாகர்கோவில்")
+    thovalai = GeographicNode(id=uuid.uuid4(), parent_id=kk.id,
+                              level=GeoLevel.TALUK, name_en="Thovalai",
+                              name_ta="தோவாளை")
+    mylapore = GeographicNode(id=uuid.uuid4(), parent_id=far.id,
+                              level=GeoLevel.TALUK, name_en="Mylapore",
+                              name_ta="மயிலாப்பூர்")
+    db.add_all([nagercoil, thovalai, mylapore]); db.commit()
+
+    def _contact(name, node, phone):
+        u = User(id=uuid.uuid4(), organization_id=org.id, phone_number=phone,
+                 email=f"{phone}@import.local",
+                 password_hash=get_password_hash("x"), role="PUBLIC_CITIZEN",
+                 is_verified=True, source="F2S_IMPORT")
+        db.add(u); db.flush()
+        db.add(UserProfile(user_id=u.id, full_name_en=name, full_name_ta=name))
+        db.add(BloodDonor(id=uuid.uuid4(), organization_id=org.id, user_id=u.id,
+                          blood_group="O+", is_available=True,
+                          geography_id=node.id))
+
+    _contact("Here", nagercoil, "+919600000021")
+    _contact("NextTaluk", thovalai, "+919600000022")
+    _contact("FarAway", mylapore, "+919600000023")
+    db.commit()
+
+    h = {"X-Organization-ID": str(org.id)}
+    base = f"/api/v1/blood-donors?source=imported&geography_id={nagercoil.id}"
+
+    just_here = {d["full_name_en"] for d in client.get(base, headers=h).json()}
+    assert just_here == {"Here"}
+
+    district = {d["full_name_en"]
+                for d in client.get(base + "&nearby=true", headers=h).json()}
+    assert district == {"Here", "NextTaluk"}, "nearby must mean the district, not the state"

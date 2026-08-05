@@ -76,3 +76,44 @@ stranger: *this person is not expecting your call — please introduce yourself.
 
 The club list answers "who near me has agreed to be asked". This answers "I have
 tried everyone and I need more numbers". Second stop, never the first.
+
+### Taluk is the organising unit
+
+It is the only geography these records have. A directory contact has no position
+and is never going to share one, so there is no distance to sort by — sorting by
+proximity here would be inventing a number. All 4,680 imported rows carry a
+taluk and a district from the source data, which is real information, so the
+list is grouped by taluk with a count per heading.
+
+Widening is an explicit step rather than a slider to nowhere: choose a taluk, and
+a checkbox offers the rest of that **district**. Someone in Nagercoil hunting a
+rare group needs Thovalai and Agastheeswaram; nobody needs Chennai. Contacts
+whose taluk was never recorded get their own heading rather than disappearing —
+hiding them would quietly shrink the directory.
+
+### Joining FYC takes you off the cold-call list
+
+When a directory contact installs the app and proves the number is theirs, they
+stop being a stranger: reachable in the app, notifiable, on the map if they
+choose to share a location. Signing in clears the import marker (and only that —
+no role change, no privilege granted), and flushes the donor search cache, so
+the directory stops offering them within the same second rather than for the
+rest of a five-minute cache window.
+
+### The bug underneath all of this
+
+A start-up backfill tagged **every donor-linked `PUBLIC_CITIZEN`** as a
+Friends2Support import. It was written as a one-off — *"self-clears, re-running
+matches nothing new"* — and it was, exactly once.
+
+`PUBLIC_CITIZEN` is not a marker of an import. It is the ordinary role every app
+member gets, including through `/auth/register`. So from the moment a real
+member registered as a blood donor, the next deploy filed them as a stranger:
+out of the club list, off the map, into the cold-call directory, silently, on
+every boot.
+
+It ran on every start, so no amount of fixing the app would have held. It is
+gone. The importer tags its own rows now, which is the only place that knows.
+The repair that replaces it reads a date of birth — the one field the directory
+import never supplies and registration always requires — so it moves people out
+of the cold-call list and never into it.

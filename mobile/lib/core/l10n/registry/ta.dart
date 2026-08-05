@@ -676,6 +676,8 @@ const Map<String, String> kTa = {
   'club_donors': 'கிளப் கொடையாளர்கள்',
   'wider_directory': 'பரந்த பட்டியல்',
   'wider_directory_note': 'Friends2Support தொடர்புகள். FYC உறுப்பினர்கள் அல்ல — கருணையுடன் அணுகவும்.',
+  'include_nearby_taluks': 'அதே மாவட்டத்தின் அருகிலுள்ள வட்டங்களையும் காட்டு',
+  'area_not_recorded': 'பகுதி பதிவு செய்யப்படவில்லை',
   'donors_here_n': 'இங்கே {n} கொடையாளர்கள்',
   'donors_around_you': 'உங்களைச் சுற்றி {n} கொடையாளர்கள்',
   'n_can_give_today': '{n} பேர் இன்று தர முடியும்',

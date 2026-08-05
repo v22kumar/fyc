@@ -660,6 +660,8 @@ const Map<String, String> kMl = {
   'club_donors': 'ക്ലബ് ദാതാക്കൾ',
   'wider_directory': 'വിശാല പട്ടിക',
   'wider_directory_note': 'Friends2Support ബന്ധങ്ങൾ. FYC അംഗങ്ങളല്ല — ദയവായി പരിഗണനയോടെ.',
+  'include_nearby_taluks': 'അതേ ജില്ലയിലെ അടുത്ത താലൂക്കുകളും കാണിക്കുക',
+  'area_not_recorded': 'പ്രദേശം രേഖപ്പെടുത്തിയിട്ടില്ല',
   'donors_here_n': 'ഇവിടെ {n} ദാതാക്കൾ',
   'donors_around_you': 'നിങ്ങൾക്ക് ചുറ്റും {n} ദാതാക്കൾ',
   'n_can_give_today': '{n} പേർക്ക് ഇന്ന് നൽകാം',

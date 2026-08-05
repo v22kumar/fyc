@@ -978,6 +978,8 @@ const Map<String, String> kEn = {
   'club_donors': 'Club donors',
   'wider_directory': 'Wider directory',
   'wider_directory_note': 'Friends2Support contacts. Not FYC members — please be considerate.',
+  'include_nearby_taluks': 'Also show nearby taluks in the same district',
+  'area_not_recorded': 'Area not recorded',
   'donors_here_n': '{n} donors here',
   'donors_around_you': '{n} donors around you',
   'n_can_give_today': '{n} can give today',

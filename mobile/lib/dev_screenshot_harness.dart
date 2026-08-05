@@ -160,13 +160,15 @@ Future<void> _walk() async {
     // back out of every nested route — a request for /blood-donation/directory
     // photographed /blood-donation instead, and looked like the route was
     // broken rather than the harness.
+    //
+    // popUntil walks down from the *top* route, which is the only way to ask
+    // "what is covering the screen right now". ModalRoute.of(nav.context)
+    // answers a different question — the route enclosing the Navigator itself —
+    // so it never matched and the sheet stayed in every photograph.
     final nav = appRouter.routerDelegate.navigatorKey.currentState;
     if (nav != null && nav.canPop()) {
-      final top = ModalRoute.of(nav.context);
-      if (top is PopupRoute) {
-        nav.pop();
-        await Future<void>.delayed(const Duration(milliseconds: 600));
-      }
+      nav.popUntil((route) => route is! PopupRoute);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
     }
     final name = '${i.toString().padLeft(2, '0')}'
         '${route.replaceAll('/', '_')}.png';

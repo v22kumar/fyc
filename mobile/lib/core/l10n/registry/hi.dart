@@ -660,6 +660,8 @@ const Map<String, String> kHi = {
   'club_donors': 'क्लब दाता',
   'wider_directory': 'व्यापक सूची',
   'wider_directory_note': 'Friends2Support संपर्क। FYC सदस्य नहीं — कृपया विचारपूर्वक संपर्क करें।',
+  'include_nearby_taluks': 'उसी ज़िले के आसपास के तालुक भी दिखाएँ',
+  'area_not_recorded': 'क्षेत्र दर्ज नहीं है',
   'donors_here_n': 'यहाँ {n} रक्तदाता',
   'donors_around_you': 'आपके आसपास {n} रक्तदाता',
   'n_can_give_today': '{n} आज दे सकते हैं',

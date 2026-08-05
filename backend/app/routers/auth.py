@@ -89,6 +89,37 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     )
 
 
+def _graduate_from_directory(db: Session, user: User) -> None:
+    """A Friends2Support contact who signs in has just joined FYC.
+
+    The directory is a list of phone numbers the club collected from a public
+    source. When one of those people downloads the app and proves the number is
+    theirs, they stop being a cold call and become a member — reachable in the
+    app, notifiable, and on the map if they choose to share a location.
+
+    Leaving the marker on would file them as a stranger forever: out of the club
+    list, absent from the nearby ranking, and offered to anyone in an emergency
+    to ring out of the blue — which is the exact thing a separate directory
+    exists to avoid.
+
+    Only the import marker is cleared. No role change and no privilege granted:
+    PUBLIC_CITIZEN is already what an ordinary registration produces.
+    """
+    if getattr(user, "source", None) != "F2S_IMPORT":
+        return
+    user.source = None
+    db.commit()
+    db.refresh(user)
+    # They have just moved between two cached lists. Without this the directory
+    # keeps offering them as a stranger to call for the rest of the cache
+    # window, which is the one moment it must not.
+    try:
+        from app.routers.blood_donors import _search_cache
+        _search_cache.invalidate()
+    except Exception:
+        pass
+
+
 @router.post("/otp/verify", response_model=Union[Token, OTPVerifySuccess])
 def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
     """
@@ -146,6 +177,9 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been blocked by an administrator.",
         )
+
+    # Signing in is how a directory contact becomes a member.
+    _graduate_from_directory(db, user)
 
     access_token = create_access_token(
         subject=user.id,
