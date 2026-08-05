@@ -967,4 +967,11 @@ const Map<String, String> kEn = {
   'resolution_rate': 'Resolved rate',
   'avg_response': 'Average reply',
   'active_citizens': 'People reporting',
+  'i_need_blood': 'I need blood',
+  'i_need_blood_help': 'Tell us once. The right donors are alerted.',
+  'donors_available_now': '{n} of {total} club donors are available right now',
+  'no_donors_available_now': 'No club donor is marked available — your request still reaches everyone',
+  'club_donors': 'Club donors',
+  'wider_directory': 'Wider directory',
+  'wider_directory_note': 'Friends2Support contacts. Not FYC members — please be considerate.',
 };

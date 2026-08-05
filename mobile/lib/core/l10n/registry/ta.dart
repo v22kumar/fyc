@@ -669,4 +669,11 @@ const Map<String, String> kTa = {
   'resolution_rate': 'தீர்வு விகிதம்',
   'avg_response': 'சராசரி பதில்',
   'active_citizens': 'புகார் அளித்தோர்',
+  'i_need_blood': 'இரத்தம் தேவை',
+  'i_need_blood_help': 'ஒருமுறை சொல்லுங்கள். தகுதியானவர்களுக்கு அறிவிப்பு செல்லும்.',
+  'donors_available_now': '{total} கிளப் கொடையாளர்களில் {n} பேர் இப்போது கிடைக்கிறார்கள்',
+  'no_donors_available_now': 'இப்போது யாரும் கிடைக்கவில்லை — இருப்பினும் உங்கள் கோரிக்கை அனைவரையும் சென்றடையும்',
+  'club_donors': 'கிளப் கொடையாளர்கள்',
+  'wider_directory': 'பரந்த பட்டியல்',
+  'wider_directory_note': 'Friends2Support தொடர்புகள். FYC உறுப்பினர்கள் அல்ல — கருணையுடன் அணுகவும்.',
 };

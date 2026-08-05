@@ -653,4 +653,11 @@ const Map<String, String> kHi = {
   'resolution_rate': 'समाधान दर',
   'avg_response': 'औसत उत्तर',
   'active_citizens': 'शिकायत करने वाले',
+  'i_need_blood': 'रक्त चाहिए',
+  'i_need_blood_help': 'एक बार बताइए। सही दाताओं को सूचना जाएगी।',
+  'donors_available_now': '{total} में से {n} क्लब दाता अभी उपलब्ध हैं',
+  'no_donors_available_now': 'अभी कोई उपलब्ध नहीं — फिर भी आपका अनुरोध सभी तक पहुँचेगा',
+  'club_donors': 'क्लब दाता',
+  'wider_directory': 'व्यापक सूची',
+  'wider_directory_note': 'Friends2Support संपर्क। FYC सदस्य नहीं — कृपया विचारपूर्वक संपर्क करें।',
 };

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
+import '../widgets/need_blood_panel.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
@@ -190,12 +191,26 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
               ],
             ),
           ),
-          _EmergencyBanner(onTap: () {
-            showRaiseRequestSheet(
-              context,
-              initialGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-            );
-          }),
+          // The request is the screen's purpose, so it leads. The filter row
+          // and the directory stay below it for anyone who wants to browse —
+          // available, but no longer the first thing asked of someone in an
+          // emergency.
+          BlocBuilder<BloodDonorBloc, BloodDonorState>(
+            builder: (context, state) {
+              final donors = state is BloodDonorSearchSuccess
+                  ? state.donors.where((d) => !d.isImported).toList()
+                  : const [];
+              return NeedBloodPanel(
+                availableNow:
+                    donors.where((d) => d.isAvailable && d.isEligible).length,
+                totalDonors: donors.length,
+                onRaiseRequest: () => showRaiseRequestSheet(
+                  context,
+                  initialGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+                ),
+              );
+            },
+          ),
           _FilterRow(
             groups: _groups,
             selected: _selectedGroup,

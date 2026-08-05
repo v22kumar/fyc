@@ -653,4 +653,11 @@ const Map<String, String> kMl = {
   'resolution_rate': 'പരിഹാര നിരക്ക്',
   'avg_response': 'ശരാശരി മറുപടി',
   'active_citizens': 'പരാതി നൽകിയവർ',
+  'i_need_blood': 'രക്തം വേണം',
+  'i_need_blood_help': 'ഒരിക്കൽ പറയുക. യോഗ്യരായവർക്ക് അറിയിപ്പ് പോകും.',
+  'donors_available_now': '{total}-ൽ {n} ക്ലബ് ദാതാക്കൾ ഇപ്പോൾ ലഭ്യമാണ്',
+  'no_donors_available_now': 'ഇപ്പോൾ ആരും ലഭ്യമല്ല — എങ്കിലും അപേക്ഷ എല്ലാവരിലും എത്തും',
+  'club_donors': 'ക്ലബ് ദാതാക്കൾ',
+  'wider_directory': 'വിശാല പട്ടിക',
+  'wider_directory_note': 'Friends2Support ബന്ധങ്ങൾ. FYC അംഗങ്ങളല്ല — ദയവായി പരിഗണനയോടെ.',
 };
