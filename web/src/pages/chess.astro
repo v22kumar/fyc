@@ -23,7 +23,12 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
     <!-- BOARD MODE -->
     <div id="board-view" class="hidden">
-      <a href="/chess" class="inline-block mb-4 text-sm text-[#0F5132] font-bold hover:underline">← All live games</a>
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <a href="/chess" class="text-sm text-[#0F5132] font-bold hover:underline">← All live games</a>
+        <!-- Spectating is public; only offer the board to someone already signed
+             in. The server still checks that they are a player in this game. -->
+        <a id="play-link" href="#" class="hidden text-sm font-bold text-white bg-[#0F5132] rounded-lg px-3 py-1.5 hover:opacity-90">Playing in this game →</a>
+      </div>
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
         <div class="flex items-center justify-between mb-3">
           <div class="font-bold text-gray-900" id="b-black">Black</div>
@@ -137,6 +142,15 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         document.getElementById('b-moves').textContent = '';
         document.getElementById('b-moves').innerHTML = out || '—';
       };
+
+      // Offer the playable board to signed-in visitors. The link is only a
+      // shortcut — the play page and the server both verify that this person is
+      // actually one of the two players.
+      if (localStorage.getItem('fyc_token')) {
+        const pl = document.getElementById('play-link');
+        pl.href = `/play?game=${encodeURIComponent(id)}`;
+        pl.classList.remove('hidden');
+      }
 
       const wsBase = API_BASE.replace(/^http/, 'ws');
       let ws;

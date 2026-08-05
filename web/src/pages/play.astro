@@ -1,0 +1,467 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+
+<BaseLayout title="Play Chess — FYC Connect" description="Play your FYC chess game in the browser.">
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    <!-- Shown while we work out whether this person may play this game. -->
+    <div id="gate" class="text-center text-gray-400 py-24">Opening the board…</div>
+
+    <div id="gate-error" class="hidden max-w-md mx-auto text-center py-20">
+      <div class="text-4xl mb-3">♟️</div>
+      <p id="gate-error-msg" class="text-gray-700 font-bold mb-4">Something went wrong.</p>
+      <a href="/chess" class="text-sm text-[#0F5132] font-bold hover:underline">← Live games</a>
+    </div>
+
+    <div id="table" class="hidden">
+      <div class="flex items-center justify-between mb-4 gap-3">
+        <a href="/chess" class="text-sm text-[#0F5132] font-bold hover:underline">← Live games</a>
+        <div class="flex items-center gap-2">
+          <span id="conn" class="hidden text-[11px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800">Reconnecting…</span>
+          <span id="watchers" class="text-[11px] text-gray-400"></span>
+        </div>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
+        <!-- Board column -->
+        <div id="board-col">
+          <!-- Opponent -->
+          <div class="flex items-center justify-between mb-2">
+            <div class="min-w-0">
+              <div id="top-name" class="font-bold text-gray-900 truncate">Opponent</div>
+              <div id="top-note" class="text-[11px] text-gray-400"></div>
+            </div>
+            <div id="top-clock" class="clock">--:--</div>
+          </div>
+
+          <div id="board-wrap" class="relative">
+            <div id="board" class="w-full aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm"></div>
+
+            <!-- Promotion picker: shown over the destination file. -->
+            <div id="promo" class="hidden absolute inset-0 bg-black/45 z-20 flex items-center justify-center">
+              <div class="bg-white rounded-2xl p-4 shadow-xl">
+                <p class="text-xs font-bold text-gray-500 mb-3 text-center uppercase tracking-wide">Promote to</p>
+                <div class="flex gap-2">
+                  <button data-piece="q" class="promo-btn">♛</button>
+                  <button data-piece="r" class="promo-btn">♜</button>
+                  <button data-piece="b" class="promo-btn">♝</button>
+                  <button data-piece="n" class="promo-btn">♞</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- End-of-game curtain. -->
+            <div id="over" class="hidden absolute inset-0 bg-black/55 z-20 flex items-center justify-center rounded-xl">
+              <div class="bg-white rounded-2xl px-6 py-5 text-center shadow-xl max-w-[85%]">
+                <p id="over-title" class="text-lg font-black text-gray-900"></p>
+                <p id="over-reason" class="text-sm text-gray-500 mt-1"></p>
+                <a href="/chess" class="inline-block mt-4 text-sm font-bold text-[#0F5132] hover:underline">← Back to live games</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Me -->
+          <div class="flex items-center justify-between mt-2">
+            <div class="min-w-0">
+              <div id="bot-name" class="font-bold text-gray-900 truncate">You</div>
+              <div id="bot-note" class="text-[11px] text-gray-400"></div>
+            </div>
+            <div id="bot-clock" class="clock">--:--</div>
+          </div>
+        </div>
+
+        <!-- Side panel -->
+        <aside class="flex flex-col gap-4">
+          <div class="bg-white rounded-2xl border border-gray-200 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wide text-gray-400">Moves</span>
+              <span id="status-pill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">● LIVE</span>
+            </div>
+            <div id="moves" class="text-sm text-gray-700 leading-relaxed max-h-56 overflow-y-auto font-mono">—</div>
+          </div>
+
+          <!-- Incoming draw offer -->
+          <div id="draw-offer" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p class="text-sm font-bold text-amber-900 mb-3">Your opponent offers a draw.</p>
+            <div class="flex gap-2">
+              <button id="draw-accept" class="flex-1 bg-[#0F5132] text-white text-sm font-bold rounded-lg py-2">Accept</button>
+              <button id="draw-decline" class="flex-1 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg py-2">Decline</button>
+            </div>
+          </div>
+
+          <div id="actions" class="grid grid-cols-2 gap-2">
+            <button id="btn-draw" class="bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg py-2.5 hover:border-gray-400">Offer draw</button>
+            <button id="btn-resign" class="bg-white border border-red-200 text-red-700 text-sm font-bold rounded-lg py-2.5 hover:border-red-400">Resign</button>
+            <button id="btn-flip" class="col-span-2 bg-white border border-gray-300 text-gray-600 text-sm font-bold rounded-lg py-2">Flip board</button>
+          </div>
+
+          <p id="hint" class="text-[11px] text-gray-400 leading-relaxed"></p>
+        </aside>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style is:global>
+  @import 'chessground/assets/chessground.base.css';
+  @import 'chessground/assets/chessground.brown.css';
+  @import 'chessground/assets/chessground.cburnett.css';
+
+  /* chessground sizes itself to its container; the container is the square. */
+  #board cg-board { border-radius: 0; }
+
+  /* The board must never push the player's own clock below the fold — losing
+     sight of your own time is the one thing a chess UI may not do. Cap the
+     column by viewport height, leaving room for both name/clock rows. */
+  #board-col {
+    width: 100%;
+    /* Site nav (~100px) + back-row (~40px) + the two name/clock rows (~100px)
+       + page padding (~50px). Subtracting less than that lets the board grow
+       until the player's own clock is pushed off-screen. */
+    max-width: min(100%, calc(100vh - 300px));
+    margin-inline: auto;
+  }
+
+  .clock {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #111827;
+    background: #F3F4F6;
+    padding: 0.15rem 0.7rem;
+    border-radius: 0.5rem;
+    min-width: 5.2rem;
+    text-align: center;
+  }
+  .clock.active { background: #0F5132; color: #fff; }
+  .clock.low { background: #B3261E; color: #fff; }
+  .clock.idle { opacity: 0.55; }
+
+  .promo-btn {
+    width: 3.2rem; height: 3.2rem; font-size: 2rem; line-height: 1;
+    border: 1px solid #E5E7EB; border-radius: 0.75rem; background: #fff;
+  }
+  .promo-btn:hover { border-color: #0F5132; background: #F0F7F3; }
+</style>
+
+<script>
+  import { Chessground } from 'chessground';
+  import { Chess } from 'chessops/chess';
+  import { makeFen } from 'chessops/fen';
+  import { chessgroundDests } from 'chessops/compat';
+  import { GameSocket } from '../lib/chess/socket';
+  import { Clock, formatClock } from '../lib/chess/clock';
+  import { API_BASE } from '../lib/config';
+
+  type Colour = 'white' | 'black';
+
+  const params = new URLSearchParams(location.search);
+  const gameId = params.get('game') || params.get('id');
+  const token = localStorage.getItem('fyc_token');
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const fail = (msg: string) => {
+    $('gate').classList.add('hidden');
+    $('gate-error').classList.remove('hidden');
+    $('gate-error-msg').textContent = msg;
+  };
+
+  if (!gameId) {
+    fail('No game was specified.');
+  } else if (!token) {
+    // Bounce through login and come straight back to this board.
+    location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  } else {
+    start(gameId, token);
+  }
+
+  function start(id: string, jwt: string) {
+    // ── Local game state ────────────────────────────────────────────────────
+    // The move list is the source of truth; the position is a fold over it, so
+    // a resync is just "replay from the start" rather than patching in place.
+    let pos = Chess.default();
+    let myColour: Colour | null = null;
+    let turn: Colour = 'white';
+    let orientation: Colour = 'white';
+    let ended = false;
+    const sans: string[] = [];
+    const clock = new Clock();
+    let pendingPromotion: { orig: string; dest: string } | null = null;
+    let flagClaimed = false;
+
+    const ground = Chessground($('board'), {
+      orientation: 'white',
+      // The server is the authority, so the board never lets go of a move it
+      // has not been told about; `free: false` keeps chessground honest.
+      movable: { free: false, color: undefined, dests: new Map(), showDests: true },
+      animation: { enabled: true, duration: 180 },
+      highlight: { lastMove: true, check: true },
+      draggable: { enabled: true, showGhost: true },
+      events: { move: onUserMove },
+    });
+
+    const socket = new GameSocket(
+      `${API_BASE.replace(/^http/, 'ws')}/api/v1/chess/games/${encodeURIComponent(id)}/ws?token=${encodeURIComponent(jwt)}`,
+    );
+
+    // ── Rendering ───────────────────────────────────────────────────────────
+    function myTurn(): boolean {
+      return !ended && myColour !== null && turn === myColour;
+    }
+
+    function refreshBoard() {
+      ground.set({
+        fen: fenOf(pos),
+        turnColor: turn,
+        orientation,
+        check: pos.isCheck() ? turn : undefined,
+        movable: {
+          free: false,
+          color: myTurn() ? myColour! : undefined,
+          dests: myTurn() ? chessgroundDests(pos) : new Map(),
+        },
+      });
+    }
+
+    function fenOf(p: Chess): string {
+      return makeFen(p.toSetup());
+    }
+
+    function renderMoves() {
+      let out = '';
+      for (let i = 0; i < sans.length; i += 2) {
+        out += `${i / 2 + 1}. ${sans[i] ?? ''} ${sans[i + 1] ?? ''}  `;
+      }
+      $('moves').textContent = out || '—';
+      $('moves').scrollTop = $('moves').scrollHeight;
+    }
+
+    function renderNames(whiteName: string, blackName: string) {
+      const iAmWhite = orientation === 'white';
+      $('bot-name').textContent = iAmWhite ? whiteName : blackName;
+      $('top-name').textContent = iAmWhite ? blackName : whiteName;
+    }
+
+    // Clocks repaint on animation frames rather than a timer: correct after a
+    // background tab wakes up, and free when the tab is hidden.
+    function tickClocks() {
+      if (clock.isTimed) {
+        const top: Colour = orientation === 'white' ? 'black' : 'white';
+        const bot: Colour = orientation;
+        paintClock($('top-clock'), clock.remaining(top), turn === top);
+        paintClock($('bot-clock'), clock.remaining(bot), turn === bot);
+
+        // The server adjudicates; we only raise the claim. It re-checks against
+        // its own clock, so a premature claim is simply rejected.
+        const flagged = clock.flagged();
+        if (flagged && !flagClaimed && !ended) {
+          flagClaimed = true;
+          socket.send({ type: 'flag' });
+        }
+      }
+      requestAnimationFrame(tickClocks);
+    }
+
+    function paintClock(el: HTMLElement, ms: number, active: boolean) {
+      el.textContent = formatClock(ms);
+      el.className = 'clock' + (active ? (ms < 20_000 ? ' low' : ' active') : ' idle');
+    }
+
+    // ── Outgoing moves ──────────────────────────────────────────────────────
+    function onUserMove(orig: string, dest: string) {
+      if (!myTurn()) return;
+      const piece = pos.board.get(sq(orig));
+      const lastRank = myColour === 'white' ? '8' : '1';
+      if (piece?.role === 'pawn' && dest[1] === lastRank) {
+        // Hold the move until a piece is chosen. chessground has already drawn
+        // the pawn on the last rank, which is exactly the affordance we want.
+        pendingPromotion = { orig, dest };
+        $('promo').classList.remove('hidden');
+        return;
+      }
+      sendMove(orig + dest);
+    }
+
+    function sendMove(uci: string) {
+      socket.send({ type: 'move', uci });
+      // Freeze input until the server confirms. P0 deliberately does not
+      // predict the resulting position — that is P1, and doing it without
+      // reconciliation would risk showing a move the server never accepted.
+      ground.set({ movable: { free: false, color: undefined, dests: new Map() } });
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.promo-btn').forEach((btn) => {
+      btn.onclick = () => {
+        $('promo').classList.add('hidden');
+        if (!pendingPromotion) return;
+        const { orig, dest } = pendingPromotion;
+        pendingPromotion = null;
+        sendMove(orig + dest + btn.dataset.piece);
+      };
+    });
+
+    // ── Applying server truth ───────────────────────────────────────────────
+    function replay(moves: { uci: string; san: string }[]) {
+      pos = Chess.default();
+      sans.length = 0;
+      for (const m of moves) {
+        const mv = uciToMove(m.uci);
+        if (mv && pos.isLegal(mv)) pos.play(mv);
+        sans.push(m.san);
+      }
+    }
+
+    function applyServerMove(uci: string, san: string) {
+      const mv = uciToMove(uci);
+      if (mv && pos.isLegal(mv)) {
+        pos.play(mv);
+        sans.push(san);
+      } else {
+        // Our position disagrees with the server's. Never guess — ask.
+        socket.send({ type: 'sync' });
+      }
+    }
+
+    // ── Socket wiring ───────────────────────────────────────────────────────
+    socket.on('_open', () => $('conn').classList.add('hidden'));
+    socket.on('_offline', () => $('conn').classList.remove('hidden'));
+
+    socket.on('state', (m) => {
+      myColour = (m.color as Colour) ?? myColour;
+      orientation = myColour ?? 'white';
+      replay(m.moves ?? []);
+      turn = (m.turn as Colour) ?? 'white';
+      clock.update(m.clock, turn);
+      clock.setRunning(!ended && (m.moves ?? []).length >= 0 && m.status !== 'waiting');
+      flagClaimed = false;
+      renderNames(m.white_name ?? 'White', m.black_name ?? 'Black');
+      reveal();
+      refreshBoard();
+      renderMoves();
+    });
+
+    socket.on('waiting', (m) => {
+      myColour = (m.color as Colour) ?? myColour;
+      orientation = myColour ?? 'white';
+      clock.setRunning(false);
+      $('hint').textContent = 'Waiting for your opponent to open the board…';
+      reveal();
+      refreshBoard();
+    });
+
+    socket.on('game_start', (m) => {
+      turn = (m.turn as Colour) ?? 'white';
+      clock.update(m.clock, turn);
+      clock.setRunning(true);
+      renderNames(m.white_name ?? 'White', m.black_name ?? 'Black');
+      $('hint').textContent = '';
+      reveal();
+      refreshBoard();
+    });
+
+    socket.on('move', (m) => {
+      applyServerMove(m.uci, m.san);
+      turn = (m.turn as Colour) ?? turn;
+      clock.update(m.clock, turn);
+      clock.setRunning(true);
+      flagClaimed = false;
+      $('draw-offer').classList.add('hidden');
+      refreshBoard();
+      renderMoves();
+    });
+
+    socket.on('draw_offered', () => $('draw-offer').classList.remove('hidden'));
+    socket.on('draw_declined', () => {
+      $('hint').textContent = 'Your draw offer was declined.';
+    });
+
+    socket.on('opponent_disconnected', (m) => {
+      // A resigning opponent's socket closes *after* the resignation, so this
+      // arrives once the game is already over. Warning about a forfeit on a
+      // finished game would be nonsense.
+      if (ended) return;
+      $('top-note').textContent = `Disconnected — forfeits in ${m.seconds_until_forfeit ?? 60}s`;
+    });
+
+    socket.on('spectator_count', (m) => {
+      $('watchers').textContent = m.count ? `${m.count} watching` : '';
+    });
+
+    socket.on('game_paused', () => {
+      $('hint').textContent = 'The game is paused — an organizer has been alerted.';
+      clock.setRunning(false);
+    });
+
+    socket.on('error', (m) => {
+      $('hint').textContent = m.message ?? 'That move was not accepted.';
+      // Whatever went wrong, our board may now be wrong too.
+      socket.send({ type: 'sync' });
+    });
+
+    socket.on('game_over', (m) => {
+      ended = true;
+      clock.setRunning(false);
+      $('status-pill').textContent = 'ENDED';
+      $('status-pill').className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600';
+      $('actions').classList.add('hidden');
+      $('draw-offer').classList.add('hidden');
+      $('over').classList.remove('hidden');
+      $('top-note').textContent = '';   // clear any "disconnected" warning
+      $('over-title').textContent = resultLabel(m.result);
+      $('over-reason').textContent = String(m.reason ?? '').replace(/_/g, ' ');
+      refreshBoard();
+    });
+
+    function resultLabel(result: string): string {
+      if (result === 'draw') return 'Draw';
+      if (!myColour) return result === 'white_wins' ? 'White wins' : 'Black wins';
+      const iWon =
+        (result === 'white_wins' && myColour === 'white') ||
+        (result === 'black_wins' && myColour === 'black');
+      return iWon ? 'You won' : 'You lost';
+    }
+
+    // ── Buttons ─────────────────────────────────────────────────────────────
+    $('btn-resign').onclick = () => {
+      if (confirm('Resign this game?')) socket.send({ type: 'resign' });
+    };
+    $('btn-draw').onclick = () => {
+      socket.send({ type: 'offer_draw' });
+      $('hint').textContent = 'Draw offered.';
+    };
+    $('draw-accept').onclick = () => socket.send({ type: 'accept_draw' });
+    $('draw-decline').onclick = () => {
+      socket.send({ type: 'decline_draw' });
+      $('draw-offer').classList.add('hidden');
+    };
+    $('btn-flip').onclick = () => {
+      orientation = orientation === 'white' ? 'black' : 'white';
+      refreshBoard();
+    };
+
+    function reveal() {
+      $('gate').classList.add('hidden');
+      $('table').classList.remove('hidden');
+      // chessground measures its container, which was display:none until now.
+      ground.redrawAll();
+    }
+
+    socket.connect();
+    requestAnimationFrame(tickClocks);
+    window.addEventListener('beforeunload', () => socket.close());
+  }
+
+  // ── small helpers ─────────────────────────────────────────────────────────
+  function sq(name: string) {
+    return (name.charCodeAt(0) - 97 + (Number(name[1]) - 1) * 8) as any;
+  }
+
+  function uciToMove(uci: string): any {
+    const from = sq(uci.slice(0, 2));
+    const to = sq(uci.slice(2, 4));
+    const promo = uci[4];
+    const roles: Record<string, string> = { q: 'queen', r: 'rook', b: 'bishop', n: 'knight' };
+    return promo ? { from, to, promotion: roles[promo] } : { from, to };
+  }
+</script>
