@@ -344,3 +344,23 @@ def test_a_stale_fix_falls_back_to_the_home_area(client, db):
     hit = next(x for x in r.json() if x["id"] == str(d.id))
     assert hit["distance_km"] < 1
     assert hit["location_basis"] == "home"
+
+
+def test_a_few_hours_old_is_recent_not_live(client, db):
+    """Three states, not two. A fix from this morning is still worth ranking
+    from, but calling it "live" would overstate it — and the app draws a filled
+    dot for live and a hollow ring for recent, so the distinction is visible to
+    the person deciding who to call."""
+    from datetime import datetime, timedelta, timezone
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000008")
+    d.latitude, d.longitude = 8.50, 77.80              # home, far from the query
+    d.last_seen_lat, d.last_seen_lng = 8.1840, 77.4125  # seen beside it this morning
+    d.last_seen_at = datetime.now(timezone.utc) - timedelta(hours=5)
+    db.commit()
+
+    r = client.get("/api/v1/blood-donors/nearby?lat=8.1833&lng=77.4119&radius_km=5",
+                   headers={"X-Organization-ID": str(org.id)})
+    hit = next(x for x in r.json() if x["id"] == str(d.id))
+    assert hit["distance_km"] < 1          # still ranked from the fix
+    assert hit["location_basis"] == "recent"

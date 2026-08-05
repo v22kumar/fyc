@@ -4,6 +4,7 @@ import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/blood_donor_entity.dart';
+import 'donor_presence.dart';
 
 /// One donor, answering one question: should I contact this person?
 ///
@@ -21,6 +22,9 @@ import '../../domain/entities/blood_donor_entity.dart';
 /// * **Source belongs to the section, not the row.** Club donors and imported
 ///   contacts sit under their own headings, so each card stops repeating which
 ///   pile it is in.
+/// * **A distance always says where it came from.** Measured from a fix taken
+///   minutes ago or from a home area recorded last year, the number looks
+///   identical and means something very different. See [DonorPresence].
 /// * **Age, because a hospital asks.** Held on the profile and never shown
 ///   until now.
 class DonorCard extends StatelessWidget {
@@ -35,23 +39,27 @@ class DonorCard extends StatelessWidget {
   final String lang;
   final VoidCallback onContact;
 
-  /// The single line that decides whether this person is worth contacting.
-  ///
-  /// Ordered by what a person in a hurry needs: how far, then whether they can
-  /// give today, then who they are.
-  String _status() {
-    final parts = <String>[];
+  DonorPresence get _presence => DonorPresence.of(donor.locationBasis);
+
+  /// Where they are — or null when we know nothing about it.
+  String? _where() {
     if (donor.distanceKm != null) {
-      parts.add('${donor.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}');
-    } else {
-      final where = donor.locationName(lang);
-      if (where != null) parts.add(where);
+      // The distance says how far; the presence says how much to believe it.
+      // They travel together as one phrase — see [DonorPresence].
+      return _presence.phrase(donor.distanceKm!);
     }
-    parts.add(donor.isEligible
-        ? trId('eligible_now')
-        : (donor.eligibleOn != null
-            ? trId('eligible_on', {'date': _shortDate(donor.eligibleOn!)})
-            : trId('eligible_soon')));
+    return donor.locationName(lang);
+  }
+
+  /// Whether they can give, and who they are.
+  String _whether() {
+    final parts = <String>[
+      donor.isEligible
+          ? trId('eligible_now')
+          : (donor.eligibleOn != null
+              ? trId('eligible_on', {'date': _shortDate(donor.eligibleOn!)})
+              : trId('eligible_soon')),
+    ];
     if (donor.age != null) parts.add(trId('age_years', {'n': donor.age}));
     return parts.join(' · ');
   }
@@ -75,6 +83,7 @@ class DonorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ready = donor.isEligible && donor.isAvailable;
     final accent = ready ? AppColors.success : AppColors.textSecondary;
+    final where = _where();
 
     return Card(
       margin: EdgeInsets.only(bottom: DSSpacing.sm),
@@ -116,28 +125,26 @@ class DonorCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          ready
-                              ? Icons.check_circle_rounded
-                              : Icons.schedule_rounded,
-                          size: 14,
-                          color: accent,
-                        ),
-                        SizedBox(width: DSSpacing.xs),
-                        Expanded(
-                          child: Text(
-                            _status(),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: accent),
-                          ),
-                        ),
-                      ],
+                    // One question per line. They were on one line, which held
+                    // in English and clipped in Tamil — the age fell off the
+                    // card entirely, and "now" appeared twice in a row meaning
+                    // two different things.
+                    if (where != null)
+                      _StatusLine(
+                        glyph: PresenceGlyph(_presence),
+                        text: where,
+                        color: _presence.color,
+                      ),
+                    _StatusLine(
+                      glyph: Icon(
+                        ready
+                            ? Icons.check_circle_rounded
+                            : Icons.schedule_rounded,
+                        size: 13,
+                        color: accent,
+                      ),
+                      text: _whether(),
+                      color: accent,
                     ),
                   ],
                 ),
@@ -149,6 +156,45 @@ class DonorCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A glyph and a fact, on one line, aligned with the line above it.
+///
+/// The glyph sits in a fixed-width box so the two status lines share a left
+/// edge whatever shape each one carries — a ragged margin at this size reads as
+/// a rendering fault rather than a design.
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({
+    required this.glyph,
+    required this.text,
+    required this.color,
+  });
+
+  final Widget glyph;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          SizedBox(width: 14, child: Center(child: glyph)),
+          SizedBox(width: DSSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+            ),
+          ),
+        ],
       ),
     );
   }

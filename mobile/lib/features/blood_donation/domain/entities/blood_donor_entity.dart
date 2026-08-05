@@ -23,6 +23,10 @@ class BloodDonorEntity extends Equatable {
   final String? eligibleOn; // ISO date the donor becomes eligible again
   /// Distance from the query point in km — only set on nearby results.
   final double? distanceKm;
+  /// Which position [distanceKm] was measured from: 'live' (seen within the
+  /// hour), 'recent' (within the day), or 'home' (their registered area).
+  /// Null on plain searches, which have no distance to explain.
+  final String? locationBasis;
   final bool hasLocation;
   /// Coarse (~1 km) coordinates for the map view — only set on nearby results.
   final double? approxLat;
@@ -44,6 +48,7 @@ class BloodDonorEntity extends Equatable {
     this.isEligible = true,
     this.eligibleOn,
     this.distanceKm,
+    this.locationBasis,
     this.hasLocation = false,
     this.approxLat,
     this.approxLng,

@@ -36,6 +36,13 @@ import 'service_locator.dart';
 const _token = String.fromEnvironment('TOKEN');
 const _out = String.fromEnvironment('OUT', defaultValue: '/tmp/shots');
 
+/// Comma-separated routes to visit instead of the full list.
+///
+/// The whole walk takes minutes, which is the wrong loop when you are iterating
+/// on one screen. `--dart-define=ROUTES=/blood-donation` gets you a photograph
+/// of that screen in seconds.
+const _routesOverride = String.fromEnvironment('ROUTES');
+
 /// Every screen a member can reach, in the order they'd meet them.
 /// Routes needing an id are given one by the seeding script.
 const _routes = <String>[
@@ -130,8 +137,12 @@ Future<void> _walk() async {
   // Let the first frame and any startup work settle before moving.
   await Future<void>.delayed(const Duration(seconds: 4));
 
-  for (var i = 0; i < _routes.length; i++) {
-    final route = _routes[i];
+  final routes = _routesOverride.isEmpty
+      ? _routes
+      : _routesOverride.split(',').map((r) => r.trim()).toList();
+
+  for (var i = 0; i < routes.length; i++) {
+    final route = routes[i];
     try {
       appRouter.go(route);
     } catch (e) {

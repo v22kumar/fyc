@@ -84,3 +84,36 @@ deserve two answers:
 
 Someone may well agree to the first and not the second, and that is a reasonable
 position to hold rather than an edge case to design around.
+
+## What it looks like
+
+![The donor list, with all three presence states](images/donor-presence.png)
+
+Three states, each carried three ways so no single channel is load-bearing:
+
+| | colour | shape | words |
+|---|---|---|---|
+| seen within the hour | green | filled dot | "0.6 km away · now" |
+| seen within the day | green | hollow ring | "0.6 km away · today" |
+| no recent fix | blue | house | "4.4 km away · home area" |
+
+Greyscale still reads. A viewer who does not separate the two hues still reads.
+Colour alone would have been the cheapest version and the one that fails
+quietly for the people it fails for.
+
+### Two things the screenshot found
+
+The card carried this on **one** status line, which held in English and clipped
+in Tamil — the age fell off the end entirely, and the word "now" appeared twice
+in a row meaning two different things (seen now, can donate now). It is two
+lines now: where they are, then whether they can give. One question each.
+
+The distance ranking was also arriving and then being **thrown away**. The hub
+asks for the plain list on open and for the ranked list once it has a position;
+bloc runs handlers for different event types concurrently, so the two were
+racing, and the ranked reply — smaller, and consistently first — lost to the
+plain one every time. The screen showed no distances at all and reported no
+error. A sequence number in the bloc makes it last-*asked* wins, and
+`blood_donor_bloc_test.dart` fails without it.
+
+Neither was visible in the code. Both were obvious in a photograph.

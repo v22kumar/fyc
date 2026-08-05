@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -31,11 +32,42 @@ class MemberLocation {
   /// being ranked from where you started is not something to publish.
   static const _staleAfter = Duration(hours: 12);
 
+  /// A fixed position for development, as "lat,lng".
+  ///
+  /// The desktop embedder used by the screenshot harness has no location
+  /// provider, so without this every distance-aware screen photographs itself in
+  /// its no-location state and the one thing you wanted to review is invisible.
+  /// Same shape and same guard as `DEBUG_TOKEN` in LocalStorage: debug builds
+  /// only, and absent unless someone passes `--dart-define` on purpose.
+  static const _debugLatLng = String.fromEnvironment('DEBUG_LATLNG');
+
+  static Position? get _debugPosition {
+    if (!kDebugMode || _debugLatLng.isEmpty) return null;
+    final parts = _debugLatLng.split(',');
+    if (parts.length != 2) return null;
+    final lat = double.tryParse(parts[0].trim());
+    final lng = double.tryParse(parts[1].trim());
+    if (lat == null || lng == null) return null;
+    return Position(
+      latitude: lat,
+      longitude: lng,
+      timestamp: DateTime.now(),
+      accuracy: 30,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+  }
+
   /// A good-enough position for distance ranking, or null.
   ///
   /// Null is an ordinary outcome, not a failure: location off, permission
   /// declined, no fix on record. Callers rank by whatever else they have.
   static Future<Position?> forRanking(BuildContext context) async {
+    if (_debugPosition != null) return _debugPosition;
     // Ask the phone before asking the member. If location is switched off at
     // the system level, agreeing to our sheet would achieve nothing — and we
     // would have spent the ask.
@@ -65,6 +97,7 @@ class MemberLocation {
 
   /// A fresh, accurate position, or null — for pinning a home area.
   static Future<Position?> precise(BuildContext context) async {
+    if (_debugPosition != null) return _debugPosition;
     if (!await Geolocator.isLocationServiceEnabled()) return null;
     if (!context.mounted) return null;
     if (!await LocationDisclosure.ensure(context)) return null;
@@ -86,6 +119,7 @@ class MemberLocation {
   /// mid-task, has tapped submit, and a bottom sheet about location is not what
   /// they meant. They will be asked properly somewhere they are browsing.
   static Future<Position?> ifAlreadyAllowed() async {
+    if (_debugPosition != null) return _debugPosition;
     final perm = await Geolocator.checkPermission();
     if (perm != LocationPermission.always &&
         perm != LocationPermission.whileInUse) {

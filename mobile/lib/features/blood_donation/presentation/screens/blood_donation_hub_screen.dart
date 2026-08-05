@@ -19,7 +19,6 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
-import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -43,6 +42,11 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
 
   /// True once the list is ordered by real distance rather than by taluk.
   bool _rankedByDistance = false;
+
+  /// Where we found the member, kept so a filter tap does not throw away the
+  /// ranking. Choosing "O+" is narrowing the question, not abandoning "near me".
+  double? _myLat;
+  double? _myLng;
 
   @override
   void initState() {
@@ -78,6 +82,16 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   }
 
   void _runSearch() {
+    // Distance ranking survives a blood-group filter. Only picking a taluk
+    // means "show me that area instead of around me", so only that drops it.
+    if (_rankedByDistance && _selectedGeographyId == null) {
+      context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
+            lat: _myLat!,
+            lng: _myLng!,
+            bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+          ));
+      return;
+    }
     context.read<BloodDonorBloc>().add(
           BloodDonorSearchRequested(
             bloodGroup: _selectedGroup,
@@ -126,12 +140,12 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     final pos = await MemberLocation.forRanking(context);
     if (pos == null || !mounted) return;
     unawaited(MemberLocation.report(pos));
-    setState(() => _rankedByDistance = true);
-    context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
-          lat: pos.latitude,
-          lng: pos.longitude,
-          bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-        ));
+    setState(() {
+      _rankedByDistance = true;
+      _myLat = pos.latitude;
+      _myLng = pos.longitude;
+    });
+    _runSearch();
   }
 
   Future<void> _launchPhone(String phone) async {
@@ -312,7 +326,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (startsSection)
-                              _DonorSectionHeading(imported: d.isImported),
+                              _DonorSectionHeading(
+                                imported: d.isImported,
+                                ranked: _rankedByDistance,
+                              ),
                             DonorCard(
                               donor: d,
                               lang: _lang,
@@ -582,158 +599,6 @@ class _LocationFilter extends StatelessWidget {
   }
 }
 
-class _DonorCard extends StatelessWidget {
-  final BloodDonorEntity donor;
-  final VoidCallback onContact;
-
-  const _DonorCard({required this.donor, required this.onContact});
-
-  Widget _badge(String text, Color color, IconData icon) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 11, color: color),
-          SizedBox(width: 3),
-          Text(text,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
-        ]),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
-    final isVerified = donor.phoneNumber != null && donor.phoneNumber!.isNotEmpty;
-
-    return ScaleOnTap(
-      onTap: onContact,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: context.cSurface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          boxShadow: context.isDark ? null : AppTheme.cardShadow,
-          border: Border.all(color: context.cBorder, width: 1),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.accent.withOpacity(0.12),
-                radius: 28,
-                child: Text(
-                  donor.bloodGroup,
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17,
-                  ),
-                ),
-              ),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            donor.displayName(lang),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 17,
-                              height: 1.2,
-                              color: context.cText,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isVerified) ...[
-                          SizedBox(width: 6),
-                          Tooltip(
-                            message: trId('verified_member'),
-                            child: Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
-                          ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.place_outlined, size: 15, color: context.cTextSecondary),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            donor.displayLocation(lang),
-                            style: TextStyle(
-                              color: context.cTextSecondary,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Eligibility / distance / reachability badges (P1 data).
-                    SizedBox(height: 7),
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      if (donor.distanceKm != null)
-                        _badge('${donor.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}',
-                            const Color(0xFF2563EB), Icons.near_me_rounded),
-                      if (donor.isEligible)
-                        _badge(trId('eligible_now'), const Color(0xFF16A34A), Icons.check_circle)
-                      else
-                        _badge(trId('eligible_soon'), const Color(0xFFB45309), Icons.schedule),
-                      if (donor.isImported)
-                        _badge(trId('friends2support'), const Color(0xFFB45309), Icons.contacts_rounded)
-                      else
-                        _badge(trId('in_app'), AppColors.primary, Icons.smartphone_rounded),
-                    ]),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  // Contact is the one action on a donor card — it reads as
-                  // the CTA in mint (the system's single call-to-action colour),
-                  // not navy structure.
-                  color: AppColors.primaryLight.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.call, size: 15, color: AppColors.primaryLight),
-                    SizedBox(width: 5),
-                    Text(
-                      trId('contact'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyDonors extends StatelessWidget {
   final String? group;
   const _EmptyDonors({this.group});
@@ -828,9 +693,15 @@ class _ContactDialog extends StatelessWidget {
 /// Which pile these donors are in, said once above the run rather than
 /// repeated as a badge on every row.
 class _DonorSectionHeading extends StatelessWidget {
-  const _DonorSectionHeading({required this.imported});
+  const _DonorSectionHeading({required this.imported, this.ranked = false});
 
   final bool imported;
+
+  /// Whether this run of cards is ordered by distance from the member.
+  ///
+  /// A sorted list that does not say it is sorted reads as an arbitrary one:
+  /// the first name looks like the first name, not the nearest person.
+  final bool ranked;
 
   @override
   Widget build(BuildContext context) {
@@ -840,7 +711,9 @@ class _DonorSectionHeading extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            imported ? trId('wider_directory') : trId('club_donors'),
+            imported
+                ? trId('wider_directory')
+                : (ranked ? trId('nearest_to_you') : trId('club_donors')),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           if (imported)

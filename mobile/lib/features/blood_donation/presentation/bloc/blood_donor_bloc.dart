@@ -25,10 +25,26 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
     on<BloodDonorAvailabilityUpdated>(_onAvailabilityUpdate);
   }
 
+  /// Which list request is the current one.
+  ///
+  /// Bloc runs handlers for *different* event types concurrently, so a search
+  /// and a nearby query issued moments apart are genuinely racing — and the one
+  /// that emits last wins regardless of which was asked for last.
+  ///
+  /// That is not a theoretical risk: the hub opens by asking for the plain list
+  /// and then, once it has a position, for the ranked one. The ranked reply is
+  /// smaller and consistently arrives first, so the plain list overwrote it
+  /// every single time and the screen quietly showed no distances at all.
+  ///
+  /// A sequence number makes it last-*asked* wins, which is what the member
+  /// meant by their most recent action.
+  int _seq = 0;
+
   Future<void> _onSearch(
     BloodDonorSearchRequested event,
     Emitter<BloodDonorState> emit,
   ) async {
+    final seq = ++_seq;
     emit(const BloodDonorLoading());
     final result = await _searchDonors(
       bloodGroup: event.bloodGroup,
@@ -36,6 +52,7 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
       nearby: event.nearby,
       availableOnly: event.availableOnly,
     );
+    if (seq != _seq) return;
     result.fold(
       (f) => emit(BloodDonorFailure(f.message)),
       (donors) => emit(BloodDonorSearchSuccess(
@@ -99,12 +116,14 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
     BloodDonorNearbyRequested event,
     Emitter<BloodDonorState> emit,
   ) async {
+    final seq = ++_seq;
     emit(BloodDonorLoading());
     final result = await _repository.donorsNear(
       lat: event.lat,
       lng: event.lng,
       bloodGroup: event.bloodGroup,
     );
+    if (seq != _seq) return;
     result.fold(
       (failure) => emit(BloodDonorFailure(failure.message)),
       (donors) => emit(BloodDonorSearchSuccess(donors: donors)),

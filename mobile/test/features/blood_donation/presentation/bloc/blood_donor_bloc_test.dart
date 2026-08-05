@@ -189,4 +189,53 @@ void main() {
       ],
     );
   });
+  group('a slow plain search cannot overwrite a newer ranked one', () {
+    const ranked = BloodDonorEntity(
+      id: 'donor-near',
+      bloodGroup: 'O+',
+      isAvailable: true,
+      fullNameEn: 'Nearby Donor',
+      distanceKm: 0.6,
+      locationBasis: 'live',
+    );
+
+    blocTest<BloodDonorBloc, BloodDonorState>(
+      'keeps the nearby result when the search reply lands after it',
+      // This is the real sequence on the hub: it asks for the plain list on
+      // open, then asks for the ranked one as soon as it has a position. The
+      // ranked reply is smaller and consistently comes back first, so before
+      // the sequence guard the plain list overwrote it every time — and the
+      // screen showed no distances at all, silently.
+      build: () {
+        when(() => searchDonors(
+              bloodGroup: any(named: 'bloodGroup'),
+              geographyId: any(named: 'geographyId'),
+              nearby: any(named: 'nearby'),
+              availableOnly: any(named: 'availableOnly'),
+            )).thenAnswer((_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+          return const Right([_tDonor]);
+        });
+        when(() => repository.donorsNear(
+              lat: any(named: 'lat'),
+              lng: any(named: 'lng'),
+              bloodGroup: any(named: 'bloodGroup'),
+            )).thenAnswer((_) async => const Right([ranked]));
+        return bloc;
+      },
+      act: (b) async {
+        b.add(const BloodDonorSearchRequested());
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        b.add(const BloodDonorNearbyRequested(lat: 8.18, lng: 77.41));
+      },
+      wait: const Duration(milliseconds: 200),
+      verify: (_) {
+        final state = bloc.state;
+        expect(state, isA<BloodDonorSearchSuccess>());
+        expect((state as BloodDonorSearchSuccess).donors.single.id,
+            'donor-near',
+            reason: 'the later plain search overwrote the distance ranking');
+      },
+    );
+  });
 }
