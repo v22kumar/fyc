@@ -30,6 +30,15 @@ class QuickQuestionCard extends StatefulWidget {
 }
 
 class _QuickQuestionCardState extends State<QuickQuestionCard> {
+  /// Fetched once per app run, shared across every instance of the card.
+  ///
+  /// Asking the server is not free of consequence: /next records that the
+  /// question was shown, and the server then stays quiet for a day. Home
+  /// rebuilds several times while it loads, so a per-instance fetch meant the
+  /// first rebuild consumed the question and a later one was correctly told
+  /// there was nothing to ask — leaving a blank space where the card should be.
+  static Future<Map<String, dynamic>?>? _pending;
+
   Map<String, dynamic>? _question;
   bool _done = false;
   bool _sending = false;
@@ -41,17 +50,22 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
   }
 
   Future<void> _load() async {
+    _pending ??= _fetch();
+    final data = await _pending;
+    if (mounted && data != null) setState(() => _question = data);
+  }
+
+  Future<Map<String, dynamic>?> _fetch() async {
     try {
       final r = await sl<ApiClient>().dio.get<dynamic>(
             '${ApiConstants.baseUrl}/api/v1/profile-prompts/next',
           );
       final data = r.data;
-      if (mounted && data is Map<String, dynamic>) {
-        setState(() => _question = data);
-      }
+      return data is Map<String, dynamic> ? data : null;
     } catch (_) {
       // A question we failed to fetch is a question not worth showing. This
       // must never be the reason a screen looks broken.
+      return null;
     }
   }
 
@@ -102,19 +116,19 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
               children: [
                 Icon(Icons.chat_bubble_outline_rounded, size: 15, color: accent),
                 SizedBox(width: DSSpacing.xs),
-                Text(
-                  trId('quick_question'),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: accent,
-                        letterSpacing: 0.4,
-                      ),
-                ),
-                const Spacer(),
-                // Dismissing has to be as easy as answering, or the card is a
-                // demand rather than a question.
-                TextButton(
-                  onPressed: _sending ? null : () => _send('dismiss', '-'),
-                  child: Text(trId('ask_me_later')),
+                // Flexible, not fixed: "ஒரு சிறு கேள்வி" is half again as long
+                // as "Quick question", and this row previously overflowed by
+                // 43px in Tamil with the dismiss button beside it.
+                Flexible(
+                  child: Text(
+                    trId('quick_question'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: accent,
+                          letterSpacing: 0.4,
+                        ),
+                  ),
                 ),
               ],
             ),
@@ -140,6 +154,17 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                         ?.copyWith(color: accent),
                   ),
               ],
+            ),
+            // Dismissing sits after the answers, on its own line. It has to be
+            // as easy to find as answering — a hidden dismissal turns the card
+            // into a demand — but it should not crowd the question, and in
+            // Tamil there is simply no room for it on the title row.
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                onPressed: _sending ? null : () => _send('dismiss', '-'),
+                child: Text(trId('ask_me_later')),
+              ),
             ),
           ],
         ),

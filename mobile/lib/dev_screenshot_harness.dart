@@ -9,7 +9,12 @@
 ///
 ///   flutter run -d linux -t lib/dev_screenshot_harness.dart \
 ///     --dart-define=API_BASE_URL=http://127.0.0.1:8151 \
-///     --dart-define=TOKEN=... --dart-define=OUT=/tmp/shots
+///     --dart-define=TOKEN=... --dart-define=DEBUG_TOKEN=<same token> \
+///     --dart-define=OUT=/tmp/shots
+///
+/// DEBUG_TOKEN is what actually authenticates: this embedder has no keyring, so
+/// the token written through LocalStorage is swallowed and every authenticated
+/// screen renders signed-out.
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;

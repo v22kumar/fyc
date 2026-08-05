@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_constants.dart';
@@ -15,6 +16,21 @@ class LocalStorage {
   );
 
   LocalStorage(this._prefs);
+
+  /// A token supplied at build time, for harnesses that have no keyring.
+  ///
+  /// The screenshot harness and the integration tests run on the Linux desktop
+  /// embedder, where flutter_secure_storage has no keyring to talk to: writes
+  /// are swallowed and reads come back null. Every authenticated screen then
+  /// renders its signed-out state, which is how a whole design review came to
+  /// be conducted against screens that were never logged in.
+  ///
+  /// Double-gated. `kDebugMode` means a release build ignores this even if the
+  /// define is somehow present, so it cannot become a way to ship a hardcoded
+  /// credential; and it only ever *reads* — nothing is written anywhere new.
+  static const String _debugToken = String.fromEnvironment('DEBUG_TOKEN');
+
+  static bool get _useDebugToken => kDebugMode && _debugToken.isNotEmpty;
 
   // Every secure-storage call is guarded: in a `flutter test` (no platform
   // channels) the plugin throws, and a token lookup must degrade to "no token"
@@ -43,8 +59,11 @@ class LocalStorage {
     await _prefs.setBool(AppConstants.hasSessionKey, true);
   }
 
-  Future<String?> getToken() async =>
-      _secureRead(AppConstants.tokenKey).then(_migrateIfNeeded(AppConstants.tokenKey));
+  Future<String?> getToken() async {
+    if (_useDebugToken) return _debugToken;
+    return _secureRead(AppConstants.tokenKey)
+        .then(_migrateIfNeeded(AppConstants.tokenKey));
+  }
 
   // Long-lived refresh token — used to silently mint new access tokens so the
   // user stays signed in until they explicitly log out.
