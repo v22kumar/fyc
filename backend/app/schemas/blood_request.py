@@ -18,6 +18,10 @@ class BloodRequestCreate(BaseModel):
     urgency: str = Field("URGENT", pattern="^(CRITICAL|URGENT|ROUTINE)$")
     note: Optional[str] = Field(None, max_length=500)
     contact_phone: Optional[str] = Field(None, max_length=20)
+    target_donor_id: Optional[UUID] = Field(
+        None,
+        description="Ask this one donor instead of alerting the neighbourhood.",
+    )
 
 
 class PledgeCreate(BaseModel):
@@ -28,6 +32,10 @@ class PledgeOut(BaseModel):
     id: UUID
     donor_user_id: UUID
     donor_name: Optional[str] = None
+    # Only ever filled in for the requester, and only once this donor has
+    # accepted. Saying yes is what turns a stranger's number into a call they
+    # are expecting.
+    donor_phone: Optional[str] = None
     status: str
     responded_at: Optional[datetime] = None
 
@@ -43,6 +51,7 @@ class BloodRequestOut(BaseModel):
     note: Optional[str] = None
     contact_phone: Optional[str] = None
     status: str
+    target_donor_name: Optional[str] = None
     notified_count: int = 0
     accepted_count: int = 0
     created_at: Optional[datetime] = None

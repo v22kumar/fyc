@@ -518,3 +518,127 @@ def test_directory_contacts_segregate_by_taluk_and_neighbours(client, db):
     district = {d["full_name_en"]
                 for d in client.get(base + "&nearby=true", headers=h).json()}
     assert district == {"Here", "NextTaluk"}, "nearby must mean the district, not the state"
+
+
+def _member(db, org, phone, name="Member", dob=None):
+    import uuid
+    from app.models.user import User, UserProfile
+    from app.core.security import get_password_hash
+    u = User(id=uuid.uuid4(), organization_id=org.id, phone_number=phone,
+             email=f"{phone}@fyc.local", password_hash=get_password_hash("x"),
+             role="PUBLIC_CITIZEN", is_verified=True)
+    db.add(u); db.flush()
+    db.add(UserProfile(user_id=u.id, full_name_en=name, full_name_ta=name,
+                       date_of_birth=dob))
+    db.commit()
+    return u
+
+
+def _auth(u, org):
+    from app.core.security import create_access_token
+    return {"Authorization": f"Bearer {create_access_token(str(u.id), u.role, str(org.id))}",
+            "X-Organization-ID": str(org.id)}
+
+
+def test_asking_one_donor_reaches_only_that_donor(client, db):
+    """Picking a person and asking them is a different act from broadcasting.
+
+    A hundred names is not a decision anyone can make, and ringing them one at
+    a time is what this replaces. A targeted request reaches one phone, and
+    nobody else's evening is interrupted by an ask that was never for them."""
+    from app.models.blood_request import BloodRequest
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000031", "Meena")
+    _, chosen = _donor_with_consent(db=db, client=client, org=org,
+                                    phone="+919600000032")
+    _, bystander = _donor_with_consent(db=db, client=client, org=org,
+                                       phone="+919600000033")
+    for d in (chosen, bystander):
+        d.latitude, d.longitude = 8.1833, 77.4119
+        d.notify_opt_in = True
+    db.commit()
+
+    r = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": chosen.blood_group,
+        "units_needed": 1,
+        "hospital_name": "Asaripallam GH",
+        "latitude": 8.1833, "longitude": 77.4119,
+        "target_donor_id": str(chosen.id),
+    })
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["notified_count"] == 1, "a targeted ask must not fan out"
+    assert body["target_donor_name"] is not None
+
+    from uuid import UUID as _UUID
+    req = db.query(BloodRequest).filter(
+        BloodRequest.id == _UUID(body["id"])).first()
+    assert req.target_donor_user_id == chosen.user_id
+    assert req.target_donor_user_id != bystander.user_id
+
+
+def test_the_number_arrives_only_after_the_donor_says_yes(client, db):
+    """The exchange this replaces handed out a stranger's number so you could
+    ring and find out. Now you ask, they agree, and then you have a number for
+    a call they are expecting."""
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000034", "Meena")
+    donor_token, donor = _donor_with_consent(db=db, client=client, org=org,
+                                             phone="+919600000035")
+    donor.latitude, donor.longitude = 8.1833, 77.4119
+    db.commit()
+
+    created = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": donor.blood_group,
+        "units_needed": 1,
+        "latitude": 8.1833, "longitude": 77.4119,
+        "target_donor_id": str(donor.id),
+    }).json()
+    rid = created["id"]
+
+    before = client.get(f"/api/v1/blood-requests/{rid}",
+                        headers=_auth(asker, org)).json()
+    assert before["pledges"] == [], "nobody has answered yet"
+
+    dh = {"Authorization": f"Bearer {donor_token}",
+          "X-Organization-ID": str(org.id)}
+    declined = client.post(f"/api/v1/blood-requests/{rid}/pledge", headers=dh,
+                           json={"status": "DECLINED"})
+    assert declined.status_code == 200, declined.text
+    after_no = client.get(f"/api/v1/blood-requests/{rid}",
+                          headers=_auth(asker, org)).json()
+    assert after_no["pledges"][0]["donor_phone"] is None, \
+        "a declining donor's number must never be disclosed"
+
+    client.post(f"/api/v1/blood-requests/{rid}/pledge", headers=dh,
+                json={"status": "ACCEPTED"})
+    after_yes = client.get(f"/api/v1/blood-requests/{rid}",
+                           headers=_auth(asker, org)).json()
+    assert after_yes["pledges"][0]["donor_phone"] == "+919600000035"
+
+
+def test_a_bystander_never_sees_the_donor_number(client, db):
+    """Accepting reveals a number to the person who asked — not to anyone who
+    happens to open the request."""
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000036", "Meena")
+    nosy = _member(db, org, "+919600000037", "Nosy")
+    donor_token, donor = _donor_with_consent(db=db, client=client, org=org,
+                                             phone="+919600000038")
+    donor.latitude, donor.longitude = 8.1833, 77.4119
+    db.commit()
+
+    rid = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": donor.blood_group,
+        "latitude": 8.1833, "longitude": 77.4119,
+        "target_donor_id": str(donor.id),
+    }).json()["id"]
+    client.post(f"/api/v1/blood-requests/{rid}/pledge",
+                headers={"Authorization": f"Bearer {donor_token}",
+                         "X-Organization-ID": str(org.id)},
+                json={"status": "ACCEPTED"})
+
+    seen = client.get(f"/api/v1/blood-requests/{rid}",
+                      headers=_auth(nosy, org)).json()
+    assert seen["pledges"][0]["donor_name"] is not None
+    assert seen["pledges"][0]["donor_phone"] is None

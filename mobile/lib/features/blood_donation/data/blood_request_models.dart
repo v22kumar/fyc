@@ -2,11 +2,15 @@ class BloodPledge {
   final String id;
   final String donorUserId;
   final String? donorName;
+  /// Only ever sent to the person who asked, and only once this donor has
+  /// accepted — saying yes is what turns a number into a call they expect.
+  final String? donorPhone;
   final String status; // ACCEPTED / DECLINED / DONATED
   const BloodPledge({
     required this.id,
     required this.donorUserId,
     this.donorName,
+    this.donorPhone,
     required this.status,
   });
 
@@ -14,6 +18,7 @@ class BloodPledge {
         id: (j['id'] ?? '').toString(),
         donorUserId: (j['donor_user_id'] ?? '').toString(),
         donorName: j['donor_name'] as String?,
+        donorPhone: j['donor_phone'] as String?,
         status: (j['status'] as String?) ?? 'ACCEPTED',
       );
 }

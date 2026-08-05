@@ -329,11 +329,32 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: context.cBorder),
           ),
+          // The payoff of asking instead of calling: their number arrives with
+          // the yes. The server sends it only to the requester and only for
+          // donors who accepted, so a row without one is somebody else's view
+          // of this request, not a missing feature.
           child: Row(children: [
             Icon(Icons.volunteer_activism_rounded, color: const Color(0xFF16A34A), size: 20),
             SizedBox(width: 10),
-            Expanded(child: Text(p.donorName ?? trId('a_donor'),
-                style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(p.donorName ?? trId('a_donor'),
+                      style: TextStyle(color: context.cText, fontWeight: FontWeight.w600)),
+                  if (p.donorPhone != null)
+                    Text(p.donorPhone!,
+                        style: TextStyle(color: context.cTextSecondary, fontSize: 13)),
+                ],
+              ),
+            ),
+            if (p.donorPhone != null)
+              IconButton(
+                tooltip: trId('call'),
+                icon: Icon(Icons.call_rounded, color: const Color(0xFF16A34A)),
+                onPressed: () => launchUrl(Uri.parse('tel:${p.donorPhone}')),
+              ),
           ]),
         ));
       }
@@ -400,20 +421,33 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         ]),
       );
     }
-    return Row(children: [
-      Expanded(
-        child: FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: EdgeInsets.symmetric(vertical: 12)),
+    // Stacked, not side by side.
+    //
+    // Two reasons. The decline button used to sit in a Row unflexed, which made
+    // the row ask it for an intrinsic width and took the whole screen down —
+    // "BoxConstraints forces an infinite width", and a member who raised a
+    // request got a blank page under the app bar. Nobody had ever opened this
+    // screen on a device, so nobody had seen it.
+    //
+    // And side by side, "I can help" in Tamil left the decline button clipped
+    // to "முடியா…". Full width each cannot clip in any language, and it puts
+    // the accept where a primary action belongs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              padding: EdgeInsets.symmetric(vertical: 14)),
           onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'ACCEPTED').then((_) {})),
           icon: Icon(Icons.volunteer_activism_rounded),
           label: Text(trId('i_can_help')),
         ),
-      ),
-      SizedBox(width: 10),
-      OutlinedButton(
-        onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
-        child: Text(trId('decline')),
-      ),
-    ]);
+        TextButton(
+          onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
+          child: Text(trId('decline')),
+        ),
+      ],
+    );
   }
 }

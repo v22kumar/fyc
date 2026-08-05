@@ -53,6 +53,7 @@ def _out(db: Session, req: BloodRequest) -> BloodRequestOut:
         note=req.note,
         contact_phone=req.contact_phone,
         status=req.status,
+        target_donor_name=_name(db, getattr(req, "target_donor_user_id", None)),
         notified_count=req.notified_count or 0,
         accepted_count=_accepted_count(db, req.id),
         created_at=req.created_at,
@@ -61,7 +62,16 @@ def _out(db: Session, req: BloodRequest) -> BloodRequestOut:
 
 
 def _fan_out(db: Session, req: BloodRequest, tenant_id) -> int:
-    """Notify nearby, compatible, eligible, opted-in FYC donors. Returns count."""
+    """Notify the donors this request is for. Returns how many were reached.
+
+    A targeted request reaches exactly one person and skips every filter below.
+    That is deliberate: the requester has looked at that donor — their group,
+    their distance, whether they can give today — and chosen them. Re-deciding
+    on their behalf, and silently dropping the request because the donor is a
+    kilometre outside a radius, would be the app overruling the human.
+    """
+    if getattr(req, "target_donor_user_id", None):
+        return _notify_one(db, req, tenant_id, req.target_donor_user_id)
     if req.latitude is None or req.longitude is None:
         return 0
     radius = _RADIUS_BY_URGENCY.get(req.urgency, 15.0)
@@ -111,6 +121,34 @@ def _fan_out(db: Session, req: BloodRequest, tenant_id) -> int:
     return notified
 
 
+def _notify_one(db: Session, req: BloodRequest, tenant_id, donor_user_id) -> int:
+    """Ask one named person, by name.
+
+    Worded as a personal ask rather than an alert, because that is what it is.
+    A broadcast says "somebody near you needs blood"; this says "Meena asked
+    you" — which is harder to leave unanswered, and honest, because a real
+    person did.
+    """
+    asker = _name(db, req.requester_user_id) or "A member"
+    hospital = req.hospital_name or "a nearby hospital"
+    try:
+        NotificationService(db).send_notification(
+            user_id=donor_user_id,
+            organization_id=tenant_id,
+            title_en=f"🩸 {asker} asked you for {req.patient_blood_group}",
+            title_ta=f"🩸 {asker} உங்களிடம் {req.patient_blood_group} கேட்டுள்ளார்",
+            body_en=f"{req.units_needed} unit(s) at {hospital}. Can you help?",
+            body_ta=f"{hospital}-இல் {req.units_needed} யூனிட். உதவ முடியுமா?",
+            notification_type="BLOOD_EMERGENCY",
+            data={"route": f"/blood-requests/{req.id}", "request_id": str(req.id)},
+        )
+        return 1
+    except Exception:
+        # The request still stands and still shows in their list; only the push
+        # was lost, and failing the whole ask over that helps nobody.
+        return 0
+
+
 @router.post("", response_model=BloodRequestOut, status_code=status.HTTP_201_CREATED)
 def create_request(
     payload: BloodRequestCreate,
@@ -121,6 +159,22 @@ def create_request(
     """Raise a blood request and alert nearby eligible donors."""
     if payload.patient_blood_group.upper() not in bm.COMPATIBLE_DONORS:
         raise HTTPException(status_code=400, detail="Invalid blood group")
+
+    target_user_id = None
+    if payload.target_donor_id:
+        target = (
+            db.query(BloodDonor)
+            .filter(
+                BloodDonor.id == payload.target_donor_id,
+                BloodDonor.organization_id == tenant_id,
+            )
+            .first()
+        )
+        if not target:
+            raise HTTPException(status_code=404, detail="Donor not found")
+        if target.user_id == current_user.id:
+            raise HTTPException(status_code=400, detail="You cannot ask yourself")
+        target_user_id = target.user_id
 
     open_count = (
         db.query(BloodRequest)
@@ -148,6 +202,7 @@ def create_request(
         urgency=payload.urgency,
         note=payload.note,
         contact_phone=payload.contact_phone or current_user.phone_number,
+        target_donor_user_id=target_user_id,
         status="OPEN",
     )
     db.add(req)
@@ -262,14 +317,25 @@ def get_request(
 
     pledges = db.query(BloodPledge).filter(BloodPledge.request_id == req.id).all()
     my_pledge = None
+    # Only the person who asked gets phone numbers back, and only for donors who
+    # have actually said yes. That is the whole exchange this screen replaced:
+    # instead of handing out a stranger's number so you can ring and find out,
+    # you ask, they agree, and then you have a number for a call they are
+    # expecting. A declining donor's number is never disclosed.
+    is_requester = bool(current_user and req.requester_user_id == current_user.id)
     pledge_out = []
     for p in pledges:
         if current_user and p.donor_user_id == current_user.id:
             my_pledge = p.status
+        phone = None
+        if is_requester and p.status in ("ACCEPTED", "DONATED"):
+            donor_user = db.query(User).filter(User.id == p.donor_user_id).first()
+            phone = donor_user.phone_number if donor_user else None
         pledge_out.append(PledgeOut(
             id=p.id,
             donor_user_id=p.donor_user_id,
             donor_name=_name(db, p.donor_user_id),
+            donor_phone=phone,
             status=p.status,
             responded_at=p.updated_at or p.created_at,
         ))

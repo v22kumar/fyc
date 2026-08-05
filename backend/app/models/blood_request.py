@@ -16,6 +16,16 @@ class BloodRequest(Base, TimestampMixin, TenantModelMixin):
     requester_user_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    # Set when one particular donor was asked, rather than the neighbourhood.
+    #
+    # Someone looking at a list of a hundred names cannot judge between them,
+    # and ringing them one at a time is the thing this app exists to replace.
+    # Picking a person and asking them is a different act from broadcasting:
+    # it reaches one phone, it is answerable with a yes, and nobody's evening
+    # is interrupted by a request that was never meant for them.
+    target_donor_user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     patient_blood_group = Column(String(5), nullable=False)
     units_needed = Column(Integer, default=1)
     hospital_name = Column(String(200), nullable=True)

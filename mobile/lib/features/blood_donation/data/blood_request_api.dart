@@ -19,6 +19,8 @@ class BloodRequestApi {
     String urgency = 'URGENT',
     String? note,
     String? contactPhone,
+    /// Ask this one donor instead of alerting the neighbourhood.
+    String? targetDonorId,
   }) async {
     final res = await _dio.post(_base, data: {
       'patient_blood_group': bloodGroup,
@@ -29,6 +31,7 @@ class BloodRequestApi {
       'urgency': urgency,
       if (note != null && note.isNotEmpty) 'note': note,
       if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
+      if (targetDonorId != null) 'target_donor_id': targetDonorId,
     });
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }

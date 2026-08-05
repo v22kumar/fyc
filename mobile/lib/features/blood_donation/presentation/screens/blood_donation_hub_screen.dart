@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../widgets/need_blood_panel.dart';
 import '../widgets/donor_card.dart';
+import '../widgets/ask_donor_sheet.dart';
 import '../widgets/donors_around_map.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../bloc/blood_donor_bloc.dart';
@@ -202,16 +203,29 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     );
   }
 
+  /// Ask this donor, rather than being handed their number.
+  ///
+  /// The old flow was a confirmation dialog and then a phone number, and from
+  /// there it was the requester's problem — dialling strangers one after
+  /// another to discover what the app already knew. Now the donor is asked, and
+  /// their number arrives with the yes. See [showAskDonorSheet].
   void _requestContact(BuildContext context, BloodDonorEntity donor) {
-    showDialog(
-      context: context,
-      builder: (_) => _ContactDialog(
-        donor: donor,
-        onConfirm: () {
-          context
-              .read<BloodDonorBloc>()
-              .add(BloodDonorContactRequested(donor.id));
-        },
+    showAskDonorSheet(
+      context,
+      donor: donor,
+      lang: _lang,
+      // The escape hatch, kept because an unanswered notification cannot be the
+      // only road out of an emergency.
+      onShowNumberInstead: () => showDialog(
+        context: context,
+        builder: (_) => _ContactDialog(
+          donor: donor,
+          onConfirm: () {
+            context
+                .read<BloodDonorBloc>()
+                .add(BloodDonorContactRequested(donor.id));
+          },
+        ),
       ),
     );
   }
@@ -307,8 +321,11 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                           imported: false,
                           ranked: _rankedByDistance,
                         ),
-                        for (final d in donors)
+                        for (final (i, d) in donors.indexed)
                           DonorCard(
+                            // Stable handles so the screenshot harness can open
+                            // the sheets behind these rows.
+                            key: ValueKey('donor-card-$i'),
                             donor: d,
                             lang: _lang,
                             onContact: () => _requestContact(context, d),

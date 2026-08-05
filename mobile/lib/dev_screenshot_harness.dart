@@ -43,6 +43,13 @@ const _out = String.fromEnvironment('OUT', defaultValue: '/tmp/shots');
 /// of that screen in seconds.
 const _routesOverride = String.fromEnvironment('ROUTES');
 
+/// Widget keys to tap after arriving, comma-separated.
+///
+/// Sheets and dialogs are where a lot of this app's design lives, and none of
+/// it had ever been photographed: the harness could only navigate, and a bottom
+/// sheet is not a route. `--dart-define=TAP=donor-card-0` opens one.
+const _tapKeys = String.fromEnvironment('TAP');
+
 /// Every screen a member can reach, in the order they'd meet them.
 /// Routes needing an id are given one by the seeding script.
 const _routes = <String>[
@@ -170,6 +177,13 @@ Future<void> _walk() async {
       nav.popUntil((route) => route is! PopupRoute);
       await Future<void>.delayed(const Duration(milliseconds: 600));
     }
+    for (final key in _tapKeys.split(',').where((k) => k.trim().isNotEmpty)) {
+      if (!await _tap(key.trim())) {
+        stderr.writeln('TAP FAILED: no widget keyed "$key" on $route');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+    }
+
     final name = '${i.toString().padLeft(2, '0')}'
         '${route.replaceAll('/', '_')}.png';
     await _capture('$_out/$name');
@@ -177,6 +191,41 @@ Future<void> _walk() async {
   }
   stdout.writeln('DONE');
   exit(0);
+}
+
+/// Tap the widget carrying `ValueKey(key)`, wherever it is on screen.
+///
+/// Walks the live element tree for the key, then synthesises a real pointer
+/// down/up at the centre of its box — so this goes through the same hit-testing
+/// and the same gesture recognisers a finger would, rather than calling the
+/// callback directly and photographing a state the app cannot actually reach.
+Future<bool> _tap(String key) async {
+  Element? found;
+  void visit(Element el) {
+    if (found != null) return;
+    if (el.widget.key == ValueKey(key)) {
+      found = el;
+      return;
+    }
+    el.visitChildren(visit);
+  }
+
+  final root = WidgetsBinding.instance.rootElement;
+  if (root == null) return false;
+  root.visitChildren(visit);
+  if (found == null) return false;
+
+  final box = found!.renderObject;
+  if (box is! RenderBox || !box.hasSize) return false;
+  final centre = box.localToGlobal(box.size.center(Offset.zero));
+
+  const pointer = 7;
+  WidgetsBinding.instance.handlePointerEvent(
+      PointerDownEvent(pointer: pointer, position: centre));
+  await Future<void>.delayed(const Duration(milliseconds: 60));
+  WidgetsBinding.instance.handlePointerEvent(
+      PointerUpEvent(pointer: pointer, position: centre));
+  return true;
 }
 
 Future<void> _capture(String path) async {
