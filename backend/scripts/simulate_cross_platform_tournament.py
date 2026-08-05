@@ -339,8 +339,107 @@ def cleanup(org_id_arg):
             db.query(User).filter(User.id.in_(bot_ids)).delete(
                 synchronize_session=False)
             db.commit()
+        # Earlier versions of this script created the tournament through the
+        # API, which posts a "registration open" notice to the members' board.
+        # Remove any of those too, so a soak run leaves nothing members can see.
+        announcements = 0
+        try:
+            from app.models.announcement import Announcement
+            rows = db.query(Announcement).filter(
+                Announcement.organization_id == org.id,
+                Announcement.title_en.like(f"%{TOURNAMENT_NAME_PREFIX}%"),
+            ).all()
+            announcements = len(rows)
+            for a in rows:
+                db.delete(a)
+            db.commit()
+        except Exception as e:  # noqa: BLE001
+            db.rollback()
+            log(f"could not remove announcements: {e}")
+
         log(f"cleaned: {len(tours)} tournament(s), {len(games)} game(s), "
-            f"{len(bot_ids)} bot account(s)")
+            f"{len(bot_ids)} bot account(s), {announcements} announcement(s)")
+
+
+
+def _build_tournament_silently(org_id, admin_id, name, player_ids, time_control):
+    """Create the tournament, entries and full bracket with direct writes.
+
+    Mirrors what POST /start does — power-of-two bracket, byes distributed, byes
+    auto-advanced — but without the member-facing side effects.
+    """
+    import math
+    with SessionLocal() as db:
+        tour = ChessTournament(
+            id=uuid.uuid4(), organization_id=org_id, name=name,
+            description="Cross-platform soak test",
+            status="IN_PROGRESS", current_round=0,
+            time_control=time_control, created_by_user_id=admin_id,
+        )
+        db.add(tour)
+        db.flush()
+        for uid in player_ids:
+            db.add(ChessTournamentEntry(
+                id=uuid.uuid4(), organization_id=org_id,
+                tournament_id=tour.id, user_id=uid, status="APPROVED"))
+        db.flush()
+
+        players = list(player_ids)
+        random.shuffle(players)
+        depth = math.ceil(math.log2(max(2, len(players))))
+        bracket = 2 ** depth
+        byes = bracket - len(players)
+
+        slots = [None] * bracket
+        for i in range(byes):
+            slots[i * 2] = "BYE"
+        p = 0
+        for i in range(bracket):
+            if slots[i] != "BYE":
+                slots[i] = players[p]
+                p += 1
+
+        for i in range(0, bracket, 2):
+            a, b = slots[i], slots[i + 1]
+            status, winner = "PENDING", None
+            if a == "BYE" and b != "BYE":
+                status, winner, a = "BYE", b, None
+            elif b == "BYE" and a != "BYE":
+                status, winner, b = "BYE", a, None
+            db.add(ChessTournamentMatch(
+                id=uuid.uuid4(), organization_id=org_id, tournament_id=tour.id,
+                round=1, slot=i // 2, player_a_id=a, player_b_id=b,
+                winner_id=winner, status=status, conduct_mode="APP",
+                activated=False))
+        # Empty shells for later rounds, filled as winners advance.
+        size = bracket // 2
+        rnd = 2
+        while size > 1:
+            size //= 2
+            for slot in range(size):
+                db.add(ChessTournamentMatch(
+                    id=uuid.uuid4(), organization_id=org_id,
+                    tournament_id=tour.id, round=rnd, slot=slot,
+                    status="PENDING", conduct_mode="APP", activated=False))
+            rnd += 1
+        db.commit()
+
+        # Carry byes into round 2 so those slots are not left empty.
+        from app.routers.chess_tournaments import _advance
+        tour = db.query(ChessTournament).filter(
+            ChessTournament.id == tour.id).first()
+        for m in db.query(ChessTournamentMatch).filter(
+                ChessTournamentMatch.tournament_id == tour.id,
+                ChessTournamentMatch.status == "BYE").all():
+            _advance(db, tour, m, m.winner_id)
+        db.commit()
+        return str(tour.id)
+
+
+def _round_count(tour_id) -> int:
+    with SessionLocal() as db:
+        return max((m.round for m in db.query(ChessTournamentMatch).filter(
+            ChessTournamentMatch.tournament_id == tour_id).all()), default=0)
 
 
 # ── driving a round ───────────────────────────────────────────────────────────
@@ -368,6 +467,7 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
             "X-Organization-ID": str(org_id),
         }
 
+    log(f"  round {rnd}: opening {len(pending)} boards…")
     async with httpx.AsyncClient(timeout=60) as client:
         for mid, a, b in pending:
             for uid in (a, b):
@@ -504,36 +604,25 @@ async def main():
     }
     name = f"{TOURNAMENT_NAME_PREFIX} — {datetime.now().strftime('%d %b %H:%M')}"
 
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(f"{api}/api/v1/chess/tournaments",
-                              json={"name": name,
-                                    "description": "Cross-platform soak test",
-                                    "time_control": args.time_control},
-                              headers=admin_hdr)
-        if r.status_code >= 400:
-            raise SystemExit(f"create failed {r.status_code}: {r.text}")
-        tour_id = r.json()["id"]
-        log(f"tournament {tour_id}")
+    # Suppress notifications raised by the bracket advancing in THIS process.
+    # Without it, every decided match pushes "Chess match decided" to the real
+    # organizer's phone — about thirty notifications for one soak run.
+    import app.routers.chess_tournaments as ct
+    ct._notify = lambda *a, **k: None
 
-        for b in bots:
-            await client.post(
-                f"{api}/api/v1/chess/tournaments/{tour_id}/register",
-                headers={
-                    "Authorization":
-                        f"Bearer {create_access_token(str(b['id']), b['role'], str(org_id))}",
-                    "X-Organization-ID": str(org_id),
-                })
-        for b in bots:
-            await client.post(
-                f"{api}/api/v1/chess/tournaments/{tour_id}/registrations/{b['id']}/decision",
-                json={"approve": True}, headers=admin_hdr)
-        await client.post(f"{api}/api/v1/chess/tournaments/{tour_id}/close",
-                          headers=admin_hdr)
-        r = await client.post(f"{api}/api/v1/chess/tournaments/{tour_id}/start",
-                              headers=admin_hdr)
-        if r.status_code >= 400:
-            raise SystemExit(f"start failed {r.status_code}: {r.text}")
-        total_rounds = r.json().get("rounds") or depth
+    # Build the tournament directly rather than through create/register/approve.
+    # Those endpoints deliberately do member-facing things: creating one posts a
+    # "registration open" announcement to the club notice board, and approving
+    # each player pushes a notification. On a live server that means members see
+    # a fake tournament and the organizer's phone lights up — and the blocking
+    # push calls are what made this appear to hang. The endpoints are already
+    # covered by simulate_full_tournament.py; what THIS script exists to test is
+    # live play and reconnection.
+    log("drawing the bracket (silently — no announcement, no notifications)")
+    tour_id = _build_tournament_silently(org_id, admin_id, name, ids,
+                                         args.time_control)
+    log(f"tournament {tour_id}")
+    total_rounds = _round_count(uuid.UUID(tour_id))
 
     t0 = time.time()
     for rnd in range(1, total_rounds + 1):
