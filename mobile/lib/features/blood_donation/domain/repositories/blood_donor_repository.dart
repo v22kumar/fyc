@@ -10,6 +10,13 @@ abstract class BloodDonorRepository {
     bool availableOnly = true,
   });
 
+  /// Donors ranked by real distance from a point.
+  Future<Either<Failure, List<BloodDonorEntity>>> donorsNear({
+    required double lat,
+    required double lng,
+    String? bloodGroup,
+  });
+
   Future<Either<Failure, BloodDonorEntity>> registerAsDonor({
     required String bloodGroup,
     bool isAvailable = true,

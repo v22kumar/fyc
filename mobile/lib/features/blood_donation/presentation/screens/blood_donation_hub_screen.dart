@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
@@ -38,11 +39,18 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   String? _selectedGeographyId;
   bool _nearby = false;
 
+  /// True once the list is ordered by real distance rather than by taluk.
+  bool _rankedByDistance = false;
+
   @override
   void initState() {
     super.initState();
+    // Show something immediately, then improve it. Asking for location first
+    // would leave the screen empty behind a permission dialog — at exactly the
+    // moment the member is least willing to wait.
     context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
     _loadTaluks();
+    _rankByDistance();
   }
 
   Future<void> _loadTaluks() async {
@@ -94,6 +102,40 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     final uri = Uri.parse(link);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Ask the phone where it is, once, and rank by that.
+  ///
+  /// Best-effort by design. Location can be off, refused, or slow, and none of
+  /// those should leave a member staring at nothing — the taluk search is still
+  /// there and still works, it just cannot answer "who is nearest".
+  Future<void> _rankByDistance() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _rankedByDistance = true);
+      context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
+            lat: pos.latitude,
+            lng: pos.longitude,
+            bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+          ));
+    } catch (_) {
+      // No location, no ranking. The list below is unaffected.
     }
   }
 

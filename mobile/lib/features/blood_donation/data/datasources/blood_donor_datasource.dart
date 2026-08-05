@@ -12,6 +12,18 @@ abstract class BloodDonorDataSource {
     bool availableOnly = true,
   });
 
+  /// Donors ranked by real distance from a point, widened to compatible blood
+  /// groups and limited to those eligible today.
+  ///
+  /// The plain search cannot do this: it filters by taluk, which is a name, not
+  /// a distance. Someone at a hospital needs whoever is nearest, and the phone
+  /// already knows where it is.
+  Future<List<BloodDonorModel>> donorsNear({
+    required double lat,
+    required double lng,
+    String? bloodGroup,
+  });
+
   Future<BloodDonorModel> registerAsDonor({
     required String bloodGroup,
     bool isAvailable = true,
@@ -55,6 +67,31 @@ class BloodDonorDataSourceImpl implements BloodDonorDataSource {
       final response = await _client.dio.get(
         ApiConstants.bloodDonors,
         queryParameters: params,
+      );
+      final list = response.data as List<dynamic>;
+      return list
+          .map((e) => BloodDonorModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<List<BloodDonorModel>> donorsNear({
+    required double lat,
+    required double lng,
+    String? bloodGroup,
+  }) async {
+    try {
+      final response = await _client.dio.get(
+        '${ApiConstants.bloodDonors}/nearby',
+        queryParameters: <String, dynamic>{
+          'lat': lat,
+          'lng': lng,
+          if (bloodGroup != null && bloodGroup.isNotEmpty)
+            'blood_group': bloodGroup,
+        },
       );
       final list = response.data as List<dynamic>;
       return list

@@ -65,3 +65,22 @@ class BloodDonorAvailabilityUpdated extends BloodDonorEvent {
   @override
   List<Object?> get props => [donorId, isAvailable];
 }
+
+/// Rank donors by how near they actually are.
+///
+/// The taluk filter answers "who is in this administrative area", which is not
+/// the question someone at a hospital is asking. This one is.
+class BloodDonorNearbyRequested extends BloodDonorEvent {
+  final double lat;
+  final double lng;
+  final String? bloodGroup;
+
+  const BloodDonorNearbyRequested({
+    required this.lat,
+    required this.lng,
+    this.bloodGroup,
+  });
+
+  @override
+  List<Object?> get props => [lat, lng, bloodGroup];
+}

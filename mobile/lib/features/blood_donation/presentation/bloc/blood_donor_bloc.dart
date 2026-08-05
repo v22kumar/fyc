@@ -19,6 +19,7 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
         _repository = repository,
         super(const BloodDonorInitial()) {
     on<BloodDonorSearchRequested>(_onSearch);
+    on<BloodDonorNearbyRequested>(_onNearby);
     on<BloodDonorRegisterRequested>(_onRegister);
     on<BloodDonorContactRequested>(_onContactRequest);
     on<BloodDonorAvailabilityUpdated>(_onAvailabilityUpdate);
@@ -91,6 +92,22 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
     result.fold(
       (f) => emit(BloodDonorFailure(f.message)),
       (donor) => emit(BloodDonorRegistered(donor)),
+    );
+  }
+
+  Future<void> _onNearby(
+    BloodDonorNearbyRequested event,
+    Emitter<BloodDonorState> emit,
+  ) async {
+    emit(BloodDonorLoading());
+    final result = await _repository.donorsNear(
+      lat: event.lat,
+      lng: event.lng,
+      bloodGroup: event.bloodGroup,
+    );
+    result.fold(
+      (failure) => emit(BloodDonorFailure(failure.message)),
+      (donors) => emit(BloodDonorSearchSuccess(donors: donors)),
     );
   }
 }

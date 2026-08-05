@@ -32,6 +32,24 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
   }
 
   @override
+  Future<Either<Failure, List<BloodDonorEntity>>> donorsNear({
+    required double lat,
+    required double lng,
+    String? bloodGroup,
+  }) async {
+    try {
+      final donors = await _remote.donorsNear(
+        lat: lat, lng: lng, bloodGroup: bloodGroup);
+      return Right(donors);
+
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, BloodDonorEntity>> registerAsDonor({
     required String bloodGroup,
     bool isAvailable = true,
