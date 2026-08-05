@@ -139,13 +139,18 @@ jobs:
 
       # The Linux desktop embedder is what lets the real board run without a
       # phone; xvfb gives it the display it insists on having.
-      # gstreamer is not optional despite this being a chess test: the app
-      # depends on audioplayers, whose Linux plugin fails cmake without it.
+      # The full set, taken from every Linux plugin's pkg_check_modules rather
+      # than discovered one failed CI run at a time: gtk (embedder),
+      # gstreamer + app + audio (audioplayers), libsecret (secure storage).
+      # A chess test does not obviously imply audio or a keyring — it does,
+      # because the app it boots depends on both.
       - name: Install the Linux desktop toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev clang xvfb \
-            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+          sudo apt-get install -y ninja-build clang xvfb \
+            libgtk-3-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libsecret-1-dev
 
       - name: Install app dependencies
         working-directory: mobile
