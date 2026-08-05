@@ -358,16 +358,15 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     return false;
   }
 
-  String _moveToUci(Move move) {
-    String sq(int s) {
-      final file = String.fromCharCode(97 + (s % 8));
-      final rank = (s ~/ 8 + 1).toString();
-      return '$file$rank';
-    }
-    final base = '${sq(move.from)}${sq(move.to)}';
-    if (move.promo != null && move.promo!.isNotEmpty) {
-      return '$base${move.promo!.toLowerCase()}';
-    }
-    return base;
-  }
+  /// Convert a board move to the UCI the server expects.
+  ///
+  /// This used to compute the rank by hand as `index ~/ 8 + 1`, which is upside
+  /// down: squares indexes from the TOP-LEFT of the board, so index 0 is a8 and
+  /// 56 is a1. Every online move was therefore mirrored vertically — a drag of
+  /// e2-e4 was sent as e7-e5, which the server rejected as illegal, so no move
+  /// a phone player made online could ever be accepted.
+  ///
+  /// Use the library's own conversion rather than re-deriving the index maths,
+  /// so the two can never drift apart again. It also handles promotion.
+  String _moveToUci(Move move) => BoardSize.standard.moveToAlgebraic(move);
 }
