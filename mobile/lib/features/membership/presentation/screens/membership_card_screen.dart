@@ -634,8 +634,13 @@ class _NoCardView extends StatelessWidget {
                   Text('🪪', style: TextStyle(fontSize: 60)),
             ),
             SizedBox(height: 24),
+            // One state, one message, one next step. This used to stack three
+            // explanations that disagreed: a Tamil heading saying there was no
+            // card, the raw server error in English underneath it, and a third
+            // line suggesting something else again. The server's wording is for
+            // the log, not for a member standing at a registration desk.
             Text(
-              trId('no_membership_card_found'),
+              trId('member_card_unavailable'),
               style: TextStyle(
                   color: AppColors.background,
                   fontSize: 18,
@@ -644,14 +649,8 @@ class _NoCardView extends StatelessWidget {
             ),
             SizedBox(height: 12),
             Text(
-              message,
-              style: TextStyle(color: Colors.white54, fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 24),
-            Text(
-              trId('contact_your_administrator_to_get_your_d'),
-              style: TextStyle(color: Colors.white38, fontSize: 11),
+              trId('member_card_unavailable_help'),
+              style: TextStyle(color: Colors.white70, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],

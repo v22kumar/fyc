@@ -33,7 +33,11 @@ def get_ai_daily_digest(db: Session = Depends(get_db)):
         
     # User constraint: "Never call Gemini when users simply open the app"
     # If the background job hasn't cached it yet, return a fallback instead of blocking a thread.
-    return {"summary": "Our AI is preparing today's digest. Check back shortly!"}
+    # Nothing generated yet. Say so as a flag rather than as English prose:
+    # the app can collapse the card, instead of giving its most prominent slot
+    # to a sentence that tells the member there is nothing to read — in a
+    # language they may not have chosen.
+    return {"summary": "", "pending": True}
 
 @router.get("/news-summary")
 def get_ai_news_summary(db: Session = Depends(get_db)):
@@ -52,7 +56,4 @@ def get_ai_news_summary(db: Session = Depends(get_db)):
         
     # User constraint: "Never call Gemini when users simply open the app"
     # If the background job hasn't cached it yet, return a fallback instead of blocking a thread.
-    return {
-        "summary": "Our AI is gathering the latest news updates. Check back shortly!",
-        "trending_topics": []
-    }
+    return {"summary": "", "pending": True, "trending_topics": []}

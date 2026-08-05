@@ -16,6 +16,7 @@ import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/components/ds_animated_counter.dart';
 import '../../../../core/design_system/components/last_updated_pill.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/pressable.dart';
@@ -206,9 +207,17 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        String firstName = 'Friend';
+        // Read the name in the member's own script first. Reaching for the
+        // English spelling regardless of language is why a Tamil home screen
+        // greeted people in Latin letters.
+        final lang = sl<LocalStorage>().getLang();
+        String? firstName;
         if (state is AuthAuthenticated) {
-          final fullName = state.user.fullNameEn ?? state.user.fullNameTa ?? '';
+          final u = state.user;
+          final fullName = (lang == 'en'
+                  ? (u.fullNameEn ?? u.fullNameTa)
+                  : (u.fullNameTa ?? u.fullNameEn)) ??
+              '';
           final parts = fullName.trim().split(' ');
           if (parts.isNotEmpty && parts.first.isNotEmpty) firstName = parts.first;
         }
@@ -220,10 +229,10 @@ class _Header extends StatelessWidget {
             : hour < 17
                 ? trId('good_afternoon')
                 : trId('good_evening');
-        // Today's date — more useful than a generic tagline in the header.
-        const _wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const _mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        final dateLine = '${_wd[_now.weekday - 1]}, ${_now.day} ${_mo[_now.month - 1]} ${_now.year}';
+        // Today's date, written the way the member's language writes it.
+        // The hardcoded Mon/Tue and Jan/Feb arrays this replaces printed an
+        // English date under a Tamil greeting on every single visit.
+        final dateLine = DateFormat.yMMMEd(lang).format(_now);
 
         // V2 1.1 — compact collapsing header. The toolbar row (brand · language
         // · bell · avatar) and the search pill stay pinned; the aurora backdrop
@@ -273,7 +282,9 @@ class _Header extends StatelessWidget {
                 radius: 18,
                 backgroundColor: AppColors.background.withOpacity(0.15),
                 child: Text(
-                  firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
+                  (firstName != null && firstName.isNotEmpty)
+                      ? firstName[0].toUpperCase()
+                      : '?',
                   style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -336,7 +347,11 @@ class _Header extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('$greetingEn, $firstName!',
+                        // No name is better than a made-up one: the old
+                        // fallback greeted members as "Friend" in English.
+                        Text(firstName == null
+                                ? greetingEn
+                                : '$greetingEn, $firstName!',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.background, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),

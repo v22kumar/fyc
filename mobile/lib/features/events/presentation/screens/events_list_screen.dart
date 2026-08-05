@@ -18,6 +18,8 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/design_system/components/ds_screen_header.dart';
+import '../../../../core/design_system/components/ds_tab_bar.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/success_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -75,17 +77,14 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 label: Text(trId('new')),
               )
             : null,
-        appBar: AppBar(
-          title: Text(trId('events')),
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: trId('all')),
-              Tab(text: trId('upcoming')),
-              Tab(text: trId('past')),
-              Tab(text: trId('my_events')),
-            ],
-          ),
+        appBar: DSScreenHeader(
+          title: trId('events'),
+          bottom: DSTabBar(tabs: [
+            trId('all'),
+            trId('upcoming'),
+            trId('past'),
+            trId('my_events'),
+          ]),
         ),
         body: BlocConsumer<EventBloc, EventState>(
           listener: (context, state) {

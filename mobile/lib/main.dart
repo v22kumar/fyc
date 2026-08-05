@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/services/sync_service.dart';
@@ -90,6 +91,9 @@ Future<void> _bootstrap() async {
     final context = appRouter.routerDelegate.navigatorKey.currentContext;
     if (context != null && route.isNotEmpty) context.go(route);
   };
+  // Locale data for dates. Without this DateFormat throws on any
+  // non-English locale, which is most of this app's members.
+  await initializeDateFormatting();
   await initServiceLocator();
   // A mid-session 401 (the 60-minute access token expired, no refresh
   // mechanism) previously failed silently — every request kept breaking

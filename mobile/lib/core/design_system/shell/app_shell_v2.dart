@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/l10n/tr.dart';
 import 'package:flutter/services.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
@@ -7,6 +6,7 @@ import '../patterns/kolam_background.dart';
 import '../tokens.dart';
 import 'sos_sheet.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 
 /// The live navigation shell (mounted at `/app`): 4 tabs (Home · Feed · Play ·
 /// Serve) + a persistent SOS control reachable from every tab. Account/profile
@@ -33,20 +33,28 @@ class AppShellV2 extends StatefulWidget {
   State<AppShellV2> createState() => _AppShellV2State();
 }
 
+/// Vertical space the floating SOS disc and the docked "+" occupy above the
+/// navigation bar. Published to the tab bodies as bottom padding.
+const double _floatingChromeHeight = 84;
+
 class _AppShellV2State extends State<AppShellV2> {
   int _index = 0;
   ShakeDetector? _shake;
   DateTime? _lastBackPress;
 
+  // Ids, not literals: the four labels now come from the same registry as the
+  // rest of the app, so Hindi and Malayalam get them too. The old pair of
+  // hardcoded strings could only ever have served English and Tamil — and in
+  // practice served only English, because the Tamil half was never read.
   static const _tabMeta = [
-    ('Home', 'ஊர்', Icons.home_rounded),
-    ('Feed', 'செய்திகள்', Icons.dynamic_feed_rounded),
-    ('Play', 'விளையாட்டு', Icons.sports_cricket_rounded),
-    ('Serve', 'சேவை', Icons.volunteer_activism_rounded),
+    ('nav_home', Icons.home_rounded),
+    ('nav_feed', Icons.dynamic_feed_rounded),
+    ('nav_play', Icons.sports_cricket_rounded),
+    ('nav_serve', Icons.volunteer_activism_rounded),
   ];
 
   List<Widget> get _bodies =>
-      widget.tabs ?? List.generate(_tabMeta.length, (i) => _PlaceholderTab(label: _tabMeta[i].$1));
+      widget.tabs ?? List.generate(_tabMeta.length, (i) => _PlaceholderTab(label: trId(_tabMeta[i].$1)));
 
   @override
   void initState() {
@@ -130,7 +138,21 @@ class _AppShellV2State extends State<AppShellV2> {
         body: KolamBackground(
           child: Stack(
             children: [
-              IndexedStack(index: _index, children: _bodies),
+              // The floating controls draw over the tab body, so the body has
+              // to know they are there. Publishing their height as bottom
+              // padding means every tab — and every tab added later — clears
+              // them, instead of each screen guessing a magic number. Before
+              // this, Home's last card sat under the "+" and the SOS disc
+              // covered the card behind it.
+              MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: MediaQuery.of(context).padding.copyWith(
+                        bottom: MediaQuery.of(context).padding.bottom +
+                            _floatingChromeHeight,
+                      ),
+                ),
+                child: IndexedStack(index: _index, children: _bodies),
+              ),
               // Persistent SOS control — reachable from every tab, never buried.
               Positioned(
                 right: DSSpacing.sm,
@@ -159,12 +181,12 @@ class _AppShellV2State extends State<AppShellV2> {
           backgroundColor: context.dsSurface,
           indicatorColor: context.dsAccent.withOpacity(0.15),
           destinations: [
-            for (final (en, ta, icon) in _tabMeta)
+            for (final (id, icon) in _tabMeta)
               NavigationDestination(
                 icon: Icon(icon, color: context.dsTextSecondary),
                 selectedIcon: Icon(icon, color: context.dsAccent),
-                label: en,
-                tooltip: ta,
+                label: trId(id),
+                tooltip: trId(id),
               ),
           ],
         ),
