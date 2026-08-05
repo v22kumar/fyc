@@ -33,6 +33,7 @@ import '../../../news/presentation/widgets/daily_news_card.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/gold_price_card.dart';
 import '../../../ai/presentation/widgets/ai_daily_digest_card.dart';
+import '../../../profile/presentation/widgets/quick_question_card.dart';
 import '../../../ai/presentation/widgets/ai_news_summary_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -2427,6 +2428,10 @@ class _CitizenDashboard extends StatelessWidget {
     // V2 1.4 — sections enter with a top-to-bottom stagger (FadeSlideIn is
     // reduce-motion aware, so this is a no-op when animations are disabled).
     final sections = <Widget>[
+      // One question, now and then. Renders nothing at all most days — the
+      // server decides when there is something worth asking, and the answer
+      // is what makes the blood-donation screen able to work.
+      const QuickQuestionCard(),
       AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
       AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       const _AnnouncementsBar(),
