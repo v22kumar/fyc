@@ -75,3 +75,78 @@ jobs:
       - name: Run tests
         working-directory: mobile
         run: flutter test
+
+  # ── End-to-end ──────────────────────────────────────────────────────────────
+  # Unit tests never caught the bugs that actually hurt: a move sent in flipped
+  # coordinates, a socket that stalled mid-game, a header widget calling
+  # production. Each was found by driving the real client against a real
+  # backend, by hand. These jobs make that automatic, because a test nobody can
+  # run is a test that stops being run.
+
+  web-e2e:
+    name: Web — real browser on a real board
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Play a game in a browser
+        run: ./scripts/e2e/run_web_e2e.sh
+
+  mobile-e2e:
+    name: Mobile — real widget tree on a real board
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      # The Linux desktop embedder is what lets the real board run without a
+      # phone; xvfb gives it the display it insists on having.
+      - name: Install the Linux desktop toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev clang xvfb
+
+      - name: Install app dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Play a game in the real widget tree
+        run: ./scripts/e2e/run_mobile_e2e.sh

@@ -93,7 +93,14 @@ def _seed_database():
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
-        if donor_count < 1000 and os.environ.get("DATABASE_URL") != "sqlite:///:memory:":
+        # SKIP_BULK_SEED lets a throwaway boot (end-to-end tests, a scratch
+        # database) start clean: the import writes thousands of rows and holds a
+        # write lock the whole time, which is enough to make a fresh SQLite file
+        # unusable for the first minute of its life.
+        _skip_bulk = os.environ.get("SKIP_BULK_SEED", "").strip().lower() in ("1", "true", "yes")
+        if (donor_count < 1000
+                and os.environ.get("DATABASE_URL") != "sqlite:///:memory:"
+                and not _skip_bulk):
             print(f"Blood donors count is {donor_count} — seeding from friends2support CSV in background...")
             # The CSV import is the single heaviest boot task (thousands of rows).
             # Run it in a daemon thread with its own DB session so the app starts
