@@ -2,6 +2,28 @@
 <html>
 <head>
   <!--
+    The web build exists so the app can be opened in a browser for design review
+    and screenshotting; it is not a shipping surface (Android and iOS never read
+    this file). Push notifications are meaningless here, and firebase_core_web
+    otherwise pulls its SDK from a CDN during PLUGIN REGISTRATION — before
+    main() runs, so the guard around Firebase.initializeApp() cannot catch a
+    failure, and the app hangs on a blank screen instead of rendering.
+
+    `flutterfire_ignore_scripts` is the package's own supported switch for
+    "I am supplying these myself". With nothing injected, Firebase simply fails
+    to initialise, main() catches it, and the app starts without push — exactly
+    the degraded mode it already handles on a phone with no Play Services.
+  -->
+  <script>
+    // Two belts: `flutterfire_ignore_scripts` is the documented switch, but its
+    // runtime `is Iterable` check on a JS array is unreliable once compiled, so
+    // we also set `firebase_core`. A non-null value there makes the loader
+    // return immediately — its own "already initialised / you supplied the
+    // scripts" path — and nothing is fetched at all.
+    window.flutterfire_ignore_scripts = ['app', 'messaging'];
+    window.firebase_core = {};
+  </script>
+  <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
 
