@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db, SessionLocal
 from app.core.security import decode_token
@@ -636,6 +636,7 @@ def chess_members(
     not real app users/opponents)."""
     users = (
         db.query(User)
+        .options(joinedload(User.profile))
         .filter(
             User.organization_id == tenant_id,
             User.id != current_user.id,
@@ -644,13 +645,19 @@ def chess_members(
         .limit(200)
         .all()
     )
+    # Ratings for the whole list in one query: looking them up per member turned
+    # opening the opponent picker into hundreds of round trips.
+    stats_by_user = {}
+    if users:
+        for s in (db.query(ChessPlayerStats)
+                  .filter(ChessPlayerStats.user_id.in_([u.id for u in users]))
+                  .all()):
+            stats_by_user[s.user_id] = s
     result = []
     for u in users:
-        profile = db.query(UserProfile).filter(UserProfile.user_id == u.id).first()
+        profile = u.profile
         name = (profile.full_name_en or profile.full_name_ta) if profile else str(u.id)
-        stats = db.query(ChessPlayerStats).filter(
-            ChessPlayerStats.user_id == u.id
-        ).first()
+        stats = stats_by_user.get(u.id)
         rating = round(stats.glicko_rating, 1) if stats else 1500.0
         games = stats.games_played if stats else 0
         result.append(ChessMemberOut(

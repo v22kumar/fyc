@@ -508,8 +508,18 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
         }
 
     log(f"  round {rnd}: opening {len(pending)} boards…")
-    async with httpx.AsyncClient(timeout=30) as client:
-        for mid, a, b in pending:
+    # Members do not tap "I'm ready" in an orderly queue — a round is called and
+    # sixty-four people tap within the same minute. Opening the boards serially
+    # measured latency but never the pile-up, so it ran concurrently here, with
+    # a cap so the test is a busy hall rather than a denial-of-service.
+    started = time.time()
+    calls = 0
+    gate = asyncio.Semaphore(int(getattr(args, "concurrent_taps", 16) or 16))
+
+    async def open_board(client, mid, a, b):
+        # Both players must be ready before either can start the board, so this
+        # pair is ordered — but every other board proceeds independently.
+        async with gate:
             for uid in (a, b):
                 await api_post(
                     client,
@@ -519,6 +529,18 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
                 client,
                 f"{api}/api/v1/chess/tournaments/{tour_id}/matches/{mid}/play",
                 hdr(a), "play")
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        await asyncio.gather(*[open_board(client, mid, a, b)
+                               for mid, a, b in pending])
+        calls = len(pending) * 3
+
+    elapsed = time.time() - started
+    # Printed every round: a per-call time that climbs as the bracket fills is
+    # the signature of a query that runs once per player, and it is invisible in
+    # a small test.
+    log(f"  round {rnd}: {calls} ready/play calls in {elapsed:.0f}s "
+        f"({elapsed / max(1, calls) * 1000:.0f} ms per call)")
 
     with SessionLocal() as db:
         live = [
@@ -587,6 +609,10 @@ async def main():
                     help="fraction of bots behaving like browser clients")
     ap.add_argument("--drop-rate", type=float, default=0.25,
                     help="chance a player's connection dies mid-game")
+    ap.add_argument("--concurrent-taps", type=int, default=16,
+                    help="how many boards open at once — a called round is "
+                         "dozens of people tapping 'I'm ready' in the same "
+                         "minute, not an orderly queue")
     ap.add_argument("--move-delay", type=float, default=0.4)
     ap.add_argument("--max-plies", type=int, default=60)
     ap.add_argument("--time-control", default="rapid_10_0")

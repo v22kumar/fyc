@@ -199,12 +199,17 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     </script>
 
     <!-- Header weather + gold price -->
-    <script>
+    <!-- define:vars so this follows PUBLIC_API_BASE like the rest of the page.
+         It used to hardcode production, which meant any other deployment (a
+         staging build, the end-to-end tests) quietly called the live server.
+         define:vars opts the script out of bundling, so no TypeScript syntax
+         may appear below this line — the browser gets it verbatim. -->
+    <script define:vars={{ API_BASE }}>
       (function () {
-        const API = 'https://api.fycconnect.com';
+        const API = API_BASE;
         const wEl = document.getElementById('hdr-weather');
         const gEl = document.getElementById('hdr-gold');
-        const fmt = (n: number | null) => {
+        const fmt = (n) => {
           if (n == null) return '—';
           const s = Math.round(n).toString();
           if (s.length <= 3) return '₹' + s;
@@ -220,7 +225,7 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
         fetch(API + '/api/v1/utilities/gold-price').then(r => r.json()).then(g => {
           if (gEl && g.price_per_gram_22k != null) gEl.textContent = '🪙 22K ' + fmt(g.price_per_gram_22k) + '/g';
         }).catch(() => {});
-        const fw = (lat: number, lon: number) => {
+        const fw = (lat, lon) => {
           fetch(API + '/api/v1/utilities/weather?lat=' + lat + '&lon=' + lon).then(r => r.json()).then(w => {
             if (w.temp == null) return;
             if (wEl) wEl.textContent = '🌤 ' + Math.round(w.temp) + '°C · ' + (w.city || 'Nagercoil');

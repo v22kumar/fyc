@@ -254,3 +254,58 @@ def test_no_show_walkover(client, db):
     db.expire_all()
     logs = db.query(AuditLog).filter(AuditLog.action_type == "CHESS_WALKOVER_CLAIMED").all()
     assert len(logs) == 1
+
+
+# ── Cost of serving a big bracket ────────────────────────────────────────────
+
+def _count_queries(fn):
+    """Run fn, returning (result, number of SQL statements executed)."""
+    from sqlalchemy import event
+    from sqlalchemy.engine import Engine
+
+    n = 0
+
+    def _seen(*_a, **_kw):
+        nonlocal n
+        n += 1
+
+    # Class-level: the tests run against their own engine, not the app's.
+    event.listen(Engine, "before_cursor_execute", _seen)
+    try:
+        return fn(), n
+    finally:
+        event.remove(Engine, "before_cursor_execute", _seen)
+
+
+def test_reading_a_tournament_costs_the_same_however_many_players(client, db):
+    """The event this is built for has 100 players.
+
+    Serving the bracket used to run one query per player reference — plus a
+    second to lazy-load each profile — so every "I'm ready" tap got slower as
+    more members joined. That is exactly backwards on the day it matters, and
+    it is invisible in a 4-player test, so pin it: doubling the field must not
+    move the query count.
+    """
+    def cost(n_players):
+        org, mgr, mgr_tok, players = _setup(client, db, n_players=n_players)
+        tid = _create(client, org.id, mgr_tok)
+        for u, tok in players:
+            client.post(f"/api/v1/chess/tournaments/{tid}/register",
+                        headers=_h(org.id, tok))
+        for u, _tok in players:
+            client.post(f"/api/v1/chess/tournaments/{tid}/entries/{u.id}/approve",
+                        headers=_h(org.id, mgr_tok))
+        client.post(f"/api/v1/chess/tournaments/{tid}/start", headers=_h(org.id, mgr_tok))
+
+        headers = _h(org.id, mgr_tok)
+        r, n = _count_queries(
+            lambda: client.get(f"/api/v1/chess/tournaments/{tid}", headers=headers))
+        assert r.status_code == 200, r.text
+        assert len(r.json()["entries"]) == n_players
+        return n
+
+    small = cost(4)
+    large = cost(16)
+    # Four times the players, and at most a couple more statements — the extra
+    # allowance is for IN-clause chunking, not per-player lookups.
+    assert large <= small + 2, f"{small} queries for 4 players, {large} for 16"

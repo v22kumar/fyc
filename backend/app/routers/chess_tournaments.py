@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.models.chess_tournament import (
@@ -57,11 +57,41 @@ def _name(u: Optional[User]) -> str:
     return "Player"
 
 
+class _NameBook:
+    """Every player name a response needs, fetched in one query.
+
+    Serialising a bracket touches each entrant plus both sides of every match.
+    Looking those up one at a time — and lazy-loading each profile on top —
+    makes a single "I'm ready" tap cost hundreds of round trips, and the cost
+    grows with the size of the tournament, which is exactly backwards for the
+    100-player event this is built for.
+    """
+
+    def __init__(self, db: Session, user_ids):
+        wanted = {u for u in user_ids if u}
+        self._names: dict = {}
+        ids = list(wanted)
+        # Chunked so a huge bracket can never build an oversized IN clause.
+        for i in range(0, len(ids), 500):
+            rows = (
+                db.query(User)
+                .options(joinedload(User.profile))
+                .filter(User.id.in_(ids[i:i + 500]))
+                .all()
+            )
+            for u in rows:
+                self._names[u.id] = _name(u)
+
+    def ref(self, user_id) -> Optional[PlayerRef]:
+        if not user_id:
+            return None
+        # A deleted account still has a slot in the bracket; it just has no name.
+        return PlayerRef(id=user_id, name=self._names.get(user_id, "Player"))
+
+
 def _ref(db: Session, user_id) -> Optional[PlayerRef]:
-    if not user_id:
-        return None
-    u = db.query(User).filter(User.id == user_id).first()
-    return PlayerRef(id=user_id, name=_name(u))
+    """Single reference, for callers that only need one."""
+    return _NameBook(db, [user_id]).ref(user_id)
 
 
 def _estatus(e: ChessTournamentEntry) -> str:
@@ -208,9 +238,17 @@ def _auto_resolve(db: Session, tour: ChessTournament):
         )
         .all()
     )
+    # Round one of a 100-player draw is 50 live matches, and this runs on every
+    # read of the tournament — so fetch the games together, not one at a time.
+    games = {}
+    if live:
+        for g in (db.query(ChessGame)
+                  .filter(ChessGame.id.in_([m.game_id for m in live]))
+                  .all()):
+            games[g.id] = g
     changed = False
     for m in live:
-        g = db.query(ChessGame).filter(ChessGame.id == m.game_id).first()
+        g = games.get(m.game_id)
         if not g or not g.result:
             continue
         if g.result == "white_wins":
@@ -232,8 +270,19 @@ def _entries(db: Session, tour_id):
     )
 
 
-def _serialize(db: Session, tour: ChessTournament, user_id) -> ChessTournamentOut:
-    entries = _entries(db, tour.id)
+def _serialize(
+    db: Session,
+    tour: ChessTournament,
+    user_id,
+    *,
+    entries: Optional[list] = None,
+    book: Optional[_NameBook] = None,
+) -> ChessTournamentOut:
+    # `entries` and `book` let a caller that already has them avoid re-querying.
+    if entries is None:
+        entries = _entries(db, tour.id)
+    if book is None:
+        book = _NameBook(db, [tour.champion_id])
     approved = sum(1 for e in entries if _estatus(e) == "APPROVED")
     pending = sum(1 for e in entries if _estatus(e) == "PENDING")
     my_status = None
@@ -255,7 +304,7 @@ def _serialize(db: Session, tour: ChessTournament, user_id) -> ChessTournamentOu
         current_round=tour.current_round or 0,
         is_registered=my_status is not None,
         my_status=my_status,
-        champion=_ref(db, tour.champion_id),
+        champion=book.ref(tour.champion_id),
         created_at=tour.created_at,
     )
 
@@ -300,7 +349,21 @@ def list_tournaments(
         .all()
     )
     cid = current_user.id if current_user else None
-    return [_serialize(db, t, cid) for t in rows]
+    # One entries query and one names query for the whole list, not per row.
+    by_tour: dict = {t.id: [] for t in rows}
+    if rows:
+        all_entries = (
+            db.query(ChessTournamentEntry)
+            .filter(ChessTournamentEntry.tournament_id.in_(list(by_tour.keys())))
+            .all()
+        )
+        for e in all_entries:
+            by_tour.setdefault(e.tournament_id, []).append(e)
+    book = _NameBook(db, [t.champion_id for t in rows])
+    return [
+        _serialize(db, t, cid, entries=by_tour.get(t.id, []), book=book)
+        for t in rows
+    ]
 
 
 @router.post("", response_model=ChessTournamentOut, status_code=status.HTTP_201_CREATED)
@@ -976,27 +1039,33 @@ def set_conduct_mode(
 
 
 def _detail(db: Session, tour: ChessTournament, user_id) -> ChessTournamentDetailOut:
-    base = _serialize(db, tour, user_id)
     entries = _entries(db, tour.id)
-    entry_out = []
-    for e in entries:
-        ref = _ref(db, e.user_id)
-        if ref:
-            entry_out.append(EntryOut(id=ref.id, name=ref.name, status=_estatus(e)))
     matches = (
         db.query(ChessTournamentMatch)
         .filter(ChessTournamentMatch.tournament_id == tour.id)
         .order_by(ChessTournamentMatch.round.asc(), ChessTournamentMatch.slot.asc())
         .all()
     )
+    # Every name this response can possibly need, in one go.
+    book = _NameBook(db, [tour.champion_id]
+                     + [e.user_id for e in entries]
+                     + [m.player_a_id for m in matches]
+                     + [m.player_b_id for m in matches])
+
+    base = _serialize(db, tour, user_id, entries=entries, book=book)
+    entry_out = []
+    for e in entries:
+        ref = book.ref(e.user_id)
+        if ref:
+            entry_out.append(EntryOut(id=ref.id, name=ref.name, status=_estatus(e)))
     rounds = max([m.round for m in matches], default=0)
     match_out = [
         MatchOut(
             id=m.id,
             round=m.round,
             slot=m.slot,
-            player_a=_ref(db, m.player_a_id),
-            player_b=_ref(db, m.player_b_id),
+            player_a=book.ref(m.player_a_id),
+            player_b=book.ref(m.player_b_id),
             winner_id=m.winner_id,
             game_id=m.game_id,
             status=m.status,
