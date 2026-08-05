@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
 import 'donor_map_screen.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
@@ -50,7 +52,12 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     // moment the member is least willing to wait.
     context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
     _loadTaluks();
-    _rankByDistance();
+    // After the first frame, so the disclosure sheet slides up over a screen
+    // that is already there. Explaining why we want a location on top of a
+    // blank page is not an explanation, it is an interruption.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _rankByDistance();
+    });
   }
 
   Future<void> _loadTaluks() async {
@@ -110,33 +117,21 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   /// Best-effort by design. Location can be off, refused, or slow, and none of
   /// those should leave a member staring at nothing — the taluk search is still
   /// there and still works, it just cannot answer "who is nearest".
+  ///
+  /// The same fix does double duty: it ranks this member's screen, and it is
+  /// reported back as their own last-seen position. This is the only moment the
+  /// app collects one, which is exactly the bargain the disclosure describes —
+  /// looking for a donor is what puts you on the map for the next person.
   Future<void> _rankByDistance() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return;
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        return;
-      }
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
-      if (!mounted) return;
-      setState(() => _rankedByDistance = true);
-      context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
-            lat: pos.latitude,
-            lng: pos.longitude,
-            bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-          ));
-    } catch (_) {
-      // No location, no ranking. The list below is unaffected.
-    }
+    final pos = await MemberLocation.forRanking(context);
+    if (pos == null || !mounted) return;
+    unawaited(MemberLocation.report(pos));
+    setState(() => _rankedByDistance = true);
+    context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
+          lat: pos.latitude,
+          lng: pos.longitude,
+          bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+        ));
   }
 
   Future<void> _launchPhone(String phone) async {

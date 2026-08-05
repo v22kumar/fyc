@@ -997,4 +997,10 @@ const Map<String, String> kEn = {
   'ask_me_later': 'Not now',
   'eligible_on': 'can donate from {date}',
   'age_years': '{n} yrs',
+  'location_ask_title': 'Share where you are?',
+  'location_ask_body': 'To show you to people nearby who need blood, the app records roughly where you are when you open it.',
+  'location_ask_no_tracking': 'It never tracks you in the background.',
+  'location_ask_yes': 'Share my location',
+  'location_ask_no': 'Not now',
+  'location_ask_change': 'You can change this any time in Settings.',
 };

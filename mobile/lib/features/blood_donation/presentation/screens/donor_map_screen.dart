@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
@@ -46,19 +47,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
     await _fetch();
   }
 
-  Future<Position?> _currentLocation() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return null;
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return null;
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
-      );
-    } catch (_) {
-      return null;
-    }
-  }
+  Future<Position?> _currentLocation() => MemberLocation.forRanking(context);
 
   Future<void> _fetch() async {
     setState(() => _loading = true);

@@ -686,4 +686,10 @@ const Map<String, String> kHi = {
   'eligible_now': 'अभी दे सकते हैं',
   'eligible_soon': 'जल्द दे सकेंगे',
   'km_away': 'कि.मी. दूर',
+  'location_ask_title': 'अपना स्थान साझा करें?',
+  'location_ask_body': 'पास में रक्त की ज़रूरत वालों को आप दिखें, इसलिए ऐप खोलने पर आपका अनुमानित स्थान दर्ज होता है।',
+  'location_ask_no_tracking': 'पृष्ठभूमि में कभी ट्रैक नहीं किया जाता।',
+  'location_ask_yes': 'स्थान साझा करें',
+  'location_ask_no': 'अभी नहीं',
+  'location_ask_change': 'सेटिंग्स में कभी भी बदल सकते हैं।',
 };

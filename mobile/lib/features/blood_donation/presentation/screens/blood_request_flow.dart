@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/blood_request_api.dart';
 import '../../data/blood_request_models.dart';
@@ -12,21 +13,12 @@ const _urgencies = ['CRITICAL', 'URGENT', 'ROUTINE'];
 
 /// Best-effort current location (never throws) — the request still goes out
 /// without coordinates, just without proximity fan-out.
-Future<Position?> _currentLocation() async {
-  try {
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-      return null;
-    }
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
-    );
-  } catch (_) {
-    return null;
-  }
-}
+///
+/// Deliberately the non-asking variant. Someone raising a blood request has
+/// already tapped submit; a permission sheet at that moment reads as an
+/// obstacle between them and help, and a sheet answered in a panic is not
+/// consent. If they have already agreed elsewhere, we use it.
+Future<Position?> _currentLocation() => MemberLocation.ifAlreadyAllowed();
 
 Future<void> showRaiseRequestSheet(BuildContext context, {String? initialGroup}) {
   return showModalBottomSheet(

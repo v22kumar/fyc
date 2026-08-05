@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/location/member_location.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
@@ -37,23 +37,18 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
       return;
     }
     setState(() => _capturing = true);
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) throw 'off';
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) throw 'denied';
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
-      );
-      if (!mounted) return;
-      setState(() { _shareLocation = true; _lat = pos.latitude; _lng = pos.longitude; _capturing = false; });
-    } catch (_) {
-      if (!mounted) return;
+    // A home area is stored and searched against for months, so this is the one
+    // caller that insists on a real fix rather than a cached one.
+    final pos = await MemberLocation.precise(context);
+    if (!mounted) return;
+    if (pos == null) {
       setState(() { _shareLocation = false; _capturing = false; });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(trId('couldn_t_get_location'))),
       );
+      return;
     }
+    setState(() { _shareLocation = true; _lat = pos.latitude; _lng = pos.longitude; _capturing = false; });
   }
 
   Future<void> _pickDate() async {

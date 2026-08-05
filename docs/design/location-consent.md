@@ -79,3 +79,39 @@ later want the position for something the member was not told about — tracking
 lost phone, say — that is a new purpose and needs its own ask. Reusing a
 donor-matching consent for location tracking would be exactly the kind of quiet
 scope creep that costs a small club its standing.
+
+## How it is built
+
+`core/location/location_disclosure.dart` holds the sheet;
+`core/location/member_location.dart` is the only place in the app that asks the
+phone for a position. Everything else calls one of three methods, and the choice
+between them is a design decision, not a convenience:
+
+| | Asks the member? | Wakes the GPS? | Used by |
+|---|---|---|---|
+| `forRanking` | yes, once | no — cached fix | the donor list, the map |
+| `precise` | yes, once | yes | pinning a home area at registration |
+| `ifAlreadyAllowed` | never | no — cached fix | raising a blood request |
+
+Two rules follow from the table.
+
+**Never ask mid-task.** Someone who has tapped *submit* on a blood request is
+not in a state to read a disclosure, and a sheet answered in a panic is not
+consent. That path takes a position only if one was already granted elsewhere.
+
+**Never spend the ask on nothing.** If location services are switched off at the
+system level, agreeing achieves nothing — so the sheet is not shown at all, and
+the one chance survives until it can actually be used.
+
+Five screens each had their own copy of this logic before, and every copy called
+`requestPermission` cold. Whichever screen a member happened to open first got to
+spend the single permanent chance to ask, with no explanation attached.
+
+### Recovering from a fumbled prompt
+
+"Not now" is remembered and we do not ask again. But if the member agreed to
+*us* and then the system dialog was dismissed or missed, that is not a decision
+to hold them to — the flag stays unset and the next visit tries once more.
+Android permits one further prompt before it stops asking for good, and that is
+worth spending. A permanent denial is recorded and never re-asked, because the
+system would not honour it.
