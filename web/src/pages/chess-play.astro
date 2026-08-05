@@ -1,0 +1,280 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+
+<BaseLayout title="Play Chess — FYC Connect" description="Find a chess game with another FYC member.">
+  <main class="max-w-2xl mx-auto px-4 py-6">
+    <div id="loading" class="text-center text-gray-400 py-24">Loading…</div>
+
+    <div id="err" class="hidden max-w-md mx-auto text-center py-20">
+      <div class="text-4xl mb-3">♟️</div>
+      <p id="err-msg" class="text-gray-700 font-bold mb-4">Something went wrong.</p>
+      <a href="/chess-play" class="text-sm text-[#0F5132] font-bold hover:underline">Try again</a>
+    </div>
+
+    <div id="view" class="hidden">
+      <div class="mb-6">
+        <h1 class="text-2xl font-black text-gray-900">Play chess</h1>
+        <p class="text-sm text-gray-500">Invite someone, or take a game that's on offer.</p>
+      </div>
+
+      <!-- Someone sent you a link -->
+      <div id="invite" class="hidden bg-white rounded-2xl border-2 border-[#0F5132] p-5 mb-5">
+        <p class="text-[11px] font-bold uppercase tracking-wide text-[#0F5132] mb-1">You were invited</p>
+        <p id="inv-who" class="text-lg font-black text-gray-900"></p>
+        <p id="inv-what" class="text-sm text-gray-500 mb-4"></p>
+        <div id="inv-actions"></div>
+      </div>
+
+      <!-- Your own open invitation -->
+      <div id="mine" class="hidden bg-[#F0F7F3] rounded-2xl border border-[#0F5132]/25 p-5 mb-5">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wide text-[#0F5132]">Waiting for an opponent</p>
+            <p id="mine-what" class="text-sm text-gray-600"></p>
+          </div>
+          <span class="shrink-0 flex h-2.5 w-2.5 relative" aria-hidden="true">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0F5132] opacity-60"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0F5132]"></span>
+          </span>
+        </div>
+        <label for="mine-link" class="text-[11px] font-bold text-gray-500">Send this link</label>
+        <div class="flex gap-2 mt-1">
+          <input id="mine-link" readonly class="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono bg-white" />
+          <button id="btn-copy" class="shrink-0 bg-[#0F5132] text-white text-sm font-bold rounded-lg px-4">Copy</button>
+        </div>
+        <button id="btn-cancel" class="mt-3 text-sm font-bold text-gray-500 hover:text-red-700">Withdraw invitation</button>
+      </div>
+
+      <!-- Create one -->
+      <div id="create" class="bg-white rounded-2xl border border-gray-200 p-5 mb-5">
+        <p class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-3">New invitation</p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-[11px] font-bold text-gray-500">Time control</span>
+            <select id="tc" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-bold text-gray-500">You play</span>
+            <select id="color" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="random">Random</option>
+              <option value="white">White</option>
+              <option value="black">Black</option>
+            </select>
+          </label>
+        </div>
+        <button id="btn-create" class="mt-4 w-full bg-[#0F5132] text-white text-sm font-bold rounded-lg py-3">Create invitation</button>
+      </div>
+
+      <!-- Open offers from others -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-bold uppercase tracking-wide text-gray-400">Open games</span>
+          <a href="/chess" class="text-[12px] font-bold text-[#0F5132] hover:underline">Watch live →</a>
+        </div>
+        <div id="lobby" class="flex flex-col gap-2"></div>
+      </div>
+
+      <p id="msg" class="text-[12px] text-gray-500 mt-4 text-center min-h-[1rem]"></p>
+    </div>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+  const params = new URLSearchParams(location.search);
+  const inviteCode = params.get('code');
+  const token = localStorage.getItem('fyc_token');
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+
+  const LABELS = {
+    untimed: 'No clock',
+    bullet_1_0: 'Bullet · 1 min',
+    blitz_3_0: 'Blitz · 3 min',
+    blitz_3_2: 'Blitz · 3+2',
+    blitz_5_0: 'Blitz · 5 min',
+    rapid_10_0: 'Rapid · 10 min each',
+    classical_30_0: 'Classical · 30 min',
+  };
+  const label = (tc) => LABELS[tc] || tc;
+
+  let rendered = false;
+
+  function fail(msg) {
+    $('loading').classList.add('hidden');
+    $('err').classList.remove('hidden');
+    $('err-msg').textContent = msg;
+  }
+
+  const headers = () => ({
+    Authorization: `Bearer ${token}`,
+    'X-Organization-ID': DEFAULT_ORG_ID,
+    'Content-Type': 'application/json',
+  });
+
+  async function api(path, opts = {}) {
+    const res = await fetch(`${API_BASE}/api/v1/chess${path}`, { headers: headers(), ...opts });
+    if (res.status === 204) return null;
+    let body = null;
+    try { body = await res.json(); } catch { /* empty body */ }
+    if (!res.ok) throw new Error((body && body.detail) || `Request failed (${res.status})`);
+    return body;
+  }
+
+  function note(text) { $('msg').textContent = text; }
+
+  // ── Rendering ─────────────────────────────────────────────────────────────
+  function renderTimeControls() {
+    $('tc').innerHTML = Object.entries(LABELS)
+      .filter(([v]) => v !== 'untimed')
+      .map(([v, l]) => `<option value="${v}"${v === 'rapid_10_0' ? ' selected' : ''}>${l}</option>`)
+      .join('');
+  }
+
+  function shareLink(code) {
+    return `${location.origin}/chess-play?code=${encodeURIComponent(code)}`;
+  }
+
+  function renderMine(seek) {
+    if (!seek) {
+      $('mine').classList.add('hidden');
+      $('create').classList.remove('hidden');
+      return;
+    }
+    $('mine').classList.remove('hidden');
+    $('create').classList.add('hidden');
+    $('mine-what').textContent = label(seek.time_control);
+    $('mine-link').value = seek.short_code ? shareLink(seek.short_code) : '';
+  }
+
+  function renderLobby(seeks) {
+    const others = seeks.filter((s) => !s.is_mine);
+    if (!others.length) {
+      $('lobby').innerHTML =
+        '<p class="text-sm text-gray-400 py-2">Nobody is waiting right now. Create an invitation and send the link.</p>';
+      return;
+    }
+    $('lobby').innerHTML = others.map((s) => `
+      <div class="flex items-center justify-between gap-3 border border-gray-200 rounded-xl px-4 py-3">
+        <div class="min-w-0">
+          <div class="font-bold text-gray-900 truncate">${esc(s.creator_name)}</div>
+          <div class="text-[12px] text-gray-500">${esc(label(s.time_control))}</div>
+        </div>
+        <button data-accept="${esc(s.id)}" class="shrink-0 bg-[#0F5132] text-white text-sm font-bold rounded-lg px-4 py-2">Play</button>
+      </div>`).join('');
+
+    $('lobby').querySelectorAll('[data-accept]').forEach((btn) => {
+      btn.onclick = () => accept(btn.dataset.accept);
+    });
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  async function accept(seekId) {
+    document.querySelectorAll('button').forEach((b) => (b.disabled = true));
+    try {
+      const res = await api(`/seeks/${seekId}/accept`, { method: 'POST' });
+      location.href = `/play?game=${encodeURIComponent(res.game_id)}`;
+    } catch (e) {
+      note(e.message);
+      document.querySelectorAll('button').forEach((b) => (b.disabled = false));
+      await load();
+    }
+  }
+
+  async function load() {
+    try {
+      const seeks = await api('/seeks');
+      rendered = true;
+      $('loading').classList.add('hidden');
+      $('err').classList.add('hidden');
+      $('view').classList.remove('hidden');
+      renderMine(seeks.find((s) => s.is_mine) || null);
+      renderLobby(seeks);
+    } catch (e) {
+      // A blip must not replace a working page with a dead end — keep what is
+      // on screen and let the next poll recover.
+      if (rendered) return;
+      fail('Could not reach the server. Retrying…');
+    }
+  }
+
+  async function loadInvite() {
+    try {
+      const seek = await api(`/seeks/by-code/${encodeURIComponent(inviteCode)}`);
+      $('invite').classList.remove('hidden');
+      $('inv-who').textContent = seek.is_mine
+        ? 'This is your own invitation'
+        : `${seek.creator_name} wants to play`;
+      $('inv-what').textContent = label(seek.time_control);
+
+      if (seek.is_mine) {
+        $('inv-actions').innerHTML =
+          '<p class="text-sm text-gray-500">Send the link below to someone else.</p>';
+      } else if (seek.status !== 'open') {
+        $('inv-actions').innerHTML =
+          '<p class="text-sm text-gray-500">This game has already been taken.</p>';
+      } else {
+        $('inv-actions').innerHTML =
+          '<button id="btn-accept-inv" class="w-full bg-[#0F5132] text-white text-sm font-bold rounded-lg py-3">Accept and play</button>';
+        $('btn-accept-inv').onclick = () => accept(seek.id);
+      }
+    } catch (e) {
+      $('invite').classList.remove('hidden');
+      $('inv-who').textContent = 'Invitation not found';
+      $('inv-what').textContent = e.message;
+    }
+  }
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // Last, after every `const` above: calling these earlier would hit the
+  // temporal dead zone and throw a ReferenceError that the catch inside load()
+  // would then disguise as a network failure.
+  if (!token) {
+    location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  } else {
+    renderTimeControls();
+
+    $('btn-create').onclick = async () => {
+      $('btn-create').disabled = true;
+      try {
+        await api('/seeks', {
+          method: 'POST',
+          body: JSON.stringify({
+            time_control: $('tc').value,
+            preferred_color: $('color').value,
+          }),
+        });
+        note('Invitation created — send the link to whoever you want to play.');
+        await load();
+      } catch (e) {
+        note(e.message);
+      }
+      $('btn-create').disabled = false;
+    };
+
+    $('btn-cancel').onclick = async () => {
+      const mine = (await api('/seeks')).find((s) => s.is_mine);
+      if (!mine) return load();
+      await api(`/seeks/${mine.id}`, { method: 'DELETE' });
+      note('Invitation withdrawn.');
+      await load();
+    };
+
+    $('btn-copy').onclick = async () => {
+      const link = $('mine-link').value;
+      try {
+        await navigator.clipboard.writeText(link);
+        note('Link copied.');
+      } catch {
+        $('mine-link').select();
+        note('Press Ctrl/Cmd+C to copy.');
+      }
+    };
+
+    if (inviteCode) loadInvite();
+    load();
+    // Someone may take your invitation while you are looking at this page.
+    setInterval(load, 6000);
+  }
+</script>
