@@ -236,11 +236,35 @@ class OnlineGamePage extends StatelessWidget {
                       moves: state.boardState.moves,
                       onMove: (state.isMyTurn &&
                               !state.moveInFlight &&
-                              !state.reconnecting)
+                              !state.reconnecting &&
+                              !state.paused)
                           ? (move) => context
                               .read<OnlineGameBloc>()
                               .add(SendMove(move))
                           : null,
+                      // Premove: drawn during the opponent's turn and fired the
+                      // instant their move lands. The web board has had this
+                      // since P1, which left a phone player at a real
+                      // disadvantage in a mixed blitz field.
+                      onPremove: (state.reconnecting || state.paused)
+                          ? null
+                          : (move) {
+                              // By the time this fires the position has already
+                              // changed, so the premove may no longer be legal.
+                              // Drop it quietly rather than sending something
+                              // the server will only reject and resync over.
+                              final stillLegal = state.boardState.moves.any(
+                                (m) => m.from == move.from && m.to == move.to,
+                              );
+                              if (!stillLegal) return;
+                              context
+                                  .read<OnlineGameBloc>()
+                                  .add(SendMove(move));
+                            },
+                      // A promotion premove must not stop to ask: the whole
+                      // point is that it plays itself. Queen is chosen, as
+                      // everywhere else.
+                      promotionBehaviour: PromotionBehaviour.autoPremove,
                       pieceSet: PieceSet.merida(),
                       theme: const BoardTheme(
                         lightSquare: _kBoardLight,
