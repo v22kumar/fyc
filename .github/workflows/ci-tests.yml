@@ -122,6 +122,14 @@ jobs:
   mobile-e2e:
     name: Mobile — real widget tree on a real board
     runs-on: ubuntu-latest
+    # NOT A GATE YET, on purpose. This suite passes locally in seconds and has
+    # already caught a bug no unit test could, but getting the Linux embedder
+    # to run headless on a runner has taken three rounds of missing system
+    # libraries and it is not yet proven stable here. Until it is, a flaky new
+    # job must not be able to block a fix the club needs. It still runs and its
+    # failures are still visible — remove this line once it has gone green a
+    # few times in a row.
+    continue-on-error: true
     # Bounded, because the first run without this sat for over an hour. The
     # build is only about a minute even cold — anything beyond that is a launch
     # that never completed, and it should fail rather than wait.
