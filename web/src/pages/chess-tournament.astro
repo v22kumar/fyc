@@ -1,0 +1,324 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+---
+
+<BaseLayout title="Chess Tournament — FYC Connect" description="Your FYC chess tournament match.">
+  <main class="max-w-3xl mx-auto px-4 py-6">
+    <div id="loading" class="text-center text-gray-400 py-24">Loading tournament…</div>
+
+    <div id="err" class="hidden max-w-md mx-auto text-center py-20">
+      <div class="text-4xl mb-3">♟️</div>
+      <p id="err-msg" class="text-gray-700 font-bold mb-4">Could not load this tournament.</p>
+      <a href="/chess" class="text-sm text-[#0F5132] font-bold hover:underline">← Live games</a>
+    </div>
+
+    <div id="view" class="hidden">
+      <div class="flex items-start justify-between gap-3 mb-5">
+        <div class="min-w-0">
+          <h1 id="t-name" class="text-2xl font-black text-gray-900 truncate"></h1>
+          <p id="t-sub" class="text-sm text-gray-500"></p>
+        </div>
+        <span id="t-status" class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600"></span>
+      </div>
+
+      <!-- The one thing a player actually came here for. -->
+      <div id="my-match" class="hidden bg-white rounded-2xl border-2 border-[#0F5132] p-5 mb-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-bold uppercase tracking-wide text-[#0F5132]">Your match</span>
+          <span id="m-round" class="text-[11px] text-gray-400"></span>
+        </div>
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="min-w-0">
+            <div class="text-[11px] text-gray-400">You play</div>
+            <div id="m-opponent" class="text-lg font-black text-gray-900 truncate"></div>
+          </div>
+          <span id="m-state" class="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full"></span>
+        </div>
+        <div id="m-actions" class="flex flex-col gap-2"></div>
+        <p id="m-note" class="text-[12px] text-gray-500 mt-3"></p>
+      </div>
+
+      <div id="not-playing" class="hidden bg-white rounded-2xl border border-gray-200 p-5 mb-5">
+        <p id="np-msg" class="text-sm text-gray-600"></p>
+        <div id="np-actions" class="mt-3"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-bold uppercase tracking-wide text-gray-400">Bracket</span>
+          <a id="telecast" href="#" class="text-[12px] font-bold text-[#0F5132] hover:underline">Watch live games →</a>
+        </div>
+        <div id="bracket" class="flex flex-col gap-4"></div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+  const params = new URLSearchParams(location.search);
+  const tourId = params.get('id');
+  const token = localStorage.getItem('fyc_token');
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+
+  function fail(msg) {
+    $('loading').classList.add('hidden');
+    $('err').classList.remove('hidden');
+    $('err-msg').textContent = msg;
+  }
+
+  /** Recover from a failed first load once the server answers again. */
+  function clearFailure() {
+    $('err').classList.add('hidden');
+  }
+
+  let myId = null;
+  try { myId = (JSON.parse(localStorage.getItem('fyc_user') || '{}') || {}).id ?? null; } catch { /* ignore */ }
+
+  // Declared before the first load() call below: `let` is not hoisted, so
+  // touching it from load() while it sits further down the file is a
+  // temporal-dead-zone ReferenceError that kills the whole page on open.
+  let rendered = false;
+
+  const headers = () => ({
+    'Authorization': `Bearer ${token}`,
+    'X-Organization-ID': DEFAULT_ORG_ID,
+    'Content-Type': 'application/json',
+  });
+
+  async function post(path) {
+    const res = await fetch(`${API_BASE}/api/v1/chess/tournaments/${tourId}${path}`, {
+      method: 'POST', headers: headers(),
+    });
+    if (!res.ok) {
+      let detail = `Request failed (${res.status})`;
+      try { detail = (await res.json()).detail || detail; } catch { /* keep default */ }
+      throw new Error(detail);
+    }
+    return res.json();
+  }
+
+  async function load() {
+    let t;
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/chess/tournaments/${tourId}`, { headers: headers() });
+      // 404 is the one answer worth giving up on; everything else may well
+      // succeed on the next poll.
+      if (res.status === 404) return fail('Tournament not found.');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      t = await res.json();
+    } catch (e) {
+      // A blip on mobile data must not leave a player staring at a dead page
+      // mid-tournament. Once something is on screen, keep it and retry quietly;
+      // only a failure with nothing rendered is worth interrupting for, and
+      // even that keeps polling in the background.
+      if (rendered) {
+        $('t-sub').textContent = 'Reconnecting…';
+        return;
+      }
+      return fail('Could not reach the server. Retrying…');
+    }
+    rendered = true;
+    clearFailure();
+    render(t);
+  }
+
+  function render(t) {
+    $('loading').classList.add('hidden');
+    $('view').classList.remove('hidden');
+    $('t-name').textContent = t.name;
+    $('t-sub').textContent = `${t.entry_count} players · ${labelTC(t.time_control)}`;
+    $('t-status').textContent = String(t.status || '').replace(/_/g, ' ');
+    $('telecast').href = `/chess?tournament=${encodeURIComponent(t.id)}`;
+
+    renderBracket(t);
+    renderMine(t);
+  }
+
+  function labelTC(tc) {
+    return ({
+      untimed: 'No clock',
+      bullet_1_0: 'Bullet 1 min',
+      blitz_3_0: 'Blitz 3 min',
+      blitz_3_2: 'Blitz 3+2',
+      blitz_5_0: 'Blitz 5 min',
+      rapid_10_0: 'Rapid 10 min each',
+      classical_30_0: 'Classical 30 min',
+    })[tc] || tc || '';
+  }
+
+  /** The player's own live match, if they have one. */
+  function myMatch(t) {
+    if (!myId) return null;
+    const mine = (t.matches || []).filter(
+      (m) => (m.player_a && m.player_a.id === myId) || (m.player_b && m.player_b.id === myId),
+    );
+    // Undecided first, then the latest round — that is the one they must play.
+    const open = mine.filter((m) => !m.winner_id);
+    if (open.length) return open.sort((a, b) => b.round - a.round)[0];
+    return mine.sort((a, b) => b.round - a.round)[0] || null;
+  }
+
+  function renderMine(t) {
+    const m = myMatch(t);
+    const box = $('my-match');
+    const alt = $('not-playing');
+
+    if (!m) {
+      box.classList.add('hidden');
+      alt.classList.remove('hidden');
+      if (!myId) {
+        $('np-msg').textContent = 'Sign in again to see your own match.';
+      } else if (t.is_registered && t.my_status === 'PENDING') {
+        $('np-msg').textContent = 'Your registration is waiting for the organizer to approve it.';
+      } else if (t.is_registered) {
+        $('np-msg').textContent = 'You are registered. Your match will appear here once the bracket is drawn.';
+      } else if (t.status === 'REGISTRATION_OPEN') {
+        $('np-msg').textContent = 'Registration is open.';
+        $('np-actions').innerHTML =
+          '<button id="btn-register" class="bg-[#0F5132] text-white text-sm font-bold rounded-lg px-4 py-2.5">Register to play</button>';
+        $('btn-register').onclick = () => act(() => post('/register'), 'Registered.');
+      } else {
+        $('np-msg').textContent = 'You are not playing in this tournament.';
+      }
+      return;
+    }
+
+    alt.classList.add('hidden');
+    box.classList.remove('hidden');
+
+    const iAmA = m.player_a && m.player_a.id === myId;
+    const opp = iAmA ? m.player_b : m.player_a;
+    const iAmReady = iAmA ? m.a_ready : m.b_ready;
+    const oppReady = iAmA ? m.b_ready : m.a_ready;
+
+    $('m-round').textContent = `Round ${m.round}`;
+    $('m-opponent').textContent = opp ? opp.name : 'Waiting for an opponent';
+
+    const pill = $('m-state');
+    const actions = $('m-actions');
+    actions.innerHTML = '';
+    $('m-note').textContent = '';
+
+    if (m.winner_id) {
+      const won = m.winner_id === myId;
+      pill.textContent = won ? 'WON' : 'OUT';
+      pill.className = `shrink-0 text-[10px] font-bold px-2 py-1 rounded-full ${won ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`;
+      if (m.game_id) {
+        actions.innerHTML = `<a href="/chess?id=${encodeURIComponent(m.game_id)}" class="text-center bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg py-2.5">Review the game</a>`;
+      }
+      return;
+    }
+
+    if (m.conduct_mode === 'PHYSICAL') {
+      pill.textContent = 'IN PERSON';
+      pill.className = 'shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800';
+      $('m-note').textContent = [
+        m.venue ? `Venue: ${m.venue}` : '',
+        m.reporting_time ? `Report at ${new Date(m.reporting_time).toLocaleString()}` : '',
+        'This match is played over the board; the organizer records the result.',
+      ].filter(Boolean).join(' · ');
+      return;
+    }
+
+    if (!m.activated) {
+      pill.textContent = 'NOT STARTED';
+      pill.className = 'shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500';
+      $('m-note').textContent = 'Waiting for the organizer to start this round.';
+      return;
+    }
+
+    if (m.game_id) {
+      pill.textContent = 'LIVE';
+      pill.className = 'shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-red-100 text-red-700';
+      actions.innerHTML = `<a href="/play?game=${encodeURIComponent(m.game_id)}" class="text-center bg-[#0F5132] text-white text-sm font-bold rounded-lg py-3">Open your board →</a>`;
+      return;
+    }
+
+    pill.textContent = 'READY CHECK';
+    pill.className = 'shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-700';
+
+    if (!iAmReady) {
+      actions.innerHTML = '<button id="btn-ready" class="bg-[#0F5132] text-white text-sm font-bold rounded-lg py-3">I\'m ready</button>';
+      $('btn-ready').onclick = () => act(() => post(`/matches/${m.id}/ready`), '');
+      $('m-note').textContent = 'Both players must be ready before the board opens.';
+    } else if (!oppReady) {
+      $('m-note').textContent = 'You are ready. Waiting for your opponent…';
+    } else {
+      actions.innerHTML = '<button id="btn-play" class="bg-[#0F5132] text-white text-sm font-bold rounded-lg py-3">Start the game →</button>';
+      $('btn-play').onclick = () => act(async () => {
+        const res = await post(`/matches/${m.id}/play`);
+        // The endpoint returns the game; go straight to the board.
+        const gid = res.game_id || res.id;
+        if (gid) location.href = `/play?game=${encodeURIComponent(gid)}`;
+      }, '');
+    }
+  }
+
+  async function act(fn, okMsg) {
+    const buttons = document.querySelectorAll('#m-actions button, #np-actions button');
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      await fn();
+      if (okMsg) $('m-note').textContent = okMsg;
+      await load();
+    } catch (e) {
+      $('m-note').textContent = e.message || 'That did not work. Try again.';
+      buttons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  function renderBracket(t) {
+    const byRound = new Map();
+    (t.matches || []).forEach((m) => {
+      if (!byRound.has(m.round)) byRound.set(m.round, []);
+      byRound.get(m.round).push(m);
+    });
+    const rounds = [...byRound.keys()].sort((a, b) => a - b);
+    $('bracket').innerHTML = rounds.map((r) => {
+      const rows = byRound.get(r).sort((a, b) => a.slot - b.slot).map((m) => {
+        const a = m.player_a ? esc(m.player_a.name) : '—';
+        const b = m.player_b ? esc(m.player_b.name) : '—';
+        const done = !!m.winner_id;
+        const aWon = done && m.player_a && m.winner_id === m.player_a.id;
+        const bWon = done && m.player_b && m.winner_id === m.player_b.id;
+        const nm = (txt, won) =>
+          `<span class="${won ? 'font-bold text-gray-900' : done ? 'text-gray-400 line-through' : 'text-gray-700'}">${txt}</span>`;
+        return `<div class="flex items-center justify-between text-[13px] py-1.5 border-b border-gray-100 last:border-0">
+          <div class="truncate">${nm(a, aWon)} <span class="text-gray-300 mx-1">vs</span> ${nm(b, bWon)}</div>
+          ${m.game_id && !done ? `<a href="/chess?id=${encodeURIComponent(m.game_id)}" class="shrink-0 text-[10px] font-bold text-red-700 bg-red-100 rounded-full px-2 py-0.5 ml-2">● LIVE</a>` : ''}
+        </div>`;
+      }).join('');
+      return `<div>
+        <div class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1">${roundName(r, rounds.length)}</div>
+        ${rows}
+      </div>`;
+    }).join('') || '<p class="text-sm text-gray-400">The bracket has not been drawn yet.</p>';
+  }
+
+  function roundName(r, total) {
+    const fromEnd = total - r;
+    if (fromEnd === 0) return 'Final';
+    if (fromEnd === 1) return 'Semi-finals';
+    if (fromEnd === 2) return 'Quarter-finals';
+    return `Round ${r}`;
+  }
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // Deliberately last. `const` arrow functions above are not hoisted, so
+  // calling load() before this point throws a temporal-dead-zone
+  // ReferenceError — which the catch inside load() then disguises as a network
+  // failure, showing "could not reach the server" while the server is fine.
+  if (!tourId) {
+    fail('No tournament was specified.');
+  } else if (!token) {
+    location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  } else {
+    load();
+    // The organizer starts rounds from their own device, so this screen has to
+    // notice without the player reloading. Cheap poll — the payload is small
+    // and this page is only open while someone is waiting to play.
+    setInterval(load, 8000);
+  }
+</script>

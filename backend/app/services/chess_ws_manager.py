@@ -23,6 +23,15 @@ logger = logging.getLogger(__name__)
 
 DISCONNECT_GRACE_SECONDS = 60
 
+# Most a player can be refunded for network latency on a single move. Without a
+# cap, a bad (or dishonest) connection would be rewarded with free time; with
+# one, compensation can only ever return time the network actually took.
+LAG_CREDIT_CAP_MS = 1000
+
+# Weight of each new round-trip sample. Low enough that one delayed packet does
+# not swing the estimate, high enough to track a genuine change in conditions.
+LAG_EWMA_ALPHA = 0.3
+
 
 # (base_milliseconds, increment_milliseconds_per_move)
 # The increment is a real Fischer increment, added to the mover's clock after
@@ -107,6 +116,20 @@ class GameSession:
 
         self.draw_offered_by: Optional[str] = None
         self._disconnect_tasks: Dict[str, asyncio.Task] = {}
+
+        # Players whose opponent has been shown a "disconnected — forfeits in
+        # 60s" warning. Without this the warning was never withdrawn when they
+        # came back: the server quietly cancelled the forfeit timer but told
+        # nobody, so the opponent sat watching a countdown that would never
+        # fire. Especially visible in cross-platform games, where one side is on
+        # mobile data and drops routinely.
+        self.disconnect_notified: set = set()
+
+        # Per-player round-trip estimate, and when the outstanding probe was
+        # sent. Used to refund the time a move spends in transit — see
+        # deduct_time().
+        self.lag_ms: Dict[str, float] = {}
+        self._probe_sent_at: Dict[str, float] = {}
 
         # Set when a move could not be durably persisted: the game is frozen and
         # rejects further moves until an organizer intervenes, so the in-memory
@@ -289,7 +312,10 @@ class GameSession:
         # move is validated and applied (which flips the turn), so that an
         # illegal-move attempt can never earn an increment.
         banked = self.white_time_ms if color == "white" else self.black_time_ms
-        remaining = max(0, (banked or 0) - self._elapsed_ms())
+        # Refund the transit time: what the player is charged is what they
+        # actually spent thinking, not what the network spent carrying it.
+        spent = max(0, self._elapsed_ms() - self.lag_credit_ms(user_id))
+        remaining = max(0, (banked or 0) - spent)
         # Increment is only earned if the move was made in time. A player who
         # moves on a dead clock does not get bailed out by the increment.
         if remaining > 0:
@@ -299,6 +325,39 @@ class GameSession:
         else:
             self.black_time_ms = remaining
         self._last_move_at = _utcnow()
+
+    # ── Lag compensation ──────────────────────────────────────────────────────
+    # A player is charged from the moment their opponent's move reached the
+    # SERVER until their reply reaches the server. That window contains two
+    # network legs they did not choose and cannot control, so on a 250ms link
+    # a 40-move blitz game silently taxes them about ten seconds — and taxes
+    # hardest the player least able to do anything about it. These three methods
+    # measure that overhead and give it back, up to a cap.
+
+    def probe_sent(self, user_id: str) -> None:
+        """Record that a latency probe was just sent to this player."""
+        self._probe_sent_at[str(user_id)] = time.monotonic()
+
+    def probe_returned(self, user_id: str) -> None:
+        """A probe came back — fold the round trip into the estimate."""
+        uid = str(user_id)
+        sent = self._probe_sent_at.pop(uid, None)
+        if sent is None:
+            return
+        rtt_ms = (time.monotonic() - sent) * 1000
+        # A wildly late reply says more about a stalled tab than the link, and
+        # letting it in would inflate the refund for every later move.
+        if rtt_ms > 10_000:
+            return
+        prev = self.lag_ms.get(uid)
+        self.lag_ms[uid] = (
+            rtt_ms if prev is None
+            else (1 - LAG_EWMA_ALPHA) * prev + LAG_EWMA_ALPHA * rtt_ms
+        )
+
+    def lag_credit_ms(self, user_id: str) -> int:
+        """Milliseconds to refund this player on their next move."""
+        return int(min(self.lag_ms.get(str(user_id), 0.0), LAG_CREDIT_CAP_MS))
 
     def flagged_color(self) -> Optional[str]:
         """The colour that has actually run out of time, or None.

@@ -51,10 +51,25 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await SyncService.init();
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
-  await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
-  await LocalNotifications.init();
+  // Push is a nice-to-have; the app must start without it. Firebase can fail on
+  // a device with missing or outdated Play Services — and unguarded, that
+  // failure throws out of main() BEFORE runApp(), so the user gets a
+  // permanently blank screen instead of an app with no notifications. The
+  // FirebaseMessaging calls further down already defend against this state;
+  // the initialisation itself did not.
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+    await FirebaseMessaging.instance
+        .requestPermission(alert: true, badge: true, sound: true);
+  } catch (e) {
+    debugPrint('[startup] push notifications unavailable: $e');
+  }
+  try {
+    await LocalNotifications.init();
+  } catch (e) {
+    debugPrint('[startup] local notifications unavailable: $e');
+  }
   LocalNotifications.onTapRoute = (route) {
     final context = appRouter.routerDelegate.navigatorKey.currentContext;
     if (context != null && route.isNotEmpty) context.go(route);

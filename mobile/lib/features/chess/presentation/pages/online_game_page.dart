@@ -236,11 +236,35 @@ class OnlineGamePage extends StatelessWidget {
                       moves: state.boardState.moves,
                       onMove: (state.isMyTurn &&
                               !state.moveInFlight &&
-                              !state.reconnecting)
+                              !state.reconnecting &&
+                              !state.paused)
                           ? (move) => context
                               .read<OnlineGameBloc>()
                               .add(SendMove(move))
                           : null,
+                      // Premove: drawn during the opponent's turn and fired the
+                      // instant their move lands. The web board has had this
+                      // since P1, which left a phone player at a real
+                      // disadvantage in a mixed blitz field.
+                      onPremove: (state.reconnecting || state.paused)
+                          ? null
+                          : (move) {
+                              // By the time this fires the position has already
+                              // changed, so the premove may no longer be legal.
+                              // Drop it quietly rather than sending something
+                              // the server will only reject and resync over.
+                              final stillLegal = state.boardState.moves.any(
+                                (m) => m.from == move.from && m.to == move.to,
+                              );
+                              if (!stillLegal) return;
+                              context
+                                  .read<OnlineGameBloc>()
+                                  .add(SendMove(move));
+                            },
+                      // A promotion premove must not stop to ask: the whole
+                      // point is that it plays itself. Queen is chosen, as
+                      // everywhere else.
+                      promotionBehaviour: PromotionBehaviour.autoPremove,
                       pieceSet: PieceSet.merida(),
                       theme: const BoardTheme(
                         lightSquare: _kBoardLight,
@@ -280,6 +304,40 @@ class OnlineGamePage extends StatelessWidget {
               ),
             ],
           ),
+
+          // Server froze the board (a move could not be saved). Takes priority
+          // over the connection banners: the socket is fine, the game is not.
+          if (state.paused)
+            Positioned(
+              top: 80,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1B18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFB3261E)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.pause_circle_outline,
+                        size: 18, color: const Color(0xFFF1746A)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        trId('game_paused_organizer'),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Our-own-connection-lost banner (we are auto-reconnecting)
           if (state.reconnecting)

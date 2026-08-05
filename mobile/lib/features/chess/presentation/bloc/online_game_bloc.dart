@@ -164,6 +164,22 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
           emit(s.copyWith(opponentDisconnected: false));
         }
 
+      case 'latency_probe':
+        // Answer at once. The round trip the server measures from this is what
+        // gets refunded to our clock on the next move, so any delay we add here
+        // is time we lose ourselves.
+        _wsClient?.send({'type': 'latency_pong'});
+
+      case 'game_paused':
+        // The server could not durably save a move and froze the board until an
+        // organizer intervenes. Web already surfaced this; without it here a
+        // Flutter player just saw their moves silently refused.
+        _stopClockTimer();
+        final s = state;
+        if (s is OnlineGameInProgress) {
+          emit(s.copyWith(paused: true, moveInFlight: false));
+        }
+
       case 'error':
         final s = state;
         if (s is OnlineGameInProgress) {
@@ -290,6 +306,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   void _onSendMove(SendMove event, Emitter<OnlineGameState> emit) {
     final s = state;
     if (s is! OnlineGameInProgress || !s.isMyTurn || s.moveInFlight) return;
+    if (s.paused) return;   // frozen by the server — the move would be refused
 
     _stopClockTimer(); // pause local countdown while waiting for echo
     final uci = _moveToUci(event.move);

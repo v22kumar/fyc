@@ -448,6 +448,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       if (myTurn()) window.setTimeout(() => ground.playPremove(), 0);
     });
 
+    // Answer the server's latency probe immediately — the round trip it
+    // measures is what gets refunded to our clock on the next move.
+    socket.on('latency_probe', () => socket.send({ type: 'latency_pong' }));
+
     socket.on('draw_offered', () => $('draw-offer').classList.remove('hidden'));
     socket.on('draw_declined', () => {
       $('hint').textContent = 'Your draw offer was declined.';
@@ -459,6 +463,11 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       // finished game would be nonsense.
       if (ended) return;
       $('top-note').textContent = `Disconnected — forfeits in ${m.seconds_until_forfeit ?? 60}s`;
+    });
+
+    socket.on('opponent_reconnected', () => {
+      // Withdraw the forfeit countdown — they made it back.
+      $('top-note').textContent = '';
     });
 
     socket.on('spectator_count', (m) => {
