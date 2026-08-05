@@ -71,6 +71,10 @@ ORGANIZER_ROLES = ("SUPER_ADMIN", "ADMIN", "EXECUTIVE_MEMBER")
 
 stats = Counter()
 protocol_seen = set()
+# How long each ready/play request actually took, measured one request at a
+# time. This is the number that answers "how long does a member wait after
+# tapping I'm ready", and it must not move with the size of the bracket.
+call_ms: list = []
 
 
 def log(msg: str) -> None:
@@ -451,7 +455,13 @@ async def api_post(client, url, headers, what, retries=3):
     """
     for attempt in range(1, retries + 1):
         try:
+            _t = time.time()
             r = await client.post(url, headers=headers)
+            # Time the request itself. Dividing a round's wall clock by its call
+            # count does NOT give this: the calls overlap, so that number falls
+            # as a round gets busier and rises as it empties — the exact
+            # opposite of what it looks like it is saying.
+            call_ms.append((time.time() - _t) * 1000)
             if r.status_code >= 400:
                 stats[f"http_{r.status_code}:{what}"] += 1
                 log(f"    {what} -> HTTP {r.status_code}: {r.text[:120]}")
@@ -514,6 +524,7 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
     # a cap so the test is a busy hall rather than a denial-of-service.
     started = time.time()
     calls = 0
+    first_call = len(call_ms)
     gate = asyncio.Semaphore(int(getattr(args, "concurrent_taps", 16) or 16))
 
     async def open_board(client, mid, a, b):
@@ -536,11 +547,23 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
         calls = len(pending) * 3
 
     elapsed = time.time() - started
-    # Printed every round: a per-call time that climbs as the bracket fills is
-    # the signature of a query that runs once per player, and it is invisible in
-    # a small test.
-    log(f"  round {rnd}: {calls} ready/play calls in {elapsed:.0f}s "
-        f"({elapsed / max(1, calls) * 1000:.0f} ms per call)")
+    # Report the MEASURED request time, not the round's wall clock divided by
+    # its call count. Those calls overlap, so the divided figure shrinks when a
+    # round is busy and grows when it is nearly empty — it once read 70ms in a
+    # 32-board round and 862ms in a 1-board round, which reads like a collapse
+    # and was in fact a flat one second throughout.
+    #
+    # This is the number to watch. It answers "how long does a member wait
+    # after tapping I'm ready", and it must NOT move with the size of the
+    # bracket. If it climbs round over round, something runs once per player.
+    mine = sorted(call_ms[first_call:])
+    if mine:
+        median = mine[len(mine) // 2]
+        slowest = mine[-1]
+        log(f"  round {rnd}: {calls} ready/play calls in {elapsed:.0f}s "
+            f"— {median:.0f} ms per request (slowest {slowest:.0f} ms)")
+    else:
+        log(f"  round {rnd}: {calls} ready/play calls in {elapsed:.0f}s")
 
     with SessionLocal() as db:
         live = [
@@ -742,6 +765,12 @@ async def main():
     print(f"  unresolved match : {unresolved}")
     print(f"  games not ended  : {stuck}")
     print(f"  wall time        : {elapsed / 60:.1f} min")
+    if call_ms:
+        # What a member actually experiences after tapping "I'm ready".
+        ordered = sorted(call_ms)
+        p50 = ordered[len(ordered) // 2]
+        p95 = ordered[min(len(ordered) - 1, int(len(ordered) * 0.95))]
+        print(f"  'I'm ready' wait : {p50:.0f} ms typical, {p95:.0f} ms at p95")
     print("-" * 64)
     for k in sorted(stats):
         print(f"    {k:<28} {stats[k]}")
