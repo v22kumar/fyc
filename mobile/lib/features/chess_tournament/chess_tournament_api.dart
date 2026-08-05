@@ -22,13 +22,39 @@ class ChessTournamentApi {
   }
 
   static Future<ChessTournament> create(
-      {required String name, String? description, String? registrationDeadline}) async {
+      {required String name,
+      String? description,
+      String? registrationDeadline,
+      String timeControl = 'rapid_10_0'}) async {
     final res = await _dio.post(_base, data: {
       'name': name,
       if (description != null && description.isNotEmpty) 'description': description,
       if (registrationDeadline != null) 'registration_deadline': registrationDeadline,
+      'time_control': timeControl,
     });
     return ChessTournament.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// The clocks an organizer may pick — value + display label, from the server
+  /// so the app never drifts from what the backend actually accepts.
+  static Future<List<({String value, String label})>> timeControlOptions() async {
+    final res = await _dio.get('$_base/meta/time-controls');
+    final opts = ((res.data as Map?)?['options'] as List?) ?? const [];
+    return opts
+        .whereType<Map>()
+        .map((e) => (
+              value: (e['value'] ?? '').toString(),
+              label: (e['label'] ?? '').toString(),
+            ))
+        .toList();
+  }
+
+  /// Organizer changes the tournament clock (only before it starts).
+  static Future<ChessTournamentDetail> setTimeControl(
+      String id, String timeControl) async {
+    final res = await _dio.patch('$_base/$id/settings',
+        data: {'time_control': timeControl});
+    return ChessTournamentDetail.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
   static Future<void> register(String id) async {

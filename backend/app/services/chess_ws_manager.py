@@ -38,6 +38,23 @@ TIME_CONTROLS: Dict[str, tuple] = {
 }
 
 
+# What an organizer may choose, in the order shown in the UI. "untimed" is kept
+# for casual/physical games but is a poor choice for a timed knockout.
+TIME_CONTROL_CHOICES: list = [
+    ("untimed", "No clock"),
+    ("bullet_1_0", "Bullet — 1 min each"),
+    ("blitz_3_0", "Blitz — 3 min each"),
+    ("blitz_3_2", "Blitz — 3 min + 2 sec/move"),
+    ("blitz_5_0", "Blitz — 5 min each"),
+    ("rapid_10_0", "Rapid — 10 min each"),
+    ("classical_30_0", "Classical — 30 min each"),
+]
+
+
+def is_valid_time_control(time_control: str) -> bool:
+    return time_control == "untimed" or time_control in TIME_CONTROLS
+
+
 def _initial_time_ms(time_control: str) -> Optional[int]:
     """Starting milliseconds for each player, or None if untimed."""
     tc = TIME_CONTROLS.get(time_control)

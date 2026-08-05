@@ -30,7 +30,12 @@ def seed_large_tournament():
             short_code="MEGA100"
         )
         db.add(tour)
-        
+        # Flush the parent rows before anything references them. SQLAlchemy
+        # cannot fully sort inserts in this schema (there is a known FK cycle
+        # between teams/tournaments), so relying on the unit of work to order
+        # tournament → user → entry fails with a FOREIGN KEY error.
+        db.flush()
+
         # 2. Create 100 users
         print("Creating 100 users...")
         users = []
@@ -55,7 +60,9 @@ def seed_large_tournament():
                 full_name_ta=f"பாட் {i+1}"
             )
             db.add(p)
-            
+            # The entry below references this user, so the user row must exist first.
+            db.flush()
+
             # Register them to the tournament
             entry = ChessTournamentEntry(
                 tournament_id=tour_id,

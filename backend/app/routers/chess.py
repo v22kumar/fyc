@@ -1061,16 +1061,26 @@ async def game_websocket(
 
     # Notify both when game is fully connected
     if session.both_connected():
+        # Start the clock first so the opening window is part of the state we
+        # persist below — otherwise a restart during the very first move lost
+        # that thinking time (last_move_at was still null in the database).
+        session.start_clock()
         if game_status == "waiting":
+            _start_clock_state = session.clock_for_db()
+
             def _mark_in_progress():
                 with SessionLocal() as s:
                     g = s.query(ChessGame).filter(ChessGame.id == gid).first()
                     if g and g.status == "waiting":
                         g.status = "in_progress"
+                        g.started_at = g.started_at or datetime.now(timezone.utc)
+                        if _start_clock_state["white_time_ms"] is not None:
+                            g.white_time_ms = _start_clock_state["white_time_ms"]
+                            g.black_time_ms = _start_clock_state["black_time_ms"]
+                            g.last_move_at = _start_clock_state["last_move_at"]
                         s.commit()
             await run_in_threadpool(_mark_in_progress)
             game_status = "in_progress"
-        session.start_clock()
         start_msg: dict = {
             "type": "game_start",
             "white_name": white_name,
@@ -1090,13 +1100,24 @@ async def game_websocket(
     # Per-connection flood guard: legitimate play is a few messages/sec, so >30
     # in a rolling second is abusive — drop the excess instead of letting one
     # client spin the loop (and the DB) at will.
-    _recent = deque(maxlen=30)
+    _recent = deque(maxlen=60)
     try:
         while True:
             raw = await websocket.receive_text()
             _mt = time.monotonic()
             _recent.append(_mt)
             if len(_recent) == _recent.maxlen and (_mt - _recent[0]) < 1.0:
+                # Over the burst budget. Crucially this must NOT be a silent
+                # drop: swallowing a legitimate move leaves the sender waiting
+                # forever for an echo that never comes, and the board deadlocks
+                # with no error anywhere (this stalled real games in the 100-bot
+                # tournament simulation, always right as the window filled).
+                # Tell the client instead, so it can resync and retry.
+                await session.send_to(uid, {
+                    "type": "error",
+                    "message": "Too many messages — slow down and resync.",
+                })
+                await session.send_to(uid, session.state_snapshot(uid))
                 continue
             try:
                 msg = __import__("json").loads(raw)
