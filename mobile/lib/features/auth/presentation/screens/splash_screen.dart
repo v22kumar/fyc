@@ -57,12 +57,24 @@ class _SplashScreenState extends State<SplashScreen>
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         final home = ApiConstants.useAppShellV2 ? '/app' : '/home';
+        String? target;
         if (state is AuthAuthenticated) {
-          context.go(home);
+          target = home;
         } else if (state is AuthUnauthenticated) {
           // DEV ONLY — skip the language/login flow and go straight to home.
-          context.go(ApiConstants.devBypassAuth ? home : '/lang-select');
+          target = ApiConstants.devBypassAuth ? home : '/lang-select';
         }
+        if (target == null) return;
+
+        // AuthCheckRequested is dispatched from initState, and with no stored
+        // token the bloc settles SYNCHRONOUSLY — so this listener can run while
+        // the first frame is still being built. Navigating at that moment makes
+        // GoRouter mark widgets dirty mid-build, which the framework reports as
+        // "setState() called during build". Defer to just after the frame.
+        final destination = target;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) context.go(destination);
+        });
       },
       child: Scaffold(
         backgroundColor: AppColors.darkBg,
