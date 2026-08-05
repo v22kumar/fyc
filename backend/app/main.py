@@ -812,6 +812,9 @@ app.include_router(notifications_router.router, prefix="/api/v1")
 from app.routers import diagnostics as diagnostics_router
 app.include_router(diagnostics_router.router, prefix="/api/v1")
 
+from app.routers import profile_prompts as profile_prompts_router
+app.include_router(profile_prompts_router.router, prefix="/api/v1")
+
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
 FilePath("uploads").mkdir(exist_ok=True)
