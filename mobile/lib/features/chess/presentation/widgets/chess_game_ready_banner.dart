@@ -9,26 +9,67 @@ import 'package:fyc_connect/core/theme/app_theme.dart';
 /// chess game waiting for them to join. Tapping it opens the game (the online
 /// game bloc reads the auth token from storage, so no token needs to be passed
 /// here). Hidden while already on the game/spectate screen.
-class ChessGameReadyBanner extends StatelessWidget {
+class ChessGameReadyBanner extends StatefulWidget {
   const ChessGameReadyBanner({super.key});
 
   @override
+  State<ChessGameReadyBanner> createState() => _ChessGameReadyBannerState();
+}
+
+class _ChessGameReadyBannerState extends State<ChessGameReadyBanner> {
+  /// Mirrors the router's current location, updated one frame late.
+  ///
+  /// The banner has to re-run its route guard when navigation happens, or it
+  /// goes stale — painted over the game screen, or failing to come back after
+  /// you leave it. The obvious way is to merge `appRouter.routerDelegate`
+  /// straight into the AnimatedBuilder, since it is a Listenable.
+  ///
+  /// That is what this used to do, and it was wrong: go_router notifies its
+  /// listeners from inside `Router.setInitialRoutePath`, i.e. while the very
+  /// first frame is still building. This widget lives in `MaterialApp.builder`,
+  /// above the Navigator, so it cannot use `GoRouterState.of(context)` and the
+  /// normal inherited-widget dependency is unavailable. Listening to the
+  /// delegate directly therefore marked this widget dirty mid-build, which the
+  /// framework reports as "setState() called during build" — and which had been
+  /// failing the app-boot test.
+  ///
+  /// Mirroring the location into a notifier that is written after the frame
+  /// keeps the guard live without fighting the build phase.
+  final ValueNotifier<String> _location = ValueNotifier<String>('');
+
+  @override
+  void initState() {
+    super.initState();
+    appRouter.routerDelegate.addListener(_syncLocation);
+    _syncLocation();
+  }
+
+  void _syncLocation() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _location.value =
+          appRouter.routerDelegate.currentConfiguration.uri.toString();
+    });
+  }
+
+  @override
+  void dispose() {
+    appRouter.routerDelegate.removeListener(_syncLocation);
+    _location.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Rebuild on BOTH a change to the joinable game AND on navigation. The
-    // route check below is only correct if this widget re-runs when the route
-    // changes — a const widget keyed on `game` alone would evaluate the guard
-    // once and go stale, leaving the banner painted over the game screen (or
-    // failing to reappear after you leave it). go_router's routerDelegate is a
-    // Listenable, so merging it in makes the guard track the live route.
     return AnimatedBuilder(
       animation: Listenable.merge([
         ChessActiveGameWatcher.instance.game,
-        appRouter.routerDelegate,
+        _location,
       ]),
       builder: (context, _) {
         final g = ChessActiveGameWatcher.instance.game.value;
         if (g == null) return const SizedBox.shrink();
-        final loc = appRouter.routerDelegate.currentConfiguration.uri.toString();
+        final loc = _location.value;
         if (loc.contains('/chess/online/') || loc.contains('/chess/spectate/')) {
           return const SizedBox.shrink();
         }
