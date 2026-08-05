@@ -442,6 +442,46 @@ def _round_count(tour_id) -> int:
             ChessTournamentMatch.tournament_id == tour_id).all()), default=0)
 
 
+
+async def api_post(client, url, headers, what, retries=3):
+    """POST with retries and an honest failure message.
+
+    A soak test that dies with a raw traceback teaches nothing. Time out, say
+    which call and how long it waited, and carry on where possible.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            r = await client.post(url, headers=headers)
+            if r.status_code >= 400:
+                stats[f"http_{r.status_code}:{what}"] += 1
+                log(f"    {what} -> HTTP {r.status_code}: {r.text[:120]}")
+            return r
+        except Exception as e:  # noqa: BLE001
+            stats[f"http_timeout:{what}"] += 1
+            log(f"    {what} attempt {attempt}/{retries} failed: "
+                f"{type(e).__name__} — the server did not answer in time")
+            if attempt == retries:
+                return None
+            await asyncio.sleep(2.0 * attempt)
+    return None
+
+
+async def preflight(api, headers):
+    """Check the server answers, and how fast, before blaming the test."""
+    async with httpx.AsyncClient(timeout=20) as client:
+        for label, url in (("health", f"{api}/api/health"),):
+            t = time.time()
+            try:
+                r = await client.get(url)
+                log(f"preflight {label}: HTTP {r.status_code} in "
+                    f"{(time.time() - t) * 1000:.0f} ms")
+            except Exception as e:  # noqa: BLE001
+                log(f"preflight {label}: FAILED ({type(e).__name__}) — "
+                    f"the API is not reachable at {api}")
+                return False
+    return True
+
+
 # ── driving a round ───────────────────────────────────────────────────────────
 
 async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
@@ -468,19 +508,17 @@ async def play_round(api, ws_base, tour_id, org_id, rnd, by_id, profiles, args):
         }
 
     log(f"  round {rnd}: opening {len(pending)} boards…")
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         for mid, a, b in pending:
             for uid in (a, b):
-                r = await client.post(
+                await api_post(
+                    client,
                     f"{api}/api/v1/chess/tournaments/{tour_id}/matches/{mid}/ready",
-                    headers=hdr(uid))
-                if r.status_code >= 400:
-                    stats[f"ready_fail:{r.status_code}"] += 1
-            r = await client.post(
+                    hdr(uid), "ready")
+            await api_post(
+                client,
                 f"{api}/api/v1/chess/tournaments/{tour_id}/matches/{mid}/play",
-                headers=hdr(a))
-            if r.status_code >= 400:
-                stats[f"play_fail:{r.status_code}"] += 1
+                hdr(a), "play")
 
     with SessionLocal() as db:
         live = [
@@ -623,6 +661,19 @@ async def main():
                                          args.time_control)
     log(f"tournament {tour_id}")
     total_rounds = _round_count(uuid.UUID(tour_id))
+
+    # Hand back every connection this process is holding before we start calling
+    # the API. The script and the server share one database; on a small Postgres
+    # a handful of idle connections held here can leave the server waiting for
+    # one, which looks exactly like the API hanging.
+    try:
+        from app.core.database import engine
+        engine.dispose()
+    except Exception:  # noqa: BLE001
+        pass
+
+    if not await preflight(api, admin_hdr):
+        return 1
 
     t0 = time.time()
     for rnd in range(1, total_rounds + 1):
