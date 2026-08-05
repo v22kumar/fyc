@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../core/network/api_client.dart';
+import '../../data/question_scheduler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 
@@ -57,11 +60,26 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
 
   Future<Map<String, dynamic>?> _fetch() async {
     try {
+      // The catalogue, not "what should I ask" — the phone decides that. This
+      // request is small, changes rarely, and 304s in the steady state.
       final r = await sl<ApiClient>().dio.get<dynamic>(
-            '${ApiConstants.baseUrl}/api/v1/profile-prompts/next',
+            '${ApiConstants.baseUrl}/api/v1/profile-prompts/catalogue',
           );
       final data = r.data;
-      return data is Map<String, dynamic> ? data : null;
+      if (data is! Map<String, dynamic>) return null;
+
+      final scheduler = QuestionScheduler(await SharedPreferences.getInstance());
+      final chosen = scheduler.pick(
+        questions: (data['questions'] as List? ?? const [])
+            .cast<Map<String, dynamic>>(),
+        answered: ((data['answered'] as List? ?? const []).cast<String>()).toSet(),
+        quietDaysAfterResponse: data['quiet_days_after_response'] as int? ?? 2,
+        quietDaysAfterDismiss: data['quiet_days_after_dismiss'] as int? ?? 14,
+        quietDaysAfterShown: data['quiet_days_after_shown'] as int? ?? 1,
+        maxDismissals: data['max_dismissals'] as int? ?? 3,
+      );
+      if (chosen != null) await scheduler.markShown();
+      return chosen;
     } catch (_) {
       // A question we failed to fetch is a question not worth showing. This
       // must never be the reason a screen looks broken.
@@ -74,6 +92,14 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
     setState(() => _sending = true);
     final id = _question?['id'] as String?;
     if (id == null) return;
+    // Record locally first: the phone owns the cadence now, and it must hold
+    // even if the upload fails or the member is offline.
+    final scheduler = QuestionScheduler(await SharedPreferences.getInstance());
+    if (path == 'answer') {
+      await scheduler.markAnswered(id);
+    } else {
+      await scheduler.markDismissed(id);
+    }
     try {
       await sl<ApiClient>().dio.post<void>(
         '${ApiConstants.baseUrl}/api/v1/profile-prompts/$path',

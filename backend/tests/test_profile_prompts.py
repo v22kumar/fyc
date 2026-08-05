@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from app.core.security import create_access_token, get_password_hash
+from app.models.profile_attribute import ProfileAttribute
 from app.models.profile_prompt import ProfilePromptState
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile
@@ -43,30 +44,85 @@ def _h(u, org):
     }
 
 
-def _ask(client, u, org):
-    r = client.get("/api/v1/profile-prompts/next", headers=_h(u, org))
+def _catalogue(client, u, org):
+    r = client.get("/api/v1/profile-prompts/catalogue", headers=_h(u, org))
     assert r.status_code == 200, r.text
     return r.json()
 
 
-# ── What we ask, and in what order ────────────────────────────────────────────
+def _unanswered(client, u, org):
+    """What the app would still have to ask, in order."""
+    c = _catalogue(client, u, org)
+    done = set(c["answered"])
+    return [q["id"] for q in c["questions"] if q["id"] not in done]
 
-def test_the_first_question_is_blood_group(client, db):
-    """Everything in the blood-donation screen depends on this one field, so it
-    goes first. Nothing else is worth asking until it is answered."""
+
+# ── The catalogue ─────────────────────────────────────────────────────────────
+
+def test_blood_group_leads_the_catalogue(client, db):
+    """Everything in the blood-donation screen depends on this one field, so the
+    app should ask it before anything else."""
     org = _org(db)
     u = _member(db, org)
-    assert _ask(client, u, org)["id"] == "blood_group"
+    assert _unanswered(client, u, org)[0] == "blood_group"
 
 
-def test_a_known_blood_group_is_never_asked_for(client, db):
+def test_a_known_blood_group_is_not_asked_for(client, db):
     """Asking for something already on file reads as not paying attention."""
     org = _org(db)
     u = _member(db, org, blood_group="O+")
-    assert _ask(client, u, org)["id"] != "blood_group"
+    assert "blood_group" not in _unanswered(client, u, org)
 
 
-def test_an_answer_lands_on_the_profile_where_the_app_reads_it(client, db):
+def test_the_catalogue_publishes_the_cadence(client, db):
+    """The app enforces the gaps, so it has to be told what they are — and they
+    should be tunable without shipping a new build."""
+    org = _org(db)
+    c = _catalogue(client, _member(db, org), org)
+    assert c["quiet_days_after_response"] >= 1
+    assert c["quiet_days_after_dismiss"] > c["quiet_days_after_response"]
+    assert c["max_dismissals"] >= 1
+
+
+def test_an_unchanged_catalogue_costs_a_304(client, db):
+    """This is fetched on app open. In the steady state it must not re-send."""
+    org = _org(db)
+    u = _member(db, org)
+    first = client.get("/api/v1/profile-prompts/catalogue", headers=_h(u, org))
+    etag = first.headers.get("etag")
+    assert etag
+    again = client.get("/api/v1/profile-prompts/catalogue",
+                       headers={**_h(u, org), "If-None-Match": etag})
+    assert again.status_code == 304
+
+
+def test_answering_changes_the_etag(client, db):
+    """A stale catalogue would have the app re-asking what was just answered."""
+    org = _org(db)
+    u = _member(db, org)
+    etag = client.get("/api/v1/profile-prompts/catalogue",
+                      headers=_h(u, org)).headers["etag"]
+    client.post("/api/v1/profile-prompts/answer",
+                json={"question_id": "blood_group", "answer": "A+"},
+                headers=_h(u, org))
+    after = client.get("/api/v1/profile-prompts/catalogue",
+                       headers={**_h(u, org), "If-None-Match": etag})
+    assert after.status_code == 200
+
+
+def test_one_members_answers_never_leak_into_anothers_catalogue(client, db):
+    org = _org(db)
+    a = _member(db, org, phone="9400000002")
+    b = _member(db, org, phone="9400000003")
+    client.post("/api/v1/profile-prompts/answer",
+                json={"question_id": "blood_group", "answer": "O-"},
+                headers=_h(a, org))
+    assert "blood_group" in _unanswered(client, b, org)
+
+
+# ── Answers ───────────────────────────────────────────────────────────────────
+
+def test_an_answer_lands_on_the_profile_where_features_query_it(client, db):
     org = _org(db)
     u = _member(db, org)
     r = client.post("/api/v1/profile-prompts/answer",
@@ -78,21 +134,46 @@ def test_an_answer_lands_on_the_profile_where_the_app_reads_it(client, db):
     assert profile.blood_group == "B+"
 
 
-def test_dont_know_is_recorded_but_never_written_as_a_blood_group(client, db):
-    """"I don't know mine" is a real answer — it stops us asking again — but it
-    is not a blood group, and a donor search must never match on it."""
+def test_every_answer_also_lands_in_the_attribute_store(client, db):
+    """The store is what makes the profile expandable: a new question is a new
+    row here, never a migration."""
+    org = _org(db)
+    u = _member(db, org)
+    client.post("/api/v1/profile-prompts/answer",
+                json={"question_id": "education", "answer": "graduate"},
+                headers=_h(u, org))
+    attr = db.query(ProfileAttribute).filter(
+        ProfileAttribute.user_id == u.id).first()
+    assert attr.key == "education"
+    assert attr.value == "graduate"
+    assert attr.answered_at is not None
+
+
+def test_answering_again_updates_rather_than_duplicates(client, db):
+    org = _org(db)
+    u = _member(db, org)
+    for v in ("school", "graduate"):
+        client.post("/api/v1/profile-prompts/answer",
+                    json={"question_id": "education", "answer": v},
+                    headers=_h(u, org))
+    rows = db.query(ProfileAttribute).filter(
+        ProfileAttribute.user_id == u.id).all()
+    assert len(rows) == 1
+    assert rows[0].value == "graduate"
+
+
+def test_dont_know_is_remembered_but_never_written_as_a_blood_group(client, db):
+    """A real answer — it stops us asking — but not a blood group, and a donor
+    search must never match on it."""
     org = _org(db)
     u = _member(db, org)
     client.post("/api/v1/profile-prompts/answer",
                 json={"question_id": "blood_group", "answer": "dont_know"},
                 headers=_h(u, org))
     db.expire_all()
-    profile = db.query(UserProfile).filter(UserProfile.user_id == u.id).first()
-    assert profile.blood_group is None
-    state = db.query(ProfilePromptState).filter(
-        ProfilePromptState.user_id == u.id).first()
-    assert state.answer == "dont_know"
-    assert state.answered_at is not None
+    assert db.query(UserProfile).filter(
+        UserProfile.user_id == u.id).first().blood_group is None
+    assert "blood_group" not in _unanswered(client, u, org)
 
 
 def test_an_invented_answer_is_rejected(client, db):
@@ -104,95 +185,16 @@ def test_an_invented_answer_is_rejected(client, db):
     assert r.status_code == 400
 
 
-# ── When we must not ask ──────────────────────────────────────────────────────
-
-def test_nobody_is_asked_twice_in_the_same_breath(client, db):
-    """Answer today, hear nothing tomorrow. This is the rule that keeps it from
-    becoming the signup form we deliberately kept short."""
+def test_a_dismissal_is_remembered_across_a_reinstall(client, db):
+    """The app holds the fortnight itself, but its memory dies with the install.
+    The count has to survive, or someone who pushed a question away three times
+    would be asked again by a fresh phone."""
     org = _org(db)
     u = _member(db, org)
-    client.post("/api/v1/profile-prompts/answer",
-                json={"question_id": "blood_group", "answer": "A+"},
-                headers=_h(u, org))
-    assert _ask(client, u, org) is None
-
-
-def test_the_quiet_period_ends(client, db):
-    org = _org(db)
-    u = _member(db, org)
-    client.post("/api/v1/profile-prompts/answer",
-                json={"question_id": "blood_group", "answer": "A+"},
-                headers=_h(u, org))
-    state = db.query(ProfilePromptState).filter(
-        ProfilePromptState.user_id == u.id).first()
-    state.answered_at = datetime.now(timezone.utc) - timedelta(days=5)
-    db.commit()
-    nxt = _ask(client, u, org)
-    assert nxt is not None
-    assert nxt["id"] != "blood_group"  # answered; moved on
-
-
-def test_a_dismissed_question_goes_to_the_back_not_away(client, db):
-    """Dismissing has to be free, or the card becomes a demand."""
-    org = _org(db)
-    u = _member(db, org)
-    r = client.post("/api/v1/profile-prompts/dismiss",
-                    json={"question_id": "blood_group", "answer": "-"},
-                    headers=_h(u, org))
-    assert r.status_code == 204
-    assert _ask(client, u, org) is None  # quiet straight after
-
-    state = db.query(ProfilePromptState).filter(
-        ProfilePromptState.user_id == u.id).first()
-    state.dismissed_at = datetime.now(timezone.utc) - timedelta(days=30)
-    db.commit()
-    assert _ask(client, u, org)["id"] == "blood_group"  # offered again later
-
-
-def test_three_dismissals_and_we_take_the_hint(client, db):
-    org = _org(db)
-    u = _member(db, org)
-    for _ in range(3):
+    for _ in range(2):
         client.post("/api/v1/profile-prompts/dismiss",
                     json={"question_id": "blood_group", "answer": "-"},
                     headers=_h(u, org))
-        state = db.query(ProfilePromptState).filter(
-            ProfilePromptState.user_id == u.id).first()
-        state.dismissed_at = datetime.now(timezone.utc) - timedelta(days=30)
-        db.commit()
-    nxt = _ask(client, u, org)
-    assert nxt is None or nxt["id"] != "blood_group"
-
-
-def test_the_same_card_is_not_shown_again_the_same_day(client, db):
-    """A member who neither answers nor dismisses is not nagged every session."""
-    org = _org(db)
-    u = _member(db, org)
-    first = _ask(client, u, org)
-    assert first["id"] == "blood_group"
-    assert _ask(client, u, org) is None
-
-
-def test_a_fully_answered_member_is_left_alone(client, db):
-    org = _org(db)
-    u = _member(db, org)
-    from app.services.profile_questions import CATALOGUE
-    for q in CATALOGUE:
-        state = ProfilePromptState(
-            organization_id=org.id, user_id=u.id, question_id=q.id,
-            answered_at=datetime.now(timezone.utc) - timedelta(days=40),
-            answer="x")
-        db.add(state)
-    db.commit()
-    assert _ask(client, u, org) is None
-
-
-def test_questions_are_private_to_the_member(client, db):
-    """One member's answers must never influence another's prompts."""
-    org = _org(db)
-    a = _member(db, org, phone="9400000002")
-    b = _member(db, org, phone="9400000003")
-    client.post("/api/v1/profile-prompts/answer",
-                json={"question_id": "blood_group", "answer": "O-"},
-                headers=_h(a, org))
-    assert _ask(client, b, org)["id"] == "blood_group"
+    state = db.query(ProfilePromptState).filter(
+        ProfilePromptState.user_id == u.id).first()
+    assert state.dismiss_count == 2
