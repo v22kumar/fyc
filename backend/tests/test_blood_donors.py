@@ -183,3 +183,19 @@ def test_request_contact_missing_tenant_header_rejected(client, db):
 
     res = client.post(f"/api/v1/blood-donors/{donor_id}/request-contact")
     assert res.status_code == 400
+
+
+def test_the_all_chip_returns_everyone_rather_than_nobody(client, db):
+    """The app's "All" chip sends the literal string "All".
+
+    That was matched against the blood_group column, so the default view of the
+    entire screen — the one every member sees first — returned an empty list no
+    matter how many donors were registered.
+    """
+    org = _make_org(db)
+    _register(client, org.id, "9500000001")
+    h = {"X-Organization-ID": str(org.id)}
+    unfiltered = client.get("/api/v1/blood-donors", headers=h)
+    as_all = client.get("/api/v1/blood-donors?blood_group=All", headers=h)
+    assert as_all.status_code == 200
+    assert len(as_all.json()) == len(unfiltered.json())

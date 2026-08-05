@@ -9,6 +9,8 @@ class BloodDonorEntity extends Equatable {
   final String? geographyNameTa;
   final String? fullNameEn;
   final String? fullNameTa;
+  /// Years, not a birth date — a hospital asks how old a donor is.
+  final int? age;
   final String? phoneNumber; // only available after authenticated contact request
   /// True for a directory contact imported from Friends2Support (vs a donor who
   /// registered in the app) — drives the "Friends2Support" badge.
@@ -35,6 +37,7 @@ class BloodDonorEntity extends Equatable {
     this.geographyNameTa,
     this.fullNameEn,
     this.fullNameTa,
+    this.age,
     this.phoneNumber,
     this.isImported = false,
     this.tier = 'fyc',

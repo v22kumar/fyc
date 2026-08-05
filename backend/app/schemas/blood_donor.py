@@ -49,6 +49,9 @@ class BloodDonorPublicOut(BaseModel):
     geography_name_ta: Optional[str] = None
     full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
+    # Age in years, not the date of birth: a hospital asks how old a donor is,
+    # and a birth date is more of someone's identity than the question needs.
+    age: Optional[int] = None
     # True for a directory contact imported from Friends2Support (vs a donor who
     # self-registered in the app). Drives the "Friends2Support" badge.
     is_imported: bool = False

@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../widgets/need_blood_panel.dart';
+import '../widgets/donor_card.dart';
+import '../../../../core/design_system/tokens.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
@@ -245,6 +247,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                   return const ShimmerCardList();
                 }
                 if (state is BloodDonorSearchSuccess) {
+                  // Club members before imported contacts, so the headings
+                  // below have contiguous runs to label.
+                  state.donors.sort((a, b) => (a.isImported ? 1 : 0)
+                      .compareTo(b.isImported ? 1 : 0));
                   if (state.donors.isEmpty) {
                     return RefreshIndicator(
                       onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
@@ -256,11 +262,28 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                     child: ListView.builder(
                       padding: EdgeInsets.all(16),
                       itemCount: state.donors.length,
-                      itemBuilder: (context, i) => _DonorCard(
-                        donor: state.donors[i],
-                        onContact: () =>
-                            _requestContact(context, state.donors[i]),
-                      ),
+                      itemBuilder: (context, i) {
+                        final d = state.donors[i];
+                        // Club donors come first and imported contacts follow,
+                        // each under its own heading. They were interleaved:
+                        // a member and a stranger adjacent, identical weight,
+                        // with only a small badge to tell them apart.
+                        final prev = i == 0 ? null : state.donors[i - 1];
+                        final startsSection =
+                            prev == null || prev.isImported != d.isImported;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (startsSection)
+                              _DonorSectionHeading(imported: d.isImported),
+                            DonorCard(
+                              donor: d,
+                              lang: _lang,
+                              onContact: () => _requestContact(context, d),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   );
                 }
@@ -760,6 +783,39 @@ class _ContactDialog extends StatelessWidget {
           child: Text(trId('reveal_contact')),
         ),
       ],
+    );
+  }
+}
+
+
+/// Which pile these donors are in, said once above the run rather than
+/// repeated as a badge on every row.
+class _DonorSectionHeading extends StatelessWidget {
+  const _DonorSectionHeading({required this.imported});
+
+  final bool imported;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: DSSpacing.sm, bottom: DSSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            imported ? trId('wider_directory') : trId('club_donors'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          if (imported)
+            Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Text(
+                trId('wider_directory_note'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

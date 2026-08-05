@@ -697,4 +697,6 @@ const Map<String, String> kTa = {
   'quick_question': 'ஒரு சிறு கேள்வி',
   'answer_saved': 'நன்றி — சேமிக்கப்பட்டது.',
   'ask_me_later': 'இப்போது வேண்டாம்',
+  'eligible_on': '{date} முதல் தர முடியும்',
+  'age_years': '{n} வயது',
 };

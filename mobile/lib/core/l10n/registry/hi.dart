@@ -681,4 +681,6 @@ const Map<String, String> kHi = {
   'quick_question': 'एक छोटा सवाल',
   'answer_saved': 'धन्यवाद — सहेजा गया।',
   'ask_me_later': 'अभी नहीं',
+  'eligible_on': '{date} से दे सकते हैं',
+  'age_years': '{n} वर्ष',
 };

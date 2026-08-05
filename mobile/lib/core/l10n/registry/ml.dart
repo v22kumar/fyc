@@ -681,4 +681,6 @@ const Map<String, String> kMl = {
   'quick_question': 'ഒരു ചെറിയ ചോദ്യം',
   'answer_saved': 'നന്ദി — സേവ് ചെയ്തു.',
   'ask_me_later': 'ഇപ്പോൾ വേണ്ട',
+  'eligible_on': '{date} മുതൽ നൽകാം',
+  'age_years': '{n} വയസ്സ്',
 };

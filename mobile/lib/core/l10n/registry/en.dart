@@ -995,4 +995,6 @@ const Map<String, String> kEn = {
   'quick_question': 'Quick question',
   'answer_saved': 'Thank you — saved.',
   'ask_me_later': 'Not now',
+  'eligible_on': 'can donate from {date}',
+  'age_years': '{n} yrs',
 };

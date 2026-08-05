@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -46,6 +47,21 @@ def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
     return [current.id] + [t.id for t in taluks]
 
 
+def _age_from(dob) -> Optional[int]:
+    """Whole years, or nothing.
+
+    A hospital asks a donor's age, so the app should be able to answer — but it
+    should answer with an age, not hand out a date of birth. Anyone under 18 is
+    reported as None: they cannot donate, and publishing a minor's age in a
+    public directory serves no purpose.
+    """
+    if not dob:
+        return None
+    today = date.today()
+    years = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    return years if 18 <= years <= 120 else None
+
+
 def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
                 with_approx_location: bool = False) -> BloodDonorPublicOut:
     """Build the public donor view with the derived tier / eligibility fields."""
@@ -65,6 +81,7 @@ def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
         geography_name_ta=geo.name_ta if geo else None,
         full_name_en=profile.full_name_en if profile else None,
         full_name_ta=profile.full_name_ta if profile else None,
+        age=_age_from(profile.date_of_birth) if profile else None,
         is_imported=imported,
         tier="imported" if imported else "fyc",
         is_eligible=bm.is_eligible(donor.last_donation_date),
@@ -113,6 +130,11 @@ def search_donors(
         return result
 
     filters = [BloodDonor.organization_id == tenant_id]
+    # The app's "All" chip sends the literal string "All", which was then
+    # matched against the blood_group column and returned nothing — so the
+    # default view of the whole screen was empty, whatever was in the database.
+    if blood_group and blood_group.strip().lower() in ("all", ""):
+        blood_group = None
     if blood_group:
         if compatible:
             # Include every donor group that can give to this recipient group.
