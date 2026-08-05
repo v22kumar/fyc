@@ -5,6 +5,7 @@ import '../../../../core/l10n/tr.dart';
 import '../../providers/ai_providers.dart';
 import 'ai_sparkle.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
+import '../../../../core/design_system/tokens.dart';
 
 /// Pick the digest text for the app's current language. Falls back to English
 /// when the Tamil copy is absent, and to the legacy single `summary` field for
@@ -20,9 +21,13 @@ String _localizedSummary(Map<String, dynamic> data) {
 class AiDailyDigestCard extends ConsumerWidget {
   const AiDailyDigestCard({super.key});
 
-  static const _g1 = Color(0xFF4338CA); // indigo
-  static const _g2 = Color(0xFF7C3AED); // violet
-  static const _g3 = Color(0xFF0D9488); // teal
+  // Derived from the club's own colour rather than a stock indigo-violet.
+  // The card should still read as the richest thing on Home — that was right —
+  // but it was the only place in the app those two purples appeared, so it read
+  // as borrowed from somewhere else.
+  static Color get _g1 => Color.lerp(AppColors.primary, Colors.black, 0.35)!;
+  static Color get _g2 => AppColors.primary;
+  static Color get _g3 => Color.lerp(AppColors.primary, DSColors.mint500, 0.65)!;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,7 +47,7 @@ class AiDailyDigestCard extends ConsumerWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [_g1, _g2, _g3],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

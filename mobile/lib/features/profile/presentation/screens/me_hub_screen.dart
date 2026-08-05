@@ -10,6 +10,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../../service_locator.dart';
 import '../../../membership/domain/entities/membership_entity.dart';
 import '../../../membership/domain/usecases/get_my_card_usecase.dart';
+import '../../../../core/design_system/components/ds_screen_header.dart';
 
 /// The Me tab — identity hub per the v2 mockup: a profile/QR card over a list
 /// of account destinations. Theme-aware + 4-language.
@@ -20,21 +21,11 @@ class MeHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.cBackground,
-      appBar: AppBar(
-        backgroundColor: context.cBackground,
-        elevation: 0,
-        title: Text(
-          '${trId('me')} ',
-          style: TextStyle(color: context.cText, fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings_rounded, color: context.cText),
-            onPressed: () => context.push('/settings'),
-            tooltip: trId('settings_2'),
-          ),
-        ],
-      ),
+      // The gear that used to sit here went to the same place as the Settings
+      // row three items below it. Two doors to one room makes a member wonder
+      // whether they do different things; the row stays because it is labelled.
+      // The title was also a bare "என்" — the word "My" with nothing after it.
+      appBar: DSScreenHeader(title: trId('my_account')),
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           final user = state is AuthAuthenticated ? state.user : null;

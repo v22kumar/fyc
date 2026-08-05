@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
+import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -19,17 +20,20 @@ import 'package:fyc_connect/core/l10n/tr.dart';
 // ── Category definitions ──────────────────────────────────────────────────────
 
 class _Cat {
-  final String id, labelTa, labelEn, subtitleEn;
+  final String id, labelTa, labelEn;
+  /// Registry id, not a literal — the caption used to be English on
+  /// every card, under a Tamil label, on a Tamil screen.
+  final String subtitleId;
   final IconData icon;
   final Color color;
-  const _Cat(this.id, this.icon, this.labelTa, this.labelEn, this.subtitleEn, this.color);
+  const _Cat(this.id, this.icon, this.labelTa, this.labelEn, this.subtitleId, this.color);
 }
 
 const _categories = [
-  _Cat('ROAD_TRAFFIC', Icons.add_road_rounded, 'சாலை / போக்குவரத்து', 'Road/Traffic', 'Potholes, Blockages, etc.', Color(0xFF16A34A)),
-  _Cat('POWER_CUT',    Icons.bolt_rounded,     'மின் தடை',          'Power Cut',    'Outages, Broken wires',    Color(0xFFD97706)),
-  _Cat('WATER',        Icons.water_drop_rounded, 'தண்ணீர் பிரச்சனை',  'Water',        'Leakages, Supply, etc.',   Color(0xFF2563EB)),
-  _Cat('OTHER',        Icons.more_horiz_rounded, 'மற்றவை',           'Other',        'Other general issues',     Color(0xFF6B7280)),
+  _Cat('ROAD_TRAFFIC', Icons.add_road_rounded, 'சாலை / போக்குவரத்து', 'Road/Traffic', 'potholes_blockages', Color(0xFF16A34A)),
+  _Cat('POWER_CUT',    Icons.bolt_rounded,     'மின் தடை',          'Power Cut',    'outages_broken_wires',     Color(0xFFD97706)),
+  _Cat('WATER',        Icons.water_drop_rounded, 'தண்ணீர் பிரச்சனை',  'Water',        'leakages_supply',          Color(0xFF2563EB)),
+  _Cat('OTHER',        Icons.more_horiz_rounded, 'மற்றவை',           'Other',        'other_general_issues',     Color(0xFF6B7280)),
 ];
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -224,7 +228,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                             children: [
                               Text(_isTa ? c.labelTa : c.labelEn,
                                   style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
-                              Text(c.subtitleEn,
+                              Text(trId(c.subtitleId),
                                   style: TextStyle(fontSize: 12, color: context.cTextSecondary)),
                             ],
                           ),
@@ -545,18 +549,28 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolved = stats?['resolved']?.toString() ?? '—';
-    final rate = stats != null ? '${stats!['resolution_rate']}%' : '—';
-    final days = stats != null ? '${stats!['avg_response_days']} Days' : '—';
-    final citizens = stats?['active_citizens'] != null
-        ? '${((stats!['active_citizens'] as int) / 1000).toStringAsFixed(1)}K'
-        : '—';
+    // Nothing reported yet means nothing worth a scoreboard. Four zeroes in
+    // four colours was the loudest thing on the screen and said the least —
+    // and "0.0K Active Citizens" is not a number anybody writes.
+    final resolvedCount = stats?['resolved'] as int? ?? 0;
+    if (stats == null || resolvedCount == 0) return const SizedBox.shrink();
 
+    final people = stats!['active_citizens'] as int? ?? 0;
+    final resolved = '$resolvedCount';
+    final rate = '${stats!['resolution_rate']}%';
+    final days = '${stats!['avg_response_days']}';
+    final citizens = people >= 1000
+        ? '${(people / 1000).toStringAsFixed(1)}K'
+        : '$people';
+
+    // One tone, not four. Green and amber mean something elsewhere in the app;
+    // spending them on neutral counts here drained them of that meaning.
+    final tint = AppColors.primary;
     final items = [
-      (resolved,  'Issues Resolved', const Color(0xFF16A34A), const Color(0xFFF0FDF4)),
-      (rate,      'Resolution Rate',  const Color(0xFF2563EB), const Color(0xFFEFF6FF)),
-      (days,      'Avg. Response',    const Color(0xFF7C3AED), const Color(0xFFF5F3FF)),
-      (citizens,  'Active Citizens',  const Color(0xFFD97706), const Color(0xFFFFFBEB)),
+      (resolved,  trId('issues_resolved')),
+      (rate,      trId('resolution_rate')),
+      (days,      trId('avg_response')),
+      (citizens,  trId('active_citizens')),
     ];
 
     return Row(
@@ -566,17 +580,28 @@ class _StatsRow extends StatelessWidget {
             margin: EdgeInsets.only(right: s == items.last ? 0 : 8),
             padding: EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
-              color: context.isDark ? s.$3.withOpacity(0.15) : s.$4,
+              color: tint.withOpacity(context.isDark ? 0.15 : 0.06),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: s.$3.withOpacity(context.isDark ? 0.25 : 0.18)),
+              border: Border.all(color: tint.withOpacity(context.isDark ? 0.25 : 0.15)),
             ),
             child: Column(
               children: [
                 Text(s.$1,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: s.$3)),
-                SizedBox(height: 2),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: tint,
+                        fontFeatures: const [FontFeature.tabularFigures()])),
+                SizedBox(height: 3),
+                // Was 7.5pt — smaller than any accessibility floor, and in a
+                // script with tall glyphs. 11 is the smallest that stays
+                // readable for a label nobody should have to squint at.
                 Text(s.$2,
-                    style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.w600, color: context.cTextSecondary),
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                        color: context.cTextSecondary),
                     textAlign: TextAlign.center, maxLines: 2),
               ],
             ),
@@ -778,7 +803,7 @@ class _CategoryGrid extends StatelessWidget {
                   maxLines: 2,
                 ),
                 Text(
-                  cat.subtitleEn,
+                  trId(cat.subtitleId),
                   style: TextStyle(fontSize: 7.5, color: context.cTextSecondary),
                   textAlign: TextAlign.center,
                   maxLines: 1,

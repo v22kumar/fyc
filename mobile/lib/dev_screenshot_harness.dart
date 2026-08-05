@@ -15,6 +15,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +80,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Let the app register its own services — registering LocalStorage first
   // makes initServiceLocator throw on the duplicate.
+  // Locale data for dates. Without this DateFormat throws on any
+  // non-English locale, which is most of this app's members.
+  await initializeDateFormatting();
   await initServiceLocator();
   await sl<LocalStorage>().saveToken(_token);
 
