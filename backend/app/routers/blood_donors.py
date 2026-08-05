@@ -211,21 +211,43 @@ def nearby_donors(
         .all()
     )
 
+    now = datetime.now(timezone.utc)
     scored = []
     for donor, profile, geo, user in rows:
         if eligible_only and not bm.is_eligible(donor.last_donation_date):
             continue
-        dist = bm.haversine_km(lat, lng, donor.latitude, donor.longitude)
+        # Rank from the freshest position that is still worth believing: where
+        # they were last seen if that is recent, otherwise their home area. A
+        # last-seen fix from March is not a better answer than "lives nearby",
+        # it is only a more precise wrong one.
+        origin_lat, origin_lng, basis = donor.latitude, donor.longitude, "home"
+        seen_at = donor.last_seen_at
+        if seen_at is not None and seen_at.tzinfo is None:
+            seen_at = seen_at.replace(tzinfo=timezone.utc)
+        if (
+            donor.last_seen_lat is not None
+            and donor.last_seen_lng is not None
+            and seen_at is not None
+            and (now - seen_at) < timedelta(hours=_LAST_SEEN_TRUSTED_HOURS)
+        ):
+            origin_lat, origin_lng = donor.last_seen_lat, donor.last_seen_lng
+            basis = "live" if (now - seen_at) < timedelta(hours=1) else "recent"
+        dist = bm.haversine_km(lat, lng, origin_lat, origin_lng)
         if dist > radius_km:
             continue
         exact = bool(blood_group) and donor.blood_group == blood_group.upper()
-        scored.append((0 if exact else 1, dist, donor, profile, geo, user))
+        scored.append((0 if exact else 1, dist, donor, profile, geo, user, basis))
 
     scored.sort(key=lambda t: (t[0], t[1]))  # exact group first, then nearest
-    return [
-        _public_out(d, p, g, u, distance_km=dist, with_approx_location=True)
-        for _, dist, d, p, g, u in scored[:limit]
-    ]
+    out = []
+    for _, dist, d, p, g, u, basis in scored[:limit]:
+        item = _public_out(d, p, g, u, distance_km=dist, with_approx_location=True)
+        # Say which position the distance came from. A distance whose basis is
+        # hidden cannot be judged — "3 km away" from a fix an hour old and from
+        # a home area recorded last year are not the same claim.
+        item.location_basis = basis
+        out.append(item)
+    return out
 
 @router.post("/register", response_model=BloodDonorPublicOut, status_code=status.HTTP_201_CREATED)
 def register_donor(
@@ -387,6 +409,10 @@ _MEANINGFUL_MOVE_KM = 1.0
 # if the member has not moved.
 _REFRESH_AFTER_HOURS = 24
 
+# Beyond this, a last-seen position stops being better information than the
+# home area and starts being a more precise way to be wrong.
+_LAST_SEEN_TRUSTED_HOURS = 24
+
 
 @router.patch("/me/location", status_code=status.HTTP_204_NO_CONTENT)
 def update_my_location(
@@ -423,14 +449,15 @@ def update_my_location(
         return
 
     now = datetime.now(timezone.utc)
-    last = donor.location_updated_at
+    last = donor.last_seen_at
     if last is not None and last.tzinfo is None:
         last = last.replace(tzinfo=timezone.utc)
 
     moved_enough = (
-        donor.latitude is None
-        or donor.longitude is None
-        or bm.haversine_km(donor.latitude, donor.longitude, payload.lat, payload.lng)
+        donor.last_seen_lat is None
+        or donor.last_seen_lng is None
+        or bm.haversine_km(
+            donor.last_seen_lat, donor.last_seen_lng, payload.lat, payload.lng)
         >= _MEANINGFUL_MOVE_KM
     )
     stale_enough = (
@@ -441,7 +468,10 @@ def update_my_location(
     if not (moved_enough or stale_enough):
         return
 
-    donor.latitude = payload.lat
-    donor.longitude = payload.lng
-    donor.location_updated_at = now
+    # The last-seen pair only. The home area from registration is a different
+    # claim and this must never touch it — writing here used to relocate a
+    # member permanently to wherever they last opened the app.
+    donor.last_seen_lat = payload.lat
+    donor.last_seen_lng = payload.lng
+    donor.last_seen_at = now
     db.commit()

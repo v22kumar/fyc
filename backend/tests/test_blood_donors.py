@@ -228,8 +228,8 @@ def test_a_first_position_is_stored(client, db):
     db.expire_all()
     from app.models.blood_donor import BloodDonor
     d = db.query(BloodDonor).filter(BloodDonor.id == d.id).first()
-    assert d.latitude is not None
-    assert d.location_updated_at is not None
+    assert d.last_seen_lat is not None
+    assert d.last_seen_at is not None
 
 
 def test_opening_the_app_again_from_the_same_place_writes_nothing(client, db):
@@ -242,12 +242,12 @@ def test_opening_the_app_again_from_the_same_place_writes_nothing(client, db):
                  json={"lat": 8.18, "lng": 77.41}, headers=h)
     db.expire_all()
     from app.models.blood_donor import BloodDonor
-    first = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().location_updated_at
+    first = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().last_seen_at
 
     client.patch("/api/v1/blood-donors/me/location",
                  json={"lat": 8.1801, "lng": 77.4101}, headers=h)
     db.expire_all()
-    again = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().location_updated_at
+    again = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().last_seen_at
     assert again == first
 
 
@@ -262,7 +262,7 @@ def test_moving_a_real_distance_does_update(client, db):
     db.expire_all()
     from app.models.blood_donor import BloodDonor
     fresh = db.query(BloodDonor).filter(BloodDonor.id == d.id).first()
-    assert abs(fresh.latitude - 8.30) < 0.001
+    assert abs(fresh.last_seen_lat - 8.30) < 0.001
 
 
 def test_without_consent_nothing_is_recorded(client, db):
@@ -278,4 +278,69 @@ def test_without_consent_nothing_is_recorded(client, db):
     assert r.status_code == 204
     db.expire_all()
     assert db.query(BloodDonor).filter(
-        BloodDonor.id == d.id).first().location_updated_at is None
+        BloodDonor.id == d.id).first().last_seen_at is None
+
+
+def test_opening_the_app_elsewhere_never_moves_the_home_area(client, db):
+    """The bug this schema split exists to prevent.
+
+    A member registers in Nagercoil and later opens the app once while visiting
+    Chennai. With both positions sharing one pair of columns, that single visit
+    relocated their home area permanently — and nothing recorded that it had
+    happened. The two claims have different lifetimes and must not share storage.
+    """
+    from app.models.blood_donor import BloodDonor
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000005")
+    d.latitude, d.longitude = 8.1833, 77.4119          # home: Nagercoil
+    db.commit()
+
+    client.patch("/api/v1/blood-donors/me/location",
+                 json={"lat": 13.0827, "lng": 80.2707},  # opened in Chennai
+                 headers={"Authorization": f"Bearer {token}",
+                          "X-Organization-ID": str(org.id)})
+    db.expire_all()
+    fresh = db.query(BloodDonor).filter(BloodDonor.id == d.id).first()
+
+    assert abs(fresh.latitude - 8.1833) < 0.0001, "home area was overwritten"
+    assert abs(fresh.last_seen_lat - 13.0827) < 0.0001
+    assert fresh.last_seen_at is not None
+
+
+def test_nearby_ranks_from_a_recent_position_and_says_so(client, db):
+    """A fresh fix is better information than a home area — and the requester
+    has to be told which one the distance came from, or they cannot judge it."""
+    from datetime import datetime, timezone
+    from app.models.blood_donor import BloodDonor
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000006")
+    d.latitude, d.longitude = 8.50, 77.80              # home, far from the query
+    d.last_seen_lat, d.last_seen_lng = 8.1840, 77.4125  # seen beside it, moments ago
+    d.last_seen_at = datetime.now(timezone.utc)
+    db.commit()
+
+    r = client.get("/api/v1/blood-donors/nearby?lat=8.1833&lng=77.4119&radius_km=5",
+                   headers={"X-Organization-ID": str(org.id)})
+    assert r.status_code == 200, r.text
+    hit = next(x for x in r.json() if x["id"] == str(d.id))
+    assert hit["distance_km"] < 1          # measured from where they were seen
+    assert hit["location_basis"] == "live"
+
+
+def test_a_stale_fix_falls_back_to_the_home_area(client, db):
+    """A last-seen position from months ago is not a better answer than "lives
+    nearby" — it is only a more precise way to be wrong."""
+    from datetime import datetime, timedelta, timezone
+    from app.models.blood_donor import BloodDonor
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000007")
+    d.latitude, d.longitude = 8.1840, 77.4125          # home, next to the query
+    d.last_seen_lat, d.last_seen_lng = 13.08, 80.27     # seen in Chennai, long ago
+    d.last_seen_at = datetime.now(timezone.utc) - timedelta(days=90)
+    db.commit()
+
+    r = client.get("/api/v1/blood-donors/nearby?lat=8.1833&lng=77.4119&radius_km=5",
+                   headers={"X-Organization-ID": str(org.id)})
+    hit = next(x for x in r.json() if x["id"] == str(d.id))
+    assert hit["distance_km"] < 1
+    assert hit["location_basis"] == "home"

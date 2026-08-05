@@ -61,6 +61,10 @@ class BloodDonorPublicOut(BaseModel):
     # Donation eligibility (90-day cooldown).
     is_eligible: bool = True
     eligible_on: Optional[date] = None
+    # Which position the distance was measured from: "live" (seen within the
+    # hour), "recent" (within a day) or "home". The requester needs to know,
+    # because the three carry very different confidence.
+    location_basis: Optional[str] = None
     # Distance from the query point in km — only present on /nearby results.
     distance_km: Optional[float] = None
     # Whether this donor has an opt-in location on file (drives "on map" vs
