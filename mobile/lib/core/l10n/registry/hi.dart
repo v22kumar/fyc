@@ -683,4 +683,7 @@ const Map<String, String> kHi = {
   'ask_me_later': 'अभी नहीं',
   'eligible_on': '{date} से दे सकते हैं',
   'age_years': '{n} वर्ष',
+  'eligible_now': 'अभी दे सकते हैं',
+  'eligible_soon': 'जल्द दे सकेंगे',
+  'km_away': 'कि.मी. दूर',
 };

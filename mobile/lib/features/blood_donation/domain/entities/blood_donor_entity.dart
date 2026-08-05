@@ -55,6 +55,18 @@ class BloodDonorEntity extends Equatable {
           : (fullNameEn ?? fullNameTa ?? '—');
 
   /// Human-readable location (place/taluk name) — never the raw geography UUID.
+  /// The area name, or null when there is none.
+  ///
+  /// [displayLocation] substitutes a "not specified" placeholder, which is fine
+  /// for a field label and wrong for a status line: it filled the most valuable
+  /// row on every donor card with a sentence saying nothing.
+  String? locationName(String lang) {
+    final name = lang == 'ta'
+        ? (geographyNameTa ?? geographyNameEn)
+        : (geographyNameEn ?? geographyNameTa);
+    return (name != null && name.trim().isNotEmpty) ? name : null;
+  }
+
   String displayLocation(String lang) {
     final name = lang == 'ta'
         ? (geographyNameTa ?? geographyNameEn)

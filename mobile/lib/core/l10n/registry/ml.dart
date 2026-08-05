@@ -683,4 +683,7 @@ const Map<String, String> kMl = {
   'ask_me_later': 'ഇപ്പോൾ വേണ്ട',
   'eligible_on': '{date} മുതൽ നൽകാം',
   'age_years': '{n} വയസ്സ്',
+  'eligible_now': 'ഇപ്പോൾ നൽകാം',
+  'eligible_soon': 'ഉടൻ നൽകാം',
+  'km_away': 'കി.മീ അകലെ',
 };

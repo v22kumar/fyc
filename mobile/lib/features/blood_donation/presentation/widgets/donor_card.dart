@@ -43,8 +43,9 @@ class DonorCard extends StatelessWidget {
     final parts = <String>[];
     if (donor.distanceKm != null) {
       parts.add('${donor.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}');
-    } else if (donor.hasLocation) {
-      parts.add(donor.displayLocation(lang));
+    } else {
+      final where = donor.locationName(lang);
+      if (where != null) parts.add(where);
     }
     parts.add(donor.isEligible
         ? trId('eligible_now')

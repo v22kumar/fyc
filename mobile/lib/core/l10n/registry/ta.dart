@@ -699,4 +699,7 @@ const Map<String, String> kTa = {
   'ask_me_later': 'இப்போது வேண்டாம்',
   'eligible_on': '{date} முதல் தர முடியும்',
   'age_years': '{n} வயது',
+  'eligible_now': 'இப்போது தர முடியும்',
+  'eligible_soon': 'விரைவில் தர முடியும்',
+  'km_away': 'கி.மீ தொலைவில்',
 };
