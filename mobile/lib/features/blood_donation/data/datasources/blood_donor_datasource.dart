@@ -10,6 +10,7 @@ abstract class BloodDonorDataSource {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
   });
 
   /// Donors ranked by real distance from a point, widened to compatible blood
@@ -54,9 +55,13 @@ class BloodDonorDataSourceImpl implements BloodDonorDataSource {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
   }) async {
     try {
       final params = <String, dynamic>{'available_only': availableOnly};
+      // 'club' or 'imported'. Two populations that behave nothing alike, and
+      // the screen asks for exactly one of them at a time.
+      if (source != null) params['source'] = source;
       if (bloodGroup != null && bloodGroup.isNotEmpty) {
         params['blood_group'] = bloodGroup;
       }

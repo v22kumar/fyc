@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.cache import TTLCache
@@ -64,15 +64,25 @@ def _age_from(dob) -> Optional[int]:
 
 
 def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
-                with_approx_location: bool = False) -> BloodDonorPublicOut:
-    """Build the public donor view with the derived tier / eligibility fields."""
+                with_approx_location: bool = False,
+                approx_from: Optional[tuple] = None) -> BloodDonorPublicOut:
+    """Build the public donor view with the derived tier / eligibility fields.
+
+    `approx_from` is the position the distance was actually measured from. It
+    matters: a donor seen this morning a kilometre away has a home area twenty
+    kilometres off, and publishing the home area anyway put the pin somewhere
+    the card did not claim they were. The map and the row have to be the same
+    claim or neither is believable.
+    """
     imported = bool(user and getattr(user, "source", None) == "F2S_IMPORT")
     approx_lat = approx_lng = None
-    if with_approx_location and getattr(donor, "latitude", None) is not None \
-            and getattr(donor, "longitude", None) is not None:
+    src_lat, src_lng = approx_from or (
+        getattr(donor, "latitude", None), getattr(donor, "longitude", None)
+    )
+    if with_approx_location and src_lat is not None and src_lng is not None:
         # Round to ~1.1 km so pins cluster by area without pinpointing a home.
-        approx_lat = round(donor.latitude, 2)
-        approx_lng = round(donor.longitude, 2)
+        approx_lat = round(src_lat, 2)
+        approx_lng = round(src_lng, 2)
     return BloodDonorPublicOut(
         id=donor.id,
         blood_group=donor.blood_group,
@@ -105,6 +115,7 @@ def search_donors(
     nearby: bool = False,
     compatible: bool = False,
     available_only: bool = True,
+    source: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
     response: Response = None,
@@ -117,10 +128,21 @@ def search_donors(
     Paginated: default limit=100. X-Total-Count header carries full match count.
     Pass nearby=true with geography_id to include all taluks in the same district.
     Results cached 5 minutes; cache flushed on any donor register / availability update.
+
+    `source` splits the two populations, which behave nothing alike:
+
+    * `club` — members who registered in the app. They can be located, notified,
+      and asked. This is what the map and the nearby ranking are about.
+    * `imported` — contacts from the Friends2Support directory. No account, no
+      location, no way to reach them except a cold phone call.
+
+    They were interleaved in one list, which quietly promised the same thing for
+    both: a member who has agreed to be asked, and a stranger's phone number
+    from a public directory, adjacent and identically weighted.
     """
     cache_key = (
         str(tenant_id), blood_group or "", str(geography_id), nearby, compatible,
-        available_only, limit, offset,
+        available_only, source or "", limit, offset,
     )
     hit, cached = _search_cache.get(cache_key)
     if hit:
@@ -150,8 +172,21 @@ def search_donors(
             filters.append(BloodDonor.geography_id == geography_id)
     if available_only:
         filters.append(BloodDonor.is_available == True)
+    if source:
+        want = source.strip().lower()
+        if want == "imported":
+            filters.append(User.source == "F2S_IMPORT")
+        elif want == "club":
+            # A donor with no user row at all is not an import — treat the
+            # absence of the marker as "one of ours", never the other way round.
+            filters.append(
+                or_(User.source.is_(None), User.source != "F2S_IMPORT")
+            )
 
-    total = db.query(func.count(BloodDonor.id)).filter(*filters).scalar() or 0
+    count_q = db.query(func.count(BloodDonor.id))
+    if source:
+        count_q = count_q.outerjoin(User, User.id == BloodDonor.user_id)
+    total = count_q.filter(*filters).scalar() or 0
 
     rows = (
         db.query(BloodDonor, UserProfile, GeographicNode, User)
@@ -236,12 +271,14 @@ def nearby_donors(
         if dist > radius_km:
             continue
         exact = bool(blood_group) and donor.blood_group == blood_group.upper()
-        scored.append((0 if exact else 1, dist, donor, profile, geo, user, basis))
+        scored.append((0 if exact else 1, dist, donor, profile, geo, user,
+                       basis, (origin_lat, origin_lng)))
 
     scored.sort(key=lambda t: (t[0], t[1]))  # exact group first, then nearest
     out = []
-    for _, dist, d, p, g, u, basis in scored[:limit]:
-        item = _public_out(d, p, g, u, distance_km=dist, with_approx_location=True)
+    for _, dist, d, p, g, u, basis, origin in scored[:limit]:
+        item = _public_out(d, p, g, u, distance_km=dist,
+                           with_approx_location=True, approx_from=origin)
         # Say which position the distance came from. A distance whose basis is
         # hidden cannot be judged — "3 km away" from a fix an hour old and from
         # a home area recorded last year are not the same claim.

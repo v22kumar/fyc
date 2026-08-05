@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/theme/app_theme.dart';
 
 /// The one thing this screen exists for.
 ///
@@ -15,22 +14,18 @@ import '../../../../core/theme/app_theme.dart';
 /// This makes it the screen: state the need once, and the people who can help
 /// are notified. Browsing stays available underneath for anyone who wants it,
 /// which is progressive disclosure rather than removal.
+///
+/// It used to carry its own "N of M available now" line. The map above it now
+/// says the same thing, larger and over the dots it is counting — so the line
+/// here was the same fact twice, two hundred pixels apart, which reads as two
+/// facts that happen to agree.
 class NeedBloodPanel extends StatelessWidget {
   const NeedBloodPanel({
     super.key,
     required this.onRaiseRequest,
-    required this.availableNow,
-    required this.totalDonors,
   });
 
   final VoidCallback onRaiseRequest;
-
-  /// Registered members who are eligible and marked available right now.
-  final int availableNow;
-
-  /// Registered members overall. Distinct from the imported directory — those
-  /// are strangers to the club and are not counted as if they were members.
-  final int totalDonors;
 
   @override
   Widget build(BuildContext context) {
@@ -91,26 +86,6 @@ class NeedBloodPanel extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          SizedBox(height: DSSpacing.sm),
-          // Honest, specific reassurance rather than a slogan: how many people
-          // this would actually reach. A number the requester can trust is
-          // worth more than "3 lives saved".
-          Row(
-            children: [
-              Icon(Icons.check_circle_rounded,
-                  size: 16, color: AppColors.success),
-              SizedBox(width: DSSpacing.xs),
-              Expanded(
-                child: Text(
-                  availableNow > 0
-                      ? trId('donors_available_now',
-                          {'n': availableNow, 'total': totalDonors})
-                      : trId('no_donors_available_now'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ],
           ),
         ],
       ),

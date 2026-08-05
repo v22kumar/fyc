@@ -51,6 +51,7 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
       geographyId: event.geographyId,
       nearby: event.nearby,
       availableOnly: event.availableOnly,
+      source: event.source,
     );
     if (seq != _seq) return;
     result.fold(

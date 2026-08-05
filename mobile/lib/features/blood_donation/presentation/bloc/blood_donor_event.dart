@@ -11,15 +11,22 @@ class BloodDonorSearchRequested extends BloodDonorEvent {
   final String? geographyId;
   final bool nearby;
   final bool availableOnly;
+
+  /// 'club' (members who registered here) or 'imported' (Friends2Support
+  /// contacts). Null means both, which is only right for a count.
+  final String? source;
+
   const BloodDonorSearchRequested({
     this.bloodGroup,
     this.geographyId,
     this.nearby = false,
     this.availableOnly = true,
+    this.source,
   });
 
   @override
-  List<Object?> get props => [bloodGroup, geographyId, nearby, availableOnly];
+  List<Object?> get props =>
+      [bloodGroup, geographyId, nearby, availableOnly, source];
 }
 
 class BloodDonorRegisterRequested extends BloodDonorEvent {

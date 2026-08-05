@@ -8,6 +8,7 @@ abstract class BloodDonorRepository {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
   });
 
   /// Donors ranked by real distance from a point.

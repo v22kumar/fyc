@@ -12,6 +12,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
 import '../../features/blood_donation/presentation/screens/donor_registration_screen.dart';
+import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
@@ -208,6 +209,13 @@ final appRouter = GoRouter(
             create: (_) => sl<BloodDonorBloc>(),
             child: const DonorRegistrationScreen(),
           ),
+        ),
+        // The Friends2Support directory is a destination in its own right, not
+        // a section of the hub — it holds its own state and never touches the
+        // hub's list.
+        GoRoute(
+          path: 'directory',
+          builder: (context, state) => const ImportedDirectoryScreen(),
         ),
       ],
     ),

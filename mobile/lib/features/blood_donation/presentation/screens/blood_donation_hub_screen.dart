@@ -2,17 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../widgets/need_blood_panel.dart';
 import '../widgets/donor_card.dart';
+import '../widgets/donors_around_map.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
-import 'donor_map_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -54,7 +55,8 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     // Show something immediately, then improve it. Asking for location first
     // would leave the screen empty behind a permission dialog — at exactly the
     // moment the member is least willing to wait.
-    context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
+    context.read<BloodDonorBloc>().add(
+        const BloodDonorSearchRequested(source: 'club'));
     _loadTaluks();
     // After the first frame, so the disclosure sheet slides up over a screen
     // that is already there. Explaining why we want a location on top of a
@@ -97,6 +99,7 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
             bloodGroup: _selectedGroup,
             geographyId: _selectedGeographyId,
             nearby: _nearby && _selectedGeographyId != null,
+            source: 'club',
           ),
         );
   }
@@ -162,6 +165,43 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     }
   }
 
+  /// Everyone standing on one pin, as cards.
+  ///
+  /// One donor still gets a sheet rather than jumping straight to the contact
+  /// dialog: tapping a dot on a map should show you who it is before it asks
+  /// you to commit to anything.
+  void _showCluster(BuildContext context, List<BloodDonorEntity> cell) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.cSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.all(DSSpacing.md),
+          children: [
+            Text(
+              trId('donors_here_n', {'n': cell.length}),
+              style: Theme.of(sheetContext).textTheme.titleSmall,
+            ),
+            SizedBox(height: DSSpacing.sm),
+            for (final d in cell)
+              DonorCard(
+                donor: d,
+                lang: _lang,
+                onContact: () {
+                  Navigator.of(sheetContext).pop();
+                  _requestContact(context, d);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _requestContact(BuildContext context, BloodDonorEntity donor) {
     showDialog(
       context: context,
@@ -182,13 +222,6 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       appBar: AppBar(
         title: Text(trId('blood_donation_hub')),
         actions: [
-          IconButton(
-            tooltip: trId('map'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const DonorMapScreen()),
-            ),
-            icon: Icon(Icons.map_rounded, color: AppColors.background),
-          ),
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
             icon: Icon(Icons.volunteer_activism, color: AppColors.background),
@@ -201,81 +234,20 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       ),
       body: Column(
         children: [
-          // Hero photo banner (FYC blood drive)
-          SizedBox(
-            height: 132,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/images/blood_drive.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.primary.withOpacity(0.15)),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.textPrimary.withOpacity(0.05),
-                        AppColors.textPrimary.withOpacity(0.55),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 12,
-                  child: Text(
-                    trId('your_one_donation_can_save_up_to_3_lives'),
-                    style: TextStyle(
-                      color: AppColors.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // The request is the screen's purpose, so it leads. The filter row
-          // and the directory stay below it for anyone who wants to browse —
-          // available, but no longer the first thing asked of someone in an
-          // emergency.
+          // The map leads, because "is anybody near me?" is the first question
+          // and a count of dots answers it before a single name is read. It was
+          // a route behind an icon, which meant it answered nothing.
           BlocBuilder<BloodDonorBloc, BloodDonorState>(
             builder: (context, state) {
               final donors = state is BloodDonorSearchSuccess
-                  ? state.donors.where((d) => !d.isImported).toList()
-                  : const [];
-              return NeedBloodPanel(
-                availableNow:
-                    donors.where((d) => d.isAvailable && d.isEligible).length,
-                totalDonors: donors.length,
-                onRaiseRequest: () => showRaiseRequestSheet(
-                  context,
-                  initialGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-                ),
+                  ? state.donors
+                  : const <BloodDonorEntity>[];
+              return DonorsAroundMap(
+                donors: donors,
+                me: _myLat == null ? null : LatLng(_myLat!, _myLng!),
+                onTapCluster: (cell) => _showCluster(context, cell),
               );
             },
-          ),
-          _FilterRow(
-            groups: _groups,
-            selected: _selectedGroup,
-            onSelect: _search,
-          ),
-          _LocationFilter(
-            taluks: _taluks,
-            selectedId: _selectedGeographyId,
-            nearby: _nearby,
-            lang: _lang,
-            onSelect: _selectLocation,
-            onToggleNearby: _toggleNearby,
           ),
           Expanded(
             child: BlocConsumer<BloodDonorBloc, BloodDonorState>(
@@ -294,54 +266,65 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 }
               },
               builder: (context, state) {
-                if (state is BloodDonorLoading) {
-                  return const ShimmerCardList();
-                }
-                if (state is BloodDonorSearchSuccess) {
-                  // Club members before imported contacts, so the headings
-                  // below have contiguous runs to label.
-                  state.donors.sort((a, b) => (a.isImported ? 1 : 0)
-                      .compareTo(b.isImported ? 1 : 0));
-                  if (state.donors.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
-                      child: ListView(children: [_EmptyDonors(group: _selectedGroup)]),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(16),
-                      itemCount: state.donors.length,
-                      itemBuilder: (context, i) {
-                        final d = state.donors[i];
-                        // Club donors come first and imported contacts follow,
-                        // each under its own heading. They were interleaved:
-                        // a member and a stranger adjacent, identical weight,
-                        // with only a small badge to tell them apart.
-                        final prev = i == 0 ? null : state.donors[i - 1];
-                        final startsSection =
-                            prev == null || prev.isImported != d.isImported;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (startsSection)
-                              _DonorSectionHeading(
-                                imported: d.isImported,
-                                ranked: _rankedByDistance,
-                              ),
-                            DonorCard(
-                              donor: d,
-                              lang: _lang,
-                              onContact: () => _requestContact(context, d),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  );
-                }
-                return SizedBox.shrink();
+                final donors = state is BloodDonorSearchSuccess
+                    ? state.donors
+                    : const <BloodDonorEntity>[];
+                return RefreshIndicator(
+                  onRefresh: () async => _runSearch(),
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                        DSSpacing.md, DSSpacing.sm, DSSpacing.md, DSSpacing.xl),
+                    children: [
+                      // The request is the screen's purpose, so it sits
+                      // directly under the map — the two together say "these
+                      // people are here, and here is how to reach them".
+                      NeedBloodPanel(
+                        onRaiseRequest: () => showRaiseRequestSheet(
+                          context,
+                          initialGroup:
+                              _selectedGroup == 'All' ? null : _selectedGroup,
+                        ),
+                      ),
+                      _FilterRow(
+                        groups: _groups,
+                        selected: _selectedGroup,
+                        onSelect: _search,
+                      ),
+                      _LocationFilter(
+                        taluks: _taluks,
+                        selectedId: _selectedGeographyId,
+                        nearby: _nearby,
+                        lang: _lang,
+                        onSelect: _selectLocation,
+                        onToggleNearby: _toggleNearby,
+                      ),
+                      if (state is BloodDonorLoading)
+                        const ShimmerCardList()
+                      else if (donors.isEmpty)
+                        _EmptyDonors(group: _selectedGroup)
+                      else ...[
+                        _DonorSectionHeading(
+                          imported: false,
+                          ranked: _rankedByDistance,
+                        ),
+                        for (final d in donors)
+                          DonorCard(
+                            donor: d,
+                            lang: _lang,
+                            onContact: () => _requestContact(context, d),
+                          ),
+                      ],
+                      // The wider directory is a door, not a section. Mixing
+                      // strangers' phone numbers into the list above promised
+                      // the same thing for both.
+                      SizedBox(height: DSSpacing.md),
+                      _WiderDirectoryCard(
+                        onOpen: () =>
+                            context.push('/blood-donation/directory'),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ),
@@ -725,6 +708,50 @@ class _DonorSectionHeading extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// The way into the Friends2Support directory.
+///
+/// A door rather than a section. Those contacts have no location, no account
+/// and no way of being asked — putting them under a heading in the list above
+/// made a stranger's phone number look like a neighbour who had volunteered.
+/// Here they are one deliberate tap away, described honestly.
+class _WiderDirectoryCard extends StatelessWidget {
+  const _WiderDirectoryCard({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: context.cSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DSRadius.card),
+        side: BorderSide(color: context.cBorder),
+      ),
+      child: ListTile(
+        onTap: onOpen,
+        contentPadding: EdgeInsets.all(DSSpacing.md),
+        leading: Icon(Icons.contact_phone_outlined,
+            color: context.cTextSecondary),
+        title: Text(trId('wider_directory'),
+            style: Theme.of(context).textTheme.titleSmall),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            trId('wider_directory_note'),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: context.cTextSecondary),
+          ),
+        ),
+        trailing: Icon(Icons.chevron_right_rounded,
+            color: context.cTextSecondary),
       ),
     );
   }

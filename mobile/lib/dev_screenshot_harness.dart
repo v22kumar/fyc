@@ -57,6 +57,7 @@ const _routes = <String>[
   '/feed/create',
   '/blood-donation',
   '/blood-donation/register',
+  '/blood-donation/directory',
   '/events',
   '/issues',
   '/issues/track',
@@ -154,10 +155,18 @@ Future<void> _walk() async {
     // Home pops an "update available" sheet on entry, which in this build is an
     // artefact of the local backend's version number. Dismiss any modal sitting
     // above the screen so the review sees the screen.
+    //
+    // Only popups. This used to pop anything poppable, which quietly walked
+    // back out of every nested route — a request for /blood-donation/directory
+    // photographed /blood-donation instead, and looked like the route was
+    // broken rather than the harness.
     final nav = appRouter.routerDelegate.navigatorKey.currentState;
     if (nav != null && nav.canPop()) {
-      nav.pop();
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      final top = ModalRoute.of(nav.context);
+      if (top is PopupRoute) {
+        nav.pop();
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+      }
     }
     final name = '${i.toString().padLeft(2, '0')}'
         '${route.replaceAll('/', '_')}.png';

@@ -15,6 +15,7 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
   }) async {
     try {
       final donors = await _remote.searchDonors(
@@ -22,6 +23,7 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
         geographyId: geographyId,
         nearby: nearby,
         availableOnly: availableOnly,
+        source: source,
       );
       return Right(donors);
     } on Failure catch (f) {

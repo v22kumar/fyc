@@ -364,3 +364,59 @@ def test_a_few_hours_old_is_recent_not_live(client, db):
     hit = next(x for x in r.json() if x["id"] == str(d.id))
     assert hit["distance_km"] < 1          # still ranked from the fix
     assert hit["location_basis"] == "recent"
+
+
+def test_source_filter_splits_club_members_from_imported_contacts(client, db):
+    """Two populations that behave nothing alike. A club member can be located,
+    notified and asked; an imported contact is a phone number from a public
+    directory and nothing else. Showing them in one list promised the same
+    thing for both."""
+    import uuid
+    from app.models.user import User, UserProfile
+    from app.models.blood_donor import BloodDonor
+    from app.core.security import get_password_hash
+
+    org = _make_org(db)
+    _donor_with_consent(client, db, org, phone="+919600000009")   # club member
+
+    imported = User(id=uuid.uuid4(), organization_id=org.id,
+                    phone_number="+919600000010", email="f2s@import.local",
+                    password_hash=get_password_hash("x"), role="USER",
+                    is_verified=False, source="F2S_IMPORT")
+    db.add(imported); db.flush()
+    db.add(UserProfile(user_id=imported.id, full_name_en="Imported Contact",
+                       full_name_ta="இறக்குமதி தொடர்பு"))
+    db.add(BloodDonor(id=uuid.uuid4(), organization_id=org.id,
+                      user_id=imported.id, blood_group="O+", is_available=True))
+    db.commit()
+
+    h = {"X-Organization-ID": str(org.id)}
+    club = client.get("/api/v1/blood-donors?source=club", headers=h).json()
+    imp = client.get("/api/v1/blood-donors?source=imported", headers=h).json()
+    both = client.get("/api/v1/blood-donors", headers=h).json()
+
+    assert all(not d["is_imported"] for d in club), "an import leaked into the club list"
+    assert imp and all(d["is_imported"] for d in imp)
+    assert len(both) == len(club) + len(imp), "unfiltered must still return everyone"
+
+
+def test_the_pin_sits_where_the_distance_was_measured_from(client, db):
+    """The map and the row have to be the same claim.
+
+    A donor seen this morning a kilometre away has a home area twenty
+    kilometres off. Publishing the home area anyway put their pin somewhere the
+    card never said they were — and a member deciding who to call reads both."""
+    from datetime import datetime, timezone
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000011")
+    d.latitude, d.longitude = 8.50, 77.80              # home, far away
+    d.last_seen_lat, d.last_seen_lng = 8.1840, 77.4125  # seen beside the query
+    d.last_seen_at = datetime.now(timezone.utc)
+    db.commit()
+
+    r = client.get("/api/v1/blood-donors/nearby?lat=8.1833&lng=77.4119&radius_km=5",
+                   headers={"X-Organization-ID": str(org.id)})
+    hit = next(x for x in r.json() if x["id"] == str(d.id))
+    assert hit["location_basis"] == "live"
+    assert abs(hit["approx_latitude"] - 8.18) < 0.005, "pin fell back to the home area"
+    assert abs(hit["approx_longitude"] - 77.41) < 0.005
