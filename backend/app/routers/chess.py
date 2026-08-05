@@ -1090,13 +1090,24 @@ async def game_websocket(
     # Per-connection flood guard: legitimate play is a few messages/sec, so >30
     # in a rolling second is abusive — drop the excess instead of letting one
     # client spin the loop (and the DB) at will.
-    _recent = deque(maxlen=30)
+    _recent = deque(maxlen=60)
     try:
         while True:
             raw = await websocket.receive_text()
             _mt = time.monotonic()
             _recent.append(_mt)
             if len(_recent) == _recent.maxlen and (_mt - _recent[0]) < 1.0:
+                # Over the burst budget. Crucially this must NOT be a silent
+                # drop: swallowing a legitimate move leaves the sender waiting
+                # forever for an echo that never comes, and the board deadlocks
+                # with no error anywhere (this stalled real games in the 100-bot
+                # tournament simulation, always right as the window filled).
+                # Tell the client instead, so it can resync and retry.
+                await session.send_to(uid, {
+                    "type": "error",
+                    "message": "Too many messages — slow down and resync.",
+                })
+                await session.send_to(uid, session.state_snapshot(uid))
                 continue
             try:
                 msg = __import__("json").loads(raw)

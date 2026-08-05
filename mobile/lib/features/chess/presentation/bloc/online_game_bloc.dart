@@ -170,6 +170,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
           emit(s.copyWith(moveInFlight: false));
           // Restart clock if it was stopped optimistically
           if (s.isTimed) _startClockTimer();
+          // Any rejected message means our board may no longer match the
+          // server's. Ask for the authoritative position instead of sitting
+          // on a stale one waiting for an echo that will never arrive.
+          _wsClient?.send({'type': 'sync'});
         }
 
       case 'disconnected':
