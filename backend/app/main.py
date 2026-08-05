@@ -802,6 +802,8 @@ app.include_router(facebook_router.router, prefix="/api/v1/facebook")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
+from app.routers import diagnostics as diagnostics_router
+app.include_router(diagnostics_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

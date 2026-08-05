@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'core/services/error_reporter.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +50,21 @@ void _handleNotificationClick(BuildContext context, RemoteMessage message) {
 }
 
 void main() async {
+  // Catch anything that escapes — framework errors, async gaps, and errors
+  // thrown during startup itself — and send it to our own backend. With no
+  // device to test on, hearing about a failure the moment a member hits it is
+  // the only feedback loop available. Everything in the reporter is
+  // best-effort; it can never be the thing that breaks the app.
+  runZonedGuarded(() async {
+    await _bootstrap();
+  }, (error, stack) {
+    ErrorReporter.instance.report(error, stack, context: 'zone');
+  });
+}
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ErrorReporter.instance.install();
   await Hive.initFlutter();
   await SyncService.init();
   // Push is a nice-to-have; the app must start without it. Firebase can fail on

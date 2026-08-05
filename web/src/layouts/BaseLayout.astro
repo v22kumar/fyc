@@ -26,6 +26,46 @@ const DEFAULT_ORG_ID = import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/fyc_logo.png" />
+    <script is:inline define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+      // Report uncaught errors to our own backend, the same place the app
+      // reports to. Without this a member's browser can fail silently and
+      // nobody ever finds out. Everything here is best-effort: a reporter that
+      // throws would turn one bug into two.
+      (function () {
+        var sent = {};
+        function report(message, stack, context) {
+          try {
+            if (!message) return;
+            var key = message + '|' + (stack || '').split('\n')[0];
+            if (sent[key]) return;          // one crash loop must not flood
+            sent[key] = true;
+            // fetch with keepalive, NOT sendBeacon: a beacon carrying
+            // application/json needs a CORS preflight, which sendBeacon cannot
+            // perform, so cross-origin reports were being dropped silently —
+            // the reporter itself failing to report.
+            fetch(API_BASE + '/api/v1/diagnostics/errors', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json',
+                         'X-Organization-ID': DEFAULT_ORG_ID },
+              body: JSON.stringify({ errors: [{
+                message: String(message).slice(0, 2000),
+                stack: stack ? String(stack).slice(0, 6000) : null,
+                platform: 'web',
+                context: context || location.pathname,
+              }] }),
+              keepalive: true,
+            }).catch(function () {});
+          } catch (e) { /* never throw from the error reporter */ }
+        }
+        window.addEventListener('error', function (e) {
+          report(e.message, e.error && e.error.stack);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason;
+          report(r && r.message ? r.message : String(r), r && r.stack);
+        });
+      })();
+    </script>
     <script is:inline>
       // Installable + fast on repeat visits. The worker is network-first for
       // pages, so registering it can never strand anyone on a stale build.
