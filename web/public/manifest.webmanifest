@@ -1,0 +1,15 @@
+{
+  "name": "FYC Connect",
+  "short_name": "FYC",
+  "description": "Friends Youth Club — events, sports, chess and community.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0F5132",
+  "icons": [
+    { "src": "/fyc_logo.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" },
+    { "src": "/fyc_logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

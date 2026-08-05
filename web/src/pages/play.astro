@@ -90,6 +90,20 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
             </div>
           </div>
 
+          <!-- Typing notation is how strong players input at speed. -->
+          <div id="kbd-wrap">
+            <input
+              id="kbd"
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="Type a move — e4, Nf3, O-O"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#0F5132]"
+            />
+            <p id="kbd-msg" class="text-[11px] text-red-600 mt-1 h-4"></p>
+          </div>
+
           <div id="actions" class="grid grid-cols-2 gap-2">
             <button id="btn-draw" class="bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg py-2.5 hover:border-gray-400">Offer draw</button>
             <button id="btn-resign" class="bg-white border border-red-200 text-red-700 text-sm font-bold rounded-lg py-2.5 hover:border-red-400">Resign</button>
@@ -149,6 +163,7 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   import { Chessground } from 'chessground';
   import { Chess } from 'chessops/chess';
   import { makeFen } from 'chessops/fen';
+  import { makeSan, parseSan } from 'chessops/san';
   import { chessgroundDests } from 'chessops/compat';
   import { GameSocket } from '../lib/chess/socket';
   import { Clock, formatClock } from '../lib/chess/clock';
@@ -190,11 +205,20 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     let pendingPromotion: { orig: string; dest: string } | null = null;
     let flagClaimed = false;
 
+    // Moves applied locally that the server has not confirmed yet. This is the
+    // whole of the prediction bookkeeping: normally it holds exactly one entry,
+    // for the fraction of a second between our drop and the server's echo.
+    const pending: { uci: string; ply: number }[] = [];
+
     const ground = Chessground($('board'), {
       orientation: 'white',
       // The server is the authority, so the board never lets go of a move it
       // has not been told about; `free: false` keeps chessground honest.
       movable: { free: false, color: undefined, dests: new Map(), showDests: true },
+      // A premove is just a drag made while `dests` is empty but the piece is
+      // still ours — chessground queues it and we fire it when the opponent
+      // moves. In blitz this is not a luxury.
+      premovable: { enabled: true, showDests: true },
       animation: { enabled: true, duration: 180 },
       highlight: { lastMove: true, check: true },
       draggable: { enabled: true, showGhost: true },
@@ -218,9 +242,13 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
         check: pos.isCheck() ? turn : undefined,
         movable: {
           free: false,
-          color: myTurn() ? myColour! : undefined,
+          // Always our own colour, even on the opponent's turn: that is what
+          // lets chessground treat a drag with no legal dests as a premove
+          // rather than rejecting it outright.
+          color: ended ? undefined : myColour ?? undefined,
           dests: myTurn() ? chessgroundDests(pos) : new Map(),
         },
+        premovable: { enabled: !ended && myColour !== null },
       });
     }
 
@@ -283,12 +311,34 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       sendMove(orig + dest);
     }
 
-    function sendMove(uci: string) {
+    /**
+     * Apply the move locally FIRST, then tell the server.
+     *
+     * This is the whole point of P1: the player sees their piece land in the
+     * next frame instead of one network round trip later. The server is still
+     * the only authority — it simply stops being on the critical path for
+     * drawing. Every optimistic move is recorded in `pending` and either
+     * confirmed by the matching echo or rolled back by a resync.
+     */
+    function sendMove(uci: string): void {
+      const mv = uciToMove(uci);
+      if (!mv || !pos.isLegal(mv)) {
+        // chessground offered a square chessops rejects (or a premove that has
+        // since become illegal). Snap the board back to the real position.
+        refreshBoard();
+        return;
+      }
+      // makeSan must run BEFORE the move is played — SAN disambiguation depends
+      // on the position the move is made from.
+      const san = makeSan(pos, mv);
+      pos.play(mv);
+      sans.push(san);
+      pending.push({ uci, ply: sans.length });
+
+      turn = turn === 'white' ? 'black' : 'white';
       socket.send({ type: 'move', uci });
-      // Freeze input until the server confirms. P0 deliberately does not
-      // predict the resulting position — that is P1, and doing it without
-      // reconciliation would risk showing a move the server never accepted.
-      ground.set({ movable: { free: false, color: undefined, dests: new Map() } });
+      refreshBoard();
+      renderMoves();
     }
 
     document.querySelectorAll<HTMLButtonElement>('.promo-btn').forEach((btn) => {
@@ -312,15 +362,36 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       }
     }
 
-    function applyServerMove(uci: string, san: string) {
+    /**
+     * Reconcile a server move against our optimistic state.
+     *
+     * Returns true when the board changed and needs a redraw. A confirmation of
+     * something we already predicted changes nothing — that is the good case,
+     * and it must not re-apply the move.
+     */
+    function reconcile(uci: string, san: string, ply: number): boolean {
+      const head = pending[0];
+      if (head) {
+        if (head.uci === uci && head.ply === ply) {
+          pending.shift();          // prediction confirmed — nothing to redraw
+          return false;
+        }
+        // The server saw something other than what we predicted. Do not try to
+        // patch it; drop every optimistic move and take the server's word.
+        pending.length = 0;
+        socket.send({ type: 'sync' });
+        return false;
+      }
+
       const mv = uciToMove(uci);
       if (mv && pos.isLegal(mv)) {
         pos.play(mv);
         sans.push(san);
-      } else {
-        // Our position disagrees with the server's. Never guess — ask.
-        socket.send({ type: 'sync' });
+        return true;
       }
+      // Our position disagrees with the server's. Never guess — ask.
+      socket.send({ type: 'sync' });
+      return false;
     }
 
     // ── Socket wiring ───────────────────────────────────────────────────────
@@ -330,6 +401,8 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     socket.on('state', (m) => {
       myColour = (m.color as Colour) ?? myColour;
       orientation = myColour ?? 'white';
+      // A full snapshot supersedes every prediction we were holding.
+      pending.length = 0;
       replay(m.moves ?? []);
       turn = (m.turn as Colour) ?? 'white';
       clock.update(m.clock, turn);
@@ -361,14 +434,18 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
     });
 
     socket.on('move', (m) => {
-      applyServerMove(m.uci, m.san);
+      const changed = reconcile(m.uci, m.san, m.ply);
       turn = (m.turn as Colour) ?? turn;
+      // The clock is always taken from the server, even when the move was our
+      // own prediction — it is the one value we must never invent.
       clock.update(m.clock, turn);
       clock.setRunning(true);
       flagClaimed = false;
       $('draw-offer').classList.add('hidden');
+      if (changed) renderMoves();
       refreshBoard();
-      renderMoves();
+      // Now that it is our turn again, fire any queued premove.
+      if (myTurn()) window.setTimeout(() => ground.playPremove(), 0);
     });
 
     socket.on('draw_offered', () => $('draw-offer').classList.remove('hidden'));
@@ -395,7 +472,10 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
 
     socket.on('error', (m) => {
       $('hint').textContent = m.message ?? 'That move was not accepted.';
-      // Whatever went wrong, our board may now be wrong too.
+      // A rejected move means our optimistic position is wrong. Throw the
+      // predictions away and take the server's board — never patch a guess.
+      pending.length = 0;
+      ground.cancelPremove();
       socket.send({ type: 'sync' });
     });
 
@@ -435,6 +515,34 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
       socket.send({ type: 'decline_draw' });
       $('draw-offer').classList.add('hidden');
     };
+    // ── Keyboard move entry ────────────────────────────────────────────────
+    const kbd = $('kbd') as HTMLInputElement;
+    kbd.addEventListener('keydown', (ev) => {
+      if ((ev as KeyboardEvent).key !== 'Enter') return;
+      const text = kbd.value.trim();
+      if (!text) return;
+      if (!myTurn()) {
+        $('kbd-msg').textContent = 'Not your turn.';
+        return;
+      }
+      // parseSan handles disambiguation, captures, castling and promotion
+      // suffixes, so "Nbd7", "exd5" and "O-O" all work as typed.
+      const mv = parseSan(pos, text);
+      if (!mv) {
+        $('kbd-msg').textContent = `“${text}” is not a legal move here.`;
+        return;
+      }
+      $('kbd-msg').textContent = '';
+      kbd.value = '';
+      sendMove(moveToUci(mv));
+    });
+    // Typing anywhere on the page jumps into the move box — no hunting for it.
+    document.addEventListener('keydown', (ev) => {
+      if (ev.target === kbd || ended) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      if (/^[a-hKQRBNO]$/.test(ev.key)) kbd.focus();
+    });
+
     $('btn-flip').onclick = () => {
       orientation = orientation === 'white' ? 'black' : 'white';
       refreshBoard();
@@ -455,6 +563,16 @@ import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
   // ── small helpers ─────────────────────────────────────────────────────────
   function sq(name: string) {
     return (name.charCodeAt(0) - 97 + (Number(name[1]) - 1) * 8) as any;
+  }
+
+  const SQ_NAMES = 'abcdefgh';
+  function sqName(s: number): string {
+    return SQ_NAMES[s % 8] + String(Math.floor(s / 8) + 1);
+  }
+
+  function moveToUci(mv: any): string {
+    const promo: Record<string, string> = { queen: 'q', rook: 'r', bishop: 'b', knight: 'n' };
+    return sqName(mv.from) + sqName(mv.to) + (mv.promotion ? promo[mv.promotion] : '');
   }
 
   function uciToMove(uci: string): any {
