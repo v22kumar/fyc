@@ -55,12 +55,21 @@ export PUBLIC_DEFAULT_ORG_ID="$ORG_ID"
   echo "web build failed:"; tail -40 "$WORK/build.log"; exit 1; }
 
 echo "→ serving the site on :$WEB_PORT"
-(cd "$ROOT/web" && npx --yes astro preview --port "$WEB_PORT") >"$WORK/web.log" 2>&1 &
+# A plain static server over the build output, rather than `astro preview`:
+# the build is static anyway, and this has no dependency that can fail to
+# resolve on a machine that is not this one. Directory requests like /play/
+# resolve to play/index.html, which is the layout astro build produces.
+(cd "$ROOT/web/dist" && python -m http.server "$WEB_PORT" --bind 127.0.0.1) \
+  >"$WORK/web.log" 2>&1 &
 WEB_PID=$!
-for _ in $(seq 1 60); do
+for _ in $(seq 1 30); do
   curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null && break
   sleep 1
 done
+# Fail here rather than letting Chromium report a connection refused: the
+# earlier version carried on and blamed the browser for a dead server.
+curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null || {
+  echo "the site never came up:"; tail -40 "$WORK/web.log"; exit 1; }
 
 echo "→ driving Chromium"
 export E2E_WEB_BASE="http://127.0.0.1:$WEB_PORT"
