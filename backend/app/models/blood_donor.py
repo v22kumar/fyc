@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Date, Float, ForeignKey, Index
+from sqlalchemy import DateTime, Column, String, Boolean, Date, Float, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -24,6 +24,10 @@ class BloodDonor(Base, TimestampMixin, TenantModelMixin):
     # donors who decline. notify_opt_in gates emergency push alerts.
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    # When the position was last refreshed. Without this a distance is a claim
+    # with no expiry: "2 km away" reads as fact whether the fix is an hour old
+    # or five months old, and someone in a hurry would act on it either way.
+    location_updated_at = Column(DateTime(timezone=True), nullable=True)
     location_consent = Column(Boolean(), default=False)
     notify_opt_in = Column(Boolean(), default=True)
 

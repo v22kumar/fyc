@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func
@@ -372,3 +373,75 @@ def request_contact(
         phone_number=phone,
         whatsapp_link=f"https://wa.me/{wa_number}"
     )
+
+class MyLocationIn(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
+# Roughly a village. Below this the position has not usefully changed, and
+# rewriting it would be churn for no gain in a search that works in kilometres.
+_MEANINGFUL_MOVE_KM = 1.0
+
+# How stale a stored position may get before a refresh is worth a write, even
+# if the member has not moved.
+_REFRESH_AFTER_HOURS = 24
+
+
+@router.patch("/me/location", status_code=status.HTTP_204_NO_CONTENT)
+def update_my_location(
+    payload: MyLocationIn,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Refresh my own position, opportunistically.
+
+    The app calls this when it happens to be open and already has a cached fix
+    from the operating system. That is the whole strategy: no background
+    tracking, no polling, no GPS wake — so no battery cost and no extra request
+    beyond one the app was making anyway.
+
+    It accepts the tradeoff honestly. A member who never opens the app has a
+    stale position, and a member who never opens the app was never going to
+    answer a request either.
+
+    Consent still governs. Opening the app is not consent to be located, so a
+    donor who has not opted in is a no-op here.
+    """
+    donor = (
+        db.query(BloodDonor)
+        .filter(
+            BloodDonor.user_id == current_user.id,
+            BloodDonor.organization_id == tenant_id,
+        )
+        .first()
+    )
+    if not donor or not donor.location_consent:
+        # Not a donor, or has not agreed to share a location. Silently nothing —
+        # this is a background courtesy call, not something to raise an error at.
+        return
+
+    now = datetime.now(timezone.utc)
+    last = donor.location_updated_at
+    if last is not None and last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+
+    moved_enough = (
+        donor.latitude is None
+        or donor.longitude is None
+        or bm.haversine_km(donor.latitude, donor.longitude, payload.lat, payload.lng)
+        >= _MEANINGFUL_MOVE_KM
+    )
+    stale_enough = (
+        last is None or (now - last) >= timedelta(hours=_REFRESH_AFTER_HOURS)
+    )
+    # Most calls land here and cost a read. Writing a new row every time someone
+    # opens the app would be churn a kilometre-scale search cannot even see.
+    if not (moved_enough or stale_enough):
+        return
+
+    donor.latitude = payload.lat
+    donor.longitude = payload.lng
+    donor.location_updated_at = now
+    db.commit()

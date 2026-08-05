@@ -199,3 +199,83 @@ def test_the_all_chip_returns_everyone_rather_than_nobody(client, db):
     as_all = client.get("/api/v1/blood-donors?blood_group=All", headers=h)
     assert as_all.status_code == 200
     assert len(as_all.json()) == len(unfiltered.json())
+
+
+# ── Opportunistic location ────────────────────────────────────────────────────
+
+def _donor_with_consent(client, db, org, phone="+919600000001", consent=True):
+    from app.models.blood_donor import BloodDonor
+    token = _register(client, org.id, phone)
+    h = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    res = client.post("/api/v1/blood-donors/register",
+                      json={"blood_group": "O+", "is_available": True}, headers=h)
+    assert res.status_code == 201, res.text
+    d = db.query(BloodDonor).filter(
+        BloodDonor.id == uuid.UUID(res.json()["id"])).first()
+    d.location_consent = consent
+    db.commit()
+    return token, d
+
+
+def test_a_first_position_is_stored(client, db):
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org)
+    r = client.patch("/api/v1/blood-donors/me/location",
+                     json={"lat": 8.18, "lng": 77.41},
+                     headers={"Authorization": f"Bearer {token}",
+                              "X-Organization-ID": str(org.id)})
+    assert r.status_code == 204, r.text
+    db.expire_all()
+    from app.models.blood_donor import BloodDonor
+    d = db.query(BloodDonor).filter(BloodDonor.id == d.id).first()
+    assert d.latitude is not None
+    assert d.location_updated_at is not None
+
+
+def test_opening_the_app_again_from_the_same_place_writes_nothing(client, db):
+    """This runs on every app open. If it wrote each time it would be pure
+    churn — a search that works in kilometres cannot see a few metres."""
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000002")
+    h = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    client.patch("/api/v1/blood-donors/me/location",
+                 json={"lat": 8.18, "lng": 77.41}, headers=h)
+    db.expire_all()
+    from app.models.blood_donor import BloodDonor
+    first = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().location_updated_at
+
+    client.patch("/api/v1/blood-donors/me/location",
+                 json={"lat": 8.1801, "lng": 77.4101}, headers=h)
+    db.expire_all()
+    again = db.query(BloodDonor).filter(BloodDonor.id == d.id).first().location_updated_at
+    assert again == first
+
+
+def test_moving_a_real_distance_does_update(client, db):
+    org = _make_org(db)
+    token, d = _donor_with_consent(client, db, org, phone="+919600000003")
+    h = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+    client.patch("/api/v1/blood-donors/me/location",
+                 json={"lat": 8.18, "lng": 77.41}, headers=h)
+    client.patch("/api/v1/blood-donors/me/location",
+                 json={"lat": 8.30, "lng": 77.55}, headers=h)
+    db.expire_all()
+    from app.models.blood_donor import BloodDonor
+    fresh = db.query(BloodDonor).filter(BloodDonor.id == d.id).first()
+    assert abs(fresh.latitude - 8.30) < 0.001
+
+
+def test_without_consent_nothing_is_recorded(client, db):
+    """Opening the app is not consent to be located."""
+    org = _make_org(db)
+    from app.models.blood_donor import BloodDonor
+    token, d = _donor_with_consent(client, db, org,
+                                   phone="+919600000004", consent=False)
+    r = client.patch("/api/v1/blood-donors/me/location",
+                     json={"lat": 8.18, "lng": 77.41},
+                     headers={"Authorization": f"Bearer {token}",
+                              "X-Organization-ID": str(org.id)})
+    assert r.status_code == 204
+    db.expire_all()
+    assert db.query(BloodDonor).filter(
+        BloodDonor.id == d.id).first().location_updated_at is None
