@@ -1,11 +1,12 @@
+import random
 import uuid
 import logging
 import time
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from fastapi.concurrency import run_in_threadpool
@@ -15,7 +16,9 @@ from app.core.database import get_db, SessionLocal
 from app.core.security import decode_token
 from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
-from app.models.chess import ChessGame, ChessMove, ChessPlayerStats, ChessChallenge
+from app.models.chess import (
+    ChessGame, ChessMove, ChessPlayerStats, ChessChallenge, ChessSeek,
+)
 from app.models.user import User, UserProfile
 from app.schemas.chess import (
     ChessGameCreate, ChessGamePatch,
@@ -23,8 +26,12 @@ from app.schemas.chess import (
     ChessPlayerStatsOut, ChessMemberOut,
     ChallengeCreate, ChallengeOut, ChallengeAcceptOut,
     LiveGameOut, PlayerProfileOut,
+    SeekCreate, SeekOut, SeekAcceptOut,
 )
-from app.services.chess_ws_manager import ws_manager, DISCONNECT_GRACE_SECONDS
+from app.services.chess_ws_manager import (
+    ws_manager, DISCONNECT_GRACE_SECONDS, is_valid_time_control, _initial_time_ms,
+)
+from app.core.short_code import generate_unique_short_code
 from app.services.glicko2 import update as glicko2_update, PlayerRating, prestige_title, title_emoji
 
 logger = logging.getLogger(__name__)
@@ -1397,3 +1404,229 @@ async def game_websocket(
         else:
             # Both disconnected — leave session alive briefly for reconnect
             pass
+
+
+# ── Open seeks ────────────────────────────────────────────────────────────────
+# A directed challenge needs you to already know your opponent. A seek is the
+# undirected form: it sits in a lobby until someone takes it, and its short code
+# makes it a link you can send on WhatsApp.
+
+SEEK_TTL_MINUTES = 60
+
+
+def _seek_out(db: Session, s: ChessSeek, me) -> SeekOut:
+    return SeekOut(
+        id=s.id,
+        short_code=s.short_code,
+        creator_id=s.creator_id,
+        creator_name=_display_name(db, s.creator) or "Player",
+        time_control=s.time_control,
+        preferred_color=s.preferred_color or "random",
+        status=s.status,
+        is_mine=str(s.creator_id) == str(me),
+        game_id=s.game_id,
+        created_at=s.created_at,
+    )
+
+
+def _expire_stale_seeks(db: Session, tenant_id) -> None:
+    """Sweep seeks nobody took. Cheap, and keeps the lobby honest."""
+    now = datetime.now(timezone.utc)
+    db.query(ChessSeek).filter(
+        ChessSeek.organization_id == tenant_id,
+        ChessSeek.status == "open",
+        ChessSeek.expires_at.isnot(None),
+        ChessSeek.expires_at < now,
+    ).update({"status": "expired"}, synchronize_session=False)
+
+
+@router.post("/seeks", response_model=SeekOut, status_code=201)
+@limiter.limit("20/minute")
+def create_seek(
+    request: Request,
+    payload: SeekCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Offer a game to anyone. Returns a seek whose short_code is shareable."""
+    tc = (payload.time_control or "rapid_10_0").strip()
+    if not is_valid_time_control(tc):
+        raise HTTPException(status_code=400, detail=f"Unknown time control '{tc}'")
+    colour = (payload.preferred_color or "random").strip().lower()
+    if colour not in ("white", "black", "random"):
+        raise HTTPException(status_code=400, detail="preferred_color must be white, black or random")
+
+    _expire_stale_seeks(db, tenant_id)
+
+    # One open seek per player: a lobby full of duplicates from one person is
+    # noise, and the second one could never be honoured anyway.
+    existing = db.query(ChessSeek).filter(
+        ChessSeek.organization_id == tenant_id,
+        ChessSeek.creator_id == current_user.id,
+        ChessSeek.status == "open",
+    ).first()
+    if existing:
+        existing.time_control = tc
+        existing.preferred_color = colour
+        existing.expires_at = datetime.now(timezone.utc) + timedelta(minutes=SEEK_TTL_MINUTES)
+        db.commit()
+        db.refresh(existing)
+        return _seek_out(db, existing, current_user.id)
+
+    seek = ChessSeek(
+        id=uuid.uuid4(),
+        organization_id=tenant_id,
+        short_code=generate_unique_short_code(db, ChessSeek),
+        creator_id=current_user.id,
+        time_control=tc,
+        preferred_color=colour,
+        status="open",
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=SEEK_TTL_MINUTES),
+    )
+    db.add(seek)
+    db.commit()
+    db.refresh(seek)
+    return _seek_out(db, seek, current_user.id)
+
+
+@router.get("/seeks", response_model=List[SeekOut])
+def list_seeks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """The lobby: every open offer, newest first, own seek included and flagged."""
+    _expire_stale_seeks(db, tenant_id)
+    db.commit()
+    rows = (
+        db.query(ChessSeek)
+        .filter(ChessSeek.organization_id == tenant_id, ChessSeek.status == "open")
+        .order_by(ChessSeek.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [_seek_out(db, s, current_user.id) for s in rows]
+
+
+@router.get("/seeks/by-code/{code}", response_model=SeekOut)
+def resolve_seek_code(
+    code: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Resolve a shared link to its seek, so the page can show what is on offer."""
+    seek = db.query(ChessSeek).filter(
+        ChessSeek.organization_id == tenant_id,
+        ChessSeek.short_code == code,
+    ).first()
+    if not seek:
+        raise HTTPException(status_code=404, detail="This invitation no longer exists")
+    return _seek_out(db, seek, current_user.id)
+
+
+@router.delete("/seeks/{seek_id}", status_code=204)
+def cancel_seek(
+    seek_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    seek = db.query(ChessSeek).filter(
+        ChessSeek.id == seek_id,
+        ChessSeek.organization_id == tenant_id,
+        ChessSeek.creator_id == current_user.id,
+    ).first()
+    if not seek:
+        raise HTTPException(status_code=404, detail="Seek not found")
+    if seek.status == "open":
+        seek.status = "cancelled"
+        db.commit()
+    return Response(status_code=204)
+
+
+@router.post("/seeks/{seek_id}/accept", response_model=SeekAcceptOut)
+@limiter.limit("30/minute")
+def accept_seek(
+    request: Request,
+    seek_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+):
+    """Take an open seek and start the game.
+
+    Two people can tap the same offer at the same moment, so the seek is claimed
+    with a conditional UPDATE: exactly one caller can move it out of `open`, and
+    the loser is told it is gone rather than being handed a second game.
+    """
+    seek = db.query(ChessSeek).filter(
+        ChessSeek.id == seek_id,
+        ChessSeek.organization_id == tenant_id,
+    ).first()
+    if not seek:
+        raise HTTPException(status_code=404, detail="This invitation no longer exists")
+    if str(seek.creator_id) == str(current_user.id):
+        raise HTTPException(status_code=400, detail="You cannot accept your own invitation")
+    if seek.status != "open":
+        raise HTTPException(status_code=409, detail="Someone already took this game")
+
+    claimed = db.query(ChessSeek).filter(
+        ChessSeek.id == seek_id,
+        ChessSeek.status == "open",
+    ).update(
+        {"status": "matched", "accepted_by_id": current_user.id},
+        synchronize_session=False,
+    )
+    if claimed == 0:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Someone already took this game")
+
+    # Resolve colours from the creator's preference.
+    pref = (seek.preferred_color or "random").lower()
+    if pref == "random":
+        creator_is_white = random.choice((True, False))
+    else:
+        creator_is_white = pref == "white"
+
+    game = ChessGame(
+        id=uuid.uuid4(),
+        organization_id=tenant_id,
+        white_id=seek.creator_id if creator_is_white else current_user.id,
+        black_id=current_user.id if creator_is_white else seek.creator_id,
+        mode="online",
+        status="waiting",
+        time_control=seek.time_control,
+        white_time_ms=_initial_time_ms(seek.time_control),
+        black_time_ms=_initial_time_ms(seek.time_control),
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(game)
+    db.flush()
+    db.query(ChessSeek).filter(ChessSeek.id == seek_id).update(
+        {"game_id": game.id}, synchronize_session=False)
+    db.commit()
+
+    creator_name = _display_name(db, seek.creator) or "Opponent"
+    accepter_name = _display_name(db, current_user) or "Your opponent"
+    _notify_chess(
+        db,
+        user_id=seek.creator_id,
+        org_id=tenant_id,
+        title_en="♟️ Your game is on",
+        body_en=f"{accepter_name} accepted your invitation.",
+        title_ta="♟️ ஆட்டம் தொடங்குகிறது",
+        body_ta=f"{accepter_name} உங்கள் அழைப்பை ஏற்றார்.",
+        data={
+            "type": "chess_accept",
+            "route": f"/chess/online/{game.id}",
+            "game_id": str(game.id),
+        },
+    )
+    return SeekAcceptOut(
+        game_id=game.id,
+        color="black" if creator_is_white else "white",
+        opponent_name=creator_name,
+        time_control=seek.time_control,
+    )

@@ -182,3 +182,31 @@ class WeeklyAwardsOut(BaseModel):
     most_active: Optional[AwardWinnerOut] = None
     best_newcomer: Optional[AwardWinnerOut] = None
     sharpest_mind: Optional[AwardWinnerOut] = None
+
+
+# ── Open seeks (lobby + shareable links) ──────────────────────────────────────
+
+class SeekCreate(BaseModel):
+    time_control: str = "rapid_10_0"
+    # 'white' | 'black' | 'random' — resolved when someone accepts.
+    preferred_color: str = "random"
+
+
+class SeekOut(BaseModel):
+    id: UUID
+    short_code: Optional[str] = None
+    creator_id: UUID
+    creator_name: str
+    time_control: str
+    preferred_color: str
+    status: str
+    is_mine: bool
+    game_id: Optional[UUID] = None
+    created_at: datetime
+
+
+class SeekAcceptOut(BaseModel):
+    game_id: UUID
+    color: str            # the colour the ACCEPTING player gets
+    opponent_name: str
+    time_control: str

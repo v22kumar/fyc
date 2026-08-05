@@ -100,6 +100,43 @@ class ChessChallenge(Base, TimestampMixin, TenantModelMixin):
     game = relationship("ChessGame", foreign_keys=[game_id])
 
 
+class ChessSeek(Base, TimestampMixin, TenantModelMixin):
+    """An open offer to play — "anyone, at this time control".
+
+    A ChessChallenge is directed: you must already know who you want to play.
+    That is useless to a member who opens the app at 9pm and just wants a game,
+    and it cannot be shared. A seek is the undirected form: it sits in a lobby
+    until someone takes it, and its short code makes it a link you can send on
+    WhatsApp. Whoever opens the link first gets the game.
+    """
+    __tablename__ = "chess_seeks"
+    __table_args__ = (
+        # The lobby query is (organization_id, status) ordered by recency.
+        Index("ix_chess_seeks_org_status", "organization_id", "status"),
+    )
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    # Short, typeable code so a seek can be shared as a link (…/play/K7P2).
+    short_code = Column(String(12), unique=True, index=True, nullable=True)
+    creator_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"),
+                        nullable=False, index=True)
+    time_control = Column(String(30), nullable=False, default="rapid_10_0")
+    # open → matched | cancelled | expired
+    status = Column(String(20), nullable=False, default="open")
+    # Colour the CREATOR wants: white / black / random (resolved on match).
+    preferred_color = Column(String(10), nullable=False, default="random")
+    game_id = Column(GUID(), ForeignKey("chess_games.id", ondelete="SET NULL"),
+                     nullable=True)
+    accepted_by_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"),
+                            nullable=True)
+    # A seek nobody takes should not sit in the lobby for ever.
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    creator = relationship("User", foreign_keys=[creator_id])
+    accepted_by = relationship("User", foreign_keys=[accepted_by_id])
+    game = relationship("ChessGame", foreign_keys=[game_id])
+
+
 class ChessPlayerStats(Base, TimestampMixin, TenantModelMixin):
     """Materialised player stats — updated after each rated game."""
     __tablename__ = "chess_player_stats"
