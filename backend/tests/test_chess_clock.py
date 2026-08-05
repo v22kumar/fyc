@@ -203,3 +203,86 @@ def test_sweep_keeps_recently_active_sessions():
     m.create("fresh", WHITE, BLACK, "W", "B")
     assert m.sweep(max_idle_seconds=3600) == 0
     assert m.get("fresh") is not None
+
+
+# ── Lag compensation ──────────────────────────────────────────────────────────
+
+def test_no_compensation_without_a_measurement():
+    """A client that never answers a probe is charged exactly as before —
+    compensation must never be a silent default."""
+    s = _session("blitz_3_0")
+    s.start_clock()
+    _rewind(s, 10)
+    s.deduct_time(WHITE)
+    assert s.white_time_ms == pytest.approx(170_000, abs=1_500)
+
+
+def test_transit_time_is_refunded():
+    """The player is charged for thinking, not for the network carrying it."""
+    s = _session("blitz_3_0")
+    s.start_clock()
+    s.probe_sent(WHITE)
+    s._probe_sent_at[WHITE] -= 0.4          # a 400ms round trip
+    s.probe_returned(WHITE)
+
+    _rewind(s, 10)                           # 10s wall clock…
+    s.deduct_time(WHITE)
+    # …of which 400ms was transit, so ~9.6s is charged.
+    assert s.white_time_ms == pytest.approx(170_400, abs=1_500)
+
+
+def test_refund_is_capped():
+    """A terrible link cannot be turned into free time."""
+    s = _session("blitz_3_0")
+    s.start_clock()
+    s.probe_sent(WHITE)
+    s._probe_sent_at[WHITE] -= 5.0          # a 5s round trip
+    s.probe_returned(WHITE)
+    assert s.lag_credit_ms(WHITE) == 1000   # capped, not 5000
+
+
+def test_absurd_probe_replies_are_ignored():
+    """A reply from a stalled tab describes the tab, not the link — letting it
+    in would inflate the refund on every later move."""
+    s = _session("blitz_3_0")
+    s.probe_sent(WHITE)
+    s._probe_sent_at[WHITE] -= 30.0
+    s.probe_returned(WHITE)
+    assert s.lag_credit_ms(WHITE) == 0
+
+
+def test_lag_estimate_smooths_across_samples():
+    """One slow packet should not swing the estimate."""
+    s = _session("blitz_3_0")
+    for rtt in (0.1, 0.1, 0.1):
+        s.probe_sent(WHITE)
+        s._probe_sent_at[WHITE] -= rtt
+        s.probe_returned(WHITE)
+    steady = s.lag_credit_ms(WHITE)
+    s.probe_sent(WHITE)
+    s._probe_sent_at[WHITE] -= 2.0          # one bad sample
+    s.probe_returned(WHITE)
+    # Moves toward the spike but nowhere near it.
+    assert steady < s.lag_credit_ms(WHITE) < 800
+
+
+def test_compensation_is_per_player():
+    """Refunding one player must not touch the other's clock."""
+    s = _session("blitz_3_0")
+    s.start_clock()
+    s.probe_sent(BLACK)
+    s._probe_sent_at[BLACK] -= 0.5
+    s.probe_returned(BLACK)
+    assert s.lag_credit_ms(BLACK) == pytest.approx(500, abs=60)
+    assert s.lag_credit_ms(WHITE) == 0
+
+
+def test_a_stale_probe_cannot_be_answered_twice():
+    """Replaying an old pong must not keep crediting."""
+    s = _session("blitz_3_0")
+    s.probe_sent(WHITE)
+    s._probe_sent_at[WHITE] -= 0.3
+    s.probe_returned(WHITE)
+    first = s.lag_credit_ms(WHITE)
+    s.probe_returned(WHITE)                  # no outstanding probe now
+    assert s.lag_credit_ms(WHITE) == first

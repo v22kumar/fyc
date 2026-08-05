@@ -1200,6 +1200,16 @@ async def game_websocket(
                     move_msg["clock"] = clock
                 await session.broadcast(move_msg)
 
+                # Measure each player's round trip right after the move that
+                # starts their think time. The probe is server-initiated so a
+                # client cannot inflate its own lag to win free time, and a
+                # client that never answers simply gets no compensation — which
+                # is exactly the behaviour before this existed.
+                for _pid in (session.white_id, session.black_id):
+                    if _pid in session.connections:
+                        session.probe_sent(_pid)
+                        await session.send_to(_pid, {"type": "latency_probe"})
+
                 clock_state = session.clock_for_db()
 
                 def _persist_move() -> bool:
@@ -1332,6 +1342,9 @@ async def game_websocket(
 
             elif msg_type == "sync":
                 await session.send_to(uid, session.state_snapshot(uid))
+
+            elif msg_type == "latency_pong":
+                session.probe_returned(uid)
 
             elif msg_type == "ping":
                 await session.send_to(uid, {"type": "pong"})

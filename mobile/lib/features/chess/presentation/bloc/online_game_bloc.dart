@@ -164,6 +164,12 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
           emit(s.copyWith(opponentDisconnected: false));
         }
 
+      case 'latency_probe':
+        // Answer at once. The round trip the server measures from this is what
+        // gets refunded to our clock on the next move, so any delay we add here
+        // is time we lose ourselves.
+        _wsClient?.send({'type': 'latency_pong'});
+
       case 'game_paused':
         // The server could not durably save a move and froze the board until an
         // organizer intervenes. Web already surfaced this; without it here a
