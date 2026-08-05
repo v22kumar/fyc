@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import '../../../../core/l10n/tr.dart';
+import '../../data/engine/chess_engine.dart' show isEngineAvailable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -838,6 +839,14 @@ class _ChessHomePageState extends State<ChessHomePage>
   }
 
   void _startAiGame(BuildContext context) {
+    // The engine is native-only. On platforms without it, say so plainly rather
+    // than opening a board that can never make a move.
+    if (!isEngineAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('ai_not_available_here'))),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (ctx) => _DifficultyDialog(

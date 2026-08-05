@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
-import 'package:stockfish_chess_engine/stockfish_chess_engine.dart';
-import 'package:stockfish_chess_engine/stockfish_chess_engine_state.dart';
+// Never import stockfish_chess_engine directly — it is FFI-only and would make
+// the app impossible to compile for the web. This facade resolves to the real
+// engine on native platforms and to a stub elsewhere.
+import '../../data/engine/chess_engine.dart';
 import 'package:square_bishop/square_bishop.dart';
 import 'ai_game_event.dart';
 import 'ai_game_state.dart';

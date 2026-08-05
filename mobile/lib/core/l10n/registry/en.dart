@@ -353,6 +353,7 @@ const Map<String, String> kEn = {
   'new_chess_tournament': 'New Chess Tournament',
   'time_control': 'Time control (every match)',
   'game_paused_organizer': 'Game paused — an organizer has been alerted.',
+  'ai_not_available_here': 'Play vs computer is only available in the mobile app.',
   'change': 'Change',
   'something_went_wrong': 'Something went wrong',
   'news': 'News',
