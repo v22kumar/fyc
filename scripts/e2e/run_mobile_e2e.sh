@@ -64,7 +64,11 @@ if [[ -z "${DISPLAY:-}" ]]; then
   RUNNER=(xvfb-run -a --server-args="-screen 0 1280x1024x24")
 fi
 
-"${RUNNER[@]}" flutter test integration_test/chess_live_game_test.dart -d linux \
+# A hard bound on the test itself. `flutter test -d linux` waits indefinitely
+# for the app's debug connection, so a launch that never completes hangs rather
+# than failing — and a hang reads exactly like a slow build.
+"${RUNNER[@]}" timeout "${E2E_TEST_TIMEOUT:-900}" \
+  flutter test integration_test/chess_live_game_test.dart -d linux \
   --dart-define=GAME_IDS="$GAME_IDS" \
   --dart-define=TOKEN="$TOKEN" \
   --dart-define=OPP_TOKEN="$OPP_TOKEN" \

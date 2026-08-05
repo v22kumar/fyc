@@ -86,6 +86,9 @@ jobs:
   web-e2e:
     name: Web — real browser on a real board
     runs-on: ubuntu-latest
+    # A hung server or a browser waiting on a page that never loads should fail
+    # in minutes, not sit on a runner for six hours.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -119,6 +122,10 @@ jobs:
   mobile-e2e:
     name: Mobile — real widget tree on a real board
     runs-on: ubuntu-latest
+    # Bounded, because the first run without this sat for over an hour. The
+    # build is only about a minute even cold — anything beyond that is a launch
+    # that never completed, and it should fail rather than wait.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -150,11 +157,25 @@ jobs:
           sudo apt-get install -y ninja-build clang xvfb \
             libgtk-3-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-            libsecret-1-dev
+            libsecret-1-dev \
+            libegl1 libgl1-mesa-dri libglu1-mesa
 
       - name: Install app dependencies
         working-directory: mobile
         run: flutter pub get
 
+      # Deliberately its own step. When the build and the test shared one, a
+      # launch that hung was indistinguishable from a compile still running —
+      # and that ambiguity cost an hour of wall clock to resolve. Now the step
+      # timings say which of the two is at fault.
+      - name: Build the Linux app
+        working-directory: mobile
+        run: flutter build linux --debug
+
+      # No GPU on a runner, so the embedder must render through llvmpipe. Without
+      # this the app builds, launches, and then waits forever for a GL context
+      # it will never get — which is what the first run spent an hour doing.
       - name: Play a game in the real widget tree
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
         run: ./scripts/e2e/run_mobile_e2e.sh
