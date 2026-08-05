@@ -1061,16 +1061,26 @@ async def game_websocket(
 
     # Notify both when game is fully connected
     if session.both_connected():
+        # Start the clock first so the opening window is part of the state we
+        # persist below — otherwise a restart during the very first move lost
+        # that thinking time (last_move_at was still null in the database).
+        session.start_clock()
         if game_status == "waiting":
+            _start_clock_state = session.clock_for_db()
+
             def _mark_in_progress():
                 with SessionLocal() as s:
                     g = s.query(ChessGame).filter(ChessGame.id == gid).first()
                     if g and g.status == "waiting":
                         g.status = "in_progress"
+                        g.started_at = g.started_at or datetime.now(timezone.utc)
+                        if _start_clock_state["white_time_ms"] is not None:
+                            g.white_time_ms = _start_clock_state["white_time_ms"]
+                            g.black_time_ms = _start_clock_state["black_time_ms"]
+                            g.last_move_at = _start_clock_state["last_move_at"]
                         s.commit()
             await run_in_threadpool(_mark_in_progress)
             game_status = "in_progress"
-        session.start_clock()
         start_msg: dict = {
             "type": "game_start",
             "white_name": white_name,

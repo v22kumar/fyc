@@ -28,6 +28,13 @@ class ChessTournament(Base, TimestampMixin, TenantModelMixin):
     # REGISTRATION_OPEN → REGISTRATION_CLOSED → IN_PROGRESS → COMPLETED
     status = Column(String(20), nullable=False, default="REGISTRATION_OPEN")
     registration_deadline = Column(DateTime(timezone=True), nullable=True)
+    # Clock used by EVERY match in this tournament — the organizer picks it once
+    # and it applies to the whole event. Matches were previously hardcoded to
+    # "untimed", which meant a stalling player could never lose on time and a
+    # multi-round event could not be finished in a day.
+    # Nullable so the startup schema-reconcile can add it to existing rows; a
+    # null is treated as the default below.
+    time_control = Column(String(30), default="rapid_10_0")
     # Highest round the manager has activated ("Start Next Round"). 0 until the
     # tournament starts, 1 once round 1 is live, etc. Nullable so the startup
     # schema-reconcile can add it to existing rows; treated as 0 when null.

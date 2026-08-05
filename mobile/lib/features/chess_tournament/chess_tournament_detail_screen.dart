@@ -221,6 +221,53 @@ class _State extends State<ChessTournamentDetailScreen> {
         child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
       );
 
+  /// Human label for a time-control id, used before the server list loads.
+  String _timeControlLabel(String tc) => const {
+        'untimed': 'No clock',
+        'bullet_1_0': 'Bullet — 1 min each',
+        'blitz_3_0': 'Blitz — 3 min each',
+        'blitz_3_2': 'Blitz — 3 min + 2 sec/move',
+        'blitz_5_0': 'Blitz — 5 min each',
+        'rapid_10_0': 'Rapid — 10 min each',
+        'classical_30_0': 'Classical — 30 min each',
+      }[tc] ??
+      tc;
+
+  Future<void> _pickTimeControl(ChessTournamentDetail t) async {
+    List<({String value, String label})> options;
+    try {
+      options = await ChessTournamentApi.timeControlOptions();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(trId('something_went_wrong'))));
+      return;
+    }
+    if (!mounted) return;
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(trId('time_control'),
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          for (final o in options)
+            ListTile(
+              title: Text(o.label),
+              trailing: o.value == t.timeControl
+                  ? const Icon(Icons.check, size: 18)
+                  : null,
+              onTap: () => Navigator.pop(ctx, o.value),
+            ),
+        ]),
+      ),
+    );
+    if (chosen == null || chosen == t.timeControl) return;
+    await _run(() => ChessTournamentApi.setTimeControl(t.id, chosen));
+  }
+
   // ── Registration / manager controls ─────────────────────────────────────────
   Widget _registrationCard(ChessTournamentDetail t) {
     return Container(
@@ -236,6 +283,26 @@ class _State extends State<ChessTournamentDetailScreen> {
           ],
           Spacer(),
           if (t.isClosed) _roundBadge(trId('registration_closed_4'), context.cTextSecondary),
+        ]),
+        SizedBox(height: 8),
+
+        // The clock every match in this event is played with. Organizers can
+        // still change it until the bracket goes live; after that it is fixed
+        // so earlier and later rounds stay comparable.
+        Row(children: [
+          Icon(Icons.timer_outlined, size: 15, color: context.cTextSecondary),
+          SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _timeControlLabel(t.timeControl),
+              style: TextStyle(fontSize: 12.5, color: context.cTextSecondary),
+            ),
+          ),
+          if (_isAdmin && (t.isOpen || t.isClosed))
+            TextButton(
+              onPressed: _busy ? null : () => _pickTimeControl(t),
+              child: Text(trId('change'), style: TextStyle(fontSize: 12)),
+            ),
         ]),
         SizedBox(height: 12),
 

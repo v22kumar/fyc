@@ -72,6 +72,19 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
     final nameC = TextEditingController();
     final descC = TextEditingController();
     DateTime? deadline;
+    // Clock for every match in the event. Options come from the server so the
+    // app can never offer a value the backend rejects.
+    var timeControl = 'rapid_10_0';
+    var tcOptions = <({String value, String label})>[
+      (value: 'rapid_10_0', label: 'Rapid — 10 min each'),
+    ];
+    try {
+      final fetched = await ChessTournamentApi.timeControlOptions();
+      if (fetched.isNotEmpty) tcOptions = fetched;
+    } catch (_) {
+      // Keep the sensible default if the lookup fails — creation still works.
+    }
+    if (!mounted) return;
     final created = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -84,6 +97,20 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
               TextField(controller: nameC, decoration: InputDecoration(labelText: trId('name'))),
               SizedBox(height: 8),
               TextField(controller: descC, decoration: InputDecoration(labelText: trId('description_2'))),
+              SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: timeControl,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: trId('time_control')),
+                items: [
+                  for (final o in tcOptions)
+                    DropdownMenuItem(
+                      value: o.value,
+                      child: Text(o.label, style: const TextStyle(fontSize: 13)),
+                    ),
+                ],
+                onChanged: (v) => setSt(() => timeControl = v ?? timeControl),
+              ),
               SizedBox(height: 12),
               Row(
                 children: [
@@ -129,6 +156,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
           name: nameC.text.trim(),
           description: descC.text.trim(),
           registrationDeadline: deadline?.toUtc().toIso8601String(),
+          timeControl: timeControl,
         );
         _load();
       } catch (_) {

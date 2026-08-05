@@ -9,6 +9,14 @@ class ChessTournamentCreate(BaseModel):
     name: str
     description: Optional[str] = None
     registration_deadline: Optional[datetime] = None
+    # Clock for every match in the event. Defaults to 10 minutes per player
+    # (sudden death) — a sane default for a multi-round one-day knockout.
+    time_control: str = "rapid_10_0"
+
+
+class TournamentSettingsIn(BaseModel):
+    """Organizer-editable tournament settings."""
+    time_control: str
 
 
 class PlayerRef(BaseModel):
@@ -30,6 +38,7 @@ class ChessTournamentOut(BaseModel):
     description: Optional[str]
     status: str
     registration_deadline: Optional[datetime]
+    time_control: str  # clock applied to every match in this tournament
     entry_count: int  # approved players (the ones who will play)
     pending_count: int  # registrations awaiting a manager decision
     current_round: int

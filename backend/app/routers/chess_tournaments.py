@@ -27,6 +27,12 @@ from app.schemas.chess_tournament import (
     ReportResultIn,
     RegistrationDecisionIn,
     ConductModeIn,
+    TournamentSettingsIn,
+)
+from app.services.chess_ws_manager import (
+    TIME_CONTROL_CHOICES,
+    _initial_time_ms,
+    is_valid_time_control,
 )
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
@@ -106,6 +112,19 @@ def _audit(db: Session, org_id, user_id, action_type: str, match_id, old_values=
         ))
     except Exception:
         pass
+
+
+DEFAULT_TIME_CONTROL = "rapid_10_0"
+
+
+def _tc(tour: ChessTournament) -> str:
+    """The tournament's clock.
+
+    A null column means the row pre-dates this setting: those tournaments were
+    created and played with no clock, so they stay untimed rather than silently
+    acquiring one mid-event. New tournaments default to DEFAULT_TIME_CONTROL.
+    """
+    return tour.time_control or "untimed"
 
 
 def _aware(dt):
@@ -227,6 +246,7 @@ def _serialize(db: Session, tour: ChessTournament, user_id) -> ChessTournamentOu
         description=tour.description,
         status=tour.status,
         registration_deadline=tour.registration_deadline,
+        time_control=_tc(tour),
         entry_count=approved,
         pending_count=pending,
         current_round=tour.current_round or 0,
@@ -290,6 +310,12 @@ def create_tournament(
     name = (payload.name or "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="Name is required")
+    time_control = (payload.time_control or DEFAULT_TIME_CONTROL).strip()
+    if not is_valid_time_control(time_control):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown time control '{time_control}'",
+        )
     tour = ChessTournament(
         id=uuid.uuid4(),
         organization_id=tenant_id,
@@ -297,6 +323,7 @@ def create_tournament(
         name=name,
         description=(payload.description or "").strip() or None,
         registration_deadline=payload.registration_deadline,
+        time_control=time_control,
         status="REGISTRATION_OPEN",
         current_round=0,
         created_by_user_id=current_user.id,
@@ -436,6 +463,43 @@ def close_registration(
     if tour.status != "REGISTRATION_OPEN":
         raise HTTPException(status_code=400, detail="Registration is not open")
     tour.status = "REGISTRATION_CLOSED"
+    db.commit()
+    return _detail(db, tour, current_user.id)
+
+
+@router.get("/meta/time-controls")
+def list_time_controls():
+    """The clocks an organizer may pick, for the settings dropdown."""
+    return {
+        "default": DEFAULT_TIME_CONTROL,
+        "options": [{"value": v, "label": lb} for v, lb in TIME_CONTROL_CHOICES],
+    }
+
+
+@router.patch("/{tour_id}/settings", response_model=ChessTournamentDetailOut)
+def update_settings(
+    tour_id: uuid.UUID,
+    payload: TournamentSettingsIn,
+    db: Session = Depends(get_db),
+    tenant_id: uuid.UUID = Depends(require_tenant_id),
+    current_user: User = Depends(require_exec),
+):
+    """Organizer sets the clock used by every match in this tournament.
+
+    Only editable before the bracket goes live: once matches are being played,
+    changing the clock mid-event would give later rounds a different time
+    control from earlier ones and make the results incomparable.
+    """
+    tour = _get_tour(db, tour_id, tenant_id)
+    if tour.status not in ("REGISTRATION_OPEN", "REGISTRATION_CLOSED"):
+        raise HTTPException(
+            status_code=400,
+            detail="Time control can only be changed before the tournament starts",
+        )
+    tc = (payload.time_control or "").strip()
+    if not is_valid_time_control(tc):
+        raise HTTPException(status_code=400, detail=f"Unknown time control '{tc}'")
+    tour.time_control = tc
     db.commit()
     return _detail(db, tour, current_user.id)
 
@@ -695,6 +759,13 @@ def play_match(
         raise HTTPException(status_code=409, detail="Waiting for your opponent to be ready")
 
     if m.game_id is None:
+        # Every match inherits the tournament's clock (was hardcoded "untimed",
+        # so a tournament could never actually be played to a time limit). The
+        # starting balances are written now rather than on the first move, so a
+        # restart during the opening move still resumes the true clock instead
+        # of handing both players a fresh one.
+        tour_tc = _tc(_get_tour(db, tour_id, tenant_id))
+        start_ms = _initial_time_ms(tour_tc)
         game = ChessGame(
             id=uuid.uuid4(),
             organization_id=tenant_id,
@@ -702,7 +773,9 @@ def play_match(
             black_id=m.player_b_id,
             mode="online",
             status="waiting",
-            time_control="untimed",
+            time_control=tour_tc,
+            white_time_ms=start_ms,
+            black_time_ms=start_ms,
         )
         db.add(game)
         db.flush()

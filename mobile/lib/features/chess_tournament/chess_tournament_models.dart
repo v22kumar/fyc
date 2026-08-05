@@ -38,6 +38,8 @@ class ChessTournament {
   final bool isRegistered;
   final String? myStatus; // PENDING / APPROVED / REJECTED for the caller
   final PlayerRef? champion;
+  /// Clock applied to every match in this tournament (e.g. 'rapid_10_0').
+  final String timeControl;
 
   const ChessTournament({
     required this.id,
@@ -51,6 +53,7 @@ class ChessTournament {
     required this.isRegistered,
     this.myStatus,
     this.champion,
+    this.timeControl = 'rapid_10_0',
   });
 
   bool get isOpen => status == 'REGISTRATION_OPEN';
@@ -72,6 +75,7 @@ class ChessTournament {
         champion: j['champion'] != null
             ? PlayerRef.fromJson((j['champion'] as Map).cast<String, dynamic>())
             : null,
+        timeControl: (j['time_control'] as String?) ?? 'rapid_10_0',
       );
 }
 
@@ -153,6 +157,7 @@ class ChessTournamentDetail extends ChessTournament {
     required super.isRegistered,
     super.myStatus,
     super.champion,
+    super.timeControl,
     required this.entries,
     required this.rounds,
     required this.matches,
@@ -177,6 +182,7 @@ class ChessTournamentDetail extends ChessTournament {
       isRegistered: t.isRegistered,
       myStatus: t.myStatus,
       champion: t.champion,
+      timeControl: t.timeControl,
       entries: ((j['entries'] as List?) ?? const [])
           .whereType<Map>()
           .map((e) => TournamentEntry.fromJson(e.cast<String, dynamic>()))
