@@ -1114,4 +1114,6 @@ const Map<String, String> kEn = {
   'location_blocked_in_settings': 'Your phone is blocking location for this app, so nobody can find you by distance.',
   'location_services_off': 'Location is switched off on this phone. Turn it on and this will start working.',
   'open_phone_settings': 'Open phone settings',
+  'code_sent_whatsapp': 'Sent on WhatsApp to {phone}',
+  'code_sent_email': 'Sent to your email',
 };

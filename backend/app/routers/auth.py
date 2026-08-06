@@ -57,35 +57,52 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     verification_id = f"v_{uuid.uuid4().hex[:12]}"
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
-    if settings.TWILIO_VERIFY_SID:
-        # Twilio Verify manages the OTP — we only track phone+org. If the send
-        # actually fails (bad/expired credentials, unverified trial number,
-        # Twilio outage), surface it instead of returning a fake success — a
-        # silent failure looked to users like "OTP is down" with no signal, and
-        # left the verification_id pointing at an SMS that never arrived.
-        if not send_verify_otp(payload.phone_number):
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Couldn't send the OTP right now. Please try again shortly.",
-            )
-        otp_store[verification_id] = (payload.phone_number, None, payload.organization_id, expires_at)
+    # A ladder, not a single rung.
+    #
+    # This used to be an if/else: with TWILIO_VERIFY_SID configured, a failed
+    # send raised 502 and stopped. The WhatsApp and email senders sitting in
+    # otp_sender.py were only reachable when Verify was *not configured at all*
+    # — so on the one day Twilio has an outage, a trial balance runs out, or a
+    # number is unverified, every single member is locked out of the app and the
+    # fallbacks that exist for exactly that moment are unreachable code.
+    #
+    # Now each channel is tried in turn until one accepts the message. Which one
+    # carried it is reported back, because "check WhatsApp" and "check your
+    # messages" send a member to different places, and being told the wrong one
+    # looks identical to nothing arriving.
+    channel = None
+
+    if settings.TWILIO_VERIFY_SID and send_verify_otp(payload.phone_number):
+        # Twilio Verify manages the code itself; we only remember phone + org.
+        otp_store[verification_id] = (
+            payload.phone_number, None, payload.organization_id, expires_at
+        )
+        channel = "sms"
     else:
+        # Every remaining channel needs a code we generated ourselves.
         otp_code = _generate_otp()
-        otp_store[verification_id] = (payload.phone_number, otp_code, payload.organization_id, expires_at)
+        otp_store[verification_id] = (
+            payload.phone_number, otp_code, payload.organization_id, expires_at
+        )
         results = deliver_otp(payload.phone_number, otp_code, email=payload.email)
-        # No Twilio Verify AND no other channel worked → nothing was delivered.
-        # Don't pretend it was sent (the dev log-fallback path is only acceptable
-        # when a bypass code is configured, i.e. dev/staging).
-        if not any(results.values()) and not settings.OTP_BYPASS_CODE:
+        channel = next((name for name, ok in results.items() if ok), None)
+
+    if channel is None:
+        # Nothing carried it. A bypass code means this is dev or staging, where
+        # a log line is the delivery channel.
+        if not settings.OTP_BYPASS_CODE:
+            otp_store.pop(verification_id, None)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="OTP delivery is not configured on the server. "
-                       "Set TWILIO_VERIFY_SID (or SMTP) as a secret.",
+                detail="We could not send your code by SMS, WhatsApp or email. "
+                       "Please ask an organizer to let you in.",
             )
+        channel = "log"
 
     return OTPResponse(
         message="OTP sent successfully",
         verification_id=verification_id,
+        channel=channel,
     )
 
 

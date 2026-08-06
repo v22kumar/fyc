@@ -65,7 +65,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ApiConstants.otpSend,
         data: {'organization_id': organizationId, 'phone_number': phoneNumber},
       );
-      return response.data['verification_id'] as String;
+      // "sms", "whatsapp", "email" or "log" — packed alongside the id so the
+      // member can be told where to look. The server tries channels in order
+      // and only one of them carried the code; pointing somebody at their
+      // messages when it went to WhatsApp is indistinguishable, to them, from
+      // nothing arriving.
+      final id = response.data['verification_id'] as String;
+      final channel = response.data['channel'] as String?;
+      return channel == null ? id : '\$id|\$channel';
     } on DioException catch (e) {
       throw mapDioException(e);
     }

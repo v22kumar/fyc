@@ -20,10 +20,22 @@ class AuthOtpSent extends AuthState {
   final String verificationId;
   final String phoneNumber;
 
-  const AuthOtpSent({required this.verificationId, required this.phoneNumber});
+  /// Which channel actually carried the code: sms, whatsapp, email or log.
+  ///
+  /// The server walks a ladder — Twilio SMS, then WhatsApp, then email — so
+  /// the answer is not knowable in advance. Telling a member to check their
+  /// messages when the code went to WhatsApp looks, from where they are
+  /// standing, exactly like nothing having been sent.
+  final String? channel;
+
+  const AuthOtpSent({
+    required this.verificationId,
+    required this.phoneNumber,
+    this.channel,
+  });
 
   @override
-  List<Object?> get props => [verificationId, phoneNumber];
+  List<Object?> get props => [verificationId, phoneNumber, channel];
 }
 
 /// OTP correct but user not registered — redirect to registration
