@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/services/error_reporter.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
@@ -168,6 +169,21 @@ class _SignInSheetState extends State<_SignInSheet> {
         } else if (state is AuthAuthenticated) {
           Navigator.of(context).pop(true);
         } else if (state is AuthFailureState) {
+          // Report every sign-in failure, with the step it happened on.
+          //
+          // Both doors into this app went down after a deploy and there was no
+          // way to tell why: a member sees "something went wrong", and nobody
+          // can distinguish a TLS failure on an old handset from a 502 out of
+          // Twilio from a null idToken caused by an unregistered signing key.
+          // Each needs a different fix and they look identical from here.
+          //
+          // The reporter is the same one that already catches crashes, so this
+          // costs nothing new and lands beside them.
+          ErrorReporter.instance.report(
+            'sign-in failed at ${_step.name}: ${state.message}',
+            null,
+            context: 'auth/${_step.name}',
+          );
           setState(() {
             _busy = false;
             _error = state.message;

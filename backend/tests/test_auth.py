@@ -492,3 +492,22 @@ def test_every_channel_down_says_so_and_leaves_nothing_dangling(db, monkeypatch)
     assert raised.value.status_code == 502
     assert "organizer" in raised.value.detail.lower()
     assert len(auth_router.otp_store) == before, "no dangling verification"
+
+
+def test_the_app_can_say_which_doors_are_open(client):
+    """A deploy where OTP and Google both stopped working left no way to tell,
+    from outside, whether the cause was a missing secret, an expired
+    credential, a bad client id or the code — every answer needed someone with
+    dashboard access. This reports configuration, never values."""
+    r = client.get("/api/health/auth")
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    assert "can_deliver_a_code" in body
+    assert set(body["channels"]) == {
+        "sms_twilio_verify", "whatsapp_twilio", "email_smtp", "otp_bypass"
+    }
+    # Configuration, not credentials. Nothing here may carry a secret value.
+    blob = r.text.lower()
+    for leak in ("auth_token", "password", "sid", "secret_key"):
+        assert leak not in blob, f"{leak} must not appear in a public probe"

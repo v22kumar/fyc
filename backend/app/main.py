@@ -853,6 +853,58 @@ def health_check():
     }
 
 
+@app.get("/api/health/auth", tags=["System"])
+def auth_channels_check():
+    """Which ways into this app are actually configured right now.
+
+    Written after a deploy where OTP and Google sign-in both stopped working and
+    there was no way to tell, from outside, whether the cause was a missing
+    secret, an expired credential, a bad client id or the code itself. Every
+    answer required someone with dashboard access to go looking, and the only
+    signal the app gave was "couldn't send the OTP".
+
+    Reports configuration, never values. Knowing that TWILIO_AUTH_TOKEN is set
+    is the diagnosis; knowing what it is would be a leak. Deliberately
+    unauthenticated for the same reason a health check is: the moment you need
+    it most is the moment nobody can sign in.
+    """
+    google_ids = [
+        cid for cid in (settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID)
+        if cid
+    ]
+    channels = {
+        "sms_twilio_verify": bool(
+            settings.TWILIO_ACCOUNT_SID
+            and settings.TWILIO_AUTH_TOKEN
+            and settings.TWILIO_VERIFY_SID
+        ),
+        "whatsapp_twilio": bool(
+            settings.TWILIO_ACCOUNT_SID
+            and settings.TWILIO_AUTH_TOKEN
+            and settings.TWILIO_WHATSAPP_FROM
+        ),
+        "email_smtp": bool(settings.SMTP_USER and settings.SMTP_PASSWORD),
+        "otp_bypass": bool(settings.OTP_BYPASS_CODE),
+    }
+    return {
+        # If every one of these is false, nobody can sign in and the app will
+        # say so at /auth/otp/send. That is the single most useful line here.
+        "can_deliver_a_code": any(
+            v for k, v in channels.items() if k != "otp_bypass"
+        ) or channels["otp_bypass"],
+        "channels": channels,
+        "google_sign_in": {
+            # The router also accepts two well-known first-party client ids, so
+            # Google can work with none configured here — this reports whether
+            # anything was set deliberately.
+            "configured_client_ids": len(google_ids),
+            "accepts_first_party_defaults": True,
+        },
+        "environment": settings.ENVIRONMENT,
+        "allowed_origins": settings.allowed_origins_list,
+    }
+
+
 @app.get("/api/health/ready", tags=["System"])
 def readiness_check():
     """Readiness probe: verifies the DB is reachable AND its schema matches the ORM.
