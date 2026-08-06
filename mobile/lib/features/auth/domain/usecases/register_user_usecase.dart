@@ -13,8 +13,8 @@ class RegisterUserUseCase {
     required String organizationId,
     required String phoneNumber,
     required String registrationToken,
-    required String email,
-    required String dateOfBirth,
+    String? email,
+    String? dateOfBirth,
     String? gender,
     String? bloodGroup,
     required String role,
@@ -28,22 +28,20 @@ class RegisterUserUseCase {
       );
     }
     // Email is optional — only validate the format when one was entered.
-    if (email.trim().isNotEmpty && !_emailRe.hasMatch(email.trim())) {
+    final trimmedEmail = (email ?? '').trim();
+    if (trimmedEmail.isNotEmpty && !_emailRe.hasMatch(trimmedEmail)) {
       return Future.value(
         const Left(ValidationFailure('Enter a valid email address')),
       );
     }
-    if (dateOfBirth.trim().isEmpty) {
-      return Future.value(
-        const Left(ValidationFailure('Date of birth is required')),
-      );
-    }
+    // Date of birth is no longer required to open an account. It is asked
+    // afterwards as a profile prompt, along with gender and blood group.
     return repository.registerUser(
       organizationId: organizationId,
       phoneNumber: phoneNumber,
       registrationToken: registrationToken,
-      email: email.trim(),
-      dateOfBirth: dateOfBirth.trim(),
+      email: trimmedEmail,
+      dateOfBirth: dateOfBirth?.trim(),
       gender: gender,
       bloodGroup: bloodGroup,
       role: role,

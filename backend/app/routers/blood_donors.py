@@ -306,8 +306,20 @@ def register_donor(
             detail="User is already registered as a blood donor"
         )
 
-    # Only keep coordinates when the donor actually consented to share location.
-    consent = bool(payload.location_consent and payload.latitude is not None and payload.longitude is not None)
+    # Consent and coordinates are two different facts, and folding them into one
+    # threw away the more important half.
+    #
+    # `location_consent` is the member's answer to "may we place you on a map".
+    # Coordinates are whether we have managed to read one yet. Someone who says
+    # yes on the registration screen and then misses the Android permission
+    # dialog used to be recorded as having said *no* — the yes was silently
+    # dropped, and the app had no way of knowing it was ever given. Now the
+    # answer is stored as given, and the position lands opportunistically the
+    # next time they open the blood screen.
+    #
+    # Coordinates without consent are still refused, which is the direction that
+    # actually matters for privacy.
+    consent = bool(payload.location_consent)
     donor = BloodDonor(
         organization_id=current_user.organization_id,
         user_id=current_user.id,

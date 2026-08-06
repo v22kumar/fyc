@@ -1,3 +1,6 @@
+import 'dart:ui' show PlatformDispatcher;
+
+import '../l10n/registry/registry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -108,7 +111,25 @@ class LocalStorage {
       _prefs.setString(AppConstants.langKey, lang);
 
   String getLang() =>
-      _prefs.getString(AppConstants.langKey) ?? AppConstants.defaultLang;
+      _prefs.getString(AppConstants.langKey) ?? _deviceLang();
+
+  /// The phone's own language, when the member has never chosen one.
+  ///
+  /// A Tamil phone should open a Tamil app without being asked. Asking was the
+  /// first thing this app ever did, on every launch, and it is a question the
+  /// device has already answered — the setting exists in Settings for the times
+  /// we guess wrong, which is where a preference belongs.
+  ///
+  /// Falls back to the club's default rather than to English: an unrecognised
+  /// locale in Nagercoil is far more likely to be a Tamil speaker than not.
+  String _deviceLang() {
+    final code = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    return kRegisteredLangs.contains(code) ? code : AppConstants.defaultLang;
+  }
+
+  /// True until the member has expressed a language preference of their own.
+  /// The detected one does not count — it is a guess, not a choice.
+  bool get hasChosenLang => _prefs.getString(AppConstants.langKey) != null;
 
   // Theme preference: 'light' | 'dark' | 'system'. Defaults to 'system' —
   // the app follows the OS setting automatically; there is no manual
@@ -147,6 +168,5 @@ class LocalStorage {
       (_prefs.getBool(AppConstants.hasSessionKey) ?? false) ||
       _prefs.getString(AppConstants.tokenKey) != null;
 
-  bool get isFirstLaunch =>
-      _prefs.getString(AppConstants.langKey) == null;
+
 }

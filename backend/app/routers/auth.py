@@ -277,12 +277,22 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     db.add(user)
     db.flush()
 
+    # A name is the one thing worth asking for at the door — it is what makes
+    # the app usable at all, on a profile, in the directory, on a blood request.
+    # Everything else (date of birth, gender, blood group, area) is asked later,
+    # one question at a time. When even the name is missing, fall back to
+    # something neutral and unique rather than inventing a person: the columns
+    # are NOT NULL, and a blank row would break the directory instead of
+    # signalling anything.
+    fallback_name = f"Member {payload.phone_number[-4:]}"
+    name_en = (payload.full_name_en or "").strip() or fallback_name
+
     profile = UserProfile(
         user_id=user.id,
         # Single-name UX: the client sends one name; store it to both the English
         # and Tamil columns when only one is provided, so display works either way.
-        full_name_ta=payload.full_name_ta or payload.full_name_en,
-        full_name_en=payload.full_name_en,
+        full_name_ta=(payload.full_name_ta or "").strip() or name_en,
+        full_name_en=name_en,
         date_of_birth=payload.date_of_birth,
         gender=payload.gender,
         blood_group=payload.blood_group,

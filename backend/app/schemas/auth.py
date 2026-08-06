@@ -43,15 +43,26 @@ class UserRegister(BaseModel):
     # Tamil and English name columns), so full_name_ta is optional and defaults to
     # the English name server-side.
     email: Optional[str] = Field(None, description="Optional — member contact email")
-    date_of_birth: date = Field(..., description="Required — used for age")
+    # Nothing here is required any more except a verified phone number.
+    #
+    # This used to demand a date of birth, a name and a role before an account
+    # could exist, which put a form between a member and the app on the day
+    # they installed it — and then the completeness gate asked for most of it a
+    # second time. Everything optional below is now collected afterwards, a
+    # question at a time, by the profile-prompt system that already exists.
+    date_of_birth: Optional[date] = Field(
+        None, description="Optional — asked later as a profile prompt"
+    )
     # Optional at the API for backward compatibility, but the app now collects it
     # at signup and sends it here so the user isn't bounced to a second "complete
     # profile" screen just to pick a gender. When absent, the completeness gate
     # still asks for it later (old behaviour) — so this is non-breaking.
     gender: Optional[str] = Field(None, pattern="^(MALE|FEMALE|OTHER)$", description="MALE/FEMALE/OTHER")
     blood_group: Optional[str] = Field(None, description="Optional blood group")
-    role: str = Field(..., pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$")
-    full_name_en: str
+    role: str = Field(
+        "PUBLIC_CITIZEN", pattern="^(PUBLIC_CITIZEN|VOLUNTEER|CLUB_MEMBER)$"
+    )
+    full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
     preferred_language: Optional[str] = "ta"
 
