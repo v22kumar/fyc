@@ -1,3 +1,4 @@
+import 'package:fyc_connect/features/auth/presentation/widgets/sign_in_sheet.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -179,7 +180,13 @@ class _EventsListScreenState extends State<EventsListScreen> {
                           .add(EventCheckinRequested(entry.value.id))
                       : null,
                   onRegister: _canRegister(entry.value)
-                      ? () => _openRegister(entry.value)
+                      ? () async {
+                          // The registration form itself needs a member.
+                          if (await SignInSheet.ensure(context) &&
+                              context.mounted) {
+                            _openRegister(entry.value);
+                          }
+                        }
                       : null,
                   onViewParticipants: entry.value.registrationEnabled
                       ? () => _openParticipants(entry.value)

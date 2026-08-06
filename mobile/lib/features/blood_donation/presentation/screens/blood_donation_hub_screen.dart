@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../widgets/need_blood_panel.dart';
 import '../widgets/donor_card.dart';
+import '../../../auth/presentation/widgets/sign_in_sheet.dart';
 import '../widgets/ask_donor_sheet.dart';
 import '../widgets/donors_around_map.dart';
 import '../../../../core/design_system/tokens.dart';
@@ -209,7 +210,10 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   /// there it was the requester's problem — dialling strangers one after
   /// another to discover what the app already knew. Now the donor is asked, and
   /// their number arrives with the yes. See [showAskDonorSheet].
-  void _requestContact(BuildContext context, BloodDonorEntity donor) {
+  Future<void> _requestContact(
+      BuildContext context, BloodDonorEntity donor) async {
+    // Asking somebody for blood is an act with a name on it.
+    if (!await SignInSheet.ensure(context) || !context.mounted) return;
     showAskDonorSheet(
       context,
       donor: donor,
@@ -237,7 +241,14 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
         title: Text(trId('blood_donation_hub')),
         actions: [
           TextButton.icon(
-            onPressed: () => context.push('/blood-donation/register'),
+            key: const ValueKey('donor-register'),
+            onPressed: () async {
+              // Offering to donate puts a member's name and number in front of
+              // strangers — that is the moment identity is needed, not before.
+              if (await SignInSheet.ensure(context) && context.mounted) {
+                context.push('/blood-donation/register');
+              }
+            },
             icon: Icon(Icons.volunteer_activism, color: AppColors.background),
             label: Text(
               trId('register'),
@@ -293,11 +304,15 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                       // directly under the map — the two together say "these
                       // people are here, and here is how to reach them".
                       NeedBloodPanel(
-                        onRaiseRequest: () => showRaiseRequestSheet(
-                          context,
-                          initialGroup:
-                              _selectedGroup == 'All' ? null : _selectedGroup,
-                        ),
+                        onRaiseRequest: () async {
+                          if (!await SignInSheet.ensure(context)) return;
+                          if (!context.mounted) return;
+                          showRaiseRequestSheet(
+                            context,
+                            initialGroup:
+                                _selectedGroup == 'All' ? null : _selectedGroup,
+                          );
+                        },
                       ),
                       _FilterRow(
                         groups: _groups,

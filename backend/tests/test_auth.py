@@ -328,12 +328,36 @@ def test_register_rejects_invalid_email(client, db):
     assert r.status_code == 422, r.text
 
 
-def test_register_requires_date_of_birth(client, db):
+def test_register_needs_nothing_but_a_verified_number(client, db):
+    """Signing up is not a form any more.
+
+    Registration used to demand a date of birth, a name and a role before an
+    account could exist — a queue between a member and the app on the day they
+    installed it, and then the completeness gate asked for most of it again.
+    Those facts are still wanted; they are asked afterwards, one question at a
+    time, by the profile-prompt system. What the door needs is a number we have
+    verified."""
     org = _reg_org(db)
     body = _reg_payload(org.id)
-    body.pop("date_of_birth")
+    for optional in ("date_of_birth", "gender", "role", "email"):
+        body.pop(optional, None)
     r = client.post("/api/v1/auth/register", json=body)
-    assert r.status_code == 422, r.text
+    assert r.status_code == 200, r.text
+    assert r.json()["access_token"]
+
+
+def test_register_without_a_name_still_produces_a_usable_account(client, db):
+    """The name columns are NOT NULL, so a nameless signup must land on
+    something neutral and unique rather than a blank row that breaks the
+    directory."""
+    org = _reg_org(db)
+    body = _reg_payload(org.id, phone_number="+919000000077")
+    for optional in ("date_of_birth", "gender", "role", "email", "full_name_en",
+                     "full_name_ta"):
+        body.pop(optional, None)
+    r = client.post("/api/v1/auth/register", json=body)
+    assert r.status_code == 200, r.text
+    assert r.json()["user"]["full_name_en"] == "Member 0077"
 
 
 def test_register_rejects_future_date_of_birth(client, db):

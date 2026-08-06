@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/language_select_screen.dart';
 import '../../features/auth/presentation/screens/otp_login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/complete_profile_screen.dart';
+import '../../features/auth/presentation/widgets/sign_in_sheet.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -109,6 +110,34 @@ import '../design_system/shell/app_shell_v2.dart';
 import '../../features/serve/presentation/screens/serve_hub_screen.dart';
 import '../../features/profile/presentation/screens/me_hub_screen.dart';
 
+/// Where the app opens, and where a signed-out member is sent if they reach
+/// for something personal.
+const kHomeRoute = '/app';
+
+/// The only routes that require a session.
+///
+/// Everything else is open, because everything else is the club talking to the
+/// village it serves: announcements, events, live scores, who has blood nearby.
+/// A person who has just installed the app should be able to read all of that
+/// before deciding whether to hand over a phone number — and the API already
+/// answers every one of these anonymously.
+///
+/// This list is deliberately about *people's data*, not about features. A
+/// member's phone number, a private profile, a membership card, a saved
+/// certificate: those need a name attached. Reading the club's noticeboard does
+/// not.
+const kMembersOnly = <String>[
+  '/me',
+  '/profile',
+  '/membership',
+  '/certificate',
+  '/journey',
+  '/directory',
+  '/members',
+  '/settings',
+  '/notifications',
+];
+
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
@@ -116,21 +145,11 @@ final appRouter = GoRouter(
     if (ApiConstants.devBypassAuth) return null;
     final authState = sl<AuthBloc>().state;
     final isAuth = authState is AuthAuthenticated;
-    final publicRoutes = {'/', '/lang-select', '/login', '/register', '/about'};
-    if (!isAuth && !publicRoutes.contains(state.matchedLocation)) {
-      return '/lang-select';
-    }
-    // Onboarding gate: a signed-in, non-admin user whose profile is incomplete
-    // (missing name / DOB / gender / phone) must finish it before using the app —
-    // so no dataless account can slip through, on OTP or Google alike. Admins are
-    // exempt so the owner is never locked out.
-    if (isAuth) {
-      final user = authState.user;
-      if (!user.isProfileComplete &&
-          !user.isAdmin &&
-          state.matchedLocation != '/complete-profile') {
-        return '/complete-profile';
-      }
+    if (!isAuth && kMembersOnly.any(state.matchedLocation.startsWith)) {
+      // Somewhere personal, without a session. Send them to the club's front
+      // page rather than a login wall — signing in happens at the moment an
+      // action needs it, not at the door.
+      return kHomeRoute;
     }
     return null;
   },
@@ -526,7 +545,15 @@ final appRouter = GoRouter(
 /// the center Create FAB wired to Home's create-actions sheet. Shared by
 /// `/app` (the post-login entry point) and `/v2` (review alias).
 Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
-      onCreate: () => showHomeCreateSheet(context),
+      // Creating anything is signed by whoever created it, so this is one of
+      // the moments identity is actually needed. Everything else in the shell —
+      // the noticeboard, the feed, live scores, the service hub — reads fine
+      // without a name attached.
+      onCreate: () async {
+        if (await SignInSheet.ensure(context) && context.mounted) {
+          showHomeCreateSheet(context);
+        }
+      },
       tabs: [
         const HomeScreen(),
         const FeedScreen(),

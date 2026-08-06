@@ -58,11 +58,15 @@ class _SplashScreenState extends State<SplashScreen>
       listener: (context, state) {
         final home = ApiConstants.useAppShellV2 ? '/app' : '/home';
         String? target;
-        if (state is AuthAuthenticated) {
+        // Signed in or not, the app opens into the app.
+        //
+        // This used to send anyone without a session to /lang-select, which
+        // led to /login — so every launch that was not already authenticated
+        // began with two gates, and choosing a language was something members
+        // did over and over. The language is remembered (and detected from the
+        // phone the first time); signing in happens when an action needs it.
+        if (state is AuthAuthenticated || state is AuthUnauthenticated) {
           target = home;
-        } else if (state is AuthUnauthenticated) {
-          // DEV ONLY — skip the language/login flow and go straight to home.
-          target = ApiConstants.devBypassAuth ? home : '/lang-select';
         }
         if (target == null) return;
 

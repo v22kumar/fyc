@@ -40,8 +40,11 @@ class AuthRegisterRequested extends AuthEvent {
   final String organizationId;
   final String phoneNumber;
   final String registrationToken;
-  final String email;
-  final String dateOfBirth; // ISO yyyy-MM-dd
+  /// Everything below the name is optional now, and none of it is asked at the
+  /// door. Date of birth, gender, blood group and role arrive later as profile
+  /// prompts — see `features/profile/data/question_scheduler.dart`.
+  final String? email;
+  final String? dateOfBirth; // ISO yyyy-MM-dd
   final String? gender; // MALE / FEMALE / OTHER
   final String? bloodGroup;
   final String role;
@@ -53,11 +56,11 @@ class AuthRegisterRequested extends AuthEvent {
     required this.organizationId,
     required this.phoneNumber,
     required this.registrationToken,
-    required this.email,
-    required this.dateOfBirth,
+    this.email,
+    this.dateOfBirth,
     this.gender,
     this.bloodGroup,
-    required this.role,
+    this.role = 'PUBLIC_CITIZEN',
     required this.fullNameTa,
     required this.fullNameEn,
     required this.preferredLanguage,
