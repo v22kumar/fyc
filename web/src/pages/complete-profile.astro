@@ -1,12 +1,28 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { API_BASE } from '../lib/config';
+import { MEMBER_APP_BASE, MEMBER_APP_READY } from '../lib/config';
 ---
 
 <BaseLayout
   title="உங்கள் சுயவிவரத்தை நிரப்புங்கள் — Complete Your Profile"
   description="FYC Connect — உங்கள் சுயவிவரத்தை முழுமையாக நிரப்பி சமூகத்துடன் இணையுங்கள்."
 >
+  <!--
+    This page is a second implementation of a member screen. The one that
+    ships is built from the same source as Android — see
+    docs/architecture/where-things-live.md — and an auth flow that differs
+    between two surfaces is a support problem waiting to happen.
+
+    Gated on PUBLIC_MEMBER_APP_READY so the hop only starts once the member app
+    is live; until then this page keeps working exactly as it did.
+  -->
+  <script is:inline define:vars={{ MEMBER_APP_READY, MEMBER_APP_BASE, APP_PATH: '/me' }}>
+    if (MEMBER_APP_READY) {
+      location.replace(MEMBER_APP_BASE + APP_PATH + location.search);
+    }
+  </script>
+
   <script is:inline>
     if (!localStorage.getItem('fyc_token')) {
       window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));

@@ -104,3 +104,27 @@ revision appears in the *gstatic* URL, not ours — with
 contents change on a Flutter upgrade without the path moving. One conditional
 request answered 304 is the price of not stranding somebody on an engine that
 no longer matches their app.
+
+
+## Retiring the duplicates, in the right order
+
+Three pages on the public site are a second implementation of a member screen:
+`login`, `verify`, `complete-profile`. An auth flow that differs between two
+surfaces is a support problem waiting to happen, so they are the first to go.
+
+They are **gated, not deleted**. `PUBLIC_MEMBER_APP_READY` defaults to false and
+the pages keep working exactly as they do today. Set it to `true` once
+`app.fycconnect.com` answers, and they forward — carrying the query string, so
+`?next=` survives. Unset it and they fall straight back.
+
+That ordering matters: pointing the site people arrive at towards an app that
+is not deployed yet would replace a working page with a dead link. The switch is
+config, so flipping it needs no code change and no deploy of this repo's logic.
+
+The feature pages — `blood-donors`, `chess-play` — follow after that flag has
+been on for a while. They are a bigger behaviour change and nobody is blocked
+by them, so they are not worth bundling into the same risk.
+
+Everything a stranger arrives at stays here and is not on this list: the
+landing page, about, share links, live scoreboards, event and tournament
+listings.
