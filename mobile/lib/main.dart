@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -66,6 +67,16 @@ void main() async {
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Real URLs in a browser, not `#/blood-donation`.
+  //
+  // Flutter web defaults to hash routing, which quietly undoes deep links: the
+  // path never reaches go_router, so app.fycconnect.com/blood-requests/<id> —
+  // where every blood notification points — opens the home screen instead of
+  // the request. The nginx rule that serves index.html for unknown paths is
+  // necessary for this and not sufficient on its own; both halves are needed.
+  //
+  // No-op off the web, so Android is unaffected.
+  if (kIsWeb) usePathUrlStrategy();
   ErrorReporter.instance.install();
   await Hive.initFlutter();
   await SyncService.init();
