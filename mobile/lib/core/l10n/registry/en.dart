@@ -1109,4 +1109,6 @@ const Map<String, String> kEn = {
   'use_my_google_details': 'Use my Google details',
   'please_tell_us_your_name': 'Please tell us your name',
   'sign_in_to_continue': 'Sign in to continue',
+  'location_on_explainer': 'Used only to show how far you are when someone nearby needs your blood group. Never tracked in the background.',
+  'location_off_explainer': 'You will still be in the directory, but not in "nearest to me" searches during an emergency.',
 };

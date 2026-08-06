@@ -26,30 +26,36 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
   String? _selectedGroup;
   bool _isAvailable = true;
   DateTime? _lastDonationDate;
-  bool _shareLocation = false;
+  /// On by default, because registering as a donor already means "find me".
+  ///
+  /// Two different things used to live in this one switch, and conflating them
+  /// is what made it dangerous to default on:
+  ///
+  /// * **Willingness to be located** — an intent, and one this member has
+  ///   effectively already stated by opening a screen called "Register as
+  ///   donor". Defaulting that to off meant people lost the feature by not
+  ///   noticing a toggle, which in an emergency is the expensive kind of quiet.
+  /// * **Permission to read the GPS** — which Android owns, which the DPDP Act
+  ///   wants given by a clear affirmative act, and which a pre-ticked box
+  ///   cannot supply. That is asked at submit, through the same disclosure
+  ///   sheet as everywhere else, never on screen open.
+  ///
+  /// So the switch expresses the intent and starts on; the permission is still
+  /// asked, once, at the moment they commit.
+  bool _shareLocation = true;
   bool _capturing = false;
   double? _lat;
   double? _lng;
 
-  Future<void> _toggleLocation(bool on) async {
-    if (!on) {
-      setState(() { _shareLocation = false; _lat = null; _lng = null; });
-      return;
-    }
-    setState(() => _capturing = true);
-    // A home area is stored and searched against for months, so this is the one
-    // caller that insists on a real fix rather than a cached one.
-    final pos = await MemberLocation.precise(context);
-    if (!mounted) return;
-    if (pos == null) {
-      setState(() { _shareLocation = false; _capturing = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(trId('couldn_t_get_location'))),
-      );
-      return;
-    }
-    setState(() { _shareLocation = true; _lat = pos.latitude; _lng = pos.longitude; _capturing = false; });
-  }
+  /// Flipping the switch records intent. Nothing is read from the phone here —
+  /// the position is fetched once, at submit.
+  void _toggleLocation(bool on) => setState(() {
+        _shareLocation = on;
+        if (!on) {
+          _lat = null;
+          _lng = null;
+        }
+      });
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -61,7 +67,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
     if (picked != null) setState(() => _lastDonationDate = picked);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_selectedGroup == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -72,6 +78,21 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
       );
       return;
     }
+
+    // The one moment the phone is asked where it is: they have chosen a blood
+    // group, left the switch on, and pressed the button. A home area is stored
+    // and searched against for months, so this insists on a real fix.
+    if (_shareLocation && _lat == null) {
+      setState(() => _capturing = true);
+      final pos = await MemberLocation.precise(context);
+      if (!mounted) return;
+      setState(() {
+        _capturing = false;
+        _lat = pos?.latitude;
+        _lng = pos?.longitude;
+      });
+    }
+
     context.read<BloodDonorBloc>().add(
           BloodDonorRegisterRequested(
             bloodGroup: _selectedGroup!,
@@ -79,7 +100,13 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
             lastDonationDate: _lastDonationDate,
             latitude: _lat,
             longitude: _lng,
-            locationConsent: _shareLocation && _lat != null && _lng != null,
+            // Their answer, not the outcome of a permission dialog. Somebody
+            // who left this on and then hit a denied prompt is still willing —
+            // and the app collects a position opportunistically the next time
+            // they open the blood screen, at which point the consent is already
+            // on record and it simply starts working. Recording false here
+            // would have silently thrown that away.
+            locationConsent: _shareLocation,
           ),
         );
   }
@@ -153,9 +180,10 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                 onTap: _pickDate,
               ),
               SizedBox(height: 24),
-              // Opt-in location — lets emergencies find nearby donors by real
-              // distance. Privacy-first: off by default, a single base point,
-              // never continuous tracking.
+              // How an emergency finds you by real distance rather than by the
+              // name of a taluk. On by default because that is what registering
+              // as a donor means; a single base point, never continuous
+              // tracking; and the phone is not asked anything until submit.
               Container(
                 padding: EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -190,10 +218,15 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                       ],
                     ),
                     SizedBox(height: 4),
+                    // Says what each position actually costs the member.
+                    // Turning it off is a real choice, so it is worth stating
+                    // the consequence rather than leaving it to be discovered:
+                    // they stay in the directory, they just stop being
+                    // findable by distance.
                     Text(
                       _shareLocation
-                          ? trId('location_captured_nearby_alerts_on')
-                          : trId('used_only_to_alert_you_when_blood_is_needed_nearby'),
+                          ? trId('location_on_explainer')
+                          : trId('location_off_explainer'),
                       style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                     ),
                   ],

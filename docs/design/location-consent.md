@@ -115,3 +115,48 @@ to hold them to — the flag stays unset and the next visit tries once more.
 Android permits one further prompt before it stops asking for good, and that is
 worth spending. A permanent denial is recorded and never re-asked, because the
 system would not honour it.
+
+
+## The switch starts on, and that is still consent
+
+Registering as a blood donor already means *find me*. Leaving the location
+switch off by default meant people lost the feature by not noticing it — which
+in an emergency is the expensive kind of quiet, and nobody ever discovers it,
+because what they see is simply not being asked.
+
+The reason it was not safe to flip before is that two different things were
+living in one switch:
+
+| | what it is | can it be pre-set? |
+|---|---|---|
+| **Willingness to be located** | an intent, already stated by opening a screen called "Register as donor" | yes |
+| **Permission to read the GPS** | owned by Android, and the DPDP Act wants a clear affirmative act | never |
+
+So they are separated. The switch expresses the intent and starts on. The
+permission is still asked once, at submit — through the same disclosure sheet
+as everywhere else, never on screen open, never as a pre-ticked substitute for
+an answer. The affirmative act is unchanged: they press *Register as donor*
+with the switch visibly on, and then they agree on the sheet.
+
+Turning it off now says what it costs, rather than leaving it to be discovered:
+you stay in the directory, you stop appearing in "nearest to me".
+
+### Consent and coordinates are two different columns
+
+The server was making the same conflation, and it was worse there:
+
+```python
+consent = bool(payload.location_consent
+               and payload.latitude is not None
+               and payload.longitude is not None)
+```
+
+A member who said yes and then missed the Android dialog was recorded as having
+said **no**. The yes was gone, with nothing to indicate it had ever been given —
+so the opportunistic capture designed for exactly this case could never fire,
+because `PATCH /me/location` is a no-op without consent.
+
+`location_consent` now stores the answer as given. Coordinates arrive when they
+arrive — the next time that member opens the blood screen — and the feature
+starts working on its own. Coordinates *without* consent are still refused,
+which is the direction that matters for privacy.

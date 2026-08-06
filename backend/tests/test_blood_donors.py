@@ -746,3 +746,44 @@ def test_imported_contacts_are_not_woken_by_a_club_alert(client, db):
     reached = (db.query(Notification)
                .filter(Notification.user_id == member.id).count())
     assert reached >= 1
+
+
+def test_consent_without_a_position_still_starts_working_later(client, db):
+    """Saying yes and then missing the permission prompt must not throw the
+    yes away.
+
+    The switch on the registration screen is on by default because registering
+    as a donor already means "find me". A member who leaves it on and then
+    fumbles the Android dialog is still willing — so the consent is recorded
+    with no coordinates, and the position arrives on its own the next time they
+    open the blood screen."""
+    from app.models.blood_donor import BloodDonor
+    org = _make_org(db)
+    token = _register(client, org.id, "+919600000061")
+    h = {"Authorization": f"Bearer {token}", "X-Organization-ID": str(org.id)}
+
+    created = client.post("/api/v1/blood-donors/register", headers=h, json={
+        "blood_group": "O-", "is_available": True, "location_consent": True,
+    })
+    assert created.status_code == 201, created.text
+
+    donor = db.query(BloodDonor).filter(
+        BloodDonor.organization_id == org.id).order_by(
+        BloodDonor.created_at.desc()).first()
+    assert donor.location_consent is True
+    assert donor.latitude is None, "no fix yet — only the willingness"
+
+    # Nobody can be ranked by a position that does not exist yet.
+    nearby = client.get(
+        "/api/v1/blood-donors/nearby?lat=8.1833&lng=77.4119&radius_km=25",
+        headers={"X-Organization-ID": str(org.id)}).json()
+    assert not any(d["id"] == str(donor.id) for d in nearby)
+
+    # The app reports one on the next open, and it simply starts working —
+    # because the consent was already on record.
+    patched = client.patch("/api/v1/blood-donors/me/location", headers=h,
+                           json={"lat": 8.1840, "lng": 77.4125})
+    assert patched.status_code == 204, patched.text
+    db.expire_all()
+    fresh = db.query(BloodDonor).filter(BloodDonor.id == donor.id).first()
+    assert fresh.last_seen_lat is not None
