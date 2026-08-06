@@ -71,3 +71,36 @@ Documents rot; tests do not. Two checks in CI hold this:
 
 The same discipline as the four-language rule: a rule nobody can forget beats a
 rule everybody agrees with.
+
+
+## Deploying the member app to the browser
+
+`mobile/Dockerfile.web` + `mobile/fly.toml` → **fyc-webapp** (`app.fycconnect.com`),
+built from exactly the source Android ships. The public Astro site stays a
+separate app (`web/fly.toml`, `fyc-web`), which is the whole point.
+
+Two things in the nginx config are worth knowing before anyone "optimises" them:
+
+**Every path that is not a file serves `index.html`.** go_router reads the URL
+after boot, so `/blood-donation` and `/blood-requests/<id>` — where a blood
+notification lands — must reach the app rather than 404.
+
+**Nothing is cached blind, because Flutter web fingerprints nothing.** The
+static-site habit of hashing a filename and then caching it for a year as
+`immutable` is wrong here: `flutter_bootstrap.js` asks for `main.dart.js` by
+that exact name on every build, and the assets keep their paths. A year of
+`immutable` would strand every existing member on whichever build they loaded
+first — the deploy goes out, the server is new, the app is old, and nothing
+says so.
+
+`Cache-Control: no-cache` does not mean "do not store". It means store it and
+revalidate: nginx sends an ETag, the browser sends `If-None-Match`, an
+unchanged file returns 304 with no body. Repeat visits stay nearly free and a
+deploy always lands.
+
+That includes CanvasKit, tempting as an exception is at ~5 MB. The engine
+revision appears in the *gstatic* URL, not ours — with
+`--no-web-resources-cdn` it is served from a flat `/canvaskit/` path whose
+contents change on a Flutter upgrade without the path moving. One conditional
+request answered 304 is the price of not stranding somebody on an engine that
+no longer matches their app.

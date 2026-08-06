@@ -1,0 +1,39 @@
+# The member app, for a browser.
+#
+# Same source as Android — see docs/architecture/where-things-live.md. This
+# image exists so that shipping a member feature to the web is a deploy rather
+# than a second implementation.
+
+# ── Stage 1: build ───────────────────────────────────────────────────────────
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
+WORKDIR /app
+
+ARG API_BASE_URL=https://api.fycconnect.com
+ARG DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d
+# Not a secret — it ships inside every APK and google-services.json. Passed as
+# a build arg so a deploy can point at a different Firebase project without a
+# code change. Deliberately NOT defaulted to an empty string: an empty
+# --dart-define beats the in-app default and produces a build that cannot sign
+# in with Google, which is a failure this project has already shipped once.
+ARG GOOGLE_SERVER_CLIENT_ID=
+
+COPY pubspec.yaml pubspec.lock ./
+RUN flutter pub get
+
+COPY . .
+RUN set -eux; \
+    google_define=""; \
+    if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then \
+      google_define="--dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"; \
+    fi; \
+    flutter build web --release \
+      --no-web-resources-cdn \
+      --dart-define=API_BASE_URL="$API_BASE_URL" \
+      --dart-define=DEFAULT_ORG_ID="$DEFAULT_ORG_ID" \
+      $google_define
+
+# ── Stage 2: serve ───────────────────────────────────────────────────────────
+FROM nginx:1.27-alpine AS runner
+COPY --from=builder /app/build/web /usr/share/nginx/html
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
