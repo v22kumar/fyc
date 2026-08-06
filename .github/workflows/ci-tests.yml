@@ -41,6 +41,49 @@ jobs:
         # package/pyproject pythonpath config making `app` importable.
         run: python -m pytest -v
 
+  web-app-build:
+    name: Web — the member app still builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # The member app is built once and reaches both Android and the browser.
+    # The moment it stops compiling for the web, parity has silently been lost —
+    # so this fails loudly on the push that breaks it rather than being noticed
+    # a month later. See docs/architecture/where-things-live.md.
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same channel as the mobile job. Pinning one and floating the other
+      # would let the web build compile against a different Flutter than the
+      # tests ran on — a second kind of drift, introduced by the check meant to
+      # prevent the first.
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Build for the browser
+        working-directory: mobile
+        # --no-web-resources-cdn serves CanvasKit from our own origin. Without
+        # it the 5 MB runtime comes from gstatic, and on a network that filters
+        # it the app is a blank page with one console error nobody reads.
+        run: flutter build web --release --no-web-resources-cdn
+
+      - name: Report what a browser would download
+        working-directory: mobile/build/web
+        run: |
+          js=$(gzip -c main.dart.js | wc -c)
+          ck=$(gzip -c canvaskit/chromium/canvaskit.wasm | wc -c)
+          printf "main.dart.js  %6.2f MB gzip\n" "$(echo "$js/1048576" | bc -l)"
+          printf "canvaskit     %6.2f MB gzip\n" "$(echo "$ck/1048576" | bc -l)"
+          # A budget, not a limit: this is the number to argue with when it
+          # grows, so nobody discovers it after a member complains.
+          echo "::notice::Member app first load ≈ $(echo "scale=1; ($js+$ck)/1048576" | bc -l) MB gzipped"
+
   mobile-tests:
     name: Mobile — flutter analyze + test
     runs-on: ubuntu-latest
