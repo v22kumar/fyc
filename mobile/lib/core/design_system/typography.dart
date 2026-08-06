@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Design-system typography: Plus Jakarta Sans (Latin) + the matching Noto
 /// Sans family per script for Tamil/Hindi/Malayalam. Fixed hierarchy, nothing
 /// below 14sp anywhere.
 ///
-/// Built on `GoogleFonts.getFont(familyName)` (the package's stable dynamic
-/// lookup) rather than the auto-generated per-font methods
-/// (`GoogleFonts.plusJakartaSans()` etc.) — this environment has no way to
-/// compile-check the generated method names against the installed package
-/// version, and `getFont` with the official Google Fonts family-name string
-/// is documented and version-stable.
+/// **The faces are bundled, not fetched.** This used to go through
+/// `GoogleFonts.getFont`, which downloads from `fonts.gstatic.com` on first use
+/// and caches the result. The failure mode is unusually bad: on a network that
+/// filters gstatic — school Wi-Fi, some ISPs, a captive portal — the download
+/// never lands and the app renders **with no text at all**. Not an error, not
+/// a fallback to a system face. Blank, with one console line nobody will read.
+/// It was caught by loading the web build in a browser with gstatic blocked,
+/// which is a state a member in Nagercoil can genuinely be in.
 ///
-/// NOTE (flagged for Sprint 3 — Offline & Performance Core): `google_fonts`
-/// fetches font files over the network on first use and caches them. For an
-/// app that must work on low/no connectivity, fonts should eventually ship as
-/// bundled assets (`GoogleFonts.config.allowRuntimeFetching = false` +
-/// pre-downloaded .ttf in `assets/fonts/`). Not changed here: the existing
-/// theme (`app_theme.dart`) already uses `GoogleFonts.outfit()` the same way,
-/// so this follows the codebase's current, established convention rather
-/// than introducing a second font-loading strategy mid-sprint. Bundling is
-/// tracked as an offline-hardening task, not a design-system concern.
+/// A club's own words should not be a request that might go unanswered. The
+/// four weights the scale uses ship in `assets/fonts/` (~1.8 MB for all four
+/// scripts), declared in `pubspec.yaml`. On the web Flutter fetches a face only
+/// when something renders in it, so a Tamil reader never pays for Devanagari.
 class DSFonts {
   DSFonts._();
 
@@ -50,8 +46,8 @@ class DSFonts {
     double? height,
     Color? color,
   }) {
-    return GoogleFonts.getFont(
-      familyFor(languageCode),
+    return TextStyle(
+      fontFamily: familyFor(languageCode),
       fontSize: fontSize,
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,

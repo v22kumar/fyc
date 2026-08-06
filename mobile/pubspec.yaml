@@ -71,7 +71,6 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.8
 
-  google_fonts: ^6.2.0
 
   # Chess
   squares: ^1.2.1       # board widget, drag/drop, piece images, animations
@@ -128,3 +127,56 @@ flutter:
     - assets/illustrations/svg/
     - assets/lottie/
     - assets/audio/
+
+  # Bundled, not fetched.
+  #
+  # google_fonts downloads these from fonts.gstatic.com on first use. On a
+  # network that filters gstatic — school Wi-Fi, some ISPs — the download
+  # fails and the app renders with no text at all: not an error, not a
+  # fallback, blank. Shipping the faces makes the app's own words a thing it
+  # owns rather than a request that might not be answered.
+  #
+  # Only the four weights the type scale actually uses (see
+  # core/design_system/typography.dart). On the web these load per-face on
+  # demand, so a Tamil reader never downloads the Devanagari.
+  fonts:
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-400.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-600.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-700.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-800.ttf
+          weight: 800
+    - family: Noto Sans Tamil
+      fonts:
+        - asset: assets/fonts/NotoSansTamil-400.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansTamil-600.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansTamil-700.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansTamil-800.ttf
+          weight: 800
+    - family: Noto Sans Devanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-400.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansDevanagari-600.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansDevanagari-700.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansDevanagari-800.ttf
+          weight: 800
+    - family: Noto Sans Malayalam
+      fonts:
+        - asset: assets/fonts/NotoSansMalayalam-400.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansMalayalam-600.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansMalayalam-700.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansMalayalam-800.ttf
+          weight: 800
