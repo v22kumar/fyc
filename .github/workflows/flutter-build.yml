@@ -95,12 +95,23 @@ jobs:
           # --build-number makes versionCode unique+increasing per build so the
           # in-app updater can detect a newer version. --build-name is the display
           # version (1.0.<run_number>).
+          # Only override the Google client id when we actually have one.
+          # `--dart-define=X=` is NOT the same as omitting it: an empty define
+          # beats String.fromEnvironment's default, so a missing GitHub secret
+          # used to ship an APK with no client id, and Google Sign-In returned a
+          # null idToken with nothing in the logs naming the cause.
+          GOOGLE_DEFINE=""
+          if [ -n "${GOOGLE_SERVER_CLIENT_ID:-}" ]; then
+            GOOGLE_DEFINE="--dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID}"
+          else
+            echo "::warning::GOOGLE_SERVER_CLIENT_ID secret is not set — building with the in-app default."
+          fi
           flutter build apk --release --split-per-abi \
             --build-number=${{ env.FYC_BUILD_NUM }} \
             --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://api.fycconnect.com \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
+            $GOOGLE_DEFINE
 
       - name: Build release AAB  (Google Play Store)
         working-directory: mobile
@@ -108,12 +119,16 @@ jobs:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
           AAB_BUILD_NUM=$(( FYC_BUILD_NUM + 4000 ))
+          GOOGLE_DEFINE=""
+          if [ -n "${GOOGLE_SERVER_CLIENT_ID:-}" ]; then
+            GOOGLE_DEFINE="--dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID}"
+          fi
           flutter build appbundle --release \
             --build-number=${AAB_BUILD_NUM} \
             --build-name=1.0.${{ github.run_number }} \
             --dart-define=API_BASE_URL=https://api.fycconnect.com \
             --dart-define=DEFAULT_ORG_ID=8f8b80b7-4b71-4770-b183-5c5f49e49a1d \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
+            $GOOGLE_DEFINE
 
       # ── 6. Rename outputs with stable filenames ───────────────────────────────
       - name: Rename outputs

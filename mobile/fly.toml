@@ -1,0 +1,40 @@
+# fly.toml — the member app in a browser (app.fycconnect.com).
+#
+# Lives in mobile/ because the Docker build context has to be the Flutter
+# project: this image is built from exactly the source Android ships.
+#
+# The public site is a separate app (web/fly.toml, fyc-web) and stays that way
+# on purpose: a shared scoreboard link must paint in about a second and be
+# indexable, which is Astro's job. This one is the member app, built from the
+# same source as Android. See docs/architecture/where-things-live.md.
+
+app = "fyc-webapp"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile.web"
+  [build.args]
+    API_BASE_URL = "https://api.fycconnect.com"
+    DEFAULT_ORG_ID = "8f8b80b7-4b71-4770-b183-5c5f49e49a1d"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  # Static files: a cold start costs a second and nothing is held in memory, so
+  # there is no reason to pay for an idle machine.
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1

@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-import { API_BASE, DEFAULT_ORG_ID } from '../lib/config';
+import { API_BASE, DEFAULT_ORG_ID, MEMBER_APP_BASE, MEMBER_APP_READY } from '../lib/config';
 
 // Read ?lang= from the URL at build time (falls back to ta)
 const lang = Astro.url.searchParams.get('lang') ?? 'ta';
@@ -11,6 +11,21 @@ const lang = Astro.url.searchParams.get('lang') ?? 'ta';
   title="உறுப்பினர் சரிபார்ப்பு - Membership Verification"
   description="FYC digital membership card verification. Verify any FYC membership number instantly."
 >
+  <!--
+    This page is a second implementation of a member screen. The one that
+    ships is built from the same source as Android — see
+    docs/architecture/where-things-live.md — and an auth flow that differs
+    between two surfaces is a support problem waiting to happen.
+
+    Gated on PUBLIC_MEMBER_APP_READY so the hop only starts once the member app
+    is live; until then this page keeps working exactly as it did.
+  -->
+  <script is:inline define:vars={{ MEMBER_APP_READY, MEMBER_APP_BASE, APP_PATH: '/' }}>
+    if (MEMBER_APP_READY) {
+      location.replace(MEMBER_APP_BASE + APP_PATH + location.search);
+    }
+  </script>
+
   <script is:inline>
     if (!localStorage.getItem('fyc_token')) {
       window.location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));

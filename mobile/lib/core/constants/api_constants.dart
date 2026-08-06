@@ -40,11 +40,27 @@ class ApiConstants {
   // must be the project whose SHA-1 is registered in Firebase, or Google returns
   // a null idToken. Not a secret (ships in google-services.json + every APK);
   // a build may override it via --dart-define=GOOGLE_SERVER_CLIENT_ID=... .
-  static const String googleServerClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com',
-  );
+  static const String _googleServerClientIdOverride =
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+
+  /// The Firebase Web OAuth client this app signs in against.
+  ///
+  /// `String.fromEnvironment` only falls back to its default when the define is
+  /// **absent** — an empty one wins. The release workflow passed
+  /// `--dart-define=GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}`, so a
+  /// GitHub secret that was unset, renamed or lost expanded to an empty string
+  /// and shipped an APK with no client id at all. Google Sign-In then returns a
+  /// null idToken and fails with nothing in the logs that names the cause — it
+  /// looks exactly like "Google sign-in is down".
+  ///
+  /// So an empty override is treated as no override. A build that means to
+  /// change this passes a real value; a build that forgets gets the one that
+  /// works.
+  static const String googleServerClientId =
+      bool.hasEnvironment('GOOGLE_SERVER_CLIENT_ID') &&
+              _googleServerClientIdOverride != ''
+          ? _googleServerClientIdOverride
+          : '986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com';
 
   // Auth
   static const String otpSend = '/api/v1/auth/otp/send';

@@ -1114,4 +1114,6 @@ const Map<String, String> kMl = {
   'location_blocked_in_settings': 'നിങ്ങളുടെ ഫോൺ ഈ ആപ്പിന് സ്ഥാനം തടയുന്നു, അതിനാൽ ദൂരം വെച്ച് ആർക്കും നിങ്ങളെ കണ്ടെത്താനാവില്ല.',
   'location_services_off': 'ഈ ഫോണിൽ ലൊക്കേഷൻ ഓഫാണ്. ഓണാക്കിയാൽ ഇത് പ്രവർത്തിച്ചു തുടങ്ങും.',
   'open_phone_settings': 'ഫോൺ ക്രമീകരണങ്ങൾ തുറക്കുക',
+  'code_sent_whatsapp': '{phone} ലേക്ക് WhatsApp-ൽ അയച്ചു',
+  'code_sent_email': 'നിങ്ങളുടെ ഇമെയിലിലേക്ക് അയച്ചു',
 };

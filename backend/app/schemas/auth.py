@@ -19,6 +19,11 @@ class OTPRequest(BaseModel):
 class OTPResponse(BaseModel):
     message: str
     verification_id: str
+    # Which channel actually carried the code: sms | whatsapp | email | log.
+    # The app tells the member where to look, because "check WhatsApp" and
+    # "check your messages" send them to different places and being pointed at
+    # the wrong one is indistinguishable from nothing arriving.
+    channel: Optional[str] = None
 
 
 class OTPVerify(BaseModel):

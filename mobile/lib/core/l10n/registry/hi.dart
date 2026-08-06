@@ -1114,4 +1114,6 @@ const Map<String, String> kHi = {
   'location_blocked_in_settings': 'आपका फ़ोन इस ऐप के लिए स्थान रोक रहा है, इसलिए कोई आपको दूरी से नहीं ढूँढ सकता।',
   'location_services_off': 'इस फ़ोन पर लोकेशन बंद है। इसे चालू करें और यह काम करने लगेगा।',
   'open_phone_settings': 'फ़ोन सेटिंग्स खोलें',
+  'code_sent_whatsapp': '{phone} पर WhatsApp से भेजा गया',
+  'code_sent_email': 'आपके ईमेल पर भेजा गया',
 };

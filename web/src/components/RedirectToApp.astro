@@ -1,0 +1,50 @@
+---
+/**
+ * A page that used to be a second implementation of a member screen.
+ *
+ * The public site keeps everything a stranger arrives at — the landing page,
+ * about, share links, live scoreboards. Anything behind a member's name is
+ * built once, from the same source Android ships, and lives in the member app.
+ * These stubs are what is left of the duplicates: they forward, they keep the
+ * query string (so `?next=` and share parameters survive), and they leave a
+ * visible link for anyone whose browser blocks the automatic hop.
+ *
+ * Kept as pages rather than deleted so existing links — printed, shared on
+ * WhatsApp, sitting in someone's history — still land somewhere useful.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { MEMBER_APP_BASE } from '../lib/config';
+
+interface Props {
+  /** Path inside the member app, e.g. "/blood-donation". */
+  to: string;
+  title: string;
+}
+
+const { to, title } = Astro.props;
+const target = `${MEMBER_APP_BASE}${to}`;
+---
+
+<BaseLayout title={title} description="Opening the FYC Connect app.">
+  <!-- Server-side canonical, so a crawler follows it rather than indexing a stub. -->
+  <meta slot="head" http-equiv="refresh" content={`0; url=${target}`} />
+  <link slot="head" rel="canonical" href={target} />
+
+  <script is:inline define:vars={{ target }}>
+    // Carry the query string across: `?next=` on sign-in, share parameters
+    // elsewhere. replace() rather than assign() so Back does not bounce the
+    // member between the two sites.
+    location.replace(target + location.search);
+  </script>
+
+  <main class="mx-auto max-w-md px-6 py-24 text-center">
+    <p class="text-sm opacity-70"
+       data-en="Opening the FYC Connect app…"
+       data-ta="FYC Connect செயலியைத் திறக்கிறது…"
+       data-hi="FYC Connect ऐप खुल रहा है…"
+       data-ml="FYC Connect ആപ്പ് തുറക്കുന്നു…">Opening the FYC Connect app…</p>
+    <a href={target} class="mt-4 inline-block underline font-semibold"
+       data-en="Continue" data-ta="தொடரவும்" data-hi="जारी रखें"
+       data-ml="തുടരുക">Continue</a>
+  </main>
+</BaseLayout>

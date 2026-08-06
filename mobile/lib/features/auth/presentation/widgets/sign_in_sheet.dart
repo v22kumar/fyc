@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/services/error_reporter.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
@@ -74,6 +75,7 @@ class _SignInSheetState extends State<_SignInSheet> {
 
   _Step _step = _Step.phone;
   String? _verificationId;
+  String? _channel;
   String? _registrationToken;
   bool _busy = false;
   String? _error;
@@ -147,6 +149,7 @@ class _SignInSheetState extends State<_SignInSheet> {
           setState(() {
             _busy = false;
             _verificationId = state.verificationId;
+            _channel = state.channel;
             _step = _Step.code;
           });
         } else if (state is AuthNeedsRegistration) {
@@ -166,6 +169,21 @@ class _SignInSheetState extends State<_SignInSheet> {
         } else if (state is AuthAuthenticated) {
           Navigator.of(context).pop(true);
         } else if (state is AuthFailureState) {
+          // Report every sign-in failure, with the step it happened on.
+          //
+          // Both doors into this app went down after a deploy and there was no
+          // way to tell why: a member sees "something went wrong", and nobody
+          // can distinguish a TLS failure on an old handset from a 502 out of
+          // Twilio from a null idToken caused by an unregistered signing key.
+          // Each needs a different fix and they look identical from here.
+          //
+          // The reporter is the same one that already catches crashes, so this
+          // costs nothing new and lands beside them.
+          ErrorReporter.instance.report(
+            'sign-in failed at ${_step.name}: ${state.message}',
+            null,
+            context: 'auth/${_step.name}',
+          );
           setState(() {
             _busy = false;
             _error = state.message;
@@ -262,7 +280,15 @@ class _SignInSheetState extends State<_SignInSheet> {
 
   String _subtitle() => switch (_step) {
         _Step.phone => trId('sign_in_subtitle'),
-        _Step.code => trId('code_sent_to', {'phone': _e164}),
+        // Named, because the server walks a ladder and the answer is not
+        // knowable until it has been walked. "Check your messages" when the
+        // code went to WhatsApp reads, from where the member is standing,
+        // exactly like nothing being sent.
+        _Step.code => switch (_channel) {
+            'whatsapp' => trId('code_sent_whatsapp', {'phone': _e164}),
+            'email' => trId('code_sent_email'),
+            _ => trId('code_sent_to', {'phone': _e164}),
+          },
         // Said plainly, because it is the reason there is no form here.
         _Step.name => trId('name_only_the_rest_later'),
       };

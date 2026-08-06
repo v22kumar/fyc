@@ -419,3 +419,95 @@ def test_google_existing_user_logs_in(client, db, monkeypatch):
     body = r.json()
     assert "access_token" in body
     assert body.get("needs_registration") is not True
+
+
+def _send_otp_direct(db, org_id, phone, email=None):
+    """Call the handler past its rate-limit decorator.
+
+    These two tests are about the delivery ladder, not about the limiter — and
+    the limiter is per-IP with every test in this file sharing one, so by the
+    time they run the budget is spent. Neither `Limiter.reset()` nor clearing
+    the storage moves the moving window, so the honest way in is the
+    undecorated function that slowapi leaves on `__wrapped__`.
+    """
+    from app.routers.auth import send_otp
+    from app.schemas.auth import OTPRequest
+    payload = OTPRequest(organization_id=org_id, phone_number=phone, email=email)
+    return send_otp.__wrapped__(request=None, payload=payload, db=db)
+
+
+def test_a_twilio_outage_does_not_lock_the_club_out(db, monkeypatch):
+    """The fallbacks exist for exactly this moment and must be reachable.
+
+    This used to be an if/else: with TWILIO_VERIFY_SID configured, a failed
+    Verify send raised 502 and stopped there. The WhatsApp and email senders in
+    otp_sender.py were only ever reached when Verify was not configured at all
+    — so on the one day Twilio has an outage, or a trial balance runs out, or a
+    number is unverified, every member is locked out and the code written to
+    save them is unreachable."""
+    from app.core.config import settings as app_settings
+    from app.routers import auth as auth_router
+
+    org = Organization(id=uuid.uuid4(), slug=f"t-{uuid.uuid4().hex[:6]}",
+                       name_ta="அ", name_en="Org")
+    db.add(org); db.commit()
+
+    monkeypatch.setattr(app_settings, "TWILIO_VERIFY_SID", "VAtest", raising=False)
+    # Twilio is down.
+    monkeypatch.setattr(auth_router, "send_verify_otp", lambda phone: False)
+    # WhatsApp picks it up.
+    monkeypatch.setattr(auth_router, "deliver_otp",
+                        lambda phone, otp, email=None: {"whatsapp": True})
+
+    res = _send_otp_direct(db, org.id, "+919876500011")
+    assert res.channel == "whatsapp", "must fall through, not raise"
+
+    # And the code minted for the fallback channel actually verifies, rather
+    # than the request pointing at a Twilio verification that never happened.
+    phone, code, _, _ = auth_router.otp_store[res.verification_id]
+    assert code is not None, "a fallback channel needs a code we generated"
+
+
+def test_every_channel_down_says_so_and_leaves_nothing_dangling(db, monkeypatch):
+    """When nothing carried it, do not hand back a verification id pointing at
+    a message that was never sent."""
+    import pytest
+    from fastapi import HTTPException
+    from app.core.config import settings as app_settings
+    from app.routers import auth as auth_router
+
+    org = Organization(id=uuid.uuid4(), slug=f"t-{uuid.uuid4().hex[:6]}",
+                       name_ta="அ", name_en="Org")
+    db.add(org); db.commit()
+
+    monkeypatch.setattr(app_settings, "TWILIO_VERIFY_SID", "VAtest", raising=False)
+    monkeypatch.setattr(app_settings, "OTP_BYPASS_CODE", "", raising=False)
+    monkeypatch.setattr(auth_router, "send_verify_otp", lambda phone: False)
+    monkeypatch.setattr(auth_router, "deliver_otp",
+                        lambda phone, otp, email=None: {"whatsapp": False, "email": False})
+
+    before = len(auth_router.otp_store)
+    with pytest.raises(HTTPException) as raised:
+        _send_otp_direct(db, org.id, "+919876500012")
+    assert raised.value.status_code == 502
+    assert "organizer" in raised.value.detail.lower()
+    assert len(auth_router.otp_store) == before, "no dangling verification"
+
+
+def test_the_app_can_say_which_doors_are_open(client):
+    """A deploy where OTP and Google both stopped working left no way to tell,
+    from outside, whether the cause was a missing secret, an expired
+    credential, a bad client id or the code — every answer needed someone with
+    dashboard access. This reports configuration, never values."""
+    r = client.get("/api/health/auth")
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    assert "can_deliver_a_code" in body
+    assert set(body["channels"]) == {
+        "sms_twilio_verify", "whatsapp_twilio", "email_smtp", "otp_bypass"
+    }
+    # Configuration, not credentials. Nothing here may carry a secret value.
+    blob = r.text.lower()
+    for leak in ("auth_token", "password", "sid", "secret_key"):
+        assert leak not in blob, f"{leak} must not appear in a public probe"
