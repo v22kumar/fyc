@@ -47,15 +47,60 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
   double? _lat;
   double? _lng;
 
+  /// What Android says right now. Read on open, and again whenever the member
+  /// comes back from system settings.
+  LocationAccess _access = LocationAccess.notAsked;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncWithSystem();
+  }
+
+  /// Make the switch agree with the phone.
+  ///
+  /// A switch that says "sharing my location" while Android has the permission
+  /// blocked is not a preference, it is a false promise — the member believes
+  /// they are findable in an emergency and they are not, and nothing on the
+  /// screen ever tells them otherwise.
+  ///
+  /// So the switch is set from the operating system, not from a hopeful
+  /// default:
+  ///
+  /// * **granted** — on, and there is nothing left to ask.
+  /// * **blocked** — off, because we cannot honour it. The only place that can
+  ///   be changed is Android's own settings, so the card says so and offers to
+  ///   open them.
+  /// * **not yet asked** — on, expressing the intent, with the permission
+  ///   requested at submit.
+  Future<void> _syncWithSystem() async {
+    final access = await MemberLocation.access();
+    if (!mounted) return;
+    setState(() {
+      _access = access;
+      _shareLocation = access != LocationAccess.blocked;
+    });
+  }
+
   /// Flipping the switch records intent. Nothing is read from the phone here —
   /// the position is fetched once, at submit.
-  void _toggleLocation(bool on) => setState(() {
-        _shareLocation = on;
-        if (!on) {
-          _lat = null;
-          _lng = null;
-        }
-      });
+  Future<void> _toggleLocation(bool on) async {
+    // Turning it on while Android has it blocked would be a switch that lies.
+    // Send them to the one place it can actually be changed, and re-read the
+    // answer when they come back rather than assuming they changed it.
+    if (on && _access == LocationAccess.blocked) {
+      await MemberLocation.openSystemSettings();
+      await _syncWithSystem();
+      return;
+    }
+    setState(() {
+      _shareLocation = on;
+      if (!on) {
+        _lat = null;
+        _lng = null;
+      }
+    });
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -224,11 +269,33 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                     // they stay in the directory, they just stop being
                     // findable by distance.
                     Text(
-                      _shareLocation
-                          ? trId('location_on_explainer')
-                          : trId('location_off_explainer'),
+                      switch (_access) {
+                        // The truthful line for each state, rather than one
+                        // sentence that is only right some of the time.
+                        LocationAccess.blocked =>
+                          trId('location_blocked_in_settings'),
+                        LocationAccess.serviceOff =>
+                          trId('location_services_off'),
+                        _ => _shareLocation
+                            ? trId('location_on_explainer')
+                            : trId('location_off_explainer'),
+                      },
                       style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                     ),
+                    if (_access == LocationAccess.blocked)
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: TextButton(
+                          onPressed: () async {
+                            await MemberLocation.openSystemSettings();
+                            await _syncWithSystem();
+                          },
+                          style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 32)),
+                          child: Text(trId('open_phone_settings')),
+                        ),
+                      ),
                   ],
                 ),
               ),

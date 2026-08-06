@@ -160,3 +160,29 @@ because `PATCH /me/location` is a no-op without consent.
 arrive — the next time that member opens the blood screen — and the feature
 starts working on its own. Coordinates *without* consent are still refused,
 which is the direction that matters for privacy.
+
+
+### The switch is set by Android, not by hope
+
+Defaulting it on is only safe if it is also *corrected*. A switch reading
+"sharing my location" while the operating system has the permission blocked is
+not a preference — it is a false promise, and the member goes on believing they
+are findable in an emergency with nothing on the screen to tell them otherwise.
+
+So the screen reads the real state on open, and again whenever the member comes
+back from system settings:
+
+| Android says | switch | what the card says |
+|---|---|---|
+| granted | **on** | nothing left to ask |
+| not asked yet | **on** | intent; the permission is requested at submit |
+| blocked | **off** | *"Your phone is blocking location for this app"* + **Open phone settings** |
+| services off | **on** | *"Location is switched off on this phone. Turn it on and this will start working."* |
+
+Tapping the switch on while Android has it blocked does not flip it. There is
+exactly one place that can be changed, so the app opens it and then **re-reads
+the answer** rather than assuming the member did what they were sent to do.
+
+`blocked` is the only state that forces the switch off, because it is the only
+one we cannot honour. Services being off is temporary and nobody's fault; the
+intent survives it.

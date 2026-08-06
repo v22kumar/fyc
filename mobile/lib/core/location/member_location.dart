@@ -7,6 +7,13 @@ import '../network/api_client.dart';
 import '../../service_locator.dart';
 import 'location_disclosure.dart';
 
+/// What the operating system will currently allow.
+///
+/// Four states, not two, because the app should behave differently in each:
+/// blocked needs a trip to system settings, `notAsked` is still winnable, and
+/// `serviceOff` is nobody's fault and fixes itself.
+enum LocationAccess { granted, notAsked, blocked, serviceOff }
+
 /// The one place the app asks the phone where it is.
 ///
 /// Before this, five screens each rolled their own version of the same eight
@@ -111,6 +118,38 @@ class MemberLocation {
     } catch (_) {
       return null;
     }
+  }
+
+  /// What Android currently says, so a switch can tell the truth.
+  ///
+  /// A toggle that reads "sharing my location" while the operating system has
+  /// the permission blocked is not a preference, it is a false promise: the
+  /// member believes they are findable in an emergency and they are not. The
+  /// only way a switch can be honest is to be set from here, not from a
+  /// hopeful default.
+  static Future<LocationAccess> access() async {
+    if (_debugPosition != null) return LocationAccess.granted;
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return LocationAccess.serviceOff;
+      }
+      return switch (await Geolocator.checkPermission()) {
+        LocationPermission.always ||
+        LocationPermission.whileInUse =>
+          LocationAccess.granted,
+        LocationPermission.deniedForever => LocationAccess.blocked,
+        _ => LocationAccess.notAsked,
+      };
+    } catch (_) {
+      return LocationAccess.notAsked;
+    }
+  }
+
+  /// Send the member to the place Android keeps the switch we cannot flip.
+  static Future<void> openSystemSettings() async {
+    try {
+      await Geolocator.openAppSettings();
+    } catch (_) {/* nothing to open on a desktop embedder */}
   }
 
   /// A position only if we may already take one — never asks, never prompts.

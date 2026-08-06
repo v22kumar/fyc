@@ -1111,4 +1111,7 @@ const Map<String, String> kEn = {
   'sign_in_to_continue': 'Sign in to continue',
   'location_on_explainer': 'Used only to show how far you are when someone nearby needs your blood group. Never tracked in the background.',
   'location_off_explainer': 'You will still be in the directory, but not in "nearest to me" searches during an emergency.',
+  'location_blocked_in_settings': 'Your phone is blocking location for this app, so nobody can find you by distance.',
+  'location_services_off': 'Location is switched off on this phone. Turn it on and this will start working.',
+  'open_phone_settings': 'Open phone settings',
 };
