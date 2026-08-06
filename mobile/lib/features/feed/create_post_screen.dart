@@ -54,7 +54,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       case 'EXECUTIVE_MEMBER':
         return 'Manager';
       case 'VOLUNTEER':
-        return 'Volunteer';
+        return trId('volunteer');
       default:
         return 'Member';
     }
@@ -320,13 +320,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 _QuickActionBtn(
                   icon: Icons.poll_outlined,
                   color: const Color(0xFF3B82F6),
-                  label: 'Poll',
+                  label: trId('poll'),
                   onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('coming_soon_create_poll')))),
                 ),
                 _QuickActionBtn(
                   icon: Icons.event_outlined,
                   color: const Color(0xFF8B5CF6),
-                  label: 'Event',
+                  label: trId('event'),
                   onTap: () {
                     Navigator.pop(context); // Close create post sheet
                     context.push('/events'); // Or wherever event creation is
@@ -335,7 +335,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 _QuickActionBtn(
                   icon: Icons.emoji_events_outlined,
                   color: const Color(0xFFD97706),
-                  label: 'Tournament',
+                  label: trId('tournament'),
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/sports/create');
@@ -344,7 +344,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 _QuickActionBtn(
                   icon: Icons.volunteer_activism_outlined,
                   color: const Color(0xFFEF4444),
-                  label: 'Volunteer',
+                  label: trId('volunteer'),
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/opportunities');

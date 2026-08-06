@@ -12,11 +12,13 @@ class SearchDonorsUseCase {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
   }) =>
       repository.searchDonors(
         bloodGroup: bloodGroup,
         geographyId: geographyId,
         nearby: nearby,
         availableOnly: availableOnly,
+        source: source,
       );
 }

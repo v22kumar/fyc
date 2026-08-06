@@ -1,3 +1,4 @@
+import 'package:fyc_connect/core/l10n/tr.dart';
 import 'dart:async';
 import 'core/services/error_reporter.dart';
 import 'dart:convert';
@@ -219,7 +220,7 @@ class _FycAppState extends State<FycApp> {
                 valueListenable: themeModeNotifier,
                 builder: (context, themeMode, __) {
                   return MaterialApp.router(
-                    title: 'FYC',
+                    title: trId('fyc'),
                 debugShowCheckedModeBanner: false,
                 // Theme is rebuilt per language so the correct script font
                 // (Plus Jakarta / Noto Sans Tamil-Devanagari-Malayalam) is

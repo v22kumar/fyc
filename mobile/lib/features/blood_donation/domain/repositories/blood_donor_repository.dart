@@ -8,6 +8,14 @@ abstract class BloodDonorRepository {
     String? geographyId,
     bool nearby = false,
     bool availableOnly = true,
+    String? source,
+  });
+
+  /// Donors ranked by real distance from a point.
+  Future<Either<Failure, List<BloodDonorEntity>>> donorsNear({
+    required double lat,
+    required double lng,
+    String? bloodGroup,
   });
 
   Future<Either<Failure, BloodDonorEntity>> registerAsDonor({

@@ -1,7 +1,9 @@
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.cache import TTLCache
@@ -46,16 +48,41 @@ def _district_taluk_ids(db: Session, geography_id: UUID) -> list[UUID]:
     return [current.id] + [t.id for t in taluks]
 
 
+def _age_from(dob) -> Optional[int]:
+    """Whole years, or nothing.
+
+    A hospital asks a donor's age, so the app should be able to answer — but it
+    should answer with an age, not hand out a date of birth. Anyone under 18 is
+    reported as None: they cannot donate, and publishing a minor's age in a
+    public directory serves no purpose.
+    """
+    if not dob:
+        return None
+    today = date.today()
+    years = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    return years if 18 <= years <= 120 else None
+
+
 def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
-                with_approx_location: bool = False) -> BloodDonorPublicOut:
-    """Build the public donor view with the derived tier / eligibility fields."""
+                with_approx_location: bool = False,
+                approx_from: Optional[tuple] = None) -> BloodDonorPublicOut:
+    """Build the public donor view with the derived tier / eligibility fields.
+
+    `approx_from` is the position the distance was actually measured from. It
+    matters: a donor seen this morning a kilometre away has a home area twenty
+    kilometres off, and publishing the home area anyway put the pin somewhere
+    the card did not claim they were. The map and the row have to be the same
+    claim or neither is believable.
+    """
     imported = bool(user and getattr(user, "source", None) == "F2S_IMPORT")
     approx_lat = approx_lng = None
-    if with_approx_location and getattr(donor, "latitude", None) is not None \
-            and getattr(donor, "longitude", None) is not None:
+    src_lat, src_lng = approx_from or (
+        getattr(donor, "latitude", None), getattr(donor, "longitude", None)
+    )
+    if with_approx_location and src_lat is not None and src_lng is not None:
         # Round to ~1.1 km so pins cluster by area without pinpointing a home.
-        approx_lat = round(donor.latitude, 2)
-        approx_lng = round(donor.longitude, 2)
+        approx_lat = round(src_lat, 2)
+        approx_lng = round(src_lng, 2)
     return BloodDonorPublicOut(
         id=donor.id,
         blood_group=donor.blood_group,
@@ -65,6 +92,7 @@ def _public_out(donor, profile, geo, user, distance_km: Optional[float] = None,
         geography_name_ta=geo.name_ta if geo else None,
         full_name_en=profile.full_name_en if profile else None,
         full_name_ta=profile.full_name_ta if profile else None,
+        age=_age_from(profile.date_of_birth) if profile else None,
         is_imported=imported,
         tier="imported" if imported else "fyc",
         is_eligible=bm.is_eligible(donor.last_donation_date),
@@ -87,6 +115,7 @@ def search_donors(
     nearby: bool = False,
     compatible: bool = False,
     available_only: bool = True,
+    source: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
     response: Response = None,
@@ -99,10 +128,21 @@ def search_donors(
     Paginated: default limit=100. X-Total-Count header carries full match count.
     Pass nearby=true with geography_id to include all taluks in the same district.
     Results cached 5 minutes; cache flushed on any donor register / availability update.
+
+    `source` splits the two populations, which behave nothing alike:
+
+    * `club` — members who registered in the app. They can be located, notified,
+      and asked. This is what the map and the nearby ranking are about.
+    * `imported` — contacts from the Friends2Support directory. No account, no
+      location, no way to reach them except a cold phone call.
+
+    They were interleaved in one list, which quietly promised the same thing for
+    both: a member who has agreed to be asked, and a stranger's phone number
+    from a public directory, adjacent and identically weighted.
     """
     cache_key = (
         str(tenant_id), blood_group or "", str(geography_id), nearby, compatible,
-        available_only, limit, offset,
+        available_only, source or "", limit, offset,
     )
     hit, cached = _search_cache.get(cache_key)
     if hit:
@@ -113,6 +153,11 @@ def search_donors(
         return result
 
     filters = [BloodDonor.organization_id == tenant_id]
+    # The app's "All" chip sends the literal string "All", which was then
+    # matched against the blood_group column and returned nothing — so the
+    # default view of the whole screen was empty, whatever was in the database.
+    if blood_group and blood_group.strip().lower() in ("all", ""):
+        blood_group = None
     if blood_group:
         if compatible:
             # Include every donor group that can give to this recipient group.
@@ -127,8 +172,21 @@ def search_donors(
             filters.append(BloodDonor.geography_id == geography_id)
     if available_only:
         filters.append(BloodDonor.is_available == True)
+    if source:
+        want = source.strip().lower()
+        if want == "imported":
+            filters.append(User.source == "F2S_IMPORT")
+        elif want == "club":
+            # A donor with no user row at all is not an import — treat the
+            # absence of the marker as "one of ours", never the other way round.
+            filters.append(
+                or_(User.source.is_(None), User.source != "F2S_IMPORT")
+            )
 
-    total = db.query(func.count(BloodDonor.id)).filter(*filters).scalar() or 0
+    count_q = db.query(func.count(BloodDonor.id))
+    if source:
+        count_q = count_q.outerjoin(User, User.id == BloodDonor.user_id)
+    total = count_q.filter(*filters).scalar() or 0
 
     rows = (
         db.query(BloodDonor, UserProfile, GeographicNode, User)
@@ -188,21 +246,45 @@ def nearby_donors(
         .all()
     )
 
+    now = datetime.now(timezone.utc)
     scored = []
     for donor, profile, geo, user in rows:
         if eligible_only and not bm.is_eligible(donor.last_donation_date):
             continue
-        dist = bm.haversine_km(lat, lng, donor.latitude, donor.longitude)
+        # Rank from the freshest position that is still worth believing: where
+        # they were last seen if that is recent, otherwise their home area. A
+        # last-seen fix from March is not a better answer than "lives nearby",
+        # it is only a more precise wrong one.
+        origin_lat, origin_lng, basis = donor.latitude, donor.longitude, "home"
+        seen_at = donor.last_seen_at
+        if seen_at is not None and seen_at.tzinfo is None:
+            seen_at = seen_at.replace(tzinfo=timezone.utc)
+        if (
+            donor.last_seen_lat is not None
+            and donor.last_seen_lng is not None
+            and seen_at is not None
+            and (now - seen_at) < timedelta(hours=_LAST_SEEN_TRUSTED_HOURS)
+        ):
+            origin_lat, origin_lng = donor.last_seen_lat, donor.last_seen_lng
+            basis = "live" if (now - seen_at) < timedelta(hours=1) else "recent"
+        dist = bm.haversine_km(lat, lng, origin_lat, origin_lng)
         if dist > radius_km:
             continue
         exact = bool(blood_group) and donor.blood_group == blood_group.upper()
-        scored.append((0 if exact else 1, dist, donor, profile, geo, user))
+        scored.append((0 if exact else 1, dist, donor, profile, geo, user,
+                       basis, (origin_lat, origin_lng)))
 
     scored.sort(key=lambda t: (t[0], t[1]))  # exact group first, then nearest
-    return [
-        _public_out(d, p, g, u, distance_km=dist, with_approx_location=True)
-        for _, dist, d, p, g, u in scored[:limit]
-    ]
+    out = []
+    for _, dist, d, p, g, u, basis, origin in scored[:limit]:
+        item = _public_out(d, p, g, u, distance_km=dist,
+                           with_approx_location=True, approx_from=origin)
+        # Say which position the distance came from. A distance whose basis is
+        # hidden cannot be judged — "3 km away" from a fix an hour old and from
+        # a home area recorded last year are not the same claim.
+        item.location_basis = basis
+        out.append(item)
+    return out
 
 @router.post("/register", response_model=BloodDonorPublicOut, status_code=status.HTTP_201_CREATED)
 def register_donor(
@@ -350,3 +432,83 @@ def request_contact(
         phone_number=phone,
         whatsapp_link=f"https://wa.me/{wa_number}"
     )
+
+class MyLocationIn(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
+# Roughly a village. Below this the position has not usefully changed, and
+# rewriting it would be churn for no gain in a search that works in kilometres.
+_MEANINGFUL_MOVE_KM = 1.0
+
+# How stale a stored position may get before a refresh is worth a write, even
+# if the member has not moved.
+_REFRESH_AFTER_HOURS = 24
+
+# Beyond this, a last-seen position stops being better information than the
+# home area and starts being a more precise way to be wrong.
+_LAST_SEEN_TRUSTED_HOURS = 24
+
+
+@router.patch("/me/location", status_code=status.HTTP_204_NO_CONTENT)
+def update_my_location(
+    payload: MyLocationIn,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Refresh my own position, opportunistically.
+
+    The app calls this when it happens to be open and already has a cached fix
+    from the operating system. That is the whole strategy: no background
+    tracking, no polling, no GPS wake — so no battery cost and no extra request
+    beyond one the app was making anyway.
+
+    It accepts the tradeoff honestly. A member who never opens the app has a
+    stale position, and a member who never opens the app was never going to
+    answer a request either.
+
+    Consent still governs. Opening the app is not consent to be located, so a
+    donor who has not opted in is a no-op here.
+    """
+    donor = (
+        db.query(BloodDonor)
+        .filter(
+            BloodDonor.user_id == current_user.id,
+            BloodDonor.organization_id == tenant_id,
+        )
+        .first()
+    )
+    if not donor or not donor.location_consent:
+        # Not a donor, or has not agreed to share a location. Silently nothing —
+        # this is a background courtesy call, not something to raise an error at.
+        return
+
+    now = datetime.now(timezone.utc)
+    last = donor.last_seen_at
+    if last is not None and last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+
+    moved_enough = (
+        donor.last_seen_lat is None
+        or donor.last_seen_lng is None
+        or bm.haversine_km(
+            donor.last_seen_lat, donor.last_seen_lng, payload.lat, payload.lng)
+        >= _MEANINGFUL_MOVE_KM
+    )
+    stale_enough = (
+        last is None or (now - last) >= timedelta(hours=_REFRESH_AFTER_HOURS)
+    )
+    # Most calls land here and cost a read. Writing a new row every time someone
+    # opens the app would be churn a kilometre-scale search cannot even see.
+    if not (moved_enough or stale_enough):
+        return
+
+    # The last-seen pair only. The home area from registration is a different
+    # claim and this must never touch it — writing here used to relocate a
+    # member permanently to wherever they last opened the app.
+    donor.last_seen_lat = payload.lat
+    donor.last_seen_lng = payload.lng
+    donor.last_seen_at = now
+    db.commit()

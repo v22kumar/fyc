@@ -777,9 +777,9 @@ class _TossSetupFormState extends State<_TossSetupForm> {
   // Sensible defaults so the scorer can start in one tap and rename later
   // (players can be renamed from team management). Openers must differ, so
   // Player 1 / Player 2 by batting position.
-  final _striker = TextEditingController(text: 'Player 1');
-  final _nonStriker = TextEditingController(text: 'Player 2');
-  final _bowler = TextEditingController(text: 'Bowler 1');
+  final _striker = TextEditingController(text: trId('player_1'));
+  final _nonStriker = TextEditingController(text: trId('player_2'));
+  final _bowler = TextEditingController(text: trId('bowler_1'));
 
   @override
   void dispose() {
@@ -1138,9 +1138,9 @@ class _SecondInningsForm extends StatefulWidget {
 }
 
 class _SecondInningsFormState extends State<_SecondInningsForm> {
-  final _striker = TextEditingController(text: 'Player 1');
-  final _nonStriker = TextEditingController(text: 'Player 2');
-  final _bowler = TextEditingController(text: 'Bowler 1');
+  final _striker = TextEditingController(text: trId('player_1'));
+  final _nonStriker = TextEditingController(text: trId('player_2'));
+  final _bowler = TextEditingController(text: trId('bowler_1'));
 
   @override
   void dispose() {

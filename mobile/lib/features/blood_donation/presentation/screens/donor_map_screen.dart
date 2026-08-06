@@ -4,11 +4,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../data/blood_request_api.dart';
 import '../../data/models/blood_donor_model.dart';
+import '../widgets/donor_presence.dart';
 
 const _groups = ['All', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 // Nagercoil town — the fallback centre if we can't get a live location.
@@ -46,19 +48,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
     await _fetch();
   }
 
-  Future<Position?> _currentLocation() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return null;
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return null;
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
-      );
-    } catch (_) {
-      return null;
-    }
-  }
+  Future<Position?> _currentLocation() => MemberLocation.forRanking(context);
 
   Future<void> _fetch() async {
     setState(() => _loading = true);
@@ -109,12 +99,26 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
                   child: Text(d.bloodGroup, style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800, fontSize: 13)),
                 ),
                 title: Text(d.displayName(lang), style: TextStyle(color: context.cText, fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                  [
-                    if (d.distanceKm != null) '${d.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}',
-                    d.isEligible ? trId('eligible_now') : trId('eligible_soon'),
-                  ].join(' · '),
-                  style: TextStyle(color: context.cTextSecondary, fontSize: 12),
+                // Same glyph and same phrasing as the donor card, from the same
+                // source, so a pin and a list row never disagree about how
+                // current a position is.
+                subtitle: Row(
+                  children: [
+                    if (d.distanceKm != null) ...[
+                      PresenceGlyph(DonorPresence.of(d.locationBasis), size: 12),
+                      const SizedBox(width: 4),
+                    ],
+                    Expanded(
+                      child: Text(
+                        [
+                          if (d.distanceKm != null)
+                            DonorPresence.of(d.locationBasis).phrase(d.distanceKm!),
+                          d.isEligible ? trId('eligible_now') : trId('eligible_soon'),
+                        ].join(' · '),
+                        style: TextStyle(color: context.cTextSecondary, fontSize: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -134,7 +138,13 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
           height: 46,
           child: GestureDetector(
             onTap: () => _openCluster(c),
-            child: _ClusterPin(count: c.donors.length),
+            child: _ClusterPin(
+              count: c.donors.length,
+              live: c.donors
+                  .where((d) =>
+                      DonorPresence.of(d.locationBasis) == DonorPresence.live)
+                  .length,
+            ),
           ),
         ),
       if (_me != null)
@@ -270,22 +280,60 @@ class _Cluster {
 
 class _ClusterPin extends StatelessWidget {
   final int count;
-  const _ClusterPin({required this.count});
+
+  /// How many donors in this cell were seen here within the hour. A pin over a
+  /// cluster of home areas and a pin over people actually standing there look
+  /// the same otherwise, and that is the difference worth walking towards.
+  final int live;
+
+  const _ClusterPin({required this.count, required this.live});
+
   @override
   Widget build(BuildContext context) {
     final single = count == 1;
-    return Container(
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2.5),
-        boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.5), blurRadius: 8)],
-      ),
-      child: single
-          ? Icon(Icons.bloodtype_rounded, color: Colors.white, size: 22)
-          : Text('$count',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.5), blurRadius: 8)],
+          ),
+          child: single
+              ? Icon(Icons.bloodtype_rounded, color: Colors.white, size: 22)
+              : Text('$count',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+        ),
+        if (live > 0)
+          Positioned(
+            right: -1,
+            top: -1,
+            child: Container(
+              width: 14,
+              height: 14,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.success,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              // The count matters when it is more than one, and a bare dot is
+              // clearer when it is exactly one.
+              child: live > 1
+                  ? FittedBox(
+                      child: Text('$live',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 9)),
+                    )
+                  : null,
+            ),
+          ),
+      ],
     );
   }
 }

@@ -674,16 +674,16 @@ class _OnlineActionBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _Btn(icon: Icons.swap_vert_rounded, label: 'Flip', onTap: onFlip),
+          _Btn(icon: Icons.swap_vert_rounded, label: trId('flip'), onTap: onFlip),
           _Btn(
             icon: Icons.handshake_outlined,
-            label: 'Draw',
+            label: trId('draw'),
             onTap: onDraw,
             color: const Color(0xFFD4AF37),
           ),
           _Btn(
             icon: Icons.flag_rounded,
-            label: 'Resign',
+            label: trId('resign'),
             onTap: onResign,
             color: AppColors.danger.withOpacity(0.4),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:fyc_connect/core/design_system/components/ds_empty_state.dart';
 import 'package:fyc_connect/core/design_system/components/ds_error_state.dart';
 import 'package:fyc_connect/core/design_system/components/ds_skeleton.dart';
@@ -59,7 +60,9 @@ void main() {
       ));
       expect(find.text('500'), findsNothing);
       expect(find.textContaining("We couldn't load"), findsOneWidget);
-      await tester.tap(find.text('Retry'));
+      // Resolved through the registry, so this test does not quietly
+      // depend on the app's default language being English.
+      await tester.tap(find.text(trId('retry')));
       await tester.pump();
       expect(retried, isTrue);
     });

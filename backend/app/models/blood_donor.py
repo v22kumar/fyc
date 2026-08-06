@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, Date, Float, ForeignKey, Index
+from sqlalchemy import DateTime, Column, String, Boolean, Date, Float, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -24,6 +24,21 @@ class BloodDonor(Base, TimestampMixin, TenantModelMixin):
     # donors who decline. notify_opt_in gates emergency push alerts.
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    # Where this donor was, the last time they happened to open the app.
+    #
+    # Kept apart from latitude/longitude on purpose. These two pairs answer
+    # different questions and have different lifetimes: the home area is stable
+    # and rarely wrong, this is precise about one moment that may be long past.
+    # Sharing one pair of columns meant the volatile value overwrote the stable
+    # one — a member who registered in Nagercoil and opened the app once in
+    # Chennai acquired a permanent home area of Chennai.
+    last_seen_lat = Column(Float, nullable=True)
+    last_seen_lng = Column(Float, nullable=True)
+    # Without this a distance is a claim with no expiry: "2 km away" reads the
+    # same whether the fix is an hour or five months old, and someone in a hurry
+    # would act on it either way.
+    last_seen_at = Column(DateTime(timezone=True), nullable=True)
+    # Consent to publish a home area so people can find a donor nearby.
     location_consent = Column(Boolean(), default=False)
     notify_opt_in = Column(Boolean(), default=True)
 

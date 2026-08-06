@@ -463,22 +463,42 @@ async def lifespan(app: FastAPI):
         except Exception as _bfc:
             logger.warning(f"[data-backfill] cricket completion finalize: {_bfc}")
 
-        # One-off: tag existing Friends2Support directory contacts (imported as
-        # donor-only PUBLIC_CITIZEN accounts) with source='F2S_IMPORT', so they
-        # stay out of member/opponent lists (e.g. the chess members list). Only
-        # touches donor-linked public citizens not already tagged — a real
-        # member/admin who is also a donor keeps source NULL and still appears
-        # everywhere. Self-clears (re-running matches nothing new).
+        # REMOVED: a start-up backfill that tagged every donor-linked
+        # PUBLIC_CITIZEN as source='F2S_IMPORT'.
+        #
+        # It read as a one-off — "self-clears, re-running matches nothing new" —
+        # and it was, exactly once. PUBLIC_CITIZEN is not a marker of an import;
+        # it is the ordinary role every app member gets, including through
+        # /auth/register. So from the moment a real member registered as a blood
+        # donor, the next deploy stamped them a Friends2Support contact: out of
+        # the club list, off the map, into the cold-call directory, with no
+        # record that it had happened.
+        #
+        # The importer tags its own rows at import time, which is where that
+        # belongs. Nothing needs to infer it afterwards from a role that cannot
+        # carry the distinction.
+        #
+        # Repairing what it already did, precisely. A date of birth is the one
+        # thing the directory import never supplies and registration always
+        # requires — the onboarding gate will not let an account through
+        # without it. So a tagged user who has one registered in this app, and
+        # the tag is wrong. No role is read and nothing is guessed; the reverse
+        # direction (moving somebody *into* the cold-call list) never happens
+        # here. Self-clearing: once repaired, it matches nothing.
         try:
             from sqlalchemy import text as _f2s_text
             with engine.begin() as conn:
-                conn.execute(_f2s_text(
-                    "UPDATE users SET source = 'F2S_IMPORT' "
-                    "WHERE role = 'PUBLIC_CITIZEN' "
-                    "AND (source IS NULL OR source = '') "
-                    "AND id IN (SELECT user_id FROM blood_donors)"))
+                _fixed = conn.execute(_f2s_text(
+                    "UPDATE users SET source = NULL "
+                    "WHERE source = 'F2S_IMPORT' "
+                    "AND id IN (SELECT user_id FROM user_profiles "
+                    "           WHERE date_of_birth IS NOT NULL)"))
+                if getattr(_fixed, "rowcount", 0):
+                    logger.info(
+                        f"[data-backfill] restored {_fixed.rowcount} member(s) "
+                        "wrongly filed as Friends2Support imports")
         except Exception as _f2se:
-            logger.warning(f"[data-backfill] tag F2S donor contacts: {_f2se}")
+            logger.warning(f"[data-backfill] restore mislabelled members: {_f2se}")
 
         # One-time backfill of the FYC LEAGUE 2026 knockout round, gated by a
         # secret so it only runs when an operator opts in (set SEED_FYC_LEAGUE_2026=1
@@ -811,6 +831,9 @@ from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
 from app.routers import diagnostics as diagnostics_router
 app.include_router(diagnostics_router.router, prefix="/api/v1")
+
+from app.routers import profile_prompts as profile_prompts_router
+app.include_router(profile_prompts_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath

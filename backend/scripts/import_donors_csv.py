@@ -192,6 +192,11 @@ def main():
                     role="PUBLIC_CITIZEN",
                     is_verified=True,
                     preferred_language="ta",
+                    # Tag at the point of import, which is the only place that
+                    # knows. This used to be inferred afterwards from
+                    # role='PUBLIC_CITIZEN' — the ordinary role every app member
+                    # has — so the inference swept up real members too.
+                    source="F2S_IMPORT",
                 )
                 db.add(user)
                 db.flush()

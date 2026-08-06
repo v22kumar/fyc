@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/blood_request_api.dart';
 import '../../data/blood_request_models.dart';
@@ -12,21 +13,12 @@ const _urgencies = ['CRITICAL', 'URGENT', 'ROUTINE'];
 
 /// Best-effort current location (never throws) — the request still goes out
 /// without coordinates, just without proximity fan-out.
-Future<Position?> _currentLocation() async {
-  try {
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-      return null;
-    }
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
-    );
-  } catch (_) {
-    return null;
-  }
-}
+///
+/// Deliberately the non-asking variant. Someone raising a blood request has
+/// already tapped submit; a permission sheet at that moment reads as an
+/// obstacle between them and help, and a sheet answered in a panic is not
+/// consent. If they have already agreed elsewhere, we use it.
+Future<Position?> _currentLocation() => MemberLocation.ifAlreadyAllowed();
 
 Future<void> showRaiseRequestSheet(BuildContext context, {String? initialGroup}) {
   return showModalBottomSheet(
@@ -221,6 +213,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(BloodRequestScreen old) {
+    super.didUpdateWidget(old);
+    // go_router reuses this State when only the path parameter changes, so
+    // initState does not run again — tapping through from one blood
+    // notification to another left the previous request on screen, complete
+    // with its blood group and its hospital.
+    if (old.requestId != widget.requestId) _load();
+  }
+
   Future<void> _load() async {
     try {
       final r = await BloodRequestApi.detail(widget.requestId);
@@ -244,6 +246,31 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _confirmBroadcast(BloodRequest r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(trId('alert_everyone_q')),
+        // Says the size of the thing before it happens. "Everyone" is abstract;
+        // a phone buzzing in four hundred pockets is not.
+        content: Text(trId('alert_everyone_body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(trId('cancel_2')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(trId('alert_everyone')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _run(() => BloodRequestApi.broadcast(r.id).then((_) {}));
   }
 
   Future<void> _call(String phone) async {
@@ -318,15 +345,21 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     }
 
     // Responders list
+    final canEscalate =
+        r.isOpen && r.isMine && r.acceptedCount == 0 && r.broadcastAt == null;
     children.add(Text(trId('responders'),
         style: TextStyle(fontWeight: FontWeight.w800, color: context.cText, fontSize: 15)));
     children.add(SizedBox(height: 8));
     final accepted = r.pledges.where((p) => p.status == 'ACCEPTED').toList();
     if (accepted.isEmpty) {
-      children.add(Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text(trId('no_responders_yet'), style: TextStyle(color: context.cTextSecondary)),
-      ));
+      // Skipped when the escalation card is about to say the same thing with
+      // an action attached — the two sat adjacent, word for word.
+      if (!canEscalate) {
+        children.add(Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text(trId('no_responders_yet'), style: TextStyle(color: context.cTextSecondary)),
+        ));
+      }
     } else {
       for (final p in accepted) {
         children.add(Container(
@@ -337,14 +370,59 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: context.cBorder),
           ),
+          // The payoff of asking instead of calling: their number arrives with
+          // the yes. The server sends it only to the requester and only for
+          // donors who accepted, so a row without one is somebody else's view
+          // of this request, not a missing feature.
           child: Row(children: [
             Icon(Icons.volunteer_activism_rounded, color: const Color(0xFF16A34A), size: 20),
             SizedBox(width: 10),
-            Expanded(child: Text(p.donorName ?? trId('a_donor'),
-                style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(p.donorName ?? trId('a_donor'),
+                      style: TextStyle(color: context.cText, fontWeight: FontWeight.w600)),
+                  if (p.donorPhone != null)
+                    Text(p.donorPhone!,
+                        style: TextStyle(color: context.cTextSecondary, fontSize: 13)),
+                ],
+              ),
+            ),
+            if (p.donorPhone != null)
+              IconButton(
+                tooltip: trId('call'),
+                icon: Icon(Icons.call_rounded, color: const Color(0xFF16A34A)),
+                onPressed: () => launchUrl(Uri.parse('tel:${p.donorPhone}')),
+              ),
           ]),
         ));
       }
+    }
+
+    // Escalation. Only where it belongs: the request is open, this is the
+    // person who raised it, nobody has answered, and it has not been sent.
+    // Any one of those false and the card is not there to be pressed by
+    // accident.
+    if (canEscalate) {
+      children.add(SizedBox(height: 12));
+      children.add(_EscalateCard(
+        busy: _busy,
+        onBroadcast: () => _confirmBroadcast(r),
+      ));
+    } else if (r.broadcastAt != null) {
+      children.add(SizedBox(height: 12));
+      children.add(Row(children: [
+        Icon(Icons.campaign_rounded, size: 18, color: AppColors.danger),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            trId('club_alerted_n', {'n': r.broadcastCount}),
+            style: TextStyle(color: context.cTextSecondary, fontSize: 12.5),
+          ),
+        ),
+      ]));
     }
 
     // Requester controls
@@ -408,20 +486,97 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         ]),
       );
     }
-    return Row(children: [
-      Expanded(
-        child: FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: EdgeInsets.symmetric(vertical: 12)),
+    // Stacked, not side by side.
+    //
+    // Two reasons. The decline button used to sit in a Row unflexed, which made
+    // the row ask it for an intrinsic width and took the whole screen down —
+    // "BoxConstraints forces an infinite width", and a member who raised a
+    // request got a blank page under the app bar. Nobody had ever opened this
+    // screen on a device, so nobody had seen it.
+    //
+    // And side by side, "I can help" in Tamil left the decline button clipped
+    // to "முடியா…". Full width each cannot clip in any language, and it puts
+    // the accept where a primary action belongs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              padding: EdgeInsets.symmetric(vertical: 14)),
           onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'ACCEPTED').then((_) {})),
           icon: Icon(Icons.volunteer_activism_rounded),
           label: Text(trId('i_can_help')),
         ),
+        TextButton(
+          onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
+          child: Text(trId('decline')),
+        ),
+      ],
+    );
+  }
+}
+
+
+/// The last resort, described honestly.
+///
+/// Everything above this on the screen is quieter: a request went to the
+/// donors who matched, and nothing came back. That is the moment this card
+/// appears, and it says what it does rather than daring the requester to find
+/// out — because the cost of a club-wide alert is not paid by the person who
+/// sends it, it is paid by the next emergency, when people have already
+/// silenced their notifications.
+class _EscalateCard extends StatelessWidget {
+  const _EscalateCard({required this.busy, required this.onBroadcast});
+
+  final bool busy;
+  final VoidCallback onBroadcast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.danger.withOpacity(0.35)),
       ),
-      SizedBox(width: 10),
-      OutlinedButton(
-        onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
-        child: Text(trId('decline')),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.campaign_rounded, color: AppColors.danger, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(trId('nobody_has_answered'),
+                        style: TextStyle(
+                            color: context.cText, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 2),
+                    Text(trId('nobody_has_answered_help'),
+                        style: TextStyle(
+                            color: context.cTextSecondary, fontSize: 12.5)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                padding: EdgeInsets.symmetric(vertical: 12)),
+            onPressed: busy ? null : onBroadcast,
+            icon: Icon(Icons.campaign_rounded),
+            label: Text(trId('alert_everyone')),
+          ),
+        ],
       ),
-    ]);
+    );
   }
 }

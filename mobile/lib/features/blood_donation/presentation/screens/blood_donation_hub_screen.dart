@@ -1,20 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../widgets/need_blood_panel.dart';
+import '../widgets/donor_card.dart';
+import '../widgets/ask_donor_sheet.dart';
+import '../widgets/donors_around_map.dart';
+import '../../../../core/design_system/tokens.dart';
 import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
-import 'donor_map_screen.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/location/member_location.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
-import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -36,11 +42,29 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   String? _selectedGeographyId;
   bool _nearby = false;
 
+  /// True once the list is ordered by real distance rather than by taluk.
+  bool _rankedByDistance = false;
+
+  /// Where we found the member, kept so a filter tap does not throw away the
+  /// ranking. Choosing "O+" is narrowing the question, not abandoning "near me".
+  double? _myLat;
+  double? _myLng;
+
   @override
   void initState() {
     super.initState();
-    context.read<BloodDonorBloc>().add(const BloodDonorSearchRequested());
+    // Show something immediately, then improve it. Asking for location first
+    // would leave the screen empty behind a permission dialog — at exactly the
+    // moment the member is least willing to wait.
+    context.read<BloodDonorBloc>().add(
+        const BloodDonorSearchRequested(source: 'club'));
     _loadTaluks();
+    // After the first frame, so the disclosure sheet slides up over a screen
+    // that is already there. Explaining why we want a location on top of a
+    // blank page is not an explanation, it is an interruption.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _rankByDistance();
+    });
   }
 
   Future<void> _loadTaluks() async {
@@ -61,11 +85,22 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
   }
 
   void _runSearch() {
+    // Distance ranking survives a blood-group filter. Only picking a taluk
+    // means "show me that area instead of around me", so only that drops it.
+    if (_rankedByDistance && _selectedGeographyId == null) {
+      context.read<BloodDonorBloc>().add(BloodDonorNearbyRequested(
+            lat: _myLat!,
+            lng: _myLng!,
+            bloodGroup: _selectedGroup == 'All' ? null : _selectedGroup,
+          ));
+      return;
+    }
     context.read<BloodDonorBloc>().add(
           BloodDonorSearchRequested(
             bloodGroup: _selectedGroup,
             geographyId: _selectedGeographyId,
             nearby: _nearby && _selectedGeographyId != null,
+            source: 'club',
           ),
         );
   }
@@ -95,6 +130,28 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     }
   }
 
+  /// Ask the phone where it is, once, and rank by that.
+  ///
+  /// Best-effort by design. Location can be off, refused, or slow, and none of
+  /// those should leave a member staring at nothing — the taluk search is still
+  /// there and still works, it just cannot answer "who is nearest".
+  ///
+  /// The same fix does double duty: it ranks this member's screen, and it is
+  /// reported back as their own last-seen position. This is the only moment the
+  /// app collects one, which is exactly the bargain the disclosure describes —
+  /// looking for a donor is what puts you on the map for the next person.
+  Future<void> _rankByDistance() async {
+    final pos = await MemberLocation.forRanking(context);
+    if (pos == null || !mounted) return;
+    unawaited(MemberLocation.report(pos));
+    setState(() {
+      _rankedByDistance = true;
+      _myLat = pos.latitude;
+      _myLng = pos.longitude;
+    });
+    _runSearch();
+  }
+
   Future<void> _launchPhone(String phone) async {
     final uri = Uri.parse('tel:$phone');
     if (await canLaunchUrl(uri)) {
@@ -109,16 +166,66 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
     }
   }
 
-  void _requestContact(BuildContext context, BloodDonorEntity donor) {
-    showDialog(
+  /// Everyone standing on one pin, as cards.
+  ///
+  /// One donor still gets a sheet rather than jumping straight to the contact
+  /// dialog: tapping a dot on a map should show you who it is before it asks
+  /// you to commit to anything.
+  void _showCluster(BuildContext context, List<BloodDonorEntity> cell) {
+    showModalBottomSheet(
       context: context,
-      builder: (_) => _ContactDialog(
-        donor: donor,
-        onConfirm: () {
-          context
-              .read<BloodDonorBloc>()
-              .add(BloodDonorContactRequested(donor.id));
-        },
+      backgroundColor: context.cSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.all(DSSpacing.md),
+          children: [
+            Text(
+              trId('donors_here_n', {'n': cell.length}),
+              style: Theme.of(sheetContext).textTheme.titleSmall,
+            ),
+            SizedBox(height: DSSpacing.sm),
+            for (final d in cell)
+              DonorCard(
+                donor: d,
+                lang: _lang,
+                onContact: () {
+                  Navigator.of(sheetContext).pop();
+                  _requestContact(context, d);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Ask this donor, rather than being handed their number.
+  ///
+  /// The old flow was a confirmation dialog and then a phone number, and from
+  /// there it was the requester's problem — dialling strangers one after
+  /// another to discover what the app already knew. Now the donor is asked, and
+  /// their number arrives with the yes. See [showAskDonorSheet].
+  void _requestContact(BuildContext context, BloodDonorEntity donor) {
+    showAskDonorSheet(
+      context,
+      donor: donor,
+      lang: _lang,
+      // The escape hatch, kept because an unanswered notification cannot be the
+      // only road out of an emergency.
+      onShowNumberInstead: () => showDialog(
+        context: context,
+        builder: (_) => _ContactDialog(
+          donor: donor,
+          onConfirm: () {
+            context
+                .read<BloodDonorBloc>()
+                .add(BloodDonorContactRequested(donor.id));
+          },
+        ),
       ),
     );
   }
@@ -129,13 +236,6 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       appBar: AppBar(
         title: Text(trId('blood_donation_hub')),
         actions: [
-          IconButton(
-            tooltip: trId('map'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const DonorMapScreen()),
-            ),
-            icon: Icon(Icons.map_rounded, color: AppColors.background),
-          ),
           TextButton.icon(
             onPressed: () => context.push('/blood-donation/register'),
             icon: Icon(Icons.volunteer_activism, color: AppColors.background),
@@ -148,81 +248,20 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
       ),
       body: Column(
         children: [
-          // Hero photo banner (FYC blood drive)
-          SizedBox(
-            height: 132,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/images/blood_drive.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.primary.withOpacity(0.15)),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.textPrimary.withOpacity(0.05),
-                        AppColors.textPrimary.withOpacity(0.55),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 12,
-                  child: Text(
-                    trId('your_one_donation_can_save_up_to_3_lives'),
-                    style: TextStyle(
-                      color: AppColors.background,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // The request is the screen's purpose, so it leads. The filter row
-          // and the directory stay below it for anyone who wants to browse —
-          // available, but no longer the first thing asked of someone in an
-          // emergency.
+          // The map leads, because "is anybody near me?" is the first question
+          // and a count of dots answers it before a single name is read. It was
+          // a route behind an icon, which meant it answered nothing.
           BlocBuilder<BloodDonorBloc, BloodDonorState>(
             builder: (context, state) {
               final donors = state is BloodDonorSearchSuccess
-                  ? state.donors.where((d) => !d.isImported).toList()
-                  : const [];
-              return NeedBloodPanel(
-                availableNow:
-                    donors.where((d) => d.isAvailable && d.isEligible).length,
-                totalDonors: donors.length,
-                onRaiseRequest: () => showRaiseRequestSheet(
-                  context,
-                  initialGroup: _selectedGroup == 'All' ? null : _selectedGroup,
-                ),
+                  ? state.donors
+                  : const <BloodDonorEntity>[];
+              return DonorsAroundMap(
+                donors: donors,
+                me: _myLat == null ? null : LatLng(_myLat!, _myLng!),
+                onTapCluster: (cell) => _showCluster(context, cell),
               );
             },
-          ),
-          _FilterRow(
-            groups: _groups,
-            selected: _selectedGroup,
-            onSelect: _search,
-          ),
-          _LocationFilter(
-            taluks: _taluks,
-            selectedId: _selectedGeographyId,
-            nearby: _nearby,
-            lang: _lang,
-            onSelect: _selectLocation,
-            onToggleNearby: _toggleNearby,
           ),
           Expanded(
             child: BlocConsumer<BloodDonorBloc, BloodDonorState>(
@@ -241,30 +280,68 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
                 }
               },
               builder: (context, state) {
-                if (state is BloodDonorLoading) {
-                  return const ShimmerCardList();
-                }
-                if (state is BloodDonorSearchSuccess) {
-                  if (state.donors.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
-                      child: ListView(children: [_EmptyDonors(group: _selectedGroup)]),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async => context.read<BloodDonorBloc>().add(BloodDonorSearchRequested(bloodGroup: _selectedGroup, geographyId: _selectedGeographyId, nearby: _nearby && _selectedGeographyId != null)),
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(16),
-                      itemCount: state.donors.length,
-                      itemBuilder: (context, i) => _DonorCard(
-                        donor: state.donors[i],
-                        onContact: () =>
-                            _requestContact(context, state.donors[i]),
+                final donors = state is BloodDonorSearchSuccess
+                    ? state.donors
+                    : const <BloodDonorEntity>[];
+                return RefreshIndicator(
+                  onRefresh: () async => _runSearch(),
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                        DSSpacing.md, DSSpacing.sm, DSSpacing.md, DSSpacing.xl),
+                    children: [
+                      // The request is the screen's purpose, so it sits
+                      // directly under the map — the two together say "these
+                      // people are here, and here is how to reach them".
+                      NeedBloodPanel(
+                        onRaiseRequest: () => showRaiseRequestSheet(
+                          context,
+                          initialGroup:
+                              _selectedGroup == 'All' ? null : _selectedGroup,
+                        ),
                       ),
-                    ),
-                  );
-                }
-                return SizedBox.shrink();
+                      _FilterRow(
+                        groups: _groups,
+                        selected: _selectedGroup,
+                        onSelect: _search,
+                      ),
+                      _LocationFilter(
+                        taluks: _taluks,
+                        selectedId: _selectedGeographyId,
+                        nearby: _nearby,
+                        lang: _lang,
+                        onSelect: _selectLocation,
+                        onToggleNearby: _toggleNearby,
+                      ),
+                      if (state is BloodDonorLoading)
+                        const ShimmerCardList()
+                      else if (donors.isEmpty)
+                        _EmptyDonors(group: _selectedGroup)
+                      else ...[
+                        _DonorSectionHeading(
+                          imported: false,
+                          ranked: _rankedByDistance,
+                        ),
+                        for (final (i, d) in donors.indexed)
+                          DonorCard(
+                            // Stable handles so the screenshot harness can open
+                            // the sheets behind these rows.
+                            key: ValueKey('donor-card-$i'),
+                            donor: d,
+                            lang: _lang,
+                            onContact: () => _requestContact(context, d),
+                          ),
+                      ],
+                      // The wider directory is a door, not a section. Mixing
+                      // strangers' phone numbers into the list above promised
+                      // the same thing for both.
+                      SizedBox(height: DSSpacing.md),
+                      _WiderDirectoryCard(
+                        onOpen: () =>
+                            context.push('/blood-donation/directory'),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ),
@@ -522,158 +599,6 @@ class _LocationFilter extends StatelessWidget {
   }
 }
 
-class _DonorCard extends StatelessWidget {
-  final BloodDonorEntity donor;
-  final VoidCallback onContact;
-
-  const _DonorCard({required this.donor, required this.onContact});
-
-  Widget _badge(String text, Color color, IconData icon) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 11, color: color),
-          SizedBox(width: 3),
-          Text(text,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
-        ]),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
-    final isVerified = donor.phoneNumber != null && donor.phoneNumber!.isNotEmpty;
-
-    return ScaleOnTap(
-      onTap: onContact,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: context.cSurface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-          boxShadow: context.isDark ? null : AppTheme.cardShadow,
-          border: Border.all(color: context.cBorder, width: 1),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.accent.withOpacity(0.12),
-                radius: 28,
-                child: Text(
-                  donor.bloodGroup,
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17,
-                  ),
-                ),
-              ),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            donor.displayName(lang),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 17,
-                              height: 1.2,
-                              color: context.cText,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isVerified) ...[
-                          SizedBox(width: 6),
-                          Tooltip(
-                            message: trId('verified_member'),
-                            child: Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
-                          ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.place_outlined, size: 15, color: context.cTextSecondary),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            donor.displayLocation(lang),
-                            style: TextStyle(
-                              color: context.cTextSecondary,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Eligibility / distance / reachability badges (P1 data).
-                    SizedBox(height: 7),
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      if (donor.distanceKm != null)
-                        _badge('${donor.distanceKm!.toStringAsFixed(1)} ${trId('km_away')}',
-                            const Color(0xFF2563EB), Icons.near_me_rounded),
-                      if (donor.isEligible)
-                        _badge(trId('eligible_now'), const Color(0xFF16A34A), Icons.check_circle)
-                      else
-                        _badge(trId('eligible_soon'), const Color(0xFFB45309), Icons.schedule),
-                      if (donor.isImported)
-                        _badge(trId('friends2support'), const Color(0xFFB45309), Icons.contacts_rounded)
-                      else
-                        _badge(trId('in_app'), AppColors.primary, Icons.smartphone_rounded),
-                    ]),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  // Contact is the one action on a donor card — it reads as
-                  // the CTA in mint (the system's single call-to-action colour),
-                  // not navy structure.
-                  color: AppColors.primaryLight.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.call, size: 15, color: AppColors.primaryLight),
-                    SizedBox(width: 5),
-                    Text(
-                      trId('contact'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyDonors extends StatelessWidget {
   final String? group;
   const _EmptyDonors({this.group});
@@ -760,6 +685,91 @@ class _ContactDialog extends StatelessWidget {
           child: Text(trId('reveal_contact')),
         ),
       ],
+    );
+  }
+}
+
+
+/// Which pile these donors are in, said once above the run rather than
+/// repeated as a badge on every row.
+class _DonorSectionHeading extends StatelessWidget {
+  const _DonorSectionHeading({required this.imported, this.ranked = false});
+
+  final bool imported;
+
+  /// Whether this run of cards is ordered by distance from the member.
+  ///
+  /// A sorted list that does not say it is sorted reads as an arbitrary one:
+  /// the first name looks like the first name, not the nearest person.
+  final bool ranked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: DSSpacing.sm, bottom: DSSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            imported
+                ? trId('wider_directory')
+                : (ranked ? trId('nearest_to_you') : trId('club_donors')),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          if (imported)
+            Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Text(
+                trId('wider_directory_note'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The way into the Friends2Support directory.
+///
+/// A door rather than a section. Those contacts have no location, no account
+/// and no way of being asked — putting them under a heading in the list above
+/// made a stranger's phone number look like a neighbour who had volunteered.
+/// Here they are one deliberate tap away, described honestly.
+class _WiderDirectoryCard extends StatelessWidget {
+  const _WiderDirectoryCard({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: context.cSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DSRadius.card),
+        side: BorderSide(color: context.cBorder),
+      ),
+      child: ListTile(
+        onTap: onOpen,
+        contentPadding: EdgeInsets.all(DSSpacing.md),
+        leading: Icon(Icons.contact_phone_outlined,
+            color: context.cTextSecondary),
+        title: Text(trId('wider_directory'),
+            style: Theme.of(context).textTheme.titleSmall),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            trId('wider_directory_note'),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: context.cTextSecondary),
+          ),
+        ),
+        trailing: Icon(Icons.chevron_right_rounded,
+            color: context.cTextSecondary),
+      ),
     );
   }
 }

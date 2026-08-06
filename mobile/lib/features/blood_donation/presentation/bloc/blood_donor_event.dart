@@ -11,15 +11,22 @@ class BloodDonorSearchRequested extends BloodDonorEvent {
   final String? geographyId;
   final bool nearby;
   final bool availableOnly;
+
+  /// 'club' (members who registered here) or 'imported' (Friends2Support
+  /// contacts). Null means both, which is only right for a count.
+  final String? source;
+
   const BloodDonorSearchRequested({
     this.bloodGroup,
     this.geographyId,
     this.nearby = false,
     this.availableOnly = true,
+    this.source,
   });
 
   @override
-  List<Object?> get props => [bloodGroup, geographyId, nearby, availableOnly];
+  List<Object?> get props =>
+      [bloodGroup, geographyId, nearby, availableOnly, source];
 }
 
 class BloodDonorRegisterRequested extends BloodDonorEvent {
@@ -64,4 +71,23 @@ class BloodDonorAvailabilityUpdated extends BloodDonorEvent {
 
   @override
   List<Object?> get props => [donorId, isAvailable];
+}
+
+/// Rank donors by how near they actually are.
+///
+/// The taluk filter answers "who is in this administrative area", which is not
+/// the question someone at a hospital is asking. This one is.
+class BloodDonorNearbyRequested extends BloodDonorEvent {
+  final double lat;
+  final double lng;
+  final String? bloodGroup;
+
+  const BloodDonorNearbyRequested({
+    required this.lat,
+    required this.lng,
+    this.bloodGroup,
+  });
+
+  @override
+  List<Object?> get props => [lat, lng, bloodGroup];
 }

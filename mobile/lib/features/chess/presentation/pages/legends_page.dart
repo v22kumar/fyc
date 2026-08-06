@@ -6,7 +6,12 @@ class LegendEntry {
   final String emoji;
   final String name;
   final String nameTa;
-  final String title;
+  /// Registry id for the honour, resolved at render time.
+  ///
+  /// The id and not the text: this table is `const`, so anything resolved here
+  /// would be resolved once, at compile time, in whatever language happened to
+  /// be first — which is exactly how these came to be English-only.
+  final String titleId;
   final String years;
   final String factEn;
   final String factTa;
@@ -16,7 +21,7 @@ class LegendEntry {
     required this.emoji,
     required this.name,
     required this.nameTa,
-    required this.title,
+    required this.titleId,
     required this.years,
     required this.factEn,
     required this.factTa,
@@ -29,7 +34,7 @@ const _legends = [
     emoji: '♛',
     name: 'Viswanathan Anand',
     nameTa: 'விஸ்வநாதன் ஆனந்த்',
-    title: 'World Champion 2000–2016',
+    titleId: 'world_champion_2000_2016',
     years: 'b. 1969, Tamil Nadu',
     factEn:
         '"Vishy" dominated world chess for two decades, becoming the first Asian World Chess Champion. Known for his lightning-fast intuition, he won the championship 5 times.',
@@ -41,7 +46,7 @@ const _legends = [
     emoji: '♟',
     name: 'Magnus Carlsen',
     nameTa: 'மேக்னஸ் கார்ல்சன்',
-    title: 'World Champion 2013–2023',
+    titleId: 'world_champion_2013_2023',
     years: 'b. 1990, Norway',
     factEn:
         'The highest-rated player in history (ELO 2882), Magnus became a Grandmaster at age 13. Known for endgame precision and near-perfect play.',
@@ -53,7 +58,7 @@ const _legends = [
     emoji: '♜',
     name: 'Garry Kasparov',
     nameTa: 'கேரி கஸ்பரோவ்',
-    title: 'World Champion 1985–2000',
+    titleId: 'world_champion_1985_2000',
     years: 'b. 1963, Azerbaijan',
     factEn:
         'Widely considered the greatest player of all time. Kasparov held the world #1 ranking for 225 months and famously battled IBM\'s Deep Blue computer.',
@@ -65,7 +70,7 @@ const _legends = [
     emoji: '♝',
     name: 'Bobby Fischer',
     nameTa: 'பாபி பிஷர்',
-    title: 'World Champion 1972–1975',
+    titleId: 'world_champion_1972_1975',
     years: 'b. 1943, USA',
     factEn:
         'An American prodigy who revolutionised chess preparation. His 1972 match against Boris Spassky during the Cold War was a cultural phenomenon watched by millions.',
@@ -77,7 +82,7 @@ const _legends = [
     emoji: '♞',
     name: 'Mikhail Tal',
     nameTa: 'மிகைல் தால்',
-    title: 'World Champion 1960–1961',
+    titleId: 'world_champion_1960_1961',
     years: 'b. 1936, Latvia',
     factEn:
         '"The Magician from Riga" — famous for wild, sacrificial attacks that left opponents stunned. His tactical brilliance created some of the most beautiful games in history.',
@@ -89,7 +94,7 @@ const _legends = [
     emoji: '♕',
     name: 'Judit Polgár',
     nameTa: 'ஜூடிட் பொல்கார்',
-    title: 'Strongest Woman Player Ever',
+    titleId: 'strongest_woman_player_ever',
     years: 'b. 1976, Hungary',
     factEn:
         'The only woman to break into the top 10 in world rankings. Became a Grandmaster at 15 — beating Fischer\'s record — and defeated every world champion of her era.',
@@ -237,7 +242,7 @@ class _LegendCardState extends State<_LegendCard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    l.title,
+                    trId(l.titleId),
                     style: TextStyle(
                       color: l.accent,
                       fontSize: 11,

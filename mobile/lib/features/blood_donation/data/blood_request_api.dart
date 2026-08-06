@@ -19,6 +19,8 @@ class BloodRequestApi {
     String urgency = 'URGENT',
     String? note,
     String? contactPhone,
+    /// Ask this one donor instead of alerting the neighbourhood.
+    String? targetDonorId,
   }) async {
     final res = await _dio.post(_base, data: {
       'patient_blood_group': bloodGroup,
@@ -29,6 +31,7 @@ class BloodRequestApi {
       'urgency': urgency,
       if (note != null && note.isNotEmpty) 'note': note,
       if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
+      if (targetDonorId != null) 'target_donor_id': targetDonorId,
     });
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
@@ -48,6 +51,13 @@ class BloodRequestApi {
 
   static Future<BloodRequest> pledge(String id, String status) async {
     final res = await _dio.post('$_base/$id/pledge', data: {'status': status});
+    return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
+  /// Wake the whole club. Refused by the server once somebody has accepted,
+  /// once it has already been sent, and beyond a few per club per day.
+  static Future<BloodRequest> broadcast(String id) async {
+    final res = await _dio.post('$_base/$id/broadcast');
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 

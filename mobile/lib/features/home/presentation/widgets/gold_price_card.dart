@@ -193,7 +193,7 @@ class _GoldContent extends StatelessWidget {
           // Price rows
           _PriceRow(
             karat: '24K',
-            label: 'Pure gold',
+            label: trId('pure_gold'),
             price: _formatPrice(data.price24k),
             isHighlight: true,
           ),
@@ -203,7 +203,7 @@ class _GoldContent extends StatelessWidget {
           ),
           _PriceRow(
             karat: '22K',
-            label: 'Jewellery grade',
+            label: trId('jewellery_grade'),
             price: _formatPrice(data.price22k),
             isHighlight: false,
           ),

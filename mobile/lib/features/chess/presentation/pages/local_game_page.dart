@@ -296,11 +296,11 @@ class _LocalActionBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _Btn(icon: Icons.swap_vert_rounded, label: 'Flip', onTap: onFlip),
-          _Btn(icon: Icons.add_rounded, label: 'New Game', onTap: onNewGame),
+          _Btn(icon: Icons.swap_vert_rounded, label: trId('flip'), onTap: onFlip),
+          _Btn(icon: Icons.add_rounded, label: trId('new_game'), onTap: onNewGame),
           _Btn(
             icon: Icons.flag_rounded,
-            label: 'Resign',
+            label: trId('resign'),
             onTap: onResign,
             color: AppColors.danger.withOpacity(0.4),
           ),

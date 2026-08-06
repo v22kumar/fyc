@@ -49,6 +49,9 @@ class BloodDonorPublicOut(BaseModel):
     geography_name_ta: Optional[str] = None
     full_name_en: Optional[str] = None
     full_name_ta: Optional[str] = None
+    # Age in years, not the date of birth: a hospital asks how old a donor is,
+    # and a birth date is more of someone's identity than the question needs.
+    age: Optional[int] = None
     # True for a directory contact imported from Friends2Support (vs a donor who
     # self-registered in the app). Drives the "Friends2Support" badge.
     is_imported: bool = False
@@ -58,6 +61,10 @@ class BloodDonorPublicOut(BaseModel):
     # Donation eligibility (90-day cooldown).
     is_eligible: bool = True
     eligible_on: Optional[date] = None
+    # Which position the distance was measured from: "live" (seen within the
+    # hour), "recent" (within a day) or "home". The requester needs to know,
+    # because the three carry very different confidence.
+    location_basis: Optional[str] = None
     # Distance from the query point in km — only present on /nearby results.
     distance_km: Optional[float] = None
     # Whether this donor has an opt-in location on file (drives "on map" vs

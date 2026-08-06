@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy import (
-    Column, String, Integer, Float, ForeignKey, UniqueConstraint, Index,
+    Column, String, Integer, Float, DateTime, ForeignKey, UniqueConstraint,
+    Index,
 )
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -16,6 +17,16 @@ class BloodRequest(Base, TimestampMixin, TenantModelMixin):
     requester_user_id = Column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    # Set when one particular donor was asked, rather than the neighbourhood.
+    #
+    # Someone looking at a list of a hundred names cannot judge between them,
+    # and ringing them one at a time is the thing this app exists to replace.
+    # Picking a person and asking them is a different act from broadcasting:
+    # it reaches one phone, it is answerable with a yes, and nobody's evening
+    # is interrupted by a request that was never meant for them.
+    target_donor_user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     patient_blood_group = Column(String(5), nullable=False)
     units_needed = Column(Integer, default=1)
     hospital_name = Column(String(200), nullable=True)
@@ -28,6 +39,14 @@ class BloodRequest(Base, TimestampMixin, TenantModelMixin):
     # OPEN → FULFILLED / CLOSED / EXPIRED
     status = Column(String(12), nullable=False, default="OPEN")
     notified_count = Column(Integer, default=0)
+    # When this request was escalated to the whole club, and how many it woke.
+    #
+    # Recorded rather than inferred, because it is the one action here that
+    # cannot be taken back: every member's phone, at once. Storing it makes it
+    # a single event with a time on it — auditable, un-repeatable, and visible
+    # to the requester so they know it has already gone out.
+    broadcast_at = Column(DateTime(timezone=True), nullable=True)
+    broadcast_count = Column(Integer, default=0)
 
     __table_args__ = (
         Index("ix_breq_org_status", "organization_id", "status"),

@@ -76,7 +76,7 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
     // app can never offer a value the backend rejects.
     var timeControl = 'rapid_10_0';
     var tcOptions = <({String value, String label})>[
-      (value: 'rapid_10_0', label: 'Rapid — 10 min each'),
+      (value: 'rapid_10_0', label: trId('rapid_10_min_each')),
     ];
     try {
       final fetched = await ChessTournamentApi.timeControlOptions();

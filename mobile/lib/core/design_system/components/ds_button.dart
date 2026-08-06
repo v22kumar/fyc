@@ -89,7 +89,19 @@ class DSButton extends StatelessWidget {
                 Icon(icon, size: 18),
                 SizedBox(width: 8),
               ],
-              Text(label),
+              // Flexible, not fixed. Every label in this app exists in four
+              // languages and Tamil runs roughly half again as long as
+              // English, so a button sized for "Retry" had
+              // "மீண்டும் முயற்சிக்கவும்" hanging off the end of it — and the
+              // middle of the words was no longer tappable.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           );
 

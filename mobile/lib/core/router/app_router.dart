@@ -12,6 +12,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
 import '../../features/blood_donation/presentation/screens/donor_registration_screen.dart';
+import '../../features/blood_donation/presentation/screens/blood_request_flow.dart';
+import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
@@ -209,7 +211,26 @@ final appRouter = GoRouter(
             child: const DonorRegistrationScreen(),
           ),
         ),
+        // The Friends2Support directory is a destination in its own right, not
+        // a section of the hub — it holds its own state and never touches the
+        // hub's list.
+        GoRoute(
+          path: 'directory',
+          builder: (context, state) => const ImportedDirectoryScreen(),
+        ),
       ],
+    ),
+    // Where a blood notification lands.
+    //
+    // The server has been sending `route: /blood-requests/<id>` with every
+    // blood push since the feature was written, and nothing has ever answered
+    // it: a donor tapping "can you help?" and a requester tapping "a donor
+    // responded" both arrived nowhere. The screen existed the whole time —
+    // it was only reachable by raising a request in the same session.
+    GoRoute(
+      path: '/blood-requests/:id',
+      builder: (context, state) =>
+          BloodRequestScreen(requestId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/events',

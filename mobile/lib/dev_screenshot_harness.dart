@@ -9,7 +9,12 @@
 ///
 ///   flutter run -d linux -t lib/dev_screenshot_harness.dart \
 ///     --dart-define=API_BASE_URL=http://127.0.0.1:8151 \
-///     --dart-define=TOKEN=... --dart-define=OUT=/tmp/shots
+///     --dart-define=TOKEN=... --dart-define=DEBUG_TOKEN=<same token> \
+///     --dart-define=OUT=/tmp/shots
+///
+/// DEBUG_TOKEN is what actually authenticates: this embedder has no keyring, so
+/// the token written through LocalStorage is swallowed and every authenticated
+/// screen renders signed-out.
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -31,6 +36,20 @@ import 'service_locator.dart';
 const _token = String.fromEnvironment('TOKEN');
 const _out = String.fromEnvironment('OUT', defaultValue: '/tmp/shots');
 
+/// Comma-separated routes to visit instead of the full list.
+///
+/// The whole walk takes minutes, which is the wrong loop when you are iterating
+/// on one screen. `--dart-define=ROUTES=/blood-donation` gets you a photograph
+/// of that screen in seconds.
+const _routesOverride = String.fromEnvironment('ROUTES');
+
+/// Widget keys to tap after arriving, comma-separated.
+///
+/// Sheets and dialogs are where a lot of this app's design lives, and none of
+/// it had ever been photographed: the harness could only navigate, and a bottom
+/// sheet is not a route. `--dart-define=TAP=donor-card-0` opens one.
+const _tapKeys = String.fromEnvironment('TAP');
+
 /// Every screen a member can reach, in the order they'd meet them.
 /// Routes needing an id are given one by the seeding script.
 const _routes = <String>[
@@ -45,6 +64,7 @@ const _routes = <String>[
   '/feed/create',
   '/blood-donation',
   '/blood-donation/register',
+  '/blood-donation/directory',
   '/events',
   '/issues',
   '/issues/track',
@@ -125,8 +145,12 @@ Future<void> _walk() async {
   // Let the first frame and any startup work settle before moving.
   await Future<void>.delayed(const Duration(seconds: 4));
 
-  for (var i = 0; i < _routes.length; i++) {
-    final route = _routes[i];
+  final routes = _routesOverride.isEmpty
+      ? _routes
+      : _routesOverride.split(',').map((r) => r.trim()).toList();
+
+  for (var i = 0; i < routes.length; i++) {
+    final route = routes[i];
     try {
       appRouter.go(route);
     } catch (e) {
@@ -138,11 +162,28 @@ Future<void> _walk() async {
     // Home pops an "update available" sheet on entry, which in this build is an
     // artefact of the local backend's version number. Dismiss any modal sitting
     // above the screen so the review sees the screen.
+    //
+    // Only popups. This used to pop anything poppable, which quietly walked
+    // back out of every nested route — a request for /blood-donation/directory
+    // photographed /blood-donation instead, and looked like the route was
+    // broken rather than the harness.
+    //
+    // popUntil walks down from the *top* route, which is the only way to ask
+    // "what is covering the screen right now". ModalRoute.of(nav.context)
+    // answers a different question — the route enclosing the Navigator itself —
+    // so it never matched and the sheet stayed in every photograph.
     final nav = appRouter.routerDelegate.navigatorKey.currentState;
     if (nav != null && nav.canPop()) {
-      nav.pop();
+      nav.popUntil((route) => route is! PopupRoute);
       await Future<void>.delayed(const Duration(milliseconds: 600));
     }
+    for (final key in _tapKeys.split(',').where((k) => k.trim().isNotEmpty)) {
+      if (!await _tap(key.trim())) {
+        stderr.writeln('TAP FAILED: no widget keyed "$key" on $route');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+    }
+
     final name = '${i.toString().padLeft(2, '0')}'
         '${route.replaceAll('/', '_')}.png';
     await _capture('$_out/$name');
@@ -150,6 +191,41 @@ Future<void> _walk() async {
   }
   stdout.writeln('DONE');
   exit(0);
+}
+
+/// Tap the widget carrying `ValueKey(key)`, wherever it is on screen.
+///
+/// Walks the live element tree for the key, then synthesises a real pointer
+/// down/up at the centre of its box — so this goes through the same hit-testing
+/// and the same gesture recognisers a finger would, rather than calling the
+/// callback directly and photographing a state the app cannot actually reach.
+Future<bool> _tap(String key) async {
+  Element? found;
+  void visit(Element el) {
+    if (found != null) return;
+    if (el.widget.key == ValueKey(key)) {
+      found = el;
+      return;
+    }
+    el.visitChildren(visit);
+  }
+
+  final root = WidgetsBinding.instance.rootElement;
+  if (root == null) return false;
+  root.visitChildren(visit);
+  if (found == null) return false;
+
+  final box = found!.renderObject;
+  if (box is! RenderBox || !box.hasSize) return false;
+  final centre = box.localToGlobal(box.size.center(Offset.zero));
+
+  const pointer = 7;
+  WidgetsBinding.instance.handlePointerEvent(
+      PointerDownEvent(pointer: pointer, position: centre));
+  await Future<void>.delayed(const Duration(milliseconds: 60));
+  WidgetsBinding.instance.handlePointerEvent(
+      PointerUpEvent(pointer: pointer, position: centre));
+  return true;
 }
 
 Future<void> _capture(String path) async {

@@ -41,3 +41,38 @@ def test_english_is_the_superset():
     # Every message must have an English entry (the guaranteed fallback).
     for key, langs in i18n.MESSAGES.items():
         assert "en" in langs, f"{key} missing English"
+
+
+def test_every_message_exists_in_every_registered_language():
+    """The rule: four languages, no exceptions — and the same for a fifth.
+
+    Falling back to English is the right runtime behaviour and a terrible way
+    to find out. Nothing throws and nothing logs; a member simply gets a push
+    notification in a language they did not choose. This is the server-side
+    twin of the mobile registry parity test.
+    """
+    missing = [
+        f"{key}:{lang}"
+        for key, langs in i18n.MESSAGES.items()
+        for lang in i18n.REGISTERED_LANGS
+        if lang not in langs
+    ]
+    assert not missing, (
+        f"{len(missing)} message(s) will fall back to English:\n  "
+        + "\n  ".join(missing)
+    )
+
+
+def test_translations_keep_their_placeholders():
+    """'Kural #{n}' translated without {n} silently drops the number."""
+    import re
+
+    token = re.compile(r"\{(\w+)\}")
+    broken = []
+    for key, langs in i18n.MESSAGES.items():
+        want = set(token.findall(langs["en"]))
+        for lang, text in langs.items():
+            missing = want - set(token.findall(text))
+            if missing:
+                broken.append(f"{key}:{lang} drops {sorted(missing)}")
+    assert not broken, "\n  ".join(broken)
