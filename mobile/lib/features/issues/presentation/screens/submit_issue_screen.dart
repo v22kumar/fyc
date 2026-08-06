@@ -359,7 +359,7 @@ class _SubmitIssueScreenState extends State<SubmitIssueScreen> {
                 maxLines: 3,
                 maxLength: 500,
                 decoration: InputDecoration(
-                  hintText: 'இங்கே தமிழில் எழுதுங்கள்...',
+                  hintText: trId('describe_the_issue_in_tamil'),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

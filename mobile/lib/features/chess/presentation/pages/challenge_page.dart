@@ -183,9 +183,11 @@ class _ChallengePageState extends State<ChallengePage>
           indicatorColor: AppColors.gold,
           labelColor: AppColors.background,
           unselectedLabelColor: Colors.white54,
-          tabs: const [
-            Tab(text: '⚔️  Challenge'),
-            Tab(text: '📬  Inbox'),
+          // Not const: these resolve through the registry, and a const list
+          // would freeze them in whichever language built first.
+          tabs: [
+            Tab(text: trId('challenge_tab')),
+            Tab(text: trId('inbox_tab')),
           ],
         ),
       ),

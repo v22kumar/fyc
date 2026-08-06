@@ -46,13 +46,15 @@ const _sports = <_SportOpt>[
 ];
 
 const _formats = ['LEAGUE', 'ROUND_ROBIN', 'DOUBLE_ROUND', 'KNOCKOUT', 'CUSTOM'];
-const _formatLabels = {
-  'LEAGUE': 'League',
-  'ROUND_ROBIN': 'Round Robin',
-  'DOUBLE_ROUND': 'Double Round',
-  'KNOCKOUT': 'Knockout',
-  'CUSTOM': 'Custom',
-};
+/// Built per call, not const: the labels come from the registry, and a const
+/// map would bake in whichever language happened to load first.
+Map<String, String> get _formatLabels => {
+      'LEAGUE': trId('league'),
+      'ROUND_ROBIN': trId('round_robin'),
+      'DOUBLE_ROUND': trId('double_round'),
+      'KNOCKOUT': trId('knockout'),
+      'CUSTOM': trId('custom'),
+    };
 
 class CreateTournamentScreen extends StatefulWidget {
   final TournamentEntity? tournament;
@@ -270,7 +272,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         backgroundColor: AppColors.accent,
         action: onRetry != null
             ? SnackBarAction(
-                label: 'Retry',
+                label: trId('retry'),
                 textColor: AppColors.background,
                 onPressed: onRetry,
               )
@@ -392,7 +394,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           _Label('Registration Closes On *'),
           SizedBox(height: 8),
           _DateField(
-            label: 'Last day to register',
+            label: trId('last_day_to_register'),
             date: _regCloseDate,
             onTap: _pickRegClose,
           ),
@@ -408,9 +410,9 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _DateField(label: 'Start Date', date: _startDate, onTap: () => _pickDate(isStart: true))),
+              Expanded(child: _DateField(label: trId('start_date'), date: _startDate, onTap: () => _pickDate(isStart: true))),
               SizedBox(width: 10),
-              Expanded(child: _DateField(label: 'End Date', date: _endDate, onTap: () => _pickDate(isStart: false))),
+              Expanded(child: _DateField(label: trId('end_date'), date: _endDate, onTap: () => _pickDate(isStart: false))),
             ],
           ),
           SizedBox(height: 18),
@@ -448,7 +450,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     onTap: () => setState(() { _customTeams = false; _numTeams = n; }),
                   ),
                 _PickChip(
-                  label: 'Custom',
+                  label: trId('custom'),
                   selected: _customTeams,
                   onTap: () => setState(() => _customTeams = true),
                 ),
@@ -503,7 +505,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 Expanded(
                   child: _ModeCard(
                     icon: Icons.verified_user_outlined,
-                    title: 'Manual Approval',
+                    title: trId('manual_approval'),
                     subtitle: 'You approve teams',
                     selected: _registration == 'MANUAL_APPROVAL',
                     onTap: () => setState(() => _registration = 'MANUAL_APPROVAL'),
@@ -513,7 +515,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 Expanded(
                   child: _ModeCard(
                     icon: Icons.public,
-                    title: 'Open Registration',
+                    title: trId('open_registration'),
                     subtitle: 'Anyone can join',
                     selected: _registration == 'OPEN',
                     onTap: () => setState(() => _registration = 'OPEN'),
@@ -537,26 +539,26 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             SizedBox(height: 8),
             _ToggleRow(
               icon: Icons.leaderboard_outlined,
-              label: 'Points Table',
+              label: trId('points_table'),
               value: _showPoints,
               onChanged: (v) => setState(() => _showPoints = v),
             ),
             _ToggleRow(
               icon: Icons.bolt_outlined,
-              label: 'Live Scores',
+              label: trId('live_scores'),
               value: _showLive,
               onChanged: (v) => setState(() => _showLive = v),
             ),
             if (_sport == 'cricket')
               _ToggleRow(
                 icon: Icons.sports_cricket_outlined,
-                label: 'Village wides (first 2/over free)',
+                label: trId('village_wides_rule'),
                 value: _villageWides,
                 onChanged: (v) => setState(() => _villageWides = v),
               ),
             _ToggleRow(
               icon: Icons.card_giftcard_outlined,
-              label: 'Prize Details',
+              label: trId('prize_details'),
               value: _showPrize,
               onChanged: (v) => setState(() => _showPrize = v),
             ),
@@ -924,11 +926,11 @@ class _HowItWorks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const steps = [
-      ('1', 'Add Teams', 'Register or approve participating teams'),
-      ('2', 'Auto Fixture', 'We generate the match schedule for you'),
-      ('3', 'Live Scores', 'Club members enter scores, you approve'),
-      ('4', 'Winner', 'Standings update automatically'),
+    final steps = [
+      ('1', trId('add_teams'), trId('add_teams_help')),
+      ('2', trId('auto_fixture'), trId('auto_fixture_help')),
+      ('3', trId('live_scores'), trId('live_scores_help')),
+      ('4', trId('winner'), trId('winner_help')),
     ];
     return Container(
       padding: EdgeInsets.all(16),

@@ -441,7 +441,7 @@ class _AiGamePageState extends State<AiGamePage>
           },
           onResign: () => _confirmResign(context),
           onAnalyse: () => _soon('Analysis'),
-          onChat: () => _soon('Chat'),
+          onChat: () => _soon(trId('chat')),
         ),
       ],
     );
@@ -893,29 +893,29 @@ class _ActionBar extends StatelessWidget {
         children: [
           _ActionBtn(
             icon: Icons.undo_rounded,
-            label: 'Take Back',
+            label: trId('take_back'),
             onTap: onTakeBack,
             disabled: onTakeBack == null,
           ),
           _ActionBtn(
             icon: Icons.add_rounded,
-            label: 'New Game',
+            label: trId('new_game'),
             onTap: onNewGame,
           ),
           _ActionBtn(
             icon: Icons.flag_rounded,
-            label: 'Resign',
+            label: trId('resign'),
             onTap: onResign,
             highlighted: true,
           ),
           _ActionBtn(
             icon: Icons.insights_rounded,
-            label: 'Analyse',
+            label: trId('analyse'),
             onTap: onAnalyse,
           ),
           _ActionBtn(
             icon: Icons.chat_bubble_outline_rounded,
-            label: 'Chat',
+            label: trId('chat'),
             onTap: onChat,
           ),
         ],

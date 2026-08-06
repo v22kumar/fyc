@@ -141,19 +141,19 @@ class _StatsBanner extends StatelessWidget {
               children: [
                 _Stat(
                   value: stats.ratingDisplay,
-                  label: 'Rating',
+                  label: trId('rating'),
                   sub: '±${stats.glickoRd.round()}',
                 ),
                 _Divider(),
                 _Stat(
                   value: '${stats.gamesPlayed}',
-                  label: 'Games',
+                  label: trId('games'),
                   sub: '${stats.wins}W ${stats.losses}L ${stats.draws}D',
                 ),
                 _Divider(),
                 _Stat(
                   value: stats.winRateDisplay,
-                  label: 'Win rate',
+                  label: trId('win_rate'),
                   sub: stats.currentStreak != 0
                       ? '${stats.currentStreak > 0 ? '+' : ''}${stats.currentStreak} streak'
                       : '—',

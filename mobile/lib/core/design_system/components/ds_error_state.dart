@@ -1,3 +1,4 @@
+import '../../l10n/tr.dart';
 import 'package:flutter/material.dart';
 import '../tokens.dart';
 import 'ds_button.dart';
@@ -39,7 +40,19 @@ class DSErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: DSSpacing.md),
-            SizedBox(width: 200, child: DSButton.filled(label: 'Retry', icon: Icons.refresh_rounded, onPressed: onRetry)),
+            // Was pinned to 200px, which fitted "Retry" and not
+            // "மீண்டும் முயற்சிக்கவும்" — the label spilled past the button
+            // and the middle of the words stopped being tappable. A minimum
+            // keeps a short label from looking mean; the maximum keeps a long
+            // one on the screen.
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 200, maxWidth: 320),
+              child: DSButton.filled(
+                label: trId('retry'),
+                icon: Icons.refresh_rounded,
+                onPressed: onRetry,
+              ),
+            ),
             if (secondaryLabel != null && onSecondary != null) ...[
               SizedBox(height: 8),
               DSButton.text(label: secondaryLabel!, onPressed: onSecondary, fullWidth: false),

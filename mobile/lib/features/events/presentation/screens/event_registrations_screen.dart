@@ -1,3 +1,4 @@
+import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,7 +71,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
-            tooltip: 'Download CSV',
+            tooltip: trId('download_csv'),
             onPressed: _downloadCSV,
           ),
         ],

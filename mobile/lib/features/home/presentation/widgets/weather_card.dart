@@ -243,7 +243,7 @@ class _WeatherContent extends StatelessWidget {
               _StatChip(
                 icon: Icons.water_drop_outlined,
                 label: data.humidity != null ? '${data.humidity}%' : '--',
-                hint: 'Humidity',
+                hint: trId('humidity'),
               ),
               SizedBox(width: 16),
               _StatChip(
@@ -251,7 +251,7 @@ class _WeatherContent extends StatelessWidget {
                 label: data.windSpeed != null
                     ? '${data.windSpeed!.toStringAsFixed(1)} m/s'
                     : '--',
-                hint: 'Wind',
+                hint: trId('wind'),
               ),
             ],
           ),

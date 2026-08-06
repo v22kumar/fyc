@@ -354,41 +354,47 @@ class _ChessHomePageState extends State<ChessHomePage>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kCardBorder, width: 1),
       ),
+      // Each column takes a quarter and no more. Unbounded, an English label
+      // fits and a Tamil one does not — "விளையாடிய ஆட்டங்கள்" for "Games
+      // Played" overflowed this row by 32 pixels.
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatBubble(
+          _statColumn(_buildStatBubble(
             icon: '🎮',
             value: _statsLoaded ? '${s?.gamesPlayed ?? 0}' : '—',
-            label: 'Games Played',
-          ),
+            label: trId('games_played'),
+          )),
           Container(width: 1, height: 40, color: _kCardBorder),
-          _buildStatBubble(
+          _statColumn(_buildStatBubble(
             icon: '🏆',
             value: _statsLoaded ? '${s?.wins ?? 0}' : '—',
-            label: 'Wins',
+            label: trId('wins'),
             valueColor: _kGreenLight,
-          ),
+          )),
           Container(width: 1, height: 40, color: _kCardBorder),
-          _buildStatBubble(
+          _statColumn(_buildStatBubble(
             icon: '⭐',
             value: _statsLoaded && (s?.gamesPlayed ?? 0) > 0
                 ? '${s!.glickoRating.round()}'
                 : '—',
-            label: 'Best Rating',
+            label: trId('best_rating'),
             valueColor: _kGold,
-          ),
+          )),
           Container(width: 1, height: 40, color: _kCardBorder),
-          _buildStatBubble(
+          _statColumn(_buildStatBubble(
             icon: '🔥',
             value: _statsLoaded ? '${s?.currentStreak ?? 0}' : '—',
-            label: 'Win Streak',
+            label: trId('win_streak'),
             valueColor: const Color(0xFFFF6B35),
-          ),
+          )),
         ],
       ),
     );
   }
+
+  /// One quarter of the row, whatever the label says.
+  Widget _statColumn(Widget child) => Expanded(child: child);
 
   Widget _buildStatBubble({
     required String icon,
@@ -422,10 +428,13 @@ class _ChessHomePageState extends State<ChessHomePage>
         SizedBox(height: 2),
         Text(
           label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: _kTextSecondary,
             fontSize: 9,
             fontWeight: FontWeight.w500,
+            height: 1.25,
           ),
           textAlign: TextAlign.center,
         ),
@@ -536,7 +545,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             padding: EdgeInsets.symmetric(horizontal: 20),
             children: [
               _PlayModeCard(
-                title: 'Local Game',
+                title: trId('local_game'),
                 subtitle: 'Play on one device',
                 emoji: '♟',
                 gradientColors: const [Color(0xFF2D1B69), Color(0xFF1A0F3E)],
@@ -544,7 +553,7 @@ class _ChessHomePageState extends State<ChessHomePage>
               ),
               SizedBox(width: 12),
               _PlayModeCard(
-                title: 'vs Computer',
+                title: trId('vs_computer'),
                 subtitle: 'Practice & Improve',
                 emoji: '♞',
                 gradientColors: const [Color(0xFF1E1B4B), Color(0xFF0F0E2A)],
@@ -552,7 +561,7 @@ class _ChessHomePageState extends State<ChessHomePage>
               ),
               SizedBox(width: 12),
               _PlayModeCard(
-                title: 'Online Match',
+                title: trId('online_match'),
                 subtitle: 'Challenge members',
                 emoji: '♛',
                 gradientColors: const [Color(0xFF0F2060), Color(0xFF071040)],
@@ -562,7 +571,7 @@ class _ChessHomePageState extends State<ChessHomePage>
               ),
               SizedBox(width: 12),
               _PlayModeCard(
-                title: 'Daily Challenge',
+                title: trId('daily_challenge'),
                 subtitle: 'Win rewards',
                 emoji: '⚡',
                 gradientColors: const [Color(0xFF1A2F1A), Color(0xFF0A1A0A)],
@@ -787,7 +796,7 @@ class _ChessHomePageState extends State<ChessHomePage>
         Expanded(
           child: _BottomGridCard(
             icon: '🏆',
-            title: 'Hall of Fame',
+            title: trId('hall_of_fame'),
             subtitle: 'Top Players',
             onTap: () => context.push('/chess/legacy'),
           ),
@@ -796,7 +805,7 @@ class _ChessHomePageState extends State<ChessHomePage>
         Expanded(
           child: _BottomGridCard(
             icon: '📋',
-            title: 'History',
+            title: trId('history'),
             subtitle: 'Your Games',
             onTap: () => context.push('/chess/history'),
           ),
@@ -805,7 +814,7 @@ class _ChessHomePageState extends State<ChessHomePage>
         Expanded(
           child: _BottomGridCard(
             icon: '📖',
-            title: 'Legends',
+            title: trId('legends'),
             subtitle: 'Chess Stories',
             onTap: () => context.push('/chess/legends'),
           ),
@@ -1465,7 +1474,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
             children: [
               Expanded(
                 child: _ColorChip(
-                  label: '♔ White',
+                  label: trId('white'),
                   selected: _playerIsWhite,
                   onTap: () => setState(() => _playerIsWhite = true),
                 ),
@@ -1473,7 +1482,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
               SizedBox(width: 8),
               Expanded(
                 child: _ColorChip(
-                  label: '♚ Black',
+                  label: trId('black'),
                   selected: !_playerIsWhite,
                   onTap: () => setState(() => _playerIsWhite = false),
                 ),

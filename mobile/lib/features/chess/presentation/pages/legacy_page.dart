@@ -89,7 +89,7 @@ class _LegacyPageState extends State<LegacyPage> {
                         Expanded(
                           child: _AwardCard(
                             emoji: '🏆',
-                            label: 'Best Player',
+                            label: trId('best_player'),
                             winner: awards.topPlayer?.name,
                           ),
                         ),
@@ -97,7 +97,7 @@ class _LegacyPageState extends State<LegacyPage> {
                         Expanded(
                           child: _AwardCard(
                             emoji: '⚡',
-                            label: 'Most Active',
+                            label: trId('most_active'),
                             winner: awards.mostActive?.name,
                           ),
                         ),
@@ -109,7 +109,7 @@ class _LegacyPageState extends State<LegacyPage> {
                         Expanded(
                           child: _AwardCard(
                             emoji: '🌱',
-                            label: 'Best Newcomer',
+                            label: trId('best_newcomer'),
                             winner: awards.bestNewcomer?.name,
                           ),
                         ),
@@ -117,7 +117,7 @@ class _LegacyPageState extends State<LegacyPage> {
                         Expanded(
                           child: _AwardCard(
                             emoji: '🧠',
-                            label: 'Sharpest Mind',
+                            label: trId('sharpest_mind'),
                             winner: awards.sharpestMind?.name,
                           ),
                         ),

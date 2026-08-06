@@ -1057,7 +1057,7 @@ class _ImpactStats extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(title: 'Our Impact'),
+        _SectionHeader(title: trId('our_impact')),
         SizedBox(height: 12),
         Row(
           children: stats.map((s) {
@@ -1408,7 +1408,7 @@ class _MoreSheet extends StatelessWidget {
           _MenuItem(Icons.eco_rounded, ta ? 'பசுமை FYC' : 'Green FYC', '/green', const Color(0xFF047857)),
           _MenuItem(Icons.campaign_rounded, ta ? 'அறிவிப்புகள்' : 'Announcements', '/announcements', const Color(0xFFF59E0B)),
           _MenuItem(Icons.photo_library_rounded, ta ? 'புகைப்படங்கள்' : 'Gallery', '/gallery', const Color(0xFFD97706)),
-          _MenuItem(Icons.groups_rounded, ta ? 'உறுப்பினர்கள்' : 'Members', '/members', const Color(0xFFEC4899)),
+          _MenuItem(Icons.groups_rounded, ta ? 'உறுப்பினர்கள்' : trId('members'), '/members', const Color(0xFFEC4899)),
         ],
       ),
       (
@@ -2442,7 +2442,7 @@ class _CitizenDashboard extends StatelessWidget {
       const _NextEventCard(),
       const _BeAHeroCard(),
       _SectionHeader(
-        title: 'Today',
+        title: trId('today'),
         trailing: lastRefreshed != null ? LastUpdatedPill(timestamp: lastRefreshed!) : null,
       ),
       DailyNewsCard(key: ValueKey('news-$refreshKey')),
@@ -2521,7 +2521,7 @@ class _VolunteerDashboard extends StatelessWidget {
         SizedBox(height: 12),
         _MiniCard(
           sectionTitle: 'Activity',
-          title: 'Green FYC Drives',
+          title: trId('green_fyc_drives'),
           subtitle: 'Tree plantation & clean-ups',
           icon: Icons.eco,
           iconColor: const Color(0xFF16A34A),
@@ -2533,7 +2533,7 @@ class _VolunteerDashboard extends StatelessWidget {
         SizedBox(height: 12),
         _ImpactStats(l: l),
         SizedBox(height: 22),
-        _SectionHeader(title: 'Today'),
+        _SectionHeader(title: trId('today')),
         SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         SizedBox(height: 14),
@@ -2591,7 +2591,7 @@ class _ManagerDashboard extends StatelessWidget {
             Expanded(
               child: _MiniCard(
                 sectionTitle: 'Pending Items',
-                title: 'Team Approvals',
+                title: trId('team_approvals'),
                 subtitle: 'Review tournament teams',
                 icon: Icons.pending_actions,
                 iconColor: const Color(0xFFF59E0B),
@@ -2603,7 +2603,7 @@ class _ManagerDashboard extends StatelessWidget {
             Expanded(
               child: _MiniCard(
                 sectionTitle: 'Community',
-                title: 'Members',
+                title: trId('members'),
                 subtitle: 'Club member directory',
                 icon: Icons.people,
                 iconColor: const Color(0xFF3B82F6),
@@ -2616,11 +2616,11 @@ class _ManagerDashboard extends StatelessWidget {
         SizedBox(height: 22),
         _ImpactStats(l: l),
         SizedBox(height: 22),
-        _SectionHeader(title: 'Recent Reports'),
+        _SectionHeader(title: trId('recent_reports')),
         SizedBox(height: 12),
         _MiniCard(
           sectionTitle: 'Issue',
-          title: 'Track Reported Issues',
+          title: trId('track_reported_issues'),
           subtitle: 'Status of citizen reports',
           icon: Icons.report_problem,
           iconColor: const Color(0xFFEF4444),
@@ -2628,7 +2628,7 @@ class _ManagerDashboard extends StatelessWidget {
           onTap: () => context.push('/issues/track'),
         ),
         SizedBox(height: 22),
-        _SectionHeader(title: 'Today'),
+        _SectionHeader(title: trId('today')),
         SizedBox(height: 12),
         DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
         SizedBox(height: 14),

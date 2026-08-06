@@ -99,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Icon(Icons.shield_outlined, color: AppColors.primary),
                   SizedBox(width: 10),
                   Text(
-                    ta ? 'தனியுரிமை & பாதுகாப்பு' : 'Privacy & Security',
+                    ta ? 'தனியுரிமை & பாதுகாப்பு' : trId('privacy_and_security'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.cText),
                   ),
                 ],
@@ -184,11 +184,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context: context,
                 ),
                 _Divider(context),
-                _LinkRow(icon: Icons.info_outline, label: 'About FYC Connect', onTap: () => context.push('/about'), context: context),
+                _LinkRow(icon: Icons.info_outline, label: trId('about_fyc_connect'), onTap: () => context.push('/about'), context: context),
                 _Divider(context),
-                _LinkRow(icon: Icons.shield_outlined, label: 'Privacy & Security', onTap: _showPrivacySheet, context: context),
+                _LinkRow(icon: Icons.shield_outlined, label: trId('privacy_and_security'), onTap: _showPrivacySheet, context: context),
                 _Divider(context),
-                _LinkRow(icon: Icons.health_and_safety_rounded, label: 'Safety Center', onTap: () => context.push('/settings/safety'), context: context),
+                _LinkRow(icon: Icons.health_and_safety_rounded, label: trId('safety_center'), onTap: () => context.push('/settings/safety'), context: context),
               ],
             ),
           ),
@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context: context,
             child: _LinkRow(
               icon: Icons.logout,
-              label: 'Logout',
+              label: trId('logout'),
               color: AppColors.accent,
               onTap: () {
                 showDialog(

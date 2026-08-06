@@ -114,12 +114,14 @@ class _DailyNewsCardState extends State<DailyNewsCard>
             tabAlignment: TabAlignment.start,
             labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             unselectedLabelStyle: TextStyle(fontSize: 12),
-            tabs: const [
-              Tab(text: 'கன்னியாகுமரி'),
-              Tab(text: 'தமிழ்'),
-              Tab(text: 'India'),
-              Tab(text: 'TN Jobs'),
-              Tab(text: 'Central'),
+            tabs: [
+              // These two were hardcoded Tamil — the same bug as a hardcoded
+              // English label, just pointed the other way.
+              Tab(text: trId('kanyakumari_news')),
+              Tab(text: trId('tamil_news')),
+              Tab(text: trId('india_news')),
+              Tab(text: trId('tn_jobs')),
+              Tab(text: trId('central_news')),
             ],
           ),
           // Content — fixed height so page doesn't jump when loading
