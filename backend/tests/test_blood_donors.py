@@ -642,3 +642,107 @@ def test_a_bystander_never_sees_the_donor_number(client, db):
                       headers=_auth(nosy, org)).json()
     assert seen["pledges"][0]["donor_name"] is not None
     assert seen["pledges"][0]["donor_phone"] is None
+
+
+def test_broadcast_reaches_every_member_and_only_once(client, db):
+    """Escalation, when nothing quieter has worked.
+
+    The ordinary fan-out is filtered — compatible group, within a radius,
+    eligible, opted in, location shared. Each filter is right and each can be
+    the reason nobody answers: a rare group with no match on file, or somebody
+    who never registered as a donor but knows three people who did."""
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000041", "Meena")
+    _member(db, org, "+919600000042", "Bystander One")
+    _member(db, org, "+919600000043", "Bystander Two")
+
+    rid = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": "AB-", "units_needed": 1,
+        "latitude": 8.1833, "longitude": 77.4119,
+    }).json()["id"]
+
+    r = client.post(f"/api/v1/blood-requests/{rid}/broadcast",
+                    headers=_auth(asker, org))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["broadcast_at"] is not None
+    assert body["broadcast_count"] >= 2, "both bystanders should have been woken"
+
+    again = client.post(f"/api/v1/blood-requests/{rid}/broadcast",
+                        headers=_auth(asker, org))
+    assert again.status_code == 409, "a club-wide alert must not be repeatable"
+
+
+def test_broadcast_is_refused_once_somebody_has_accepted(client, db):
+    """Waking four hundred people after one has said yes is not an emergency,
+    it is noise — and noise is what makes the next one get ignored."""
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000044", "Meena")
+    donor_token, donor = _donor_with_consent(db=db, client=client, org=org,
+                                             phone="+919600000045")
+    donor.latitude, donor.longitude = 8.1833, 77.4119
+    db.commit()
+
+    rid = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": donor.blood_group,
+        "latitude": 8.1833, "longitude": 77.4119,
+    }).json()["id"]
+    client.post(f"/api/v1/blood-requests/{rid}/pledge",
+                headers={"Authorization": f"Bearer {donor_token}",
+                         "X-Organization-ID": str(org.id)},
+                json={"status": "ACCEPTED"})
+
+    r = client.post(f"/api/v1/blood-requests/{rid}/broadcast",
+                    headers=_auth(asker, org))
+    assert r.status_code == 400
+    assert "already accepted" in r.json()["detail"].lower()
+
+
+def test_only_the_requester_or_an_admin_can_wake_the_club(client, db):
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000046", "Meena")
+    stranger = _member(db, org, "+919600000047", "Stranger")
+
+    rid = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": "O-", "latitude": 8.18, "longitude": 77.41,
+    }).json()["id"]
+
+    r = client.post(f"/api/v1/blood-requests/{rid}/broadcast",
+                    headers=_auth(stranger, org))
+    assert r.status_code == 403
+
+
+def test_imported_contacts_are_not_woken_by_a_club_alert(client, db):
+    """They never joined this club, and an emergency push at 2am is not the way
+    to introduce ourselves."""
+    import uuid
+    from app.models.user import User, UserProfile
+    from app.models.notification import Notification
+    from app.core.security import get_password_hash
+
+    org = _make_org(db)
+    asker = _member(db, org, "+919600000048", "Meena")
+    member = _member(db, org, "+919600000050", "Real Member")
+    imported = User(id=uuid.uuid4(), organization_id=org.id,
+                    phone_number="+919600000049", email="f2s2@import.local",
+                    password_hash=get_password_hash("x"), role="PUBLIC_CITIZEN",
+                    is_verified=True, source="F2S_IMPORT")
+    db.add(imported); db.flush()
+    db.add(UserProfile(user_id=imported.id, full_name_en="Imported",
+                       full_name_ta="இறக்குமதி"))
+    db.commit()
+
+    rid = client.post("/api/v1/blood-requests", headers=_auth(asker, org), json={
+        "patient_blood_group": "O-", "latitude": 8.18, "longitude": 77.41,
+    }).json()["id"]
+    client.post(f"/api/v1/blood-requests/{rid}/broadcast", headers=_auth(asker, org))
+
+    woken = (db.query(Notification)
+             .filter(Notification.user_id == imported.id).count())
+    assert woken == 0
+
+    # And the control: a real member of the same club did get one, so a zero
+    # above means "excluded", not "notifications are not being written at all".
+    reached = (db.query(Notification)
+               .filter(Notification.user_id == member.id).count())
+    assert reached >= 1

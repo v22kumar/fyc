@@ -36,9 +36,16 @@ class BloodRequest {
   final String status; // OPEN / FULFILLED / CLOSED / EXPIRED
   final int notifiedCount;
   final int acceptedCount;
+  /// Set once this request has been escalated to the whole club — the one
+  /// action here that cannot be taken back, so it is shown, not hidden.
+  final String? broadcastAt;
+  final int broadcastCount;
   final String? requesterName;
   final List<BloodPledge> pledges;
   final String? myPledge; // caller's own pledge status, if any
+  /// Whether the signed-in member raised this request — answered by the
+  /// server, because the server is what enforces it.
+  final bool isMine;
 
   const BloodRequest({
     required this.id,
@@ -53,9 +60,12 @@ class BloodRequest {
     this.status = 'OPEN',
     this.notifiedCount = 0,
     this.acceptedCount = 0,
+    this.broadcastAt,
+    this.broadcastCount = 0,
     this.requesterName,
     this.pledges = const [],
     this.myPledge,
+    this.isMine = false,
   });
 
   bool get isOpen => status == 'OPEN';
@@ -73,11 +83,14 @@ class BloodRequest {
         status: (j['status'] as String?) ?? 'OPEN',
         notifiedCount: (j['notified_count'] as num?)?.toInt() ?? 0,
         acceptedCount: (j['accepted_count'] as num?)?.toInt() ?? 0,
+        broadcastAt: j['broadcast_at'] as String?,
+        broadcastCount: (j['broadcast_count'] as num?)?.toInt() ?? 0,
         requesterName: j['requester_name'] as String?,
         pledges: ((j['pledges'] as List?) ?? const [])
             .whereType<Map>()
             .map((e) => BloodPledge.fromJson(e.cast<String, dynamic>()))
             .toList(),
         myPledge: j['my_pledge'] as String?,
+        isMine: j['is_mine'] as bool? ?? false,
       );
 }

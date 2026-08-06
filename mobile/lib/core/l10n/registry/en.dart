@@ -1092,4 +1092,10 @@ const Map<String, String> kEn = {
   'live_scores_help': 'Club members enter scores, you approve',
   'winner_help': 'Standings update automatically',
   'describe_the_issue_in_tamil': 'Describe the issue in Tamil...',
+  'nobody_has_answered': 'Nobody has answered yet',
+  'nobody_has_answered_help': 'The matching donors nearby have been asked. You can alert the whole club instead.',
+  'alert_everyone': 'Alert everyone',
+  'alert_everyone_q': 'Alert everyone in the club?',
+  'alert_everyone_body': 'Every member gets a notification, once. It cannot be sent again for this request, so use it when nothing else has worked.',
+  'club_alerted_n': '{n} members alerted',
 };

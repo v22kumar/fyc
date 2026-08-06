@@ -54,6 +54,13 @@ class BloodRequestApi {
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
+  /// Wake the whole club. Refused by the server once somebody has accepted,
+  /// once it has already been sent, and beyond a few per club per day.
+  static Future<BloodRequest> broadcast(String id) async {
+    final res = await _dio.post('$_base/$id/broadcast');
+    return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
+  }
+
   static Future<BloodRequest> close(String id, {bool fulfilled = true}) async {
     final res = await _dio.post('$_base/$id/close', queryParameters: {'fulfilled': fulfilled});
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());

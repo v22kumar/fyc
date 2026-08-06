@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy import (
-    Column, String, Integer, Float, ForeignKey, UniqueConstraint, Index,
+    Column, String, Integer, Float, DateTime, ForeignKey, UniqueConstraint,
+    Index,
 )
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -38,6 +39,14 @@ class BloodRequest(Base, TimestampMixin, TenantModelMixin):
     # OPEN → FULFILLED / CLOSED / EXPIRED
     status = Column(String(12), nullable=False, default="OPEN")
     notified_count = Column(Integer, default=0)
+    # When this request was escalated to the whole club, and how many it woke.
+    #
+    # Recorded rather than inferred, because it is the one action here that
+    # cannot be taken back: every member's phone, at once. Storing it makes it
+    # a single event with a time on it — auditable, un-repeatable, and visible
+    # to the requester so they know it has already gone out.
+    broadcast_at = Column(DateTime(timezone=True), nullable=True)
+    broadcast_count = Column(Integer, default=0)
 
     __table_args__ = (
         Index("ix_breq_org_status", "organization_id", "status"),

@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -326,8 +327,23 @@ class NotificationService:
         if target_roles:
             query = query.filter(User.role.in_(target_roles))
         else:
-            # Prevent spamming Blood Donors for generic news/broadcasts.
-            query = query.filter(User.role.in_(["SUPER_ADMIN", "ADMIN", "MEMBER"]))
+            # Everyone who is actually a member of this club.
+            #
+            # This used to read `role.in_(["SUPER_ADMIN", "ADMIN", "MEMBER"])`.
+            # "MEMBER" is not a role this app assigns — the roles are
+            # PUBLIC_CITIZEN, VOLUNTEER, CLUB_MEMBER, EXECUTIVE_MEMBER, ADMIN
+            # and SUPER_ADMIN — so every broadcast since it was written reached
+            # administrators and nobody else. Announcements, new events, new
+            # tournaments: all of them, to a handful of people.
+            #
+            # The intent behind it was right and is kept: do not send club news
+            # to Friends2Support directory contacts, who never joined and never
+            # asked. That is now expressible directly, against the flag that
+            # actually marks them, instead of through a role that cannot carry
+            # the distinction.
+            query = query.filter(
+                or_(User.source.is_(None), User.source != "F2S_IMPORT")
+            )
             
         for u in query.all():
             self.send_notification(

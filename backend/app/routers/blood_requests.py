@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -24,6 +24,14 @@ router = APIRouter(prefix="/blood-requests", tags=["Blood Requests"])
 # Radius (km) the emergency fan-out reaches, by urgency.
 _RADIUS_BY_URGENCY = {"CRITICAL": 25.0, "URGENT": 15.0, "ROUTINE": 8.0}
 _MAX_OPEN_PER_REQUESTER = 3
+
+# How many whole-club alerts this organisation may send in a rolling day.
+#
+# Not a technical limit — a trust one. Every member's phone at once is the
+# loudest thing this app can do, and it works exactly as long as it stays rare.
+# Three in one day and people start turning notifications off, which costs the
+# next emergency far more than it costs this one.
+_MAX_BROADCASTS_PER_DAY = 3
 
 
 def _name(db: Session, user_id) -> Optional[str]:
@@ -55,6 +63,8 @@ def _out(db: Session, req: BloodRequest) -> BloodRequestOut:
         status=req.status,
         target_donor_name=_name(db, getattr(req, "target_donor_user_id", None)),
         notified_count=req.notified_count or 0,
+        broadcast_at=getattr(req, "broadcast_at", None),
+        broadcast_count=getattr(req, "broadcast_count", 0) or 0,
         accepted_count=_accepted_count(db, req.id),
         created_at=req.created_at,
         requester_name=_name(db, req.requester_user_id),
@@ -341,7 +351,12 @@ def get_request(
         ))
 
     base = _out(db, req)
-    return BloodRequestDetailOut(**base.model_dump(), pledges=pledge_out, my_pledge=my_pledge)
+    return BloodRequestDetailOut(
+        **base.model_dump(),
+        pledges=pledge_out,
+        my_pledge=my_pledge,
+        is_mine=is_requester,
+    )
 
 
 @router.post("/{request_id}/pledge", response_model=BloodRequestDetailOut)
@@ -394,6 +409,138 @@ def pledge(
             pass
 
     return get_request(request_id, db, tenant_id, current_user)
+
+
+@router.post("/{request_id}/broadcast", response_model=BloodRequestDetailOut)
+def broadcast_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """Wake the whole club, when nothing quieter has worked.
+
+    The ordinary fan-out is filtered — compatible group, within a radius,
+    eligible today, opted in, location shared. Every one of those filters is
+    right, and every one of them can be the reason a request goes unanswered:
+    the person who can help may be a rare group with no match in the database,
+    or someone who never registered as a donor at all but knows three people
+    who did.
+
+    So this is the escalation, and it is deliberately hard to reach:
+
+    * Only the requester (or an admin) can send it.
+    * Only while the request is open.
+    * **Only if nobody has accepted.** Once one person has said yes, waking
+      four hundred more is not an emergency, it is noise.
+    * Once. It cannot be repeated on the same request.
+    * At most a few per club per day, whoever asks.
+
+    The text is not passed through the AI rewriter that other broadcasts use.
+    In an emergency the facts are the message, and a rephrasing is latency plus
+    a chance to be wrong about a blood group.
+    """
+    req = (
+        db.query(BloodRequest)
+        .filter(BloodRequest.id == request_id, BloodRequest.organization_id == tenant_id)
+        .first()
+    )
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    is_admin = current_user.role in ("ADMIN", "SUPER_ADMIN")
+    if req.requester_user_id != current_user.id and not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the person who raised this request can alert everyone",
+        )
+    if req.status != "OPEN":
+        raise HTTPException(status_code=400, detail="This request is already closed")
+    if getattr(req, "broadcast_at", None):
+        raise HTTPException(
+            status_code=409, detail="Everyone has already been alerted for this request"
+        )
+    if _accepted_count(db, req.id) > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Someone has already accepted — no need to alert the whole club",
+        )
+
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+    recent = (
+        db.query(func.count(BloodRequest.id))
+        .filter(
+            BloodRequest.organization_id == tenant_id,
+            BloodRequest.broadcast_at.isnot(None),
+            BloodRequest.broadcast_at >= since,
+        )
+        .scalar()
+        or 0
+    )
+    if recent >= _MAX_BROADCASTS_PER_DAY:
+        raise HTTPException(
+            status_code=429,
+            detail="The club has already sent several club-wide alerts today. "
+            "Please contact an organizer.",
+        )
+
+    req.broadcast_at = datetime.now(timezone.utc)
+    req.broadcast_count = _broadcast(db, req, tenant_id)
+    db.commit()
+    db.refresh(req)
+    return get_request(request_id, db, tenant_id, current_user)
+
+
+def _broadcast(db: Session, req: BloodRequest, tenant_id) -> int:
+    """Notify every member of the club. Returns how many were reached.
+
+    Skips the requester, anyone who has already answered, and the imported
+    Friends2Support contacts — they never joined this club and an emergency
+    push is not the way to introduce ourselves.
+    """
+    answered = {
+        p.donor_user_id
+        for p in db.query(BloodPledge).filter(BloodPledge.request_id == req.id).all()
+    }
+    members = (
+        db.query(User)
+        .filter(
+            User.organization_id == tenant_id,
+            or_(User.source.is_(None), User.source != "F2S_IMPORT"),
+        )
+        .all()
+    )
+
+    asker = _name(db, req.requester_user_id) or "A member"
+    hospital = req.hospital_name or "a hospital nearby"
+    group = req.patient_blood_group
+    svc = NotificationService(db)
+    reached = 0
+    for u in members:
+        if u.id == req.requester_user_id or u.id in answered:
+            continue
+        try:
+            svc.send_notification(
+                user_id=u.id,
+                organization_id=tenant_id,
+                title_en=f"🚨 {group} needed urgently",
+                title_ta=f"🚨 {group} ரத்தம் அவசரமாகத் தேவை",
+                # Named, and asking for a share as well as a donation: most
+                # people reading this cannot give that group, and all of them
+                # know somebody.
+                body_en=f"{asker} needs {req.units_needed} unit(s) of {group} at "
+                f"{hospital}. Can you help, or pass this on?",
+                body_ta=f"{asker} அவர்களுக்கு {hospital}-இல் {req.units_needed} "
+                f"யூனிட் {group} ரத்தம் தேவை. உதவ முடியுமா, அல்லது இதை "
+                f"மற்றவர்களுக்குத் தெரிவிக்க முடியுமா?",
+                notification_type="BLOOD_EMERGENCY",
+                data={"route": f"/blood-requests/{req.id}", "request_id": str(req.id)},
+            )
+            reached += 1
+        except Exception:
+            # One dead token must never stop the rest of the club being told.
+            continue
+    return reached
 
 
 @router.post("/{request_id}/close", response_model=BloodRequestOut)
