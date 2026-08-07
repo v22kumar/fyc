@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import issues_workflow
+from app.routers import civic as civic_router
 from app.routers import users as users_router, media as media_router
 from app.routers import posts as posts_router
 from app.routers import chess_tournaments as chess_tournaments_router
@@ -825,6 +826,7 @@ app.include_router(blood_requests.router, prefix="/api/v1")
 # order, and `/issues/queue` would otherwise be swallowed by that router's
 # earlier `/issues/{issue_id}` and 422 on parsing "queue" as a UUID.
 app.include_router(issues_workflow.router, prefix="/api/v1")
+app.include_router(civic_router.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(share.router, prefix="/api/v1")
