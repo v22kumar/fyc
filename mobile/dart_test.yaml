@@ -1,0 +1,15 @@
+# Test tags for this package.
+#
+# `render` marks the Complaint Box screenshot harness. It is a camera, not an
+# assertion suite: it drives the real widget tree, writes PNGs to
+# build/ui_shots, and is meant to be looked at by a person. It is also slow,
+# and in a headless container it does not always shut down cleanly — which
+# would hang CI rather than fail it, and a hung build is worse than a red one.
+#
+# Excluded by default. Run it deliberately:
+#
+#     flutter test --tags render
+tags:
+  render:
+    # Never picked up by a bare `flutter test`.
+    skip: "screenshot harness — run explicitly with --tags render"

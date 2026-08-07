@@ -3,7 +3,12 @@
 Rendered through the Flutter SDK at 390×844 with the app's real typeface, by
 `mobile/test/features/complaint_box/render_harness_test.dart`.
 
-    flutter test test/features/complaint_box/render_harness_test.dart
+    flutter test --tags render
+
+The harness is tagged `render` and skipped by a bare `flutter test`. It is a
+camera, not an assertion suite — and in a headless container it does not always
+shut down cleanly, which would hang CI rather than fail it. A hung build is
+worse than a red one.
 
 Photographs, not assertions. The point is to look.
 
