@@ -17,6 +17,7 @@ import '../../features/blood_donation/presentation/screens/blood_request_flow.da
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
+import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
@@ -264,6 +265,14 @@ final appRouter = GoRouter(
         create: (_) => sl<IssueBloc>(),
         child: const SubmitIssueScreen(),
       ),
+    ),
+    // The rebuilt reporting flow: photo first, one language, fourteen things a
+    // person can point at. Its own route rather than a replacement, so it can be
+    // put in front of members alongside the old screen instead of on a flag day
+    // — the two post to different endpoints and both still work.
+    GoRoute(
+      path: '/issues/report',
+      builder: (context, state) => const ReportIssueScreen(),
     ),
     GoRoute(
       path: '/membership',
