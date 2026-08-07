@@ -167,6 +167,10 @@ class IssueCreateV2(BaseModel):
     geography_id: Optional[UUID] = None
     photo_url: Optional[str] = None
     is_emergency: bool = False
+    #: ROUTINE or SERIOUS. Steers what the Complaint Box suggests next — a call
+    #: for routine problems, a letter for serious ones, because a call leaves
+    #: no evidence. Advice, never a gate.
+    severity: str = Field(default="ROUTINE", pattern="^(ROUTINE|SERIOUS)$")
 
 
 # ── The route a complaint will take ──────────────────────────────────────────

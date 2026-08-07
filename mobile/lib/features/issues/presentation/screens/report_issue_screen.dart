@@ -48,6 +48,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   double? _lng;
   bool _sending = false;
 
+  /// One question, asked once. It steers what the next screen suggests and
+  /// never blocks anything: somebody who wants to ring about a serious problem
+  /// still can.
+  bool _serious = false;
+
   @override
   void initState() {
     super.initState();
@@ -125,8 +130,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
     setState(() => _sending = true);
     try {
-      await sl<ApiClient>().dio.post('/api/v1/issues/v2', data: {
+      final created = await sl<ApiClient>().dio.post('/api/v1/issues/v2', data: {
         'category': _kind,
+        // How bad it is, which decides what the next screen suggests: routine
+        // problems go to the phone, serious ones to a letter, because a call
+        // leaves no evidence and a letter is dated and quotable.
+        'severity': _serious ? 'SERIOUS' : 'ROUTINE',
         'description': _words.text.trim(),
         // Which language the words are actually in, so nothing downstream is
         // passed off as a translation that never happened.
@@ -136,7 +145,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         'photo_url': _photoUrl,
       });
       if (!mounted) return;
-      await _showSent();
+      final id = (created.data is Map) ? created.data['id'] as String? : null;
+      await _showSent(complaintId: id);
     } catch (_) {
       if (!mounted) return;
       setState(() => _sending = false);
@@ -154,7 +164,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   /// "Submitted" and silence is what teaches people not to bother a second
   /// time. This says who looks at it and that they will be able to see where it
   /// goes.
-  Future<void> _showSent() async {
+  Future<void> _showSent({String? complaintId}) async {
     await showModalBottomSheet<void>(
       context: context,
       isDismissible: false,
@@ -188,9 +198,19 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 child: FilledButton(
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    if (mounted) context.go('/issues/track');
+                    if (!mounted) return;
+                    // Straight into the Complaint Box for this report, where
+                    // the three routes live. "Submitted" and a list is how a
+                    // report becomes a thing nobody does anything about.
+                    if (complaintId != null) {
+                      context.push('/complaints/$complaintId?category=$_kind');
+                    } else {
+                      context.go('/issues/track');
+                    }
                   },
-                  child: Text(trId('my_reports')),
+                  child: Text(complaintId != null
+                      ? trId('what_next')
+                      : trId('my_reports')),
                 ),
               ),
             ],
@@ -230,6 +250,19 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           _KindGrid(
             selected: _kind,
             onSelect: (code) => setState(() => _kind = code),
+          ),
+          const SizedBox(height: 14),
+          // Asked plainly, because the honest version of this question is
+          // "should this leave a paper trail" and most people know the answer
+          // for their own problem better than any rule would.
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _serious,
+            onChanged: (v) => setState(() => _serious = v),
+            title: Text(trId('is_this_serious'),
+                style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
+            subtitle: Text(trId('is_this_serious_help'),
+                style: TextStyle(fontSize: 13, color: context.cTextSecondary)),
           ),
           const SizedBox(height: 22),
           _StepLabel(3, trId('report_say_it_once')),

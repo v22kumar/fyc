@@ -1210,4 +1210,7 @@ const Map<String, String> kEn = {
   'serious_write_instead': 'Put this in writing — a letter leaves a record you can point to later.',
   'open_in_mail': 'Open in my mail app',
   'written_in_your_words': 'Written in your own words.',
+  'what_next': 'What next?',
+  'is_this_serious': 'Is this serious?',
+  'is_this_serious_help': 'A danger to someone, or something you have already reported. We will suggest putting it in writing.',
 };

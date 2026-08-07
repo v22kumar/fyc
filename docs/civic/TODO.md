@@ -32,27 +32,19 @@ place; `scripts/import_civic_contacts.py` checks it.
 
 ## Not started
 
-Roughly in the order the architecture proposes.
-
-- [ ] **Letter template** — skeleton in code, two slots for the model. Removes
-      the *"Submitted via FYC Connect"* footer, which in Lane A is false.
-- [ ] **Location as a place name and a Maps link** rather than coordinates.
-- [ ] **Capture screen** — photo first, description, location confirm, one
-      severity question.
-- [ ] **Routes screen** — call / write yourself / hand to FYC, steered by
-      severity.
-- [ ] **Call logging** — *reached / no answer / promised to act*, and the line
-      it produces for a later letter.
-- [ ] **Draft and hand-off** to the member's own mail app, with the disclosed
-      BCC switch.
-- [ ] **Member-owned timeline** — every row names its author.
-- [ ] **Mark resolved / mark closed**, and the lock that follows.
-- [ ] **Severity steering** — serious goes by mail, CC the next rung, 7-day
-      clock instead of 14.
-- [ ] **Lane B** — the club inbox, triage, forward.
-- [ ] **Escalation** — Lane A one rung up, quoting the previous letter and the
-      logged calls.
+- [ ] **Escalation in motion** — Lane A one rung up after the wait elapses,
+      quoting the previous letter and the logged calls. The pieces exist: the
+      ladder, `wait_days` per rung, and the call records the letter already
+      quotes. What is missing is the thing that notices the clock ran out.
+- [ ] **Lane B triage actions** — the reviewer's queue screen exists; forwarding
+      from it, and the club-authored timeline entries that follow, do not.
 - [ ] **Honest statistics** — last, and only above about twenty complaints.
+      Rules written in the architecture §10; nothing implemented, which is
+      correct for now since there is no sample.
+- [ ] **Photo as a real attachment.** The letter carries the photo as a URL,
+      which is better for an officer reading on a phone but does mean the
+      picture lives behind a link. An `ACTION_SEND` intent could attach it;
+      `mailto:` cannot.
 
 ## Done
 
@@ -60,6 +52,22 @@ Roughly in the order the architecture proposes.
 - [x] `GET /civic/ladder` — the whole route for one complaint, nearest first,
       with `can_call` and `can_write` answered separately
 - [x] Collectorate contacts parsed and imported, with provenance
+- [x] **`ComplaintEvent`** — the authored timeline. Every row names who said it,
+      which is what lets the interface avoid asserting anything nobody stated.
+- [x] **Letter template** — skeleton in code, two model-filled slots, a Maps
+      link instead of coordinates, and no club sign-off on the member's letter.
+      Works with the model unavailable.
+- [x] **Call logging**, and the paragraph it produces in the next letter.
+- [x] **Draft and hand-off** to the member's own mail app, with the disclosed
+      BCC switch and the single "did you send it?" question.
+- [x] **Mark resolved / mark closed**, the lock, and one-tap reopen.
+- [x] **Severity** — asked once at capture, steers the next screen, CCs the
+      supervisor on serious complaints, halves the wait.
+- [x] **Hand to FYC** — the lane switch.
+- [x] **The Flutter feature** — `data/ domain/ presentation/` with a bloc, in
+      the same shape as blood donation. All strings in the four-language
+      registry.
+- [x] Capture flows straight into the Complaint Box rather than a list.
 
 ## Decisions already made, so nobody reopens them by accident
 
@@ -70,6 +78,13 @@ Roughly in the order the architecture proposes.
 - **BCC to the club, default on and disclosed.** Not silent.
 - **The whole ladder is shown**, never one office.
 - **No rate whose denominator contains things we did not observe.**
+
+## Verified
+
+- Backend: 22 tests across the endpoints and the letter.
+- Mobile: 8 bloc tests; `flutter analyze` clean.
+- Not verified on a device or against a real government mailbox. Nobody has
+  yet sent a letter written by this to an actual officer.
 
 ## Known rough edges
 
@@ -83,3 +98,13 @@ Roughly in the order the architecture proposes.
   when the report has no tag. Right most of the time, wrong for somebody
   reporting a pothole outside their ward. Coordinates would fix it and need
   boundary data the project does not have.
+- The send sheet uses `mailto:`, which every device with a mail app handles but
+  which cannot attach a file and breaks on very long bodies. The letter is
+  trimmed at 4000 characters to stay inside that. An `ACTION_SEND` intent is
+  the upgrade when the photo needs to travel as an attachment.
+- `CLUB_COMPLAINT_BCC` is unset, so the blind copy is disclosed in the UI but
+  goes nowhere until somebody configures an address. The switch will show as on
+  with an empty `bcc` list — harmless, but it means the escalation clock cannot
+  start by itself yet.
+- Sending from the club's mailbox is still not built at all, only decided. The
+  narrow exception for members with no email address has no code.

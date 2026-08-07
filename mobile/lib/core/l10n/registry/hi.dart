@@ -1210,4 +1210,7 @@ const Map<String, String> kHi = {
   'serious_write_instead': 'इसे लिखित में दें — पत्र एक रिकॉर्ड छोड़ता है।',
   'open_in_mail': 'मेरे मेल ऐप में खोलें',
   'written_in_your_words': 'आपके अपने शब्दों में।',
+  'what_next': 'आगे क्या?',
+  'is_this_serious': 'क्या यह गंभीर है?',
+  'is_this_serious_help': 'किसी के लिए खतरा, या पहले बताई गई बात। हम लिखित में देने का सुझाव देंगे।',
 };

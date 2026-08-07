@@ -102,6 +102,8 @@ def submit_issue_v2(
         geography_id=payload.geography_id,
         photo_url=payload.photo_url,
         is_emergency=payload.is_emergency,
+        severity=payload.severity,
+        lane="SELF",
         status=IssueStatus.NEW,
     )
     db.add(issue)
