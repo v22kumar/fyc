@@ -160,7 +160,11 @@ class _RungTile extends StatelessWidget {
                     // pass it to a neighbour who does not have the app.
                     if (rung.canCall) ...[
                       SizedBox(height: DSSpacing.xs),
-                      SelectableText(
+                      // Plain text, not selectable. Dragging to select inside
+                      // a scrolling list fights the scroll gesture, and the
+                      // two things a member actually needs are to read the
+                      // number and to dial it — the button does the second.
+                      Text(
                         _readable(rung.phone!),
                         style: t.textTheme.titleSmall?.copyWith(
                           color: AppColors.primary,

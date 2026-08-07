@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fyc_connect/core/storage/local_storage.dart';
@@ -26,8 +27,18 @@ Future<void> _shoot(WidgetTester tester, String name) async {
   final boundary = el.renderObject! as RenderRepaintBoundary;
   final image = await boundary.toImage(pixelRatio: 2.0);
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+  // An undisposed image leaves the binding with pending work, and the run
+  // stalls after the first shot instead of failing.
+  image.dispose();
   final dir = Directory('build/ui_shots')..createSync(recursive: true);
   File('${dir.path}/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+}
+
+/// Set the frame once, and always give it back.
+Future<void> _phone(WidgetTester t, Widget w) async {
+  await t.binding.setSurfaceSize(const Size(390, 844));
+  addTearDown(() => t.binding.setSurfaceSize(null));
+  await t.pumpWidget(w);
 }
 
 Widget _frame(Widget child, {Brightness brightness = Brightness.light}) =>
@@ -128,6 +139,10 @@ const _draft = ComplaintDraft(
 
 void main() {
   setUpAll(() async {
+    // main.dart does this at startup; without it DateFormat throws for any
+    // locale and the timeline renders as a red error screen.
+    await initializeDateFormatting();
+
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     if (!sl.isRegistered<LocalStorage>()) {
@@ -154,38 +169,28 @@ void main() {
   });
 
   testWidgets('ladder — light', (t) async {
-    t.view.physicalSize = const Size(390 * 2, 844 * 2);
-    t.view.devicePixelRatio = 2.0;
-    await t.pumpWidget(_frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {})));
+    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {})));
     await _shoot(t, '01_ladder_light');
   });
 
   testWidgets('ladder — dark', (t) async {
-    t.view.physicalSize = const Size(390 * 2, 844 * 2);
-    t.view.devicePixelRatio = 2.0;
-    await t.pumpWidget(_frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {}),
+    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {}),
         brightness: Brightness.dark));
     await _shoot(t, '02_ladder_dark');
   });
 
   testWidgets('timeline — waiting', (t) async {
-    t.view.physicalSize = const Size(390 * 2, 844 * 2);
-    t.view.devicePixelRatio = 2.0;
-    await t.pumpWidget(_frame(ComplaintTimeline(state: _state(waiting: 12))));
+    await _phone(t, _frame(ComplaintTimeline(state: _state(waiting: 12))));
     await _shoot(t, '03_timeline_waiting');
   });
 
   testWidgets('timeline — closed', (t) async {
-    t.view.physicalSize = const Size(390 * 2, 844 * 2);
-    t.view.devicePixelRatio = 2.0;
-    await t.pumpWidget(_frame(ComplaintTimeline(state: _state(closed: true))));
+    await _phone(t, _frame(ComplaintTimeline(state: _state(closed: true))));
     await _shoot(t, '04_timeline_closed');
   });
 
   testWidgets('send sheet', (t) async {
-    t.view.physicalSize = const Size(390 * 2, 844 * 2);
-    t.view.devicePixelRatio = 2.0;
-    await t.pumpWidget(_frame(SendLetterSheet(
+    await _phone(t, _frame(SendLetterSheet(
       draft: _draft, onSentConfirmed: () {}, onBccChanged: (_) {},
     )));
     await _shoot(t, '05_send_sheet');

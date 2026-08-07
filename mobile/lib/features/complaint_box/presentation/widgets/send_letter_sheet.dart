@@ -72,9 +72,23 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(d.toLabel, style: Theme.of(context).textTheme.titleMedium),
-          SizedBox(height: DSSpacing.xs),
-          Text(d.subject, style: Theme.of(context).textTheme.titleSmall),
+          // The letter already opens with "To: …", so repeating it here just
+          // pushes the actual content off a phone screen. The subject is what
+          // this sheet is usefully titled by.
+          Text(d.subject, style: Theme.of(context).textTheme.titleMedium),
+
+          // Anyone else who will receive this, named.
+          //
+          // A serious complaint copies the supervisor from the start, and the
+          // member must be able to see that before they send — the same rule
+          // that makes the club's blind copy a disclosed switch rather than a
+          // silent one. A copy somebody does not know about is something done
+          // to them, and that does not stop being true because it is a CC.
+          if (d.cc.isNotEmpty) ...[
+            SizedBox(height: DSSpacing.xs),
+            Text('${trId('also_goes_to')} ${d.cc.join(', ')}',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
           SizedBox(height: DSSpacing.sm),
           Flexible(
             child: SingleChildScrollView(
@@ -101,10 +115,13 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
           ),
           SizedBox(height: DSSpacing.xs),
           if (!_opened)
-            FilledButton.icon(
-              onPressed: _open,
-              icon: const Icon(Icons.outgoing_mail),
-              label: Text(trId('open_in_mail')),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _open,
+                icon: const Icon(Icons.outgoing_mail),
+                label: Text(trId('open_in_mail')),
+              ),
             )
           else ...[
             // Asked only after their mail app was actually opened.

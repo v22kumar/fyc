@@ -37,10 +37,19 @@ class ComplaintTimeline extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Who acted is the whole point of this list, so the club's
+                // entries must not look identical to the member's own. On a
+                // screen where the club forwarded something and the member
+                // did not, that difference is the information.
                 Padding(
                   padding: const EdgeInsets.only(top: 3),
-                  child: Icon(_icon(ev.type), size: 18,
-                      color: context.cTextSecondary),
+                  child: Icon(
+                    _icon(ev.type),
+                    size: 18,
+                    color: ev.author == ComplaintAuthor.member
+                        ? context.cTextSecondary
+                        : AppColors.primary,
+                  ),
                 ),
                 SizedBox(width: DSSpacing.xs),
                 Expanded(
@@ -51,7 +60,11 @@ class ComplaintTimeline extends StatelessWidget {
                         // Author first, always. The sentence is a report of
                         // what somebody stated, not an assertion by the app.
                         '${_who(ev)} · ${fmt.format(ev.at)}',
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: ev.author == ComplaintAuthor.member
+                                  ? null
+                                  : AppColors.primary,
+                            ),
                       ),
                       Text(_sentence(ev),
                           style: Theme.of(context).textTheme.bodyMedium),
