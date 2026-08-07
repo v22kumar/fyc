@@ -125,11 +125,19 @@ class _RungTile extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(DSSpacing.sm),
                 decoration: BoxDecoration(
-                  color: context.cSurface,
+                  // Tonal, not just outlined. A tinted surface reads as
+                  // "this one" before anybody has parsed a word; a 1.5px
+                  // border is something you notice only after reading.
+                  color: isStart
+                      ? Color.alphaBlend(
+                          AppColors.primary.withValues(alpha: 0.06),
+                          context.cSurface,
+                        )
+                      : context.cSurface,
                   borderRadius: BorderRadius.circular(DSRadius.card),
                   border: Border.all(
                     color: isStart
-                        ? AppColors.primary.withValues(alpha: 0.5)
+                        ? AppColors.primary.withValues(alpha: 0.45)
                         : context.cBorder,
                     width: isStart ? 1.5 : 1,
                   ),

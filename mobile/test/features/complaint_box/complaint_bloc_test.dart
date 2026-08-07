@@ -43,7 +43,8 @@ class _Fake implements ComplaintRepository {
     if (ladderThrows) throw Exception('network');
     return CallLadder(category: category, rungs: const [
       LadderRung(
-        position: 1, departmentCode: 'ULB', departmentName: 'Corporation',
+        position: 1, authorityId: 'auth-ae', departmentCode: 'ULB',
+        departmentName: 'Corporation',
         covers: 'your ward', canCall: true, canWrite: false, waitDays: 14,
         designation: 'Assistant Engineer', phone: '9443132365',
       ),
@@ -74,7 +75,7 @@ class _Fake implements ComplaintRepository {
   @override
   Future<ComplaintDraft> draft(String id,
       {String? authorityId, bool bccClub = true, bool useAi = true}) async {
-    calls.add('draft:bcc=$bccClub');
+    calls.add('draft:bcc=$bccClub:to=${authorityId ?? 'nobody'}');
     return ComplaintDraft(
       toLabel: 'Assistant Engineer, Corporation',
       subject: 'Street light out',
@@ -152,7 +153,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     bloc.add(const DraftRequested());
     await Future<void>.delayed(Duration.zero);
-    expect(repo.calls, contains('draft:bcc=true'));
+    expect(repo.calls, contains('draft:bcc=true:to=nobody'));
     expect(repo.calls, isNot(contains('markSent')),
         reason: 'the draft goes to another app; this one cannot see what '
             'happens next and must not pretend otherwise');
@@ -163,7 +164,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     bloc.add(const DraftRequested(bccClub: false));
     await Future<void>.delayed(Duration.zero);
-    expect(repo.calls, contains('draft:bcc=false'));
+    expect(repo.calls, contains('draft:bcc=false:to=nobody'));
     expect(bloc.state.draft!.bcc, isEmpty);
   });
 
@@ -224,6 +225,20 @@ void main() {
     expect(bloc.state.busy, isFalse, reason: 'the spinner must not get stuck');
     expect(bloc.state.complaint!.isClosed, isFalse,
         reason: 'a failed close must not look like a successful one');
+  });
+
+  test('writing to a rung addresses that rung', () async {
+    // The Write button used to discard the office it was attached to and
+    // always draft an unaddressed letter — the one thing a per-office button
+    // exists not to do.
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+    final rung = bloc.state.ladder!.rungs.first;
+
+    bloc.add(DraftRequested(authorityId: rung.authorityId));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repo.calls, contains('draft:bcc=true:to=auth-ae'));
   });
 
   test('the ladder keeps offices with no number, marked', () async {

@@ -315,6 +315,7 @@ def call_ladder(
         rungs.append(
             LadderRungOut(
                 position=r.position,
+                authority_id=(a.id if a else None),
                 department_code=r.department.code,
                 department_name_en=r.department.name_en,
                 department_name_ta=r.department.name_ta,

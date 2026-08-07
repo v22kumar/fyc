@@ -36,6 +36,7 @@ enum CallOutcome { reached, noAnswer, promised }
 class LadderRung extends Equatable {
   const LadderRung({
     required this.position,
+    this.authorityId,
     required this.departmentCode,
     required this.departmentName,
     required this.covers,
@@ -48,6 +49,11 @@ class LadderRung extends Equatable {
   });
 
   final int position;
+
+  /// Which office this is. The Write button needs it to address the letter to
+  /// this rung rather than to nobody.
+  final String? authorityId;
+
   final String departmentCode;
   final String departmentName;
 
@@ -69,8 +75,10 @@ class LadderRung extends Equatable {
   String get title => designation ?? departmentName;
 
   @override
-  List<Object?> get props =>
-      [position, departmentCode, designation, phone, email, canCall, canWrite];
+  List<Object?> get props => [
+        position, authorityId, departmentCode, designation, phone, email,
+        canCall, canWrite,
+      ];
 }
 
 /// Every office worth trying for one complaint, nearest first.

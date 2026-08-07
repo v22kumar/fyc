@@ -136,7 +136,7 @@ class _WaitingChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.12),
+          color: AppColors.warning.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(DSRadius.chip),
         ),
         child: Text(

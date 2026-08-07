@@ -88,7 +88,7 @@ class ComplaintDetailScreen extends StatelessWidget {
             padding: EdgeInsets.all(DSSpacing.md),
             children: [
               if (c.severity == e.ComplaintSeverity.serious && !c.isClosed)
-                _SeriousAdvice(),
+                const _SeriousAdvice(),
               if (!c.isClosed) ...[
                 _SectionTitle(trId('call_someone')),
                 if (state.ladderFailed)
@@ -101,9 +101,13 @@ class ComplaintDetailScreen extends StatelessWidget {
                   LadderList(
                     ladder: state.ladder!,
                     onCalled: (rung) => _askHowItWent(context, rung),
+                    // Address the letter to the office they tapped. This
+                    // discarded its argument and always drafted to nobody,
+                    // which made the per-rung Write button do the one thing it
+                    // exists not to do.
                     onWrite: (rung) => context
                         .read<ComplaintBloc>()
-                        .add(DraftRequested(authorityId: null)),
+                        .add(DraftRequested(authorityId: rung.authorityId)),
                   ),
                 SizedBox(height: DSSpacing.md),
                 _SectionTitle(trId('send_it_yourself')),
@@ -157,6 +161,15 @@ class ComplaintDetailScreen extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      // A drag handle and a tall top radius are what a sheet looks like now,
+      // and more usefully they tell the member this thing can be dismissed —
+      // which matters when it is holding a letter they have not decided to
+      // send yet.
+      showDragHandle: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (_) => SendLetterSheet(
         draft: draft,
         onSentConfirmed: () => bloc.add(const SendConfirmed()),
@@ -171,6 +184,10 @@ class ComplaintDetailScreen extends StatelessWidget {
     final bloc = context.read<ComplaintBloc>();
     showModalBottomSheet<void>(
       context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (sheet) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -278,12 +295,14 @@ class _SectionTitle extends StatelessWidget {
 /// Shown for serious complaints only. A call leaves no evidence; a letter is
 /// dated, addressed and quotable. Advice, never a block.
 class _SeriousAdvice extends StatelessWidget {
+  const _SeriousAdvice();
+
   @override
   Widget build(BuildContext context) => Container(
         margin: EdgeInsets.only(bottom: DSSpacing.md),
         padding: EdgeInsets.all(DSSpacing.sm),
         decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.10),
+          color: AppColors.warning.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(DSRadius.card),
         ),
         child: Row(

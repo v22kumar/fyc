@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/complaint_entities.dart';
 
 /// Hand the letter to the member's own mail app.
