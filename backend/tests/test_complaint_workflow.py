@@ -326,3 +326,22 @@ def test_pinning_a_department_nobody_has_offices_for_falls_back_safely(
 
     assert result.sent, "an unknown override should fall back to the normal ladder"
     assert sent_mail[0]["to"] == "ae@example.invalid"
+
+
+def test_a_recorded_area_is_not_reported_back_as_a_guess(db, club, reviewer, town):
+    """The route is rebuilt from what was stored on the complaint, and the
+    place's name has to survive that trip.
+
+    Without it the app could not tell a recorded area from an assumption, so a
+    complaint filed in a properly classified ward was labelled a guess — and a
+    reviewer would go looking for a problem that was not there.
+    """
+    issue = _issue(db, club, reviewer, town)
+    workflow.approve(db, issue, reviewer)
+    db.commit()
+
+    ladder = workflow.route_for(db, issue)
+
+    assert ladder.jurisdiction.confidence.value == "DECLARED"
+    assert ladder.jurisdiction.place_name == "Nagercoil"
+    assert not ladder.jurisdiction.needs_human_check

@@ -18,6 +18,7 @@ import '../../features/blood_donation/presentation/screens/imported_directory_sc
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
+import '../../features/issues/presentation/screens/review_queue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
@@ -273,6 +274,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/issues/report',
       builder: (context, state) => const ReportIssueScreen(),
+    ),
+    // The club's side of the workflow. Without it a complaint stops at the
+    // club instead of passing through it: nothing reaches a government office
+    // until a member has read it, and until now there was no screen to read it
+    // on.
+    GoRoute(
+      path: '/issues/queue',
+      builder: (context, state) => const ReviewQueueScreen(),
     ),
     GoRoute(
       path: '/membership',

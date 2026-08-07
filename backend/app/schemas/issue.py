@@ -191,7 +191,12 @@ class RouteOut(BaseModel):
     local_body_type: str
     #: DECLARED / INHERITED / GUESSED — how confident the jurisdiction is.
     jurisdiction_confidence: str
+    #: English prose, for logs and for anyone reading the API directly.
     jurisdiction_reason: str
+    #: The place the answer came from. The app builds its own sentence from
+    #: this plus the confidence, so a Tamil reviewer reads Tamil rather than a
+    #: server-assembled English string.
+    jurisdiction_place: Optional[str] = None
     #: True when a reviewer should confirm the area before anything is sent.
     needs_human_check: bool
     rungs: list[RouteRungOut]

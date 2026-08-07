@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../domain/civic_categories.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -34,38 +35,6 @@ class ReportIssueScreen extends StatefulWidget {
   @override
   State<ReportIssueScreen> createState() => _ReportIssueScreenState();
 }
-
-/// What a person can point at, in the order they are likely to need them.
-///
-/// Fourteen against the old nine — and the old nine were shaped around which
-/// office the code already knew about, which is backwards. Drainage is not
-/// garbage, and a complaint about a government school had nowhere to go at all.
-///
-/// `code` matches the backend's `CivicCategory`, which is what the routing
-/// ladder is keyed on.
-class _Kind {
-  final String code;
-  final String labelId;
-  final IconData icon;
-  const _Kind(this.code, this.labelId, this.icon);
-}
-
-const _kinds = <_Kind>[
-  _Kind('ROAD', 'cat_road', Icons.dangerous_outlined),
-  _Kind('STREET_LIGHT', 'cat_street_light', Icons.lightbulb_outline),
-  _Kind('DRINKING_WATER', 'cat_drinking_water', Icons.water_drop_outlined),
-  _Kind('DRAINAGE', 'cat_drainage', Icons.water_damage_outlined),
-  _Kind('GARBAGE', 'cat_garbage', Icons.delete_outline),
-  _Kind('ELECTRICITY', 'cat_electricity', Icons.bolt_outlined),
-  _Kind('PUBLIC_HEALTH', 'cat_public_health', Icons.pest_control_outlined),
-  _Kind('ENCROACHMENT', 'cat_encroachment', Icons.fence_outlined),
-  _Kind('SCHOOL', 'cat_school', Icons.school_outlined),
-  _Kind('HEALTHCARE', 'cat_healthcare', Icons.local_hospital_outlined),
-  _Kind('POLLUTION', 'cat_pollution', Icons.factory_outlined),
-  _Kind('TRANSPORT', 'cat_transport', Icons.directions_bus_outlined),
-  _Kind('SAFETY', 'cat_safety', Icons.local_police_outlined),
-  _Kind('OTHER', 'cat_other', Icons.more_horiz),
-];
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _words = TextEditingController();
@@ -448,7 +417,7 @@ class _KindGrid extends StatelessWidget {
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (final kind in _kinds)
+            for (final kind in CivicCategory.all)
               _KindTile(
                 kind: kind,
                 width: width,
@@ -463,7 +432,7 @@ class _KindGrid extends StatelessWidget {
 }
 
 class _KindTile extends StatelessWidget {
-  final _Kind kind;
+  final CivicCategory kind;
   final double width;
   final bool selected;
   final VoidCallback onTap;

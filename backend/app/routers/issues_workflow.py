@@ -49,6 +49,7 @@ def _route_out(ladder) -> RouteOut:
         local_body_type=ladder.jurisdiction.local_body_type.value,
         jurisdiction_confidence=ladder.jurisdiction.confidence.value,
         jurisdiction_reason=ladder.jurisdiction.reason,
+        jurisdiction_place=ladder.jurisdiction.place_name,
         needs_human_check=ladder.jurisdiction.needs_human_check,
         rungs=[
             RouteRungOut(

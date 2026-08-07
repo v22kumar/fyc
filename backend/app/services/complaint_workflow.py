@@ -54,11 +54,21 @@ def route_for(db: Session, issue: PublicIssue) -> Ladder:
     """
     if issue.local_body_type:
         from app.models.civic import LocalBodyType
+        from app.models.geography import GeographicNode
 
+        # The place's name is read back rather than stored on the issue: it is
+        # the one part of the answer that can legitimately change (a ward gets
+        # renamed) without the routing decision changing with it. Reconstructing
+        # without it left the app unable to tell a recorded area from a guess,
+        # so a complaint filed in a classified ward was labelled an assumption.
+        place = (
+            db.get(GeographicNode, issue.geography_id) if issue.geography_id else None
+        )
         known = Jurisdiction(
             local_body_type=LocalBodyType(issue.local_body_type),
             confidence=Confidence(issue.jurisdiction_confidence or Confidence.GUESSED.value),
             geography_id=issue.geography_id,
+            place_name=place.name_en if place else None,
             reason=issue.jurisdiction_reason or "",
         )
     else:

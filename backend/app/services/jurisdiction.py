@@ -54,6 +54,11 @@ class Jurisdiction:
     confidence: Confidence
     #: The node the answer came from, when it came from one.
     geography_id: Optional[UUID] = None
+    #: That node's name. Carried alongside `reason` because the reason is
+    #: English prose assembled here, and prose cannot be translated by a client.
+    #: The app renders its own sentence from (confidence, place, local body),
+    #: which is how the reviewer's screen stays in the reviewer's language.
+    place_name: Optional[str] = None
     #: Human-readable trail, for the reviewer screen and for debugging a
     #: complaint that went somewhere strange.
     reason: str = ""
@@ -108,6 +113,7 @@ def resolve_from_node(db: Session, geography_id: Optional[UUID]) -> Optional[Jur
             local_body_type=declared,
             confidence=Confidence.DECLARED,
             geography_id=node.id,
+            place_name=node.name_en,
             reason=f"{node.name_en} is recorded as a {declared.value.replace('_', ' ').lower()}",
         )
 
@@ -127,6 +133,7 @@ def resolve_from_node(db: Session, geography_id: Optional[UUID]) -> Optional[Jur
                 local_body_type=inherited,
                 confidence=Confidence.INHERITED,
                 geography_id=parent.id,
+                place_name=parent.name_en,
                 reason=(
                     f"{node.name_en} is not classified; inherited from "
                     f"{parent.name_en}"
@@ -169,6 +176,7 @@ def resolve(
             # own area, not necessarily the pothole's.
             confidence=Confidence.INHERITED,
             geography_id=answer.geography_id,
+            place_name=answer.place_name,
             reason=f"taken from the reporter's own area — {answer.reason}",
         )
 
