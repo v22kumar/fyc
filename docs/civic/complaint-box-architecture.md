@@ -1,349 +1,391 @@
 # Complaint Box — architecture
 
-*Decision record. Written before the code, because the wrong answer here is
-expensive to unwind and the cost is legal, not technical.*
-
-## The question
-
-A member sees a broken street light. They do not know how to write to the
-Assistant Engineer, and would not know it was the Assistant Engineer. The app
-knows both. Who presses send?
-
-Today the club does: `issues.py` sends through FYC's own SMTP, sets `reply_to`
-to the member, and signs off *"Submitted via FYC Connect — Friends Youth Club,
-Nagercoil."* That makes the club the sender of record for every complaint any
-member writes.
-
-## Decision
-
-**The member sends, from their own mail account. The app writes the draft.**
-
-The club's contribution is the draft, the right officer, and the evidence
-bundle — never the connection.
-
-### Why
-
-**Liability.** A complaint naming a contractor, sent from the club's mailbox, is
-the club's publication. Sent from the member's own address with their name and
-number, the club is a tool — the same as a word processor. Using published
-government contacts is not the exposure; being the sender is.
-
-**Spam stops being a problem to solve.** Nobody spams a District Collector from
-their own Gmail with their name on it. The friction is exactly right, which
-means **the approval gate can go**. That gate does not scale — an organiser
-approving a hundred complaints one at a time is a bottleneck, and it quietly
-makes them a censor deciding whose grievance counts.
-
-**Officials treat it as a citizen grievance.** The same words from a club
-mailbox "on behalf of" a resident read as a campaign and get discounted.
-
-**Deliverability.** A small club's SMTP sending bulk mail to `nic.in` addresses
-gets filtered, then blocklisted. The feature would die silently and nobody would
-find out for weeks.
-
-**No registration question.** Nobody needs to be a registered entity to help a
-neighbour write a letter.
-
-## How, concretely
-
-Three ways to send from a member's own Gmail. They are not close.
-
-### 1. Email intent — CHOSEN
-
-`ACTION_SENDTO` with the draft prefilled, or `flutter_email_sender`. The member's
-own mail app opens with recipient, CC, subject and body filled; they read it,
-edit it, press send. It leaves from their real account and lands in their Sent
-folder.
-
-- Costs nothing, needs no review, ships this week.
-- Handles long bodies and an attached photo, which a raw `mailto:` URI does not.
-- `url_launcher` is already a dependency; `mailto:` is the fallback when no
-  intent handler exists.
-
-### 2. `mailto:` link — FALLBACK
-
-Same model, simpler. Breaks on long bodies (URI length) and cannot attach. Kept
-only for devices where the intent finds no handler.
-
-### 3. Gmail API with the `gmail.send` scope — REJECTED
-
-Genuinely the best product: we would know it was sent, hold the message id,
-thread the follow-ups, and run the escalation clock automatically.
-
-Rejected because `gmail.send` is a **restricted scope**. Google requires an
-independent CASA security assessment — thousands of dollars a year and weeks of
-process — for an app that would be doing this on behalf of an unregistered
-youth club. It also only serves Gmail users. Revisit if the club is ever
-registered and the volume justifies it.
-
-## The consequence that shapes everything
-
-**We cannot know whether they pressed send.** The app hands the draft to another
-application and loses sight of it. Every part of the design has to be honest
-about that rather than paper over it.
-
-So:
-
-- A complaint is never marked sent automatically. On return the app asks once:
-  *"Did you send it?"* — one tap.
-- `DRAFTED` and `SENT` are different states, and `DRAFTED` is not a failure. A
-  member who drafted and thought better of it has done nothing wrong.
-- **Opt-in BCC.** *"Keep a copy with the club so we can follow it up"* — plain
-  words, off by default. When on, the club receives the mail, which is real
-  proof of sending and starts the escalation clock without anyone being asked.
-  Off, the member is on their own timeline and the app just nudges.
-- The escalation ladder cannot read their inbox — reading Gmail is a restricted
-  scope too. After 14 days it asks: *"Has anyone replied?"* If not, it drafts
-  the next rung.
-
-## The ladder
-
-The feature that actually gets things fixed, and it requires sending nothing:
-
-    Assistant Engineer / VAO  →  Tahsildar / Executive Engineer
-      →  RDO  →  District Collector  →  CM Cell (1100)  →  CPGRAMS
-
-Each rung is a fresh draft quoting the previous one and its date. The directory
-already holds all six.
-
-## Club-sent, as a narrow exception
-
-Some members have no email at all. For them the current path stays: organiser
-approves, club sends. Small volume, so the gate works there — it just stops
-being the default. Capped per member per week.
-
-## Naming
-
-**Complaint Box** — புகார் பெட்டி. A familiar civic object, and broad enough for
-anything. Replaces "Report an issue".
-
-## Shape
-
-Following the blood-donation feature, which is the cleanest thing in the app:
-
-    features/complaint_box/
-      data/          api client, models, repository impl
-      domain/        entities, repository interface, usecases
-      presentation/  bloc + event + state, screens, widgets
-
-Server keeps: the directory, the AI draft, the ladder rules, the public tracker,
-the timeline. Server loses: being the sender.
-
-## Open, and needing a human
-
-- The exact source URL for the scraped Collectorate contacts (blocks import).
-- Whether the club wants the BCC copy at all — it is a privacy call, not a
-  technical one.
-- Not legal advice. The member-sends model removes the largest exposure by not
-  making the club the publisher; it does not make the question disappear.
+*புகார் பெட்டி. Written before the code, because the expensive mistakes here are
+legal and social, not technical.*
 
 ---
 
-# Two lanes
+## 1. The problem
 
-The decision above answered *who presses send*. It left out that there are two
-different journeys, and only one of them is the club's business.
+A member sees a broken street light. They do not know it is the Assistant
+Engineer's job, do not have his number, and would not know how to write to him
+if they did. So nothing happens, and the light stays broken for a year.
 
-## Lane A — straight to the department
+The club knows all three things. That knowledge — not a mail server — is the
+product.
 
-The member writes it, the app drafts it, **they** send it from their own mail.
-The club never touches it and never sees it.
+## 2. What was already there, and what is wrong with it
 
-## Lane B — to the club
+`issues.py` sends every complaint through FYC's own SMTP, sets `reply_to` to
+the member, and signs off *"Submitted via FYC Connect — Friends Youth Club,
+Nagercoil."*
 
-The member sends it **to FYC**, because they want help, or the office ignored
-them, or they would rather someone else dealt with it. Now the club owns it: an
-organiser reads it and either raises it with the department or closes it with a
-reason.
+Three problems. The club becomes the publisher of whatever any member writes
+about any contractor. A small club's SMTP mailing `nic.in` addresses in bulk
+gets blocklisted, and the feature dies silently. And it needs an organiser to
+approve each one, which stops working at about complaint number twenty.
 
-Lane B is the second priority to build, but it is the one that makes the club
-useful rather than merely helpful — and it is the only lane where the club can
-honestly claim to know anything.
+---
 
-## Who owns the truth, per lane
+## 3. The decisions
 
-This is the whole design. Every screen follows from it.
+### 3.1 The member sends. The app drafts.
 
-| | Lane A — direct | Lane B — via the club |
+The club's contribution is the draft, the right officer, and the evidence
+bundle. Never the connection.
+
+This removes the liability (the club is a tool, like a word processor), makes
+the complaint land as a citizen grievance rather than a campaign, sidesteps the
+deliverability problem entirely, and needs nobody to be a registered entity.
+
+It also **dissolves the spam problem instead of policing it.** Nobody spams a
+District Collector from their own Gmail with their name on it. So the approval
+gate goes — the bottleneck disappears because the thing it was guarding against
+stops happening.
+
+Using published government contact details is not the exposure. Being the
+sender is.
+
+### 3.2 Mechanism: an email intent, not the Gmail API
+
+| | Verdict |
+|---|---|
+| **Email intent** (`ACTION_SENDTO` / `flutter_email_sender`) | **Chosen.** Opens their own mail app prefilled; they read, edit, send. Free, no review, handles long bodies and an attached photo. |
+| `mailto:` via `url_launcher` | Fallback when no intent handler exists. Breaks on long bodies, cannot attach. |
+| Gmail API, `gmail.send` scope | **Rejected.** The better product — real send confirmation, message ids, an automatic escalation clock — but it is a *restricted scope* needing a paid CASA security assessment, thousands a year and weeks of process, for an unregistered youth club. Serves only Gmail users. Revisit if the club registers. |
+
+### 3.3 The consequence that shapes everything
+
+**We cannot know whether they pressed send.** The app hands the draft to another
+application and loses sight of it. Every screen must be honest about that rather
+than paper over it.
+
+---
+
+## 4. Three routes
+
+Most civic problems are fixed by a phone call. A letter is the slower, colder
+way to ask. So:
+
+```
+Your report is ready.
+
+→ Call someone        5 numbers, nearest first
+→ Send it yourself    we will write it for you
+→ Ask FYC to help     someone from the club will take it on
+```
+
+Nothing is forced, and routes combine. Calling, getting nowhere, then writing is
+the normal path — and the letter should already know about the call.
+
+### 4.1 Calling shows the whole ladder
+
+```
+Assistant Engineer — your ward       9xxxxxxxxx   ← start here
+Assistant Executive Engineer         9xxxxxxxxx
+Executive Engineer — division        9xxxxxxxxx
+District Collector                   04652 279090
+CM Helpline                          1100
+```
+
+**One number is worse than none.** If that single person does not answer, or
+listens and does nothing, the member has no visible next step and stops. The
+ladder makes the next step obvious from the first screen, and lets them judge
+who is worth calling — they know things about the local office we do not.
+
+Each rung states what it covers: *your ward*, *the division*, *the district*.
+
+### 4.2 Calls are logged because the member says so
+
+One tap afterwards: **reached / no answer / promised to act**. Nothing is
+detected; the member is asked and believed.
+
+This record is worth more than it looks. It becomes the opening line of any
+letter that follows:
+
+> *"I spoke to the Assistant Engineer on 5 August, who said it would be seen to.
+> There has been no action since."*
+
+That sentence is what makes a letter land with an Executive Engineer, and it
+exists only because somebody tapped a button after a phone call. Calls feeding
+the letter is what makes these one product rather than three buttons.
+
+---
+
+## 5. Serious issues go by mail, and the app says so
+
+**A call leaves no evidence. A letter is dated, addressed, referenced and
+quotable.** For anything serious that difference decides whether there is a
+record when it matters.
+
+At capture the member answers one question — *how bad is it?* — and the app
+steers accordingly:
+
+| | Steering |
+|---|---|
+| **Routine** — a light out, a pothole, uncollected rubbish | Call first. It is faster and usually enough. |
+| **Serious** — a danger to someone, a repeated failure already reported, sewage or contaminated water, an office that has refused | **Write.** *"Put this in writing — a letter leaves a record you can point to later. Call as well if you like."* |
+
+For serious complaints the app additionally:
+
+- pre-selects the **next rung up** as a CC from the start, so the supervisor
+  sees it at the same time as the officer
+- keeps the photo, since evidence is the point
+- shortens the escalation clock from 14 days to 7
+
+The app suggests; it never blocks. A member who wants to call about a serious
+problem may.
+
+---
+
+## 6. Two lanes, and who owns the truth
+
+**Lane A — direct.** The member sends from their own mail. The club never sees
+it.
+
+**Lane B — via the club.** The member hands it to FYC. An organiser reads it and
+either raises it with the department or closes it with a reason.
+
+| | Lane A | Lane B |
 |---|---|---|
-| Who sends | The member, from their own mail | The club, from the club's mail |
+| Who sends | The member | The club |
 | Who knows it was sent | Only the member | The club |
 | Who knows if anyone replied | Only the member | The club |
 | Who sets the status | The member | The club |
-| How much we track | As much as they tell us | All of it |
+| How much we track | What they tell us | All of it |
 
 **In Lane A the member is the source of truth.** Not the server, not a webhook,
-not a guess. The app asks and believes the answer.
+not an inference. The app asks and believes the answer.
 
-**In Lane B the club is the source of truth**, and it can be complete, because
-the mail genuinely went from the club's mailbox and the reply comes back to it.
+**In Lane B the club is the source of truth,** and can be complete — the mail
+really did leave its mailbox, and the reply really does come back to it.
 
-# Making unknown state not look broken
+---
 
-The hard part. We often will not know the stage of a Lane A complaint, and a
-list of rows reading `Unknown` looks like a bug.
+## 7. Status, when we often do not know it
 
-Three rules:
+A list of rows reading `Unknown` looks like a bug. Three rules.
 
-**1. Never show a status the system invented.** Every entry on the timeline
-carries an author, and the UI says who:
+**7.1 Never show a status the system invented.** Every timeline entry names its
+author:
 
-> **You** · 5 Aug — *You said you sent this to the Assistant Engineer*
-> **FYC** · 6 Aug — *Forwarded to the Executive Engineer, TWAD*
+> **You** · 5 Aug — *You said you called the Assistant Engineer. He promised to
+> look at it.*
+> **You** · 6 Aug — *You said you sent the letter.*
+> **FYC** · 8 Aug — *Forwarded to the Executive Engineer, TWAD.*
 
-Not "Sent" floating with no subject. A sentence with an author cannot be wrong
-in the way a status badge can.
+A sentence with an author cannot be wrong in the way a floating badge can.
 
-**2. Absence of news is a state, and it has a name.** Not `Unknown` —
-**"Waiting to hear"**, with the days visible: *waiting 12 days*. That is a true
-and useful thing to display, and it is what a person would actually say.
+**7.2 Absence of news is a state with a name.** Not `Unknown` — **"Waiting to
+hear · 12 days"**. True, useful, and what a person would actually say.
 
-**3. The member can always close it.** Two taps available on every complaint,
-at any time, regardless of what we know:
+**7.3 The member can always close it.** Available on every complaint at any
+time, whatever we know:
 
-- **Mark resolved** — *"the light is fixed"*. Nothing else needed.
-- **Mark closed** — *"I gave up"* or *"I sent it another way"*. No judgement, no
+- **Mark resolved** — *the light is fixed*
+- **Mark closed** — *I gave up*, or *I sorted it another way*. No judgement, no
   form.
 
-A member who fixed the problem by walking into the office should be able to say
-so. A complaint that can only be closed by an event the app can observe is a
-complaint that stays open forever and makes the list useless.
+Someone who fixed it by walking into the office must be able to say so. A
+complaint that can only be closed by an event the app can observe stays open
+forever, and an active list full of dead complaints is a list nobody opens.
 
-Once closed, the row is locked: no more nudges, no escalation prompts, and it
-moves out of the active list. Reopening is one tap if they were wrong.
+Closed rows lock: no nudges, no escalation prompts, out of the active list, one
+tap to reopen.
 
-# The letter is a template, not a generated document
+### 7.4 States
 
-Asking an AI to write the whole letter gives a different letter every time, and
-a bill for each one. Worse, when the quota runs out or the call fails there is
-no letter at all.
+```
+        ┌──────────┐
+        │ CAPTURED │  what, where, photo, severity
+        └────┬─────┘
+   ┌─────────┼──────────────┬────────────────────┐
+   ▼         ▼              ▼                    ▼
+ CALLED   DRAFTED      HANDED_TO_FYC        (abandoned)
+   │         │              │
+   │         ▼              ▼
+   │    SENT_BY_YOU    FYC_REVIEWING ──► FYC_FORWARDED
+   │    (they said)         │                 │
+   └────┬────┴──────────────┴─────────────────┘
+        ▼
+   WAITING_TO_HEAR ──► REPLY_RECEIVED
+        │                    │
+        └────────┬───────────┘
+                 ▼
+        RESOLVED / CLOSED     (locked; reopen in one tap)
+```
 
-**The skeleton is code. The AI fills two slots.**
+`CALLED`, `SENT_BY_YOU` and `REPLY_RECEIVED` are only ever set by the member in
+Lane A, and by the club in Lane B. The server never infers them.
 
-Fixed, written once, identical every time:
+---
 
-    To: <designation>, <office>
-    Subject: <slot: subject>
+## 8. The letter is a template, not a generated document
 
-    Sir / Madam,
+Asking a model to write the whole letter gives a different letter every time, a
+bill for each one, and no letter at all when the quota runs out.
 
-    <slot: body>
+**The skeleton is code. The model fills two slots.**
 
-    Location:  <place name>
-               <Google Maps link>
-    Reported:  <date>
-    Photo:     <url, if any>
-    Reference: <short code>
+```
+To: <designation>, <office>
+Subject: <slot: subject>
 
-    <name>
-    <phone>
-    <address>
+Sir / Madam,
 
-The AI is asked for exactly two things: a one-line subject, and three sentences
-of formal description in the member's language. Nothing else. If it fails, the
-member's own words go in the body slot and the letter still sends — it is
-plainer, not broken.
+<slot: body>
 
-This also fixes something the current draft gets wrong: it appends
-*"Submitted via FYC Connect — Friends Youth Club, Nagercoil"*, which in Lane A
-is false. In Lane A the letter is from the member and says so.
+<if calls logged>
+I contacted <office> by telephone on <dates>. <outcome>.
+</if>
 
-# Location is a link, not coordinates
+Location:  <place name>
+           <Google Maps link>
+Reported:  <date>
+Photo:     <url, if any>
+Reference: <short code>
 
-`GPS 8.1833, 77.4119` means nothing to an Assistant Engineer reading mail on a
-phone. Every complaint carries:
+<member name>
+<member phone>
+<member address>
+```
+
+The model is asked for exactly two things: a one-line subject, and three
+sentences of formal description in the member's language. If it fails, the
+member's own words fill the body slot and the letter still sends — plainer, not
+broken.
+
+This also removes the *"Submitted via FYC Connect"* footer, which in Lane A is
+simply false. It is the member's letter and says so.
+
+---
+
+## 9. Location is a link
+
+`GPS 8.1833, 77.4119` means nothing to an engineer reading mail on a phone.
+Every complaint carries:
 
 - the place as a person would say it — *"Vadasery bus stand, near the
-  footbridge"* — from reverse geocoding, editable by the member
+  footbridge"* — reverse-geocoded, editable by the member
 - a Google Maps link that opens the exact pin
 
 Coordinates stay in the record for the app's own use and never appear in the
 letter.
 
-# Build order
+---
 
-1. The template and the Maps link — improves the letter that already exists.
-2. Lane A end to end, with the member-owned timeline and the two close buttons.
-3. Lane B — the club inbox, triage, forward, and its fuller timeline.
-4. The ladder, which is just Lane A again one rung up, quoting the last letter.
+## 10. Numbers we are allowed to show
+
+The current screen opens with *0 Issues Resolved · 0% Resolution Rate · 0.0 Days
+Avg. Response · 0.0K Active Citizens* — four statistics, all zero, in four
+unrelated colours.
+
+Beyond being empty, most of these are **not knowable**. In Lane A we do not see
+replies, so there is no response time. We do not learn outcomes unless somebody
+tells us, so any "resolution rate" has unknowns in its denominator and is a
+guess presented as a measurement.
+
+**The rule: never publish a rate whose denominator contains things we did not
+observe.**
+
+What can be shown honestly:
+
+| Number | Source | Shown as |
+|---|---|---|
+| Complaints raised | Observed | *"142 reports this year"* |
+| Calls made | Member said so | *"members made 88 calls"* |
+| Letters sent | Member said so | *"61 letters sent"* |
+| Marked resolved | Member said so | *"37 of the 92 people who told us said it was fixed"* — denominator visible |
+| Lane B outcomes | Club owns it | Full, including response times — this is the club's credibility, and it is real |
+
+And: **nothing is shown until the sample is worth showing.** Below about twenty
+complaints the strip stays hidden. Four zeroes at the top of a screen is the
+loudest way to say the feature is unused.
+
+Semantic colour is reserved for meaning — green for resolved, amber for waiting.
+Neutral counts get one tone.
 
 ---
 
-# Three routes, and mail is not the first one
+## 11. Sending from the club's mailbox
 
-The design so far assumed every complaint is a letter. Most are not. A blocked
-drain is usually fixed by ringing the right person, and a letter is the slower,
-colder way to ask.
+Built, shipped **switched off**.
 
-So the screen offers three routes, in this order:
+Whether an unregistered club wants to be the sender of record is the club's
+decision, not this document's, and it may change once the volume is visible.
+Behind a setting, default off, invisible to members until deliberately enabled.
 
-## 1. Call someone — the default
+When enabled: a named organiser account, and a cap. A stuck loop mailing a
+Collector two hundred times would end that relationship permanently.
 
-Show the **whole ladder**, not the one "correct" officer:
+---
 
-    Assistant Engineer — your ward          9xxxxxxxxx     ← start here
-    Assistant Executive Engineer            9xxxxxxxxx
-    Executive Engineer, division            9xxxxxxxxx
-    District Collector                      04652 279090
-    CM Helpline                             1100
+## 12. Shape
 
-Showing a single number is worse than showing none. If that one person does not
-pick up, or listens and does nothing, the member has no visible next step and
-stops. The ladder makes the next step obvious from the first screen, and it
-lets them judge for themselves who is worth calling — often they already know
-someone, or know that the ward office is useless on a Friday.
+Following the blood-donation feature, the cleanest thing in the app:
 
-Each rung shows what it covers, so the choice is informed rather than a guess:
-*"your ward"*, *"the whole division"*, *"the district"*.
+```
+mobile/lib/features/complaint_box/
+  data/          api client, models, repository impl
+  domain/        entities, repository interface, usecases
+  presentation/  bloc + event + state, screens, widgets
+```
 
-**Calls are logged because the member says so, not because we detect them.**
-One tap after the call: *did you get through?* — reached / no answer / promised
-to act. That record is worth more than it looks: it becomes the first line of
-the letter if one is needed later.
+Server keeps the directory, the ladder rules, the draft slots, the public
+tracker, the timeline. Server loses being the sender.
 
-> *"I spoke to the Assistant Engineer on 5 August, who said it would be seen
-> to. There has been no action since."*
+### Data model
 
-That sentence is what makes a letter land, and it exists only because someone
-tapped a button after a phone call.
+- `Complaint` — what, where (lat/lng + place + maps url), photo, severity, lane,
+  state, short code
+- `ComplaintEvent` — the timeline. **Every row has an author** (`MEMBER`, `FYC`,
+  `SYSTEM`) and a verb. This table is why the UI can never assert something
+  nobody said.
+- `ComplaintContact` — which rung was called or written to, and when
+- `Authority` — exists already, with the ladder and jurisdictions
 
-## 2. Write it yourself
+### API
 
-The app drafts it, supplies the right address, and hands it to their own mail
-app. As decided above. This is where people go when calls have failed, or when
-they want a record.
+```
+POST   /civic/complaints                 capture
+GET    /civic/complaints/{id}/ladder     contacts for this category + location
+POST   /civic/complaints/{id}/draft      subject + body slots filled
+POST   /civic/complaints/{id}/events     "I called", "I sent it", "they replied"
+POST   /civic/complaints/{id}/resolve    resolved | closed(reason)
+POST   /civic/complaints/{id}/handover   → Lane B
+GET    /civic/inbox                      Lane B queue (organisers)
+```
 
-## 3. Hand it to FYC
+### Screens
 
-The club takes it on. An organiser can ring the department, write from the
-club's own name, or close it with a reason. This is for members who would
-rather not deal with an office at all — which is a real and reasonable
-preference, not a failure on their part.
+1. **Capture** — photo first, description, location confirm, one severity question
+2. **What next** — the three routes, steered by severity
+3. **Ladder** — the stack of contacts, call buttons, log-the-call prompt
+4. **Draft** — the letter, editable, then hand to their mail app
+5. **My complaints** — active and closed, "waiting 12 days", the two close buttons
+6. **Detail** — the authored timeline
+7. **FYC inbox** — organiser triage (Lane B)
 
-# Sending from the club's own mailbox
+---
 
-Build it, ship it switched off.
+## 13. Build order
 
-The capability is small and the decision is not ours: whether an unregistered
-club wants to be the sender of record is a question for the club, and the
-answer may change once the volume is visible. So the code exists behind a
-setting, defaults to off, and no member sees the option until someone turns it
-on deliberately.
+1. **Template, Maps link, ladder** — improves the letter that exists today, and
+   the ladder is the highest-value screen. Neither needs an open decision.
+2. **Capture → routes → call logging** — Lane A without the letter.
+3. **Draft → hand-off → member-owned timeline → the two close buttons.**
+4. **Severity steering**, once there is a real letter to steer towards.
+5. **Lane B** — the club inbox and triage.
+6. **The ladder in motion** — escalation is Lane A one rung up, quoting the
+   previous letter and the logged calls.
+7. **Honest statistics**, last, when there is a sample.
 
-Turning it on should require a named organiser account, and should be capped —
-a stuck loop that mails a Collector two hundred times would end the club's
-relationship with that office permanently.
+---
 
-# What this means for the screen
+## 14. Open, and needing a person
 
-The complaint is captured once — what, where, a photo. Then the member chooses
-what to do with it, and can do more than one thing:
-
-    Your report is ready.
-
-    → Call someone        (5 numbers, nearest first)
-    → Send it yourself    (we will write it for you)
-    → Ask FYC to help     (someone from the club will take it on)
-
-Nothing is forced. A member who calls, gets nowhere, and then writes has done
-the normal thing, and the letter should already know about the call.
+- **The source URL of the scraped Collectorate contacts.** Blocks importing the
+  17 offices already matched. Only the person who fetched the page knows it.
+- **Does the club want a BCC copy** of Lane A letters? A privacy decision.
+- **Not legal advice.** The member-sends model removes the largest exposure by
+  not making the club the publisher. It does not make the question disappear.
