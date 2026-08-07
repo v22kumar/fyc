@@ -266,3 +266,84 @@ letter.
 2. Lane A end to end, with the member-owned timeline and the two close buttons.
 3. Lane B — the club inbox, triage, forward, and its fuller timeline.
 4. The ladder, which is just Lane A again one rung up, quoting the last letter.
+
+---
+
+# Three routes, and mail is not the first one
+
+The design so far assumed every complaint is a letter. Most are not. A blocked
+drain is usually fixed by ringing the right person, and a letter is the slower,
+colder way to ask.
+
+So the screen offers three routes, in this order:
+
+## 1. Call someone — the default
+
+Show the **whole ladder**, not the one "correct" officer:
+
+    Assistant Engineer — your ward          9xxxxxxxxx     ← start here
+    Assistant Executive Engineer            9xxxxxxxxx
+    Executive Engineer, division            9xxxxxxxxx
+    District Collector                      04652 279090
+    CM Helpline                             1100
+
+Showing a single number is worse than showing none. If that one person does not
+pick up, or listens and does nothing, the member has no visible next step and
+stops. The ladder makes the next step obvious from the first screen, and it
+lets them judge for themselves who is worth calling — often they already know
+someone, or know that the ward office is useless on a Friday.
+
+Each rung shows what it covers, so the choice is informed rather than a guess:
+*"your ward"*, *"the whole division"*, *"the district"*.
+
+**Calls are logged because the member says so, not because we detect them.**
+One tap after the call: *did you get through?* — reached / no answer / promised
+to act. That record is worth more than it looks: it becomes the first line of
+the letter if one is needed later.
+
+> *"I spoke to the Assistant Engineer on 5 August, who said it would be seen
+> to. There has been no action since."*
+
+That sentence is what makes a letter land, and it exists only because someone
+tapped a button after a phone call.
+
+## 2. Write it yourself
+
+The app drafts it, supplies the right address, and hands it to their own mail
+app. As decided above. This is where people go when calls have failed, or when
+they want a record.
+
+## 3. Hand it to FYC
+
+The club takes it on. An organiser can ring the department, write from the
+club's own name, or close it with a reason. This is for members who would
+rather not deal with an office at all — which is a real and reasonable
+preference, not a failure on their part.
+
+# Sending from the club's own mailbox
+
+Build it, ship it switched off.
+
+The capability is small and the decision is not ours: whether an unregistered
+club wants to be the sender of record is a question for the club, and the
+answer may change once the volume is visible. So the code exists behind a
+setting, defaults to off, and no member sees the option until someone turns it
+on deliberately.
+
+Turning it on should require a named organiser account, and should be capped —
+a stuck loop that mails a Collector two hundred times would end the club's
+relationship with that office permanently.
+
+# What this means for the screen
+
+The complaint is captured once — what, where, a photo. Then the member chooses
+what to do with it, and can do more than one thing:
+
+    Your report is ready.
+
+    → Call someone        (5 numbers, nearest first)
+    → Send it yourself    (we will write it for you)
+    → Ask FYC to help     (someone from the club will take it on)
+
+Nothing is forced. A member who calls, gets nowhere, and then writes has done
+the normal thing, and the letter should already know about the call.
