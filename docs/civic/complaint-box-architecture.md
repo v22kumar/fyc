@@ -54,11 +54,35 @@ sender is.
 | `mailto:` via `url_launcher` | Fallback when no intent handler exists. Breaks on long bodies, cannot attach. |
 | Gmail API, `gmail.send` scope | **Rejected.** The better product — real send confirmation, message ids, an automatic escalation clock — but it is a *restricted scope* needing a paid CASA security assessment, thousands a year and weeks of process, for an unregistered youth club. Serves only Gmail users. Revisit if the club registers. |
 
-### 3.3 The consequence that shapes everything
+### 3.3 The consequence, and how the BCC softens it
 
-**We cannot know whether they pressed send.** The app hands the draft to another
-application and loses sight of it. Every screen must be honest about that rather
-than paper over it.
+**The app cannot know whether they pressed send.** It hands the draft to another
+application and loses sight of it.
+
+**The blind copy is the way back.** Every Lane A letter carries the club's
+address as a BCC, so when the member sends it, a copy arrives at FYC. That is
+not a guess or an inference — it is the letter itself, which means:
+
+- the escalation clock starts on its own, with no *"did you send it?"* prompt
+- the club can see the letter went, without the department knowing it has a
+  reader
+- a member who drafted and never sent is visible as exactly that, and can be
+  offered help rather than nagged
+
+**It must not be a secret.** A blind copy the sender does not know about is
+something done *to* them. So it is stated plainly on the draft screen, above
+the send button, with a switch:
+
+> *A copy goes to FYC so we can follow this up for you.*  **[on]**
+
+Default on, because the follow-up is the reason most members are here. Off in
+one tap, and off means genuinely off — no copy, no clock, and the app falls back
+to asking.
+
+**The prompt survives as the fallback.** For members who switch the copy off,
+and for the moment before any copy arrives, the app still asks once and believes
+the answer. The BCC improves the common case; it does not remove the need to be
+honest in the uncommon one.
 
 ---
 
@@ -149,7 +173,7 @@ either raises it with the department or closes it with a reason.
 | | Lane A | Lane B |
 |---|---|---|
 | Who sends | The member | The club |
-| Who knows it was sent | Only the member | The club |
+| Who knows it was sent | The club, via the BCC — or the member, if they turned it off | The club |
 | Who knows if anyone replied | Only the member | The club |
 | Who sets the status | The member | The club |
 | How much we track | What they tell us | All of it |
@@ -382,10 +406,14 @@ GET    /civic/inbox                      Lane B queue (organisers)
 
 ---
 
-## 14. Open, and needing a person
+## 14. Settled, and still open
 
-- **The source URL of the scraped Collectorate contacts.** Blocks importing the
-  17 offices already matched. Only the person who fetched the page knows it.
-- **Does the club want a BCC copy** of Lane A letters? A privacy decision.
+**Settled.** The BCC is in, default on and disclosed (§3.3). The scraped
+contacts are imported: the club confirmed the page at
+`https://kanniyakumari.nic.in/contact-us/`, read 7 August 2026, and 17 of the 39
+offices now have a traceable contact.
+
+**Still open.**
+
 - **Not legal advice.** The member-sends model removes the largest exposure by
   not making the club the publisher. It does not make the question disappear.
