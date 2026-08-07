@@ -81,10 +81,15 @@ place; `scripts/import_civic_contacts.py` checks it.
 
 ## Verified
 
-- Backend: 22 tests across the endpoints and the letter.
-- Mobile: 8 bloc tests; `flutter analyze` clean.
-- Not verified on a device or against a real government mailbox. Nobody has
-  yet sent a letter written by this to an actual officer.
+- Backend: 491 tests, 22 of them the Complaint Box and the letter.
+- Mobile: 120 tests, 8 of them the bloc; `flutter analyze` clean.
+- The whole journey walked against a running server: report → ladder → ring
+  somebody → say what happened → write → confirm sent → mark resolved → and a
+  closed complaint refusing the next event with a 409. The letter came out with
+  the logged call quoted, a Maps link, the member's own name, and the club's
+  blind copy.
+- **Not** run on a device, and nobody has yet sent a letter written by this to a
+  real officer. Until that happens it is theory that passes its own tests.
 
 ## Known rough edges
 
