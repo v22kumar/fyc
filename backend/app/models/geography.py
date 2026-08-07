@@ -26,6 +26,17 @@ class GeographicNode(Base, TimestampMixin):
     name_ta = Column(String(100), nullable=False)
     name_en = Column(String(100), nullable=False)
     pincode = Column(String(10), nullable=True)
+    # Which kind of local body governs this place — Corporation, Municipality,
+    # Town Panchayat or Village Panchayat (see civic.LocalBodyType).
+    #
+    # The tree knew a place's *level* (taluk, village, ward) but not who runs
+    # it, and those are different questions: a "VILLAGE" node inside Nagercoil
+    # city is governed by a Corporation, and a complaint routed to a village
+    # panchayat president there reaches nobody.
+    #
+    # Nullable, because it is only known for places somebody has filled in.
+    # Resolution walks up to the parent when a node has not been classified.
+    local_body_type = Column(String(30), nullable=True)
 
     # Self-referential: child.parent_id → parent.id (many-to-one from child's perspective)
     parent_node = relationship(
