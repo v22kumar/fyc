@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/complaint_entities.dart';
 
 /// Hand the letter to the member's own mail app.
@@ -58,8 +58,17 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
   Future<void> _open() async {
     final uri = _mailto();
     if (await canLaunchUrl(uri)) {
+      await HapticFeedback.selectionClick();
       await launchUrl(uri);
       if (mounted) setState(() => _opened = true);
+      return;
+    }
+    // No mail app at all. Silently doing nothing here would look like a dead
+    // button on the one screen where the member is trying to act.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('no_mail_app'))),
+      );
     }
   }
 
@@ -72,14 +81,31 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(d.toLabel, style: Theme.of(context).textTheme.titleMedium),
-          SizedBox(height: DSSpacing.xs),
-          Text(d.subject, style: Theme.of(context).textTheme.titleSmall),
+          // The letter already opens with "To: …", so repeating it here just
+          // pushes the actual content off a phone screen. The subject is what
+          // this sheet is usefully titled by.
+          Text(d.subject, style: Theme.of(context).textTheme.titleMedium),
+
+          // Anyone else who will receive this, named.
+          //
+          // A serious complaint copies the supervisor from the start, and the
+          // member must be able to see that before they send — the same rule
+          // that makes the club's blind copy a disclosed switch rather than a
+          // silent one. A copy somebody does not know about is something done
+          // to them, and that does not stop being true because it is a CC.
+          if (d.cc.isNotEmpty) ...[
+            SizedBox(height: DSSpacing.xs),
+            Text('${trId('also_goes_to')} ${d.cc.join(', ')}',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
           SizedBox(height: DSSpacing.sm),
           Flexible(
             child: SingleChildScrollView(
-              child: Text(d.body,
-                  style: Theme.of(context).textTheme.bodySmall),
+              child: Semantics(
+                label: trId('letter_preview'),
+                child: Text(d.body,
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
             ),
           ),
           if (!d.aiWritten) ...[
@@ -101,10 +127,13 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
           ),
           SizedBox(height: DSSpacing.xs),
           if (!_opened)
-            FilledButton.icon(
-              onPressed: _open,
-              icon: const Icon(Icons.outgoing_mail),
-              label: Text(trId('open_in_mail')),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _open,
+                icon: const Icon(Icons.outgoing_mail),
+                label: Text(trId('open_in_mail')),
+              ),
             )
           else ...[
             // Asked only after their mail app was actually opened.
@@ -116,6 +145,10 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () {
+                      // Confirming a letter went is the single most consequential
+                      // tap in the feature — it starts the clock the escalation
+                      // ladder runs on.
+                      HapticFeedback.mediumImpact();
                       widget.onSentConfirmed();
                       Navigator.of(context).pop();
                     },

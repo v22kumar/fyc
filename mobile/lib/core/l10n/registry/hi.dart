@@ -1213,4 +1213,12 @@ const Map<String, String> kHi = {
   'what_next': 'आगे क्या?',
   'is_this_serious': 'क्या यह गंभीर है?',
   'is_this_serious_help': 'किसी के लिए खतरा, या पहले बताई गई बात। हम लिखित में देने का सुझाव देंगे।',
+  'no_contact_yet': 'संपर्क अभी नहीं जुटाया गया',
+  'also_goes_to': 'इन्हें भी जाएगा:',
+  'could_not_load': 'यह रिपोर्ट लोड नहीं हो सकी',
+  'check_connection': 'कनेक्शन जाँचें और फिर कोशिश करें।',
+  'try_again': 'फिर कोशिश करें',
+  'no_mail_app': 'इस फ़ोन में कोई मेल ऐप नहीं मिला।',
+  'letter_preview': 'पत्र',
+  'contacts_unavailable': 'अभी संपर्क नहीं मिल सके।',
 };

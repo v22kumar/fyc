@@ -8,6 +8,13 @@ import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_b
 /// the bloc never invents a state change of its own.
 class _Fake implements ComplaintRepository {
   final List<String> calls = [];
+
+  /// When set, the next ladder fetch throws — standing in for a dropped
+  /// connection rather than an empty directory.
+  bool ladderThrows = false;
+
+  /// When set, mutating actions throw.
+  bool actionsThrow = false;
   ComplaintState current = const ComplaintState(
     id: 'c1',
     lane: ComplaintLane.self,
@@ -33,9 +40,11 @@ class _Fake implements ComplaintRepository {
   @override
   Future<CallLadder> ladder({required String category, String? geographyId}) async {
     calls.add('ladder');
+    if (ladderThrows) throw Exception('network');
     return CallLadder(category: category, rungs: const [
       LadderRung(
-        position: 1, departmentCode: 'ULB', departmentName: 'Corporation',
+        position: 1, authorityId: 'auth-ae', departmentCode: 'ULB',
+        departmentName: 'Corporation',
         covers: 'your ward', canCall: true, canWrite: false, waitDays: 14,
         designation: 'Assistant Engineer', phone: '9443132365',
       ),
@@ -66,7 +75,7 @@ class _Fake implements ComplaintRepository {
   @override
   Future<ComplaintDraft> draft(String id,
       {String? authorityId, bool bccClub = true, bool useAi = true}) async {
-    calls.add('draft:bcc=$bccClub');
+    calls.add('draft:bcc=$bccClub:to=${authorityId ?? 'nobody'}');
     return ComplaintDraft(
       toLabel: 'Assistant Engineer, Corporation',
       subject: 'Street light out',
@@ -94,6 +103,7 @@ class _Fake implements ComplaintRepository {
   Future<ComplaintState> close(String id,
       {required bool resolved, String? reason}) async {
     calls.add('close:$resolved');
+    if (actionsThrow) throw Exception('network');
     return _with(closed: true);
   }
 
@@ -143,7 +153,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     bloc.add(const DraftRequested());
     await Future<void>.delayed(Duration.zero);
-    expect(repo.calls, contains('draft:bcc=true'));
+    expect(repo.calls, contains('draft:bcc=true:to=nobody'));
     expect(repo.calls, isNot(contains('markSent')),
         reason: 'the draft goes to another app; this one cannot see what '
             'happens next and must not pretend otherwise');
@@ -154,7 +164,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     bloc.add(const DraftRequested(bccClub: false));
     await Future<void>.delayed(Duration.zero);
-    expect(repo.calls, contains('draft:bcc=false'));
+    expect(repo.calls, contains('draft:bcc=false:to=nobody'));
     expect(bloc.state.draft!.bcc, isEmpty);
   });
 
@@ -184,6 +194,51 @@ void main() {
     bloc.add(const HandedToClub());
     await Future<void>.delayed(Duration.zero);
     expect(bloc.state.complaint!.lane, ComplaintLane.viaClub);
+  });
+
+  test('a failed ladder is not the same as an empty one', () async {
+    // These used to be indistinguishable, so somebody whose train went into a
+    // tunnel was told "no office is listed for this yet" — which is a
+    // different problem with a different fix.
+    repo.ladderThrows = true;
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(bloc.state.ladderFailed, isTrue);
+    expect(bloc.state.ladder, isNull);
+    expect(bloc.state.complaint, isNotNull,
+        reason: 'the rest of the screen must still work — they can still '
+            'write, or hand it to the club');
+  });
+
+  test('a failed action reports itself instead of doing nothing', () async {
+    // The screen only rendered `failure` when the complaint had not loaded, so
+    // tapping "mark resolved" on a bad connection was silent.
+    bloc.add(const LoadComplaint('c1'));
+    await Future<void>.delayed(Duration.zero);
+    repo.actionsThrow = true;
+
+    bloc.add(const Closed(resolved: true));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(bloc.state.failure, isNotNull);
+    expect(bloc.state.busy, isFalse, reason: 'the spinner must not get stuck');
+    expect(bloc.state.complaint!.isClosed, isFalse,
+        reason: 'a failed close must not look like a successful one');
+  });
+
+  test('writing to a rung addresses that rung', () async {
+    // The Write button used to discard the office it was attached to and
+    // always draft an unaddressed letter — the one thing a per-office button
+    // exists not to do.
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+    final rung = bloc.state.ladder!.rungs.first;
+
+    bloc.add(DraftRequested(authorityId: rung.authorityId));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repo.calls, contains('draft:bcc=true:to=auth-ae'));
   });
 
   test('the ladder keeps offices with no number, marked', () async {

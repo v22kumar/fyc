@@ -1213,4 +1213,12 @@ const Map<String, String> kEn = {
   'what_next': 'What next?',
   'is_this_serious': 'Is this serious?',
   'is_this_serious_help': 'A danger to someone, or something you have already reported. We will suggest putting it in writing.',
+  'no_contact_yet': 'No contact collected yet',
+  'also_goes_to': 'Also goes to:',
+  'could_not_load': 'Could not load this report',
+  'check_connection': 'Check your connection and try again.',
+  'try_again': 'Try again',
+  'no_mail_app': 'No mail app found on this phone.',
+  'letter_preview': 'The letter',
+  'contacts_unavailable': 'Could not fetch the contacts just now.',
 };

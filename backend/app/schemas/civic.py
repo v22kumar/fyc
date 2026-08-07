@@ -111,6 +111,10 @@ class LadderRungOut(BaseModel):
     """One office a member can ring, with enough context to choose."""
 
     position: int
+    #: Which office this is, so the screen can address a letter to *this* rung.
+    #: Without it the Write button on a specific officer could only produce an
+    #: unaddressed draft, which is the one thing it exists not to do.
+    authority_id: Optional[UUID] = None
     department_code: str
     department_name_en: str
     department_name_ta: Optional[str] = None

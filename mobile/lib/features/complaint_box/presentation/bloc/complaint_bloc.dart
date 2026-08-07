@@ -77,6 +77,7 @@ class ComplaintViewState extends Equatable {
     this.draft,
     this.failure,
     this.busy = false,
+    this.ladderFailed = false,
   });
 
   final bool loading;
@@ -93,6 +94,11 @@ class ComplaintViewState extends Equatable {
   /// screen while a call is being logged.
   final bool busy;
 
+  /// The ladder request failed, as opposed to coming back empty. "We have no
+  /// offices for this" and "your connection dropped" need different words and
+  /// different buttons.
+  final bool ladderFailed;
+
   ComplaintViewState copyWith({
     bool? loading,
     e.ComplaintState? complaint,
@@ -100,6 +106,7 @@ class ComplaintViewState extends Equatable {
     e.ComplaintDraft? draft,
     String? failure,
     bool? busy,
+    bool? ladderFailed,
     bool clearDraft = false,
     bool clearFailure = false,
   }) =>
@@ -110,10 +117,12 @@ class ComplaintViewState extends Equatable {
         draft: clearDraft ? null : (draft ?? this.draft),
         failure: clearFailure ? null : (failure ?? this.failure),
         busy: busy ?? this.busy,
+        ladderFailed: ladderFailed ?? this.ladderFailed,
       );
 
   @override
-  List<Object?> get props => [loading, complaint, ladder, draft, failure, busy];
+  List<Object?> get props =>
+      [loading, complaint, ladder, draft, failure, busy, ladderFailed];
 }
 
 // ── Bloc ─────────────────────────────────────────────────────────────────────
@@ -160,15 +169,27 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
       // Fetched alongside, because the first question on the screen is "who do
       // I call" and it should not need a second wait.
       e.CallLadder? ladder;
+      var ladderFailed = false;
       if (ev.category != null) {
         try {
           ladder = await _repo.ladder(category: ev.category!);
         } catch (_) {
           // A missing ladder is a directory gap, not a reason to fail the
           // screen — the member can still write, or hand it to the club.
+          //
+          // But a *failed request* is not a directory gap, and the two used to
+          // render identically: "no office listed for this yet" was shown to
+          // somebody whose train had gone into a tunnel. They are now
+          // distinguishable, so the screen can offer a retry instead of a
+          // shrug.
+          ladderFailed = true;
         }
       }
-      emit(state.copyWith(loading: false, complaint: complaint, ladder: ladder));
+      emit(state.copyWith(
+          loading: false,
+          complaint: complaint,
+          ladder: ladder,
+          ladderFailed: ladderFailed));
     } catch (err) {
       emit(state.copyWith(loading: false, failure: err.toString()));
     }

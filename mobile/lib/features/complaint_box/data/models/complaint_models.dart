@@ -21,6 +21,7 @@ String outcomeWire(CallOutcome o) => switch (o) {
 
 LadderRung rungFromJson(Map<String, dynamic> j) => LadderRung(
       position: (j['position'] as num?)?.toInt() ?? 0,
+      authorityId: j['authority_id'] as String?,
       departmentCode: j['department_code'] as String? ?? '',
       departmentName: j['department_name_en'] as String? ?? '',
       covers: j['covers_en'] as String? ?? '',
