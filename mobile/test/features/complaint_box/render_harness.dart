@@ -1,6 +1,3 @@
-@Tags(['render'])
-library;
-
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -24,7 +21,19 @@ import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_b
 import 'package:fyc_connect/features/complaint_box/presentation/screens/complaint_detail_screen.dart';
 
 /// Renders the Complaint Box surfaces to PNGs so a human can look at them.
-/// Not assertions — a camera. Run with: flutter test --tags render
+///
+/// A camera, not an assertion suite. Deliberately named without the `_test`
+/// suffix so `flutter test` never collects it: it drives the real widget tree
+/// and, in a headless container, does not always shut down cleanly. Left in
+/// the default run it fails CI over screenshots nobody asked for — or worse,
+/// hangs it, and a hung build burns the runner's timeout while telling you
+/// nothing.
+///
+/// Run it deliberately:
+///
+///     flutter test test/features/complaint_box/render_harness.dart
+///
+/// Output lands in build/ui_shots/.
 Future<void> _shoot(WidgetTester tester, String name) async {
   await tester.pump(const Duration(milliseconds: 300));
   final el = find.byType(RepaintBoundary).evaluate().first;
