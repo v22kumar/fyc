@@ -1,0 +1,165 @@
+name: Uptime
+
+# Tell a human when the club's app is down.
+#
+# There was error *collection* — the ClientError sink catches what members hit —
+# but no error *notification*. The last outage was discovered because people
+# complained; the schema drift that broke every login had been live for an
+# unknown length of time before anyone knew. Collection without notification
+# means the outage lasts as long as it takes someone to give up and phone you.
+#
+# This runs on GitHub, not on Fly, which is the whole point: a monitor that
+# lives on the machine it is watching cannot report that machine being gone.
+# The backend already pings itself every four minutes (services/keepalive.py) —
+# that keeps it warm, it does not raise an alarm.
+#
+# Honest limits, so nobody trusts this more than it deserves:
+#   * GitHub's scheduler is best-effort. A */10 cron often fires late, sometimes
+#     by 10-15 minutes under load. This shortens an outage from hours to tens of
+#     minutes, not to seconds.
+#   * Scheduled workflows are disabled automatically after 60 days with no
+#     repository activity. On an active repo that never happens; on a quiet one
+#     the alarm switches itself off silently.
+# Both are acceptable for a club app and neither is acceptable as the only
+# safety net forever — a hosted monitor (UptimeRobot, BetterStack; both free at
+# this volume) is the belt to this workflow's braces, and takes five minutes.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  # A late run and an on-time run overlapping would race to open the same issue.
+  group: uptime
+  cancel-in-progress: false
+
+env:
+  # The deep probe, not /api/health. The shallow one stayed 200 throughout the
+  # login outage, because the process was alive and only the database was
+  # unreachable. /api/health/ready runs a real query, which is the difference
+  # between "the server answers" and "the app works".
+  HEALTH_URL: https://api.fycconnect.com/api/health/ready
+
+jobs:
+  check:
+    name: Is the backend answering?
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe the backend
+        id: probe
+        run: |
+          set +e
+          # Three attempts, 20s apart. One failed request is usually a deploy
+          # rolling, a cold start, or GitHub's own network — none of which is
+          # worth waking someone for. Three in a row over 40 seconds is real.
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /tmp/body -w '%{http_code}' --max-time 20 "$HEALTH_URL")
+            echo "attempt $attempt -> HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "up=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            last_code="$code"
+            [ "$attempt" -lt 3 ] && sleep 20
+          done
+          echo "up=false" >> "$GITHUB_OUTPUT"
+          echo "code=$last_code" >> "$GITHUB_OUTPUT"
+          # Whatever the server managed to say, trimmed. On a 503 the readiness
+          # probe returns the DB error, which is usually the whole diagnosis.
+          {
+            echo "body<<EOF"
+            head -c 400 /tmp/body 2>/dev/null || true
+            echo
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Open or close the outage issue
+        uses: actions/github-script@v7
+        env:
+          UP: ${{ steps.probe.outputs.up }}
+          CODE: ${{ steps.probe.outputs.code }}
+          BODY: ${{ steps.probe.outputs.body }}
+        with:
+          script: |
+            const LABEL = 'outage';
+            const TITLE = 'Backend is down';
+            const up = process.env.UP === 'true';
+
+            // A GitHub issue is the notification channel on purpose: it reaches
+            // the phone through an app that is already installed, it costs
+            // nothing, and it needs no new secret. Adding Twilio here would mean
+            // copying credentials that currently live only in Fly secrets into a
+            // second place, which is a worse trade than a slightly slower alert.
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: LABEL,
+            });
+            const existing = open.data.find(i => i.title === TITLE);
+
+            if (!up) {
+              const detail = [
+                `Probed \`${process.env.HEALTH_URL || 'the readiness endpoint'}\` three times, 20s apart.`,
+                '',
+                `Last status: **${process.env.CODE || 'no response'}**`,
+                '',
+                process.env.BODY ? '```\n' + process.env.BODY.trim() + '\n```' : '_No response body._',
+                '',
+                'A 503 here means the process is up but the database is not reachable —',
+                'the body above is the readiness probe quoting the actual error.',
+                'No response at all usually means the machine is stopped or the',
+                'certificate/DNS is broken.',
+                '',
+                'This issue closes itself on the next successful check.',
+              ].join('\n');
+
+              if (existing) {
+                // Already reported. Say nothing — a comment every ten minutes
+                // during a long outage is noise that trains people to mute it.
+                core.notice(`Still down; issue #${existing.number} already open.`);
+                return;
+              }
+              // Create the label on first use rather than requiring setup.
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: LABEL,
+                  color: 'b60205',
+                  description: 'Automated uptime alert',
+                });
+              } catch (e) { /* already exists */ }
+
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: TITLE,
+                labels: [LABEL],
+                body: detail,
+              });
+              core.setFailed(`Backend is down — opened issue #${created.data.number}`);
+              return;
+            }
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: 'Recovered — the readiness probe is answering 200 again.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed',
+              });
+              core.notice(`Recovered; closed issue #${existing.number}.`);
+            }

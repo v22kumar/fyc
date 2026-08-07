@@ -17,9 +17,8 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy import func
+from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -29,7 +28,6 @@ from app.models.client_error import ClientError
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
-limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])
 
 require_admin = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])

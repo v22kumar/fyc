@@ -8,9 +8,9 @@ from fastapi.responses import JSONResponse
 logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.middleware.tenant import TenantMiddleware
@@ -243,6 +243,24 @@ async def lifespan(app: FastAPI):
     # by tests. Running it on every function-scoped test's lifespan added roughly
     # 25s/test (~32 minutes across the CI suite).
     if not settings.TESTING:
+        # Say once, at boot, whether photos uploaded today will still exist
+        # next week. Not a boot failure — a club with no image host should
+        # still be able to run everything else — but not silent either, which
+        # is how a gallery got emptied by a deploy with nobody noticing.
+        from app.routers.media import storage_status
+
+        _media = storage_status()
+        if settings.is_production and not _media["survives_a_deploy"]:
+            logger.error(
+                "[media] uploads are NOT durable: writing to container disk, "
+                "which every deploy discards. library_installed=%s "
+                "credentials_set=%s — see GET /api/health/media",
+                _media["library_installed"],
+                _media["credentials_set"],
+            )
+        else:
+            logger.info("[media] storage backend: %s", _media["backend"])
+
         # Auto-reconcile schema drift. create_all only creates missing TABLES;
         # it never adds columns to a pre-existing table. On the long-lived prod
         # SQLite, any column added to a model after its table was first created
@@ -712,8 +730,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Rate limiting
-limiter = Limiter(key_func=get_remote_address)
+# Rate limiting. Every router shares this one limiter; app.core.rate_limit
+# explains why get_remote_address was counting the whole club as one caller.
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -903,6 +921,24 @@ def auth_channels_check():
         "environment": settings.ENVIRONMENT,
         "allowed_origins": settings.allowed_origins_list,
     }
+
+
+@app.get("/api/health/media", tags=["System"])
+def media_storage_check():
+    """Where uploaded photos go, and whether they survive a deploy.
+
+    Same reasoning as /api/health/auth: the interesting failures here are
+    invisible from the outside. An upload to the container filesystem succeeds,
+    returns a URL, and displays perfectly — until the next deploy replaces the
+    container and every one of those URLs 404s. Nothing links the two events,
+    which are usually weeks apart.
+
+    Configuration, never values. Reports that the Cloudinary secrets are set,
+    not what they are.
+    """
+    from app.routers.media import storage_status
+
+    return storage_status()
 
 
 @app.get("/api/health/ready", tags=["System"])

@@ -3,8 +3,7 @@ import uuid
 from typing import Dict, Tuple, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
 import jwt
 
@@ -20,8 +19,6 @@ from app.models.club_request import ClubMemberRequest
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-limiter = Limiter(key_func=get_remote_address)
 
 OTP_TTL_MINUTES = 10
 
