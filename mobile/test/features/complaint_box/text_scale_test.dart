@@ -60,7 +60,7 @@ void main() {
     testWidgets('the ladder survives ${scale}x text without overflowing',
         (t) async {
       await pumpAt(t, scale);
-      expect(tester_exceptions(), isEmpty,
+      expect(recordedExceptions(), isEmpty,
           reason: 'a RenderFlex overflow at ${scale}x means a member with '
               'large type loses part of the screen they came for');
     });
@@ -96,7 +96,7 @@ void main() {
 
 /// Any exception the framework recorded while laying out — overflow errors
 /// arrive this way rather than as thrown exceptions.
-List<Object> tester_exceptions() {
+List<Object> recordedExceptions() {
   final errors = <Object>[];
   final caught = TestWidgetsFlutterBinding.instance.takeException();
   if (caught != null) errors.add(caught as Object);

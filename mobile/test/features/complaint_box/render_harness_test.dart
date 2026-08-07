@@ -60,10 +60,10 @@ Widget _frame(Widget child, {Brightness brightness = Brightness.light}) =>
       ),
     );
 
-final _ladder = CallLadder(
+const _ladder = CallLadder(
   category: 'STREET_LIGHT',
   placeName: 'Vadasery',
-  rungs: const [
+  rungs: [
     LadderRung(
       position: 1, departmentCode: 'ULB', departmentName: 'Nagercoil Corporation',
       covers: 'your ward', canCall: false, canWrite: false, waitDays: 14,
