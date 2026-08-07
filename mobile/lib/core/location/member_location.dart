@@ -82,21 +82,36 @@ class MemberLocation {
     if (!context.mounted) return null;
     if (!await LocationDisclosure.ensure(context)) return null;
 
+    final cached = await _lastKnown();
+    if (cached != null && !_isStale(cached)) return cached;
     try {
-      final cached = await Geolocator.getLastKnownPosition();
-      if (cached != null && !_isStale(cached)) return cached;
-      try {
-        return await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 8),
-          ),
-        );
-      } catch (_) {
-        // A stale fix still beats nothing for "who is nearest" — it is only
-        // unfit for being written down as a home area.
-        return cached;
-      }
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+    } catch (_) {
+      // A stale fix still beats nothing for "who is nearest" — it is only
+      // unfit for being written down as a home area.
+      return cached;
+    }
+  }
+
+  /// The phone's cached fix, or null if there isn't one — including because the
+  /// platform has no such thing.
+  ///
+  /// A browser doesn't: `geolocator_web` throws `getLastKnownPosition is not
+  /// supported`. That used to be caught by a try wrapped around this *and* the
+  /// live lookup, so the throw skipped the fallback and every caller on the web
+  /// got null — the blood hub asked where you were, was told nothing, and
+  /// quietly showed an unranked list with no distances on it. The failure looked
+  /// like "no donors near you" rather than like a missing platform feature.
+  ///
+  /// Its own guard, so a platform without a cache falls through to asking.
+  static Future<Position?> _lastKnown() async {
+    try {
+      return await Geolocator.getLastKnownPosition();
     } catch (_) {
       return null;
     }
@@ -165,9 +180,9 @@ class MemberLocation {
       return null;
     }
     if (!await Geolocator.isLocationServiceEnabled()) return null;
+    final cached = await _lastKnown();
+    if (cached != null && !_isStale(cached)) return cached;
     try {
-      final cached = await Geolocator.getLastKnownPosition();
-      if (cached != null && !_isStale(cached)) return cached;
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
@@ -175,7 +190,7 @@ class MemberLocation {
         ),
       );
     } catch (_) {
-      return null;
+      return cached;
     }
   }
 

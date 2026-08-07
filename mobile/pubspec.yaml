@@ -11,6 +11,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Bundled with the SDK; needed for usePathUrlStrategy() so the browser gets
+  # real paths instead of #/hash routes, which is what makes deep links work.
+  flutter_web_plugins:
+    sdk: flutter
   flutter_localizations:
     sdk: flutter
 
