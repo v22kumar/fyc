@@ -7,9 +7,8 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from fastapi.concurrency import run_in_threadpool
+from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db, SessionLocal
@@ -38,9 +37,6 @@ logger = logging.getLogger(__name__)
 from app.core.config import settings as _settings
 
 router = APIRouter(prefix="/chess", tags=["Chess"])
-# Disabled under TESTING so the in-memory counter can't trip across the suite's
-# shared client address; enforced in every real deployment.
-limiter = Limiter(key_func=get_remote_address, enabled=not _settings.TESTING)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

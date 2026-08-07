@@ -1,5 +1,6 @@
-import uuid
 import io
+import logging
+import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -10,6 +11,8 @@ from app.models.user import User
 from app.middleware.tenant import require_tenant_id
 from app.core.config import settings
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 # Attempt to import cloudinary; fall back gracefully if not installed.
 try:
@@ -34,6 +37,35 @@ def _cloudinary_configured() -> bool:
         and bool(settings.CLOUDINARY_API_KEY)
         and bool(settings.CLOUDINARY_API_SECRET)
     )
+
+
+def storage_status() -> dict:
+    """Where photos are being written, and whether they will still be there
+    tomorrow.
+
+    Worth reporting because the failure it describes is completely silent. The
+    upload succeeds, the URL is stored, the photo displays — and then a deploy
+    replaces the container and every one of those URLs 404s, with nothing in any
+    log to connect the two events weeks apart.
+
+    `library_installed` is broken out on purpose: it was the missing half. The
+    three secrets can all be set correctly and still be ignored if `cloudinary`
+    is not in requirements.txt, which is exactly what happened.
+    """
+    durable = _cloudinary_configured()
+    return {
+        "backend": "cloudinary" if durable else "local_disk",
+        # The whole point. False means uploads are being written to a filesystem
+        # that a deploy throws away.
+        "survives_a_deploy": durable,
+        "library_installed": _CLOUDINARY_AVAILABLE,
+        "credentials_set": bool(
+            settings.CLOUDINARY_CLOUD_NAME
+            and settings.CLOUDINARY_API_KEY
+            and settings.CLOUDINARY_API_SECRET
+        ),
+        "environment": settings.ENVIRONMENT,
+    }
 
 
 @router.post("/upload")
@@ -92,6 +124,17 @@ async def upload_file(
         return {"url": secure_url, "filename": filename}
 
     # ── Local disk fallback (development) ──────────────────────────────────
+    # In production this path means the photo is already lost — it just hasn't
+    # happened yet. The container filesystem is not the mounted volume, so the
+    # next deploy removes it and leaves a dead URL in the database. Say so at
+    # the moment it happens, with the org, so the damage can be traced later.
+    if settings.is_production:
+        logger.error(
+            "[media] wrote an upload to ephemeral container disk — it will be "
+            "lost on the next deploy. Configure Cloudinary. org=%s",
+            current_user.organization_id,
+        )
+
     ext = Path(file.filename or "upload.jpg").suffix or ".jpg"
     filename = f"{uuid.uuid4().hex}{ext}"
 

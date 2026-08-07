@@ -5,9 +5,8 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy import func
+from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
@@ -41,8 +40,6 @@ from app.core.short_code import generate_unique_short_code
 from app.core.config import settings
 
 router = APIRouter(prefix="/chess/tournaments", tags=["Chess Tournaments"])
-# Disabled under TESTING (shared client address would trip the shared counter).
-limiter = Limiter(key_func=get_remote_address, enabled=not settings.TESTING)
 
 require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
