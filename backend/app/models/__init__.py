@@ -5,7 +5,16 @@ from app.models.audit import AuditLog
 from app.models.geography import GeographicNode, GeoLevel
 from app.models.blood_donor import BloodDonor
 from app.models.blood_request import BloodRequest, BloodPledge
-from app.models.issue import PublicIssue, IssueEmailLog, ComplaintDepartment, IssueStatus, IssueCategory
+from app.models.issue import (
+    PublicIssue, IssueEmailLog, ComplaintDepartment, IssueStatus, IssueCategory,
+    ComplaintEvent, ComplaintLane, ComplaintSeverity, ComplaintAuthor,
+    ComplaintEventType, CallOutcome,
+)
+from app.models.civic import (
+    Department, Authority, RoutingRule, RoutingStep, IssueEscalation,
+    LocalBodyType, JurisdictionScope, GovTier, Rung, CivicCategory,
+    EscalationOutcome, normalise_category,
+)
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.community import CommunityProfile
 from app.models.sports import Tournament, Team, Fixture, LiveScoreEntry, ChallengeMatch, Player
@@ -44,6 +53,12 @@ __all__ = [
     "PublicIssue",
     "IssueEmailLog",
     "ComplaintDepartment",
+    "ComplaintEvent",
+    "ComplaintLane",
+    "ComplaintSeverity",
+    "ComplaintAuthor",
+    "ComplaintEventType",
+    "CallOutcome",
     "IssueStatus",
     "IssueCategory",
     "Event",

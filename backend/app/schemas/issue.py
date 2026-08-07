@@ -142,3 +142,127 @@ class ForwardOut(BaseModel):
     portal_url: Optional[str] = None
     subject: str
     email_log_id: Optional[UUID] = None
+
+
+# ── One description, in the language the person speaks ───────────────────────
+
+class IssueCreateV2(BaseModel):
+    """What a person actually submits, after the redesign.
+
+    The old `IssueCreate` required `description_ta` **and** `description_en`,
+    both non-empty. Somebody standing in front of an overflowing drain had to
+    compose the complaint in Tamil and then again in English. This asks once.
+
+    The other column is still filled — the letter to an officer is written in
+    English and the app displays Tamil — but that is the server's job.
+    """
+
+    category: str
+    description: str = Field(..., min_length=3)
+    #: Which language `description` is in. Recorded so it is always clear which
+    #: text came from a human and which was produced for them.
+    description_lang: str = Field(default="ta", max_length=8)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    geography_id: Optional[UUID] = None
+    photo_url: Optional[str] = None
+    is_emergency: bool = False
+    #: ROUTINE or SERIOUS. Steers what the Complaint Box suggests next — a call
+    #: for routine problems, a letter for serious ones, because a call leaves
+    #: no evidence. Advice, never a gate.
+    severity: str = Field(default="ROUTINE", pattern="^(ROUTINE|SERIOUS)$")
+
+
+# ── The route a complaint will take ──────────────────────────────────────────
+
+class RouteRungOut(BaseModel):
+    position: int
+    department_code: str
+    department_name_en: str
+    department_name_ta: Optional[str] = None
+    designation_en: Optional[str] = None
+    designation_ta: Optional[str] = None
+    rung: int
+    wait_days: int
+    #: False when nobody has filled in an address for this office yet. The
+    #: complaint walks past it rather than stopping.
+    reachable: bool
+
+
+class RouteOut(BaseModel):
+    category: str
+    scope: str
+    local_body_type: str
+    #: DECLARED / INHERITED / GUESSED — how confident the jurisdiction is.
+    jurisdiction_confidence: str
+    #: English prose, for logs and for anyone reading the API directly.
+    jurisdiction_reason: str
+    #: The place the answer came from. The app builds its own sentence from
+    #: this plus the confidence, so a Tamil reviewer reads Tamil rather than a
+    #: server-assembled English string.
+    jurisdiction_place: Optional[str] = None
+    #: True when a reviewer should confirm the area before anything is sent.
+    needs_human_check: bool
+    rungs: list[RouteRungOut]
+    #: Where the citizen is pointed when no rung can be reached yet.
+    fallback_portal: Optional[str] = None
+    fallback_helpline: Optional[str] = None
+
+
+class ReviewIn(BaseModel):
+    """The club's decision on a report."""
+
+    approve: bool
+    #: Required when rejecting. Shown to the person who reported it.
+    reason: Optional[str] = None
+    #: Set when the reviewer recognises the road as a highway, so the complaint
+    #: climbs the highway chain instead of the local body's.
+    department_code_override: Optional[str] = None
+
+
+class DispatchIn(BaseModel):
+    """Send the letter. Both fields optional — the server writes a complete one."""
+
+    subject: Optional[str] = None
+    body: Optional[str] = None
+
+
+class DispatchOut(BaseModel):
+    sent: bool
+    position: Optional[int] = None
+    sent_to: Optional[str] = None
+    due_at: Optional[datetime] = None
+    #: What to show the citizen when nothing could be sent — never a dead end.
+    fallback_portal: Optional[str] = None
+    fallback_helpline: Optional[str] = None
+
+
+class EscalationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    position: int
+    sent_to_label: Optional[str]
+    sent_to_email: Optional[str]
+    dispatched_at: Optional[datetime]
+    due_at: Optional[datetime]
+    outcome: str
+    response_note: Optional[str]
+
+
+class QueueItemOut(BaseModel):
+    id: UUID
+    category: str
+    status: str
+    description: str
+    created_at: datetime
+    #: waiting_on_us / waiting_on_them / overdue
+    bucket: str
+    current_position: Optional[int] = None
+    next_action_due_at: Optional[datetime] = None
+    days_overdue: Optional[int] = None
+
+
+class QueueOut(BaseModel):
+    waiting_on_us: list[QueueItemOut]
+    waiting_on_them: list[QueueItemOut]
+    overdue: list[QueueItemOut]

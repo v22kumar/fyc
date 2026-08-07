@@ -20,6 +20,9 @@ from app.core.security import get_password_hash
 from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
+from app.routers import issues_workflow
+from app.routers import civic as civic_router
+from app.routers import complaint_box as complaint_box_router
 from app.routers import users as users_router, media as media_router
 from app.routers import posts as posts_router
 from app.routers import chess_tournaments as chess_tournaments_router
@@ -89,6 +92,22 @@ def _seed_database():
 
         # Always ensure default contacts are seeded (idempotent)
         seed_default_contacts(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
+
+        # The civic department directory and the escalation ladders (idempotent).
+        #
+        # Seeded early, before anything reads it, because the slow part of this
+        # subsystem is not code — it is somebody ringing offices to find out who
+        # the Assistant Engineer is. The directory exists from today with every
+        # office listed and every contact blank, so that work can start now.
+        # Nothing user-facing changes until the routing is wired up.
+        try:
+            from seeds.civic_directory import seed as _seed_civic
+            _made = _seed_civic(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
+            if any(_made.values()):
+                logger.info("[civic] directory seeded: %s", _made)
+        except Exception as _ce:
+            # A directory that fails to seed must never stop the app booting.
+            logger.warning("[civic] directory seeding skipped: %s", _ce)
 
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
@@ -804,6 +823,12 @@ app.include_router(organizations.router, prefix="/api/v1")
 app.include_router(geography.router, prefix="/api/v1")
 app.include_router(blood_donors.router, prefix="/api/v1")
 app.include_router(blood_requests.router, prefix="/api/v1")
+# Before the legacy issues router, not after: FastAPI matches in declaration
+# order, and `/issues/queue` would otherwise be swallowed by that router's
+# earlier `/issues/{issue_id}` and 422 on parsing "queue" as a UUID.
+app.include_router(issues_workflow.router, prefix="/api/v1")
+app.include_router(civic_router.router, prefix="/api/v1")
+app.include_router(complaint_box_router.router, prefix="/api/v1")
 app.include_router(issues.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(share.router, prefix="/api/v1")

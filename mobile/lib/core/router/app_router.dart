@@ -17,6 +17,8 @@ import '../../features/blood_donation/presentation/screens/blood_request_flow.da
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/submit_issue_screen.dart';
+import '../../features/issues/presentation/screens/report_issue_screen.dart';
+import '../../features/issues/presentation/screens/review_queue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
@@ -106,6 +108,9 @@ import '../../features/feed/create_post_screen.dart';
 
 // Design System v2 (Sprint 1)
 import '../design_system/design_system_gallery_screen.dart';
+import '../../features/complaint_box/domain/repositories/complaint_repository.dart';
+import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
+import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
 import '../design_system/shell/app_shell_v2.dart';
 import '../../features/serve/presentation/screens/serve_hub_screen.dart';
 import '../../features/profile/presentation/screens/me_hub_screen.dart';
@@ -265,6 +270,22 @@ final appRouter = GoRouter(
         child: const SubmitIssueScreen(),
       ),
     ),
+    // The rebuilt reporting flow: photo first, one language, fourteen things a
+    // person can point at. Its own route rather than a replacement, so it can be
+    // put in front of members alongside the old screen instead of on a flag day
+    // — the two post to different endpoints and both still work.
+    GoRoute(
+      path: '/issues/report',
+      builder: (context, state) => const ReportIssueScreen(),
+    ),
+    // The club's side of the workflow. Without it a complaint stops at the
+    // club instead of passing through it: nothing reaches a government office
+    // until a member has read it, and until now there was no screen to read it
+    // on.
+    GoRoute(
+      path: '/issues/queue',
+      builder: (context, state) => const ReviewQueueScreen(),
+    ),
     GoRoute(
       path: '/membership',
       builder: (context, state) => BlocProvider(
@@ -363,6 +384,21 @@ final appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    // The Complaint Box: one complaint, its three routes, and its timeline.
+    GoRoute(
+      path: '/complaints/:id',
+      builder: (context, state) => BlocProvider(
+        create: (_) => ComplaintBloc(sl<ComplaintRepository>())
+          ..add(LoadComplaint(
+            state.pathParameters['id']!,
+            category: state.uri.queryParameters['category'],
+          )),
+        child: ComplaintDetailScreen(
+          complaintId: state.pathParameters['id']!,
+          category: state.uri.queryParameters['category'],
+        ),
+      ),
     ),
     GoRoute(
       path: '/issues/track',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -153,6 +154,23 @@ class _IssueDetailViewState extends State<_IssueDetailView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // The way back into the Complaint Box. This screen shows what
+                  // has happened; that one shows what the member can still do
+                  // about it — who to ring, what to write, whether to hand it
+                  // to the club. Without this link a report is somewhere to
+                  // look rather than somewhere to act.
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => context.push(
+                        '/complaints/${_currentIssue.id}'
+                        '?category=${_currentIssue.category}',
+                      ),
+                      icon: const Icon(Icons.support_agent_rounded),
+                      label: Text(trId('what_next')),
+                    ),
+                  ),
+                  SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [

@@ -7,6 +7,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
+    #: Where a member's blind copy goes, so the club learns a letter was
+    #: actually sent without having to ask. Disclosed to the member on the
+    #: draft screen with a switch — never a silent copy. Empty disables it.
+    CLUB_COMPLAINT_BCC: str = ""
+
     PROJECT_NAME: str = "FYC Connect"
     GEMINI_API_KEY: str = ""
 
