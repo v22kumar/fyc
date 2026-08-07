@@ -136,3 +136,133 @@ the timeline. Server loses: being the sender.
   technical one.
 - Not legal advice. The member-sends model removes the largest exposure by not
   making the club the publisher; it does not make the question disappear.
+
+---
+
+# Two lanes
+
+The decision above answered *who presses send*. It left out that there are two
+different journeys, and only one of them is the club's business.
+
+## Lane A — straight to the department
+
+The member writes it, the app drafts it, **they** send it from their own mail.
+The club never touches it and never sees it.
+
+## Lane B — to the club
+
+The member sends it **to FYC**, because they want help, or the office ignored
+them, or they would rather someone else dealt with it. Now the club owns it: an
+organiser reads it and either raises it with the department or closes it with a
+reason.
+
+Lane B is the second priority to build, but it is the one that makes the club
+useful rather than merely helpful — and it is the only lane where the club can
+honestly claim to know anything.
+
+## Who owns the truth, per lane
+
+This is the whole design. Every screen follows from it.
+
+| | Lane A — direct | Lane B — via the club |
+|---|---|---|
+| Who sends | The member, from their own mail | The club, from the club's mail |
+| Who knows it was sent | Only the member | The club |
+| Who knows if anyone replied | Only the member | The club |
+| Who sets the status | The member | The club |
+| How much we track | As much as they tell us | All of it |
+
+**In Lane A the member is the source of truth.** Not the server, not a webhook,
+not a guess. The app asks and believes the answer.
+
+**In Lane B the club is the source of truth**, and it can be complete, because
+the mail genuinely went from the club's mailbox and the reply comes back to it.
+
+# Making unknown state not look broken
+
+The hard part. We often will not know the stage of a Lane A complaint, and a
+list of rows reading `Unknown` looks like a bug.
+
+Three rules:
+
+**1. Never show a status the system invented.** Every entry on the timeline
+carries an author, and the UI says who:
+
+> **You** · 5 Aug — *You said you sent this to the Assistant Engineer*
+> **FYC** · 6 Aug — *Forwarded to the Executive Engineer, TWAD*
+
+Not "Sent" floating with no subject. A sentence with an author cannot be wrong
+in the way a status badge can.
+
+**2. Absence of news is a state, and it has a name.** Not `Unknown` —
+**"Waiting to hear"**, with the days visible: *waiting 12 days*. That is a true
+and useful thing to display, and it is what a person would actually say.
+
+**3. The member can always close it.** Two taps available on every complaint,
+at any time, regardless of what we know:
+
+- **Mark resolved** — *"the light is fixed"*. Nothing else needed.
+- **Mark closed** — *"I gave up"* or *"I sent it another way"*. No judgement, no
+  form.
+
+A member who fixed the problem by walking into the office should be able to say
+so. A complaint that can only be closed by an event the app can observe is a
+complaint that stays open forever and makes the list useless.
+
+Once closed, the row is locked: no more nudges, no escalation prompts, and it
+moves out of the active list. Reopening is one tap if they were wrong.
+
+# The letter is a template, not a generated document
+
+Asking an AI to write the whole letter gives a different letter every time, and
+a bill for each one. Worse, when the quota runs out or the call fails there is
+no letter at all.
+
+**The skeleton is code. The AI fills two slots.**
+
+Fixed, written once, identical every time:
+
+    To: <designation>, <office>
+    Subject: <slot: subject>
+
+    Sir / Madam,
+
+    <slot: body>
+
+    Location:  <place name>
+               <Google Maps link>
+    Reported:  <date>
+    Photo:     <url, if any>
+    Reference: <short code>
+
+    <name>
+    <phone>
+    <address>
+
+The AI is asked for exactly two things: a one-line subject, and three sentences
+of formal description in the member's language. Nothing else. If it fails, the
+member's own words go in the body slot and the letter still sends — it is
+plainer, not broken.
+
+This also fixes something the current draft gets wrong: it appends
+*"Submitted via FYC Connect — Friends Youth Club, Nagercoil"*, which in Lane A
+is false. In Lane A the letter is from the member and says so.
+
+# Location is a link, not coordinates
+
+`GPS 8.1833, 77.4119` means nothing to an Assistant Engineer reading mail on a
+phone. Every complaint carries:
+
+- the place as a person would say it — *"Vadasery bus stand, near the
+  footbridge"* — from reverse geocoding, editable by the member
+- a Google Maps link that opens the exact pin
+
+Coordinates stay in the record for the app's own use and never appear in the
+letter.
+
+# Build order
+
+1. The template and the Maps link — improves the letter that already exists.
+2. Lane A end to end, with the member-owned timeline and the two close buttons.
+3. Lane B — the club inbox, triage, forward, and its fuller timeline.
+4. The ladder, which is just Lane A again one rung up, quoting the last letter.
