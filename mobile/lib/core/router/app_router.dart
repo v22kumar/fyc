@@ -108,6 +108,9 @@ import '../../features/feed/create_post_screen.dart';
 
 // Design System v2 (Sprint 1)
 import '../design_system/design_system_gallery_screen.dart';
+import '../../features/complaint_box/domain/repositories/complaint_repository.dart';
+import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
+import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
 import '../design_system/shell/app_shell_v2.dart';
 import '../../features/serve/presentation/screens/serve_hub_screen.dart';
 import '../../features/profile/presentation/screens/me_hub_screen.dart';
@@ -381,6 +384,21 @@ final appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    // The Complaint Box: one complaint, its three routes, and its timeline.
+    GoRoute(
+      path: '/complaints/:id',
+      builder: (context, state) => BlocProvider(
+        create: (_) => ComplaintBloc(sl<ComplaintRepository>())
+          ..add(LoadComplaint(
+            state.pathParameters['id']!,
+            category: state.uri.queryParameters['category'],
+          )),
+        child: ComplaintDetailScreen(
+          complaintId: state.pathParameters['id']!,
+          category: state.uri.queryParameters['category'],
+        ),
+      ),
     ),
     GoRoute(
       path: '/issues/track',
