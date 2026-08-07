@@ -13,9 +13,6 @@ import '../../domain/entities/complaint_entities.dart';
 /// next step and stop. Seeing the route means the next step is always obvious —
 /// and they can judge who is worth ringing, because they know things about the
 /// local office this directory never will.
-///
-/// Offices with no number yet are shown greyed rather than hidden. A gap the
-/// club cannot see is a gap nobody fills.
 class LadderList extends StatelessWidget {
   const LadderList({
     super.key,
@@ -26,23 +23,30 @@ class LadderList extends StatelessWidget {
 
   final CallLadder ladder;
 
-  /// Fired after the dialler is opened, so the member can say what happened.
+  /// Fired after the dialler opens, so the member can say what happened.
   final void Function(LadderRung rung) onCalled;
 
   final void Function(LadderRung rung)? onWrite;
 
   @override
   Widget build(BuildContext context) {
-    if (ladder.rungs.isEmpty) {
-      return _NoRoute(ladder: ladder);
-    }
+    if (ladder.rungs.isEmpty) return _NoRoute(ladder: ladder);
+
+    // "Start here" belongs on the first rung they can actually use, not on
+    // whichever office happens to sit at the top of the list. Marking an
+    // office with no phone number as the place to start is worse than marking
+    // nothing.
+    final startAt = ladder.rungs.indexWhere((r) => r.canCall || r.canWrite);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < ladder.rungs.length; i++)
           _RungTile(
             rung: ladder.rungs[i],
-            isFirst: i == 0,
+            step: i + 1,
+            isStart: i == startAt,
+            isLast: i == ladder.rungs.length - 1,
             onCalled: onCalled,
             onWrite: onWrite,
           ),
@@ -54,21 +58,45 @@ class LadderList extends StatelessWidget {
 class _RungTile extends StatelessWidget {
   const _RungTile({
     required this.rung,
-    required this.isFirst,
+    required this.step,
+    required this.isStart,
+    required this.isLast,
     required this.onCalled,
     this.onWrite,
   });
 
   final LadderRung rung;
-  final bool isFirst;
+  final int step;
+  final bool isStart;
+  final bool isLast;
   final void Function(LadderRung) onCalled;
   final void Function(LadderRung)? onWrite;
 
-  Future<void> _dial(BuildContext context) async {
+  /// Unreachable means *neither* route works. An office with a published email
+  /// and no phone is not unreachable — it is one you write to, and dimming it
+  /// would hide a letter somebody could send today.
+  bool get _unreachable => !rung.canCall && !rung.canWrite;
+
+  /// Group the digits the way a person reads them aloud.
+  ///
+  /// This number gets copied onto a wall and passed to a neighbour without the
+  /// app. `9443132365` is a wall of digits; `94431 32365` is a phone number.
+  static String _readable(String raw) {
+    final d = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (d.length == 10) return '${d.substring(0, 5)} ${d.substring(5)}';
+    // Landlines here are STD code + number, and the split is not fixed. The
+    // Kanniyakumari codes are four or five digits.
+    if (d.length == 11 && d.startsWith('0')) {
+      return '${d.substring(0, 5)} ${d.substring(5)}';
+    }
+    return raw;
+  }
+
+  Future<void> _dial() async {
     final uri = Uri(scheme: 'tel', path: rung.phone);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
-      // Ask only after the dialler has actually opened. Prompting before would
+      // Asked only after the dialler actually opened. Prompting before would
       // be asking about a call that never happened.
       onCalled(rung);
     }
@@ -76,90 +104,193 @@ class _RungTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = !rung.canCall;
-    return Opacity(
-      opacity: muted ? 0.55 : 1,
-      child: Container(
-        margin: EdgeInsets.only(bottom: DSSpacing.xs),
-        padding: EdgeInsets.all(DSSpacing.sm),
-        decoration: BoxDecoration(
-          color: context.cSurface,
-          borderRadius: BorderRadius.circular(DSRadius.card),
-          border: Border.all(
-            color: isFirst && rung.canCall
-                ? AppColors.primary.withOpacity(0.45)
-                : context.cBorder,
-            width: isFirst && rung.canCall ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(rung.title,
-                            style: Theme.of(context).textTheme.titleSmall,
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                      ),
-                      if (isFirst && rung.canCall) ...[
-                        SizedBox(width: DSSpacing.xs),
-                        _Pill(text: trId('start_here')),
+    final t = Theme.of(context);
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The rail. Four identical cards do not read as a sequence; a number
+          // and a line do, which is the point — this is a route, and there is
+          // always a next step.
+          _Rail(step: step, isStart: isStart, isLast: isLast,
+              dim: _unreachable),
+          SizedBox(width: DSSpacing.sm),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: DSSpacing.sm),
+              child: Container(
+                padding: EdgeInsets.all(DSSpacing.sm),
+                decoration: BoxDecoration(
+                  color: context.cSurface,
+                  borderRadius: BorderRadius.circular(DSRadius.card),
+                  border: Border.all(
+                    color: isStart
+                        ? AppColors.primary.withValues(alpha: 0.5)
+                        : context.cBorder,
+                    width: isStart ? 1.5 : 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            rung.title,
+                            style: t.textTheme.titleSmall?.copyWith(
+                              color: _unreachable
+                                  ? context.cTextSecondary
+                                  : context.cText,
+                            ),
+                          ),
+                        ),
+                        if (isStart) _StartPill(),
                       ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(rung.covers, style: t.textTheme.bodySmall),
+
+                    // The number, in full, as text.
+                    //
+                    // A screen whose whole job is "here is who to ring" that
+                    // shows no digits is not doing it. People read the number
+                    // before they trust the button, write it on a wall, and
+                    // pass it to a neighbour who does not have the app.
+                    if (rung.canCall) ...[
+                      SizedBox(height: DSSpacing.xs),
+                      SelectableText(
+                        _readable(rung.phone!),
+                        style: t.textTheme.titleSmall?.copyWith(
+                          color: AppColors.primary,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
                     ],
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    rung.covers,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (muted) ...[
-                    SizedBox(height: 4),
-                    // Named, not hidden. Somebody has to know it is missing.
-                    Text(trId('no_number_yet'),
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: AppColors.warning)),
+
+                    if (_unreachable) ...[
+                      const SizedBox(height: 4),
+                      // Named, never hidden — a gap the club cannot see is a
+                      // gap nobody fills. But said quietly: this is our
+                      // missing data, not the member's problem, and a screen
+                      // of amber warnings reads as broken.
+                      Text(trId('no_contact_yet'),
+                          style: t.textTheme.bodySmall
+                              ?.copyWith(color: context.cTextSecondary)),
+                    ],
+
+                    if (rung.canCall || rung.canWrite) ...[
+                      SizedBox(height: DSSpacing.xs),
+                      Row(
+                        children: [
+                          if (rung.canCall)
+                            Expanded(
+                              // Only the rung we are recommending gets a
+                              // filled button. Give the District Collector a
+                              // call button as inviting as the ward
+                              // engineer's and people will ring the Collector
+                              // about a bulb — which is exactly how a club
+                              // stops being taken seriously, and how the
+                              // ladder's logic gets inverted.
+                              child: isStart
+                                  ? FilledButton.icon(
+                                      onPressed: _dial,
+                                      icon: const Icon(Icons.call_rounded,
+                                          size: 18),
+                                      label: Text(trId('call')),
+                                    )
+                                  : OutlinedButton.icon(
+                                      onPressed: _dial,
+                                      icon: const Icon(Icons.call_rounded,
+                                          size: 18),
+                                      label: Text(trId('call')),
+                                    ),
+                            ),
+                          if (rung.canCall && rung.canWrite && onWrite != null)
+                            SizedBox(width: DSSpacing.xs),
+                          if (rung.canWrite && onWrite != null)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => onWrite!(rung),
+                                icon: const Icon(Icons.mail_outline_rounded,
+                                    size: 18),
+                                label: Text(trId('write')),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-            if (rung.canCall)
-              IconButton(
-                onPressed: () => _dial(context),
-                icon: const Icon(Icons.call_rounded),
-                color: AppColors.primary,
-                tooltip: trId('call'),
-              ),
-            if (rung.canWrite && onWrite != null)
-              IconButton(
-                onPressed: () => onWrite!(rung),
-                icon: const Icon(Icons.mail_outline_rounded),
-                tooltip: trId('write'),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text});
-  final String text;
+/// The numbered rail down the left, so the list reads as a climb.
+class _Rail extends StatelessWidget {
+  const _Rail({
+    required this.step,
+    required this.isStart,
+    required this.isLast,
+    required this.dim,
+  });
+
+  final int step;
+  final bool isStart;
+  final bool isLast;
+  final bool dim;
 
   @override
+  Widget build(BuildContext context) {
+    final on = isStart ? AppColors.primary : context.cTextSecondary;
+    return SizedBox(
+      width: 26,
+      child: Column(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isStart
+                  ? AppColors.primary.withValues(alpha: 0.14)
+                  : Colors.transparent,
+              border: Border.all(color: on.withValues(alpha: dim ? 0.3 : 0.6)),
+            ),
+            child: Text('$step',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: dim ? on.withValues(alpha: 0.5) : on)),
+          ),
+          if (!isLast)
+            Expanded(
+              child: Container(
+                width: 1.5,
+                color: context.cBorder,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StartPill extends StatelessWidget {
+  @override
   Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(left: 6),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.12),
+          color: AppColors.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(DSRadius.chip),
         ),
-        child: Text(text,
+        child: Text(trId('start_here'),
             style: Theme.of(context)
                 .textTheme
                 .labelSmall

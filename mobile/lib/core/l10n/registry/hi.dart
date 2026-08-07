@@ -1213,4 +1213,5 @@ const Map<String, String> kHi = {
   'what_next': 'आगे क्या?',
   'is_this_serious': 'क्या यह गंभीर है?',
   'is_this_serious_help': 'किसी के लिए खतरा, या पहले बताई गई बात। हम लिखित में देने का सुझाव देंगे।',
+  'no_contact_yet': 'संपर्क अभी नहीं जुटाया गया',
 };
