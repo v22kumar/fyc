@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/design_system/tokens.dart';
@@ -95,6 +96,9 @@ class _RungTile extends StatelessWidget {
   Future<void> _dial() async {
     final uri = Uri(scheme: 'tel', path: rung.phone);
     if (await canLaunchUrl(uri)) {
+      // Ringing a government officer is a moment of commitment, and the app is
+      // about to disappear behind the dialler. A tick confirms the tap landed.
+      await HapticFeedback.selectionClick();
       await launchUrl(uri);
       // Asked only after the dialler actually opened. Prompting before would
       // be asking about a call that never happened.
@@ -164,11 +168,18 @@ class _RungTile extends StatelessWidget {
                       // a scrolling list fights the scroll gesture, and the
                       // two things a member actually needs are to read the
                       // number and to dial it — the button does the second.
-                      Text(
-                        _readable(rung.phone!),
-                        style: t.textTheme.titleSmall?.copyWith(
-                          color: AppColors.primary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                      Semantics(
+                        // Without this a screen reader reads 9443132365 as one
+                        // enormous number. Spaced digits are read singly, which
+                        // is the only way somebody can write it down.
+                        label: rung.phone!.split('').join(' '),
+                        excludeSemantics: true,
+                        child: Text(
+                          _readable(rung.phone!),
+                          style: t.textTheme.titleSmall?.copyWith(
+                            color: AppColors.primary,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
                         ),
                       ),
                     ],
@@ -197,29 +208,42 @@ class _RungTile extends StatelessWidget {
                               // about a bulb — which is exactly how a club
                               // stops being taken seriously, and how the
                               // ladder's logic gets inverted.
-                              child: isStart
-                                  ? FilledButton.icon(
-                                      onPressed: _dial,
-                                      icon: const Icon(Icons.call_rounded,
-                                          size: 18),
-                                      label: Text(trId('call')),
-                                    )
-                                  : OutlinedButton.icon(
-                                      onPressed: _dial,
-                                      icon: const Icon(Icons.call_rounded,
-                                          size: 18),
-                                      label: Text(trId('call')),
-                                    ),
+                              // "Call" alone tells a screen-reader user
+                              // nothing about who they are about to ring, and
+                              // on this screen that is the entire question.
+                              child: Semantics(
+                                button: true,
+                                label: '${trId('call')} ${rung.title}',
+                                excludeSemantics: true,
+                                child: isStart
+                                    ? FilledButton.icon(
+                                        onPressed: _dial,
+                                        icon: const Icon(Icons.call_rounded,
+                                            size: 18),
+                                        label: Text(trId('call')),
+                                      )
+                                    : OutlinedButton.icon(
+                                        onPressed: _dial,
+                                        icon: const Icon(Icons.call_rounded,
+                                            size: 18),
+                                        label: Text(trId('call')),
+                                      ),
+                              ),
                             ),
                           if (rung.canCall && rung.canWrite && onWrite != null)
                             SizedBox(width: DSSpacing.xs),
                           if (rung.canWrite && onWrite != null)
                             Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => onWrite!(rung),
-                                icon: const Icon(Icons.mail_outline_rounded,
-                                    size: 18),
-                                label: Text(trId('write')),
+                              child: Semantics(
+                                button: true,
+                                label: '${trId('write')} ${rung.title}',
+                                excludeSemantics: true,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => onWrite!(rung),
+                                  icon: const Icon(Icons.mail_outline_rounded,
+                                      size: 18),
+                                  label: Text(trId('write')),
+                                ),
                               ),
                             ),
                         ],

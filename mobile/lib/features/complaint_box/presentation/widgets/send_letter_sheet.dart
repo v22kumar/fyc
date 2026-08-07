@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/design_system/tokens.dart';
@@ -58,8 +59,17 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
   Future<void> _open() async {
     final uri = _mailto();
     if (await canLaunchUrl(uri)) {
+      await HapticFeedback.selectionClick();
       await launchUrl(uri);
       if (mounted) setState(() => _opened = true);
+      return;
+    }
+    // No mail app at all. Silently doing nothing here would look like a dead
+    // button on the one screen where the member is trying to act.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('no_mail_app'))),
+      );
     }
   }
 
@@ -92,8 +102,11 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
           SizedBox(height: DSSpacing.sm),
           Flexible(
             child: SingleChildScrollView(
-              child: Text(d.body,
-                  style: Theme.of(context).textTheme.bodySmall),
+              child: Semantics(
+                label: trId('letter_preview'),
+                child: Text(d.body,
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
             ),
           ),
           if (!d.aiWritten) ...[
@@ -133,6 +146,10 @@ class _SendLetterSheetState extends State<SendLetterSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () {
+                      // Confirming a letter went is the single most consequential
+                      // tap in the feature — it starts the clock the escalation
+                      // ladder runs on.
+                      HapticFeedback.mediumImpact();
                       widget.onSentConfirmed();
                       Navigator.of(context).pop();
                     },

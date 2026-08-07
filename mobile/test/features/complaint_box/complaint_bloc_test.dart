@@ -8,6 +8,13 @@ import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_b
 /// the bloc never invents a state change of its own.
 class _Fake implements ComplaintRepository {
   final List<String> calls = [];
+
+  /// When set, the next ladder fetch throws — standing in for a dropped
+  /// connection rather than an empty directory.
+  bool ladderThrows = false;
+
+  /// When set, mutating actions throw.
+  bool actionsThrow = false;
   ComplaintState current = const ComplaintState(
     id: 'c1',
     lane: ComplaintLane.self,
@@ -33,6 +40,7 @@ class _Fake implements ComplaintRepository {
   @override
   Future<CallLadder> ladder({required String category, String? geographyId}) async {
     calls.add('ladder');
+    if (ladderThrows) throw Exception('network');
     return CallLadder(category: category, rungs: const [
       LadderRung(
         position: 1, departmentCode: 'ULB', departmentName: 'Corporation',
@@ -94,6 +102,7 @@ class _Fake implements ComplaintRepository {
   Future<ComplaintState> close(String id,
       {required bool resolved, String? reason}) async {
     calls.add('close:$resolved');
+    if (actionsThrow) throw Exception('network');
     return _with(closed: true);
   }
 
@@ -184,6 +193,37 @@ void main() {
     bloc.add(const HandedToClub());
     await Future<void>.delayed(Duration.zero);
     expect(bloc.state.complaint!.lane, ComplaintLane.viaClub);
+  });
+
+  test('a failed ladder is not the same as an empty one', () async {
+    // These used to be indistinguishable, so somebody whose train went into a
+    // tunnel was told "no office is listed for this yet" — which is a
+    // different problem with a different fix.
+    repo.ladderThrows = true;
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(bloc.state.ladderFailed, isTrue);
+    expect(bloc.state.ladder, isNull);
+    expect(bloc.state.complaint, isNotNull,
+        reason: 'the rest of the screen must still work — they can still '
+            'write, or hand it to the club');
+  });
+
+  test('a failed action reports itself instead of doing nothing', () async {
+    // The screen only rendered `failure` when the complaint had not loaded, so
+    // tapping "mark resolved" on a bad connection was silent.
+    bloc.add(const LoadComplaint('c1'));
+    await Future<void>.delayed(Duration.zero);
+    repo.actionsThrow = true;
+
+    bloc.add(const Closed(resolved: true));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(bloc.state.failure, isNotNull);
+    expect(bloc.state.busy, isFalse, reason: 'the spinner must not get stuck');
+    expect(bloc.state.complaint!.isClosed, isFalse,
+        reason: 'a failed close must not look like a successful one');
   });
 
   test('the ladder keeps offices with no number, marked', () async {

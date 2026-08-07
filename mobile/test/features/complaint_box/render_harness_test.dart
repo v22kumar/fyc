@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,9 @@ import 'package:fyc_connect/features/complaint_box/domain/entities/complaint_ent
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/complaint_timeline.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/ladder_list.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/send_letter_sheet.dart';
+import 'package:fyc_connect/features/complaint_box/domain/repositories/complaint_repository.dart';
+import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_bloc.dart';
+import 'package:fyc_connect/features/complaint_box/presentation/screens/complaint_detail_screen.dart';
 
 /// Renders the Complaint Box surfaces to PNGs so a human can look at them.
 /// Not assertions — a camera. Run with: flutter test --tags render
@@ -195,4 +199,74 @@ void main() {
     )));
     await _shoot(t, '05_send_sheet');
   });
+
+  testWidgets('detail — light', (t) async {
+    await _phone(t, _screen(_state(waiting: 12), brightness: Brightness.light));
+    await _shoot(t, '06_detail_light');
+  });
+
+  testWidgets('detail — dark', (t) async {
+    await _phone(t, _screen(_state(waiting: 12), brightness: Brightness.dark));
+    await _shoot(t, '07_detail_dark');
+  });
+
+  testWidgets('detail — closed', (t) async {
+    await _phone(t, _screen(_state(closed: true)));
+    await _shoot(t, '08_detail_closed');
+  });
+
+  testWidgets('empty ladder', (t) async {
+    await _phone(t, _frame(LadderList(
+      ladder: const CallLadder(
+          category: 'OTHER', rungs: [], fallbackHelpline: '1100'),
+      onCalled: (_) {},
+    )));
+    await _shoot(t, '09_no_route');
+  });
 }
+
+/// A fake that answers from a fixed state, so the whole screen can be
+/// photographed without a server.
+class _StubRepo implements ComplaintRepository {
+  _StubRepo(this._state);
+  final ComplaintState _state;
+
+  @override
+  Future<CallLadder> ladder({required String category, String? geographyId}) async => _ladder;
+  @override
+  Future<ComplaintState> load(String id) async => _state;
+  @override
+  Future<ComplaintState> logCall(String id,
+          {required CallOutcome outcome, String? authorityId,
+          String? authorityLabel, String? note}) async => _state;
+  @override
+  Future<ComplaintDraft> draft(String id,
+          {String? authorityId, bool bccClub = true, bool useAi = true}) async => _draft;
+  @override
+  Future<ComplaintState> markSent(String id,
+          {String? authorityId, String? authorityLabel}) async => _state;
+  @override
+  Future<ComplaintState> markReplied(String id, {String? note}) async => _state;
+  @override
+  Future<ComplaintState> close(String id,
+          {required bool resolved, String? reason}) async => _state;
+  @override
+  Future<ComplaintState> reopen(String id) async => _state;
+  @override
+  Future<ComplaintState> handToClub(String id) async => _state;
+}
+
+Widget _screen(ComplaintState state, {Brightness brightness = Brightness.light}) =>
+    MaterialApp(
+      theme: brightness == Brightness.light
+          ? AppTheme.lightFor('en')
+          : AppTheme.darkFor('en'),
+      home: RepaintBoundary(
+        child: BlocProvider(
+          create: (_) => ComplaintBloc(_StubRepo(state))
+            ..add(const LoadComplaint('c1', category: 'STREET_LIGHT')),
+          child: const ComplaintDetailScreen(
+              complaintId: 'c1', category: 'STREET_LIGHT'),
+        ),
+      ),
+    );
