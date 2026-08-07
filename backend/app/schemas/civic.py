@@ -103,3 +103,46 @@ class DirectoryHealthOut(BaseModel):
     #: Fill these in first.
     top_gaps: list[GapOut]
     ladders: list[LadderHealthOut]
+
+
+# ── The call ladder a member sees ────────────────────────────────────────────
+
+class LadderRungOut(BaseModel):
+    """One office a member can ring, with enough context to choose."""
+
+    position: int
+    department_code: str
+    department_name_en: str
+    department_name_ta: Optional[str] = None
+    designation_en: Optional[str] = None
+    designation_ta: Optional[str] = None
+    #: What this office covers, in words: "your ward", "the division".
+    covers_en: str
+    covers_ta: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    #: Reachability is two different questions, and the directory answers them
+    #: separately: an office with a mobile number and no published address can
+    #: be rung today but not written to. Collapsing them into one flag would
+    #: grey out a phone number somebody could have dialled.
+    can_call: bool
+    can_write: bool
+    #: Days to wait at this rung before the next one is worth trying.
+    wait_days: int
+
+
+class CallLadderOut(BaseModel):
+    """Every office worth trying for one complaint, nearest first.
+
+    Deliberately the whole list. Showing a single number is worse than showing
+    none: the member ignored by that one number has no visible next step, and
+    stops. The ladder makes the next step obvious from the first screen.
+    """
+
+    category: str
+    local_body_type: Optional[str] = None
+    place_name: Optional[str] = None
+    rungs: list[LadderRungOut]
+    #: A published helpline or portal, for when no rung can be reached at all.
+    fallback_helpline: Optional[str] = None
+    fallback_portal_url: Optional[str] = None

@@ -25,9 +25,10 @@ from app.models.civic import (
 from app.models.user import User
 from app.schemas.civic import (
     AuthorityOut, AuthorityPatch, DepartmentOut, DirectoryHealthOut, GapOut,
-    LadderHealthOut,
+    LadderHealthOut, CallLadderOut, LadderRungOut,
 )
 from app.services.complaint_routing import build_ladder
+from app.services.jurisdiction import resolve as resolve_jurisdiction
 from app.services.jurisdiction import Confidence, Jurisdiction
 
 router = APIRouter(prefix="/civic", tags=["Civic Directory"])
@@ -258,4 +259,83 @@ def directory_health(
         ladders_blocked=sum(1 for l in ladders if l.blocked),
         top_gaps=gaps[:10],
         ladders=ladders,
+    )
+
+
+# ── The ladder a member sees before they do anything ─────────────────────────
+
+#: How each rung reads to someone deciding who to ring. The directory knows the
+#: office; this is what it *covers*, which is the part that makes the choice
+#: informed rather than a guess.
+_COVERS = {
+    10: ("your ward", "உங்கள் வார்டு"),
+    20: ("your area", "உங்கள் பகுதி"),
+    30: ("the local body", "உள்ளாட்சி"),
+    40: ("the division", "கோட்டம்"),
+    50: ("the district", "மாவட்டம்"),
+    60: ("the state", "மாநிலம்"),
+    70: ("national", "தேசிய"),
+}
+
+
+@router.get("/ladder", response_model=CallLadderOut)
+def call_ladder(
+    category: str = Query(description="what the complaint is about"),
+    geography_id: Optional[UUID] = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Every office worth trying for this complaint, nearest first.
+
+    The whole list, on purpose. Handing a member one "correct" officer is worse
+    than handing them nothing: when that officer does not pick up, or listens
+    and does nothing, there is no visible next step and they stop. Seeing the
+    ladder from the first screen means the next step is always obvious — and
+    they can judge for themselves who is worth ringing, because they know
+    things about the local office that this directory never will.
+
+    Unreachable rungs are returned too, marked. Hiding an office we have no
+    number for would hide the gap; showing it greyed is how it gets filled.
+    """
+    org_id = current_user.organization_id
+    # The reporter's own place is the fallback when the report has no tag —
+    # someone can report a pothole outside their ward, but it is right far more
+    # often than a district-wide guess.
+    jurisdiction = resolve_jurisdiction(
+        db,
+        geography_id=geography_id,
+        reporter_geography_id=getattr(current_user, "geography_id", None),
+    )
+    ladder = build_ladder(db, org_id, category, jurisdiction)
+
+    rungs = []
+    for r in ladder.rungs:
+        covers_en, covers_ta = _COVERS.get(r.rung, ("", None))
+        a = r.authority
+        rungs.append(
+            LadderRungOut(
+                position=r.position,
+                department_code=r.department.code,
+                department_name_en=r.department.name_en,
+                department_name_ta=r.department.name_ta,
+                designation_en=a.designation_en if a else None,
+                designation_ta=a.designation_ta if a else None,
+                covers_en=covers_en,
+                covers_ta=covers_ta,
+                phone=(a.phone if a else None) or None,
+                email=(a.email if a else None) or None,
+                can_call=bool((a.phone or "").strip()) if a else False,
+                can_write=r.reachable,
+                wait_days=r.wait_days,
+            )
+        )
+
+    fallback = ladder.fallback
+    return CallLadderOut(
+        category=ladder.category,
+        local_body_type=getattr(jurisdiction.local_body_type, "value", None),
+        place_name=jurisdiction.place_name,
+        rungs=rungs,
+        fallback_helpline=fallback.helpline if fallback else None,
+        fallback_portal_url=fallback.portal_url if fallback else None,
     )
