@@ -617,3 +617,4 @@ def list_issue_emails(
         IssueEmailLog.issue_id == issue_id,
         IssueEmailLog.organization_id == tenant_id
     ).order_by(IssueEmailLog.created_at.desc()).all()
+

@@ -1,5 +1,8 @@
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, Boolean, ForeignKey, Enum as SAEnum
+from sqlalchemy import (
+    Column, String, Text, Numeric, Boolean, DateTime, Integer, ForeignKey,
+    Enum as SAEnum,
+)
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import GUID, TimestampMixin, TenantModelMixin
@@ -56,6 +59,43 @@ class PublicIssue(Base, TimestampMixin, TenantModelMixin):
     is_emergency = Column(Boolean, nullable=True, default=False)
     status = Column(SAEnum(IssueStatus, name="issue_status"), default=IssueStatus.NEW, nullable=False)
     assigned_volunteer_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    # ── The club review gate ────────────────────────────────────────────────
+    # Nothing reaches a government office without a member of the club reading
+    # it first. These record who did, when, and what they decided — the club's
+    # name goes on every letter, so the decision has an owner.
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    reviewed_by_user_id = Column(GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # Shown to the person who reported it. A rejection with no reason teaches
+    # them only that reporting is pointless.
+    review_note = Column(Text, nullable=True)
+
+    # ── Where this happened, as the router understood it ────────────────────
+    # Stored rather than recomputed: the tree can be reclassified later, and a
+    # complaint's history should say where it was actually sent, not where it
+    # would be sent today. `jurisdiction_confidence` carries DECLARED /
+    # INHERITED / GUESSED so a reviewer knows whether to check.
+    local_body_type = Column(String(30), nullable=True)
+    jurisdiction_confidence = Column(String(20), nullable=True)
+    jurisdiction_reason = Column(Text, nullable=True)
+
+    # ── Position on the ladder ──────────────────────────────────────────────
+    # Which rung the complaint is on now (matches RoutingStep.position), and
+    # when the club should be ASKED whether to climb. Never a trigger: no email
+    # leaves this system without a person pressing send.
+    current_position = Column(Integer, nullable=True)
+    next_action_due_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Road class cannot be derived from a coordinate — a state highway and a
+    # corporation street look identical to GPS. When a reviewer recognises the
+    # road, this pins the complaint to NHAI or the Highways Department instead
+    # of the local body.
+    department_code_override = Column(String(40), nullable=True)
+
+    # Which language the citizen actually wrote in. They are asked once, in
+    # their own language; the other description column is filled by translation
+    # or by copying, and this records which one came from a human.
+    description_lang = Column(String(8), nullable=True)
 
     reporter = relationship("User", foreign_keys=[reported_by_user_id])
     assigned_volunteer = relationship("User", foreign_keys=[assigned_volunteer_id])
