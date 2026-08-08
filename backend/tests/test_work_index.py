@@ -207,6 +207,50 @@ def test_a_member_cannot_review_reports(client, db, club, carpenter, neighbour):
                       headers=_h(neighbour, club)).status_code == 403
 
 
+# ── What a searcher sees first ───────────────────────────────────────────────
+
+def test_proven_work_comes_above_a_newer_listing(
+    client, db, club, carpenter, neighbour
+):
+    """Ordering by recency alone puts the least proven option at the top.
+
+    A listing created five minutes ago outranking somebody with nine confirmed
+    jobs is the opposite of what the trust line exists to communicate.
+    """
+    proven = _list(client, carpenter, club, display_name="Murugan A.").json()["id"]
+    client.post(f"/api/v1/work/listings/{proven}/records",
+                json={"what": "Fitted a door"}, headers=_h(neighbour, club))
+
+    # Created afterwards, so recency alone would put it first.
+    newcomer = _user(db, club, phone="+919000000061", name="Newcomer")
+    _list(client, newcomer, club, display_name="Brand New")
+
+    names = [r["display_name"] for r in
+             client.get("/api/v1/work/listings?category=CARPENTRY",
+                        headers=_h(neighbour, club)).json()]
+    assert names == ["Murugan A.", "Brand New"]
+
+
+def test_a_new_listing_is_still_on_the_same_screen(
+    client, db, club, carpenter, neighbour
+):
+    """The other trap.
+
+    Sorting purely by confirmed jobs means nobody new is seen, so nobody new is
+    hired, so nobody new accumulates jobs — and the index never bootstraps.
+    Grouping rather than ranking keeps them visible.
+    """
+    proven = _list(client, carpenter, club, display_name="Murugan A.").json()["id"]
+    client.post(f"/api/v1/work/listings/{proven}/records",
+                json={"what": "Fitted a door"}, headers=_h(neighbour, club))
+    newcomer = _user(db, club, phone="+919000000062", name="Newcomer")
+    _list(client, newcomer, club, display_name="Brand New")
+
+    rows = client.get("/api/v1/work/listings?category=CARPENTRY",
+                      headers=_h(neighbour, club)).json()
+    assert any(r["display_name"] == "Brand New" for r in rows)
+
+
 # ── The owner's side ─────────────────────────────────────────────────────────
 
 def test_views_are_counted_so_the_owner_sees_something_happened(

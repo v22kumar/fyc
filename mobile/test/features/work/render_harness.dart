@@ -129,18 +129,24 @@ void main() {
     }
     await sl<LocalStorage>().saveLang('en');
 
-    for (final entry in {
-      'Plus Jakarta Sans': 'assets/fonts/PlusJakartaSans-400.ttf',
-      'Noto Sans Tamil': 'assets/fonts/NotoSansTamil-400.ttf',
-    }.entries) {
-      final loader = FontLoader(entry.key)
-        ..addFont(File(entry.value).readAsBytes().then((b) => b.buffer.asByteData()));
-      await loader.load();
-    }
-    final bold = FontLoader('Plus Jakarta Sans')
-      ..addFont(File('assets/fonts/PlusJakartaSans-700.ttf')
+    // Every weight into one loader per family.
+    //
+    // Loading 700 through a *second* FontLoader for the same family does not
+    // merge with the first: bold text then lays out at the right width and
+    // paints nothing, which reads in a screenshot as an empty button. Two
+    // rounds of this review were spent chasing a category chip that was
+    // rendering its label perfectly well.
+    final latin = FontLoader('Plus Jakarta Sans');
+    for (final w in ['400', '600', '700', '800']) {
+      latin.addFont(File('assets/fonts/PlusJakartaSans-$w.ttf')
           .readAsBytes().then((b) => b.buffer.asByteData()));
-    await bold.load();
+    }
+    await latin.load();
+
+    final tamil = FontLoader('Noto Sans Tamil')
+      ..addFont(File('assets/fonts/NotoSansTamil-400.ttf')
+          .readAsBytes().then((b) => b.buffer.asByteData()));
+    await tamil.load();
   });
 
   testWidgets('cards', (t) async {

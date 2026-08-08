@@ -223,9 +223,31 @@ def search_listings(
             Listing.display_name.ilike(like) | Listing.about.ilike(like)
         )
 
-    rows = (query.order_by(Listing.created_at.desc())
-                 .offset(offset).limit(limit).all())
-    return [_out(db, r) for r in rows]
+    rows = query.all()
+
+    # Proven work first, then the newest.
+    #
+    # Ordering by recency alone — which is what this did — puts a listing
+    # created five minutes ago above somebody with nine confirmed jobs, so the
+    # first thing a searcher sees is the least proven option on the screen.
+    #
+    # But sorting purely by confirmed jobs is the other trap: nobody new is
+    # ever seen, so nobody new is ever hired, so nobody new ever accumulates
+    # jobs, and the index cannot bootstrap. Grouping rather than ranking gets
+    # both — anybody with a confirmed job is above anybody without one, and
+    # inside each group the newest is first, so a new listing is on the same
+    # screen rather than buried on page three.
+    def _rank(listing: Listing):
+        confirmed = (
+            db.query(func.count(WorkRecord.id))
+            .filter(WorkRecord.listing_id == listing.id,
+                    WorkRecord.confirmed_at.isnot(None))
+            .scalar()
+        ) or 0
+        return (0 if confirmed > 0 else 1, -(listing.created_at.timestamp()))
+
+    rows.sort(key=_rank)
+    return [_out(db, r) for r in rows[offset:offset + limit]]
 
 
 @router.get("/listings/{listing_id}", response_model=ListingOut)

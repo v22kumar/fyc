@@ -59,20 +59,6 @@ class ListingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(listing.displayName, style: t.textTheme.titleSmall),
-          // A shop's opening hours decide whether somebody rings now or later,
-          // and the card was dropping them entirely — the one piece of
-          // information that distinguishes a business from a person.
-          if (listing.kind == ListingKind.business && listing.hours != null) ...[
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(Icons.schedule_rounded, size: 14,
-                    color: context.cTextSecondary),
-                const SizedBox(width: 4),
-                Text(listing.hours!, style: t.textTheme.bodySmall),
-              ],
-            ),
-          ],
           if (listing.area != null || listing.about != null) ...[
             const SizedBox(height: 2),
             Text(
@@ -82,6 +68,20 @@ class ListingCard extends StatelessWidget {
               style: t.textTheme.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          // Hours come after the place, because somebody asks "where" before
+          // "when" — and sitting between the name and the description they
+          // separated the two things that identify the listing.
+          if (listing.kind == ListingKind.business && listing.hours != null) ...[
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 14,
+                    color: context.cTextSecondary),
+                const SizedBox(width: 4),
+                Text(listing.hours!, style: t.textTheme.bodySmall),
+              ],
             ),
           ],
           SizedBox(height: DSSpacing.xs),
