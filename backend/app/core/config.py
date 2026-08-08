@@ -7,6 +7,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
+    #: Example work listings, so the index is not empty on the first day.
+    #: They are flagged, marked in the UI and cannot be dialled. Turn off once
+    #: real listings outnumber them.
+    WORK_SAMPLES_ENABLED: bool = True
+
     #: Where a member's blind copy goes, so the club learns a letter was
     #: actually sent without having to ask. Disclosed to the member on the
     #: draft screen with a switch — never a silent copy. Empty disables it.

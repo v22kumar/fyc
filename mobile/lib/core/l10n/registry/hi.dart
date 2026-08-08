@@ -1276,4 +1276,8 @@ const Map<String, String> kHi = {
   'work_cat_beauty': 'ब्यूटी सैलून',
   'work_cat_events': 'कार्यक्रम',
   'work_cat_repairs_general': 'मरम्मत',
+  'work_member_since': 'सदस्य',
+  'work_be_the_first': 'सबसे पहले आप दर्ज करें',
+  'sample': 'नमूना',
+  'sample_cannot_be_called': 'यह एक उदाहरण है, असली व्यक्ति नहीं।',
 };

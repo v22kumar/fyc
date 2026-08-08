@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/design_system/components/ds_screen_header.dart';
 import '../../../../core/design_system/tokens.dart';
@@ -8,7 +9,6 @@ import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/work_entities.dart';
 import '../../domain/repositories/work_repository.dart';
-import '../bloc/work_bloc.dart';
 
 /// List what you do — done once, so short enough to finish standing up.
 ///
@@ -79,8 +79,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         address: _isShop ? _address.text.trim() : null,
         hours: _isShop ? _hours.text.trim() : null,
       );
+      // The haptic is fired without awaiting, so nothing touches `context`
+      // after an async gap — the analyzer was right that the widget can be
+      // gone by then, and a disposed-context lookup here would crash on the
+      // one screen somebody only ever uses once.
+      unawaited(HapticFeedback.mediumImpact());
       if (!mounted) return;
-      await HapticFeedback.mediumImpact();
       // Say what happens next. The alternative is silence, and somebody who
       // hears silence concludes it did not work.
       ScaffoldMessenger.of(context).showSnackBar(

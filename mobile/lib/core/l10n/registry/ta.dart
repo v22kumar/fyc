@@ -1276,4 +1276,8 @@ const Map<String, String> kTa = {
   'work_cat_beauty': 'அழகு நிலையம்',
   'work_cat_events': 'நிகழ்ச்சிகள்',
   'work_cat_repairs_general': 'பழுது பார்த்தல்',
+  'work_member_since': 'உறுப்பினர்',
+  'work_be_the_first': 'முதலில் நீங்கள் பதிவு செய்யுங்கள்',
+  'sample': 'மாதிரி',
+  'sample_cannot_be_called': 'இது ஒரு மாதிரி பதிவு, உண்மையான நபர் அல்ல.',
 };

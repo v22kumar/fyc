@@ -26,6 +26,13 @@ class ListingCard extends StatelessWidget {
   final void Function(WorkListing) onOpened;
 
   Future<void> _dial(BuildContext context) async {
+    if (listing.isSample) {
+      // Refused rather than disabled, so it says why.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('sample_cannot_be_called'))),
+      );
+      return;
+    }
     onOpened(listing);
     await HapticFeedback.selectionClick();
     final uri = Uri(scheme: 'tel', path: listing.phone);
@@ -33,6 +40,12 @@ class ListingCard extends StatelessWidget {
   }
 
   Future<void> _whatsapp(BuildContext context) async {
+    if (listing.isSample) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('sample_cannot_be_called'))),
+      );
+      return;
+    }
     onOpened(listing);
     final digits = (listing.whatsapp ?? listing.phone).replaceAll(RegExp(r'\D'), '');
     // Assume an Indian number when no country code is given, which is what
@@ -58,7 +71,31 @@ class ListingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(listing.displayName, style: t.textTheme.titleSmall),
+          Row(
+            children: [
+              Flexible(
+                child: Text(listing.displayName,
+                    style: t.textTheme.titleSmall,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              if (listing.isSample) ...[
+                const SizedBox(width: 6),
+                // Said on the card, not buried in the description. Somebody
+                // scanning a list must not mistake an example for a neighbour.
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: context.cTextSecondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(DSRadius.chip),
+                  ),
+                  child: Text(trId('sample'),
+                      style: t.textTheme.labelSmall
+                          ?.copyWith(color: context.cTextSecondary)),
+                ),
+              ],
+            ],
+          ),
           if (listing.area != null || listing.about != null) ...[
             const SizedBox(height: 2),
             Text(
@@ -68,6 +105,20 @@ class ListingCard extends StatelessWidget {
               style: t.textTheme.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          // Hours come after the place, because somebody asks "where" before
+          // "when" — and sitting between the name and the description they
+          // separated the two things that identify the listing.
+          if (listing.kind == ListingKind.business && listing.hours != null) ...[
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 14,
+                    color: context.cTextSecondary),
+                const SizedBox(width: 4),
+                Text(listing.hours!, style: t.textTheme.bodySmall),
+              ],
             ),
           ],
           SizedBox(height: DSSpacing.xs),
@@ -128,13 +179,30 @@ class _TrustLine extends StatelessWidget {
           style: t.textTheme.bodySmall?.copyWith(color: context.cTextSecondary));
     }
 
+    // Compact, and an icon rather than a "✓" character.
+    //
+    // Spelled out, this line wrapped to two rows and took as much space as the
+    // description — on a card meant to be scanned in a second, the trust
+    // signal must be readable at a glance, not read. And the tick glyph is not
+    // in the app's typeface, so it rendered as a box.
     final bits = <String>[
-      if (trust.phoneVerified) '✓ ${trId('number_verified')}',
       '${trust.jobsConfirmed} ${trId('jobs_done')}',
       if (trust.memberSinceYear != null)
-        '${trId('member_since')} ${trust.memberSinceYear}',
+        '${trId('work_member_since')} ${trust.memberSinceYear}',
     ];
-    return Text(bits.join(' · '),
-        style: t.textTheme.bodySmall?.copyWith(color: AppColors.primary));
+    return Row(
+      children: [
+        if (trust.phoneVerified) ...[
+          Icon(Icons.verified_rounded, size: 15, color: AppColors.primary),
+          const SizedBox(width: 4),
+        ],
+        Flexible(
+          child: Text(bits.join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t.textTheme.bodySmall?.copyWith(color: AppColors.primary)),
+        ),
+      ],
+    );
   }
 }

@@ -132,6 +132,31 @@ def _seed_database():
             # A directory that fails to seed must never stop the app booting.
             logger.warning("[civic] directory seeding skipped: %s", _ce)
 
+        # A few example work listings, so the index is not empty on day one.
+        #
+        # Somebody who opens a category and finds nothing concludes the whole
+        # app is empty and does not come back — a directory has to look like
+        # one before anybody adds themselves to it. These are flagged as
+        # samples, carry an unusable number, and the app refuses to dial them;
+        # putting a stranger's real phone in front of members to make the list
+        # look fuller would be worse than an empty list.
+        #
+        # Off by default. Turn WORK_SAMPLES_ENABLED off — or call
+        # seeds.work_samples.remove — once real listings outnumber them.
+        try:
+            if getattr(settings, "WORK_SAMPLES_ENABLED", False):
+                from seeds.work_samples import seed as _seed_work
+                _org = uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d")
+                _owner = db.query(User).filter(
+                    User.organization_id == _org).order_by(
+                    User.created_at.asc()).first()
+                if _owner is not None:
+                    _n = _seed_work(db, _org, _owner.id)
+                    if _n:
+                        logger.info("[work] %s sample listings seeded", _n)
+        except Exception as _we:
+            logger.warning("[work] sample seeding skipped: %s", _we)
+
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0
