@@ -7,7 +7,8 @@ import '../models/complaint_models.dart';
 
 /// The one place that talks to the server about complaints.
 abstract class ComplaintDataSource {
-  Future<CallLadder> ladder({required String category, String? geographyId});
+  Future<CallLadder> ladder({required String category, String? geographyId,
+      double? latitude, double? longitude});
   Future<ComplaintState> load(String id);
   Future<ComplaintState> logCall(String id, Map<String, dynamic> body);
   Future<ComplaintDraft> draft(String id, Map<String, dynamic> body);
@@ -25,11 +26,14 @@ class ComplaintDataSourceImpl implements ComplaintDataSource {
   Map<String, dynamic> _map(Response r) => (r.data as Map).cast<String, dynamic>();
 
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) async {
+  Future<CallLadder> ladder({required String category, String? geographyId,
+      double? latitude, double? longitude}) async {
     try {
       final r = await _api.dio.get<dynamic>('/api/v1/civic/ladder', queryParameters: {
         'category': category,
         if (geographyId != null) 'geography_id': geographyId,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
       });
       return ladderFromJson(_map(r));
     } on DioException catch (e) {

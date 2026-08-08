@@ -211,7 +211,8 @@ class ComplaintDetailScreen extends StatelessWidget {
         onSentConfirmed: () => bloc.add(const SendConfirmed()),
         onBccChanged: (on) => bloc.add(DraftRequested(bccClub: on)),
       ),
-    );
+      // However it closes — button, back gesture, tap outside.
+    ).whenComplete(() => bloc.add(const DraftDismissed()));
   }
 
   /// Asked after the dialler has closed, never before — and the answer is

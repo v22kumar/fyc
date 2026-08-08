@@ -37,6 +37,10 @@ class LadderList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Outside the district is a different answer from "we have not collected
+    // this office yet", and telling a member the second when the first is true
+    // is how they end up ringing Nagercoil about a street in Bengaluru.
+    if (!ladder.covered) return const _OutsideArea();
     if (ladder.rungs.isEmpty) return _NoRoute(ladder: ladder);
 
     // "Start here" belongs on the first rung they can actually use, not on
@@ -370,6 +374,46 @@ class _StartPill extends StatelessWidget {
                 .labelSmall
                 ?.copyWith(color: AppColors.primary)),
       );
+}
+
+/// The report is somewhere this club's directory does not speak for.
+///
+/// Said plainly rather than dressed up as an empty list. The member has done
+/// nothing wrong and the app has nothing useful — pretending otherwise would
+/// route a complaint to an officer six hundred kilometres away.
+class _OutsideArea extends StatelessWidget {
+  const _OutsideArea();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(DSSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.cSurface,
+        borderRadius: BorderRadius.circular(DSRadius.card),
+        border: Border.all(color: context.cBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_off_outlined,
+                  size: 18, color: context.cTextSecondary),
+              SizedBox(width: DSSpacing.xs),
+              Expanded(
+                child: Text(trId('outside_our_area'),
+                    style: Theme.of(context).textTheme.titleSmall),
+              ),
+            ],
+          ),
+          SizedBox(height: DSSpacing.xs),
+          Text(trId('outside_our_area_help'),
+              style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
 }
 
 /// No route at all. Still gives the member somewhere to go.

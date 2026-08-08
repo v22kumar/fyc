@@ -150,3 +150,8 @@ class CallLadderOut(BaseModel):
     #: A published helpline or portal, for when no rung can be reached at all.
     fallback_helpline: Optional[str] = None
     fallback_portal_url: Optional[str] = None
+    #: False when the report is outside the district this club's directory
+    #: covers. The rungs are then empty on purpose — an office six hundred
+    #: kilometres from the problem is worse than no office, and saying "we do
+    #: not have this area" is the honest answer.
+    covered: bool = True

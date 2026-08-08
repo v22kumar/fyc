@@ -9,8 +9,10 @@ class ComplaintRepositoryImpl implements ComplaintRepository {
   final ComplaintDataSource _source;
 
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) =>
-      _source.ladder(category: category, geographyId: geographyId);
+  Future<CallLadder> ladder({required String category, String? geographyId,
+          double? latitude, double? longitude}) =>
+      _source.ladder(category: category, geographyId: geographyId,
+          latitude: latitude, longitude: longitude);
 
   @override
   Future<ComplaintState> load(String complaintId) => _source.load(complaintId);

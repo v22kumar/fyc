@@ -38,8 +38,9 @@ class _Fake implements ComplaintRepository {
   }
 
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) async {
-    calls.add('ladder');
+  Future<CallLadder> ladder({required String category, String? geographyId,
+      double? latitude, double? longitude}) async {
+    calls.add('ladder:lat=$latitude');
     if (ladderThrows) throw Exception('network');
     return CallLadder(category: category, rungs: const [
       LadderRung(
@@ -141,7 +142,8 @@ void main() {
       () async {
     bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
     await Future<void>.delayed(Duration.zero);
-    expect(repo.calls, containsAll(['load', 'ladder']));
+    expect(repo.calls, contains('load'));
+    expect(repo.calls.any((c) => c.startsWith('ladder')), isTrue);
     expect(bloc.state.ladder!.rungs.length, 2);
   });
 
@@ -200,6 +202,30 @@ void main() {
     bloc.add(const HandedToClub());
     await Future<void>.delayed(Duration.zero);
     expect(bloc.state.complaint!.lane, ComplaintLane.viaClub);
+  });
+
+  test('the location travels to the ladder', () async {
+    // Without it the server cannot tell whether the report is inside the
+    // district the club covers, and used to assume it was — routing a
+    // Bengaluru pothole to an engineer in Nagercoil.
+    bloc.add(const LoadComplaint('c1',
+        category: 'STREET_LIGHT', latitude: 8.1833, longitude: 77.4119));
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.calls, contains('ladder:lat=8.1833'));
+  });
+
+  test('a draft is thrown away when the sheet closes', () async {
+    // It used to stay in state, so a second request could not be told from the
+    // first and the sheet never reopened.
+    bloc.add(const LoadComplaint('c1'));
+    await Future<void>.delayed(Duration.zero);
+    bloc.add(const DraftRequested());
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.draft, isNotNull);
+
+    bloc.add(const DraftDismissed());
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.draft, isNull);
   });
 
   test('a failed ladder is not the same as an empty one', () async {

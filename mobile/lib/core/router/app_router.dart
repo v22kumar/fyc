@@ -398,6 +398,10 @@ final appRouter = GoRouter(
           ..add(LoadComplaint(
             state.pathParameters['id']!,
             category: state.uri.queryParameters['category'],
+            latitude:
+                double.tryParse(state.uri.queryParameters['lat'] ?? ''),
+            longitude:
+                double.tryParse(state.uri.queryParameters['lng'] ?? ''),
           )),
         child: ComplaintDetailScreen(
           complaintId: state.pathParameters['id']!,

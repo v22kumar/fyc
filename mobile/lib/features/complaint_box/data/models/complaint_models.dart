@@ -38,6 +38,7 @@ CallLadder ladderFromJson(Map<String, dynamic> j) => CallLadder(
       placeName: j['place_name'] as String?,
       fallbackHelpline: j['fallback_helpline'] as String?,
       fallbackPortalUrl: j['fallback_portal_url'] as String?,
+      covered: j['covered'] as bool? ?? true,
       rungs: [
         for (final r in (j['rungs'] as List? ?? []))
           rungFromJson(r as Map<String, dynamic>)

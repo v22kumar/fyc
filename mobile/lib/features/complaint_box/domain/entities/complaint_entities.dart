@@ -92,6 +92,7 @@ class CallLadder extends Equatable {
     this.placeName,
     this.fallbackHelpline,
     this.fallbackPortalUrl,
+    this.covered = true,
   });
 
   final String category;
@@ -99,6 +100,11 @@ class CallLadder extends Equatable {
   final String? placeName;
   final String? fallbackHelpline;
   final String? fallbackPortalUrl;
+
+  /// False when the report is outside the district this club's directory
+  /// covers. The rungs are empty on purpose then — an office six hundred
+  /// kilometres from the problem is worse than no office.
+  final bool covered;
 
   bool get hasAnyoneToCall => rungs.any((r) => r.canCall);
 

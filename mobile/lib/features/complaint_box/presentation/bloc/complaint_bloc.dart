@@ -13,11 +13,18 @@ abstract class ComplaintBlocEvent extends Equatable {
 }
 
 class LoadComplaint extends ComplaintBlocEvent {
-  const LoadComplaint(this.id, {this.category});
+  const LoadComplaint(this.id, {this.category, this.latitude, this.longitude});
   final String id;
   final String? category;
+
+  /// Where the problem is. Without these the server cannot tell whether the
+  /// report is inside the district the club's directory covers, and used to
+  /// assume it was — routing a Bengaluru pothole to Nagercoil.
+  final double? latitude;
+  final double? longitude;
+
   @override
-  List<Object?> get props => [id, category];
+  List<Object?> get props => [id, category, latitude, longitude];
 }
 
 class CallLogged extends ComplaintBlocEvent {
@@ -65,6 +72,15 @@ class Reopened extends ComplaintBlocEvent {
 
 class HandedToClub extends ComplaintBlocEvent {
   const HandedToClub();
+}
+
+/// The letter sheet closed. Throws the draft away.
+///
+/// Without this the draft stayed in state after the sheet was dismissed, so
+/// asking for a second one left the screen unable to tell a fresh draft from
+/// the one already sitting there — and the sheet never reopened.
+class DraftDismissed extends ComplaintBlocEvent {
+  const DraftDismissed();
 }
 
 class ContactSuggested extends ComplaintBlocEvent {
@@ -168,6 +184,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
     on<Reopened>(_onReopen);
     on<HandedToClub>(_onHandover);
     on<ContactSuggested>(_onSuggestContact);
+    on<DraftDismissed>((_, emit) => emit(state.copyWith(clearDraft: true)));
   }
 
   final ComplaintRepository _repo;
@@ -196,7 +213,11 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
       var ladderFailed = false;
       if (ev.category != null) {
         try {
-          ladder = await _repo.ladder(category: ev.category!);
+          ladder = await _repo.ladder(
+            category: ev.category!,
+            latitude: ev.latitude,
+            longitude: ev.longitude,
+          );
         } catch (_) {
           // A missing ladder is a directory gap, not a reason to fail the
           // screen — the member can still write, or hand it to the club.

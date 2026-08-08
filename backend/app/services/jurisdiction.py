@@ -189,3 +189,42 @@ def resolve(
             f"assumed {default.value.replace('_', ' ').lower()}"
         ),
     )
+
+
+# ── Whether the club's directory covers a place at all ────────────────────────
+
+#: Kanniyakumari district, as a bounding box.
+#:
+#: Deliberately crude. The club's directory is forty offices in one district,
+#: and a box is enough to answer the only question being asked: is this
+#: somewhere we know anything about? Real boundary data would let a complaint
+#: route to the right *ward*; this exists so a complaint from Bengaluru does
+#: not route to Nagercoil at all.
+KANNIYAKUMARI_BOUNDS = {
+    "min_lat": 8.03, "max_lat": 8.42,
+    "min_lng": 77.06, "max_lng": 77.62,
+}
+
+
+def is_covered(latitude, longitude) -> bool:
+    """Is this somewhere the club's directory speaks for?
+
+    A member in Bengaluru reporting a pothole used to be routed to an Assistant
+    Engineer in Nagercoil — six hundred kilometres away, who would have no idea
+    what they were being written to about. The system had no concept of being
+    outside its own area: an unknown location fell back to a guessed default,
+    and the guess was always Kanniyakumari.
+
+    Returning False here is the app saying it does not know, which is the
+    honest answer and far better than a confident wrong one.
+    """
+    if latitude is None or longitude is None:
+        return False
+    try:
+        lat, lng = float(latitude), float(longitude)
+    except (TypeError, ValueError):
+        return False
+    return (
+        KANNIYAKUMARI_BOUNDS["min_lat"] <= lat <= KANNIYAKUMARI_BOUNDS["max_lat"]
+        and KANNIYAKUMARI_BOUNDS["min_lng"] <= lng <= KANNIYAKUMARI_BOUNDS["max_lng"]
+    )

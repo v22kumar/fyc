@@ -206,7 +206,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     // the three routes live. "Submitted" and a list is how a
                     // report becomes a thing nobody does anything about.
                     if (complaintId != null) {
-                      context.push('/complaints/$complaintId?category=$_kind');
+                      // Coordinates travel with the link, so the next screen
+                      // can tell whether the club's directory covers this
+                      // place at all.
+                      context.push('/complaints/$complaintId'
+                          '?category=$_kind&lat=$_lat&lng=$_lng');
                     } else {
                       context.go('/issues/track');
                     }

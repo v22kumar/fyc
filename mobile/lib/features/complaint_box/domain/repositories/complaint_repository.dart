@@ -9,7 +9,15 @@ import '../entities/complaint_entities.dart';
 abstract class ComplaintRepository {
   /// Every office worth trying, nearest first, including the ones nobody has
   /// filled in yet.
-  Future<CallLadder> ladder({required String category, String? geographyId});
+  /// Coordinates matter: without them the server cannot tell whether the
+  /// report is inside the district this club's directory covers, and used to
+  /// assume it was.
+  Future<CallLadder> ladder({
+    required String category,
+    String? geographyId,
+    double? latitude,
+    double? longitude,
+  });
 
   Future<ComplaintState> load(String complaintId);
 

@@ -30,6 +30,7 @@ from app.schemas.civic import (
     LadderHealthOut, CallLadderOut, LadderRungOut,
 )
 from app.services.complaint_routing import build_ladder
+from app.services.jurisdiction import is_covered
 from app.services.jurisdiction import resolve as resolve_jurisdiction
 from app.services.jurisdiction import Confidence, Jurisdiction
 
@@ -284,6 +285,8 @@ _COVERS = {
 def call_ladder(
     category: str = Query(description="what the complaint is about"),
     geography_id: Optional[UUID] = Query(default=None),
+    latitude: Optional[float] = Query(default=None),
+    longitude: Optional[float] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -299,6 +302,19 @@ def call_ladder(
     Unreachable rungs are returned too, marked. Hiding an office we have no
     number for would hide the gap; showing it greyed is how it gets filled.
     """
+    # Is this even somewhere the club's directory speaks for?
+    #
+    # Without this a member in Bengaluru was routed to an Assistant Engineer in
+    # Nagercoil, because an unknown location fell back to a guessed default and
+    # the guess was always Kanniyakumari. An office six hundred kilometres from
+    # the problem is worse than no office.
+    if latitude is not None and longitude is not None and not is_covered(
+            latitude, longitude):
+        return CallLadderOut(
+            category=category, rungs=[], covered=False,
+            place_name=None, local_body_type=None,
+        )
+
     org_id = current_user.organization_id
     # The reporter's own place is the fallback when the report has no tag —
     # someone can report a pothole outside their ward, but it is right far more

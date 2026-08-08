@@ -252,7 +252,9 @@ class _StubRepo implements ComplaintRepository {
   final ComplaintState _state;
 
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) async => _ladder;
+  Future<CallLadder> ladder({required String category, String? geographyId,
+          double? latitude, double? longitude}) async =>
+      _ladder;
   @override
   Future<ComplaintState> load(String id) async => _state;
   @override
