@@ -270,6 +270,83 @@ def apply(records: list[dict], organization_id: str) -> int:
     return written
 
 
+def apply_worksheet(db, organization_id, path) -> int:
+    """Fill blank contacts from the worksheet, on an existing session.
+
+    Separate from `apply` because this one runs on every boot, and the rules
+    are different when nobody is watching:
+
+    * It only fills a contact that is still blank. An organiser who corrected a
+      number by hand must not have it reverted on the next deploy by a file
+      that was right in August.
+    * It takes the caller's session, so a failure rolls back with the rest of
+      startup rather than half-committing a directory.
+
+    Returns how many offices it filled, so the boot log can say.
+    """
+    import json
+
+    from app.models.civic import Authority, Department, LocalBodyType
+    from scripts.civic_contacts_worksheet import office_id
+
+    if not path.exists():
+        return 0
+    records = json.loads(path.read_text())
+    if isinstance(records, dict):
+        records = records.get("offices") or records.get("rows") or []
+
+    by_code = {
+        d.code: d
+        for d in db.query(Department).filter(
+            Department.organization_id == organization_id
+        )
+    }
+    offices = {}
+    for a in db.query(Authority).filter(
+        Authority.organization_id == organization_id
+    ):
+        dept = next((c for c, d in by_code.items() if d.id == a.department_id), None)
+        if dept is None:
+            continue
+        lbt = LocalBodyType(a.local_body_type) if a.local_body_type else None
+        offices[office_id(dept, a.rung, a.designation_en, lbt)] = a
+
+    filled = 0
+    for r in records:
+        phone = (r.get("phone") or "").strip()
+        email = (r.get("email") or "").strip()
+        if not (phone or email):
+            continue
+        authority = offices.get(r.get("office_id"))
+        if authority is None:
+            continue
+
+        touched = False
+        if phone and not (authority.phone or "").strip():
+            authority.phone = phone
+            touched = True
+        if email and not (authority.email or "").strip():
+            authority.email = email
+            touched = True
+        if not touched:
+            continue
+
+        # Provenance travels with the contact. A number nobody can trace is one
+        # nobody can check when it stops working.
+        authority.source_url = r.get("source_url") or authority.source_url
+        if r.get("verified_at"):
+            authority.verified_at = datetime.strptime(
+                r["verified_at"], "%Y-%m-%d"
+            ).replace(tzinfo=timezone.utc)
+        if r.get("office_name") and not authority.office_name_en:
+            authority.office_name_en = r["office_name"]
+        filled += 1
+
+    if filled:
+        db.flush()
+    return filled
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("file", type=Path)
