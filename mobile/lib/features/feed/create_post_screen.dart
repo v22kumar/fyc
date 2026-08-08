@@ -347,7 +347,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   label: trId('volunteer'),
                   onTap: () {
                     Navigator.pop(context);
-                    context.push('/opportunities');
+                    context.push('/work');
                   },
                 ),
               ],

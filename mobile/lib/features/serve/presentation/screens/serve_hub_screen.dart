@@ -84,7 +84,10 @@ class ServeHubScreen extends StatelessWidget {
             tint: const Color(0xFF16255A),
             title: trId('jobs_gigs'),
             subtitle: trId('find_work_post_a_job'),
-            onTap: () => context.push('/opportunities'),
+            // The rebuilt index. The old /opportunities screen could create a
+            // posting nobody could browse; this is the directory that makes a
+            // posting worth making.
+            onTap: () => context.push('/work'),
           ),
           const SizedBox(height: 12),
           _PeerCard(

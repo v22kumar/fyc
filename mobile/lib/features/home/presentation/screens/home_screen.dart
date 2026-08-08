@@ -730,7 +730,7 @@ class _ServiceBento extends StatelessWidget {
         subtitle: trId('jobs_scholarships_community_gigs'),
         icon: Icons.work_rounded,
         tint: AppColors.gold,
-        route: '/opportunities',
+        route: '/work',
         illustration: 'opportunities',
         pill: trId('jobs_2'),
         pillColor: AppColors.gold,
@@ -1399,7 +1399,7 @@ class _MoreSheet extends StatelessWidget {
           _MenuItem(Icons.travel_explore_rounded, ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track', const Color(0xFF14B8A6)),
           _MenuItem(Icons.badge_rounded, l.membership, '/membership', AppColors.primary),
           _MenuItem(Icons.contacts_rounded, l.directory, '/directory', const Color(0xFF2563EB)),
-          _MenuItem(Icons.work_rounded, ta ? 'வாய்ப்புகள்' : 'Opportunities', '/opportunities', const Color(0xFFD97706)),
+          _MenuItem(Icons.work_rounded, ta ? 'வாய்ப்புகள்' : 'Opportunities', '/work', const Color(0xFFD97706)),
         ],
       ),
       (
