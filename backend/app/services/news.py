@@ -54,6 +54,57 @@ def _split_title_source(raw_title: str) -> tuple[str, str]:
     return raw_title, "Google News"
 
 
+#: Words that mean a search box rather than a story.
+_QUERY_WORDS = {"news", "latest", "today", "updates", "breaking", "district",
+                "headlines"}
+
+
+def _title_key(title: str) -> str:
+    """A headline reduced to the words that carry it.
+
+    Punctuation, case and the publisher suffix vary between feeds while the
+    story does not, so those are stripped before comparing.
+    """
+    import re
+
+    t = title.lower().split(" - ")[0].split(" | ")[0]
+    t = re.sub(r"[^a-z0-9\u0b80-\u0bff ]+", " ", t)
+    return " ".join(t.split())
+
+
+def _looks_like_a_query(title: str) -> bool:
+    """Is this a search term somebody typed rather than something published?
+
+    "kanyakumari news" and "Kanyakumari district" arrived as titles from a
+    search API. A real headline says something; these name a topic. The test
+    is deliberately conservative — three words or fewer, and every word either
+    a place or one of the query words above — because dropping a real story is
+    worse than keeping a dull one.
+    """
+    words = [w for w in title.strip().lower().replace("|", " ").split() if w]
+    if not words or len(words) > 4:
+        return False
+    return all(w in _QUERY_WORDS or w.isalpha() and len(w) > 3
+               for w in words) and any(w in _QUERY_WORDS for w in words)
+
+
+def _publisher_from_url(url: str) -> str:
+    """The masthead, from the domain.
+
+    dinamalar.com becomes Dinamalar. Not perfect, and far better than naming
+    the scraper: a member reading "Firecrawl" under a headline reasonably
+    concludes that is who wrote it.
+    """
+    from urllib.parse import urlparse
+
+    host = (urlparse(url).netloc or "").lower()
+    host = host.removeprefix("www.").removeprefix("m.")
+    if not host:
+        return ""
+    name = host.split(".")[0]
+    return name[:1].upper() + name[1:] if name else ""
+
+
 def _parse_pubdate(raw: Optional[str]) -> Optional[datetime]:
     if not raw:
         return None
@@ -206,12 +257,27 @@ async def _fetch_firecrawl(query: str, limit: int) -> list[dict]:
             if not title or not link:
                 continue
             
-            # Firecrawl search might not provide published_at, we default to now or omit
+            # A search result is not always a news story. "kanyakumari news"
+            # and "Kanyakumari district" are queries that came back as titles,
+            # and putting them in a headline list tells a member the app does
+            # not know what it is showing them.
+            if _looks_like_a_query(title):
+                continue
+
             items.append({
                 "title": title,
-                "source": "Firecrawl",
+                # The publisher, taken from the link — not the name of the
+                # tool that fetched it. "Firecrawl" was appearing under every
+                # headline as though it were a newspaper.
+                "source": _publisher_from_url(link),
                 "link": link,
-                "published_at": datetime.now(timezone.utc),
+                # Deliberately absent rather than invented.
+                #
+                # This used to be set to the moment of the fetch, so every
+                # story in the list read "3m" no matter how old it was. A
+                # fabricated timestamp is worse than none: it is the app
+                # asserting a fact it does not have.
+                "published_at": None,
             })
         return items
     except Exception as e:
@@ -264,17 +330,28 @@ async def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]
     
     combined = []
     seen_urls = set()
-    
+    seen_titles = set()
+
+    def _add(item: dict) -> None:
+        # Two sources carrying the same story under different URLs is the
+        # normal case, not the exception — which is why matching on the link
+        # alone let the same headline appear twice in one list. Comparing the
+        # words as well catches it.
+        key = _title_key(item.get("title", ""))
+        if item["link"] in seen_urls or (key and key in seen_titles):
+            return
+        combined.append(item)
+        seen_urls.add(item["link"])
+        if key:
+            seen_titles.add(key)
+
     if not isinstance(rss_items, Exception):
         for item in rss_items:
-            combined.append(item)
-            seen_urls.add(item["link"])
-            
+            _add(item)
+
     if not isinstance(fc_items, Exception):
         for item in fc_items:
-            if item["link"] not in seen_urls:
-                combined.append(item)
-                seen_urls.add(item["link"])
+            _add(item)
                 
     # Sort by published_at descending if available
     combined.sort(

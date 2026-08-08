@@ -10,6 +10,8 @@ import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_badge.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
+import '../../../../core/design_system/surfaces/glass_card.dart';
+import '../../../../core/design_system/surfaces/mesh_backdrop.dart';
 import '../../../../core/design_system/components/spot_illustration.dart';
 import '../../../sports/presentation/screens/live_scorecard_screen.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
@@ -52,6 +54,14 @@ void showHomeCreateSheet(BuildContext context) => _showCreateSheet(context);
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _aurora;
+
+  /// How far the page has scrolled, for the mesh drift.
+  ///
+  /// Held in a ValueNotifier rather than setState: the ground repaints, the
+  /// rest of Home does not. Rebuilding a two-and-a-half-thousand-line tree on
+  /// every scroll frame would make the drift cost more than it is worth.
+  final ValueNotifier<double> _scroll = ValueNotifier(0);
+  final ScrollController _scrollController = ScrollController();
   int _refreshKey = 0;
   DateTime? _lastRefreshed;
 
@@ -59,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _aurora = AnimationController(vsync: this, duration: const Duration(seconds: 12))..repeat();
+    _scrollController.addListener(() => _scroll.value = _scrollController.offset);
     _lastRefreshed = DateTime.now();
     // Purge any leftover update installer from a previous update (best-effort),
     // then check for a newer build once the home screen is shown.
@@ -71,6 +82,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _aurora.dispose();
+    _scrollController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -100,11 +113,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           // brand row + search stay pinned, and body sections are slivers so
           // later slices can reorder/lazy-load them individually.
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               _Header(l: l, aurora: _aurora),
               SliverToBoxAdapter(
-                child: _HomeBackdrop(
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _scroll,
+                  builder: (context, offset, child) =>
+                      _HomeBackdrop(scroll: offset, child: child!),
                   child: Padding(
                   padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: Column(
@@ -141,39 +158,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 /// surface instead of flat white. Theme-aware; clipped to the rounded top.
 class _HomeBackdrop extends StatelessWidget {
   final Widget child;
-  const _HomeBackdrop({required this.child});
+
+  /// How far the page has scrolled, so the mesh drifts.
+  ///
+  /// Two fixed glows and a static kolam were what this used to be: pretty, and
+  /// identical in every screenshot. The blobs now move at different rates as
+  /// the page moves, which is the difference between a background and a ground
+  /// the content sits in.
+  final double scroll;
+
+  const _HomeBackdrop({required this.child, this.scroll = 0});
 
   @override
   Widget build(BuildContext context) {
     final dark = context.isDark;
     return ClipRRect(
       borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: dark
-                ? [Color(0xFF10162E), AppColors.darkBackground]
-                : const [Color(0xFFF1F5FF), Color(0xFFFBFCFF)],
-          ),
-        ),
+      child: MeshBackdrop(
+        scroll: scroll,
+        // Related hues on purpose — a mesh of unrelated colours reads as a
+        // fault rather than as a gradient. Lighter and far softer in the light
+        // theme, where a saturated ground fights the text instead of holding it.
+        intensity: dark ? 1 : 0.45,
+        colors: dark
+            ? const [
+                Color(0xFF0E7C66),
+                Color(0xFF1E3A8A),
+                Color(0xFF7C2D6B),
+                Color(0xFFB45309),
+              ]
+            : const [
+                Color(0xFF7DD3C0),
+                Color(0xFFA5C4FF),
+                Color(0xFFE9C8E4),
+                Color(0xFFFFE1A8),
+              ],
         child: Stack(
           children: [
-            Positioned(
-                top: -70,
-                left: -60,
-                child: _glow(AppColors.primaryLight.withOpacity(dark ? 0.12 : 0.16), 220)),
-            Positioned(
-                top: 20,
-                right: -70,
-                child: _glow(AppColors.gold.withOpacity(dark ? 0.08 : 0.12), 200)),
+            // The kolam stays. It is the one piece of this backdrop that is
+            // about Nagercoil rather than about depth.
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: KolamPattern(
-                    color: (dark ? AppColors.background : Color(0xFF0A1128))
-                        .withOpacity(dark ? 0.045 : 0.03),
+                    color: (dark ? AppColors.background : const Color(0xFF0A1128))
+                        .withValues(alpha: dark ? 0.045 : 0.03),
                   ),
                 ),
               ),
@@ -184,17 +213,6 @@ class _HomeBackdrop extends StatelessWidget {
       ),
     );
   }
-
-  Widget _glow(Color c, double d) => IgnorePointer(
-        child: Container(
-          width: d,
-          height: d,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(colors: [c, c.withOpacity(0)]),
-          ),
-        ),
-      );
 }
 
 // ── Header ───────────────────────────────────────────────────────────────────
@@ -681,14 +699,11 @@ class _ServiceBento extends StatelessWidget {
         route: '/blood-donation',
         illustration: 'blood',
       ),
-      _Service(
-        title: trId('sports_arena'),
-        subtitle: trId('tournaments_chess_live_scores'),
-        icon: Icons.sports_cricket_rounded,
-        tint: AppColors.warning,
-        route: '/sports',
-        illustration: 'sports',
-      ),
+      // Sports Arena is the featured hero directly above this grid — same
+      // title, same subtitle, same /sports destination, about two hundred
+      // points apart in one scroll. The tile went rather than the hero,
+      // because the hero carries the live indicator and is the one a member
+      // notices.
       _Service(
         title: trId('community_feed_2'),
         subtitle: trId('threads_gallery_updates'),
@@ -753,28 +768,79 @@ class _ServiceBento extends StatelessWidget {
         SizedBox(height: 12),
         const _FeaturedSportsHero(),
         SizedBox(height: 12),
+        // Four across, saturated, one screen.
+        //
+        // This was two across at an 0.82 aspect ratio — roughly 380 points per
+        // tile, so six of them ran to three full screens to present six links.
+        // A launcher is scanned rather than read: the subtitle was never the
+        // reason anybody tapped, and the illustration existed because the tile
+        // was large rather than the other way round.
+        //
+        // The colour that was spread thinly across a big pale card is now
+        // concentrated, and each tile throws its own glow onto the mesh
+        // beneath it.
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.82,
+            crossAxisCount: 4,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.80,
           ),
           itemCount: services.length,
           itemBuilder: (_, i) {
             final s = services[i];
-            return DSFeatureCard(
-              icon: s.icon,
-              title: s.title,
-              subtitle: s.subtitle,
+            return GlassCard(
               tint: s.tint,
-              pillLabel: s.pill,
-              pillColor: s.pillColor,
-              illustration: s.illustration,
-              actionLabel: trId('open'),
               onTap: () => context.push(s.route),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Stack(
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(s.icon, color: Colors.white, size: 24),
+                      const SizedBox(height: 6),
+                      Text(
+                        s.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // A pill still fits, as a dot — "NEW" spelled out does not
+                  // survive a tile this size, and losing the signal entirely
+                  // would be worse than abbreviating it.
+                  if (s.pill != null)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: s.pillColor ?? Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (s.pillColor ?? Colors.white)
+                                  .withValues(alpha: 0.8),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         ),
