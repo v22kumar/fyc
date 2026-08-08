@@ -1278,4 +1278,6 @@ const Map<String, String> kMl = {
   'work_cat_repairs_general': 'റിപ്പയർ',
   'work_member_since': 'അംഗം',
   'work_be_the_first': 'ആദ്യം നിങ്ങൾ ചേർക്കൂ',
+  'sample': 'സാമ്പിൾ',
+  'sample_cannot_be_called': 'ഇത് ഒരു ഉദാഹരണമാണ്, യഥാർത്ഥ വ്യക്തിയല്ല.',
 };

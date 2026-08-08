@@ -84,6 +84,8 @@ class ListingOut(BaseModel):
     address: Optional[str] = None
     hours: Optional[str] = None
     trust: TrustOut
+    #: A club-seeded example. The app shows it as one and will not dial it.
+    is_sample: bool = False
 
 
 class ListingIn(BaseModel):
@@ -156,6 +158,7 @@ def _out(db: Session, listing: Listing) -> ListingOut:
         phone=listing.phone, whatsapp=listing.whatsapp,
         address=listing.address, hours=listing.hours,
         trust=_trust(db, listing),
+        is_sample=bool(listing.is_sample),
     )
 
 

@@ -26,6 +26,13 @@ class ListingCard extends StatelessWidget {
   final void Function(WorkListing) onOpened;
 
   Future<void> _dial(BuildContext context) async {
+    if (listing.isSample) {
+      // Refused rather than disabled, so it says why.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('sample_cannot_be_called'))),
+      );
+      return;
+    }
     onOpened(listing);
     await HapticFeedback.selectionClick();
     final uri = Uri(scheme: 'tel', path: listing.phone);
@@ -33,6 +40,12 @@ class ListingCard extends StatelessWidget {
   }
 
   Future<void> _whatsapp(BuildContext context) async {
+    if (listing.isSample) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('sample_cannot_be_called'))),
+      );
+      return;
+    }
     onOpened(listing);
     final digits = (listing.whatsapp ?? listing.phone).replaceAll(RegExp(r'\D'), '');
     // Assume an Indian number when no country code is given, which is what
@@ -58,7 +71,31 @@ class ListingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(listing.displayName, style: t.textTheme.titleSmall),
+          Row(
+            children: [
+              Flexible(
+                child: Text(listing.displayName,
+                    style: t.textTheme.titleSmall,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              if (listing.isSample) ...[
+                const SizedBox(width: 6),
+                // Said on the card, not buried in the description. Somebody
+                // scanning a list must not mistake an example for a neighbour.
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: context.cTextSecondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(DSRadius.chip),
+                  ),
+                  child: Text(trId('sample'),
+                      style: t.textTheme.labelSmall
+                          ?.copyWith(color: context.cTextSecondary)),
+                ),
+              ],
+            ],
+          ),
           if (listing.area != null || listing.about != null) ...[
             const SizedBox(height: 2),
             Text(

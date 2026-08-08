@@ -53,6 +53,7 @@ class WorkListing extends Equatable {
     this.whatsapp,
     this.address,
     this.hours,
+    this.isSample = false,
   });
 
   final String id;
@@ -74,8 +75,13 @@ class WorkListing extends Equatable {
   final String? address;
   final String? hours;
 
+  /// Seeded by the club so the index is not empty on the first day. Shown as
+  /// a sample, and never dialled — India reserves no fictional phone range, so
+  /// the number on one of these cannot be allowed to reach anybody.
+  final bool isSample;
+
   @override
-  List<Object?> get props => [id, displayName, category, phone, trust];
+  List<Object?> get props => [id, displayName, category, phone, trust, isSample];
 }
 
 /// A listing as its owner sees it — with the one number that tells them

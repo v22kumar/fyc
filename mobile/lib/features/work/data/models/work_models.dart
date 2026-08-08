@@ -18,6 +18,7 @@ WorkListing listingFromJson(Map<String, dynamic> j) => WorkListing(
       whatsapp: j['whatsapp'] as String?,
       address: j['address'] as String?,
       hours: j['hours'] as String?,
+      isSample: j['is_sample'] as bool? ?? false,
       trust: _trustFromJson((j['trust'] as Map?)?.cast<String, dynamic>()),
     );
 

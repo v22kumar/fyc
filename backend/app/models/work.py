@@ -114,6 +114,16 @@ class Listing(Base, TimestampMixin, TenantModelMixin):
     #: listing back exactly as it was.
     is_hidden = Column(Boolean, nullable=False, default=False)
 
+    #: Seeded by the club so the index is not empty on the first day, and
+    #: marked so nobody mistakes it for a neighbour.
+    #:
+    #: India reserves no fictional phone range — any ten-digit number invented
+    #: here could be somebody's — so a sample carries an unusable number and
+    #: the app refuses to dial it. An index that looks populated by quietly
+    #: putting strangers' phones in front of members would be worse than an
+    #: empty one.
+    is_sample = Column(Boolean, nullable=False, default=False)
+
     #: How many people opened it. The only thing the app can honestly show
     #: somebody who listed once and heard nothing — and without it the supply
     #: side quietly decides it did not work.
