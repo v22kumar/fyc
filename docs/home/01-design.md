@@ -86,22 +86,49 @@ a member needed.
 points — three full screens to present seven links. Four across at icon-plus-
 label is one screen for all of them, and a launcher is scanned, not read.
 
-## 4. What "attractive" means here
+## 4. Richness is not the thing to cut — I had this wrong
 
-The club asked for something that hooks a member, and said the current styling
-is decent but not current. Two specific things, neither of which is more
-colour:
+My first pass read "fewer elements" as "make it minimal", and the club
+corrected it: they want gradients, imagery, overlays, depth. A wow factor.
 
-**Depth instead of decoration.** The tiles are large because they carry
-illustrations; the illustrations are there because the tiles are large. Cutting
-both and spending the saved space on *fewer, better* moments — one live-match
-card that actually animates, one kural set beautifully — reads as more
-designed, not less.
+**They are right, and the two things are not in conflict.** The research
+measures the cost of *decisions*, not of *pixels*. Fifty-two things to choose
+between is expensive. A gradient is free. Confusing the two is how a design
+review ends up recommending grey rectangles and calling it discipline.
 
-**Motion that reports rather than performs.** A live score that ticks, a
+So the target is not minimal. It is **fewer things, each of them far richer**
+— which is what the apps that feel expensive actually do. A streaming service
+home is visually enormous: full-bleed artwork, scrims, saturated colour. It is
+also about six decisions.
+
+Concretely, for this Home:
+
+**A mesh-gradient ground, not a flat one.** Several soft radial gradients
+blended behind the whole page, shifting slowly with scroll. It reads as depth
+rather than as a background colour, and it costs nothing to look at because
+there is nothing in it to decide about.
+
+**Full-bleed imagery with a scrim, on the few cards that matter.** A live
+match, a blood request, the kural. Image, then a gradient scrim so text stays
+legible over any photograph, then the words. This is the pattern every premium
+app uses and it is the single biggest change in perceived quality.
+
+**Saturated glass for the launcher.** The tiles get smaller in *height* and
+much stronger in *colour* — a tinted translucent surface over the mesh, with
+the blur showing through. Eight of those in one screen looks considered; seven
+tall pale boxes over three screens looks unfinished.
+
+**Depth as a system.** Two shadow levels and one blur level, used
+consistently, so the page has a foreground and a background instead of one
+plane.
+
+**Motion that reports rather than performs.** A score that ticks, a
 waiting-days count that increments, a NOW card that slides in when a match
-starts. Motion attached to real change is what makes an app feel alive;
-motion attached to navigation is what makes it feel slow.
+starts. Motion attached to real change makes an app feel alive; motion
+attached to navigation makes it feel slow.
+
+The rule that keeps both honest: **richness goes into the things that are
+staying, not into the number of things.**
 
 ## 5. Honest constraints
 
