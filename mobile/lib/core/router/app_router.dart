@@ -106,6 +106,10 @@ import '../../features/feed/create_post_screen.dart';
 
 // Design System v2 (Sprint 1)
 import '../design_system/design_system_gallery_screen.dart';
+import '../../features/work/domain/repositories/work_repository.dart';
+import '../../features/work/presentation/bloc/work_bloc.dart';
+import '../../features/work/presentation/screens/create_listing_screen.dart';
+import '../../features/work/presentation/screens/work_home_screen.dart';
 import '../../features/complaint_box/domain/repositories/complaint_repository.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
 import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
@@ -439,9 +443,12 @@ final appRouter = GoRouter(
       path: '/members',
       builder: (context, state) => const MembersRosterScreen(),
     ),
+    // The old opportunities screen: a create form with nothing to browse.
+    // Replaced by the work index, and kept as a redirect so any held link
+    // still lands somewhere useful.
     GoRoute(
       path: '/opportunities',
-      builder: (context, state) => const OpportunitiesScreen(),
+      redirect: (_, __) => '/work',
     ),
 
     // Chess

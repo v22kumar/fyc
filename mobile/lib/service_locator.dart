@@ -16,6 +16,9 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 // Blood donation
 import 'features/blood_donation/data/datasources/blood_donor_datasource.dart';
 import 'features/complaint_box/data/datasources/complaint_datasource.dart';
+import 'features/work/data/datasources/work_datasource.dart';
+import 'features/work/data/repositories/work_repository_impl.dart';
+import 'features/work/domain/repositories/work_repository.dart';
 import 'features/complaint_box/data/repositories/complaint_repository_impl.dart';
 import 'features/complaint_box/domain/repositories/complaint_repository.dart';
 import 'features/blood_donation/data/repositories/blood_donor_repository_impl.dart';
@@ -178,6 +181,14 @@ Future<void> initServiceLocator() async {
   );
 
   // ── Blood donation ────────────────────────────────────────────────────────
+  // Work — the local index
+  sl.registerLazySingleton<WorkDataSource>(
+    () => WorkDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<WorkRepository>(
+    () => WorkRepositoryImpl(sl<WorkDataSource>()),
+  );
+
   // Complaint Box
   sl.registerLazySingleton<ComplaintDataSource>(
     () => ComplaintDataSourceImpl(sl<ApiClient>()),

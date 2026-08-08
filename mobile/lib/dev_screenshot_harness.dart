@@ -79,7 +79,7 @@ const _routes = <String>[
   '/green/register',
   '/notifications',
   '/announcements',
-  '/opportunities',
+  '/work',
   '/about',
   '/settings',
   '/settings/safety',
