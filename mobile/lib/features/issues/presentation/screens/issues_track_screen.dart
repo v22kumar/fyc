@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/issue_entity.dart';
@@ -11,7 +12,6 @@ import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
 import 'issue_detail_screen.dart';
-import 'submit_issue_screen.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class IssuesTrackScreen extends StatefulWidget {
@@ -62,9 +62,10 @@ class _IssuesTrackScreenState extends State<IssuesTrackScreen> {
                       title: trId('all_clear'),
                       message: trId('there_are_no_reported_issues_in_your_are'),
                       buttonText: trId('report_an_issue'),
-                      onAction: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SubmitIssueScreen()),
-                      ),
+                      // The same flow the rest of the app opens. This pushed
+                      // the older screen directly rather than going through the
+                      // router, so it survived the route being repointed.
+                      onAction: () => context.push('/issues'),
                     );
                   }
                   return RefreshIndicator(

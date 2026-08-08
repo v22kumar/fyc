@@ -91,6 +91,18 @@ place; `scripts/import_civic_contacts.py` checks it.
 - **Not** run on a device, and nobody has yet sent a letter written by this to a
   real officer. Until that happens it is theory that passes its own tests.
 
+## Dead code to decide about
+
+`submit_issue_screen.dart` is now unreachable — nothing routes to it. It is the
+older reporting flow, and it contradicts what was decided since: it asks for
+the same description twice in two languages, tells the member the app will
+"auto mail to department" when the club no longer sends anything, and opens
+with a resolution rate computed from two reports.
+
+Left in place rather than deleted, because removing a six-hundred-line screen
+is a separate decision from fixing a route. But it should go: dead code that
+contradicts the product is how the contradiction comes back.
+
 ## Known rough edges
 
 - `can_call` / `can_write` are computed per request from the Authority row.

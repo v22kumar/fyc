@@ -16,7 +16,6 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/blood_donation/presentation/screens/blood_request_flow.dart';
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
-import '../../features/issues/presentation/screens/submit_issue_screen.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/issues/presentation/screens/review_queue_screen.dart';
 import '../../features/common/screens/opportunities_screen.dart';
@@ -29,7 +28,6 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
-import '../../features/issues/presentation/bloc/issue_bloc.dart';
 
 // Sports
 import '../../features/sports/presentation/bloc/sports_bloc.dart';
@@ -263,20 +261,24 @@ final appRouter = GoRouter(
         child: const EventsListScreen(),
       ),
     ),
+    // Reporting: photo first, asked once, and straight into the Complaint Box
+    // afterwards so the member gets a next step rather than a receipt.
+    //
+    // This used to open the older screen while the rebuilt one sat on
+    // /issues/report, deliberately, so the two could run side by side instead
+    // of switching on a flag day. Nothing ever linked to that route, so every
+    // member tapping "Report an issue" got the old flow — which asks for the
+    // same description twice, in two languages, promises "auto mail to
+    // department" that the club no longer sends, and opens with a 50%
+    // resolution rate computed from two reports.
     GoRoute(
       path: '/issues',
-      builder: (context, state) => BlocProvider(
-        create: (_) => sl<IssueBloc>(),
-        child: const SubmitIssueScreen(),
-      ),
+      builder: (context, state) => const ReportIssueScreen(),
     ),
-    // The rebuilt reporting flow: photo first, one language, fourteen things a
-    // person can point at. Its own route rather than a replacement, so it can be
-    // put in front of members alongside the old screen instead of on a flag day
-    // — the two post to different endpoints and both still work.
+    // Kept so anything holding the old link still lands somewhere sensible.
     GoRoute(
       path: '/issues/report',
-      builder: (context, state) => const ReportIssueScreen(),
+      redirect: (_, __) => '/issues',
     ),
     // The club's side of the workflow. Without it a complaint stops at the
     // club instead of passing through it: nothing reaches a government office
