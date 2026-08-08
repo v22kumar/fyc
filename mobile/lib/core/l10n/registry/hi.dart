@@ -1228,4 +1228,5 @@ const Map<String, String> kHi = {
   'checked_before_used': 'FYC जाँच के बाद ही निर्देशिका में जोड़ेगा।',
   'send_to_fyc': 'FYC को भेजें',
   'thanks_fyc_will_check': 'धन्यवाद। FYC जाँच कर जोड़ेगा।',
+  'need_a_number_or_email': 'भेजने के लिए नंबर या ईमेल जोड़ें।',
 };

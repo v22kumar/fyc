@@ -1228,4 +1228,5 @@ const Map<String, String> kTa = {
   'checked_before_used': 'கழகம் சரிபார்த்த பிறகே சேர்க்கப்படும்.',
   'send_to_fyc': 'கழகத்திற்கு அனுப்பு',
   'thanks_fyc_will_check': 'நன்றி. கழகம் சரிபார்த்து சேர்க்கும்.',
+  'need_a_number_or_email': 'அனுப்ப ஒரு எண் அல்லது மின்னஞ்சல் தேவை.',
 };

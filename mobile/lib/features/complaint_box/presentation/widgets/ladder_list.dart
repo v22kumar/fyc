@@ -218,7 +218,15 @@ class _RungTile extends StatelessWidget {
                       if (onSuggestContact != null)
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
+                          // Same rule as Call and Write: "Add it" tells a blind
+                          // member nothing about which of four offices they
+                          // are about to supply a number for.
+                          child: Semantics(
+                            button: true,
+                            label:
+                                '${trId('know_this_contact')} — ${rung.title}',
+                            excludeSemantics: true,
+                            child: TextButton.icon(
                             onPressed: () => onSuggestContact!(rung),
                             icon: const Icon(Icons.add_circle_outline_rounded,
                                 size: 16),
@@ -228,6 +236,7 @@ class _RungTile extends StatelessWidget {
                               minimumSize: const Size(0, 36),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
+                          ),
                           ),
                         ),
                     ],

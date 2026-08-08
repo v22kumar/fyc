@@ -1228,4 +1228,5 @@ const Map<String, String> kEn = {
   'checked_before_used': 'FYC will check it before adding it to the directory.',
   'send_to_fyc': 'Send to FYC',
   'thanks_fyc_will_check': 'Thank you. FYC will check it before adding it.',
+  'need_a_number_or_email': 'Add a phone number or an email to send this.',
 };

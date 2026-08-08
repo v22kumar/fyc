@@ -111,6 +111,14 @@ class _SuggestContactSheetState extends State<SuggestContactSheet> {
             ],
           ),
           SizedBox(height: DSSpacing.md),
+          // Says what it wants rather than going grey and silent — the same
+          // rule the capture screen's Send button now follows.
+          if (!_hasSomething)
+            Padding(
+              padding: EdgeInsets.only(bottom: DSSpacing.xs),
+              child: Text(trId('need_a_number_or_email'),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
           SizedBox(
             width: double.infinity,
             child: FilledButton(

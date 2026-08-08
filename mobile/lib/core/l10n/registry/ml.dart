@@ -1228,4 +1228,5 @@ const Map<String, String> kMl = {
   'checked_before_used': 'FYC പരിശോധിച്ച ശേഷമേ ചേർക്കൂ.',
   'send_to_fyc': 'FYC-ക്ക് അയക്കുക',
   'thanks_fyc_will_check': 'നന്ദി. FYC പരിശോധിച്ച് ചേർക്കും.',
+  'need_a_number_or_email': 'അയക്കാൻ നമ്പറോ ഇമെയിലോ ചേർക്കുക.',
 };
