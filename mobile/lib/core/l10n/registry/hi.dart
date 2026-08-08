@@ -1222,4 +1222,10 @@ const Map<String, String> kHi = {
   'letter_preview': 'पत्र',
   'contacts_unavailable': 'अभी संपर्क नहीं मिल सके।',
   'serious_examples': '• बिजली का तार गिरा हुआ, या पानी में\n• सीवेज या पीने का पानी दूषित\n• किसी को पहले ही चोट लगी है\n• पहले बताया था, कुछ नहीं हुआ',
+  'know_this_contact': 'नंबर पता है? जोड़ें',
+  'how_do_you_know': 'यह कहाँ से मिला?',
+  'how_do_you_know_hint': 'उनके दफ़्तर के बाहर बोर्ड पर',
+  'checked_before_used': 'FYC जाँच के बाद ही निर्देशिका में जोड़ेगा।',
+  'send_to_fyc': 'FYC को भेजें',
+  'thanks_fyc_will_check': 'धन्यवाद। FYC जाँच कर जोड़ेगा।',
 };

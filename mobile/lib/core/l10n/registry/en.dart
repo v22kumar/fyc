@@ -1222,4 +1222,10 @@ const Map<String, String> kEn = {
   'letter_preview': 'The letter',
   'contacts_unavailable': 'Could not fetch the contacts just now.',
   'serious_examples': '• A live wire down, or in water\n• Sewage or drinking water contaminated\n• Somebody has already been hurt\n• You reported it before and nothing was done',
+  'know_this_contact': 'Know their number? Add it',
+  'how_do_you_know': 'Where did you get it?',
+  'how_do_you_know_hint': 'On the board outside his office',
+  'checked_before_used': 'FYC will check it before adding it to the directory.',
+  'send_to_fyc': 'Send to FYC',
+  'thanks_fyc_will_check': 'Thank you. FYC will check it before adding it.',
 };

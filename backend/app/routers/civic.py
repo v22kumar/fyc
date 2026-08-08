@@ -15,14 +15,16 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.dependencies import RoleChecker, get_current_user
 from app.models.civic import (
-    Authority, CivicCategory, Department, LocalBodyType, RoutingRule, RoutingStep,
+    Authority, CivicCategory, ContactSuggestion, ContactSuggestionStatus,
+    Department, LocalBodyType, RoutingRule, RoutingStep,
 )
-from app.models.user import User
+from app.models.user import User, UserProfile
 from app.schemas.civic import (
     AuthorityOut, AuthorityPatch, DepartmentOut, DirectoryHealthOut, GapOut,
     LadderHealthOut, CallLadderOut, LadderRungOut,
@@ -340,3 +342,169 @@ def call_ladder(
         fallback_helpline=fallback.helpline if fallback else None,
         fallback_portal_url=fallback.portal_url if fallback else None,
     )
+
+
+# ── Members filling the gaps in the directory ────────────────────────────────
+
+class ContactSuggestionIn(BaseModel):
+    phone: Optional[str] = Field(default=None, max_length=60)
+    email: Optional[str] = Field(default=None, max_length=255)
+    #: Where they got it, in their own words. Deliberately not a URL — the
+    #: people who have a ward councillor's number read it off a board outside
+    #: his office, not a website, and demanding a link would exclude exactly
+    #: the contributions worth having.
+    how_they_know: Optional[str] = Field(default=None, max_length=500)
+
+
+class ContactSuggestionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    authority_id: UUID
+    designation: Optional[str] = None
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    how_they_know: Optional[str] = None
+    status: str
+    suggested_by: Optional[str] = None
+    created_at: datetime
+
+
+@router.post("/authorities/{authority_id}/suggest-contact",
+             response_model=ContactSuggestionOut, status_code=201)
+def suggest_contact(
+    authority_id: UUID,
+    payload: ContactSuggestionIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """A member offers a contact for an office that has none.
+
+    The directory's blanks are the local desks — ward councillor, panchayat
+    president, section office — and they are blank precisely because no
+    district web page lists them. The people who have those numbers are the
+    members standing in front of those offices.
+
+    It waits for an organiser. A wrong number does not inconvenience one
+    person: it sends every future complaint about that street to a stranger,
+    under the club's name, and nobody finds out for weeks.
+    """
+    if not ((payload.phone or "").strip() or (payload.email or "").strip()):
+        raise HTTPException(status_code=422,
+                            detail="Give a phone number or an email address")
+
+    authority = db.get(Authority, authority_id)
+    if authority is None or authority.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=404, detail="Unknown office")
+
+    suggestion = ContactSuggestion(
+        organization_id=current_user.organization_id,
+        authority_id=authority_id,
+        suggested_by_user_id=current_user.id,
+        phone=(payload.phone or "").strip() or None,
+        email=(payload.email or "").strip() or None,
+        how_they_know=(payload.how_they_know or "").strip() or None,
+        status=ContactSuggestionStatus.PENDING.value,
+    )
+    db.add(suggestion)
+    db.commit()
+    db.refresh(suggestion)
+    return _suggestion_out(db, suggestion)
+
+
+def _suggestion_out(db: Session, s: ContactSuggestion) -> ContactSuggestionOut:
+    a = db.get(Authority, s.authority_id)
+    name = None
+    if s.suggested_by_user_id:
+        row = (db.query(UserProfile.full_name_en, UserProfile.full_name_ta)
+                 .filter(UserProfile.user_id == s.suggested_by_user_id).first())
+        if row:
+            name = row[0] or row[1]
+    return ContactSuggestionOut(
+        id=s.id, authority_id=s.authority_id,
+        designation=(a.designation_en if a else None),
+        department=(a.department.name_en if a and a.department else None),
+        phone=s.phone, email=s.email, how_they_know=s.how_they_know,
+        status=s.status, suggested_by=name, created_at=s.created_at,
+    )
+
+
+@router.get("/contact-suggestions", response_model=list[ContactSuggestionOut])
+def list_contact_suggestions(
+    status_filter: str = Query(default="PENDING", alias="status"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """The queue an organiser works through."""
+    _require_reviewer(current_user)
+    rows = (db.query(ContactSuggestion)
+              .filter(ContactSuggestion.organization_id == current_user.organization_id,
+                      ContactSuggestion.status == status_filter)
+              .order_by(ContactSuggestion.created_at.asc())
+              .all())
+    return [_suggestion_out(db, s) for s in rows]
+
+
+class SuggestionReviewIn(BaseModel):
+    accept: bool
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+@router.post("/contact-suggestions/{suggestion_id}/review",
+             response_model=ContactSuggestionOut)
+def review_contact_suggestion(
+    suggestion_id: UUID,
+    payload: SuggestionReviewIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Accept it into the directory, or turn it down with a reason.
+
+    Accepting writes the contact onto the office and records who vouched for
+    it, because the same rule applies to a member's number as to a scraped
+    one: an entry nobody can trace is one nobody can check when it stops
+    working.
+    """
+    _require_reviewer(current_user)
+    s = db.get(ContactSuggestion, suggestion_id)
+    if s is None or s.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=404, detail="Unknown suggestion")
+    if s.status != ContactSuggestionStatus.PENDING.value:
+        raise HTTPException(status_code=409, detail="Already reviewed")
+
+    if payload.accept:
+        a = db.get(Authority, s.authority_id)
+        if a is None:
+            raise HTTPException(status_code=404, detail="Office no longer exists")
+        if s.phone:
+            a.phone = s.phone
+        if s.email:
+            a.email = s.email
+        a.source_url = f"member-suggestion:{s.id}"
+        a.verified_at = datetime.now(timezone.utc)
+
+    s.status = (ContactSuggestionStatus.ACCEPTED.value if payload.accept
+                else ContactSuggestionStatus.REJECTED.value)
+    s.reviewed_by_user_id = current_user.id
+    s.reviewed_at = datetime.now(timezone.utc)
+    s.review_note = payload.note
+    db.commit()
+    db.refresh(s)
+    return _suggestion_out(db, s)
+
+
+def _require_reviewer(user: User) -> None:
+    """Only an organiser decides what the directory says.
+
+    This is the gate the whole feature rests on: without it, one wrong
+    submission quietly redirects every future complaint about a street to a
+    stranger, over the club's name.
+    """
+    allowed = {"EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN", "PRESIDENT",
+               "SECRETARY"}
+    role = getattr(user, "role", "")
+    role = getattr(role, "value", role)
+    if role not in allowed:
+        raise HTTPException(status_code=403,
+                            detail="Only club organisers can review contacts")

@@ -46,4 +46,16 @@ abstract class ComplaintRepository {
 
   /// Hand it to the club.
   Future<ComplaintState> handToClub(String complaintId);
+
+  /// Offer a contact for an office the directory has none for.
+  ///
+  /// It does not reach the directory until an organiser accepts it. A wrong
+  /// number does not inconvenience one person — it sends every future
+  /// complaint about that street to a stranger, over the club's name.
+  Future<void> suggestContact(
+    String authorityId, {
+    String? phone,
+    String? email,
+    String? howTheyKnow,
+  });
 }

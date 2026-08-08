@@ -20,6 +20,7 @@ class LadderList extends StatelessWidget {
     required this.ladder,
     required this.onCalled,
     this.onWrite,
+    this.onSuggestContact,
   });
 
   final CallLadder ladder;
@@ -28,6 +29,11 @@ class LadderList extends StatelessWidget {
   final void Function(LadderRung rung) onCalled;
 
   final void Function(LadderRung rung)? onWrite;
+
+  /// Tapped on an office the club has no contact for. The member standing in
+  /// front of that office is far more likely to have its number than any
+  /// district web page.
+  final void Function(LadderRung rung)? onSuggestContact;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +56,7 @@ class LadderList extends StatelessWidget {
             isLast: i == ladder.rungs.length - 1,
             onCalled: onCalled,
             onWrite: onWrite,
+            onSuggestContact: onSuggestContact,
           ),
       ],
     );
@@ -64,6 +71,7 @@ class _RungTile extends StatelessWidget {
     required this.isLast,
     required this.onCalled,
     this.onWrite,
+    this.onSuggestContact,
   });
 
   final LadderRung rung;
@@ -72,6 +80,7 @@ class _RungTile extends StatelessWidget {
   final bool isLast;
   final void Function(LadderRung) onCalled;
   final void Function(LadderRung)? onWrite;
+  final void Function(LadderRung)? onSuggestContact;
 
   /// Unreachable means *neither* route works. An office with a published email
   /// and no phone is not unreachable — it is one you write to, and dimming it
@@ -201,6 +210,26 @@ class _RungTile extends StatelessWidget {
                       Text(trId('no_contact_yet'),
                           style: t.textTheme.bodySmall
                               ?.copyWith(color: context.cTextSecondary)),
+                      // The member standing outside this office is more likely
+                      // to have its number than any district web page — which
+                      // is exactly why these rows are the blank ones. Asking
+                      // costs nothing and it is the only way the local desks
+                      // ever get filled.
+                      if (onSuggestContact != null)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => onSuggestContact!(rung),
+                            icon: const Icon(Icons.add_circle_outline_rounded,
+                                size: 16),
+                            label: Text(trId('know_this_contact')),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 36),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ),
                     ],
 
                     if (rung.canCall || rung.canWrite) ...[

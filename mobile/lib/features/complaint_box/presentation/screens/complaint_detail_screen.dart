@@ -11,6 +11,7 @@ import '../bloc/complaint_bloc.dart';
 import '../widgets/complaint_timeline.dart';
 import '../widgets/ladder_list.dart';
 import '../widgets/send_letter_sheet.dart';
+import '../widgets/suggest_contact_sheet.dart';
 
 /// One complaint: what to do about it, and what has happened so far.
 ///
@@ -42,8 +43,15 @@ class ComplaintDetailScreen extends StatelessWidget {
       body: BlocConsumer<ComplaintBloc, ComplaintViewState>(
         listenWhen: (a, b) =>
             (a.draft != b.draft && b.draft != null) ||
-            (a.failure != b.failure && b.failure != null),
+            (a.failure != b.failure && b.failure != null) ||
+            (!a.contactSuggested && b.contactSuggested),
         listener: (context, state) {
+          if (state.contactSuggested) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(trId('thanks_fyc_will_check'))));
+            return;
+          }
           // A failed action used to be silent: `failure` was only rendered
           // when the complaint itself had not loaded, so tapping "mark
           // resolved" on a dropped connection did nothing at all and the
@@ -90,7 +98,13 @@ class ComplaintDetailScreen extends StatelessWidget {
               if (c.severity == e.ComplaintSeverity.serious && !c.isClosed)
                 const _SeriousAdvice(),
               if (!c.isClosed) ...[
-                _SectionTitle(trId('call_someone')),
+                // Only when there is something under it. A section heading
+                // reading "Call someone" with nothing beneath it is how a
+                // screen tells a member the feature is broken — and this
+                // happens whenever the complaint was opened without a
+                // category, which is a route detail they should never pay for.
+                if (state.ladder != null || state.ladderFailed)
+                  _SectionTitle(trId('call_someone')),
                 if (state.ladderFailed)
                   _LadderUnavailable(
                     onRetry: () => context
@@ -108,6 +122,8 @@ class ComplaintDetailScreen extends StatelessWidget {
                     onWrite: (rung) => context
                         .read<ComplaintBloc>()
                         .add(DraftRequested(authorityId: rung.authorityId)),
+                    onSuggestContact: (rung) =>
+                        _openSuggestSheet(context, rung),
                   ),
                 SizedBox(height: DSSpacing.md),
                 _SectionTitle(trId('send_it_yourself')),
@@ -152,6 +168,26 @@ class ComplaintDetailScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _openSuggestSheet(BuildContext context, e.LadderRung rung) {
+    final bloc = context.read<ComplaintBloc>();
+    final id = rung.authorityId;
+    if (id == null) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => SuggestContactSheet(
+        rung: rung,
+        onSubmit: (phone, email, how) => bloc.add(ContactSuggested(
+          authorityId: id, phone: phone, email: email, howTheyKnow: how,
+        )),
       ),
     );
   }

@@ -67,6 +67,21 @@ class HandedToClub extends ComplaintBlocEvent {
   const HandedToClub();
 }
 
+class ContactSuggested extends ComplaintBlocEvent {
+  const ContactSuggested({
+    required this.authorityId,
+    this.phone,
+    this.email,
+    this.howTheyKnow,
+  });
+  final String authorityId;
+  final String? phone;
+  final String? email;
+  final String? howTheyKnow;
+  @override
+  List<Object?> get props => [authorityId, phone, email];
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 
 class ComplaintViewState extends Equatable {
@@ -78,6 +93,7 @@ class ComplaintViewState extends Equatable {
     this.failure,
     this.busy = false,
     this.ladderFailed = false,
+    this.contactSuggested = false,
   });
 
   final bool loading;
@@ -99,6 +115,10 @@ class ComplaintViewState extends Equatable {
   /// different buttons.
   final bool ladderFailed;
 
+  /// A suggestion just went to the club. Drives one acknowledgement, then
+  /// cleared — the ladder itself must not change until somebody approves it.
+  final bool contactSuggested;
+
   ComplaintViewState copyWith({
     bool? loading,
     e.ComplaintState? complaint,
@@ -107,6 +127,7 @@ class ComplaintViewState extends Equatable {
     String? failure,
     bool? busy,
     bool? ladderFailed,
+    bool? contactSuggested,
     bool clearDraft = false,
     bool clearFailure = false,
   }) =>
@@ -118,11 +139,13 @@ class ComplaintViewState extends Equatable {
         failure: clearFailure ? null : (failure ?? this.failure),
         busy: busy ?? this.busy,
         ladderFailed: ladderFailed ?? this.ladderFailed,
+        contactSuggested: contactSuggested ?? false,
       );
 
   @override
   List<Object?> get props =>
-      [loading, complaint, ladder, draft, failure, busy, ladderFailed];
+      [loading, complaint, ladder, draft, failure, busy, ladderFailed,
+        contactSuggested];
 }
 
 // ── Bloc ─────────────────────────────────────────────────────────────────────
@@ -144,6 +167,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
     on<Closed>(_onClose);
     on<Reopened>(_onReopen);
     on<HandedToClub>(_onHandover);
+    on<ContactSuggested>(_onSuggestContact);
   }
 
   final ComplaintRepository _repo;
@@ -229,4 +253,20 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
 
   Future<void> _onHandover(HandedToClub ev, Emitter<ComplaintViewState> emit) =>
       _guard(emit, () => _repo.handToClub(_id!));
+
+  Future<void> _onSuggestContact(
+      ContactSuggested ev, Emitter<ComplaintViewState> emit) async {
+    emit(state.copyWith(busy: true, clearFailure: true));
+    try {
+      await _repo.suggestContact(ev.authorityId,
+          phone: ev.phone, email: ev.email, howTheyKnow: ev.howTheyKnow);
+      // The ladder is deliberately not refetched. Nothing has changed on it
+      // yet and nothing should appear to — the suggestion is waiting for an
+      // organiser, and showing the number as though it were live would be the
+      // app claiming something nobody has approved.
+      emit(state.copyWith(busy: false, contactSuggested: true));
+    } catch (err) {
+      emit(state.copyWith(failure: err.toString(), busy: false));
+    }
+  }
 }
