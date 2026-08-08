@@ -1280,4 +1280,5 @@ const Map<String, String> kTa = {
   'work_be_the_first': 'முதலில் நீங்கள் பதிவு செய்யுங்கள்',
   'sample': 'மாதிரி',
   'sample_cannot_be_called': 'இது ஒரு மாதிரி பதிவு, உண்மையான நபர் அல்ல.',
+  'work_home_subtitle': 'தச்சர், டியூஷன், பழுது — வேலையும் பதிவிடலாம்',
 };

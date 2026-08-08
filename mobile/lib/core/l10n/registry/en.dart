@@ -1280,4 +1280,5 @@ const Map<String, String> kEn = {
   'work_be_the_first': 'Be the first to list it',
   'sample': 'Sample',
   'sample_cannot_be_called': 'This is an example listing, not a real person.',
+  'work_home_subtitle': 'Carpenters, tutors, repairs — and post work',
 };

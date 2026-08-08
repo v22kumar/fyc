@@ -224,7 +224,19 @@ class AppTheme {
         chipTheme: ChipThemeData(
           backgroundColor: AppColors.background,
           selectedColor: AppColors.primary,
-          labelStyle: _font(lang, fontSize: 14, fontWeight: FontWeight.bold),
+          // The colour is not optional.
+          //
+          // This labelStyle carried a family and a weight and no colour, and a
+          // Material 3 Chip given a labelStyle uses it as-is rather than
+          // filling the gap from the text theme — so every chip label in the
+          // app laid out at the right width and painted nothing. A plain
+          // `Chip` with no code of ours does it too, which is how it was
+          // found: bold text renders perfectly well two lines above an empty
+          // chip.
+          labelStyle: _font(lang, fontSize: 14, fontWeight: FontWeight.bold,
+              color: DSColors.textPrimaryLight),
+          secondaryLabelStyle: _font(lang, fontSize: 14,
+              fontWeight: FontWeight.bold, color: Colors.white),
           padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),

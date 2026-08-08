@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/work_bloc.dart';
 import '../widgets/listing_card.dart';
+import '../widgets/listing_skeleton.dart';
 
 /// The single place. Skills, jobs and gigs all arrive here.
 ///
@@ -23,6 +26,7 @@ class WorkHomeScreen extends StatefulWidget {
 
 class _WorkHomeScreenState extends State<WorkHomeScreen> {
   final _search = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -32,13 +36,42 @@ class _WorkHomeScreenState extends State<WorkHomeScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _search.dispose();
     super.dispose();
   }
 
+  /// Search as they type, but not on every keystroke.
+  ///
+  /// "carpenter" is nine requests without this, on a connection that is
+  /// metered and slow — and eight of those answers are thrown away before
+  /// anybody reads them. Waiting for a pause in typing costs nothing a person
+  /// can feel and is most of the data bill.
+  void _onTyped(String _) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (_search.text.trim().isEmpty) return;
+      _run();
+    });
+  }
+
   void _run({String? category}) {
+    _debounce?.cancel();
     context.read<WorkBloc>().add(
         WorkSearched(q: _search.text.trim(), category: category));
+  }
+
+  Future<void> _refresh() async {
+    // The gesture people already try. Without it, a member who suspects the
+    // list is stale has to leave the screen and come back.
+    final bloc = context.read<WorkBloc>();
+    if (bloc.state.hasSearched) {
+      bloc.add(WorkSearched(
+          q: _search.text.trim(), category: bloc.state.activeCategory));
+    } else {
+      bloc.add(const WorkOpened());
+    }
+    await bloc.stream.firstWhere((s) => !s.loading && !s.searching);
   }
 
   @override
@@ -50,12 +83,17 @@ class _WorkHomeScreenState extends State<WorkHomeScreen> {
       ),
       body: BlocBuilder<WorkBloc, WorkState>(
         builder: (context, state) {
-          return ListView(
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+            // Always scrollable, so the pull works even on a short list.
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(DSSpacing.md),
             children: [
               TextField(
                 controller: _search,
                 textInputAction: TextInputAction.search,
+                onChanged: _onTyped,
                 onSubmitted: (_) => _run(),
                 decoration: InputDecoration(
                   hintText: trId('work_search_hint'),
@@ -65,8 +103,7 @@ class _WorkHomeScreenState extends State<WorkHomeScreen> {
               SizedBox(height: DSSpacing.md),
 
               if (state.loading)
-                const Center(child: Padding(
-                  padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                const ListingSkeleton()
               else if (state.hasSearched)
                 ..._results(context, state)
               else
@@ -79,6 +116,7 @@ class _WorkHomeScreenState extends State<WorkHomeScreen> {
                 label: Text(trId('list_what_you_do')),
               ),
             ],
+            ),
           );
         },
       ),
@@ -126,8 +164,9 @@ class _WorkHomeScreenState extends State<WorkHomeScreen> {
 
   List<Widget> _results(BuildContext context, WorkState state) {
     if (state.searching) {
-      return [const Center(child: Padding(
-        padding: EdgeInsets.all(24), child: CircularProgressIndicator()))];
+      // The shape of the answer, not a spinner. On a bar of 3G that is most
+      // of what "fast" means, and the page does not jump when results land.
+      return [const ListingSkeleton()];
     }
     if (state.results.isEmpty) {
       return [
