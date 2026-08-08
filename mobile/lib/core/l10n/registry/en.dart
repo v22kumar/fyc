@@ -1276,4 +1276,6 @@ const Map<String, String> kEn = {
   'work_cat_beauty': 'Beauty & salon',
   'work_cat_events': 'Events',
   'work_cat_repairs_general': 'Repairs',
+  'work_member_since': 'member since',
+  'work_be_the_first': 'Be the first to list it',
 };

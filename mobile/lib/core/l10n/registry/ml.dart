@@ -1276,4 +1276,6 @@ const Map<String, String> kMl = {
   'work_cat_beauty': 'ബ്യൂട്ടി പാർലർ',
   'work_cat_events': 'പരിപാടികൾ',
   'work_cat_repairs_general': 'റിപ്പയർ',
+  'work_member_since': 'അംഗം',
+  'work_be_the_first': 'ആദ്യം നിങ്ങൾ ചേർക്കൂ',
 };

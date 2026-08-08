@@ -59,6 +59,20 @@ class ListingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(listing.displayName, style: t.textTheme.titleSmall),
+          // A shop's opening hours decide whether somebody rings now or later,
+          // and the card was dropping them entirely — the one piece of
+          // information that distinguishes a business from a person.
+          if (listing.kind == ListingKind.business && listing.hours != null) ...[
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 14,
+                    color: context.cTextSecondary),
+                const SizedBox(width: 4),
+                Text(listing.hours!, style: t.textTheme.bodySmall),
+              ],
+            ),
+          ],
           if (listing.area != null || listing.about != null) ...[
             const SizedBox(height: 2),
             Text(
@@ -128,13 +142,30 @@ class _TrustLine extends StatelessWidget {
           style: t.textTheme.bodySmall?.copyWith(color: context.cTextSecondary));
     }
 
+    // Compact, and an icon rather than a "✓" character.
+    //
+    // Spelled out, this line wrapped to two rows and took as much space as the
+    // description — on a card meant to be scanned in a second, the trust
+    // signal must be readable at a glance, not read. And the tick glyph is not
+    // in the app's typeface, so it rendered as a box.
     final bits = <String>[
-      if (trust.phoneVerified) '✓ ${trId('number_verified')}',
       '${trust.jobsConfirmed} ${trId('jobs_done')}',
       if (trust.memberSinceYear != null)
-        '${trId('member_since')} ${trust.memberSinceYear}',
+        '${trId('work_member_since')} ${trust.memberSinceYear}',
     ];
-    return Text(bits.join(' · '),
-        style: t.textTheme.bodySmall?.copyWith(color: AppColors.primary));
+    return Row(
+      children: [
+        if (trust.phoneVerified) ...[
+          Icon(Icons.verified_rounded, size: 15, color: AppColors.primary),
+          const SizedBox(width: 4),
+        ],
+        Flexible(
+          child: Text(bits.join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t.textTheme.bodySmall?.copyWith(color: AppColors.primary)),
+        ),
+      ],
+    );
   }
 }
