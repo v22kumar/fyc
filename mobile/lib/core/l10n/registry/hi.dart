@@ -1280,4 +1280,5 @@ const Map<String, String> kHi = {
   'work_be_the_first': 'सबसे पहले आप दर्ज करें',
   'sample': 'नमूना',
   'sample_cannot_be_called': 'यह एक उदाहरण है, असली व्यक्ति नहीं।',
+  'work_home_subtitle': 'बढ़ई, ट्यूशन, मरम्मत — और काम पोस्ट करें',
 };

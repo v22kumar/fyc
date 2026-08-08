@@ -18,7 +18,6 @@ import '../../features/blood_donation/presentation/screens/imported_directory_sc
 import '../../features/events/presentation/screens/events_list_screen.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/issues/presentation/screens/review_queue_screen.dart';
-import '../../features/common/screens/opportunities_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
@@ -442,6 +441,24 @@ final appRouter = GoRouter(
       // Real club-member roster (names/role/photo).
       path: '/members',
       builder: (context, state) => const MembersRosterScreen(),
+    ),
+    // The local work index — one place for skills, jobs and gigs.
+    //
+    // These two routes were lost in a rebase: the imports survived, and
+    // /opportunities was left redirecting to a path that did not exist, so
+    // every entry point in the app led to a route-not-found. The analyzer said
+    // so, in the only way it can — four unused imports.
+    GoRoute(
+      path: '/work',
+      builder: (context, state) => BlocProvider(
+        create: (_) => WorkBloc(sl<WorkRepository>()),
+        child: const WorkHomeScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/work/list',
+      builder: (context, state) =>
+          CreateListingScreen(repo: sl<WorkRepository>()),
     ),
     // The old opportunities screen: a create form with nothing to browse.
     // Replaced by the work index, and kept as a redirect so any held link

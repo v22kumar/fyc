@@ -95,7 +95,8 @@ class ServeHubScreen extends StatelessWidget {
             tint: const Color(0xFF14B891),
             title: trId('skills_directory'),
             subtitle: trId('hire_local_skills_offer_yours'),
-            onTap: () => context.push('/community'),
+            // Was '/community' — the feed, not a directory of anybody.
+            onTap: () => context.push('/work'),
           ),
           const SizedBox(height: 28),
           // ── Emergency numbers ────────────────────────────────────────────

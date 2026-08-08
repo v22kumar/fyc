@@ -715,25 +715,23 @@ class _ServiceBento extends StatelessWidget {
         pill: trId('eco'),
         pillColor: AppColors.success,
       ),
+      // One tile, because there is one place.
+      //
+      // "Skills Directory" and "Opportunities" were two tiles that had never
+      // pointed at the same screen — Skills went to the community feed, so a
+      // card reading "carpenters, electricians, tutors" opened threads and
+      // photographs. Now that both are the work index, two tiles for one
+      // destination is just a question the member has to answer before they
+      // can start: which of these two is the one I want?
       _Service(
-        title: trId('skills_directory'),
-        subtitle: trId('carpenters_electricians_tutors'),
+        title: trId('work'),
+        subtitle: trId('work_home_subtitle'),
         icon: Icons.handyman_rounded,
         tint: AppColors.primary,
-        route: '/community',
+        route: '/work',
         illustration: 'skills',
         pill: trId('new_2'),
         pillColor: AppColors.primaryLight,
-      ),
-      _Service(
-        title: trId('opportunities'),
-        subtitle: trId('jobs_scholarships_community_gigs'),
-        icon: Icons.work_rounded,
-        tint: AppColors.gold,
-        route: '/work',
-        illustration: 'opportunities',
-        pill: trId('jobs_2'),
-        pillColor: AppColors.gold,
       ),
       _Service(
         title: trId('events'),
