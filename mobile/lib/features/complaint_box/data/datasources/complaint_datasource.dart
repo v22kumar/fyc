@@ -12,6 +12,7 @@ abstract class ComplaintDataSource {
   Future<ComplaintState> logCall(String id, Map<String, dynamic> body);
   Future<ComplaintDraft> draft(String id, Map<String, dynamic> body);
   Future<ComplaintState> post(String id, String action, [Map<String, dynamic>? body]);
+  Future<void> suggestContact(String authorityId, Map<String, dynamic> body);
 }
 
 class ComplaintDataSourceImpl implements ComplaintDataSource {
@@ -54,6 +55,18 @@ class ComplaintDataSourceImpl implements ComplaintDataSource {
     try {
       final r = await _api.dio.post<dynamic>('$_base/$id/draft', data: body);
       return draftFromJson(_map(r));
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> suggestContact(
+      String authorityId, Map<String, dynamic> body) async {
+    try {
+      await _api.dio.post<dynamic>(
+          '/api/v1/civic/authorities/$authorityId/suggest-contact',
+          data: body);
     } on DioException catch (e) {
       throw mapDioException(e);
     }

@@ -16,6 +16,7 @@ import 'package:fyc_connect/features/complaint_box/domain/entities/complaint_ent
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/complaint_timeline.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/ladder_list.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/send_letter_sheet.dart';
+import 'package:fyc_connect/features/complaint_box/presentation/widgets/suggest_contact_sheet.dart';
 import 'package:fyc_connect/features/complaint_box/domain/repositories/complaint_repository.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_bloc.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/screens/complaint_detail_screen.dart';
@@ -182,12 +183,14 @@ void main() {
   });
 
   testWidgets('ladder — light', (t) async {
-    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {})));
+    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {},
+        onSuggestContact: (_) {})));
     await _shoot(t, '01_ladder_light');
   });
 
   testWidgets('ladder — dark', (t) async {
-    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {}),
+    await _phone(t, _frame(LadderList(ladder: _ladder, onCalled: (_) {}, onWrite: (_) {},
+        onSuggestContact: (_) {}),
         brightness: Brightness.dark));
     await _shoot(t, '02_ladder_dark');
   });
@@ -222,6 +225,14 @@ void main() {
   testWidgets('detail — closed', (t) async {
     await _phone(t, _screen(_state(closed: true)));
     await _shoot(t, '08_detail_closed');
+  });
+
+  testWidgets('suggest contact sheet', (t) async {
+    await _phone(t, _frame(SuggestContactSheet(
+      rung: _ladder.rungs.first,
+      onSubmit: (_, __, ___) {},
+    )));
+    await _shoot(t, '10_suggest_contact');
   });
 
   testWidgets('empty ladder', (t) async {
@@ -263,6 +274,9 @@ class _StubRepo implements ComplaintRepository {
   Future<ComplaintState> reopen(String id) async => _state;
   @override
   Future<ComplaintState> handToClub(String id) async => _state;
+  @override
+  Future<void> suggestContact(String authorityId,
+      {String? phone, String? email, String? howTheyKnow}) async {}
 }
 
 Widget _screen(ComplaintState state, {Brightness brightness = Brightness.light}) =>

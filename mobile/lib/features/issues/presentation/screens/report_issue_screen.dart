@@ -26,7 +26,10 @@ import '../../../../service_locator.dart';
 /// than on a paragraph — so the camera opens on entry and everything else
 /// follows it. Location is taken silently from a fix the phone already has.
 ///
-/// Kept as a separate screen from `SubmitIssueScreen` rather than replacing it
+/// This replaced an older screen that asked for the same description twice —
+/// once in Tamil and once in English — and promised the app would "auto mail
+/// to department", which the club no longer does. That screen has been deleted;
+/// the note below explains why the two ran side by side for a while
 /// in place: the old one posts to the old endpoint, which still works, and this
 /// can be put in front of people without a flag day.
 class ReportIssueScreen extends StatefulWidget {
@@ -261,8 +264,27 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             onChanged: (v) => setState(() => _serious = v),
             title: Text(trId('is_this_serious'),
                 style: TextStyle(fontWeight: FontWeight.w600, color: context.cText)),
-            subtitle: Text(trId('is_this_serious_help'),
-                style: TextStyle(fontSize: 13, color: context.cTextSecondary)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(trId('is_this_serious_help'),
+                    style: TextStyle(fontSize: 13, color: context.cTextSecondary)),
+                const SizedBox(height: 6),
+                // Examples, not a definition.
+                //
+                // "Is this serious?" is a question nobody can answer about
+                // their own problem in the abstract — everything feels serious
+                // to the person standing in front of it, and nothing does
+                // once they worry about wasting an officer's time. A live
+                // wire lying in water is unambiguous, and one concrete case
+                // like that calibrates the whole scale.
+                Text(trId('serious_examples'),
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.45,
+                        color: context.cTextSecondary)),
+              ],
+            ),
           ),
           const SizedBox(height: 22),
           _StepLabel(3, trId('report_say_it_once')),
@@ -289,10 +311,39 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: SizedBox(
-          height: 52,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // What is still missing, said before they reach for the button
+            // rather than after.
+            if (!ready && !_sending) ...[
+              Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 16, color: context.cTextSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(_whatIsMissing() ?? '',
+                        style: TextStyle(
+                            fontSize: 13, color: context.cTextSecondary)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+            SizedBox(
+          height: 56,
+          width: double.infinity,
           child: FilledButton(
-            onPressed: (_sending || !ready) ? null : _send,
+            // Live even when the report is incomplete.
+            //
+            // It used to disable itself until every requirement was met, and
+            // the code explaining what was missing lived in a snackbar fired
+            // on tap — which could never run, because the button would not
+            // accept the tap. So a member saw a dead grey button and was never
+            // told why. An enabled button that answers "you still need a
+            // photo" beats a disabled one that answers nothing.
+            onPressed: _sending ? null : _send,
             child: _sending
                 ? const SizedBox(
                     width: 20, height: 20,
@@ -300,9 +351,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   )
                 : Text(
                     trId('report_send'),
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
                   ),
           ),
+        ),
+          ],
         ),
       ),
     );

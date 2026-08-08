@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -105,6 +106,27 @@ def _seed_database():
             _made = _seed_civic(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
             if any(_made.values()):
                 logger.info("[civic] directory seeded: %s", _made)
+            # The contacts somebody actually collected, applied on deploy.
+            #
+            # Without this the directory is forty offices with every phone
+            # number blank, which renders as a ladder where no rung can be
+            # rung — the exact screen a member sees when they open the
+            # Complaint Box asking who to call. The worksheet was parsed,
+            # validated and committed weeks before it was ever applied to a
+            # running database; nobody noticed, because a dry run and a deploy
+            # look identical in a terminal.
+            #
+            # Idempotent: it only fills contacts that are still blank, and
+            # never overwrites an edit an organiser made by hand.
+            from scripts.import_civic_contacts import apply_worksheet as _apply
+            _applied = _apply(
+                db,
+                uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"),
+                pathlib.Path(__file__).resolve().parents[1]
+                / "seeds" / "civic_contacts.worksheet.json",
+            )
+            if _applied:
+                logger.info("[civic] contacts applied: %s offices", _applied)
         except Exception as _ce:
             # A directory that fails to seed must never stop the app booting.
             logger.warning("[civic] directory seeding skipped: %s", _ce)

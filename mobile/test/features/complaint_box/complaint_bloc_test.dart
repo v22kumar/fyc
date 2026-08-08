@@ -118,6 +118,12 @@ class _Fake implements ComplaintRepository {
     calls.add('handToClub');
     return _with(lane: ComplaintLane.viaClub);
   }
+
+  @override
+  Future<void> suggestContact(String authorityId,
+      {String? phone, String? email, String? howTheyKnow}) async {
+    calls.add('suggestContact:$authorityId:$phone');
+  }
 }
 
 void main() {
@@ -239,6 +245,25 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(repo.calls, contains('draft:bcc=true:to=auth-ae'));
+  });
+
+  test('suggesting a contact does not put it on the ladder', () async {
+    // The suggestion is waiting for an organiser. Showing the number as though
+    // it were live would be the app claiming something nobody approved — and
+    // the member who believes they fixed the directory, then finds it
+    // unchanged next week, does not offer a second time.
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+    final before = bloc.state.ladder;
+
+    bloc.add(const ContactSuggested(
+        authorityId: 'auth-ward', phone: '9443132365'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repo.calls, contains('suggestContact:auth-ward:9443132365'));
+    expect(bloc.state.ladder, same(before));
+    expect(bloc.state.contactSuggested, isTrue,
+        reason: 'the member still gets told it was received');
   });
 
   test('the ladder keeps offices with no number, marked', () async {

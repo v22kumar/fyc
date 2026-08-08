@@ -93,6 +93,16 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="whatsapp" />
         </intent>
+        <!-- url_launcher: the member's own mail app.
+             Without this, Android 11+ package visibility hides every mail app
+             from us, canLaunchUrl("mailto:...") returns false, and the Send
+             button in the Complaint Box silently does nothing. tel, sms, https
+             and whatsapp were all declared here; mail never was, and the whole
+             write-a-letter path depends on it. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

@@ -379,3 +379,57 @@ class IssueEscalation(Base, TimestampMixin, TenantModelMixin):
     __table_args__ = (
         UniqueConstraint("issue_id", "position", name="uq_escalation_issue_position"),
     )
+
+
+class ContactSuggestionStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+
+
+class ContactSuggestion(Base, TimestampMixin, TenantModelMixin):
+    """A number or address a member says belongs to an office.
+
+    The directory has forty desks and a contact for barely half of them, and
+    the missing ones are the local desks that matter most — the ward
+    councillor, the panchayat president, the section office — precisely
+    because they are the ones no district web page lists. The people who have
+    those numbers are the members standing in front of those offices.
+
+    It does not go straight into the directory. A wrong number here does not
+    inconvenience one person; it sends every future complaint about that street
+    to a stranger, under the club's name, and nobody finds out for weeks. So a
+    suggestion waits for an organiser, and carries where the member got it.
+    """
+
+    __tablename__ = "civic_contact_suggestions"
+    __table_args__ = (
+        Index("ix_contact_suggestions_status", "organization_id", "status"),
+    )
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    authority_id = Column(
+        GUID(), ForeignKey("civic_authorities.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    suggested_by_user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    phone = Column(String(60), nullable=True)
+    email = Column(String(255), nullable=True)
+
+    #: Where they got it — "on the board outside the office", "he gave me his
+    #: card". Not a URL, because the people who have these numbers did not read
+    #: them on a website, and demanding one would exclude exactly the
+    #: contributions worth having.
+    how_they_know = Column(Text, nullable=True)
+
+    status = Column(String(12), nullable=False,
+                    default=ContactSuggestionStatus.PENDING.value)
+    reviewed_by_user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    #: Why it was turned down, so the member is told something better than no.
+    review_note = Column(Text, nullable=True)

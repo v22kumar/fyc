@@ -44,6 +44,36 @@ until you look at the pixels and three invisible until you read the source.
 
 **Weighted total: 9.2**
 
+## Round 3 — 9.2, and a correction to round 2
+
+Round 2 rated screens rendered in a harness. Installing the build showed that
+two of the three routes were dead, so that 9.2 was measuring pictures rather
+than a product. Stated plainly because the rubric is worthless if it flatters:
+
+* The Send button did nothing at all. `mailto` was missing from the Android
+  `queries` block, so `canLaunchUrl` returned false on every phone running
+  Android 11 or later and the handler took the silent branch.
+* There was no Call button on any rung anywhere, because the collected
+  contacts had never been applied to a running database — the importer had
+  only ever been run as a dry run, and a dry run and a deploy look identical
+  in a terminal.
+
+A feature where the two main paths are dead is not a 9. It was closer to a 5,
+and no amount of rendering would have found either — only installing it did.
+
+With those fixed and this round's work in:
+
+| Dimension | Weight | Score | Notes |
+|---|---:|---:|---|
+| **Does the job** | 3 | 9.5 | Both routes actually work now. Every rung offers something: a call, a letter, or — where the directory is blank — an invitation to fill it. No row is a dead end. |
+| **Honesty** | 2 | 9.5 | CC and BCC both disclosed. Failed actions report themselves. A dropped connection is distinguishable from an empty directory. And a submitted contact visibly does *not* change the ladder, because it has not been approved. |
+| **Visual craft** | 1.5 | 9 | Numbered rail, tonal elevation on the recommendation, one type scale, dark parity verified by rendering it. |
+| **Modern feel (2027)** | 1.5 | 8.5 | M3 tonal surfaces, 28px sheets with drag handles, motion that explains state, haptics at the three committing taps. Short of full marks: no shared-element transition into the letter, no predictive back, no dynamic colour. |
+| **Accessibility** | 1 | 9.5 | Every action names its target, including "Add it" — which of four offices matters. Numbers announced digit by digit. 200% text proven by test. |
+| **Engineering** | 1 | 9 | 18 mobile and 42 backend tests on this feature. Every state handled. Analyzer clean. Short of full marks: still no golden-image regression, so this can drift silently. |
+
+**Weighted total: 9.2** — this time on a feature that works.
+
 ## What would take it to 9.5
 
 - A golden-image test, so a regression in any of this fails CI instead of
@@ -54,5 +84,9 @@ until you look at the pixels and three invisible until you read the source.
 
 ## What no rating can cover
 
-Nobody has held this on a phone, and nobody has sent a letter written by it to
-a real officer. Both remain true.
+Somebody has now held this on a phone, and that is where both fatal bugs came
+from — neither was findable any other way. Nobody has yet sent a letter written
+by it to a real officer, so that half is still untested.
+
+The lesson worth keeping: a rubric scored against a render measures the
+drawing, not the thing. Every round of this should start by installing it.

@@ -68,4 +68,14 @@ class ComplaintRepositoryImpl implements ComplaintRepository {
   @override
   Future<ComplaintState> handToClub(String complaintId) =>
       _source.post(complaintId, 'handover');
+
+  @override
+  Future<void> suggestContact(String authorityId,
+          {String? phone, String? email, String? howTheyKnow}) =>
+      _source.suggestContact(authorityId, {
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (email != null && email.isNotEmpty) 'email': email,
+        if (howTheyKnow != null && howTheyKnow.isNotEmpty)
+          'how_they_know': howTheyKnow,
+      });
 }
