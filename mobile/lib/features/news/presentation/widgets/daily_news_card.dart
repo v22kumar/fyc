@@ -222,7 +222,18 @@ class _NewsFeedState extends State<_NewsFeed> {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Divider(height: 1, color: context.cBorder),
           ),
-          itemBuilder: (_, i) => _NewsRow(item: items[i], jobMode: widget.jobMode),
+          // The first story gets the weight.
+          //
+          // Eight identical grey rows is a search results page: nothing tells
+          // a member which of these matters, so every one costs the same
+          // glance and none of them is read. Giving the lead story a larger
+          // headline is the oldest thing a front page does, and it is the
+          // difference between a list and an edition.
+          itemBuilder: (_, i) => _NewsRow(
+            item: items[i],
+            jobMode: widget.jobMode,
+            isLead: i == 0 && !widget.jobMode,
+          ),
         );
       },
     );
@@ -311,7 +322,12 @@ class _EmptyState extends StatelessWidget {
 class _NewsRow extends StatelessWidget {
   final NewsItemModel item;
   final bool jobMode;
-  const _NewsRow({required this.item, this.jobMode = false});
+
+  /// The top story, set larger. Job listings have no lead — they are a list on
+  /// purpose, and one of them is not more important than the others.
+  final bool isLead;
+
+  const _NewsRow({required this.item, this.jobMode = false, this.isLead = false});
 
   String _relativeTime(DateTime? dt) {
     if (dt == null) return '';
@@ -360,12 +376,12 @@ class _NewsRow extends StatelessWidget {
                   Text(
                     item.title,
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
+                      fontSize: isLead ? 17 : 13.5,
+                      fontWeight: isLead ? FontWeight.w800 : FontWeight.w600,
+                      height: 1.3,
                       color: context.cText,
                     ),
-                    maxLines: 2,
+                    maxLines: isLead ? 3 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4),
@@ -383,6 +399,9 @@ class _NewsRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      // No time rather than a wrong one. Stories that arrive
+                      // without a publication date used to be stamped with the
+                      // moment of the fetch, so every item read "3m".
                       if (_relativeTime(item.publishedAt).isNotEmpty) ...[
                         Text(' • ',
                             style: TextStyle(

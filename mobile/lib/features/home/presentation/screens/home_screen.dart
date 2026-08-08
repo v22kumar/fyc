@@ -681,14 +681,11 @@ class _ServiceBento extends StatelessWidget {
         route: '/blood-donation',
         illustration: 'blood',
       ),
-      _Service(
-        title: trId('sports_arena'),
-        subtitle: trId('tournaments_chess_live_scores'),
-        icon: Icons.sports_cricket_rounded,
-        tint: AppColors.warning,
-        route: '/sports',
-        illustration: 'sports',
-      ),
+      // Sports Arena is the featured hero directly above this grid — same
+      // title, same subtitle, same /sports destination, about two hundred
+      // points apart in one scroll. The tile went rather than the hero,
+      // because the hero carries the live indicator and is the one a member
+      // notices.
       _Service(
         title: trId('community_feed_2'),
         subtitle: trId('threads_gallery_updates'),

@@ -50,28 +50,43 @@ bottom nav, a floating "+" and a floating SOS — on top of seven tiles and four
 
 These are not taste. They are wrong.
 
-### 2.1 The weather says Bengaluru
+### 2.1 ~~The weather says Bengaluru~~ — wrong, this was my error
 
-A club for Nagercoil, showing a member the temperature in a city 600km away.
-Either the location is hardcoded or it is falling back to a default nobody
-changed. As it stands the card is worse than absent: it is confidently wrong
-about the one fact a weather card exists to state.
+I called this a bug. It is not: the member looking at that screenshot was in
+Bengaluru, and the card was correctly reporting where they actually were.
 
-### 2.2 Sports Arena appears twice
+Left in rather than deleted, because it is the more useful kind of mistake to
+record — I read a screenshot, assumed the app's audience matched the app's
+subject, and reported a working feature as broken. A club *for* Nagercoil is
+used *by* people who travel.
 
-Once as the "LIVE SPORTS" hero, and again as a tile in the grid immediately
-below — same title, same subtitle ("Tournaments, chess & live scores"), same
-destination. A member has to work out whether these are two things.
+### 2.2 Sports Arena appears twice — confirmed in the source
 
-### 2.3 The news is duplicated, and mislabelled
+Confirmed rather than assumed this time. `home_screen.dart:754` renders
+`_FeaturedSportsHero`, whose button calls `context.push('/sports')`;
+`home_screen.dart:685` adds a tile with `route: '/sports'`. Both carry
+`trId('sports_arena')` and `trId('tournaments_chess_live_scores')`.
 
-The same Kanyakumari headlines repeat between screens. Worse, every item is
-attributed to **"Firecrawl"** — the scraping vendor, not the publisher. A
-member reads that as the name of a newspaper.
+Same title, same subtitle, same destination, about two hundred points apart in
+the same scroll. A member has to work out whether these are two things.
 
-And several "headlines" are not headlines at all: *"kanyakumari news"*,
-*"Kanyakumari district"*, *"Today Breaking News | Kanyakumari Updates"*. Those
-are search-result titles. The card is showing the query, not the story.
+### 2.3 The news presentation
+
+Where the stories come from is a separate piece of work the club is handling —
+Google RSS, after an experiment with Firecrawl. So the *source* is not the
+question here. How it is shown is, and it is the weakest thing on the screen.
+
+The same headlines repeat between screens. Every item is attributed to
+**"Firecrawl"**, which is a scraping vendor rather than a publisher, so a
+member reads it as the name of a newspaper. Several "headlines" are not
+headlines: *"kanyakumari news"*, *"Kanyakumari district"*, *"Today Breaking
+News | Kanyakumari Updates"* — those are search-result titles, so the card is
+showing the query rather than the story.
+
+And the shape is a plain list: five tabs, then eight near-identical rows of
+grey text with an arrow. Nothing distinguishes an important story from a
+routine one, nothing carries an image, and every row costs the same glance as
+every other. It reads as a search results page, which is exactly what it is.
 
 ### 2.4 The floating "+" covers content
 
