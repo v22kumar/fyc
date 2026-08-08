@@ -1211,8 +1211,8 @@ const Map<String, String> kEn = {
   'open_in_mail': 'Open in my mail app',
   'written_in_your_words': 'Written in your own words.',
   'what_next': 'What next?',
-  'is_this_serious': 'Is this serious?',
-  'is_this_serious_help': 'A danger to someone, or something you have already reported. We will suggest putting it in writing.',
+  'is_this_serious': 'Is anyone in danger?',
+  'is_this_serious_help': 'We\'ll suggest putting it in writing, so there\'s a record.',
   'no_contact_yet': 'No contact collected yet',
   'also_goes_to': 'Also goes to:',
   'could_not_load': 'Could not load this report',
@@ -1221,4 +1221,5 @@ const Map<String, String> kEn = {
   'no_mail_app': 'No mail app found on this phone.',
   'letter_preview': 'The letter',
   'contacts_unavailable': 'Could not fetch the contacts just now.',
+  'serious_examples': '• A live wire down, or in water\n• Sewage or drinking water contaminated\n• Somebody has already been hurt\n• You reported it before and nothing was done',
 };

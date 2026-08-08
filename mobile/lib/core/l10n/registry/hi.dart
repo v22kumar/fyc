@@ -1211,8 +1211,8 @@ const Map<String, String> kHi = {
   'open_in_mail': 'मेरे मेल ऐप में खोलें',
   'written_in_your_words': 'आपके अपने शब्दों में।',
   'what_next': 'आगे क्या?',
-  'is_this_serious': 'क्या यह गंभीर है?',
-  'is_this_serious_help': 'किसी के लिए खतरा, या पहले बताई गई बात। हम लिखित में देने का सुझाव देंगे।',
+  'is_this_serious': 'क्या किसी को ख़तरा है?',
+  'is_this_serious_help': 'हम लिखित में देने का सुझाव देंगे — रिकॉर्ड रहेगा।',
   'no_contact_yet': 'संपर्क अभी नहीं जुटाया गया',
   'also_goes_to': 'इन्हें भी जाएगा:',
   'could_not_load': 'यह रिपोर्ट लोड नहीं हो सकी',
@@ -1221,4 +1221,5 @@ const Map<String, String> kHi = {
   'no_mail_app': 'इस फ़ोन में कोई मेल ऐप नहीं मिला।',
   'letter_preview': 'पत्र',
   'contacts_unavailable': 'अभी संपर्क नहीं मिल सके।',
+  'serious_examples': '• बिजली का तार गिरा हुआ, या पानी में\n• सीवेज या पीने का पानी दूषित\n• किसी को पहले ही चोट लगी है\n• पहले बताया था, कुछ नहीं हुआ',
 };
