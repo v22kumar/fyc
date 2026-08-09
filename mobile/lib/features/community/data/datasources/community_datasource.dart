@@ -6,6 +6,7 @@ import '../models/community_profile_model.dart';
 
 abstract class CommunityDataSource {
   Future<List<CommunityProfileModel>> fetchProfiles();
+  Future<List<dynamic>> fetchRoster();
 }
 
 class CommunityDataSourceImpl implements CommunityDataSource {
@@ -30,4 +31,9 @@ class CommunityDataSourceImpl implements CommunityDataSource {
       throw mapDioException(e);
     }
   }
+
+  @override
+  Future<List<dynamic>> fetchRoster() async =>
+      ((await _client.dio.get('/api/v1/users/roster')).data as List?) ??
+      const [];
 }

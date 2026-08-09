@@ -3,19 +3,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/profile_repository.dart';
 
 /// Profile hub: avatar, name, role, impact stats (from /users/me/journey) and
 /// quick links to the user's activity + account actions. Read-only, reuses
 /// existing routes; no new backend needed.
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final ProfileRepository repo;
+  const ProfileScreen({super.key, required this.repo});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -36,8 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadStats() async {
     try {
-      final res = await sl<ApiClient>().dio.get('/api/v1/users/me/journey');
-      final d = res.data as Map<String, dynamic>;
+      final d = await widget.repo.myJourney();
       if (!mounted) return;
       setState(() {
         _events = (d['events_attended'] as num?)?.toInt() ?? 0;

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../data/question_scheduler.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
+import '../../domain/repositories/profile_repository.dart';
 
 /// One question, asked once in a while.
 ///
@@ -26,7 +24,8 @@ import '../../../../service_locator.dart';
 ///
 /// When there is nothing to ask — the common case — it renders nothing at all.
 class QuickQuestionCard extends StatefulWidget {
-  const QuickQuestionCard({super.key});
+  final ProfileRepository repo;
+  const QuickQuestionCard({super.key, required this.repo});
 
   @override
   State<QuickQuestionCard> createState() => _QuickQuestionCardState();
@@ -62,11 +61,8 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
     try {
       // The catalogue, not "what should I ask" — the phone decides that. This
       // request is small, changes rarely, and 304s in the steady state.
-      final r = await sl<ApiClient>().dio.get<dynamic>(
-            '${ApiConstants.baseUrl}/api/v1/profile-prompts/catalogue',
-          );
-      final data = r.data;
-      if (data is! Map<String, dynamic>) return null;
+      final data = await widget.repo.promptCatalogue();
+      if (data == null) return null;
 
       final scheduler = QuestionScheduler(await SharedPreferences.getInstance());
       final chosen = scheduler.pick(
@@ -101,10 +97,8 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
       await scheduler.markDismissed(id);
     }
     try {
-      await sl<ApiClient>().dio.post<void>(
-        '${ApiConstants.baseUrl}/api/v1/profile-prompts/$path',
-        data: {'question_id': id, 'answer': answer},
-      );
+      await widget.repo.submitPromptAnswer(
+          path, {'question_id': id, 'answer': answer});
     } catch (_) {
       // Losing one answer is not worth an error message. The server will ask
       // again in a few days.

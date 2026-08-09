@@ -7,10 +7,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../bloc/notification_bloc.dart';
 import '../../domain/entities/notification_entity.dart';
-import '../../../../service_locator.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../data/repositories/notification_repository.dart';
 
 /// Local relative-time formatter (avoids a third-party dependency).
 String _timeAgo(DateTime dt) {
@@ -45,7 +44,9 @@ String _bucketLabel(String bucket) {
 }
 
 class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+  const NotificationScreen({super.key, required this.repo});
+
+  final NotificationRepository repo;
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -67,11 +68,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final bloc = context.read<NotificationBloc>();
     try {
-      final res = await sl<ApiClient>().dio.post('/api/v1/notifications/test');
-      final data = res.data;
-      final detail = (data is Map && data['detail'] is String)
-          ? data['detail'] as String
-          : trId('test_notification_sent');
+      final detail =
+          await widget.repo.sendTestPush() ?? trId('test_notification_sent');
       messenger.showSnackBar(SnackBar(content: Text(detail), duration: const Duration(seconds: 5)));
       bloc.add(FetchNotifications());
     } catch (_) {

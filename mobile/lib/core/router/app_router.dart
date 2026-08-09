@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -10,6 +11,8 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/auth/presentation/widgets/sign_in_sheet.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/search/domain/repositories/search_repository.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -77,6 +80,7 @@ import '../../features/announcements/domain/entities/announcement_entity.dart';
 import '../../features/announcements/presentation/bloc/announcement_bloc.dart';
 import '../../features/announcements/presentation/screens/announcements_screen.dart';
 import '../../features/announcements/presentation/screens/announcement_detail_screen.dart';
+import '../../features/notifications/data/repositories/notification_repository.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/pages/notification_screen.dart';
 
@@ -95,6 +99,7 @@ import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/volunteers/presentation/screens/certificate_screen.dart';
 
 // Community
+import '../../features/community/domain/repositories/community_repository.dart';
 import '../../features/community/presentation/bloc/community_bloc.dart';
 import '../../features/community/presentation/screens/community_directory_screen.dart';
 import '../../features/community/presentation/screens/members_roster_screen.dart';
@@ -190,7 +195,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/complete-profile',
-      builder: (context, state) => const CompleteProfileScreen(),
+      builder: (context, state) => CompleteProfileScreen(repo: sl<AuthRepository>()),
     ),
     GoRoute(
       path: '/register',
@@ -215,11 +220,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/search',
-      builder: (context, state) => const SearchScreen(),
+      builder: (context, state) =>
+          SearchScreen(repo: sl<SearchRepository>()),
     ),
     GoRoute(
       path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) =>
+          ProfileScreen(repo: sl<ProfileRepository>()),
     ),
     GoRoute(
       path: '/journey',
@@ -396,7 +403,7 @@ final appRouter = GoRouter(
       path: '/notifications',
       builder: (context, state) => BlocProvider(
         create: (_) => sl<NotificationBloc>(),
-        child: const NotificationScreen(),
+        child: NotificationScreen(repo: sl<NotificationRepository>()),
       ),
     ),
     GoRoute(
@@ -497,7 +504,8 @@ final appRouter = GoRouter(
     GoRoute(
       // Real club-member roster (names/role/photo).
       path: '/members',
-      builder: (context, state) => const MembersRosterScreen(),
+      builder: (context, state) =>
+          MembersRosterScreen(repo: sl<CommunityRepository>()),
     ),
     // The local work index — one place for skills, jobs and gigs.
     //
@@ -692,7 +700,9 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
         }
       },
       tabs: [
-        HomeScreen(repo: sl<HomeRepository>()),
+        HomeScreen(
+            repo: sl<HomeRepository>(),
+            promptRepo: sl<ProfileRepository>()),
         FeedScreen(repo: sl<FeedRepository>()),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),

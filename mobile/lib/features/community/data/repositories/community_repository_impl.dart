@@ -19,4 +19,7 @@ class CommunityRepositoryImpl implements CommunityRepository {
       return const Left(ServerFailure());
     }
   }
+
+  @override
+  Future<List<dynamic>> fetchRoster() => _remote.fetchRoster();
 }

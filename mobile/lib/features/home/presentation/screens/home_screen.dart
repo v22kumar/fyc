@@ -35,13 +35,16 @@ import '../../../ai/presentation/widgets/ai_daily_digest_card.dart';
 import '../../../profile/presentation/widgets/quick_question_card.dart';
 import '../../../ai/presentation/widgets/ai_news_summary_card.dart';
 import '../../domain/repositories/home_repository.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   final HomeRepository repo;
+  final ProfileRepository promptRepo;
   /// Home is always hosted inside [AppShellV2], which provides the single
   /// bottom navigation + center Create FAB. It never draws its own nav bar
   /// (audit #05: one navigation shell, not two divergent ones).
-  const HomeScreen({super.key, required this.repo});
+  const HomeScreen(
+      {super.key, required this.repo, required this.promptRepo});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -145,7 +148,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               l: l,
                               refreshKey: _refreshKey,
                               lastRefreshed: _lastRefreshed,
-                              repo: widget.repo);
+                              repo: widget.repo,
+                              promptRepo: widget.promptRepo);
                         },
                       ),
                       const SizedBox(height: 130),
@@ -2488,6 +2492,7 @@ class _MatchCard extends StatelessWidget {
 
 class _CitizenDashboard extends StatelessWidget {
   final HomeRepository repo;
+  final ProfileRepository promptRepo;
   final AppLocalizations l;
   final int refreshKey;
   final DateTime? lastRefreshed;
@@ -2495,7 +2500,8 @@ class _CitizenDashboard extends StatelessWidget {
       {required this.l,
       required this.refreshKey,
       this.lastRefreshed,
-      required this.repo});
+      required this.repo,
+      required this.promptRepo});
 
   @override
   Widget build(BuildContext context) {
@@ -2509,7 +2515,7 @@ class _CitizenDashboard extends StatelessWidget {
       // One question, now and then. Renders nothing at all most days — the
       // server decides when there is something worth asking, and the answer
       // is what makes the blood-donation screen able to work.
-      const QuickQuestionCard(),
+      QuickQuestionCard(repo: promptRepo),
       AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
       AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       const _AnnouncementsBar(),

@@ -38,4 +38,12 @@ class NotificationRemoteDataSource {
     );
     return NotificationPreferenceModel.fromJson(response.data);
   }
+
+  Future<String?> sendTestPush() async {
+    final res = await dio.post('/api/v1/notifications/test');
+    final data = res.data;
+    return (data is Map && data['detail'] is String)
+        ? data['detail'] as String
+        : null;
+  }
 }

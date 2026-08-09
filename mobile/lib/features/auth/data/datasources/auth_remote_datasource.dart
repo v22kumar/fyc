@@ -48,6 +48,8 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<UserModel> getMe();
+  Future<void> registerFcmToken(String token);
+  Future<void> updateMyProfile(Map<String, dynamic> body);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -225,4 +227,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await _client.dio.post(ApiConstants.authLogout);
     } catch (_) {/* best-effort: local logout proceeds regardless */}
   }
+
+  @override
+  Future<void> registerFcmToken(String token) =>
+      _client.dio.post(ApiConstants.fcmToken, data: {'token': token});
+
+  @override
+  Future<void> updateMyProfile(Map<String, dynamic> body) =>
+      _client.dio.patch(ApiConstants.myProfile, data: body);
 }
