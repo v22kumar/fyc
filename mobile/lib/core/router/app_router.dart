@@ -22,6 +22,7 @@ import '../../features/membership/presentation/screens/membership_card_screen.da
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
 import '../../service_locator.dart';
+import '../storage/local_storage.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
@@ -43,8 +44,10 @@ import '../../features/chess/presentation/bloc/spectator_bloc.dart';
 import '../../features/chess/presentation/bloc/spectator_event.dart';
 import '../../features/chess/presentation/bloc/ai_game_bloc.dart';
 import '../../features/chess/presentation/pages/chess_home_page.dart';
-import '../../features/chess_tournament/chess_tournament_list_screen.dart';
-import '../../features/chess_tournament/chess_tournament_detail_screen.dart';
+import '../../features/chess_tournament/domain/repositories/tournament_repository.dart';
+import '../../features/chess_tournament/presentation/bloc/tournament_bloc.dart';
+import '../../features/chess_tournament/presentation/screens/tournament_list_screen.dart';
+import '../../features/chess_tournament/presentation/screens/tournament_screen.dart';
 import '../../features/chess/presentation/pages/local_game_page.dart';
 import '../../features/chess/presentation/pages/game_history_page.dart';
 import '../../features/chess/presentation/pages/challenge_page.dart';
@@ -599,7 +602,13 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: 'tournaments',
-          builder: (context, state) => const ChessTournamentListScreen(),
+          builder: (context, state) => RepositoryProvider<TournamentRepository>.value(
+            value: sl<TournamentRepository>(),
+            child: BlocProvider(
+              create: (_) => TournamentListBloc(sl<TournamentRepository>()),
+              child: const TournamentListScreen(),
+            ),
+          ),
           routes: [
             // Deep-linked from push notifications (backend sends
             // /chess/tournaments/<id> as the tap route) — was previously
@@ -607,8 +616,13 @@ final appRouter = GoRouter(
             // the router's error screen instead of opening the tournament.
             GoRoute(
               path: ':id',
-              builder: (context, state) => ChessTournamentDetailScreen(
-                tournamentId: state.pathParameters['id']!,
+              builder: (context, state) => BlocProvider(
+                create: (_) => TournamentBloc(sl<TournamentRepository>(),
+                    authToken: () => sl<LocalStorage>().getToken())
+                  ..add(TournamentRequested(state.pathParameters['id']!)),
+                child: TournamentScreen(
+                  tournamentId: state.pathParameters['id']!,
+                ),
               ),
             ),
           ],
