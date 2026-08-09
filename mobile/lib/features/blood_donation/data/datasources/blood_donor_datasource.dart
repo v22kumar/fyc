@@ -42,6 +42,7 @@ abstract class BloodDonorDataSource {
     required String donorId,
     required bool isAvailable,
   });
+  Future<List<dynamic>> fetchTaluks();
 }
 
 class BloodDonorDataSourceImpl implements BloodDonorDataSource {
@@ -172,4 +173,11 @@ class BloodDonorDataSourceImpl implements BloodDonorDataSource {
       throw mapDioException(e);
     }
   }
+
+  @override
+  Future<List<dynamic>> fetchTaluks() async =>
+      ((await _client.dio.get(ApiConstants.geography,
+                  queryParameters: {'level': 'TALUK'}))
+              .data as List?) ??
+      const [];
 }

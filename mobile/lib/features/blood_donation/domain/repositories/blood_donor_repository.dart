@@ -35,4 +35,7 @@ abstract class BloodDonorRepository {
     required String donorId,
     required bool isAvailable,
   });
+
+  /// Taluk list for the directory filters (id + names, raw rows).
+  Future<List<dynamic>> fetchTaluks();
 }

@@ -18,11 +18,10 @@ import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/location/member_location.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../../domain/repositories/blood_donor_repository.dart';
 
 class BloodDonationHubScreen extends StatefulWidget {
   const BloodDonationHubScreen({super.key});
@@ -69,10 +68,8 @@ class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
 
   Future<void> _loadTaluks() async {
     try {
-      final res = await sl<ApiClient>()
-          .dio
-          .get(ApiConstants.geography, queryParameters: {'level': 'TALUK'});
-      final list = (res.data as List<dynamic>)
+      final rows = await sl<BloodDonorRepository>().fetchTaluks();
+      final list = rows
           .map((e) => _Taluk(
                 id: e['id'] as String,
                 nameEn: (e['name_en'] as String?) ?? '',

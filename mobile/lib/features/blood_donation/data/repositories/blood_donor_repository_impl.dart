@@ -111,4 +111,7 @@ class BloodDonorRepositoryImpl implements BloodDonorRepository {
       return const Left(ServerFailure());
     }
   }
+
+  @override
+  Future<List<dynamic>> fetchTaluks() => _remote.fetchTaluks();
 }
