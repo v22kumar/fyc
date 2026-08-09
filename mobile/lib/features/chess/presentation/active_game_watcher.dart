@@ -1,12 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
-import '../../../core/constants/api_constants.dart';
-import '../../../core/network/api_client.dart';
-import '../../../service_locator.dart';
-import '../../auth/presentation/bloc/auth_bloc.dart';
-import '../../auth/presentation/bloc/auth_state.dart';
-
 /// A chess game the signed-in player can join right now.
 class ActiveChessGame {
   final String id;
@@ -23,6 +17,10 @@ class ActiveChessGame {
 /// poll that lived on the Challenge screen (cancelled the moment they navigated
 /// away) plus a best-effort push that is off unless Firebase is configured. The
 /// watcher decouples "get into the game" from any one screen or from push.
+///
+/// Its two needs — who is signed in, and the active-game payload — are
+/// injected by the composition root (main.dart); the watcher owns no HTTP
+/// client and reaches into no other feature's bloc.
 class ChessActiveGameWatcher {
   ChessActiveGameWatcher._();
   static final ChessActiveGameWatcher instance = ChessActiveGameWatcher._();
@@ -31,8 +29,15 @@ class ChessActiveGameWatcher {
   final ValueNotifier<ActiveChessGame?> game = ValueNotifier<ActiveChessGame?>(null);
 
   Timer? _timer;
+  String? Function()? _currentUserId;
+  Future<dynamic> Function()? _fetchActive;
 
-  void start() {
+  void start({
+    required String? Function() currentUserId,
+    required Future<dynamic> Function() fetchActive,
+  }) {
+    _currentUserId = currentUserId;
+    _fetchActive = fetchActive;
     // 3s so a player is pulled into an accepted game quickly (was 7s, which made
     // matchmaking feel slow). The endpoint is a single indexed query.
     _timer ??= Timer.periodic(const Duration(seconds: 3), (_) => _poll());
@@ -46,20 +51,19 @@ class ChessActiveGameWatcher {
   }
 
   Future<void> _poll() async {
-    final auth = sl<AuthBloc>().state;
-    if (auth is! AuthAuthenticated) {
+    final uid = _currentUserId?.call();
+    if (uid == null) {
       game.value = null;
       return;
     }
     try {
-      final res = await sl<ApiClient>().dio.get('${ApiConstants.chessGames}/active');
-      final data = res.data;
+      final data = await _fetchActive!.call();
       if (data is! Map || data['id'] == null) {
         game.value = null;
         return;
       }
       final id = data['id'].toString();
-      final myColor = (data['white_id']?.toString() == auth.user.id) ? 'white' : 'black';
+      final myColor = (data['white_id']?.toString() == uid) ? 'white' : 'black';
       final next = ActiveChessGame(id, myColor);
       if (game.value?.id != next.id || game.value?.myColor != next.myColor) {
         game.value = next;
