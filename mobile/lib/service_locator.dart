@@ -146,6 +146,8 @@ import 'features/news/data/datasources/news_datasource.dart';
 
 // Chess
 import 'features/chess/data/datasources/chess_remote_datasource.dart';
+import 'features/chess/data/repositories/chess_repository_impl.dart';
+import 'features/chess/domain/repositories/chess_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -453,5 +455,8 @@ Future<void> initServiceLocator() async {
   // Chess
   sl.registerLazySingleton<ChessRemoteDataSource>(
     () => ChessRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<ChessRepository>(
+    () => ChessRepositoryImpl(sl<ChessRemoteDataSource>()),
   );
 }

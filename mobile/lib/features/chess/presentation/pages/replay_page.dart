@@ -5,14 +5,14 @@ import 'package:share_plus/share_plus.dart';
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
-import '../../data/datasources/chess_remote_datasource.dart';
+import '../../domain/repositories/chess_repository.dart';
 import '../../data/models/chess_game_model.dart';
 
 class ReplayPage extends StatefulWidget {
   final String gameId;
+  final ChessRepository repo;
 
-  const ReplayPage({super.key, required this.gameId});
+  const ReplayPage({super.key, required this.gameId, required this.repo});
 
   @override
   State<ReplayPage> createState() => _ReplayPageState();
@@ -37,7 +37,7 @@ class _ReplayPageState extends State<ReplayPage> {
 
   Future<void> _loadGame() async {
     try {
-      final game = await sl<ChessRemoteDataSource>().getGame(widget.gameId);
+      final game = await widget.repo.getGame(widget.gameId);
       if (!mounted) return;
       // Pre-apply all moves and store snapshots
       _buildHistory(game.moves);

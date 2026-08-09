@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
-import '../../data/datasources/chess_remote_datasource.dart';
+import '../../domain/repositories/chess_repository.dart';
 import '../../data/models/chess_game_model.dart';
 import '../widgets/prestige_card.dart';
 
 class GameHistoryPage extends StatefulWidget {
-  const GameHistoryPage({super.key});
+  const GameHistoryPage({super.key, required this.repo});
+
+  final ChessRepository repo;
 
   @override
   State<GameHistoryPage> createState() => _GameHistoryPageState();
@@ -21,9 +22,8 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
   @override
   void initState() {
     super.initState();
-    final ds = sl<ChessRemoteDataSource>();
-    _future = ds.myGames();
-    _statsFuture = ds.myStats();
+    _future = widget.repo.myGames();
+    _statsFuture = widget.repo.myStats();
   }
 
   @override

@@ -2,15 +2,19 @@ import 'dart:async';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
-import '../../data/datasources/chess_remote_datasource.dart';
+import '../../domain/repositories/chess_repository.dart';
 import '../../data/models/chess_game_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ChallengePage extends StatefulWidget {
-  const ChallengePage({super.key});
+  const ChallengePage(
+      {super.key, required this.repo, required this.authToken});
+
+  final ChessRepository repo;
+
+  /// The stored token for opening the board, injected by the router.
+  final Future<String?> Function() authToken;
 
   @override
   State<ChallengePage> createState() => _ChallengePageState();
@@ -19,7 +23,7 @@ class ChallengePage extends StatefulWidget {
 class _ChallengePageState extends State<ChallengePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final TabController _tabs;
-  final _ds = sl<ChessRemoteDataSource>();
+  late final ChessRepository _ds = widget.repo;
 
   late Future<List<ChessMemberModel>> _membersFuture;
   late Future<List<ChessChallengeModel>> _incomingFuture;
@@ -142,7 +146,7 @@ class _ChallengePageState extends State<ChallengePage>
     _navigating = true;
     _enteredGameIds.add(c.gameId!);
     try {
-      final token = await sl<LocalStorage>().getToken() ?? '';
+      final token = await widget.authToken() ?? '';
       if (!mounted) return;
       await context.push(
         '/chess/online/${c.gameId}',
@@ -243,8 +247,7 @@ class _ChallengePageState extends State<ChallengePage>
 
   Future<void> _acceptChallenge(ChessChallengeModel c) async {
     try {
-      final storage = sl<LocalStorage>();
-      final token = await storage.getToken() ?? '';
+      final token = await widget.authToken() ?? '';
       final result = await _ds.acceptChallenge(c.id);
       if (!mounted) return;
       context.push(

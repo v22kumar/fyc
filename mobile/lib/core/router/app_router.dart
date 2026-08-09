@@ -37,6 +37,7 @@ import '../../features/sports/presentation/screens/live_entries_approval_screen.
 
 // Chess
 import '../../features/chess/data/datasources/chess_remote_datasource.dart';
+import '../../features/chess/domain/repositories/chess_repository.dart';
 import '../../features/chess/presentation/bloc/game_bloc.dart';
 import '../../features/chess/presentation/bloc/online_game_bloc.dart';
 import '../../features/chess/presentation/bloc/online_game_event.dart';
@@ -516,7 +517,9 @@ final appRouter = GoRouter(
       path: '/chess',
       builder: (context, state) => BlocProvider(
         create: (_) => GameBloc(remote: sl<ChessRemoteDataSource>()),
-        child: const ChessHomePage(),
+        child: ChessHomePage(
+            repo: sl<ChessRepository>(),
+            storage: sl<LocalStorage>()),
       ),
       routes: [
         GoRoute(
@@ -534,11 +537,14 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: 'history',
-          builder: (context, state) => const GameHistoryPage(),
+          builder: (context, state) =>
+              GameHistoryPage(repo: sl<ChessRepository>()),
         ),
         GoRoute(
           path: 'challenge',
-          builder: (context, state) => const ChallengePage(),
+          builder: (context, state) => ChallengePage(
+              repo: sl<ChessRepository>(),
+              authToken: () => sl<LocalStorage>().getToken()),
         ),
         GoRoute(
           path: 'online/:gameId',
@@ -582,6 +588,7 @@ final appRouter = GoRouter(
                 depth: extra['depth'] as int? ?? 5,
                 skill: extra['skill'] as int? ?? 10,
                 playerIsWhite: extra['playerIsWhite'] as bool? ?? true,
+                storage: sl<LocalStorage>(),
               ),
             );
           },
@@ -590,12 +597,12 @@ final appRouter = GoRouter(
           path: 'replay/:gameId',
           builder: (context, state) {
             final gameId = state.pathParameters['gameId']!;
-            return ReplayPage(gameId: gameId);
+            return ReplayPage(gameId: gameId, repo: sl<ChessRepository>());
           },
         ),
         GoRoute(
           path: 'legacy',
-          builder: (context, state) => const LegacyPage(),
+          builder: (context, state) => LegacyPage(repo: sl<ChessRepository>()),
         ),
         GoRoute(
           path: 'legends',

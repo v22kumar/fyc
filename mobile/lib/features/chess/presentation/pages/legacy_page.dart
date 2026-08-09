@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
-import '../../data/datasources/chess_remote_datasource.dart';
+import '../../domain/repositories/chess_repository.dart';
 import '../../data/models/chess_game_model.dart';
 
 /// Maps a player's Glicko rating + game count to the matching prestige title emoji.
@@ -19,7 +18,9 @@ String _titleEmoji(double rating, int games) {
 }
 
 class LegacyPage extends StatefulWidget {
-  const LegacyPage({super.key});
+  const LegacyPage({super.key, required this.repo});
+
+  final ChessRepository repo;
 
   @override
   State<LegacyPage> createState() => _LegacyPageState();
@@ -32,7 +33,7 @@ class _LegacyPageState extends State<LegacyPage> {
   @override
   void initState() {
     super.initState();
-    final ds = sl<ChessRemoteDataSource>();
+    final ds = widget.repo;
     _awardsFuture = ds.weeklyAwards();
     _membersFuture = ds.members();
   }
@@ -53,7 +54,7 @@ class _LegacyPageState extends State<LegacyPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          final ds = sl<ChessRemoteDataSource>();
+          final ds = widget.repo;
           setState(() {
             _awardsFuture = ds.weeklyAwards();
             _membersFuture = ds.members();
