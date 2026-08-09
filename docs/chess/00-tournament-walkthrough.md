@@ -51,7 +51,18 @@ rejects. Only `APPROVED` players enter the bracket, and the card says so.
   produce byes; the screen never mentions it, so the organiser finds out when
   the bracket appears.
 
-## 3 · Start  ✅ with one trap
+## 3 · Start  ⚠️ and one trap
+
+Shot `44`: **8 approved · Registration closed**, with **Start Tournament & Draw
+Bracket** and **Reopen Registration**. The controls are right and the wording
+is plain.
+
+**What is missing:** the roster. `_approvalsCard` only renders when there are
+*pending* entries, so at the moment the organiser presses the irreversible
+"draw the bracket" button, the eight people about to be drawn are nowhere on
+the screen. `entries` is in the payload — an approved list is a few lines away
+and would let somebody check the draw is the draw they meant.
+
 
 `POST /{id}/start` shuffles, rounds up to the next power of two, creates every
 match for every round, and seeds round 1 **front-against-back so byes face real
