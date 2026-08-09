@@ -225,6 +225,10 @@ def _seed_database():
             "CREATE INDEX IF NOT EXISTS ix_post_likes_post_id ON post_likes (post_id)",
             "CREATE INDEX IF NOT EXISTS ix_post_reposts_post_id ON post_reposts (post_id)",
             "CREATE INDEX IF NOT EXISTS ix_comments_entity ON comments (entity_type, entity_id)",
+            # The 15-second SOS sweep filters on status alone (it serves every
+            # org); ix_sos_open leads with organization_id, so the sweep was a
+            # full scan every 15 seconds, forever.
+            "CREATE INDEX IF NOT EXISTS ix_sos_incidents_status ON sos_incidents (status)",
         ]
         for _stmt in _perf_indexes:
             try:
@@ -710,8 +714,11 @@ async def lifespan(app: FastAPI):
         }
         scheduler = AsyncIOScheduler(jobstores=jobstores)
         
+        # Every daily cron carries an hour of misfire grace: APScheduler's
+        # default is ONE second, so a redeploy or cold start straddling the
+        # trigger minute silently skipped that day's run.
         scheduler.add_job(run_birthday_notifications, "cron", hour=0, minute=31, timezone="UTC",
-                          id="birthday_notifications", replace_existing=True)
+                          id="birthday_notifications", replace_existing=True, misfire_grace_time=3600)
 
         from app.services.daily_digest import (
             run_thirukkural_digest, 
@@ -722,24 +729,24 @@ async def lifespan(app: FastAPI):
             run_notification_cleanup
         )
         scheduler.add_job(run_thirukkural_digest, "cron", hour=3, minute=30, timezone="UTC",  # 9:00 AM IST
-                          id="thirukkural_digest", replace_existing=True)
+                          id="thirukkural_digest", replace_existing=True, misfire_grace_time=3600)
         scheduler.add_job(run_news_digest, "cron", hour=4, minute=30, timezone="UTC",  # 10:00 AM IST
-                          id="news_digest", replace_existing=True)
+                          id="news_digest", replace_existing=True, misfire_grace_time=3600)
         scheduler.add_job(run_evening_digest, "cron", hour=14, minute=30, timezone="UTC",  # 8:00 PM IST
-                          id="evening_digest", replace_existing=True)
+                          id="evening_digest", replace_existing=True, misfire_grace_time=3600)
                           
         # Nightly database cleanup
         scheduler.add_job(run_notification_cleanup, "cron", hour=2, minute=0, timezone="UTC",  # 7:30 AM IST
-                          id="notification_cleanup", replace_existing=True)
+                          id="notification_cleanup", replace_existing=True, misfire_grace_time=3600)
 
         # AI pre-cache jobs — populate the Home AI cards ahead of peak hours.
         # Only scheduled when a Gemini key is configured (the jobs no-op without
         # it, but skipping keeps the scheduler clean).
         if settings.GEMINI_API_KEY:
             scheduler.add_job(run_ai_daily_digest_job, "cron", hour=2, minute=45, timezone="UTC",  # 8:15 AM IST
-                              id="ai_daily_digest", replace_existing=True)
+                              id="ai_daily_digest", replace_existing=True, misfire_grace_time=3600)
             scheduler.add_job(run_ai_news_summary_job, "cron", hour=4, minute=45, timezone="UTC",  # 10:15 AM IST
-                              id="ai_news_summary", replace_existing=True)
+                              id="ai_news_summary", replace_existing=True, misfire_grace_time=3600)
             logger.info("[scheduler] AI digest + news summary jobs scheduled")
 
         # Social feed sync — pulls Instagram/Facebook/Threads posts into the
@@ -748,7 +755,8 @@ async def lifespan(app: FastAPI):
         # feed never synced). The job itself no-ops for any org without tokens.
         from app.services.social_sync import sync_social_feeds
         scheduler.add_job(sync_social_feeds, "interval", hours=1,
-                          id="social_media_sync", replace_existing=True)
+                          id="social_media_sync", replace_existing=True,
+                          max_instances=1, coalesce=True)
 
         # SOS escalation — the thing that notices nobody answered.
         #
@@ -776,7 +784,7 @@ async def lifespan(app: FastAPI):
             logger.info("[scheduler] Morning broadcast scheduled at 00:30 UTC (6:00 AM IST)")
 
         from app.services.keepalive import run_keepalive
-        scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True)
+        scheduler.add_job(run_keepalive, "interval", minutes=4, id="keepalive", replace_existing=True, coalesce=True)
 
         # Safety net for live chess: adjudicates games whose clock expired while
         # nobody was connected, closes out abandoned boards, advances any
@@ -784,7 +792,8 @@ async def lifespan(app: FastAPI):
         # Without this a single stalled board blocks an entire knockout round.
         from app.services.chess_reaper import run_chess_reaper
         scheduler.add_job(run_chess_reaper, "interval", minutes=2,
-                          id="chess_reaper", replace_existing=True)
+                          id="chess_reaper", replace_existing=True,
+                          max_instances=1, coalesce=True)
         # Only ONE instance may actually run the scheduler — otherwise every Fly
         # machine fires the same cron jobs (duplicate pushes / WhatsApp blasts to
         # the whole member base). Jobs are still persisted to the shared jobstore

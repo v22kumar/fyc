@@ -76,7 +76,8 @@ def create_comment(
                             data={
                                 "message": comment_text,
                                 "access_token": org.instagram_access_token
-                            }
+                            },
+                            timeout=15,
                         )
                         if res.status_code != 200:
                             logger.error(f"Failed to sync IG comment: {res.text}")
@@ -94,7 +95,8 @@ def create_comment(
                                 "text": comment_text,
                                 "reply_to_id": media_id,
                                 "access_token": org.threads_access_token
-                            }
+                            },
+                            timeout=15,
                         )
                         if c_res.status_code == 200:
                             creation_id = c_res.json().get("id")
@@ -104,7 +106,8 @@ def create_comment(
                                 data={
                                     "creation_id": creation_id,
                                     "access_token": org.threads_access_token
-                                }
+                                },
+                                timeout=15,
                             )
                         else:
                             logger.error(f"Failed to create Threads reply container: {c_res.text}")

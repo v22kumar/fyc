@@ -236,6 +236,9 @@ class SosIncident(Base, TimestampMixin, TenantModelMixin):
 
     __table_args__ = (
         Index("ix_sos_open", "organization_id", "status"),
+        # The 15-second escalation sweep filters on status alone (it serves
+        # every org), which ix_sos_open cannot serve — a status index is
+        # created by the startup ensure-indexes block in app/main.py.
         UniqueConstraint("raised_by_user_id", "idempotency_key",
                          name="uq_sos_idempotency"),
     )

@@ -759,7 +759,13 @@ def list_fixtures(
     tenant_id: uuid.UUID = Depends(require_tenant_id),
 ):
     _get_tenant_tournament(db, tournament_id, tenant_id)
-    q = db.query(Fixture).filter(Fixture.tournament_id == tournament_id)
+    # _fixture_out reads both team names; without the joins a 20-team
+    # round-robin page cost 380 lazy SELECTs.
+    q = (
+        db.query(Fixture)
+        .options(joinedload(Fixture.team_a), joinedload(Fixture.team_b))
+        .filter(Fixture.tournament_id == tournament_id)
+    )
     if fixture_status:
         q = q.filter(Fixture.status == fixture_status.upper())
     fixtures = q.order_by(Fixture.match_number).all()

@@ -513,17 +513,35 @@ def _cricket_live_snapshot(fixture_id: str):
     """The public live payload for a fixture (status + scoreboard state), read in
     a short-lived session so a long-running stream never holds a DB connection.
     Returns None when the match isn't initialised yet — or on any DB error, so a
-    transient blip skips a tick instead of tearing down every viewer's stream."""
+    transient blip skips a tick instead of tearing down every viewer's stream.
+
+    Cache-aside with a 1s TTL: every viewer's stream polls this every second,
+    so 200 spectators of one match meant 200 identical queries and pool
+    checkouts per second. The cache collapses that to one DB pass per tick,
+    shared by everyone. Bypassed under tests so a just-scored ball is never
+    hidden behind a cached response."""
+    from app.core import livecache
+    from app.core.config import settings
+
+    cache_key = f"cricket:sse:{fixture_id}"
+    if not settings.TESTING:
+        cached = livecache.get_json(cache_key)
+        if cached is not None:
+            return cached
+
     db = SessionLocal()
     try:
         m = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
         if not m:
             return None
-        return {
+        snap = {
             "status": m.status,
             "overs_per_innings": m.overs_per_innings,
             "match_state": m.match_state,
         }
+        if not settings.TESTING:
+            livecache.set_json(cache_key, snap, ttl_seconds=1)
+        return snap
     except Exception:
         logger.debug("cricket live snapshot read failed for %s", fixture_id, exc_info=True)
         return None

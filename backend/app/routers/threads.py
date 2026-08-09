@@ -55,7 +55,7 @@ def create_threads_post(
     else:
         container_params["media_type"] = "TEXT"
 
-    res = requests.post(container_url, data=container_params)
+    res = requests.post(container_url, data=container_params, timeout=15)
     if res.status_code != 200:
         logger.error(f"Failed to create Threads container: {res.text}")
         raise HTTPException(status_code=400, detail=f"Failed to publish to Threads: {res.json().get('error', {}).get('message')}")
@@ -68,7 +68,7 @@ def create_threads_post(
         "access_token": org.threads_access_token,
         "creation_id": creation_id
     }
-    pub_res = requests.post(publish_url, data=publish_params)
+    pub_res = requests.post(publish_url, data=publish_params, timeout=15)
     if pub_res.status_code != 200:
         logger.error(f"Failed to publish Threads container: {pub_res.text}")
         raise HTTPException(status_code=400, detail=f"Failed to finalize Threads post: {pub_res.json().get('error', {}).get('message')}")

@@ -135,7 +135,7 @@ def auth_instagram_callback(request: Request, code: str = Query(...),
         "redirect_uri": redirect_uri,
         "code": code
     }
-    res = requests.post(token_url, data=payload)
+    res = requests.post(token_url, data=payload, timeout=15)
     if res.status_code != 200:
         logger.error(f"Failed to get IG token: {res.text}")
         raise HTTPException(status_code=400, detail=f"Failed to get IG token: {res.text}")
@@ -209,7 +209,7 @@ def auth_threads_callback(request: Request, code: str = Query(...),
         "redirect_uri": redirect_uri,
         "code": code
     }
-    res = requests.post(token_url, data=payload)
+    res = requests.post(token_url, data=payload, timeout=15)
     if res.status_code != 200:
         raise HTTPException(status_code=400, detail=f"Failed to get short-lived token: {res.text}")
         
@@ -219,7 +219,7 @@ def auth_threads_callback(request: Request, code: str = Query(...),
     
     # 2. Exchange for long-lived token
     long_lived_url = f"https://graph.threads.net/access_token?grant_type=th_exchange_token&client_secret={THREADS_APP_SECRET}&access_token={short_lived_token}"
-    ll_res = requests.get(long_lived_url)
+    ll_res = requests.get(long_lived_url, timeout=15)
     if ll_res.status_code != 200:
         raise HTTPException(status_code=400, detail=f"Failed to get long-lived token: {ll_res.text}")
         
