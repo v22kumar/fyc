@@ -114,7 +114,7 @@ import '../../features/safety/presentation/bloc/sos_bloc.dart';
 import '../../features/safety/presentation/screens/live_incidents_screen.dart';
 import '../../features/safety/presentation/screens/responder_alert_screen.dart';
 import '../../features/safety/presentation/screens/safety_setup_screen.dart';
-import '../../features/safety/presentation/screens/sos_trigger_screen.dart';
+import '../../features/safety/presentation/screens/sos_screen.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_list_bloc.dart';
 import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
@@ -440,7 +440,7 @@ final appRouter = GoRouter(
       path: '/sos',
       builder: (context, state) => BlocProvider(
         create: (_) => SosBloc(sl<SafetyRepository>()),
-        child: const SosTriggerScreen(),
+        child: const SosScreen(),
       ),
     ),
     GoRoute(

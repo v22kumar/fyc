@@ -16,6 +16,7 @@ import 'package:fyc_connect/features/safety/presentation/bloc/sos_bloc.dart';
 import 'package:fyc_connect/features/safety/presentation/screens/responder_alert_screen.dart';
 import 'package:fyc_connect/features/safety/presentation/screens/safety_setup_screen.dart';
 import 'package:fyc_connect/features/safety/presentation/screens/sos_live_screen.dart';
+import 'package:fyc_connect/features/safety/presentation/screens/sos_screen.dart';
 import 'package:fyc_connect/features/safety/presentation/screens/sos_trigger_screen.dart';
 import 'package:fyc_connect/service_locator.dart';
 
@@ -127,6 +128,30 @@ void main() {
       ..add(const SosRaised());
     await _phone(t, _app(BlocProvider.value(value: bloc, child: const SosLiveScreen())));
     await _shoot(t, '33_sos_live_coming');
+  });
+
+  testWidgets('the whole raise, through the real route', (t) async {
+    // Exactly what the router builds for `/sos`, driven by an actual hold.
+    // The screen this photographs was, until now, a grey rectangle: it was
+    // reached by pushing a route outside the BlocProvider it depends on.
+    final repo = FakeSafetyRepository(contacts: 2, incident: incidentTwoComing);
+    await _phone(
+      t,
+      _app(BlocProvider(
+        create: (_) => SosBloc(repo, probe: fakeProbe(accuracyM: 12)),
+        child: const SosScreen(),
+      )),
+    );
+    final gesture =
+        await t.startGesture(t.getCenter(find.text('Hold to\nsend SOS')));
+    for (var i = 0; i < 80; i++) {
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
+    for (var i = 0; i < 14; i++) {
+      await t.pump(const Duration(milliseconds: 500));
+    }
+    await _shoot(t, '36_sos_after_raise');
   });
 
   testWidgets('responder — asked', (t) async {
