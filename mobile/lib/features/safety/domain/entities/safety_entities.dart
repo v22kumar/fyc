@@ -251,6 +251,7 @@ class SafetyContact extends Equatable {
     this.notifyPush = true,
     this.verifiedAt,
     this.position = 0,
+    this.isMember = false,
   });
 
   final String id;
@@ -268,10 +269,16 @@ class SafetyContact extends Equatable {
   final DateTime? verifiedAt;
   final int position;
 
+  /// Whether this number belongs to a member of the club, which decides what
+  /// the screen may promise: a phone that rings through a silenced ringer, or
+  /// an SMS that lands silently.
+  final bool isMember;
+
   bool get isTested => verifiedAt != null;
 
   @override
-  List<Object?> get props => [id, name, phone, verifiedAt, position];
+  List<Object?> get props =>
+      [id, name, phone, verifiedAt, position, isMember];
 }
 
 /// Whether this member has agreed to be told when somebody near them needs

@@ -448,8 +448,12 @@ class _Actions extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // The alarm is a first-class control here rather than a fifth button
-          // on a menu, and it survives this screen closing.
+          // Off unless asked for, and it survives this screen closing.
+          //
+          // The alarm used to start by itself on this phone. It does not any
+          // more — it is here for the one case where being heard is the point:
+          // attracting a passer-by, or making somebody back off. The person
+          // holding the phone is the only one who can judge that.
           ValueListenableBuilder<bool>(
             valueListenable: SirenController.instance.isPlaying,
             builder: (context, playing, _) => SizedBox(
@@ -465,8 +469,9 @@ class _Actions extends StatelessWidget {
                 ),
                 icon: Icon(playing
                     ? Icons.volume_up_rounded
-                    : Icons.volume_off_rounded),
-                label: Text(playing ? trId('alarm_on') : trId('alarm_off')),
+                    : Icons.campaign_outlined),
+                label: Text(
+                    playing ? trId('stop_alarm') : trId('sound_alarm_here')),
               ),
             ),
           ),

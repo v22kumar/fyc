@@ -25,6 +25,34 @@ class LocalNotifications {
     importance: Importance.high,
   );
 
+  /// The channel an SOS arrives on, and the reason the alarm moved here.
+  ///
+  /// The siren used to sound on the phone of the person *raising* the SOS.
+  /// That is the wrong phone: in a threat it announces to the person you are
+  /// afraid of that you have called for help, and it drowns out the 112 call
+  /// you are trying to make. The phone that has to be impossible to ignore is
+  /// the one belonging to somebody who can come — a responder asleep at two in
+  /// the morning, or your wife with her ringer off.
+  ///
+  /// So this channel plays the siren as its **notification sound**, at
+  /// [AudioAttributesUsage.alarm], which sounds through a silenced ringer the
+  /// way an alarm clock does. A channel's sound is fixed at creation by
+  /// Android, which is exactly why it needs to be its own channel rather than
+  /// a louder variant of the general one.
+  static const sosChannelId = 'fyc_sos';
+
+  static const AndroidNotificationChannel _sosChannel =
+      AndroidNotificationChannel(
+    sosChannelId,
+    'Emergency (SOS)',
+    description: 'Someone near you needs help. Rings like an alarm.',
+    importance: Importance.max,
+    sound: RawResourceAndroidNotificationSound('sos_siren'),
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+    enableVibration: true,
+    enableLights: true,
+  );
+
   /// Called from onSelectNotification with the tapped message's route payload.
   static void Function(String route)? onTapRoute;
 
@@ -48,24 +76,43 @@ class LocalNotifications {
       },
     );
     // Create the channel up-front so the first notification shows immediately.
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.createNotificationChannel(_channel);
+    await android?.createNotificationChannel(_sosChannel);
   }
+
+  /// Is this an SOS? Then it gets the alarm channel and the alarm treatment.
+  static bool isSos(RemoteMessage message) =>
+      message.data['type'] == 'SOS';
 
   /// Post a foreground FCM message to the system tray.
   static Future<void> showFromMessage(RemoteMessage message) async {
     final n = message.notification;
     if (n == null) return;
+    final sos = isSos(message);
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
-        _channel.id,
-        _channel.name,
-        channelDescription: _channel.description,
-        importance: Importance.high,
-        priority: Priority.high,
+        sos ? _sosChannel.id : _channel.id,
+        sos ? _sosChannel.name : _channel.name,
+        channelDescription:
+            sos ? _sosChannel.description : _channel.description,
+        importance: sos ? Importance.max : Importance.high,
+        priority: sos ? Priority.max : Priority.high,
         icon: '@mipmap/ic_launcher',
+        // An SOS is a call for help, not news. `category` is what lets Android
+        // treat it as urgent under Do Not Disturb, and the full-screen intent
+        // is what wakes a locked screen instead of adding a quiet row nobody
+        // sees until morning.
+        category: sos ? AndroidNotificationCategory.call : null,
+        fullScreenIntent: sos,
+        sound: sos
+            ? const RawResourceAndroidNotificationSound('sos_siren')
+            : null,
+        audioAttributesUsage: sos
+            ? AudioAttributesUsage.alarm
+            : AudioAttributesUsage.notification,
+        timeoutAfter: sos ? const Duration(minutes: 5).inMilliseconds : null,
       ),
     );
     try {

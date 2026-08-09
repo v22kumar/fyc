@@ -15,6 +15,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/router/app_router.dart';
 import 'core/services/local_notifications.dart';
+import 'core/services/siren_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_manager.dart';
 import 'core/l10n/app_localizations.dart';
@@ -188,6 +189,15 @@ class _FycAppState extends State<FycApp> {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         if (message.notification != null) {
           LocalNotifications.showFromMessage(message);
+        }
+        // An SOS arriving while the app is open gets the alarm too.
+        //
+        // In the foreground Android hands the message to us and posts nothing
+        // itself, so the channel's alarm sound never plays — which would mean
+        // the one member most likely to be holding their phone is the one who
+        // hears nothing. The siren runs until they open the alert.
+        if (LocalNotifications.isSos(message)) {
+          SirenController.instance.start();
         }
       });
 

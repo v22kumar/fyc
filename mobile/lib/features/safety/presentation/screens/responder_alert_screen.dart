@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/services/siren_controller.dart';
 import '../../domain/entities/safety_entities.dart' as e;
 import '../bloc/responder_bloc.dart';
 import 'sos_live_screen.dart' show formatAgo, formatDistance;
@@ -32,6 +33,10 @@ class _ResponderAlertScreenState extends State<ResponderAlertScreen> {
   @override
   void initState() {
     super.initState();
+    // Opening the screen is the acknowledgement the alarm was waiting for.
+    // It has done its job — waking somebody — and carrying on while they read
+    // the three facts they need would only make them fumble for the volume.
+    SirenController.instance.stop();
     context.read<ResponderBloc>().add(AlertOpened(widget.incidentId));
   }
 
