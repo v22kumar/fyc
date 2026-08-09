@@ -31,6 +31,7 @@ class OnlineGamePage extends StatelessWidget {
         leadingWidth: 44,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          tooltip: trId('back'),
           onPressed: () => Navigator.pop(context),
         ),
         title: BlocBuilder<OnlineGameBloc, OnlineGameState>(
@@ -57,6 +58,7 @@ class OnlineGamePage extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.swap_vert_rounded,
                         color: Colors.white54, size: 22),
+                    tooltip: trId('flip_board'),
                     onPressed: () =>
                         context.read<OnlineGameBloc>().add(const FlipOnlineBoard()),
                   ),

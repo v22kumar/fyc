@@ -241,6 +241,7 @@ class _ResponderRow extends StatelessWidget {
           if (responder.phone != null)
             IconButton(
               onPressed: () => _call(responder.phone!),
+              tooltip: trId('call'),
               icon: const Icon(Icons.call_rounded, color: Color(0xFF16A34A)),
             ),
         ],

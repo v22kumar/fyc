@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/photo_entity.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
+import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
 
 class PhotoViewerScreen extends StatelessWidget {
@@ -26,6 +27,7 @@ class PhotoViewerScreen extends StatelessWidget {
         foregroundColor: AppColors.background,
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: trId('close'),
           onPressed: () => context.go('/gallery'),
         ),
       ),
