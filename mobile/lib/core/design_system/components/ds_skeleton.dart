@@ -73,20 +73,20 @@ class DSSkeletonList extends StatelessWidget {
             borderRadius: BorderRadius.circular(DSRadius.card),
             border: Border.all(color: context.dsBorder),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
+                children: [
                   DSSkeletonBlock(width: 40, height: 40, radius: 20),
                   SizedBox(width: 12),
                   Expanded(child: DSSkeletonBlock(width: double.infinity, height: 14)),
                 ],
               ),
               SizedBox(height: 14),
-              const DSSkeletonBlock(width: double.infinity, height: 14),
+              DSSkeletonBlock(width: double.infinity, height: 14),
               SizedBox(height: 8),
-              const DSSkeletonBlock(width: 160, height: 14),
+              DSSkeletonBlock(width: 160, height: 14),
             ],
           ),
         ),

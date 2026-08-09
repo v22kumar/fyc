@@ -6,6 +6,7 @@
 ///   flutter run -d linux -t lib/dev_board_harness.dart \
 ///     --dart-define=API_BASE_URL=... --dart-define=GAME_ID=... \
 ///     --dart-define=TOKEN=...
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';

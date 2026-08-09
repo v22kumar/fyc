@@ -48,11 +48,11 @@ void main() {
     await latin.load();
   });
 
-  final worked = WorkListing(
+  const worked = WorkListing(
     id: 'l1', kind: ListingKind.person, displayName: 'Murugan A.',
     category: 'CARPENTRY', phone: '9443132365', area: 'Vadasery',
     about: 'interlock brick work, doors',
-    trust: const ListingTrust(
+    trust: ListingTrust(
         phoneVerified: true, jobsConfirmed: 9, isNew: false,
         memberSinceYear: 2022),
   );

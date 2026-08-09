@@ -54,7 +54,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested());
               },
               child: ListView.builder(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 itemCount: state.feed.length,
                 itemBuilder: (context, index) {
                   return _FeedCard(item: state.feed[index], lang: _lang);
@@ -67,9 +67,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(state.message),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
                       context.read<CommunityFeedBloc>().add(const CommunityFeedFetchRequested());
@@ -80,7 +80,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               ),
             );
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -99,7 +99,7 @@ class _FeedCard extends StatelessWidget {
     final dateObj = DateTime.tryParse(item.createdAt)?.toLocal() ?? DateTime.now();
 
     return Card(
-      margin: EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: Column(
@@ -115,36 +115,36 @@ class _FeedCard extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 width: double.infinity,
                 height: 150,
-                color: AppColors.textSecondary.withOpacity(0.2),
+                color: AppColors.textSecondary.withValues(alpha: 0.2),
                 child: Icon(Icons.broken_image, color: AppColors.textSecondary),
               ),
             ),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   lang == 'ta' ? item.displayTitleTa : item.displayTitleEn,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   lang == 'ta' ? item.displaySubtitleTa : item.displaySubtitleEn,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textSecondary.withOpacity(0.8),
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
                     height: 1.4,
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       fmt.format(dateObj),
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -177,7 +177,7 @@ class _FeedCard extends StatelessWidget {
         break;
       case 'TOURNAMENT':
         icon = Icons.emoji_events;
-        color = AppColors.warning.withOpacity(0.7);
+        color = AppColors.warning.withValues(alpha: 0.7);
         label = trId('tournament');
         break;
       case 'ISSUE':
@@ -194,15 +194,15 @@ class _FeedCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: color.withOpacity(0.15),
+            backgroundColor: color.withValues(alpha: 0.15),
             child: Icon(icon, size: 18, color: color),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
             label,
             style: TextStyle(

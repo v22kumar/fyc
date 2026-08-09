@@ -9,13 +9,13 @@ class SuccessSnackbar {
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.transparent,
         content: Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.success,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.success.withOpacity(0.3),
+                color: AppColors.success.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -24,7 +24,7 @@ class SuccessSnackbar {
           child: Row(
             children: [
               Icon(Icons.check_circle_outline, color: AppColors.background, size: 28),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -39,10 +39,10 @@ class SuccessSnackbar {
                       ),
                     ),
                     if (message != null) ...[
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         message,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
                         ),

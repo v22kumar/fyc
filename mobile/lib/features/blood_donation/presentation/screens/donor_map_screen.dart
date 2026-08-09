@@ -82,20 +82,20 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: context.cSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
         child: ListView(
           shrinkWrap: true,
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           children: [
             Text('${c.donors.length} ${trId('donors_here')}',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.cText)),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             for (final d in c.donors)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.accent.withOpacity(0.12),
+                  backgroundColor: AppColors.accent.withValues(alpha: 0.12),
                   child: Text(d.bloodGroup, style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800, fontSize: 13)),
                 ),
                 title: Text(d.displayName(lang), style: TextStyle(color: context.cText, fontWeight: FontWeight.w600)),
@@ -157,7 +157,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
               color: const Color(0xFF2563EB),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 3),
-              boxShadow: [BoxShadow(color: const Color(0xFF2563EB).withOpacity(0.4), blurRadius: 8)],
+              boxShadow: [BoxShadow(color: const Color(0xFF2563EB).withValues(alpha: 0.4), blurRadius: 8)],
             ),
           ),
         ),
@@ -169,7 +169,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
         actions: [
           IconButton(
             tooltip: trId('recenter'),
-            icon: Icon(Icons.my_location_rounded),
+            icon: const Icon(Icons.my_location_rounded),
             onPressed: () {
               if (_me != null) _map.move(_me!, 13);
             },
@@ -183,11 +183,11 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
             height: 48,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               children: [
                 for (final g in _groups)
                   Padding(
-                    padding: EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(g),
                       selected: _group == g,
@@ -225,15 +225,15 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
                     top: 12, left: 0, right: 0,
                     child: Center(
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: context.cSurface,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                          const SizedBox(width: 8),
                           Text(trId('loading'), style: TextStyle(color: context.cText, fontSize: 12)),
                         ]),
                       ),
@@ -243,7 +243,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
                   Positioned(
                     bottom: 20, left: 20, right: 20,
                     child: Container(
-                      padding: EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: context.cSurface,
                         borderRadius: BorderRadius.circular(14),
@@ -261,7 +261,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
           Container(
             width: double.infinity,
             color: context.cBackground,
-            padding: EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(vertical: 3),
             child: Text('© OpenStreetMap',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 9, color: context.cTextSecondary)),
@@ -300,12 +300,12 @@ class _ClusterPin extends StatelessWidget {
             color: AppColors.accent,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2.5),
-            boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.5), blurRadius: 8)],
+            boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.5), blurRadius: 8)],
           ),
           child: single
-              ? Icon(Icons.bloodtype_rounded, color: Colors.white, size: 22)
+              ? const Icon(Icons.bloodtype_rounded, color: Colors.white, size: 22)
               : Text('$count',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
         ),
         if (live > 0)
           Positioned(

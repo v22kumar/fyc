@@ -464,8 +464,9 @@ def test_a_twilio_outage_does_not_lock_the_club_out(db, monkeypatch):
 
     # And the code minted for the fallback channel actually verifies, rather
     # than the request pointing at a Twilio verification that never happened.
-    phone, code, _, _ = auth_router.otp_store[res.verification_id]
-    assert code is not None, "a fallback channel needs a code we generated"
+    pending = auth_router.otp_store[res.verification_id]
+    assert pending.otp_code is not None, \
+        "a fallback channel needs a code we generated"
 
 
 def test_every_channel_down_says_so_and_leaves_nothing_dangling(db, monkeypatch):

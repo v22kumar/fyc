@@ -49,7 +49,7 @@ void main() {
                 const SizedBox(height: 8),
                 ActionChip(label: const Text('D: chip label'), onPressed: () {}),
                 const SizedBox(height: 8),
-                Chip(label: const Text('E: plain Chip')),
+                const Chip(label: Text('E: plain Chip')),
               ],
             ),
           ),

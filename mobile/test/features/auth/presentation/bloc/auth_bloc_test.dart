@@ -85,7 +85,7 @@ void main() {
         return bloc;
       },
       act: (b) => b.add(const AuthCheckRequested()),
-      expect: () => [const AuthLoading(), AuthAuthenticated(_tUser)],
+      expect: () => [const AuthLoading(), const AuthAuthenticated(_tUser)],
     );
 
     blocTest<AuthBloc, AuthState>(
@@ -159,7 +159,7 @@ void main() {
         verificationId: 'vid-123',
         otpCode: '654321',
       )),
-      expect: () => [const AuthLoading(), AuthAuthenticated(_tUser)],
+      expect: () => [const AuthLoading(), const AuthAuthenticated(_tUser)],
     );
   });
 

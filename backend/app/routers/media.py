@@ -29,6 +29,21 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "video/mp
 MAX_SIZE_MB = 20
 
 
+def _looks_like_image(content: bytes) -> bool:
+    """The first bytes are the file's own statement of what it is — the
+    Content-Type header is only the client's claim. Accepts exactly the
+    formats in ALLOWED_TYPES: JPEG, PNG, WebP, GIF, MP4/QuickTime."""
+    if len(content) < 12:
+        return False
+    return (
+        content[:3] == b"\xff\xd8\xff"                        # JPEG
+        or content[:4] == b"\x89PNG"                           # PNG
+        or content[:4] == b"GIF8"                              # GIF
+        or (content[:4] == b"RIFF" and content[8:12] == b"WEBP")  # WebP
+        or content[4:8] == b"ftyp"                             # MP4 / QuickTime
+    )
+
+
 def _cloudinary_configured() -> bool:
     """Return True if Cloudinary credentials are set and the library is installed."""
     return (
@@ -88,11 +103,32 @@ async def upload_file(
             detail=f"Only JPEG, PNG, WebP, and GIF images are accepted. Got: {file.content_type}",
         )
 
-    content = await file.read()
-    if len(content) > MAX_SIZE_MB * 1024 * 1024:
+    # Read in bounded chunks and stop the moment the limit is crossed — the
+    # old `await file.read()` buffered the entire body into RAM *before*
+    # checking, so the size limit protected the disk but not the memory of
+    # the single machine serving everyone.
+    max_bytes = MAX_SIZE_MB * 1024 * 1024
+    chunks: list[bytes] = []
+    received = 0
+    while True:
+        chunk = await file.read(1024 * 1024)
+        if not chunk:
+            break
+        received += len(chunk)
+        if received > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds the {MAX_SIZE_MB} MB limit.",
+            )
+        chunks.append(chunk)
+    content = b"".join(chunks)
+
+    # The Content-Type header is the client's claim; the first bytes are the
+    # file's own. JPEG/PNG/WebP/GIF all declare themselves up front.
+    if not _looks_like_image(content):
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds the {MAX_SIZE_MB} MB limit.",
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="The file does not look like a JPEG, PNG, WebP or GIF image.",
         )
 
     org_id = str(current_user.organization_id)

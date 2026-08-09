@@ -112,6 +112,7 @@ dependencies:
   # AI Feature Dependencies
   flutter_riverpod: ^2.5.1
 
+  http: any
 dev_dependencies:
   integration_test:
     sdk: flutter
@@ -121,6 +122,7 @@ dev_dependencies:
   bloc_test: ^9.1.7
   mocktail: ^1.0.4
 
+  characters: any
 flutter:
   uses-material-design: true
   generate: true

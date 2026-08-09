@@ -118,9 +118,9 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                       children: [
                         Icon(Icons.error_outline,
                             size: 48, color: context.cTextSecondary),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(state.message),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => context.read<DirectoryBloc>().add(
                                 DirectoryFetchRequested(
@@ -132,7 +132,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                     ),
                   );
                 }
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               },
             ),
           ),
@@ -161,10 +161,10 @@ class _FilterRow extends StatelessWidget {
       height: 52,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           Padding(
-            padding: EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               label: Text(trId('all')),
               selected: selected == null,
@@ -173,14 +173,14 @@ class _FilterRow extends StatelessWidget {
           ),
           ...categories.map(
             (c) => Padding(
-              padding: EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
                 label: Text(
                   '${ContactEntity.categoryEmojiFor(c)} '
                   '${ContactEntity.categoryLabelFor(c, lang)}',
                 ),
                 selected: selected == c,
-                selectedColor: AppColors.primary.withOpacity(0.15),
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
                 onSelected: (_) => onSelect(selected == c ? null : c),
               ),
             ),
@@ -230,7 +230,7 @@ class _ContactList extends StatelessWidget {
     });
 
     return ListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       children: children,
     );
   }
@@ -243,7 +243,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10, top: 4),
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
         style: TextStyle(
@@ -276,7 +276,7 @@ class _ContactCard extends StatelessWidget {
     final geography = contact.displayGeography(lang);
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -284,7 +284,7 @@ class _ContactCard extends StatelessWidget {
         border: Border.all(color: context.cBorder, width: 1),
       ),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -297,19 +297,19 @@ class _ContactCard extends StatelessWidget {
               ),
             ),
             if (designation != null && designation.isNotEmpty) ...[
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 designation,
                 style: TextStyle(color: context.cTextSecondary, fontSize: 13),
               ),
             ],
             if (geography != null && geography.isNotEmpty) ...[
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Row(
                 children: [
                   Icon(Icons.place_outlined,
                       size: 14, color: context.cTextSecondary),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       geography,
@@ -320,18 +320,18 @@ class _ContactCard extends StatelessWidget {
                 ],
               ),
             ],
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Icon(Icons.phone_outlined, size: 14, color: context.cTextSecondary),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   contact.phonePrimary,
                   style: TextStyle(fontSize: 12, color: context.cTextSecondary),
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -339,7 +339,7 @@ class _ContactCard extends StatelessWidget {
                     onTap: onCall,
                     child: OutlinedButton.icon(
                       onPressed: onCall,
-                      icon: Icon(Icons.phone, size: 16),
+                      icon: const Icon(Icons.phone, size: 16),
                       label: Text(trId('call')),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 44),
@@ -348,13 +348,13 @@ class _ContactCard extends StatelessWidget {
                   ),
                 ),
                 if (onWhatsApp != null) ...[
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ScaleOnTap(
                       onTap: onWhatsApp,
                       child: ElevatedButton.icon(
                         onPressed: onWhatsApp,
-                        icon: Icon(Icons.chat, size: 16),
+                        icon: const Icon(Icons.chat, size: 16),
                         label: Text(trId('whatsapp')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF25D366),
@@ -383,8 +383,8 @@ class _EmptyContacts extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('📇', style: TextStyle(fontSize: 64)),
-          SizedBox(height: 16),
+          const Text('📇', style: TextStyle(fontSize: 64)),
+          const SizedBox(height: 16),
           Text(
             trId('no_contacts_found'),
             style: TextStyle(fontSize: 16, color: context.cTextSecondary),

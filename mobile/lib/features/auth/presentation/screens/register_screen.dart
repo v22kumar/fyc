@@ -174,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         height: 300,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF0F5132).withOpacity(0.52),
+                          color: const Color(0xFF0F5132).withValues(alpha: 0.52),
                         ),
                       ),
                     ),
@@ -186,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         height: 260,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF16A34A).withOpacity(0.28),
+                          color: const Color(0xFF16A34A).withValues(alpha: 0.28),
                         ),
                       ),
                     ),
@@ -198,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                         height: 200,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFD4AF37).withOpacity(0.07),
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.07),
                         ),
                       ),
                     ),
@@ -219,23 +219,23 @@ class _RegisterScreenState extends State<RegisterScreen>
                 final isLoading = state is AuthLoading;
                 return SafeArea(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                     child: Column(
                       children: [
                         // Logo + brand
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Container(
-                          padding: EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.background.withOpacity(0.08),
+                            color: AppColors.background.withValues(alpha: 0.08),
                             border: Border.all(
-                              color: AppColors.background.withOpacity(0.18),
+                              color: AppColors.background.withValues(alpha: 0.18),
                               width: 1,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.4),
+                                color: AppColors.primary.withValues(alpha: 0.4),
                                 blurRadius: 24,
                                 spreadRadius: 2,
                               ),
@@ -246,10 +246,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>
-                                Text('🌱', style: TextStyle(fontSize: 36)),
+                                const Text('🌱', style: TextStyle(fontSize: 36)),
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           trId('fyc_connect'),
                           style: TextStyle(
@@ -259,16 +259,16 @@ class _RegisterScreenState extends State<RegisterScreen>
                             letterSpacing: -0.3,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           trId('join_us_in_community_service'),
                           style: TextStyle(
-                            color: AppColors.background.withOpacity(0.55),
+                            color: AppColors.background.withValues(alpha: 0.55),
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 28),
+                        const SizedBox(height: 28),
 
                         // Glass card
                         ClipRRect(
@@ -277,20 +277,20 @@ class _RegisterScreenState extends State<RegisterScreen>
                             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: AppColors.background.withOpacity(0.93),
+                                color: AppColors.background.withValues(alpha: 0.93),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: AppColors.background.withOpacity(0.6),
+                                  color: AppColors.background.withValues(alpha: 0.6),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.textPrimary.withOpacity(0.25),
+                                    color: AppColors.textPrimary.withValues(alpha: 0.25),
                                     blurRadius: 40,
                                     offset: const Offset(0, 16),
                                   ),
                                 ],
                               ),
-                              padding: EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(24),
                               child: Form(
                                 key: _formKey,
                                 child: Column(
@@ -304,10 +304,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     if (_phoneEditable)
                                       Padding(
-                                        padding: EdgeInsets.only(top: 12),
+                                        padding: const EdgeInsets.only(top: 12),
                                         child: TextFormField(
                                           controller: _phoneCtrl,
                                           keyboardType: TextInputType.phone,
@@ -315,7 +315,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           decoration: InputDecoration(
                                             label: Text(trId('phone_number')),
                                             hintText: '9876543210',
-                                            prefixIcon: Icon(Icons.phone_outlined),
+                                            prefixIcon: const Icon(Icons.phone_outlined),
                                           ),
                                           validator: (v) {
                                             final t = (v ?? '').replaceAll(RegExp(r'\s'), '');
@@ -337,7 +337,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                             color: AppColors.textSecondary,
                                             fontSize: 13),
                                       ),
-                                    SizedBox(height: 20),
+                                    const SizedBox(height: 20),
 
                                     // Full name — one field (stored to both the
                                     // Tamil and English name columns server-side).
@@ -348,12 +348,12 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       decoration: InputDecoration(
                                         label: Text(trId('full_name')),
                                         hintText: trId('e_g_karthik_j_2'),
-                                        prefixIcon: Icon(Icons.person_outline),
+                                        prefixIcon: const Icon(Icons.person_outline),
                                       ),
                                       validator: (v) =>
                                           v == null || v.trim().isEmpty ? trId('full_name') : null,
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
                                     // Email (optional)
                                     TextFormField(
@@ -363,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       decoration: InputDecoration(
                                         label: Text(trId('email_optional')),
                                         hintText: trId('name_example_com'),
-                                        prefixIcon: Icon(Icons.email_outlined),
+                                        prefixIcon: const Icon(Icons.email_outlined),
                                       ),
                                       validator: (v) {
                                         final t = (v ?? '').trim();
@@ -374,7 +374,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         return null;
                                       },
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
                                     // Gender (required) — one-tap chips.
                                     Text(
@@ -385,7 +385,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Row(
                                       children: [
                                         for (final g in const [
@@ -398,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                               onTap: () => setState(() => _gender = g[0]),
                                               child: AnimatedContainer(
                                                 duration: const Duration(milliseconds: 150),
-                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                                 margin: EdgeInsets.only(right: g[0] == 'OTHER' ? 0 : 8),
                                                 alignment: Alignment.center,
                                                 decoration: BoxDecoration(
@@ -428,7 +428,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         ],
                                       ],
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
                                     // Date of birth (mandatory) — tap to pick.
                                     InkWell(
@@ -437,7 +437,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       child: InputDecorator(
                                         decoration: InputDecoration(
                                           label: Text(trId('date_of_birth')),
-                                          prefixIcon: Icon(Icons.cake_outlined),
+                                          prefixIcon: const Icon(Icons.cake_outlined),
                                         ),
                                         child: Text(
                                           _dob == null
@@ -450,13 +450,13 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         ),
                                       ),
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
                                     // Blood Group (Optional)
                                     DropdownButtonFormField<String>(
-                                      value: _bloodGroup,
+                                      initialValue: _bloodGroup,
                                       decoration: InputDecoration(
-                                        label: Text('Blood Group (Optional)'),
+                                        label: const Text('Blood Group (Optional)'),
                                         prefixIcon: Icon(Icons.bloodtype_outlined, color: AppColors.danger),
                                       ),
                                       items: _bloodGroups.map((bg) {
@@ -467,7 +467,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       }).toList(),
                                       onChanged: (v) => setState(() => _bloodGroup = v),
                                     ),
-                                    SizedBox(height: 24),
+                                    const SizedBox(height: 24),
 
                                     // Role selection
                                     Text(
@@ -478,7 +478,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
-                                    SizedBox(height: 10),
+                                    const SizedBox(height: 10),
                                     Row(
                                       children: [
                                         Expanded(
@@ -490,7 +490,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                             onTap: () => setState(() => _role = 'PUBLIC_CITIZEN'),
                                           ),
                                         ),
-                                        SizedBox(width: 12),
+                                        const SizedBox(width: 12),
                                         Expanded(
                                           child: _RoleCard(
                                             icon: '🤝',
@@ -502,7 +502,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 32),
+                                    const SizedBox(height: 32),
 
                                     ElevatedButton(
                                       onPressed: isLoading ? null : _submit,
@@ -514,7 +514,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                   color: AppColors.background, strokeWidth: 2))
                                           : Text(l.register),
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
@@ -567,7 +567,7 @@ class _RoleCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primarySurface : AppColors.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -578,8 +578,8 @@ class _RoleCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(icon, style: TextStyle(fontSize: 32)),
-            SizedBox(height: 8),
+            Text(icon, style: const TextStyle(fontSize: 32)),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(

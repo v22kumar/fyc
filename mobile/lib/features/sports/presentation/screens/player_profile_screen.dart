@@ -18,52 +18,52 @@ class PlayerProfileScreen extends StatelessWidget {
         title: Text(player.name),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: CircleAvatar(
                 radius: 50,
-                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 child: Text(
                   player.name[0].toUpperCase(),
-                  style: TextStyle(fontSize: 40),
+                  style: const TextStyle(fontSize: 40),
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Center(
               child: Text(
                 player.name,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Center(
               child: Text(
                 player.role ?? 'Player',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             Text(
               trId('statistics'),
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildStatCard('Matches Played', player.matchesPlayed.toString()),
             _buildStatCard('Runs Scored', player.runsScored.toString()),
             _buildStatCard('Wickets Taken', player.wicketsTaken.toString()),
             _buildStatCard('Awards (MVP)', player.mvpCount.toString()),
             _buildStatCard('Sportsmanship Score', player.sportsmanshipScore.toString()),
             if (player.battingStyle != null || player.bowlingStyle != null) ...[
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               Text(
                 trId('play_style'),
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               if (player.battingStyle != null)
                 _buildStatCard('Batting Style', player.battingStyle!),
               if (player.bowlingStyle != null)
@@ -77,12 +77,12 @@ class PlayerProfileScreen extends StatelessWidget {
 
   Widget _buildStatCard(String label, String value) {
     return Card(
-      margin: EdgeInsets.only(bottom: 8.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       child: ListTile(
         title: Text(label),
         trailing: Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

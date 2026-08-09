@@ -2,26 +2,16 @@ import '../../domain/entities/notification_entity.dart';
 
 class NotificationModel extends NotificationEntity {
   const NotificationModel({
-    required String id,
-    required String titleEn,
-    required String titleTa,
-    required String bodyEn,
-    required String bodyTa,
-    required String notificationType,
-    required bool isRead,
-    required DateTime createdAt,
-    Map<String, dynamic>? data,
-  }) : super(
-          id: id,
-          titleEn: titleEn,
-          titleTa: titleTa,
-          bodyEn: bodyEn,
-          bodyTa: bodyTa,
-          notificationType: notificationType,
-          isRead: isRead,
-          createdAt: createdAt,
-          data: data,
-        );
+    required super.id,
+    required super.titleEn,
+    required super.titleTa,
+    required super.bodyEn,
+    required super.bodyTa,
+    required super.notificationType,
+    required super.isRead,
+    required super.createdAt,
+    super.data,
+  });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
@@ -40,24 +30,15 @@ class NotificationModel extends NotificationEntity {
 
 class NotificationPreferenceModel extends NotificationPreferenceEntity {
   const NotificationPreferenceModel({
-    required bool pushEnabled,
-    required bool whatsappEnabled,
-    required bool smsEnabled,
-    required bool emailEnabled,
-    required bool newsEnabled,
-    required bool sportsEnabled,
-    required bool communityEnabled,
-    required bool eventsEnabled,
-  }) : super(
-          pushEnabled: pushEnabled,
-          whatsappEnabled: whatsappEnabled,
-          smsEnabled: smsEnabled,
-          emailEnabled: emailEnabled,
-          newsEnabled: newsEnabled,
-          sportsEnabled: sportsEnabled,
-          communityEnabled: communityEnabled,
-          eventsEnabled: eventsEnabled,
-        );
+    required super.pushEnabled,
+    required super.whatsappEnabled,
+    required super.smsEnabled,
+    required super.emailEnabled,
+    required super.newsEnabled,
+    required super.sportsEnabled,
+    required super.communityEnabled,
+    required super.eventsEnabled,
+  });
 
   factory NotificationPreferenceModel.fromJson(Map<String, dynamic> json) {
     return NotificationPreferenceModel(

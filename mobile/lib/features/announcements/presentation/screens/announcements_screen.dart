@@ -76,7 +76,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     .add(const AnnouncementFetchRequested());
               },
               child: ListView.builder(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 itemCount: state.announcements.length,
                 itemBuilder: (context, index) {
                   final announcement = state.announcements[index];
@@ -98,9 +98,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: context.cTextSecondary),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(state.message),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<AnnouncementBloc>()
@@ -112,7 +112,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             );
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -138,7 +138,7 @@ class _AnnouncementCard extends StatelessWidget {
     return ScaleOnTap(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -146,17 +146,17 @@ class _AnnouncementCard extends StatelessWidget {
           border: Border.all(color: context.cBorder, width: 1),
         ),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -168,12 +168,12 @@ class _AnnouncementCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   if (announcement.isPinned)
                     Icon(Icons.push_pin_rounded, size: 16, color: AppColors.warning),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
                 announcement.displayTitle(lang),
                 style: TextStyle(
@@ -182,18 +182,18 @@ class _AnnouncementCard extends StatelessWidget {
                   color: context.cText,
                 ),
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
                 announcement.displayBody(lang),
                 style: TextStyle(color: context.cTextSecondary, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Icon(Icons.schedule, size: 14, color: context.cTextSecondary),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     fmt.format(announcement.createdAt.toLocal()),
                     style: TextStyle(fontSize: 12, color: context.cTextSecondary),

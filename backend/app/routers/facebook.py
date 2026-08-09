@@ -45,7 +45,7 @@ def publish_to_facebook(
     if not page_id:
         # If page_id is not set, we can query /me to get it, assuming the token is a Page token
         try:
-            me_res = requests.get(f"https://graph.facebook.com/v19.0/me?access_token={org.facebook_access_token}").json()
+            me_res = requests.get(f"https://graph.facebook.com/v19.0/me?access_token={org.facebook_access_token}", timeout=15).json()
             if 'id' in me_res:
                 page_id = me_res['id']
                 org.facebook_page_id = page_id
@@ -73,7 +73,7 @@ def publish_to_facebook(
         if payload.link:
             data["link"] = payload.link
 
-    res = requests.post(url, data=data)
+    res = requests.post(url, data=data, timeout=15)
     
     if res.status_code != 200:
         logger.error(f"Failed to post to Facebook: {res.text}")

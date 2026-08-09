@@ -16,7 +16,7 @@ class JourneyRepositoryImpl implements JourneyRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 }

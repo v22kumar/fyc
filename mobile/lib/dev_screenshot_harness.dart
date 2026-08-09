@@ -15,6 +15,7 @@
 /// DEBUG_TOKEN is what actually authenticates: this embedder has no keyring, so
 /// the token written through LocalStorage is swallowed and every authenticated
 /// screen renders signed-out.
+library;
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;

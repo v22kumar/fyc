@@ -91,11 +91,11 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           children: [
             Text(trId('type'),
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
@@ -111,7 +111,7 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _field(_titleEn,
                 trId('title_english'),
                 required: true),
@@ -134,11 +134,11 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
             _field(_descEn,
                 trId('description'),
                 maxLines: 4),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _submit,
               child: _saving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : Text(trId('post')),
             ),
@@ -151,7 +151,7 @@ class _OpportunityCreateScreenState extends State<OpportunityCreateScreen> {
   Widget _field(TextEditingController c, String label,
       {bool required = false, int maxLines = 1, TextInputType? keyboardType}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: c,
         maxLines: maxLines,

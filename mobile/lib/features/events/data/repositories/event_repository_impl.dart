@@ -14,7 +14,7 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Stream<Either<Failure, List<EventEntity>>> fetchEventsStream() async* {
-    final boxName = 'events_cache';
+    const boxName = 'events_cache';
     Box? box;
     bool servedCache = false;
     try {
@@ -45,7 +45,7 @@ class EventRepositoryImpl implements EventRepository {
     } on Failure catch (f) {
       if (!servedCache) yield Left(f);
     } catch (e) {
-      if (!servedCache) yield Left(ServerFailure());
+      if (!servedCache) yield const Left(ServerFailure());
     }
   }
 
@@ -57,7 +57,7 @@ class EventRepositoryImpl implements EventRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -69,7 +69,7 @@ class EventRepositoryImpl implements EventRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -81,7 +81,7 @@ class EventRepositoryImpl implements EventRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 }

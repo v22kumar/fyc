@@ -103,7 +103,7 @@ class DonorCard extends StatelessWidget {
               // The blood group is what people scan for, so it is the anchor.
               CircleAvatar(
                 radius: 26,
-                backgroundColor: DSColors.danger.withOpacity(0.10),
+                backgroundColor: DSColors.danger.withValues(alpha: 0.10),
                 child: Text(
                   donor.bloodGroup,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(

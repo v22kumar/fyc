@@ -69,7 +69,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                 ? Center(
                     child: Text(
                       trId('game_start'),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF8B8682),
                         fontSize: 12,
                       ),
@@ -78,9 +78,9 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                 : ListView.separated(
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     itemCount: pairs.length,
-                    separatorBuilder: (_, __) => SizedBox(width: 4),
+                    separatorBuilder: (_, __) => const SizedBox(width: 4),
                     itemBuilder: (context, i) {
                       final (white, black) = pairs[i];
                       final moveNum = i + 1;
@@ -93,19 +93,19 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                         children: [
                           Text(
                             '$moveNum.',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Color(0xFF6B6762),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 3),
                           _MoveToken(
                             san: white,
                             isLatest: whiteIdx == lastIdx,
                           ),
                           if (black != null) ...[
-                            SizedBox(width: 3),
+                            const SizedBox(width: 3),
                             _MoveToken(
                               san: black,
                               isLatest: blackIdx == lastIdx,
@@ -113,7 +113,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
                           ],
                           // Thinking indicator after last partial move
                           if (widget.isThinking && isLastPair && black == null) ...[
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             _ThinkingIndicator(label: widget.thinkingLabel),
                           ],
                         ],
@@ -125,7 +125,7 @@ class _ChessMoveBarState extends State<ChessMoveBar> {
           // If thinking and no moves yet, show indicator at right
           if (widget.isThinking && widget.moveSans.isEmpty)
             Padding(
-              padding: EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 10),
               child: _ThinkingIndicator(label: widget.thinkingLabel),
             ),
         ],
@@ -143,7 +143,7 @@ class _MoveToken extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: isLatest
           ? BoxDecoration(
               color: const Color(0xFF4A7C59),
@@ -153,7 +153,7 @@ class _MoveToken extends StatelessWidget {
       child: Text(
         san,
         style: TextStyle(
-          color: isLatest ? AppColors.background : Color(0xFFD0CEC9),
+          color: isLatest ? AppColors.background : const Color(0xFFD0CEC9),
           fontSize: 12,
           fontWeight: isLatest ? FontWeight.w700 : FontWeight.w500,
           fontFeatures: const [FontFeature.tabularFigures()],
@@ -201,18 +201,18 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
       children: [
         FadeTransition(
           opacity: _anim,
-          child: Icon(
+          child: const Icon(
             Icons.circle,
             size: 6,
             color: Color(0xFF4A7C59),
           ),
         ),
-        SizedBox(width: 5),
+        const SizedBox(width: 5),
         Text(
           widget.label.isEmpty
               ? 'thinking…'
               : '${widget.label} is thinking…',
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF8B8682),
             fontSize: 11,
             fontStyle: FontStyle.italic,

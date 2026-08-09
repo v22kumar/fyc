@@ -87,7 +87,7 @@ class DSButton extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 18),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
               ],
               // Flexible, not fixed. Every label in this app exists in four
               // languages and Tamil runs roughly half again as long as
@@ -111,7 +111,7 @@ class DSButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: context.dsAccent,
             foregroundColor: AppColors.background,
-            disabledBackgroundColor: context.dsAccent.withOpacity(0.4),
+            disabledBackgroundColor: context.dsAccent.withValues(alpha: 0.4),
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
           ),
@@ -121,7 +121,7 @@ class DSButton extends StatelessWidget {
           onPressed: _disabled ? null : onPressed,
           style: OutlinedButton.styleFrom(
             foregroundColor: context.dsPrimary,
-            side: BorderSide(color: context.dsPrimary.withOpacity(_disabled ? 0.3 : 0.6), width: 1.5),
+            side: BorderSide(color: context.dsPrimary.withValues(alpha: _disabled ? 0.3 : 0.6), width: 1.5),
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
           ),
@@ -130,7 +130,7 @@ class DSButton extends StatelessWidget {
       DSButtonVariant.tonal => FilledButton.tonal(
           onPressed: _disabled ? null : onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: context.dsAccent.withOpacity(0.12),
+            backgroundColor: context.dsAccent.withValues(alpha: 0.12),
             foregroundColor: context.dsAccent,
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
@@ -150,7 +150,7 @@ class DSButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: DSColors.danger,
             foregroundColor: AppColors.background,
-            disabledBackgroundColor: DSColors.danger.withOpacity(0.4),
+            disabledBackgroundColor: DSColors.danger.withValues(alpha: 0.4),
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: DSSpacing.md),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DSRadius.button)),
           ),

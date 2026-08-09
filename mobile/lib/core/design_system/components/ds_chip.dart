@@ -63,7 +63,7 @@ class DSChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = color ?? _chipDefaults[kind]!;
-    final bg = selected ? base : base.withOpacity(0.12);
+    final bg = selected ? base : base.withValues(alpha: 0.12);
     final fg = selected ? AppColors.background : base;
     return Material(
       color: Colors.transparent,
@@ -72,14 +72,14 @@ class DSChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(DSRadius.chip),
         child: AnimatedContainer(
           duration: DSMotion.standard,
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(DSRadius.chip)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 14, color: fg),
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
               ],
               Text(
                 label,

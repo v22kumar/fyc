@@ -31,7 +31,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       orientation: Squares.white,
       whiteName: event.whiteName,
       blackName: event.blackName,
-      moveSans: [],
+      moveSans: const [],
       isWhiteTurn: true,
     ));
   }

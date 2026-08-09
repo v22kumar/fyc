@@ -9,14 +9,14 @@ class PrestigeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.gold.withOpacity(0.35)),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.gold.withOpacity(0.08),
+            color: AppColors.gold.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -29,16 +29,16 @@ class PrestigeCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: AppColors.gold.withOpacity(0.12),
+              color: AppColors.gold.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                  color: AppColors.gold.withOpacity(0.4), width: 1.5),
+                  color: AppColors.gold.withValues(alpha: 0.4), width: 1.5),
             ),
             child: Center(
-              child: Text(stats.titleEmoji, style: TextStyle(fontSize: 26)),
+              child: Text(stats.titleEmoji, style: const TextStyle(fontSize: 26)),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
 
           // Title + rating info
           Expanded(
@@ -47,17 +47,17 @@ class PrestigeCard extends StatelessWidget {
               children: [
                 Text(
                   stats.title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.gold,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                     letterSpacing: 0.3,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   'Rating ${stats.ratingDisplay} · RD ±${stats.glickoRd.round()}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
                   ),
@@ -70,11 +70,11 @@ class PrestigeCard extends StatelessWidget {
           if (stats.currentStreak != 0)
             Container(
               padding:
-                  EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: stats.currentStreak > 0
-                    ? AppColors.primaryLight.withOpacity(0.15)
-                    : AppColors.warning.withOpacity(0.15),
+                    ? AppColors.primaryLight.withValues(alpha: 0.15)
+                    : AppColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

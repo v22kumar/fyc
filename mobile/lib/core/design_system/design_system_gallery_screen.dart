@@ -65,9 +65,9 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                 onSelected: (v) => setState(() => _lang = v),
                 itemBuilder: (_) => [
                   PopupMenuItem(value: 'en', child: Text(trId('en'))),
-                  PopupMenuItem(value: 'ta', child: Text('தமிழ்')),
-                  PopupMenuItem(value: 'hi', child: Text('हिंदी')),
-                  PopupMenuItem(value: 'ml', child: Text('മലയാളം')),
+                  const PopupMenuItem(value: 'ta', child: Text('தமிழ்')),
+                  const PopupMenuItem(value: 'hi', child: Text('हिंदी')),
+                  const PopupMenuItem(value: 'ml', child: Text('മലയാളം')),
                 ],
               ),
             ],
@@ -77,17 +77,17 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
             children: [
               const _SectionLabel('Buttons'),
               DSButton.filled(label: 'Filled', onPressed: () {}),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               DSButton.outlined(label: 'Outlined', onPressed: () {}),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               DSButton.tonal(label: 'Tonal', onPressed: () {}),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               DSButton.text(label: 'Text', onPressed: () {}),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               DSButton.danger(label: 'Danger', icon: Icons.delete_rounded, onPressed: () {}),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               const DSButton(label: 'Loading', onPressed: null, loading: true),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               const DSButton(label: 'Disabled', onPressed: null),
               SizedBox(height: DSSpacing.md),
 
@@ -100,7 +100,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   child: Row(
                     children: [
                       DSCardIcon(kind: kind),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,13 +113,13 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
               ],
               SizedBox(height: DSSpacing.sm),
 
               const _SectionLabel('Inputs'),
               const DSSearchField(hint: 'Search members, events, teams…'),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               DSDropdown<String>(
                 label: 'Category',
                 value: _dropdownValue,
@@ -131,9 +131,9 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                 ],
                 onChanged: (v) => setState(() => _dropdownValue = v),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               DSOtpField(length: 6, onCompleted: (_) {}),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               DSDateField(
                 value: _dateValue,
                 onTap: () async {
@@ -146,7 +146,7 @@ class _DesignSystemGalleryScreenState extends State<DesignSystemGalleryScreen> {
                   if (picked != null) setState(() => _dateValue = '${picked.year}-${picked.month}-${picked.day}');
                 },
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               DSLocationField(onTap: () {}),
               SizedBox(height: DSSpacing.md),
 
@@ -241,7 +241,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10, top: 4),
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(color: context.dsAccent, letterSpacing: 0.6),

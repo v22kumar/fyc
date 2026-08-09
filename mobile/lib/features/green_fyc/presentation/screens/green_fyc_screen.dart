@@ -38,7 +38,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/green/register'),
         backgroundColor: AppColors.primary,
-        icon: Icon(Icons.park_rounded),
+        icon: const Icon(Icons.park_rounded),
         label: Text(trId('register_a_tree')),
       ),
       body: BlocConsumer<GreenBloc, GreenState>(
@@ -54,7 +54,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
         },
         builder: (context, state) {
           if (state is GreenLoading || state is GreenInitial) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
           if (state is GreenLoaded) {
             return RefreshIndicator(
@@ -62,7 +62,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                 context.read<GreenBloc>().add(const GreenFetchRequested());
               },
               child: ListView(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(18),
@@ -76,7 +76,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                             'assets/images/impact_sapling.png',
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.primary.withOpacity(0.15)),
+                                color: AppColors.primary.withValues(alpha: 0.15)),
                           ),
                           DecoratedBox(
                             decoration: BoxDecoration(
@@ -84,8 +84,8 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  AppColors.textPrimary.withOpacity(0.0),
-                                  AppColors.textPrimary.withOpacity(0.5),
+                                  AppColors.textPrimary.withValues(alpha: 0.0),
+                                  AppColors.textPrimary.withValues(alpha: 0.5),
                                 ],
                               ),
                             ),
@@ -100,7 +100,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                                 color: AppColors.background,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                shadows: [
+                                shadows: const [
                                   Shadow(color: Colors.black54, blurRadius: 6)
                                 ],
                               ),
@@ -110,9 +110,9 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _StatsHeader(stats: state.stats, lang: lang),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   _SectionHeader(
                     label: trId('plantation_drives'),
                   ),
@@ -132,9 +132,9 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(state.message),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<GreenBloc>()
@@ -146,7 +146,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
               ),
             );
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -211,11 +211,11 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +224,7 @@ class _StatCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 22, color: AppColors.primary),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 '$value',
                 style: TextStyle(
@@ -235,7 +235,7 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
@@ -256,7 +256,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10, top: 4),
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Text(
         label,
         style: TextStyle(
@@ -281,7 +281,7 @@ class _DriveCard extends StatelessWidget {
     final location = drive.displayLocation(lang);
 
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -305,23 +305,23 @@ class _DriveCard extends StatelessWidget {
               ),
             ),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   drive.displayTitle(lang),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(Icons.calendar_today,
                         size: 14, color: context.cTextSecondary),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       fmt.format(drive.driveDate.toLocal()),
                       style:
@@ -330,12 +330,12 @@ class _DriveCard extends StatelessWidget {
                   ],
                 ),
                 if (location != null && location.isNotEmpty) ...[
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(Icons.location_on_outlined,
                           size: 14, color: context.cTextSecondary),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           location,
@@ -346,7 +346,7 @@ class _DriveCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
@@ -358,7 +358,7 @@ class _DriveCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   tr(
                     en: '${drive.treeCount} / ${drive.targetCount} trees',
@@ -387,13 +387,13 @@ class _EmptyDrives extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.park_rounded, size: 64, color: AppColors.primary.withOpacity(0.6)),
-            SizedBox(height: 16),
+            Icon(Icons.park_rounded, size: 64, color: AppColors.primary.withValues(alpha: 0.6)),
+            const SizedBox(height: 16),
             Text(
               trId('no_plantation_drives_yet'),
               style: TextStyle(fontSize: 16, color: context.cTextSecondary),

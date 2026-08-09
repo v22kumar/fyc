@@ -2,7 +2,6 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/event_entity.dart';
 import '../entities/public_registrant.dart';
-import '../entities/event_entity.dart';
 
 abstract class EventRepository {
   /// Emits cache first (if present), then the network result.

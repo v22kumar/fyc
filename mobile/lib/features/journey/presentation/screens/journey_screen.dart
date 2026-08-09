@@ -52,10 +52,10 @@ class _JourneyScreenState extends State<JourneyScreen> {
                   context.read<JourneyBloc>().add(const JourneyFetchRequested());
                 },
                 child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                   children: [
                     _buildHeader(),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     GridView.count(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
@@ -101,7 +101,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 28),
+                    const SizedBox(height: 28),
                     _MilestonesSection(j: j),
                   ],
                 ),
@@ -112,9 +112,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-                    SizedBox(height: 16),
-                    Text(state.message, style: TextStyle(color: Colors.black54)),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                    Text(state.message, style: const TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         context.read<JourneyBloc>().add(const JourneyFetchRequested());
@@ -125,7 +125,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 ),
               );
             }
-            return SizedBox.shrink();
+            return const SizedBox.shrink();
           },
         ),
       ),
@@ -134,13 +134,13 @@ class _JourneyScreenState extends State<JourneyScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -153,16 +153,16 @@ class _JourneyScreenState extends State<JourneyScreen> {
             backgroundColor: AppColors.background,
             child: Icon(Icons.emoji_events, size: 40, color: AppColors.warning),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             trId('your_community_impact'),
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             trId('your_contributions_are_making_a_real_dif'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary.withOpacity(0.6)),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary.withValues(alpha: 0.6)),
           ),
         ],
       ),
@@ -186,31 +186,31 @@ class _ImpactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 32),
           ),
-          Spacer(),
+          const Spacer(),
           Text(
             value,
             style: TextStyle(
@@ -219,14 +219,14 @@ class _ImpactCard extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary.withOpacity(0.6),
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -271,12 +271,12 @@ class _MilestonesSection extends StatelessWidget {
           trId('milestones'),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           trId('badges_you_unlock_as_you_contribute'),
           style: TextStyle(fontSize: 13, color: context.cTextSecondary),
         ),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -304,13 +304,13 @@ class _MilestoneBadge extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: accent.withOpacity(m.unlocked ? 0.14 : 0.08),
+                color: accent.withValues(alpha: m.unlocked ? 0.14 : 0.08),
                 shape: BoxShape.circle,
-                border: Border.all(color: accent.withOpacity(0.4)),
+                border: Border.all(color: accent.withValues(alpha: 0.4)),
               ),
               child: Icon(m.unlocked ? m.icon : Icons.lock_outline_rounded, color: accent, size: 26),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
               m.label,
               textAlign: TextAlign.center,

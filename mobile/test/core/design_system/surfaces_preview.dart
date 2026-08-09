@@ -80,13 +80,13 @@ void main() {
                             color: Colors.white70, fontSize: 12,
                             fontWeight: FontWeight.w800, letterSpacing: 1.4)),
                     const SizedBox(height: 8),
-                    ScrimHero(
-                      tint: const Color(0xFFF59E0B),
+                    const ScrimHero(
+                      tint: Color(0xFFF59E0B),
                       height: 175,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text('● LIVE',
                               style: TextStyle(
                                   color: Colors.white, fontSize: 11,

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/journey_model.dart';

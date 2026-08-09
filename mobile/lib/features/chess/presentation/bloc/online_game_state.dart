@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:bishop/bishop.dart' as bishop;
-import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
 
 abstract class OnlineGameState extends Equatable {

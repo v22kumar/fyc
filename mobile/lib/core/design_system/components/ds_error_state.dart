@@ -29,9 +29,9 @@ class DSErrorState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: EdgeInsets.all(24),
-              decoration: BoxDecoration(color: DSColors.dangerSurface, shape: BoxShape.circle),
-              child: Icon(Icons.cloud_off_rounded, size: 48, color: DSColors.danger),
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(color: DSColors.dangerSurface, shape: BoxShape.circle),
+              child: const Icon(Icons.cloud_off_rounded, size: 48, color: DSColors.danger),
             ),
             SizedBox(height: DSSpacing.sm),
             Text(
@@ -54,7 +54,7 @@ class DSErrorState extends StatelessWidget {
               ),
             ),
             if (secondaryLabel != null && onSecondary != null) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               DSButton.text(label: secondaryLabel!, onPressed: onSecondary, fullWidth: false),
             ],
           ],

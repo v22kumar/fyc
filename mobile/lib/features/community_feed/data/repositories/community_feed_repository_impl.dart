@@ -13,7 +13,7 @@ class CommunityFeedRepositoryImpl implements CommunityFeedRepository {
 
   @override
   Stream<Either<Failure, List<CommunityFeedItemEntity>>> fetchFeedStream() async* {
-    final boxName = 'community_feed_cache';
+    const boxName = 'community_feed_cache';
     Box? box;
     bool servedCache = false;
     try {
@@ -44,7 +44,7 @@ class CommunityFeedRepositoryImpl implements CommunityFeedRepository {
     } on Failure catch (f) {
       if (!servedCache) yield Left(f);
     } catch (e) {
-      if (!servedCache) yield Left(ServerFailure());
+      if (!servedCache) yield const Left(ServerFailure());
     }
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
-import 'package:square_bishop/square_bishop.dart';
 import '../bloc/spectator_bloc.dart';
 import '../bloc/spectator_state.dart';
 import '../widgets/chess_player_card.dart';
@@ -30,7 +29,7 @@ class SpectatorPage extends StatelessWidget {
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: BlocBuilder<SpectatorBloc, SpectatorState>(
@@ -38,7 +37,7 @@ class SpectatorPage extends StatelessWidget {
             if (state is SpectatorWatching) {
               return Text(
                 '${state.whiteName} vs ${state.blackName}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -47,16 +46,16 @@ class SpectatorPage extends StatelessWidget {
             }
             return Text(
               trId('spectating'),
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             );
           },
         ),
         actions: [
           BlocBuilder<SpectatorBloc, SpectatorState>(
             builder: (context, state) {
-              if (state is! SpectatorWatching) return SizedBox.shrink();
+              if (state is! SpectatorWatching) return const SizedBox.shrink();
               return Padding(
-                padding: EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 12),
                 child: Chip(
                   avatar:
                       Icon(Icons.visibility, size: 14, color: AppColors.background),
@@ -69,8 +68,8 @@ class SpectatorPage extends StatelessWidget {
                     ),
                   ),
                   backgroundColor: _kSurface,
-                  side: BorderSide(color: Color(0xFF4A4440)),
-                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  side: const BorderSide(color: Color(0xFF4A4440)),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
               );
             },
@@ -93,10 +92,10 @@ class SpectatorPage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: _kGreen),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: _kGreen),
+          const SizedBox(height: 16),
           Text(trId('connecting'),
-              style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
+              style: const TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
       ),
     );
@@ -161,16 +160,16 @@ class SpectatorPage extends StatelessWidget {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 13,
                         height: 13,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Color(0xFFB45309)),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         trId('reconnecting'),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFFB45309),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -181,11 +180,11 @@ class SpectatorPage extends StatelessWidget {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
-                      SizedBox(width: 6),
+                      const Icon(Icons.visibility, size: 14, color: Color(0xFF8B8682)),
+                      const SizedBox(width: 6),
                       Text(
                         'Spectating · ${state.spectatorCount} watching',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFF8B8682),
                           fontSize: 12,
                         ),
@@ -202,7 +201,7 @@ class SpectatorPage extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -215,13 +214,13 @@ class SpectatorPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 '${state.moveSans.length} moves',
                 style:
-                    TextStyle(color: Color(0xFF8B8682), fontSize: 14),
+                    const TextStyle(color: Color(0xFF8B8682), fontSize: 14),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -229,13 +228,13 @@ class SpectatorPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(
                     trId('back_to_chess'),
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                 ),
               ),
@@ -299,20 +298,20 @@ class _SpectatorClock extends StatelessWidget {
     final isLow = ms < 30000;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
-            ? (isLow ? AppColors.danger.withOpacity(0.8) : _kGreen)
+            ? (isLow ? AppColors.danger.withValues(alpha: 0.8) : _kGreen)
             : const Color(0xFF1E1B18),
         borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: AppColors.danger.withOpacity(0.4), width: 1.5)
+            ? Border.all(color: AppColors.danger.withValues(alpha: 0.4), width: 1.5)
             : null,
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isActive ? AppColors.background : Color(0xFF6B6762),
+          color: isActive ? AppColors.background : const Color(0xFF6B6762),
           fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
           fontSize: 15,
           fontFeatures: const [FontFeature.tabularFigures()],

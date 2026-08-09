@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../design_system/typography.dart';
 import '../design_system/tokens.dart';
 import 'theme_manager.dart';
-import 'package:fyc_connect/core/theme/app_theme.dart';
 
 /// Semantic aliases over the dynamic [ThemeManager] color scale.
 /// Instead of hardcoded constants, this reads from the live backend-driven theme.
@@ -10,12 +9,12 @@ class AppColors {
   AppColors._();
 
   static Color get primary => ThemeManager.instance.colors.primary;
-  static Color get primaryLight => ThemeManager.instance.colors.primary.withOpacity(0.8);
-  static Color get primarySurface => ThemeManager.instance.colors.primary.withOpacity(0.1);
+  static Color get primaryLight => ThemeManager.instance.colors.primary.withValues(alpha: 0.8);
+  static Color get primarySurface => ThemeManager.instance.colors.primary.withValues(alpha: 0.1);
 
   static Color get accent => ThemeManager.instance.colors.danger;          // Rose — Blood Donation / danger
-  static Color get accentLight => ThemeManager.instance.colors.danger.withOpacity(0.8);
-  static Color get accentSurface => ThemeManager.instance.colors.danger.withOpacity(0.1);
+  static Color get accentLight => ThemeManager.instance.colors.danger.withValues(alpha: 0.8);
+  static Color get accentSurface => ThemeManager.instance.colors.danger.withValues(alpha: 0.1);
 
   // Gold accent (championships, logos)
   static const Color gold = Color(0xFFD4AF37);
@@ -27,9 +26,9 @@ class AppColors {
 
   static Color get background => ThemeManager.instance.colors.background; // scaffold
   static Color get surface => ThemeManager.instance.colors.surface;       // cards/sheets
-  static Color get surfaceContainerLow => ThemeManager.instance.colors.surface.withOpacity(0.9);
-  static Color get surfaceContainer => ThemeManager.instance.colors.surface.withOpacity(0.95);
-  static Color get surfaceContainerHigh => ThemeManager.instance.colors.surface.withOpacity(0.98);
+  static Color get surfaceContainerLow => ThemeManager.instance.colors.surface.withValues(alpha: 0.9);
+  static Color get surfaceContainer => ThemeManager.instance.colors.surface.withValues(alpha: 0.95);
+  static Color get surfaceContainerHigh => ThemeManager.instance.colors.surface.withValues(alpha: 0.98);
 
   static Color get textPrimary => ThemeManager.instance.colors.textPrimary;
   static Color get textSecondary => ThemeManager.instance.colors.textSecondary;
@@ -75,14 +74,14 @@ class AppTheme {
   static LinearGradient get primaryGradient => gradientPrimary;
 
   static LinearGradient get gradientAccent => LinearGradient(
-    colors: [AppColors.accent, Color(0xFFFB7185)],
+    colors: [AppColors.accent, const Color(0xFFFB7185)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   static LinearGradient get accentGradient => gradientAccent;
 
   static LinearGradient get gradientSuccess => LinearGradient(
-    colors: [AppColors.success, Color(0xFF34D399)],
+    colors: [AppColors.success, const Color(0xFF34D399)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -96,12 +95,12 @@ class AppTheme {
 
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.09),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.09),
           blurRadius: 24,
           offset: const Offset(0, 10),
         ),
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.04),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.04),
           blurRadius: 4,
           offset: const Offset(0, 1),
         ),
@@ -109,7 +108,7 @@ class AppTheme {
 
   static List<BoxShadow> get glowShadow => [
         BoxShadow(
-          color: AppColors.primary.withOpacity(0.35),
+          color: AppColors.primary.withValues(alpha: 0.35),
           blurRadius: 20,
           offset: const Offset(0, 6),
         ),
@@ -201,7 +200,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide(color: AppColors.accent, width: 1.5),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           hintStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
           labelStyle: _font(lang, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
@@ -237,7 +236,7 @@ class AppTheme {
               color: DSColors.textPrimaryLight),
           secondaryLabelStyle: _font(lang, fontSize: 14,
               fontWeight: FontWeight.bold, color: Colors.white),
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
@@ -264,7 +263,7 @@ class AppTheme {
           elevation: 0,
           centerTitle: false,
           titleTextStyle: _font(lang, color: AppColors.darkText, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-          iconTheme: IconThemeData(color: AppColors.darkText),
+          iconTheme: const IconThemeData(color: AppColors.darkText),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -285,13 +284,13 @@ class AppTheme {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radiusBtn),
-            borderSide: BorderSide(color: AppColors.darkBorder),
+            borderSide: const BorderSide(color: AppColors.darkBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radiusBtn),
             borderSide: BorderSide(color: AppColors.primaryLight, width: 2),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           hintStyle: _font(lang, color: AppColors.darkTextSecondary, fontSize: 14, fontWeight: FontWeight.w400),
         ),
         cardTheme: CardThemeData(
@@ -299,7 +298,7 @@ class AppTheme {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusCard),
-            side: BorderSide(color: AppColors.darkBorder, width: 1),
+            side: const BorderSide(color: AppColors.darkBorder, width: 1),
           ),
           margin: EdgeInsets.zero,
         ),

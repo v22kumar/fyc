@@ -89,9 +89,9 @@ class _RaiseRequestSheetState extends State<_RaiseRequestSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: context.cSurface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: EdgeInsets.fromLTRB(20, 14, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(
@@ -101,14 +101,14 @@ class _RaiseRequestSheetState extends State<_RaiseRequestSheet> {
               children: [
                 Row(children: [
                   Icon(Icons.emergency_rounded, color: AppColors.danger),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(trId('request_blood'),
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: context.cText)),
                 ]),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(trId('patient_blood_group'),
                     style: TextStyle(fontWeight: FontWeight.w700, color: context.cText, fontSize: 13)),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 8, children: [
                   for (final g in _groups)
                     ChoiceChip(
@@ -121,14 +121,14 @@ class _RaiseRequestSheetState extends State<_RaiseRequestSheet> {
                       onSelected: (_) => setState(() => _group = g),
                     ),
                 ]),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(trId('urgency'),
                     style: TextStyle(fontWeight: FontWeight.w700, color: context.cText, fontSize: 13)),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(children: [
                   for (final u in _urgencies)
                     Padding(
-                      padding: EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(trId('urgency_${u.toLowerCase()}')),
                         selected: _urgency == u,
@@ -140,48 +140,48 @@ class _RaiseRequestSheetState extends State<_RaiseRequestSheet> {
                       ),
                     ),
                 ]),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _hospitalCtrl,
                   decoration: InputDecoration(
                     labelText: trId('hospital_optional'),
-                    prefixIcon: Icon(Icons.local_hospital_outlined),
+                    prefixIcon: const Icon(Icons.local_hospital_outlined),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(children: [
                   Text('${trId('units')}: ', style: TextStyle(color: context.cText, fontWeight: FontWeight.w600)),
                   IconButton(
                     onPressed: () => setState(() => _units = (_units - 1).clamp(1, 20)),
-                    icon: Icon(Icons.remove_circle_outline),
+                    icon: const Icon(Icons.remove_circle_outline),
                   ),
                   Text('$_units', style: TextStyle(color: context.cText, fontWeight: FontWeight.w800, fontSize: 16)),
                   IconButton(
                     onPressed: () => setState(() => _units = (_units + 1).clamp(1, 20)),
-                    icon: Icon(Icons.add_circle_outline),
+                    icon: const Icon(Icons.add_circle_outline),
                   ),
                 ]),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(children: [
                   Icon(Icons.info_outline, size: 14, color: context.cTextSecondary),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(trId('nearby_donors_will_be_alerted'),
                         style: TextStyle(fontSize: 11.5, color: context.cTextSecondary)),
                   ),
                 ]),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.danger,
-                      padding: EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: _busy ? null : _submit,
                     icon: _busy
                         ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                        : Icon(Icons.campaign_rounded),
+                        : const Icon(Icons.campaign_rounded),
                     label: Text(_busy ? trId('sending') : trId('send_request')),
                   ),
                 ),
@@ -275,9 +275,21 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
 
   Future<void> _call(String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
+    // A dead call button in an emergency flow must never be silent: if the
+    // dialer cannot open, show the number itself — a person can still dial.
+    var placed = false;
     try {
-      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
+      if (await canLaunchUrl(uri)) {
+        placed = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      placed = false;
+    }
+    if (!placed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${trId('could_not_open_dialer')}: $phone')),
+      );
+    }
   }
 
   @override
@@ -287,7 +299,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       backgroundColor: context.cBackground,
       appBar: AppBar(title: Text(trId('blood_request'))),
       body: r == null && !_error
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _error
               ? Center(child: ElevatedButton(onPressed: _load, child: Text(trId('retry_2'))))
               : RefreshIndicator(onRefresh: _load, child: _body(r!)),
@@ -298,8 +310,8 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     final children = <Widget>[
       // Header card
       Container(
-        margin: EdgeInsets.only(bottom: 14),
-        padding: EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [AppColors.danger, const Color(0xFFF87171)]),
           borderRadius: BorderRadius.circular(18),
@@ -308,21 +320,21 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           Container(
             width: 54, height: 54,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
             child: Text(r.patientBloodGroup,
                 style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w900, fontSize: 18)),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${r.unitsNeeded} ${trId('units')} · ${trId('urgency_${r.urgency.toLowerCase()}')}',
                   style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15)),
               if (r.hospitalName != null && r.hospitalName!.isNotEmpty)
                 Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Text(r.hospitalName!, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12.5)),
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(r.hospitalName!, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5)),
                 ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(r.isOpen ? trId('open') : trId('completed'),
                   style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w700)),
             ]),
@@ -332,16 +344,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       // Stats
       Row(children: [
         Expanded(child: _stat('${r.notifiedCount}', trId('donors_notified'))),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(child: _stat('${r.acceptedCount}', trId('responding'), color: const Color(0xFF16A34A))),
       ]),
-      SizedBox(height: 16),
+      const SizedBox(height: 16),
     ];
 
     // Donor pledge action (accept / decline) — for donors, when open.
     if (r.isOpen) {
       children.add(_pledgeBar(r));
-      children.add(SizedBox(height: 16));
+      children.add(const SizedBox(height: 16));
     }
 
     // Responders list
@@ -349,22 +361,22 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         r.isOpen && r.isMine && r.acceptedCount == 0 && r.broadcastAt == null;
     children.add(Text(trId('responders'),
         style: TextStyle(fontWeight: FontWeight.w800, color: context.cText, fontSize: 15)));
-    children.add(SizedBox(height: 8));
+    children.add(const SizedBox(height: 8));
     final accepted = r.pledges.where((p) => p.status == 'ACCEPTED').toList();
     if (accepted.isEmpty) {
       // Skipped when the escalation card is about to say the same thing with
       // an action attached — the two sat adjacent, word for word.
       if (!canEscalate) {
         children.add(Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(trId('no_responders_yet'), style: TextStyle(color: context.cTextSecondary)),
         ));
       }
     } else {
       for (final p in accepted) {
         children.add(Container(
-          margin: EdgeInsets.only(bottom: 8),
-          padding: EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: context.cSurface,
             borderRadius: BorderRadius.circular(12),
@@ -375,8 +387,8 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           // donors who accepted, so a row without one is somebody else's view
           // of this request, not a missing feature.
           child: Row(children: [
-            Icon(Icons.volunteer_activism_rounded, color: const Color(0xFF16A34A), size: 20),
-            SizedBox(width: 10),
+            const Icon(Icons.volunteer_activism_rounded, color: Color(0xFF16A34A), size: 20),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +405,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
             if (p.donorPhone != null)
               IconButton(
                 tooltip: trId('call'),
-                icon: Icon(Icons.call_rounded, color: const Color(0xFF16A34A)),
+                icon: const Icon(Icons.call_rounded, color: Color(0xFF16A34A)),
                 onPressed: () => launchUrl(Uri.parse('tel:${p.donorPhone}')),
               ),
           ]),
@@ -406,16 +418,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     // Any one of those false and the card is not there to be pressed by
     // accident.
     if (canEscalate) {
-      children.add(SizedBox(height: 12));
+      children.add(const SizedBox(height: 12));
       children.add(_EscalateCard(
         busy: _busy,
         onBroadcast: () => _confirmBroadcast(r),
       ));
     } else if (r.broadcastAt != null) {
-      children.add(SizedBox(height: 12));
+      children.add(const SizedBox(height: 12));
       children.add(Row(children: [
         Icon(Icons.campaign_rounded, size: 18, color: AppColors.danger),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             trId('club_alerted_n', {'n': r.broadcastCount}),
@@ -427,32 +439,33 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
 
     // Requester controls
     if (r.isOpen) {
-      children.add(SizedBox(height: 12));
-      if (r.contactPhone != null && r.contactPhone!.isNotEmpty)
+      children.add(const SizedBox(height: 12));
+      if (r.contactPhone != null && r.contactPhone!.isNotEmpty) {
         children.add(SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: () => _call(r.contactPhone!),
-            icon: Icon(Icons.call),
+            icon: const Icon(Icons.call),
             label: Text(trId('call_requester')),
           ),
         ));
-      children.add(SizedBox(height: 8));
+      }
+      children.add(const SizedBox(height: 8));
       children.add(SizedBox(
         width: double.infinity,
         child: TextButton.icon(
           onPressed: _busy ? null : () => _run(() => BloodRequestApi.close(r.id).then((_) {})),
-          icon: Icon(Icons.check_circle_outline),
+          icon: const Icon(Icons.check_circle_outline),
           label: Text(trId('mark_fulfilled')),
         ),
       ));
     }
 
-    return ListView(padding: EdgeInsets.all(16), children: children);
+    return ListView(padding: const EdgeInsets.all(16), children: children);
   }
 
   Widget _stat(String value, String label, {Color? color}) => Container(
-        padding: EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(14),
@@ -460,7 +473,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         ),
         child: Column(children: [
           Text(value, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: color ?? context.cText)),
-          SizedBox(height: 2),
+          const SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
         ]),
       );
@@ -468,15 +481,15 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
   Widget _pledgeBar(BloodRequest r) {
     if (r.myPledge == 'ACCEPTED') {
       return Container(
-        padding: EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0x2216A34A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFF16A34A)),
         ),
         child: Row(children: [
-          Icon(Icons.check_circle, color: Color(0xFF16A34A)),
-          SizedBox(width: 10),
+          const Icon(Icons.check_circle, color: Color(0xFF16A34A)),
+          const SizedBox(width: 10),
           Expanded(child: Text(trId('you_accepted_thank_you'),
               style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
           TextButton(
@@ -503,9 +516,9 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         FilledButton.icon(
           style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF16A34A),
-              padding: EdgeInsets.symmetric(vertical: 14)),
+              padding: const EdgeInsets.symmetric(vertical: 14)),
           onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'ACCEPTED').then((_) {})),
-          icon: Icon(Icons.volunteer_activism_rounded),
+          icon: const Icon(Icons.volunteer_activism_rounded),
           label: Text(trId('i_can_help')),
         ),
         TextButton(
@@ -535,11 +548,11 @@ class _EscalateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.danger.withOpacity(0.08),
+        color: AppColors.danger.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.danger.withOpacity(0.35)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -548,7 +561,7 @@ class _EscalateCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.campaign_rounded, color: AppColors.danger, size: 20),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,7 +570,7 @@ class _EscalateCard extends StatelessWidget {
                     Text(trId('nobody_has_answered'),
                         style: TextStyle(
                             color: context.cText, fontWeight: FontWeight.w800)),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(trId('nobody_has_answered_help'),
                         style: TextStyle(
                             color: context.cTextSecondary, fontSize: 12.5)),
@@ -566,13 +579,13 @@ class _EscalateCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           FilledButton.icon(
             style: FilledButton.styleFrom(
                 backgroundColor: AppColors.danger,
-                padding: EdgeInsets.symmetric(vertical: 12)),
+                padding: const EdgeInsets.symmetric(vertical: 12)),
             onPressed: busy ? null : onBroadcast,
-            icon: Icon(Icons.campaign_rounded),
+            icon: const Icon(Icons.campaign_rounded),
             label: Text(trId('alert_everyone')),
           ),
         ],

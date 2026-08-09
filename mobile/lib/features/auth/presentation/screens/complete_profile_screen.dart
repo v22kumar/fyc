@@ -138,23 +138,23 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           children: [
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(trId('complete_profile_hint'),
-                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13)),
-            SizedBox(height: 20),
+                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 13)),
+            const SizedBox(height: 20),
             if (_error != null)
               Container(
                 width: double.infinity,
-                margin: EdgeInsets.only(bottom: 16),
-                padding: EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF2F2),
                   border: Border.all(color: const Color(0xFFFECACA)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(_error!, style: TextStyle(color: Color(0xFFB91C1C), fontSize: 13)),
+                child: Text(_error!, style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 13)),
               ),
             _label('${trId('full_name_tamil')} *'),
             _field(_nameTa, textInputAction: TextInputAction.next),
@@ -178,9 +178,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             Row(
               children: [
                 _genderChip('MALE', trId('male')),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _genderChip('FEMALE', trId('female')),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _genderChip('OTHER', trId('other')),
               ],
             ),
@@ -188,7 +188,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               _label('${trId('phone_number')} *'),
               _field(_phone, keyboardType: TextInputType.phone, hint: '+919876543210'),
             ],
-            SizedBox(height: 28),
+            const SizedBox(height: 28),
             SizedBox(
               height: 52,
               child: FilledButton(
@@ -211,17 +211,17 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: EdgeInsets.only(top: 16, bottom: 6),
-        child: Text(text, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        padding: const EdgeInsets.only(top: 16, bottom: 6),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
       );
 
   InputDecoration _decoration({String? hint}) => InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: AppColors.background,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3))),
       );
 
   Widget _field(TextEditingController c,
@@ -240,11 +240,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         onTap: () => setState(() => _gender = value),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? Color(0xFF0F5132) : AppColors.background,
-            border: Border.all(color: selected ? Color(0xFF0F5132) : AppColors.textSecondary.withOpacity(0.3)),
+            color: selected ? const Color(0xFF0F5132) : AppColors.background,
+            border: Border.all(color: selected ? const Color(0xFF0F5132) : AppColors.textSecondary.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(label,

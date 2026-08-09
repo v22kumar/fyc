@@ -24,7 +24,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -38,7 +38,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -52,7 +52,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -80,7 +80,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -92,7 +92,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -104,7 +104,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -130,7 +130,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -146,7 +146,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -157,7 +157,7 @@ class SportsRepositoryImpl implements SportsRepository {
       return Right(res);
     } catch (e) {
       if (e is Failure) return Left(e);
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -168,7 +168,7 @@ class SportsRepositoryImpl implements SportsRepository {
       return Right(res);
     } catch (e) {
       if (e is Failure) return Left(e);
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -179,7 +179,7 @@ class SportsRepositoryImpl implements SportsRepository {
       return Right(res);
     } catch (e) {
       if (e is Failure) return Left(e);
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -191,7 +191,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -204,7 +204,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -217,7 +217,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -229,7 +229,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -241,7 +241,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -253,7 +253,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 
@@ -265,7 +265,7 @@ class SportsRepositoryImpl implements SportsRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 }

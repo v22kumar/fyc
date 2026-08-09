@@ -21,12 +21,12 @@ class DSSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           if (icon != null) ...[
             Icon(icon, size: 18, color: AppColors.primary),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
           ],
           Expanded(
             child: Text(

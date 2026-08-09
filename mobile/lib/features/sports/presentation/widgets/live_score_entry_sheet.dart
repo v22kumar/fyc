@@ -141,41 +141,41 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
         children: [
           Center(child: Container(width: 40, height: 4,
               decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
           Row(
             children: [
               Icon(Icons.bolt_rounded, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 '${trId('enter_score')} · ${scoring.unitLabel()}',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText),
               ),
             ],
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             widget.isManager
                 ? trId('this_result_is_saved_to_the_standings_ri')
                 : trId('your_entry_will_be_sent_to_an_admin_for'),
             style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           Row(
             children: [
               Expanded(child: _ScoreField(label: teamA, controller: _scoreACtrl, hint: scoring.hint)),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(trId('vs_2'), style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
               Expanded(child: _ScoreField(label: teamB, controller: _scoreBCtrl, hint: scoring.hint)),
             ],
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           Text(trId('winner'),
               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.cText)),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
@@ -187,7 +187,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
                   onTap: () => setState(() => _winnerId = null)),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           TextField(
             controller: _notesCtrl,
@@ -198,7 +198,7 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
               isDense: true,
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           SizedBox(
             width: double.infinity,
@@ -239,7 +239,7 @@ class _ScoreField extends StatelessWidget {
         Text(label,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.cText),
             maxLines: 1, overflow: TextOverflow.ellipsis),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         TextField(
           controller: controller,
           textAlign: TextAlign.center,
@@ -248,7 +248,7 @@ class _ScoreField extends StatelessWidget {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             isDense: true,
           ),
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ],
     );
@@ -266,9 +266,9 @@ class _WinnerChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.12) : context.cSurface,
+          color: selected ? AppColors.primary.withValues(alpha: 0.12) : context.cSurface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: selected ? AppColors.primary : context.cBorder, width: selected ? 1.5 : 1),
         ),

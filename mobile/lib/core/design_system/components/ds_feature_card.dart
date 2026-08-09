@@ -59,7 +59,7 @@ class DSFeatureCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         boxShadow: dark
             ? null
-            : [BoxShadow(color: tint.withOpacity(0.14), blurRadius: 16, offset: const Offset(0, 8))],
+            : [BoxShadow(color: tint.withValues(alpha: 0.14), blurRadius: 16, offset: const Offset(0, 8))],
       ),
       child: Material(
         color: Colors.transparent,
@@ -73,11 +73,11 @@ class DSFeatureCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: dark
-                  ? [tint.withOpacity(0.20), context.cSurface]
-                  : [tint.withOpacity(0.10), AppColors.background],
+                  ? [tint.withValues(alpha: 0.20), context.cSurface]
+                  : [tint.withValues(alpha: 0.10), AppColors.background],
             ),
             borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(color: dark ? context.cBorder : tint.withOpacity(0.22)),
+            border: Border.all(color: dark ? context.cBorder : tint.withValues(alpha: 0.22)),
           ),
           child: InkWell(
             onTap: onTap,
@@ -100,10 +100,10 @@ class DSFeatureCard extends StatelessWidget {
                   Positioned(
                     right: -16,
                     bottom: -14,
-                    child: Icon(icon, size: 96, color: tint.withOpacity(dark ? 0.12 : 0.09)),
+                    child: Icon(icon, size: 96, color: tint.withValues(alpha: dark ? 0.12 : 0.09)),
                   ),
                 Padding(
-                  padding: EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(14),
                   child: Stack(
                     children: [
                       Column(
@@ -119,11 +119,11 @@ class DSFeatureCard extends StatelessWidget {
                                 colors: [tint, Color.lerp(tint, AppColors.textPrimary, 0.18)!],
                               ),
                               borderRadius: BorderRadius.circular(13),
-                              boxShadow: [BoxShadow(color: tint.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                              boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
                             ),
                             child: Icon(icon, color: AppColors.background, size: 23),
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Text(
                             title,
                             maxLines: 1,
@@ -134,7 +134,7 @@ class DSFeatureCard extends StatelessWidget {
                               color: context.cText,
                             ),
                           ),
-                          SizedBox(height: 3),
+                          const SizedBox(height: 3),
                           Expanded(
                             child: Text(
                               subtitle,
@@ -147,7 +147,7 @@ class DSFeatureCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -159,7 +159,7 @@ class DSFeatureCard extends StatelessWidget {
                                   color: tint,
                                 ),
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Icon(Icons.arrow_forward_rounded, size: 13, color: tint),
                             ],
                           ),
@@ -170,9 +170,9 @@ class DSFeatureCard extends StatelessWidget {
                           top: 0,
                           right: 0,
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: pill.withOpacity(0.12),
+                              color: pill.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(7),
                             ),
                             child: Text(

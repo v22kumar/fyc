@@ -48,7 +48,7 @@ def _sync_facebook(db: Session, org: Organization, admin_user: User):
             "access_token": org.facebook_access_token,
             "limit": 10
         }
-        res = requests.get(url, params=params)
+        res = requests.get(url, params=params, timeout=15)
         if res.status_code != 200:
             logger.error(f"Failed to fetch Facebook feed: {res.text}")
             return
@@ -91,7 +91,7 @@ def _sync_instagram(db: Session, org: Organization, admin_user: User):
             "access_token": org.instagram_access_token,
             "limit": 10
         }
-        res = requests.get(url, params=params)
+        res = requests.get(url, params=params, timeout=15)
         if res.status_code != 200:
             logger.error(f"Failed to fetch Instagram feed: {res.text}")
             return
@@ -136,7 +136,7 @@ def _sync_threads(db: Session, org: Organization, admin_user: User):
             "access_token": org.threads_access_token,
             "limit": 10
         }
-        res = requests.get(url, params=params)
+        res = requests.get(url, params=params, timeout=15)
         if res.status_code != 200:
             logger.error(f"Failed to fetch Threads feed: {res.text}")
             return

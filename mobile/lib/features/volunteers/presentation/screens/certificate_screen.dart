@@ -35,11 +35,11 @@ class CertificateScreen extends StatelessWidget {
         title: Text(trId('my_certificate')),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(AppTheme.paddingPage),
+        padding: const EdgeInsets.all(AppTheme.paddingPage),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
               child: Container(
                 width: 96,
@@ -50,10 +50,10 @@ class CertificateScreen extends StatelessWidget {
                   border: Border.all(color: AppColors.accent, width: 2),
                 ),
                 alignment: Alignment.center,
-                child: Text('🪪', style: TextStyle(fontSize: 44)),
+                child: const Text('🪪', style: TextStyle(fontSize: 44)),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
               trId('volunteer_certificate'),
               textAlign: TextAlign.center,
@@ -63,7 +63,7 @@ class CertificateScreen extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               trId('your_official_certificate_recognising_yo'),
               textAlign: TextAlign.center,
@@ -73,16 +73,16 @@ class CertificateScreen extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => _download(context, lang),
-              icon: Icon(Icons.download_rounded),
+              icon: const Icon(Icons.download_rounded),
               label: Text(
                   trId('download_certificate')),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(14),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
@@ -93,7 +93,7 @@ class CertificateScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.info_outline,
                       size: 18, color: AppColors.textSecondary),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       trId('the_certificate_opens_in_your_device_bro'),

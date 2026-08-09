@@ -133,7 +133,7 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(DSRadius.card),
-          border: Border.all(color: accent.withOpacity(0.25)),
+          border: Border.all(color: accent.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,8 +172,8 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                   ActionChip(
                     label: Text(_label(o)),
                     onPressed: _sending ? null : () => _send('answer', o),
-                    backgroundColor: accent.withOpacity(0.08),
-                    side: BorderSide(color: accent.withOpacity(0.28)),
+                    backgroundColor: accent.withValues(alpha: 0.08),
+                    side: BorderSide(color: accent.withValues(alpha: 0.28)),
                     labelStyle: Theme.of(context)
                         .textTheme
                         .titleSmall

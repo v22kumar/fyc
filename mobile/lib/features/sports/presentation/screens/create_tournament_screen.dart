@@ -286,32 +286,32 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        padding: EdgeInsets.fromLTRB(24, 16, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         decoration: BoxDecoration(
           color: context.cBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Center(child: Container(width: 40, height: 4,
                 decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-            SizedBox(height: 22),
+            const SizedBox(height: 22),
             Container(
-              padding: EdgeInsets.all(18),
-              decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.10), shape: BoxShape.circle),
-              child: Text('🏆', style: TextStyle(fontSize: 40)),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.10), shape: BoxShape.circle),
+              child: const Text('🏆', style: TextStyle(fontSize: 40)),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(trId('tournament_created'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               trId('now_register_teams_then_tap_generate_fix'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.5, color: context.cTextSecondary, height: 1.5),
             ),
-            SizedBox(height: 22),
+            const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -325,7 +325,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
@@ -353,17 +353,17 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.cText)),
       ),
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         children: [
           // Sport selector
-          _Label('Select Sport'),
-          SizedBox(height: 8),
+          const _Label('Select Sport'),
+          const SizedBox(height: 8),
           SizedBox(
             height: 44,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _sports.length,
-              separatorBuilder: (_, __) => SizedBox(width: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final s = _sports[i];
                 final sel = s.value == _sport;
@@ -379,43 +379,43 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               },
             ),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Tournament name
-          _Label('Tournament Name'),
-          SizedBox(height: 8),
+          const _Label('Tournament Name'),
+          const SizedBox(height: 8),
           TextField(
             controller: _nameCtrl,
             decoration: _dec(context, 'e.g. FYC Summer ${DateTime.now().year}', Icons.emoji_events_outlined),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Registration deadline (required — drives the register→close→fixtures flow)
-          _Label('Registration Closes On *'),
-          SizedBox(height: 8),
+          const _Label('Registration Closes On *'),
+          const SizedBox(height: 8),
           _DateField(
             label: trId('last_day_to_register'),
             date: _regCloseDate,
             onTap: _pickRegClose,
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             trId('teams_can_register_until_this_date_fixtu'),
             style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Dates
-          _Label('Tournament Dates'),
-          SizedBox(height: 8),
+          const _Label('Tournament Dates'),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(child: _DateField(label: trId('start_date'), date: _startDate, onTap: () => _pickDate(isStart: true))),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(child: _DateField(label: trId('end_date'), date: _endDate, onTap: () => _pickDate(isStart: false))),
             ],
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Advanced settings toggle
           GestureDetector(
@@ -434,12 +434,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               ],
             ),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           if (_showAdvanced) ...[
             // Number of teams
-            _Label('Number of Teams'),
-            SizedBox(height: 8),
+            const _Label('Number of Teams'),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
@@ -457,7 +457,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               ],
             ),
             if (_customTeams) ...[
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextField(
                 controller: _customTeamsCtrl,
                 keyboardType: TextInputType.number,
@@ -465,11 +465,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 decoration: _dec(context, 'Enter number of teams', Icons.groups_outlined),
               ),
             ],
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
 
             // Format
-            _Label('Format'),
-            SizedBox(height: 8),
+            const _Label('Format'),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -479,12 +479,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 onTap: () => setState(() => _format = f),
               )).toList(),
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
 
             // Match config (sport-specific)
             if (configOpts.isNotEmpty) ...[
               _Label(_matchConfigLabel[_sport] ?? 'Match Format'),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -494,12 +494,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   onTap: () => setState(() => _matchConfig = c),
                 )).toList(),
               ),
-              SizedBox(height: 18),
+              const SizedBox(height: 18),
             ],
 
             // Registration
-            _Label('Team Registration'),
-            SizedBox(height: 8),
+            const _Label('Team Registration'),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -511,7 +511,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     onTap: () => setState(() => _registration = 'MANUAL_APPROVAL'),
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _ModeCard(
                     icon: Icons.public,
@@ -523,20 +523,20 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
 
             // Venue
-            _Label('Venue'),
-            SizedBox(height: 8),
+            const _Label('Venue'),
+            const SizedBox(height: 8),
             TextField(
               controller: _venueCtrl,
               decoration: _dec(context, 'Where the matches are played', Icons.location_on_outlined),
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
 
             // Additional settings
-            _Label('Additional Settings'),
-            SizedBox(height: 8),
+            const _Label('Additional Settings'),
+            const SizedBox(height: 8),
             _ToggleRow(
               icon: Icons.leaderboard_outlined,
               label: trId('points_table'),
@@ -563,19 +563,19 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               onChanged: (v) => setState(() => _showPrize = v),
             ),
             if (_showPrize) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               TextField(
                 controller: _prizeCtrl,
                 maxLines: 2,
                 decoration: _dec(context, 'e.g. Winner ₹10,000 · Runner-up ₹5,000', Icons.emoji_events_outlined),
               ),
             ],
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _Label('Description (Markdown Supported)'),
+                const _Label('Description (Markdown Supported)'),
                 PopupMenuButton<String>(
                   icon: Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
                   tooltip: trId('templates'),
@@ -626,13 +626,13 @@ Join us for our yearly gathering!
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: _descCtrl,
               maxLines: 8,
               decoration: _dec(context, 'Write tournament rules, timings, and information here. You can use markdown like **bold** or *italic*.', Icons.description_outlined),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
 
           // Summary
@@ -647,11 +647,11 @@ Join us for our yearly gathering!
             end: _endDate,
             venue: _venueCtrl.text.trim(),
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
 
           // How it works
           const _HowItWorks(),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Create button
           SizedBox(
@@ -670,19 +670,19 @@ Join us for our yearly gathering!
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.emoji_events, color: AppColors.background, size: 18),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(widget.tournament != null ? 'Save Changes' : 'Create Tournament',
                             style: TextStyle(color: AppColors.background, fontSize: 15, fontWeight: FontWeight.w700)),
                       ],
                     ),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Center(
             child: Text(trId('we_ll_generate_fixtures_automatically'),
                 style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -722,9 +722,9 @@ class _PickChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.12) : context.cSurface,
+          color: selected ? AppColors.primary.withValues(alpha: 0.12) : context.cSurface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: selected ? AppColors.primary : context.cBorder,
@@ -761,9 +761,9 @@ class _ModeCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.10) : context.cSurface,
+          color: selected ? AppColors.primary.withValues(alpha: 0.10) : context.cSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: selected ? AppColors.primary : context.cBorder, width: selected ? 1.5 : 1),
         ),
@@ -771,9 +771,9 @@ class _ModeCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, size: 20, color: selected ? AppColors.primary : context.cTextSecondary),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(title, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.cText)),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(subtitle, style: TextStyle(fontSize: 10.5, color: context.cTextSecondary)),
           ],
         ),
@@ -793,7 +793,7 @@ class _DateField extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(12),
@@ -802,7 +802,7 @@ class _DateField extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.calendar_today_outlined, size: 16, color: context.cTextSecondary),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -836,11 +836,11 @@ class _ToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
           Icon(icon, size: 18, color: context.cTextSecondary),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: context.cText, fontWeight: FontWeight.w500))),
           Switch.adaptive(value: value, onChanged: onChanged, activeColor: AppColors.primary),
         ],
@@ -883,7 +883,7 @@ class _SummaryCard extends StatelessWidget {
       ('Venue', venue.isEmpty ? '—' : venue),
     ];
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF15201A) : const Color(0xFFF8FAF8),
         borderRadius: BorderRadius.circular(16),
@@ -894,19 +894,19 @@ class _SummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('🏆', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
+              const Text('🏆', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
               Text(trId('tournament_summary'),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cText)),
             ],
           ),
           if (name.isNotEmpty) ...[
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
           ],
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           ...rows.map((r) => Padding(
-                padding: EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -933,11 +933,11 @@ class _HowItWorks extends StatelessWidget {
       ('4', trId('winner'), trId('winner_help')),
     ];
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF101A22) : const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.2)),
+        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,20 +945,20 @@ class _HowItWorks extends StatelessWidget {
           Text(trId('how_it_works_2'),
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
                   color: context.isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB))),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           ...steps.map((s) => Padding(
-                padding: EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 22,
                       height: 22,
-                      decoration: BoxDecoration(color: Color(0xFF2563EB), shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: Color(0xFF2563EB), shape: BoxShape.circle),
                       alignment: Alignment.center,
                       child: Text(s.$1, style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w800)),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

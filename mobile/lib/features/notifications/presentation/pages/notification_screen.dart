@@ -98,15 +98,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
           // device and reports why if it can't.
           BlocBuilder<AuthBloc, AuthState>(builder: (context, auth) {
             final isAdmin = auth is AuthAuthenticated && auth.user.isAdmin;
-            if (!isAdmin) return SizedBox.shrink();
+            if (!isAdmin) return const SizedBox.shrink();
             return IconButton(
-              icon: Icon(Icons.notifications_active_outlined),
+              icon: const Icon(Icons.notifications_active_outlined),
               tooltip: trId('send_test_notification'),
               onPressed: () => _sendTest(context),
             );
           }),
           IconButton(
-            icon: Icon(Icons.done_all_rounded),
+            icon: const Icon(Icons.done_all_rounded),
             onPressed: () => context.read<NotificationBloc>().add(MarkAllNotificationsAsRead()),
             tooltip: trId('mark_all_as_read'),
           ),
@@ -127,7 +127,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             }
             return _buildGroupedList(context, items);
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -166,7 +166,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
       ));
     }
-    return ListView(padding: EdgeInsets.only(bottom: 24), children: children);
+    return ListView(padding: const EdgeInsets.only(bottom: 24), children: children);
   }
 }
 
@@ -177,7 +177,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
@@ -205,16 +205,16 @@ class _NotificationTile extends StatelessWidget {
       onDismissed: (_) => onDismiss(),
       background: Container(
         alignment: Alignment.centerRight,
-        color: AppColors.primary.withOpacity(0.15),
-        padding: EdgeInsets.only(right: 24),
+        color: AppColors.primary.withValues(alpha: 0.15),
+        padding: const EdgeInsets.only(right: 24),
         child: Icon(Icons.check_rounded, color: AppColors.primary),
       ),
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: notif.isRead
-              ? context.cTextSecondary.withOpacity(0.12)
-              : AppColors.primary.withOpacity(0.14),
+              ? context.cTextSecondary.withValues(alpha: 0.12)
+              : AppColors.primary.withValues(alpha: 0.14),
           child: Icon(
             Icons.notifications_rounded,
             color: notif.isRead ? context.cTextSecondary : AppColors.primary,
@@ -228,7 +228,7 @@ class _NotificationTile extends StatelessWidget {
           ),
         ),
         subtitle: Padding(
-          padding: EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.only(top: 2),
           child: Text(
             notif.bodyEn,
             maxLines: 2,
@@ -252,8 +252,8 @@ class _EmptyInbox extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.notifications_none_rounded, size: 64, color: context.cTextSecondary.withOpacity(0.25)),
-          SizedBox(height: 16),
+          Icon(Icons.notifications_none_rounded, size: 64, color: context.cTextSecondary.withValues(alpha: 0.25)),
+          const SizedBox(height: 16),
           Text(
             trId('no_notifications_right_now'),
             style: TextStyle(color: context.cTextSecondary, fontSize: 15),

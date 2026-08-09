@@ -19,6 +19,15 @@ class _OfflineBannerState extends State<OfflineBanner> {
   @override
   void initState() {
     super.initState();
+    // Seed from the current state: the stream only reports *changes*, so an
+    // app opened while already offline would show no banner until the radio
+    // toggled — precisely the launch where the banner matters most.
+    Connectivity().checkConnectivity().then((results) {
+      final nowOffline = results.every((r) => r == ConnectivityResult.none);
+      if (mounted && nowOffline != _offline) {
+        setState(() => _offline = nowOffline);
+      }
+    });
     _sub = Connectivity().onConnectivityChanged.listen((results) {
       final nowOffline = results.every((r) => r == ConnectivityResult.none);
       if (mounted && nowOffline != _offline) setState(() => _offline = nowOffline);
@@ -33,7 +42,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_offline) return SizedBox.shrink();
+    if (!_offline) return const SizedBox.shrink();
     return Material(
       color: const Color(0xFFDC2626),
       child: SafeArea(
@@ -41,12 +50,12 @@ class _OfflineBannerState extends State<OfflineBanner> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.wifi_off, color: AppColors.background, size: 14),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(trId('no_internet_connection'), style: TextStyle(color: AppColors.background, fontSize: 12, fontWeight: FontWeight.w600)),
             ],
           ),

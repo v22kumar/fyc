@@ -104,6 +104,10 @@ class _AskDonorSheetState extends State<_AskDonorSheet> {
     }
   }
 
+  /// The units stepper lives in [_Form], a separate widget; it changes state
+  /// through this method rather than reaching into [setState] directly.
+  void changeUnits(int delta) => setState(() => _units += delta);
+
   @override
   Widget build(BuildContext context) {
     final name = widget.donor.displayName(widget.lang);
@@ -144,10 +148,10 @@ class _Form extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: DSColors.danger.withOpacity(0.10),
+              backgroundColor: DSColors.danger.withValues(alpha: 0.10),
               child: Text(
                 donor.bloodGroup,
-                style: TextStyle(
+                style: const TextStyle(
                   color: DSColors.danger,
                   fontWeight: FontWeight.w800,
                 ),
@@ -194,17 +198,13 @@ class _Form extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium),
             const Spacer(),
             IconButton(
-              onPressed: state._units > 1
-                  ? () => state.setState(() => state._units--)
-                  : null,
+              onPressed: state._units > 1 ? () => state.changeUnits(-1) : null,
               icon: const Icon(Icons.remove_circle_outline),
             ),
             Text('${state._units}',
                 style: Theme.of(context).textTheme.titleMedium),
             IconButton(
-              onPressed: state._units < 10
-                  ? () => state.setState(() => state._units++)
-                  : null,
+              onPressed: state._units < 10 ? () => state.changeUnits(1) : null,
               icon: const Icon(Icons.add_circle_outline),
             ),
           ],

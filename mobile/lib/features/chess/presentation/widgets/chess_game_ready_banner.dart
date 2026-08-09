@@ -87,7 +87,7 @@ class _ChessGameReadyBannerState extends State<ChessGameReadyBanner> {
                 child: Row(
                   children: [
                     Text('♟', style: TextStyle(color: AppColors.background, fontSize: 15)),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         trId('your_chess_game_is_ready_tap_to_join'),

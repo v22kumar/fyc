@@ -151,7 +151,7 @@ class _Action extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: tint.withOpacity(0.12),
+                  color: tint.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: tint, size: 26),
@@ -203,7 +203,7 @@ class _PeerCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: tint.withOpacity(0.12),
+                color: tint.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: tint, size: 24),
@@ -239,7 +239,7 @@ class _EmergencyRow extends StatelessWidget {
     return ListTile(
       onTap: onCall,
       leading: CircleAvatar(
-        backgroundColor: item.tint.withOpacity(0.12),
+        backgroundColor: item.tint.withValues(alpha: 0.12),
         child: Icon(item.icon, color: item.tint),
       ),
       title: Text(
