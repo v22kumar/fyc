@@ -5,9 +5,10 @@ import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/blood_request_api.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import 'donor_presence.dart';
+import '../../domain/repositories/blood_request_repository.dart';
+import '../../../../service_locator.dart';
 
 /// Ask one person, instead of being handed their phone number.
 ///
@@ -82,7 +83,7 @@ class _AskDonorSheetState extends State<_AskDonorSheet> {
       // Where the blood is needed, if we happen to know. Never asks for the
       // permission here — mid-request is the wrong moment to explain location.
       final pos = await MemberLocation.ifAlreadyAllowed();
-      await BloodRequestApi.create(
+      await sl<BloodRequestRepository>().create(
         bloodGroup: widget.donor.bloodGroup,
         units: _units,
         hospital: _hospital.text.trim(),

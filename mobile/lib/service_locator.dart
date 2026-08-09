@@ -151,6 +151,8 @@ import 'features/chess/domain/repositories/chess_repository.dart';
 import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/domain/repositories/feed_repository.dart';
 import 'features/home/data/repositories/home_repository_impl.dart';
+import 'features/blood_donation/data/blood_request_repository_impl.dart';
+import 'features/blood_donation/domain/repositories/blood_request_repository.dart';
 import 'features/home/domain/repositories/home_repository.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
 import 'features/profile/domain/repositories/profile_repository.dart';
@@ -476,6 +478,11 @@ Future<void> initServiceLocator() async {
   // Home dashboard
   sl.registerLazySingleton<HomeRepository>(
     () => HomeRepositoryImpl(sl<ApiClient>()),
+  );
+
+  // Blood emergencies
+  sl.registerLazySingleton<BloodRequestRepository>(
+    () => BloodRequestRepositoryImpl(sl<ApiClient>()),
   );
 
   // Profile + search

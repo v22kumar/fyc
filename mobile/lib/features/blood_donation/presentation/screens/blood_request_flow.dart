@@ -5,8 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/blood_request_api.dart';
 import '../../data/blood_request_models.dart';
+import '../../domain/repositories/blood_request_repository.dart';
+import '../../../../service_locator.dart';
 
 const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const _urgencies = ['CRITICAL', 'URGENT', 'ROUTINE'];
@@ -56,7 +57,7 @@ class _RaiseRequestSheetState extends State<_RaiseRequestSheet> {
     setState(() => _busy = true);
     try {
       final pos = await _currentLocation();
-      final req = await BloodRequestApi.create(
+      final req = await sl<BloodRequestRepository>().create(
         bloodGroup: _group,
         units: _units,
         hospital: _hospitalCtrl.text.trim(),
@@ -225,7 +226,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
 
   Future<void> _load() async {
     try {
-      final r = await BloodRequestApi.detail(widget.requestId);
+      final r = await sl<BloodRequestRepository>().detail(widget.requestId);
       if (mounted) setState(() { _req = r; _error = false; });
     } catch (_) {
       if (mounted) setState(() => _error = true);
@@ -270,7 +271,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       ),
     );
     if (ok != true) return;
-    await _run(() => BloodRequestApi.broadcast(r.id).then((_) {}));
+    await _run(() => sl<BloodRequestRepository>().broadcast(r.id).then((_) {}));
   }
 
   Future<void> _call(String phone) async {
@@ -454,7 +455,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       children.add(SizedBox(
         width: double.infinity,
         child: TextButton.icon(
-          onPressed: _busy ? null : () => _run(() => BloodRequestApi.close(r.id).then((_) {})),
+          onPressed: _busy ? null : () => _run(() => sl<BloodRequestRepository>().close(r.id).then((_) {})),
           icon: const Icon(Icons.check_circle_outline),
           label: Text(trId('mark_fulfilled')),
         ),
@@ -493,7 +494,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           Expanded(child: Text(trId('you_accepted_thank_you'),
               style: TextStyle(color: context.cText, fontWeight: FontWeight.w600))),
           TextButton(
-            onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
+            onPressed: _busy ? null : () => _run(() => sl<BloodRequestRepository>().pledge(r.id, 'DECLINED').then((_) {})),
             child: Text(trId('cancel_2')),
           ),
         ]),
@@ -517,12 +518,12 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
           style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF16A34A),
               padding: const EdgeInsets.symmetric(vertical: 14)),
-          onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'ACCEPTED').then((_) {})),
+          onPressed: _busy ? null : () => _run(() => sl<BloodRequestRepository>().pledge(r.id, 'ACCEPTED').then((_) {})),
           icon: const Icon(Icons.volunteer_activism_rounded),
           label: Text(trId('i_can_help')),
         ),
         TextButton(
-          onPressed: _busy ? null : () => _run(() => BloodRequestApi.pledge(r.id, 'DECLINED').then((_) {})),
+          onPressed: _busy ? null : () => _run(() => sl<BloodRequestRepository>().pledge(r.id, 'DECLINED').then((_) {})),
           child: Text(trId('decline')),
         ),
       ],

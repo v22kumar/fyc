@@ -6,9 +6,10 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/blood_request_api.dart';
 import '../../data/models/blood_donor_model.dart';
 import '../widgets/donor_presence.dart';
+import '../../domain/repositories/blood_request_repository.dart';
+import '../../../../service_locator.dart';
 
 const _groups = ['All', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 // Nagercoil town — the fallback centre if we can't get a live location.
@@ -51,7 +52,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
   Future<void> _fetch() async {
     setState(() => _loading = true);
     try {
-      final list = await BloodRequestApi.nearby(
+      final list = await sl<BloodRequestRepository>().nearby(
         lat: _center.latitude,
         lng: _center.longitude,
         bloodGroup: _group == 'All' ? null : _group,
