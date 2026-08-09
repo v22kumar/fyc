@@ -129,6 +129,7 @@ SafetyContact contactFromJson(Map<String, dynamic> j) => SafetyContact(
       notifyPush: j['notify_push'] as bool? ?? true,
       verifiedAt: _at(j['verified_at']),
       position: (j['position'] as num?)?.toInt() ?? 0,
+      isMember: j['is_member'] as bool? ?? false,
     );
 
 ResponderSettings settingsFromJson(Map<String, dynamic> j) => ResponderSettings(

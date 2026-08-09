@@ -544,3 +544,99 @@ def test_the_timeline_names_an_author_on_every_row(client, db, club, raiser, aut
     ack = next(e for e in body["events"] if e["event_type"] == "ACKNOWLEDGED")
     assert ack["author"] == "RESPONDER"
     assert ack["author_name"] == "Suresh"
+
+
+# ── The alarm rings on the phone that can help ───────────────────────────────
+
+
+def test_a_trusted_contact_who_is_a_member_is_told_at_once(
+    client, db, club, raiser, auth
+):
+    """Your wife should not be reduced to an SMS because she is far away.
+
+    A trusted contact who also uses the app is told first and for a different
+    reason from everybody else — because she is yours, not because she is
+    near — so she joins at wave 0 with no distance attached.
+    """
+    wife = _member(db, club, name="Meena", phone="+919000002001")
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Meena", "phone": "+919000002001",
+                      "relationship_label": "Wife"},
+                headers=auth)
+
+    body = _raise(client, auth)
+
+    hers = next(r for r in body["responders"] if r["user_id"] == str(wife.id))
+    assert hers["wave"] == 0
+    assert hers["distance_m"] is None, (
+        "she was not chosen for being close, and a distance would imply she was"
+    )
+    assert body["alerted_count"] == 1
+
+
+def test_a_contact_member_can_say_they_are_coming(client, db, club, raiser, auth):
+    """Wave 0 is a real place on the list, not a footnote."""
+    wife = _member(db, club, name="Meena", phone="+919000002002")
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Meena", "phone": "+919000002002"}, headers=auth)
+    incident = _raise(client, auth)
+
+    r = client.post(f"/api/v1/safety/sos/{incident['id']}/ack",
+                    headers=_auth(wife, club))
+    assert r.status_code == 200, r.text
+    assert r.json()["acknowledged_count"] == 1
+
+
+def test_a_contact_who_is_not_a_member_gets_no_phantom_responder(
+    client, db, club, raiser, auth
+):
+    """Nothing is guessed. No match, no row — the SMS is what they get."""
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Amma", "phone": "+919999999999"}, headers=auth)
+
+    body = _raise(client, auth)
+    assert body["responders"] == []
+    assert body["alerted_count"] == 0
+
+
+def test_a_contact_member_is_not_told_twice(client, db, club, raiser, auth):
+    """Somebody who is both your emergency contact and the nearest responder
+    is one person, and gets one row."""
+    both = _member(db, club, name="Meena", phone="+919000002003",
+                   lat=8.185, lng=77.413, available=True)
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Meena", "phone": "+919000002003"}, headers=auth)
+
+    body = _raise(client, auth)
+    hers = [r for r in body["responders"] if r["user_id"] == str(both.id)]
+    assert len(hers) == 1
+    assert body["alerted_count"] == 1
+
+
+def test_the_raiser_is_never_their_own_responder(client, db, club, raiser, auth):
+    """A member who saved their own number as a contact must not be alerted
+    about themselves."""
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Me", "phone": raiser.phone_number}, headers=auth)
+
+    body = _raise(client, auth)
+    assert all(r["user_id"] != str(raiser.id) for r in body["responders"])
+
+
+def test_the_setup_screen_only_promises_a_ring_it_can_deliver(
+    client, db, club, raiser, auth
+):
+    """A contact who uses the app gets a push on the alarm channel; one who
+    does not gets an SMS that lands silently. Saying "rings like an alarm" for
+    the second is the same species of lie as the four green ticks."""
+    _member(db, club, name="Meena", phone="+919000002010")
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Meena", "phone": "+919000002010"}, headers=auth)
+    client.post("/api/v1/safety/contacts",
+                json={"name": "Amma", "phone": "+918888888888"}, headers=auth)
+
+    by_name = {c["name"]: c for c in
+               client.get("/api/v1/safety/contacts", headers=auth).json()}
+
+    assert by_name["Meena"]["is_member"] is True
+    assert by_name["Amma"]["is_member"] is False

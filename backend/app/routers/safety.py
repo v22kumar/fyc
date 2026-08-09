@@ -79,11 +79,13 @@ def _phones(db: Session, user_ids: set[UUID]) -> dict[UUID, Optional[str]]:
 def _out(db: Session, incident: SosIncident) -> SosIncidentOut:
     responders = sorted(
         incident.responders or [],
-        # Coming first, then told-and-silent, then declined; nearest inside
-        # each group. The member's eye should land on somebody who is on the
-        # way before it lands on six people who have not answered.
+        # Coming first, then told-and-silent, then declined. Inside each group
+        # your own people lead — they were told because they are yours, and
+        # seeing your wife's name above a stranger two kilometres away is what
+        # the list is for — then nearest.
         key=lambda r: (
             0 if r.acknowledged_at else (2 if r.declined_at else 1),
+            0 if (r.wave or 1) == 0 else 1,
             r.distance_m if r.distance_m is not None else 10 ** 9,
         ),
     )
@@ -188,6 +190,65 @@ def _may_see(db: Session, incident: SosIncident, user: User) -> bool:
 
 # ── Push ─────────────────────────────────────────────────────────────────────
 
+def _contact_members(db: Session, incident: SosIncident) -> list[SosResponder]:
+    """Your people, told because they are yours — not because they are near.
+
+    A trusted contact who also uses the app should not be reduced to an SMS.
+    If your wife is a member, her phone should ring like an alarm, and if she
+    happens to be close she should be able to say she is coming like anybody
+    else. So she becomes a responder at **wave 0**: told first, ranked by
+    nothing, and never subject to the radius that governs the waves.
+
+    Matching is on the phone number the contact was saved with. Nothing is
+    guessed: no match, no push, and the SMS still goes.
+    """
+    contacts = (db.query(SafetyContact)
+                  .filter(SafetyContact.user_id == incident.raised_by_user_id,
+                          SafetyContact.notify_push.is_(True))
+                  .all())
+    numbers = {c.phone for c in contacts if c.phone}
+    if not numbers:
+        return []
+
+    members = (db.query(User)
+                 .filter(User.organization_id == incident.organization_id,
+                         User.phone_number.in_(numbers),
+                         User.id != incident.raised_by_user_id)
+                 .all())
+
+    # Queried rather than read off `incident.responders`: wave 1's rows were
+    # added to this session moments ago and the relationship does not see them
+    # until a flush. Reading it here handed a duplicate row to anybody who was
+    # both your emergency contact and your nearest neighbour, and the unique
+    # constraint caught it — which is what the constraint is for.
+    db.flush()
+    already = {
+        r.user_id for r in db.query(SosResponder)
+        .filter(SosResponder.incident_id == incident.id).all()
+    }
+    now = _now()
+    rows: list[SosResponder] = []
+    for member in members:
+        if member.id in already:
+            continue
+        row = SosResponder(
+            organization_id=incident.organization_id,
+            incident_id=incident.id,
+            user_id=member.id,
+            wave=0,
+            # Deliberately null. They were not chosen for being close, and a
+            # distance here would imply they were.
+            distance_m=None,
+            notified_at=now,
+        )
+        db.add(row)
+        rows.append(row)
+
+    if rows:
+        incident.alerted_count = (incident.alerted_count or 0) + len(rows)
+    return rows
+
+
 def _notify_contacts(db: Session, incident: SosIncident) -> int:
     """Message the member's trusted contacts from the server.
 
@@ -276,6 +337,9 @@ def raise_sos(
            detail=None if incident.has_location else "location unknown")
 
     rows = dispatch_wave(db, incident, wave_number=1, now=now)
+    # Your people first in the list, because they were told first and for a
+    # different reason.
+    rows = _contact_members(db, incident) + rows
     dispatched = [(r.user_id, r.distance_m) for r in rows]
 
     sent = _notify_contacts(db, incident)
@@ -324,6 +388,10 @@ def _push_incident_wave(org_id: UUID, incident_id: UUID,
                     notification_type="SOS",
                     data={"type": "SOS", "incident_id": str(incident_id),
                           "route": f"/safety/respond/{incident_id}"},
+                    # The siren lives here now, not on the phone of the person
+                    # in trouble. `fyc_sos` plays it at alarm volume, which is
+                    # what gets through a silenced ringer at 2 a.m.
+                    channel_id="fyc_sos",
                 )
             except Exception:
                 continue
@@ -633,15 +701,41 @@ def read_incident(
 
 # ── Trusted contacts ─────────────────────────────────────────────────────────
 
+def _with_membership(db: Session, tenant_id: UUID,
+                     contacts: list[SafetyContact]) -> list[SafetyContactOut]:
+    """Mark the contacts whose phones will actually ring.
+
+    One query for the lot rather than one per contact — this list is read
+    every time the setup screen opens.
+    """
+    numbers = {c.phone for c in contacts if c.phone}
+    members: set[str] = set()
+    if numbers:
+        members = {
+            phone for (phone,) in
+            db.query(User.phone_number)
+            .filter(User.organization_id == tenant_id,
+                    User.phone_number.in_(numbers)).all()
+            if phone
+        }
+    out = []
+    for c in contacts:
+        row = SafetyContactOut.model_validate(c)
+        row.is_member = c.phone in members
+        out.append(row)
+    return out
+
+
 @router.get("/contacts", response_model=list[SafetyContactOut])
 def list_contacts(
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
     current_user: User = Depends(get_current_user),
 ):
-    return (db.query(SafetyContact)
-              .filter(SafetyContact.user_id == current_user.id)
-              .order_by(SafetyContact.position.asc()).all())
+    contacts = (db.query(SafetyContact)
+                  .filter(SafetyContact.user_id == current_user.id)
+                  .order_by(SafetyContact.position.asc()).all())
+    return _with_membership(db, tenant_id, contacts)
 
 
 @router.post("/contacts", response_model=SafetyContactOut,

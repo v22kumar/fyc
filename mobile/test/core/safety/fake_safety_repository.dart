@@ -122,6 +122,8 @@ class FakeSafetyRepository implements SafetyRepository {
             relationship: i == 0 ? 'Mother' : 'Father',
             verifiedAt: i == 0 ? _base : null,
             position: i,
+            // One of each, so the screenshot shows both promises.
+            isMember: i == 0,
           ),
         );
 

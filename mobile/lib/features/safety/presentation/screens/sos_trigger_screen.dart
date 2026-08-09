@@ -68,7 +68,17 @@ class _SosTriggerScreenState extends State<SosTriggerScreen> {
 
   void _beginCountdown() {
     if (_counting) return;
-    SirenController.instance.start();
+    // No siren here, on purpose.
+    //
+    // It used to start the moment the button was held, on the phone of the
+    // person in trouble — which is the one phone it must not sound on. In a
+    // threat it announces to the person you are afraid of that you have called
+    // for help; during a 112 call it drowns out the call; and it is frightening
+    // at the moment somebody least needs that. The alarm belongs on the phone
+    // of somebody who can come, and that is where it now goes.
+    //
+    // It is still one tap away on the live screen, for the case where being
+    // heard is the point.
     setState(() => _remaining = _countdown);
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
@@ -86,6 +96,9 @@ class _SosTriggerScreenState extends State<SosTriggerScreen> {
   void _cancel() {
     _ticker?.cancel();
     _ticker = null;
+    // Defensive: nothing here starts the siren any more, but a member who
+    // turned it on by hand and then cancelled should not be left with it
+    // blaring at a false alarm.
     SirenController.instance.stop();
     HapticFeedback.mediumImpact();
     setState(() => _remaining = 0);
@@ -96,7 +109,6 @@ class _SosTriggerScreenState extends State<SosTriggerScreen> {
 
   void _send() {
     if (widget.rehearsal) {
-      SirenController.instance.stop();
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(trId('rehearse_done'))));

@@ -203,8 +203,16 @@ class NotificationService:
                        body_en: str,
                        body_ta: str,
                        notification_type: str,
-                       data: Optional[Dict[str, Any]] = None):
+                       data: Optional[Dict[str, Any]] = None,
+                       channel_id: Optional[str] = None):
         """Push + in-app record only — no WhatsApp / SMS / email fan-out.
+
+        `channel_id` picks the Android notification channel, and for one
+        message type that is the whole difference between arriving and being
+        missed: an SOS goes on `fyc_sos`, whose sound is the siren played at
+        alarm volume, so it rings through a silenced phone at two in the
+        morning. A channel's sound is fixed by Android when the channel is
+        created, which is why urgency has to be a channel rather than a flag.
 
         For transient, real-time alerts (e.g. a live chess challenge) where
         blasting WhatsApp or email on every event would be spammy and
@@ -240,12 +248,14 @@ class NotificationService:
                 _title,
                 _body,
                 self._tray_data(data),
+                channel_id=channel_id,
             ):
                 notification.delivered_at = datetime.now(timezone.utc)
                 notification.delivery_channel = "FCM"
                 self.db.commit()
 
-    def _dispatch_push(self, token: str, title: str, body: str, data: dict = None) -> bool:
+    def _dispatch_push(self, token: str, title: str, body: str, data: dict = None,
+                       channel_id: Optional[str] = None) -> bool:
         if not firebase_admin._apps:
             logger.warning("FCM skipped (firebase not initialized).")
             return False
@@ -262,8 +272,12 @@ class NotificationService:
                 android=messaging.AndroidConfig(
                     priority="high",
                     notification=messaging.AndroidNotification(
-                        channel_id="fyc_default",
-                        default_sound=True,
+                        channel_id=channel_id or "fyc_default",
+                        # The SOS channel carries its own sound — the siren, at
+                        # alarm volume. Asking for the default here would
+                        # replace it with a notification blip.
+                        default_sound=(channel_id != "fyc_sos"),
+                        sound=None if channel_id != "fyc_sos" else "sos_siren",
                     ),
                 ),
                 data={k: str(v) for k, v in (data or {}).items()},

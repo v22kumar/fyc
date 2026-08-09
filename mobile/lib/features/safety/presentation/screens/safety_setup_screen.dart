@@ -26,7 +26,6 @@ class SafetySetupScreen extends StatefulWidget {
 
 class _SafetySetupScreenState extends State<SafetySetupScreen> {
   bool _shake = false;
-  bool _silentAlarm = false;
 
   @override
   void initState() {
@@ -37,12 +36,8 @@ class _SafetySetupScreenState extends State<SafetySetupScreen> {
 
   Future<void> _loadDevicePrefs() async {
     final shake = await SosService.getShakeToTrigger();
-    final loud = await SosService.getLoudSiren();
     if (!mounted) return;
-    setState(() {
-      _shake = shake;
-      _silentAlarm = !loud;
-    });
+    setState(() => _shake = shake);
   }
 
   @override
@@ -161,17 +156,6 @@ class _SafetySetupScreenState extends State<SafetySetupScreen> {
                 subtitle: Text(trId('shake_to_send_help'),
                     style: Theme.of(context).textTheme.bodySmall),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _silentAlarm,
-                onChanged: (v) async {
-                  await SosService.setLoudSiren(!v);
-                  if (mounted) setState(() => _silentAlarm = v);
-                },
-                title: Text(trId('silent_alarm')),
-                subtitle: Text(trId('silent_alarm_help'),
-                    style: Theme.of(context).textTheme.bodySmall),
-              ),
 
               SizedBox(height: DSSpacing.md),
               // Nobody should press the real one for the first time in an
@@ -250,6 +234,34 @@ class _ContactRow extends StatelessWidget {
                 ),
                 Text(contact.phone,
                     style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 2),
+                // What will actually happen to them. A phone that rings like
+                // an alarm and an SMS that lands silently are very different
+                // promises, and the member choosing who to list should know
+                // which one they are making.
+                Row(
+                  children: [
+                    Icon(
+                      contact.isMember
+                          ? Icons.notifications_active_rounded
+                          : Icons.sms_outlined,
+                      size: 13,
+                      color: context.cTextSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        // Only a member's phone can be made to ring. For
+                        // everybody else this says SMS, because that is what
+                        // they will get.
+                        contact.isMember
+                            ? trId('rings_like_an_alarm')
+                            : trId('sms_only'),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 // Says "not tested yet" rather than showing a tick nobody
                 // earned. Nobody should discover a wrong number mid-emergency.

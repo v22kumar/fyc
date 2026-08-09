@@ -29,7 +29,7 @@ each follows from who owns it.
 | | Lane | Owner | FYC's only job |
 |---|---|---|---|
 | **0** | **The State** — 112 | TN Police | be a faster dialler than the dialler, and have the member's location already on screen to read out |
-| **1** | **The people who love you** | the member | make sure they are told even if the phone is gone |
+| **1** | **The people who love you** | the member | make sure they are told even if the phone is gone, and that their phone *rings* |
 | **2** | **The people who are near** | FYC | **this is the product** |
 
 Everything below serves that table.
@@ -95,6 +95,15 @@ alerts go unanswered, then:
    network → SMS. No app → the shell still dials 112.
 7. **Four languages, on this screen more than any other.**
 8. **Nothing about a safety feature may depend on a screen staying open.**
+9. **The alarm belongs on the phone that can help, not the phone in trouble.**
+   A siren on the sender's handset announces to whoever they are afraid of
+   that they have called for help, drowns out the 112 call they are trying to
+   make, and frightens somebody who is already frightened. The phone that must
+   be impossible to ignore is a responder's, asleep at two in the morning. So
+   the SOS push carries its own Android channel, `fyc_sos`, whose sound is the
+   siren at `USAGE_ALARM` — it rings through a silenced ringer the way an alarm
+   clock does. On the sender's phone the siren is one tap away and never
+   automatic, for the case where being heard is the point.
 
 ---
 
@@ -135,7 +144,7 @@ Moves off the device so the alert survives a lost phone and a reinstall.
 
 | column | why |
 |---|---|
-| `incident_id`, `user_id`, `wave` | which escalation round they were in |
+| `incident_id`, `user_id`, `wave` | which escalation round they were in. **Wave 0** is your own people: a trusted contact who is also a member, told first and for a different reason — because they are yours, not because they are near. Their `distance_m` is null, because a distance would imply they were chosen for it. |
 | `distance_m` | at dispatch, frozen |
 | `notified_at`, `acknowledged_at`, `arrived_at`, `declined_at` | four separate facts, each written by the person it is about |
 

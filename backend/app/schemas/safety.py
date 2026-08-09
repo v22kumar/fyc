@@ -60,6 +60,16 @@ class SafetyContactOut(BaseModel):
     verified_at: Optional[datetime] = None
     position: int
 
+    #: Whether this number belongs to a member of the club.
+    #:
+    #: Decides what the setup screen is allowed to promise. A contact who uses
+    #: the app gets a push on the alarm channel — their phone rings through a
+    #: silenced ringer. A contact who does not gets an SMS, which lands
+    #: silently. Telling a member their mother's phone will "ring like an
+    #: alarm" when it will not is the same species of lie as the four green
+    #: ticks this feature was rebuilt to remove.
+    is_member: bool = False
+
 
 # ── Being a responder ────────────────────────────────────────────────────────
 
