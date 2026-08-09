@@ -665,13 +665,12 @@ def update_team_status(
     
     if team.status == "APPROVED" and team.contact_phone:
         t = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+        # Positional: {{1}} team name, {{2}} tournament name. Meta's body
+        # parameters are ordered, so this is a sequence rather than a dict.
         whatsapp_queue.enqueue_template(
             phone=team.contact_phone,
             template_name="team_registration_approved",
-            parameters={
-                "team_name": team.name,
-                "tournament_name": t.name_en if t else "Tournament",
-            }
+            parameters=[team.name, t.name_en if t else "Tournament"],
         )
         
     return team

@@ -179,10 +179,13 @@ class NotificationService:
                 notification.delivered_at = datetime.now(timezone.utc)
 
         if pref.whatsapp_enabled and user.phone_number:
+            # Positional: {{1}} title, {{2}} body. Meta's body parameters are
+            # ordered, so this is a sequence — a dict would be sorted by key
+            # and send the body where the title belongs.
             success = self.whatsapp_queue.enqueue_template(
                 phone=user.phone_number,
                 template_name=notification_type.lower(),
-                parameters={"title": title_en, "body": body_en}
+                parameters=[title_en, body_en],
             )
             if success: channels.append("WHATSAPP")
 

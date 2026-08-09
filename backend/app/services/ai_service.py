@@ -10,6 +10,46 @@ from app.models.ai_content import AIContent
 logger = logging.getLogger(__name__)
 
 
+def _run_async(coro):
+    """Run an async coroutine from synchronous code, wherever we are called from.
+
+    This service is synchronous and is called from three places with three
+    different event-loop situations: an APScheduler worker thread (no loop), a
+    sync FastAPI route running in a threadpool (no loop on this thread), and —
+    if anyone ever awaits it — a live async context (a loop already running on
+    this thread).
+
+    ``asyncio.run`` covers the first two and raises in the third. So the third
+    is detected and handed to a private loop on a separate thread, which is the
+    only way to block for a result without deadlocking the caller's loop.
+
+    Returns None on failure rather than raising: a digest is worth degrading,
+    not worth a 500.
+    """
+    import asyncio
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        # No loop on this thread — the ordinary case.
+        try:
+            return asyncio.run(coro)
+        except Exception as e:
+            logger.warning(f"async fetch failed: {e}")
+            return None
+
+    # A loop is already running here; asyncio.run would raise. Give the
+    # coroutine its own loop on its own thread and wait for it there.
+    import concurrent.futures
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    except Exception as e:
+        logger.warning(f"async fetch failed on worker thread: {e}")
+        return None
+
+
 def _parse_bilingual(response_text: str, keep: tuple = ()) -> Dict[str, Any]:
     """Parse Gemini's JSON reply into {summary_en, summary_ta, summary}.
 
@@ -309,24 +349,22 @@ class AIService:
             return cached.content_data
 
         from app.services.news import get_kanyakumari_news, get_top_tamil_news
-        import asyncio
-        
-        try:
-            # The news functions are async (refactored in Phase 1 for performance)
-            # If there's an existing event loop, run_until_complete, else asyncio.run
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # We can't use run_until_complete in a running loop, but in our architecture
-                # this is called from a synchronous background thread (apscheduler) or sync route
-                # where the loop is usually not running. 
-                pass
-            k_news = loop.run_until_complete(get_kanyakumari_news(limit=5))
-            t_news = loop.run_until_complete(get_top_tamil_news(limit=5))
-        except RuntimeError:
-            k_news = asyncio.run(get_kanyakumari_news(limit=5))
-            t_news = asyncio.run(get_top_tamil_news(limit=5))
-            
-        news_items = k_news + t_news
+
+        # Fetch both feeds from this synchronous method.
+        #
+        # What was here checked `loop.is_running()`, did nothing about it (an
+        # empty `pass`, with a comment saying the branch should not happen),
+        # and then called `run_until_complete` anyway — which raises
+        # "This event loop is already running" in exactly the case the check
+        # had just detected. It also used `asyncio.get_event_loop()`, which is
+        # deprecated outside a running loop and, on a worker thread that has
+        # never had one, raises rather than creating one.
+        #
+        # `_run_async` below handles both worlds explicitly instead of guessing.
+        k_news = _run_async(get_kanyakumari_news(limit=5))
+        t_news = _run_async(get_top_tamil_news(limit=5))
+
+        news_items = (k_news or []) + (t_news or [])
         
         context = "Latest News Headlines:\\n"
         for i, item in enumerate(news_items[:10]):

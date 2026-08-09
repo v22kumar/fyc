@@ -96,7 +96,11 @@ class Settings(BaseSettings):
     OTP_BYPASS_CODE: str | None = None
 
     # Firebase Cloud Messaging — set in production .env to enable push notifications
-    FCM_SERVER_KEY: str = ""  # legacy HTTP API (decommissioned) — do not use
+    # FCM_SERVER_KEY is gone. It configured the legacy FCM HTTP API, which
+    # Google decommissioned in June 2024, and the only module that read it has
+    # been deleted. Push goes through firebase-admin (FCM v1) — see
+    # FIREBASE_CREDENTIALS_JSON. `extra="ignore"` below means a deployment that
+    # still has the old variable set will start cleanly rather than fail.
 
     # Firebase Admin (FCM HTTP v1) — the modern push path. Provide EITHER a path
     # to a service-account JSON file, OR the JSON itself (handy on Fly.io where
