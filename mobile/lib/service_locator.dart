@@ -153,6 +153,8 @@ import 'features/feed/domain/repositories/feed_repository.dart';
 import 'features/home/data/repositories/home_repository_impl.dart';
 import 'features/blood_donation/data/blood_request_repository_impl.dart';
 import 'features/blood_donation/domain/repositories/blood_request_repository.dart';
+import 'features/ai/data/datasources/ai_datasource.dart';
+import 'features/ai/data/repositories/ai_repository.dart';
 import 'features/issues/data/civic_repository_impl.dart';
 import 'features/issues/domain/repositories/civic_repository.dart';
 import 'features/home/domain/repositories/home_repository.dart';
@@ -480,6 +482,11 @@ Future<void> initServiceLocator() async {
   // Home dashboard
   sl.registerLazySingleton<HomeRepository>(
     () => HomeRepositoryImpl(sl<ApiClient>()),
+  );
+
+  // AI cards
+  sl.registerLazySingleton<AiRepository>(
+    () => AiRepository(AiDatasource(sl<ApiClient>())),
   );
 
   // Civic ladder

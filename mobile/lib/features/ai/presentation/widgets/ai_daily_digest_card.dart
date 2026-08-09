@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/tr.dart';
-import '../../providers/ai_providers.dart';
+import '../../../../service_locator.dart';
+import '../../data/repositories/ai_repository.dart';
 import 'ai_sparkle.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
 import '../../../../core/design_system/tokens.dart';
@@ -18,8 +18,16 @@ String _localizedSummary(Map<String, dynamic> data) {
 
 /// Home "AI Daily Briefing" — a premium gradient hero summarising the day's
 /// community activity. Shows an on-brand skeleton while the digest is preparing.
-class AiDailyDigestCard extends ConsumerWidget {
+class AiDailyDigestCard extends StatefulWidget {
   const AiDailyDigestCard({super.key});
+
+  @override
+  State<AiDailyDigestCard> createState() => _AiDailyDigestCardState();
+}
+
+class _AiDailyDigestCardState extends State<AiDailyDigestCard> {
+  late final Future<Map<String, dynamic>> _future =
+      sl<AiRepository>().getDailyDigest();
 
   // Derived from the club's own colour rather than a stock indigo-violet.
   // The card should still read as the richest thing on Home — that was right —
@@ -30,16 +38,19 @@ class AiDailyDigestCard extends ConsumerWidget {
   static Color get _g3 => Color.lerp(AppColors.primary, DSColors.mint500, 0.65)!;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final aiDigestState = ref.watch(aiDailyDigestProvider);
-    return aiDigestState.when(
-      data: (data) {
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return _shell(child: _skeleton());
+        }
+        final data = snap.data;
+        if (data == null) return const SizedBox.shrink();
         final summary = _localizedSummary(data);
         if (summary.isEmpty) return const SizedBox.shrink();
         return _shell(child: _content(summary));
       },
-      loading: () => _shell(child: _skeleton()),
-      error: (error, stack) => const SizedBox.shrink(),
     );
   }
 

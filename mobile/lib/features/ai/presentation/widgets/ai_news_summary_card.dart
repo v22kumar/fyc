@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../providers/ai_providers.dart';
+import '../../../../service_locator.dart';
+import '../../data/repositories/ai_repository.dart';
 import 'ai_sparkle.dart';
 
 /// Pick the news summary for the app's current language (falls back to English,
@@ -16,24 +16,35 @@ String _localizedSummary(Map<String, dynamic> data) {
 
 /// Home "AI News Summary" — a clean, theme-aware surface card with a violet AI
 /// accent and gradient trending-topic chips.
-class AiNewsSummaryCard extends ConsumerWidget {
+class AiNewsSummaryCard extends StatefulWidget {
   const AiNewsSummaryCard({super.key});
+
+  @override
+  State<AiNewsSummaryCard> createState() => _AiNewsSummaryCardState();
+}
+
+class _AiNewsSummaryCardState extends State<AiNewsSummaryCard> {
+  late final Future<Map<String, dynamic>> _future =
+      sl<AiRepository>().getNewsSummary();
 
   static const _accent1 = Color(0xFF7C3AED); // violet
   static const _accent2 = Color(0xFFDB2777); // pink
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final aiNewsState = ref.watch(aiNewsSummaryProvider);
-    return aiNewsState.when(
-      data: (data) {
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return _shell(context, child: _skeleton(context));
+        }
+        final data = snap.data;
+        if (data == null) return const SizedBox.shrink();
         final summary = _localizedSummary(data);
         if (summary.isEmpty) return const SizedBox.shrink();
         final topics = List<String>.from(data['trending_topics'] ?? const []);
         return _shell(context, child: _content(context, summary, topics));
       },
-      loading: () => _shell(context, child: _skeleton(context)),
-      error: (error, stack) => const SizedBox.shrink(),
     );
   }
 

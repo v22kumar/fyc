@@ -24,7 +24,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/l10n/app_localizations.dart';
 import 'core/router/app_router.dart';
@@ -109,8 +108,7 @@ Future<void> main() async {
 
   Directory(_out).createSync(recursive: true);
 
-  runApp(ProviderScope(
-    child: RepaintBoundary(
+  runApp(RepaintBoundary(
     key: _rootKey,
     // A phone-shaped viewport: reviewing a 1280px-wide desktop window would
     // hide exactly the crowding this is meant to find.
@@ -137,7 +135,7 @@ Future<void> main() async {
         ),
       ),
     ),
-  )));
+  ));
 
   unawaited(_walk());
 }
