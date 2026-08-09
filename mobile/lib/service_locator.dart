@@ -150,6 +150,8 @@ import 'features/chess/data/repositories/chess_repository_impl.dart';
 import 'features/chess/domain/repositories/chess_repository.dart';
 import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/domain/repositories/feed_repository.dart';
+import 'features/home/data/repositories/home_repository_impl.dart';
+import 'features/home/domain/repositories/home_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -465,5 +467,10 @@ Future<void> initServiceLocator() async {
   // Community feed
   sl.registerLazySingleton<FeedRepository>(
     () => FeedRepositoryImpl(sl<ApiClient>()),
+  );
+
+  // Home dashboard
+  sl.registerLazySingleton<HomeRepository>(
+    () => HomeRepositoryImpl(sl<ApiClient>()),
   );
 }

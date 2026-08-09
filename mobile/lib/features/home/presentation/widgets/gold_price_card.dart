@@ -1,11 +1,9 @@
 import 'package:dio/dio.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shimmer_box.dart';
-import '../../../../service_locator.dart';
+import '../../domain/repositories/home_repository.dart';
 
 /// Today's gold price card (24K and 22K per gram in INR) shown on the home
 /// screen. Data is fetched from the backend proxy which caches results for
@@ -14,7 +12,8 @@ import '../../../../service_locator.dart';
 /// Non-critical: loading errors render a graceful "unavailable" message
 /// rather than crashing the home screen.
 class GoldPriceCard extends StatefulWidget {
-  const GoldPriceCard({super.key});
+  final HomeRepository repo;
+  const GoldPriceCard({super.key, required this.repo});
 
   @override
   State<GoldPriceCard> createState() => _GoldPriceCardState();
@@ -31,8 +30,8 @@ class _GoldPriceCardState extends State<GoldPriceCard> {
 
   Future<_GoldData?> _fetchGoldPrice() async {
     try {
-      final response = await sl<ApiClient>().dio.get(ApiConstants.goldPrice);
-      final json = response.data as Map<String, dynamic>;
+      final data = await widget.repo.goldPrice();
+      final json = data as Map<String, dynamic>;
       return _GoldData.fromJson(json);
     } on DioException catch (e) {
       debugPrint('GoldPriceCard: fetch failed — ${e.message}');

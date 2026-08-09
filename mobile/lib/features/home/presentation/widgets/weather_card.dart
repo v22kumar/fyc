@@ -2,11 +2,9 @@ import 'package:dio/dio.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shimmer_box.dart';
-import '../../../../service_locator.dart';
+import '../../domain/repositories/home_repository.dart';
 
 // Default to Nagercoil when GPS is unavailable or denied.
 const double _defaultLat = 8.1833;
@@ -14,7 +12,8 @@ const double _defaultLon = 77.4119;
 const String _defaultCity = 'Nagercoil';
 
 class WeatherCard extends StatefulWidget {
-  const WeatherCard({super.key});
+  final HomeRepository repo;
+  const WeatherCard({super.key, required this.repo});
 
   @override
   State<WeatherCard> createState() => _WeatherCardState();
@@ -64,11 +63,7 @@ class _WeatherCardState extends State<WeatherCard> {
   Future<_WeatherData?> _fetchWeather(
       double lat, double lon, String cityHint) async {
     try {
-      final response = await sl<ApiClient>().dio.get(
-        ApiConstants.weatherCurrent,
-        queryParameters: {'lat': lat, 'lon': lon},
-      );
-      final json = response.data as Map<String, dynamic>;
+      final json = await widget.repo.weather(lat: lat, lon: lon);
       final data = _WeatherData.fromJson(json);
       // Open-Meteo doesn't reverse-geocode; use GPS city hint if backend returns empty.
       return data.copyWithCity(data.city.isEmpty ? cityHint : data.city);

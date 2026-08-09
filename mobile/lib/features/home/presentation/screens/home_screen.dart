@@ -18,7 +18,6 @@ import '../../../../core/design_system/components/last_updated_pill.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/update_sheet.dart';
@@ -35,12 +34,14 @@ import '../widgets/gold_price_card.dart';
 import '../../../ai/presentation/widgets/ai_daily_digest_card.dart';
 import '../../../profile/presentation/widgets/quick_question_card.dart';
 import '../../../ai/presentation/widgets/ai_news_summary_card.dart';
+import '../../domain/repositories/home_repository.dart';
 
 class HomeScreen extends StatefulWidget {
+  final HomeRepository repo;
   /// Home is always hosted inside [AppShellV2], which provides the single
   /// bottom navigation + center Create FAB. It never draws its own nav bar
   /// (audit #05: one navigation shell, not two divergent ones).
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.repo});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -114,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              _Header(l: l, aurora: _aurora),
+              _Header(l: l, aurora: _aurora, repo: widget.repo),
               SliverToBoxAdapter(
                 child: ValueListenableBuilder<double>(
                   valueListenable: _scroll,
@@ -129,12 +130,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         builder: (context, state) {
                           if (state is AuthAuthenticated) {
                             if (state.user.isAdmin) {
-                              return _ManagerDashboard(l: l, refreshKey: _refreshKey);
+                              return _ManagerDashboard(
+                              l: l,
+                              refreshKey: _refreshKey,
+                              repo: widget.repo);
                             } else if (state.user.isVolunteer) {
-                              return _VolunteerDashboard(l: l, refreshKey: _refreshKey);
+                              return _VolunteerDashboard(
+                              l: l,
+                              refreshKey: _refreshKey,
+                              repo: widget.repo);
                             }
                           }
-                          return _CitizenDashboard(l: l, refreshKey: _refreshKey, lastRefreshed: _lastRefreshed);
+                          return _CitizenDashboard(
+                              l: l,
+                              refreshKey: _refreshKey,
+                              lastRefreshed: _lastRefreshed,
+                              repo: widget.repo);
                         },
                       ),
                       const SizedBox(height: 130),
@@ -216,9 +227,10 @@ class _HomeBackdrop extends StatelessWidget {
 // ── Header ───────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
+  final HomeRepository repo;
   final AppLocalizations l;
   final AnimationController aurora;
-  const _Header({required this.l, required this.aurora});
+  const _Header({required this.l, required this.aurora, required this.repo});
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +303,7 @@ class _Header extends StatelessWidget {
               onTap: () => _showLanguagePicker(context),
             ),
             const SizedBox(width: 8),
-            const _NotificationBell(),
+            _NotificationBell(repo: repo),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => context.push('/me'),
@@ -461,7 +473,8 @@ class _CircleBtn extends StatelessWidget {
 
 /// Notification bell with an unread-count badge. Taps through to /notifications.
 class _NotificationBell extends StatefulWidget {
-  const _NotificationBell();
+  final HomeRepository repo;
+  const _NotificationBell({required this.repo});
 
   @override
   State<_NotificationBell> createState() => _NotificationBellState();
@@ -478,8 +491,7 @@ class _NotificationBellState extends State<_NotificationBell> {
 
   Future<void> _loadUnread() async {
     try {
-      final res = await sl<ApiClient>().dio.get('/api/v1/notifications');
-      final list = (res.data as List?) ?? const [];
+      final list = await widget.repo.notifications();
       final count = list
           .where((e) => e is Map && e['is_read'] != true)
           .length;
@@ -1624,7 +1636,8 @@ class _BentoTile extends StatelessWidget {
 // ── Next upcoming event (real data) ──────────────────────────────────────────
 
 class _NextEventCard extends StatefulWidget {
-  const _NextEventCard();
+  final HomeRepository repo;
+  const _NextEventCard({required this.repo});
 
   @override
   State<_NextEventCard> createState() => _NextEventCardState();
@@ -1644,8 +1657,7 @@ class _NextEventCardState extends State<_NextEventCard> {
 
   Future<void> _load() async {
     try {
-      final res = await sl<ApiClient>().dio.get('/api/v1/events');
-      final list = (res.data as List?) ?? const [];
+      final list = await widget.repo.events();
       final now = DateTime.now();
       final upcoming = list
           .whereType<Map<String, dynamic>>()
@@ -1801,7 +1813,8 @@ class _NextEventCardState extends State<_NextEventCard> {
 // ── Live Updates (recent community activity feed) ────────────────────────────
 
 class _LiveUpdates extends StatefulWidget {
-  const _LiveUpdates();
+  final HomeRepository repo;
+  const _LiveUpdates({required this.repo});
 
   @override
   State<_LiveUpdates> createState() => _LiveUpdatesState();
@@ -1821,9 +1834,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
 
   Future<void> _load() async {
     try {
-      final res =
-          await sl<ApiClient>().dio.get('/api/v1/community/feed', queryParameters: {'limit': 5});
-      final list = (res.data as List?) ?? const [];
+      final list = await widget.repo.communityFeed();
       if (!mounted) return;
       setState(() {
         _items = list.whereType<Map<String, dynamic>>().take(3).toList();
@@ -2003,8 +2014,9 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
 // ── Today's Impact Hub (live community stats + quick actions) ────────────────
 
 class _TodayImpactHub extends StatefulWidget {
+  final HomeRepository repo;
   final AppLocalizations l;
-  const _TodayImpactHub({required this.l});
+  const _TodayImpactHub({required this.l, required this.repo});
 
   @override
   State<_TodayImpactHub> createState() => _TodayImpactHubState();
@@ -2024,8 +2036,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
 
   Future<void> _load() async {
     try {
-      final res = await sl<ApiClient>().dio.get('/api/v1/community/stats');
-      final d = res.data as Map<String, dynamic>;
+      final d = await widget.repo.communityStats();
       if (!mounted) return;
       setState(() {
         _volunteers = (d['total_volunteers'] as num?)?.toInt() ?? 0;
@@ -2250,7 +2261,8 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
 /// auto-refreshing so scores "stream" while the screen is open. Falls back to
 /// recent results when nothing is live; hides entirely when there is no sport.
 class _LiveScoresSection extends StatefulWidget {
-  const _LiveScoresSection();
+  final HomeRepository repo;
+  const _LiveScoresSection({required this.repo});
 
   @override
   State<_LiveScoresSection> createState() => _LiveScoresSectionState();
@@ -2281,8 +2293,7 @@ class _LiveScoresSectionState extends State<_LiveScoresSection> {
     if (_fetching) return;
     _fetching = true;
     try {
-      final res = await sl<ApiClient>().dio.get('/api/v1/sports/live');
-      final data = res.data as Map<String, dynamic>;
+      final data = await widget.repo.liveScores();
       if (!mounted) return;
       List<Map<String, dynamic>> pick(String k) =>
           ((data[k] as List?) ?? const []).whereType<Map<String, dynamic>>().toList();
@@ -2476,10 +2487,15 @@ class _MatchCard extends StatelessWidget {
 }
 
 class _CitizenDashboard extends StatelessWidget {
+  final HomeRepository repo;
   final AppLocalizations l;
   final int refreshKey;
   final DateTime? lastRefreshed;
-  const _CitizenDashboard({required this.l, required this.refreshKey, this.lastRefreshed});
+  const _CitizenDashboard(
+      {required this.l,
+      required this.refreshKey,
+      this.lastRefreshed,
+      required this.repo});
 
   @override
   Widget build(BuildContext context) {
@@ -2497,11 +2513,11 @@ class _CitizenDashboard extends StatelessWidget {
       AiDailyDigestCard(key: ValueKey('ai-digest-$refreshKey')),
       AiNewsSummaryCard(key: ValueKey('ai-news-$refreshKey')),
       const _AnnouncementsBar(),
-      const _LiveScoresSection(),
+      _LiveScoresSection(repo: repo),
       const _QuickActions(),
       const _ServiceBento(),
-      const _LiveUpdates(),
-      const _NextEventCard(),
+      _LiveUpdates(repo: repo),
+      _NextEventCard(repo: repo),
       const _BeAHeroCard(),
       _SectionHeader(
         title: trId('today'),
@@ -2509,9 +2525,9 @@ class _CitizenDashboard extends StatelessWidget {
       ),
       DailyNewsCard(key: ValueKey('news-$refreshKey')),
       DailyThirukkuralCard(key: ValueKey('kural-$refreshKey')),
-      WeatherCard(key: ValueKey('weather-$refreshKey')),
-      GoldPriceCard(key: ValueKey('gold-$refreshKey')),
-      _TodayImpactHub(l: l),
+      WeatherCard(key: ValueKey('weather-$refreshKey'), repo: repo),
+      GoldPriceCard(key: ValueKey('gold-$refreshKey'), repo: repo),
+      _TodayImpactHub(l: l, repo: repo),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2537,9 +2553,11 @@ class _CitizenDashboard extends StatelessWidget {
 }
 
 class _VolunteerDashboard extends StatelessWidget {
+  final HomeRepository repo;
   final AppLocalizations l;
   final int refreshKey;
-  const _VolunteerDashboard({required this.l, required this.refreshKey});
+  const _VolunteerDashboard(
+      {required this.l, required this.refreshKey, required this.repo});
 
   @override
   Widget build(BuildContext context) {
@@ -2601,18 +2619,20 @@ class _VolunteerDashboard extends StatelessWidget {
         const SizedBox(height: 14),
         DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
-        WeatherCard(key: ValueKey('weather-$refreshKey')),
+        WeatherCard(key: ValueKey('weather-$refreshKey'), repo: repo),
         const SizedBox(height: 14),
-        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
+        GoldPriceCard(key: ValueKey('gold-$refreshKey'), repo: repo),
       ],
     );
   }
 }
 
 class _ManagerDashboard extends StatelessWidget {
+  final HomeRepository repo;
   final AppLocalizations l;
   final int refreshKey;
-  const _ManagerDashboard({required this.l, required this.refreshKey});
+  const _ManagerDashboard(
+      {required this.l, required this.refreshKey, required this.repo});
 
   @override
   Widget build(BuildContext context) {
@@ -2696,9 +2716,9 @@ class _ManagerDashboard extends StatelessWidget {
         const SizedBox(height: 14),
         DailyNewsCard(key: ValueKey('news-$refreshKey')),
         const SizedBox(height: 14),
-        WeatherCard(key: ValueKey('weather-$refreshKey')),
+        WeatherCard(key: ValueKey('weather-$refreshKey'), repo: repo),
         const SizedBox(height: 14),
-        GoldPriceCard(key: ValueKey('gold-$refreshKey')),
+        GoldPriceCard(key: ValueKey('gold-$refreshKey'), repo: repo),
       ],
     );
   }

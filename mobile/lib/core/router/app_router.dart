@@ -9,6 +9,7 @@ import '../../features/auth/presentation/screens/otp_login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/auth/presentation/widgets/sign_in_sheet.dart';
+import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -685,7 +686,7 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
         }
       },
       tabs: [
-        const HomeScreen(),
+        HomeScreen(repo: sl<HomeRepository>()),
         FeedScreen(repo: sl<FeedRepository>()),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),
