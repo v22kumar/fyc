@@ -253,7 +253,13 @@ class _ContactRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Says "not tested yet" rather than showing a tick nobody
                 // earned. Nobody should discover a wrong number mid-emergency.
-                Row(
+                //
+                // Wrapped rather than laid out in a Row: the Tamil for "not
+                // tested yet" beside the Tamil for "send a test" overflows a
+                // 390px phone, and it did.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
                   children: [
                     Icon(
                       contact.isTested
@@ -264,7 +270,6 @@ class _ContactRow extends StatelessWidget {
                           ? AppColors.success
                           : context.cTextSecondary,
                     ),
-                    const SizedBox(width: 4),
                     Text(
                       contact.isTested ? trId('tested') : trId('not_tested_yet'),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -273,11 +278,11 @@ class _ContactRow extends StatelessWidget {
                                 : context.cTextSecondary,
                           ),
                     ),
-                    const Spacer(),
                     TextButton(
                       onPressed: busy ? null : onTest,
                       style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8)),
                       child: Text(trId('send_test_message')),
                     ),
                   ],
@@ -387,24 +392,31 @@ class _DistancePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Label above rather than beside: the Tamil for "how far" plus three chips
+    // does not fit a 390px phone on one line, and pushing the last chip off
+    // the edge hides an option rather than crowding it.
     return Padding(
       padding: EdgeInsets.symmetric(vertical: DSSpacing.xs),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(trId('how_far'),
               style: Theme.of(context).textTheme.bodyMedium),
-          const Spacer(),
-          for (final m in _options)
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: ChoiceChip(
-                selected: metres == m,
-                onSelected: (_) => onChanged(m),
-                label: Text(m < 1000
-                    ? '$m m'
-                    : '${(m / 1000).toStringAsFixed(0)} km'),
-              ),
-            ),
+          SizedBox(height: DSSpacing.xs),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final m in _options)
+                ChoiceChip(
+                  selected: metres == m,
+                  onSelected: (_) => onChanged(m),
+                  label: Text(m < 1000
+                      ? '$m m'
+                      : '${(m / 1000).toStringAsFixed(0)} km'),
+                ),
+            ],
+          ),
         ],
       ),
     );
