@@ -546,7 +546,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             children: [
               _PlayModeCard(
                 title: trId('local_game'),
-                subtitle: 'Play on one device',
+                subtitle: trId('play_on_one_device'),
                 emoji: '♟',
                 gradientColors: const [Color(0xFF2D1B69), Color(0xFF1A0F3E)],
                 onTap: () => _startLocalGame(context),
@@ -554,7 +554,7 @@ class _ChessHomePageState extends State<ChessHomePage>
               const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('vs_computer'),
-                subtitle: 'Practice & Improve',
+                subtitle: trId('practice_and_improve'),
                 emoji: '♞',
                 gradientColors: const [Color(0xFF1E1B4B), Color(0xFF0F0E2A)],
                 onTap: () => _startAiGame(context),
@@ -562,7 +562,7 @@ class _ChessHomePageState extends State<ChessHomePage>
               const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('online_match'),
-                subtitle: 'Challenge members',
+                subtitle: trId('challenge_members'),
                 emoji: '♛',
                 gradientColors: const [Color(0xFF0F2060), Color(0xFF071040)],
                 badge: '120+ Young Players',
@@ -572,10 +572,10 @@ class _ChessHomePageState extends State<ChessHomePage>
               const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('daily_challenge'),
-                subtitle: 'Win rewards',
+                subtitle: trId('win_rewards'),
                 emoji: '⚡',
                 gradientColors: const [Color(0xFF1A2F1A), Color(0xFF0A1A0A)],
-                badge: 'Win rewards',
+                badge: trId('win_rewards'),
                 badgeColor: _kGold,
                 onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(trId('daily_challenges_coming_soon'))),
@@ -797,7 +797,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           child: _BottomGridCard(
             icon: '🏆',
             title: trId('hall_of_fame'),
-            subtitle: 'Top Players',
+            subtitle: trId('top_players'),
             onTap: () => context.push('/chess/legacy'),
           ),
         ),
@@ -806,7 +806,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           child: _BottomGridCard(
             icon: '📋',
             title: trId('history'),
-            subtitle: 'Your Games',
+            subtitle: trId('your_games'),
             onTap: () => context.push('/chess/history'),
           ),
         ),
@@ -815,7 +815,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           child: _BottomGridCard(
             icon: '📖',
             title: trId('legends'),
-            subtitle: 'Chess Stories',
+            subtitle: trId('chess_stories'),
             onTap: () => context.push('/chess/legends'),
           ),
         ),

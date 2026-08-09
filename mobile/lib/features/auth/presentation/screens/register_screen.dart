@@ -456,7 +456,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                     DropdownButtonFormField<String>(
                                       initialValue: _bloodGroup,
                                       decoration: InputDecoration(
-                                        label: const Text('Blood Group (Optional)'),
+                                        label: Text(trId('blood_group_optional')),
                                         prefixIcon: Icon(Icons.bloodtype_outlined, color: AppColors.danger),
                                       ),
                                       items: _bloodGroups.map((bg) {
