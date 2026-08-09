@@ -15,7 +15,6 @@ import '../widgets/add_fixture_sheet.dart' as import_AddFixtureSheet;
 import 'cricket_scoring_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
@@ -24,10 +23,13 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import 'create_tournament_screen.dart';
 import '../widgets/edit_team_sheet.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class SportsTournamentDetailScreen extends StatefulWidget {
   final String tournamentId;
-  const SportsTournamentDetailScreen({super.key, required this.tournamentId});
+  const SportsTournamentDetailScreen({super.key, required this.repo, required this.tournamentId});
+
+  final SportsRepository repo;
 
   @override
   State<SportsTournamentDetailScreen> createState() =>
@@ -95,10 +97,7 @@ class _SportsTournamentDetailScreenState
 
   Future<void> _generateFixtures({bool force = false}) async {
     try {
-      await sl<ApiClient>().dio.post(
-        ApiConstants.sportsGenerateFixtures(widget.tournamentId),
-        queryParameters: force ? {'force': true} : null,
-      );
+      await widget.repo.generateFixtures(widget.tournamentId, force: force);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -158,7 +157,7 @@ class _SportsTournamentDetailScreenState
     );
     if (confirm != true) return;
     try {
-      await sl<ApiClient>().dio.post(ApiConstants.sportsCloseRegistration(widget.tournamentId));
+      await widget.repo.closeRegistration(widget.tournamentId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(trId('registration_closed')),
@@ -229,9 +228,7 @@ class _SportsTournamentDetailScreenState
 
     if (confirmed == true) {
       try {
-        await sl<ApiClient>().dio.delete(
-          '${ApiConstants.sportsTournaments}/${widget.tournamentId}/fixtures/${f.id}',
-        );
+        await widget.repo.deleteFixture(widget.tournamentId, f.id);
         _reload();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -341,7 +338,9 @@ class _SportsTournamentDetailScreenState
                       final res = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CreateTournamentScreen(tournament: state.tournament),
+                          builder: (_) => CreateTournamentScreen(
+                              tournament: state.tournament,
+                              repo: widget.repo),
                         ),
                       );
                       if (res == true) {

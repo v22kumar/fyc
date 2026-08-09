@@ -49,6 +49,28 @@ abstract class SportsDataSource {
   Future<WeeklyGameModel> createWeeklyGame(Map<String, dynamic> data);
   Future<WeeklyGameModel> joinWeeklyGame(String gameId);
   Future<WeeklyGameModel> startWeeklyGame(String gameId);
+
+  // ── Organizer one-shot mutations ──────────────────────────────────────────
+  // These speak raw maps deliberately: each is a pass-through form
+  // submission, and the fresh state is re-fetched via the entity-speaking
+  // reads above. Their existence here is what removes raw HTTP from the
+  // sheets and screens that used to own it.
+  Future<String?> createTournament(Map<String, dynamic> data);
+  Future<void> updateTournament(String tournamentId, Map<String, dynamic> data);
+  Future<void> generateFixtures(String tournamentId, {bool force = false});
+  Future<void> closeRegistration(String tournamentId);
+  Future<void> createFixture(String tournamentId, Map<String, dynamic> data);
+  Future<void> updateFixture(
+      String tournamentId, String fixtureId, Map<String, dynamic> data);
+  Future<void> deleteFixture(String tournamentId, String fixtureId);
+  Future<void> registerTeam(String tournamentId, Map<String, dynamic> data);
+  Future<void> updateTeam(
+      String tournamentId, String teamId, Map<String, dynamic> data);
+  Future<void> submitLiveScore(String fixtureId, Map<String, dynamic> data);
+  Future<void> updateWeeklyGame(String gameId, Map<String, dynamic> data);
+  Future<void> deleteWeeklyGame(String gameId);
+  Future<List<dynamic>> fetchLiveEntries(String entryStatus);
+  Future<void> decideLiveEntry(String entryId, String status);
 }
 
 class SportsDataSourceImpl implements SportsDataSource {
@@ -355,4 +377,76 @@ class SportsDataSourceImpl implements SportsDataSource {
       throw mapDioException(e);
     }
   }
+
+  // ── Organizer one-shot mutations ──────────────────────────────────────────
+
+  @override
+  Future<String?> createTournament(Map<String, dynamic> data) async {
+    final res = await _client.dio.post(ApiConstants.sportsTournaments, data: data);
+    return (res.data as Map?)?['id'] as String?;
+  }
+
+  @override
+  Future<void> updateTournament(String tournamentId, Map<String, dynamic> data) =>
+      _client.dio.put('${ApiConstants.sportsTournaments}/$tournamentId', data: data);
+
+  @override
+  Future<void> generateFixtures(String tournamentId, {bool force = false}) =>
+      _client.dio.post(ApiConstants.sportsGenerateFixtures(tournamentId),
+          queryParameters: force ? {'force': true} : null);
+
+  @override
+  Future<void> closeRegistration(String tournamentId) =>
+      _client.dio.post(ApiConstants.sportsCloseRegistration(tournamentId));
+
+  @override
+  Future<void> createFixture(String tournamentId, Map<String, dynamic> data) =>
+      _client.dio.post(ApiConstants.sportsTournamentFixtures(tournamentId), data: data);
+
+  @override
+  Future<void> updateFixture(
+          String tournamentId, String fixtureId, Map<String, dynamic> data) =>
+      _client.dio.patch(
+          '${ApiConstants.sportsTournaments}/$tournamentId/fixtures/$fixtureId',
+          data: data);
+
+  @override
+  Future<void> deleteFixture(String tournamentId, String fixtureId) =>
+      _client.dio.delete(
+          '${ApiConstants.sportsTournaments}/$tournamentId/fixtures/$fixtureId');
+
+  @override
+  Future<void> registerTeam(String tournamentId, Map<String, dynamic> data) =>
+      _client.dio.post(ApiConstants.sportsTournamentTeams(tournamentId), data: data);
+
+  @override
+  Future<void> updateTeam(
+          String tournamentId, String teamId, Map<String, dynamic> data) =>
+      _client.dio.patch(
+          '${ApiConstants.sportsTournaments}/$tournamentId/teams/$teamId',
+          data: data);
+
+  @override
+  Future<void> submitLiveScore(String fixtureId, Map<String, dynamic> data) =>
+      _client.dio.post(ApiConstants.sportsFixtureLiveEntry(fixtureId), data: data);
+
+  @override
+  Future<void> updateWeeklyGame(String gameId, Map<String, dynamic> data) =>
+      _client.dio.patch('${ApiConstants.weeklyGames}/$gameId', data: data);
+
+  @override
+  Future<void> deleteWeeklyGame(String gameId) =>
+      _client.dio.delete('${ApiConstants.weeklyGames}/$gameId');
+
+  @override
+  Future<List<dynamic>> fetchLiveEntries(String entryStatus) async {
+    final res = await _client.dio.get(ApiConstants.sportsLiveEntries,
+        queryParameters: {'entry_status': entryStatus});
+    return (res.data as List?) ?? const [];
+  }
+
+  @override
+  Future<void> decideLiveEntry(String entryId, String status) =>
+      _client.dio.patch('${ApiConstants.sportsLiveEntries}/$entryId',
+          data: {'status': status});
 }

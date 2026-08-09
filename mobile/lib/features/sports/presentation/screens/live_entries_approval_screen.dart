@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../service_locator.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 /// Admin/executive queue to approve or reject club-member live-score entries.
 class LiveEntriesApprovalScreen extends StatefulWidget {
-  const LiveEntriesApprovalScreen({super.key});
+  const LiveEntriesApprovalScreen({super.key, required this.repo});
+
+  final SportsRepository repo;
 
   @override
   State<LiveEntriesApprovalScreen> createState() => _LiveEntriesApprovalScreenState();
@@ -29,11 +29,8 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await sl<ApiClient>().dio.get(
-        ApiConstants.sportsLiveEntries,
-        queryParameters: {'entry_status': _filter},
-      );
-      if (mounted) setState(() { _entries = res.data as List<dynamic>; _loading = false; });
+      final entries = await widget.repo.fetchLiveEntries(_filter);
+      if (mounted) setState(() { _entries = entries; _loading = false; });
     } catch (_) {
       if (mounted) setState(() { _entries = []; _loading = false; });
     }
@@ -42,10 +39,7 @@ class _LiveEntriesApprovalScreenState extends State<LiveEntriesApprovalScreen> {
   Future<void> _review(String id, String status) async {
     setState(() => _busy.add(id));
     try {
-      await sl<ApiClient>().dio.patch(
-        '${ApiConstants.sportsLiveEntries}/$id',
-        data: {'status': status},
-      );
+      await widget.repo.decideLiveEntry(id, status);
       if (!mounted) return;
       setState(() => _entries.removeWhere((e) => e['id'] == id));
       ScaffoldMessenger.of(context).showSnackBar(

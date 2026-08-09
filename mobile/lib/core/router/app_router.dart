@@ -29,6 +29,7 @@ import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
 
 // Sports
+import '../../features/sports/domain/repositories/sports_repository.dart';
 import '../../features/sports/presentation/bloc/sports_bloc.dart';
 import '../../features/sports/presentation/screens/sports_hub_screen.dart';
 import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
@@ -351,17 +352,20 @@ final appRouter = GoRouter(
               create: (_) => sl<SportsBloc>(),
               child: SportsTournamentDetailScreen(
                 tournamentId: extra?['tournamentId'] as String? ?? '',
+                repo: sl<SportsRepository>(),
               ),
             );
           },
         ),
         GoRoute(
           path: 'create',
-          builder: (context, state) => const CreateTournamentScreen(),
+          builder: (context, state) =>
+              CreateTournamentScreen(repo: sl<SportsRepository>()),
         ),
         GoRoute(
           path: 'approvals',
-          builder: (context, state) => const LiveEntriesApprovalScreen(),
+          builder: (context, state) =>
+              LiveEntriesApprovalScreen(repo: sl<SportsRepository>()),
         ),
       ],
     ),

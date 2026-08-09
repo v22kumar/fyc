@@ -268,4 +268,64 @@ class SportsRepositoryImpl implements SportsRepository {
       return const Left(ServerFailure());
     }
   }
+
+  // ── Organizer one-shot mutations: straight delegation ─────────────────────
+
+  @override
+  Future<String?> createTournament(Map<String, dynamic> data) =>
+      _remote.createTournament(data);
+
+  @override
+  Future<void> updateTournament(String tournamentId, Map<String, dynamic> data) =>
+      _remote.updateTournament(tournamentId, data);
+
+  @override
+  Future<void> generateFixtures(String tournamentId, {bool force = false}) =>
+      _remote.generateFixtures(tournamentId, force: force);
+
+  @override
+  Future<void> closeRegistration(String tournamentId) =>
+      _remote.closeRegistration(tournamentId);
+
+  @override
+  Future<void> createFixture(String tournamentId, Map<String, dynamic> data) =>
+      _remote.createFixture(tournamentId, data);
+
+  @override
+  Future<void> updateFixture(
+          String tournamentId, String fixtureId, Map<String, dynamic> data) =>
+      _remote.updateFixture(tournamentId, fixtureId, data);
+
+  @override
+  Future<void> deleteFixture(String tournamentId, String fixtureId) =>
+      _remote.deleteFixture(tournamentId, fixtureId);
+
+  @override
+  Future<void> registerTeam(String tournamentId, Map<String, dynamic> data) =>
+      _remote.registerTeam(tournamentId, data);
+
+  @override
+  Future<void> updateTeam(
+          String tournamentId, String teamId, Map<String, dynamic> data) =>
+      _remote.updateTeam(tournamentId, teamId, data);
+
+  @override
+  Future<void> submitLiveScore(String fixtureId, Map<String, dynamic> data) =>
+      _remote.submitLiveScore(fixtureId, data);
+
+  @override
+  Future<void> updateWeeklyGame(String gameId, Map<String, dynamic> data) =>
+      _remote.updateWeeklyGame(gameId, data);
+
+  @override
+  Future<void> deleteWeeklyGame(String gameId) =>
+      _remote.deleteWeeklyGame(gameId);
+
+  @override
+  Future<List<dynamic>> fetchLiveEntries(String entryStatus) =>
+      _remote.fetchLiveEntries(entryStatus);
+
+  @override
+  Future<void> decideLiveEntry(String entryId, String status) =>
+      _remote.decideLiveEntry(entryId, status);
 }

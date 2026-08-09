@@ -52,4 +52,25 @@ abstract class SportsRepository {
   Future<Either<Failure, WeeklyGameEntity>> createWeeklyGame(Map<String, dynamic> data);
   Future<Either<Failure, WeeklyGameEntity>> joinWeeklyGame(String gameId);
   Future<Either<Failure, WeeklyGameEntity>> startWeeklyGame(String gameId);
+
+  // ── Organizer one-shot mutations ──────────────────────────────────────────
+  // Plain futures, not Either: each is a form submission whose sheet already
+  // owns a try/catch + snackbar, and the fresh state is re-fetched through
+  // the entity-speaking reads above.
+  Future<String?> createTournament(Map<String, dynamic> data);
+  Future<void> updateTournament(String tournamentId, Map<String, dynamic> data);
+  Future<void> generateFixtures(String tournamentId, {bool force = false});
+  Future<void> closeRegistration(String tournamentId);
+  Future<void> createFixture(String tournamentId, Map<String, dynamic> data);
+  Future<void> updateFixture(
+      String tournamentId, String fixtureId, Map<String, dynamic> data);
+  Future<void> deleteFixture(String tournamentId, String fixtureId);
+  Future<void> registerTeam(String tournamentId, Map<String, dynamic> data);
+  Future<void> updateTeam(
+      String tournamentId, String teamId, Map<String, dynamic> data);
+  Future<void> submitLiveScore(String fixtureId, Map<String, dynamic> data);
+  Future<void> updateWeeklyGame(String gameId, Map<String, dynamic> data);
+  Future<void> deleteWeeklyGame(String gameId);
+  Future<List<dynamic>> fetchLiveEntries(String entryStatus);
+  Future<void> decideLiveEntry(String entryId, String status);
 }
