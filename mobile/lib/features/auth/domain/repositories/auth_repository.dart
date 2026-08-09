@@ -56,4 +56,10 @@ abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> getMe();
 
   Future<void> logout();
+
+  /// Best-effort: push registration must never block login.
+  Future<void> registerFcmToken(String token);
+
+  /// The one-time profile completion patch.
+  Future<void> updateMyProfile(Map<String, dynamic> body);
 }

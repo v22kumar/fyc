@@ -7,10 +7,7 @@ import '../../data/models/user_model.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../service_locator.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -240,9 +237,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       FirebaseMessaging.instance.getToken().then((token) async {
         if (token == null) return;
-        final client = sl<ApiClient>();
         try {
-          await client.dio.post(ApiConstants.fcmToken, data: {'token': token});
+          await _repository.registerFcmToken(token);
         } catch (_) {}
       }).catchError((_) {});
     } catch (_) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -77,6 +78,7 @@ import '../../features/announcements/domain/entities/announcement_entity.dart';
 import '../../features/announcements/presentation/bloc/announcement_bloc.dart';
 import '../../features/announcements/presentation/screens/announcements_screen.dart';
 import '../../features/announcements/presentation/screens/announcement_detail_screen.dart';
+import '../../features/notifications/data/repositories/notification_repository.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/pages/notification_screen.dart';
 
@@ -95,6 +97,7 @@ import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/volunteers/presentation/screens/certificate_screen.dart';
 
 // Community
+import '../../features/community/domain/repositories/community_repository.dart';
 import '../../features/community/presentation/bloc/community_bloc.dart';
 import '../../features/community/presentation/screens/community_directory_screen.dart';
 import '../../features/community/presentation/screens/members_roster_screen.dart';
@@ -190,7 +193,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/complete-profile',
-      builder: (context, state) => const CompleteProfileScreen(),
+      builder: (context, state) => CompleteProfileScreen(repo: sl<AuthRepository>()),
     ),
     GoRoute(
       path: '/register',
@@ -396,7 +399,7 @@ final appRouter = GoRouter(
       path: '/notifications',
       builder: (context, state) => BlocProvider(
         create: (_) => sl<NotificationBloc>(),
-        child: const NotificationScreen(),
+        child: NotificationScreen(repo: sl<NotificationRepository>()),
       ),
     ),
     GoRoute(
@@ -497,7 +500,8 @@ final appRouter = GoRouter(
     GoRoute(
       // Real club-member roster (names/role/photo).
       path: '/members',
-      builder: (context, state) => const MembersRosterScreen(),
+      builder: (context, state) =>
+          MembersRosterScreen(repo: sl<CommunityRepository>()),
     ),
     // The local work index — one place for skills, jobs and gigs.
     //

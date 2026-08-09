@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../service_locator.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 /// One-time onboarding screen that forces a new user (Google or OTP, on any
 /// platform) to supply the mandatory profile data — name, date of birth, gender
@@ -18,7 +16,9 @@ import 'package:fyc_connect/core/theme/app_theme.dart';
 /// router gate (app_router) sends any signed-in, non-admin user here until their
 /// profile is complete; there is deliberately no skip.
 class CompleteProfileScreen extends StatefulWidget {
-  const CompleteProfileScreen({super.key});
+  const CompleteProfileScreen({super.key, required this.repo});
+
+  final AuthRepository repo;
 
   @override
   State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
@@ -93,7 +93,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (_needsPhone && phone.isNotEmpty) body['phone_number'] = phone;
 
     try {
-      await sl<ApiClient>().dio.patch(ApiConstants.myProfile, data: body);
+      await widget.repo.updateMyProfile(body);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(trId('profile_saved'))),

@@ -72,4 +72,7 @@ class NotificationRepository {
       return const Left(ServerFailure());
     }
   }
+
+  /// Fire a self-test push; returns the server's diagnostic sentence.
+  Future<String?> sendTestPush() => remoteDataSource.sendTestPush();
 }

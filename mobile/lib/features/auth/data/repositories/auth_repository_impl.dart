@@ -203,4 +203,12 @@ class AuthRepositoryImpl implements AuthRepository {
     await _remote.signOutGoogle(); // clear cached Google session
     await _storage.clearToken();
   }
+
+  @override
+  Future<void> registerFcmToken(String token) =>
+      _remote.registerFcmToken(token);
+
+  @override
+  Future<void> updateMyProfile(Map<String, dynamic> body) =>
+      _remote.updateMyProfile(body);
 }
