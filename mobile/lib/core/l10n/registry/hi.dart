@@ -1406,4 +1406,9 @@ const Map<String, String> kHi = {
   'rings_like_an_alarm': 'उनका फ़ोन अलार्म की तरह बजेगा',
   'sms_only': 'सिर्फ़ SMS — वे ऐप इस्तेमाल नहीं करते',
   'your_person': 'आपके अपने',
+  'update_from_play': 'Play Store में अपडेट करें',
+  'installed_from_play_note': 'आपने FYC Connect को Play Store से इंस्टॉल किया था, इसलिए अपडेट भी वहीं से आना चाहिए।',
+  'downloads_from_github': 'FYC Connect सार्वजनिक Play Store पर नहीं है। अपडेट सीधे क्लब के रिलीज़ पेज से डाउनलोड होता है।',
+  'continue_for_now': 'अभी अपडेट किए बिना जारी रखें',
+  'install_may_be_blocked': 'अगर Android कहे "App not installed", तो आपकी कॉपी किसी और तरीके से इंस्टॉल हुई थी। पहले उसे अनइंस्टॉल करें, या जहाँ से ली थी वहीं से अपडेट करें।',
 };

@@ -89,7 +89,11 @@ async def app_info():
     return {
         "name": "FYC Connect",
         "platform": "Android",
-        "package": "com.friendsyouthclub.fycconnect",
+        # The real applicationId, from mobile/android/app/build.gradle.kts.
+        # This said `com.friendsyouthclub.fycconnect`, which is not the
+        # package of any app that has ever shipped — a wrong answer in the
+        # one endpoint whose job is to say what the app is.
+        "package": "com.fycconnect.app",
         "available": True,
         "download_url": apk_url,
         "apk_url": apk_url,

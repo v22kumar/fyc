@@ -1406,4 +1406,9 @@ const Map<String, String> kEn = {
   'rings_like_an_alarm': 'Their phone will ring like an alarm',
   'sms_only': 'SMS only — they don\'t use the app',
   'your_person': 'your person',
+  'update_from_play': 'Update in Play Store',
+  'installed_from_play_note': 'You installed FYC Connect from the Play Store, so the update has to come from there too.',
+  'downloads_from_github': 'FYC Connect isn\'t on the public Play Store. The update downloads straight from the club\'s release page.',
+  'continue_for_now': 'Continue without updating',
+  'install_may_be_blocked': 'If Android says "App not installed", the copy you have was installed a different way. Uninstall it first, or update from wherever you got it.',
 };
