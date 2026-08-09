@@ -54,9 +54,14 @@ def create_comment(
     db.commit()
     db.refresh(comment)
     
-    # Cross-Platform Comment Sync
+    # Cross-Platform Comment Sync — the post must belong to the commenter's
+    # own organization: without the filter, a comment aimed at another org's
+    # synced post would fire the outbound sync using *their* access token.
     if payload.entity_type == "post":
-        post = db.query(Post).filter(Post.id == payload.entity_id).first()
+        post = db.query(Post).filter(
+            Post.id == payload.entity_id,
+            Post.organization_id == current_user.organization_id,
+        ).first()
         if post and post.source in ["instagram", "threads"] and post.idempotency_key:
             org = db.query(Organization).filter(Organization.id == current_user.organization_id).first()
             if org:
