@@ -14,7 +14,22 @@ import 'chess_tournament_models.dart';
 
 class ChessTournamentDetailScreen extends StatefulWidget {
   final String tournamentId;
-  const ChessTournamentDetailScreen({super.key, required this.tournamentId});
+
+  /// A tournament to render instead of fetching one.
+  ///
+  /// The render harness photographs this screen at every stage of an event —
+  /// registration through champion — and a widget test runs on a fake clock
+  /// where the HTTP future never resolves, so driving it through the network
+  /// only ever produced a picture of the loading spinner. This is the seam
+  /// that lets the pictures be of the real screen. Null in the app.
+  @visibleForTesting
+  final ChessTournamentDetail? preload;
+
+  const ChessTournamentDetailScreen({
+    super.key,
+    required this.tournamentId,
+    this.preload,
+  });
 
   @override
   State<ChessTournamentDetailScreen> createState() => _State();
@@ -38,6 +53,10 @@ class _State extends State<ChessTournamentDetailScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.preload != null) {
+      _t = widget.preload;
+      return;
+    }
     _load();
   }
 

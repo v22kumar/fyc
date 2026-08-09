@@ -12,7 +12,12 @@ import 'chess_tournament_models.dart';
 import 'chess_tournament_detail_screen.dart';
 
 class ChessTournamentListScreen extends StatefulWidget {
-  const ChessTournamentListScreen({super.key});
+  /// Tournaments to render instead of fetching them. See the note on
+  /// [ChessTournamentDetailScreen.preload]. Null in the app.
+  @visibleForTesting
+  final List<ChessTournament>? preload;
+
+  const ChessTournamentListScreen({super.key, this.preload});
 
   @override
   State<ChessTournamentListScreen> createState() => _ChessTournamentListScreenState();
@@ -30,6 +35,10 @@ class _ChessTournamentListScreenState extends State<ChessTournamentListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.preload != null) {
+      _items = widget.preload;
+      return;
+    }
     _load();
   }
 
