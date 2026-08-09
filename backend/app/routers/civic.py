@@ -24,12 +24,14 @@ from app.models.civic import (
     Authority, CivicCategory, ContactSuggestion, ContactSuggestionStatus,
     Department, LocalBodyType, RoutingRule, RoutingStep,
 )
+from app.models.issue import PublicIssue
 from app.models.user import User, UserProfile
 from app.schemas.civic import (
     AuthorityOut, AuthorityPatch, DepartmentOut, DirectoryHealthOut, GapOut,
     LadderHealthOut, CallLadderOut, LadderRungOut,
 )
 from app.services.complaint_routing import build_ladder
+from app.services.jurisdiction import is_covered
 from app.services.jurisdiction import resolve as resolve_jurisdiction
 from app.services.jurisdiction import Confidence, Jurisdiction
 
@@ -284,6 +286,11 @@ _COVERS = {
 def call_ladder(
     category: str = Query(description="what the complaint is about"),
     geography_id: Optional[UUID] = Query(default=None),
+    complaint_id: Optional[UUID] = Query(
+        default=None,
+        description="the complaint this ladder is for, so it is built from "
+                    "where the thing actually is",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -300,12 +307,40 @@ def call_ladder(
     number for would hide the gap; showing it greyed is how it gets filled.
     """
     org_id = current_user.organization_id
+
+    # Where the thing actually is, when we were told which complaint this is
+    # about. Without it the ladder was built from the *reporter's* home area,
+    # which is the one piece of context that is wrong precisely when it matters
+    # — somebody reporting a problem while away from home.
+    issue = None
+    if complaint_id is not None:
+        issue = db.get(PublicIssue, complaint_id)
+        if issue is not None and (
+            issue.organization_id != org_id
+            or (issue.reported_by_user_id != current_user.id
+                and not getattr(current_user, "is_admin", False))
+        ):
+            issue = None
+
+    # Is this even our district? Asked before anything is built, because the
+    # answer "here are four officers in Nagercoil" is worse than no answer at
+    # all for a pothole in Bengaluru: it is confidently wrong, it wastes the
+    # member's afternoon, and it teaches an office that this club sends noise.
+    if issue is not None and not is_covered(issue.latitude, issue.longitude):
+        return CallLadderOut(
+            category=category,
+            rungs=[],
+            covered=False,
+            outside_place=issue.location_name,
+        )
+
     # The reporter's own place is the fallback when the report has no tag —
     # someone can report a pothole outside their ward, but it is right far more
     # often than a district-wide guess.
     jurisdiction = resolve_jurisdiction(
         db,
-        geography_id=geography_id,
+        geography_id=(geography_id
+                      or (issue.geography_id if issue is not None else None)),
         reporter_geography_id=getattr(current_user, "geography_id", None),
     )
     ladder = build_ladder(db, org_id, category, jurisdiction)

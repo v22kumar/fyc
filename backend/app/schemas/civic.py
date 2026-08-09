@@ -150,3 +150,12 @@ class CallLadderOut(BaseModel):
     #: A published helpline or portal, for when no rung can be reached at all.
     fallback_helpline: Optional[str] = None
     fallback_portal_url: Optional[str] = None
+    #: False when the complaint is from somewhere this directory does not
+    #: speak for. An empty ladder then means "not our district", not "we have
+    #: no offices for this" — two different sentences, and only one of them is
+    #: an invitation to suggest a contact.
+    covered: bool = True
+    #: The place we understood the complaint to be in, when we could name it.
+    #: Shown back so a member whose GPS was wrong can see why they were told
+    #: this is out of area.
+    outside_place: Optional[str] = None

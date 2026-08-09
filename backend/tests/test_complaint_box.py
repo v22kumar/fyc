@@ -217,3 +217,80 @@ def test_somebody_elses_complaint_is_not_readable(client, db, club, complaint):
 def test_handing_it_to_the_club_changes_lane(client, db, complaint, auth):
     body = client.post(_url(complaint, "/handover"), headers=auth).json()
     assert body["lane"] == "VIA_CLUB"
+
+
+# ── The list a member actually opens ─────────────────────────────────────────
+
+def test_my_complaints_says_how_long_each_has_been_waiting(
+    client, db, complaint, auth
+):
+    """The old tracking screen showed a status column the server maintained by
+    guessing. This shows what somebody said, and how long since anything left."""
+    client.post(_url(complaint, "/sent"), json={}, headers=auth)
+    ev = (db.query(ComplaintEvent)
+            .filter(ComplaintEvent.issue_id == complaint.id).first())
+    ev.created_at = datetime.now(timezone.utc) - timedelta(days=9)
+    db.commit()
+
+    rows = client.get("/api/v1/civic/complaints", headers=auth).json()
+    assert len(rows) == 1
+    assert rows[0]["waiting_days"] == 9
+    assert rows[0]["last_event"] == "SENT"
+
+
+def test_a_report_nobody_has_acted_on_is_not_waiting(client, db, complaint, auth):
+    # Not the same as nothing being known — and starting a clock against a
+    # complaint that was never sent would nag somebody for no reason.
+    rows = client.get("/api/v1/civic/complaints", headers=auth).json()
+    assert rows[0]["waiting_days"] is None
+
+
+def test_open_complaints_come_before_closed_ones(
+    client, db, club, member, complaint, auth
+):
+    """A list that hides closed ones looks like work disappeared; a list that
+    mixes them in is mostly dead rows. So they sort last."""
+    still_open = PublicIssue(
+        id=uuid.uuid4(), organization_id=club.id, reported_by_user_id=member.id,
+        category="WATER", description_en="Still broken",
+        description_ta="இன்னும் சரியாகவில்லை",
+        latitude=8.18, longitude=77.41, status=IssueStatus.NEW, lane="SELF",
+    )
+    db.add(still_open)
+    db.commit()
+
+    # Close the one the fixture made, leaving the other open.
+    client.post(_url(complaint, "/close"), json={"resolved": True}, headers=auth)
+
+    rows = client.get("/api/v1/civic/complaints", headers=auth).json()
+    assert len(rows) == 2
+    assert rows[0]["is_closed"] is False
+    assert rows[-1]["is_closed"] is True
+
+
+def test_somebody_elses_complaints_are_not_listed(client, db, club, complaint):
+    other = User(id=uuid.uuid4(), organization_id=club.id,
+                 phone_number="+919000000091", email="x@example.invalid",
+                 password_hash="x", role="USER", is_verified=True)
+    db.add(other)
+    db.commit()
+    headers = {
+        "Authorization": f"Bearer {create_access_token(str(other.id), other.role, str(club.id))}",
+        "X-Organization-ID": str(club.id),
+    }
+    assert client.get("/api/v1/civic/complaints", headers=headers).json() == []
+
+
+def test_the_complaint_screen_can_show_what_the_complaint_was_about(
+    client, db, complaint, auth
+):
+    """A ladder of officers with no reminder of which problem this is.
+
+    That is what the detail screen was for anybody carrying more than one
+    complaint. The state now carries the member's own words and photograph.
+    """
+    body = client.get(_url(complaint), headers=auth).json()
+
+    assert body["category"], "the screen has to be able to name and icon itself"
+    assert body["description"], "their own words, not a status"
+    assert "photo_url" in body and "place_name" in body

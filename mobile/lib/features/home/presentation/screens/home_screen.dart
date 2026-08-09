@@ -1362,10 +1362,10 @@ void _showLanguagePicker(BuildContext context) {
 
 void _showCreateSheet(BuildContext context) {
   final actions = <(IconData, String, String, Color)>[
-    (Icons.edit_note_rounded, 'Share a Post', '/feed/create', const Color(0xFF0B6E4F)),
-    (Icons.water_drop, 'Register as Donor', '/blood-donation/register', const Color(0xFFEF4444)),
-    (Icons.campaign, 'Report an Issue', '/issues', const Color(0xFFEAB308)),
-    (Icons.eco, 'Register a Tree', '/green/register', const Color(0xFF16A34A)),
+    (Icons.edit_note_rounded, trId('share_a_post'), '/feed/create', const Color(0xFF0B6E4F)),
+    (Icons.water_drop, trId('register_as_donor'), '/blood-donation/register', const Color(0xFFEF4444)),
+    (Icons.campaign, trId('complaint_box'), '/issues', const Color(0xFFEAB308)),
+    (Icons.eco, trId('register_a_tree'), '/green/register', const Color(0xFF16A34A)),
   ];
   showModalBottomSheet(
     context: context,
@@ -1459,8 +1459,8 @@ class _MoreSheet extends StatelessWidget {
           _MenuItem(Icons.celebration_rounded, l.events, '/events', const Color(0xFF8B5CF6)),
           _MenuItem(Icons.castle_rounded, ta ? 'சதுரங்கம்' : 'Chess', '/chess', const Color(0xFF334155)),
           _MenuItem(Icons.emoji_events_rounded, ta ? 'விளையாட்டு' : 'Sports Hub', '/sports', const Color(0xFFF97316)),
-          _MenuItem(Icons.report_problem_rounded, l.publicIssues, '/issues', AppColors.warning),
-          _MenuItem(Icons.travel_explore_rounded, ta ? 'புகார் கண்காணிப்பு' : 'Track Issues', '/issues/track', const Color(0xFF14B8A6)),
+          _MenuItem(Icons.report_problem_rounded, trId('complaint_box'), '/issues', AppColors.warning),
+          _MenuItem(Icons.travel_explore_rounded, trId('my_complaints'), '/issues/track', const Color(0xFF14B8A6)),
           _MenuItem(Icons.badge_rounded, l.membership, '/membership', AppColors.primary),
           _MenuItem(Icons.contacts_rounded, l.directory, '/directory', const Color(0xFF2563EB)),
           _MenuItem(Icons.work_rounded, ta ? 'வாய்ப்புகள்' : 'Opportunities', '/work', const Color(0xFFD97706)),
@@ -2155,7 +2155,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
                 () => context.push('/blood-donation')),
             SizedBox(width: 10),
             _quickAction(context, Icons.campaign_rounded,
-                ta ? 'புகார்' : 'Report', const Color(0xFFEAB308),
+                trId('complaint_box'), const Color(0xFFEAB308),
                 () => context.push('/issues')),
             SizedBox(width: 10),
             _quickAction(context, Icons.celebration_rounded,
@@ -2683,9 +2683,9 @@ class _ManagerDashboard extends StatelessWidget {
         _SectionHeader(title: trId('recent_reports')),
         SizedBox(height: 12),
         _MiniCard(
-          sectionTitle: 'Issue',
-          title: trId('track_reported_issues'),
-          subtitle: 'Status of citizen reports',
+          sectionTitle: trId('complaint_box'),
+          title: trId('my_complaints'),
+          subtitle: trId('civic_complaints_tracked_to_fix'),
           icon: Icons.report_problem,
           iconColor: const Color(0xFFEF4444),
           onViewAll: () => context.push('/issues/track'),

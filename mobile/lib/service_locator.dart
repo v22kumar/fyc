@@ -95,8 +95,6 @@ import 'features/issues/domain/repositories/issue_list_repository.dart';
 import 'features/issues/domain/usecases/fetch_issues_usecase.dart';
 import 'features/issues/domain/usecases/mark_issue_resolved_usecase.dart';
 import 'features/issues/domain/usecases/log_email_sent_usecase.dart';
-import 'features/issues/presentation/bloc/issue_list_bloc.dart';
-import 'features/issues/presentation/bloc/issue_detail_bloc.dart';
 
 // Journey
 import 'features/journey/data/datasources/journey_datasource.dart';
@@ -346,17 +344,13 @@ Future<void> initServiceLocator() async {
     () => IssueListRepositoryImpl(sl<IssueListDataSource>()),
   );
   sl.registerLazySingleton(() => FetchIssuesUseCase(sl<IssueListRepository>()));
-  sl.registerFactory<IssueListBloc>(
-    () => IssueListBloc(fetchIssues: sl<FetchIssuesUseCase>()),
-  );
   sl.registerLazySingleton(() => MarkIssueResolvedUseCase(sl<IssueListRepository>()));
   sl.registerLazySingleton(() => LogEmailSentUseCase(sl<IssueListRepository>()));
-  sl.registerFactory<IssueDetailBloc>(
-    () => IssueDetailBloc(
-      markResolved: sl<MarkIssueResolvedUseCase>(),
-      logEmail: sl<LogEmailSentUseCase>(),
-    ),
-  );
+  // IssueListBloc and IssueDetailBloc were registered here and are gone. Their
+  // two screens listed and acted on issues by a status column the server
+  // maintained by inference; the Complaint Box replaced both with a timeline
+  // nobody has to infer. Leaving the registrations behind would have kept two
+  // unreachable screens compiling and looking maintained.
 
   // Journey
   sl.registerLazySingleton<JourneyDataSource>(

@@ -19,7 +19,9 @@ import 'package:fyc_connect/features/complaint_box/presentation/widgets/send_let
 import 'package:fyc_connect/features/complaint_box/presentation/widgets/suggest_contact_sheet.dart';
 import 'package:fyc_connect/features/complaint_box/domain/repositories/complaint_repository.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_bloc.dart';
+import 'package:fyc_connect/features/complaint_box/presentation/bloc/complaint_list_bloc.dart';
 import 'package:fyc_connect/features/complaint_box/presentation/screens/complaint_detail_screen.dart';
+import 'package:fyc_connect/features/complaint_box/presentation/screens/my_complaints_screen.dart';
 
 /// Renders the Complaint Box surfaces to PNGs so a human can look at them.
 ///
@@ -101,6 +103,10 @@ const _ladder = CallLadder(
 
 ComplaintState _state({bool closed = false, int? waiting}) => ComplaintState(
       id: 'c1',
+      category: 'STREET_LIGHT',
+      description: 'The street light opposite Vadasery bus stand has been '
+          'dead for three weeks.',
+      placeName: 'Vadasery bus stand, Nagercoil',
       lane: ComplaintLane.self,
       severity: ComplaintSeverity.serious,
       status: closed ? 'RESOLVED' : 'UNDER_REVIEW',
@@ -129,6 +135,70 @@ ComplaintState _state({bool closed = false, int? waiting}) => ComplaintState(
           authorityLabel: 'Executive Engineer, TWAD', at: DateTime(2026, 8, 6),
         ),
       ],
+    );
+
+/// One of every standing the list can render, in the order the server sends
+/// them: open before closed, longest-ignored first.
+final _mine = <ComplaintSummary>[
+  ComplaintSummary(
+    id: 'a', category: 'DRINKING_WATER',
+    description: 'The main pipe on Kottar Road has been leaking for a month '
+        'and the road is always wet.',
+    placeName: 'Kottar Road, Nagercoil',
+    lane: ComplaintLane.self, severity: ComplaintSeverity.serious,
+    status: 'UNDER_REVIEW', isClosed: false,
+    waitingDays: 23, lastEvent: 'SENT', lastEventAt: DateTime(2026, 7, 17),
+    createdAt: DateTime(2026, 7, 15),
+  ),
+  ComplaintSummary(
+    id: 'b', category: 'STREET_LIGHT',
+    description: 'Street light opposite the bus stand is dead.',
+    placeName: 'Vadasery bus stand',
+    lane: ComplaintLane.self, severity: ComplaintSeverity.routine,
+    status: 'UNDER_REVIEW', isClosed: false,
+    waitingDays: 4, lastEvent: 'CALLED', lastEventAt: DateTime(2026, 8, 5),
+    createdAt: DateTime(2026, 8, 1),
+  ),
+  ComplaintSummary(
+    id: 'c', category: 'GARBAGE',
+    description: 'Bin at the corner has not been cleared since Monday.',
+    placeName: 'Anna Nagar 3rd Street',
+    lane: ComplaintLane.viaClub, severity: ComplaintSeverity.routine,
+    status: 'UNDER_REVIEW', isClosed: false,
+    waitingDays: 2, lastEvent: 'FYC_FORWARDED',
+    lastEventAt: DateTime(2026, 8, 7), createdAt: DateTime(2026, 8, 6),
+  ),
+  ComplaintSummary(
+    id: 'd', category: 'DRAINAGE',
+    description: 'Open drain beside the school gate.',
+    placeName: 'Government School, Ozhuginasery',
+    lane: ComplaintLane.self, severity: ComplaintSeverity.serious,
+    status: 'NEW', isClosed: false,
+    createdAt: DateTime(2026, 8, 8),
+  ),
+  ComplaintSummary(
+    id: 'e', category: 'ROAD',
+    description: 'Pothole at the junction, two people have fallen.',
+    placeName: 'Parvathipuram junction',
+    lane: ComplaintLane.self, severity: ComplaintSeverity.serious,
+    status: 'RESOLVED', isClosed: true, closedReason: 'Filled the next week',
+    lastEvent: 'RESOLVED', lastEventAt: DateTime(2026, 7, 2),
+    createdAt: DateTime(2026, 6, 20),
+  ),
+];
+
+Widget _list(List<ComplaintSummary> all,
+        {Brightness brightness = Brightness.light, bool showClosed = false}) =>
+    MaterialApp(
+      theme: brightness == Brightness.light
+          ? AppTheme.lightFor('en')
+          : AppTheme.darkFor('en'),
+      home: RepaintBoundary(
+        child: BlocProvider<ComplaintListBloc>(
+          create: (_) => ComplaintListBloc(_StubRepo(_state(waiting: 12), all)),
+          child: const MyComplaintsScreen(),
+        ),
+      ),
     );
 
 const _draft = ComplaintDraft(
@@ -175,6 +245,22 @@ void main() {
         ..addFont(File(file).readAsBytes().then((b) => b.buffer.asByteData()));
       await loader.load();
     }
+    // Without this every icon is a filled box, and a screenshot full of tofu
+    // cannot answer the question these shots exist to answer. The font ships
+    // with the SDK; the test binding just never registers it.
+    for (final path in [
+      '/opt/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+      '${Platform.environment['FLUTTER_ROOT'] ?? ''}'
+          '/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+    ]) {
+      final f = File(path);
+      if (!f.existsSync()) continue;
+      final icons = FontLoader('MaterialIcons')
+        ..addFont(f.readAsBytes().then((b) => b.buffer.asByteData()));
+      await icons.load();
+      break;
+    }
+
     final bold = FontLoader('Plus Jakarta Sans')
       ..addFont(File('assets/fonts/PlusJakartaSans-700.ttf')
           .readAsBytes()
@@ -235,6 +321,32 @@ void main() {
     await _shoot(t, '10_suggest_contact');
   });
 
+  testWidgets('detail — outside our area', (t) async {
+    // A pothole photographed in Bengaluru. The ladder must not offer four
+    // officers in Nagercoil, and the screen must say why it is offering none.
+    await _phone(t, _screen(_state(waiting: 3),
+        ladder: const CallLadder(
+          category: 'ROAD', rungs: [], covered: false,
+          outsidePlace: 'Indiranagar, Bengaluru',
+        )));
+    await _shoot(t, '14_detail_outside_area');
+  });
+
+  testWidgets('my complaints — light', (t) async {
+    await _phone(t, _list(_mine));
+    await _shoot(t, '11_my_complaints_light');
+  });
+
+  testWidgets('my complaints — dark', (t) async {
+    await _phone(t, _list(_mine, brightness: Brightness.dark));
+    await _shoot(t, '12_my_complaints_dark');
+  });
+
+  testWidgets('my complaints — nothing yet', (t) async {
+    await _phone(t, _list(const []));
+    await _shoot(t, '13_my_complaints_empty');
+  });
+
   testWidgets('empty ladder', (t) async {
     await _phone(t, _frame(LadderList(
       ladder: const CallLadder(
@@ -248,11 +360,16 @@ void main() {
 /// A fake that answers from a fixed state, so the whole screen can be
 /// photographed without a server.
 class _StubRepo implements ComplaintRepository {
-  _StubRepo(this._state);
+  _StubRepo(this._state, [this._all = const [], this._ladderOverride]);
   final ComplaintState _state;
+  final List<ComplaintSummary> _all;
+  final CallLadder? _ladderOverride;
 
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) async => _ladder;
+  Future<CallLadder> ladder({required String category, String? geographyId,
+          String? complaintId}) async => _ladderOverride ?? _ladder;
+  @override
+  Future<List<ComplaintSummary>> mine({bool includeClosed = true}) async => _all;
   @override
   Future<ComplaintState> load(String id) async => _state;
   @override
@@ -279,15 +396,17 @@ class _StubRepo implements ComplaintRepository {
       {String? phone, String? email, String? howTheyKnow}) async {}
 }
 
-Widget _screen(ComplaintState state, {Brightness brightness = Brightness.light}) =>
+Widget _screen(ComplaintState state,
+        {Brightness brightness = Brightness.light, CallLadder? ladder}) =>
     MaterialApp(
       theme: brightness == Brightness.light
           ? AppTheme.lightFor('en')
           : AppTheme.darkFor('en'),
       home: RepaintBoundary(
         child: BlocProvider(
-          create: (_) => ComplaintBloc(_StubRepo(state))
-            ..add(const LoadComplaint('c1', category: 'STREET_LIGHT')),
+          create: (_) =>
+              ComplaintBloc(_StubRepo(state, const [], ladder))
+                ..add(const LoadComplaint('c1', category: 'STREET_LIGHT')),
           child: const ComplaintDetailScreen(
               complaintId: 'c1', category: 'STREET_LIGHT'),
         ),

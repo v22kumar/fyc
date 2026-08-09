@@ -189,3 +189,45 @@ def resolve(
             f"assumed {default.value.replace('_', ' ').lower()}"
         ),
     )
+
+
+# ── Is this even our district? ───────────────────────────────────────────────
+#
+# Everything above answers "which kind of local body governs this place",
+# having already assumed the place is one this club's directory speaks for. For
+# a long time nothing asked the prior question, and the default answered it
+# wrongly: a member in Bengaluru reporting a pothole outside their office was
+# handed an Assistant Engineer in Nagercoil, six hundred kilometres away, with
+# the same confidence as a member standing in Vadasery. The letter would have
+# been addressed, plausible and useless, and the office receiving it would have
+# learned that complaints from this club are noise.
+#
+# A bounding box is a crude shape for a district with a coastline and a hill
+# border, so it is drawn generously: it is here to catch Chennai, Bengaluru and
+# Dubai, not to adjudicate a village on the Tirunelveli line. Being wrong at the
+# margin means offering the ladder to somebody just outside it, which is a far
+# smaller harm than the one this exists to stop.
+KANNIYAKUMARI_BOUNDS = {
+    "min_lat": 8.03,
+    "max_lat": 8.42,
+    "min_lng": 77.06,
+    "max_lng": 77.62,
+}
+
+
+def is_covered(latitude, longitude) -> bool:
+    """Is this somewhere the club's directory can speak for?
+
+    Unknown coordinates return True. Absence of evidence is not evidence of
+    being elsewhere, and a member whose GPS was off should still see the ladder
+    — the club review gate is where a wrong one gets caught.
+    """
+    if latitude is None or longitude is None:
+        return True
+    try:
+        lat, lng = float(latitude), float(longitude)
+    except (TypeError, ValueError):
+        return True
+    b = KANNIYAKUMARI_BOUNDS
+    return (b["min_lat"] <= lat <= b["max_lat"]
+            and b["min_lng"] <= lng <= b["max_lng"])

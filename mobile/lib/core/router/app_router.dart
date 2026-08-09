@@ -80,8 +80,6 @@ import '../../features/gallery/presentation/screens/gallery_screen.dart';
 import '../../features/gallery/presentation/screens/photo_viewer_screen.dart';
 
 // Issue tracking
-import '../../features/issues/presentation/bloc/issue_list_bloc.dart';
-import '../../features/issues/presentation/screens/issues_track_screen.dart';
 
 // About
 import '../../features/about/presentation/screens/about_screen.dart';
@@ -111,7 +109,9 @@ import '../../features/work/presentation/screens/create_listing_screen.dart';
 import '../../features/work/presentation/screens/work_home_screen.dart';
 import '../../features/complaint_box/domain/repositories/complaint_repository.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
+import '../../features/complaint_box/presentation/bloc/complaint_list_bloc.dart';
 import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
+import '../../features/complaint_box/presentation/screens/my_complaints_screen.dart';
 import '../design_system/shell/app_shell_v2.dart';
 import '../../features/serve/presentation/screens/serve_hub_screen.dart';
 import '../../features/profile/presentation/screens/me_hub_screen.dart';
@@ -405,11 +405,17 @@ final appRouter = GoRouter(
         ),
       ),
     ),
+    // "My complaints" — the way back into anything already reported.
+    //
+    // The path is unchanged because half the app links to it. What is behind
+    // it is not: the old screen listed issues by a status column the server
+    // maintained by inference, so a complaint nobody had touched still read
+    // "Under review". This one shows what somebody actually said.
     GoRoute(
       path: '/issues/track',
       builder: (context, state) => BlocProvider(
-        create: (_) => sl<IssueListBloc>(),
-        child: const IssuesTrackScreen(),
+        create: (_) => ComplaintListBloc(sl<ComplaintRepository>()),
+        child: const MyComplaintsScreen(),
       ),
     ),
     GoRoute(

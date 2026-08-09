@@ -119,3 +119,102 @@ def test_an_unknown_category_is_not_an_error(client, db, club, auth):
     r = client.get("/api/v1/civic/ladder", params={"category": "NOT_A_CATEGORY"},
                    headers=auth)
     assert r.status_code == 200, r.text
+
+
+# ── Is this even our district? ───────────────────────────────────────────────
+
+
+def _report(db, club, member, *, lat, lng, place):
+    from app.models.issue import IssueStatus, PublicIssue
+
+    issue = PublicIssue(
+        id=uuid.uuid4(), organization_id=club.id,
+        reported_by_user_id=member.id, category="STREET_LIGHT",
+        description_en="A light is out", description_ta="விளக்கு எரியவில்லை",
+        latitude=lat, longitude=lng, location_name=place,
+        status=IssueStatus.NEW,
+    )
+    db.add(issue)
+    db.commit()
+    return issue
+
+
+def test_a_complaint_from_outside_the_district_gets_no_ladder(
+    client, db, club, member, auth
+):
+    """The bug this exists to stop.
+
+    A member in Bengaluru photographing a pothole outside their office was
+    handed an Assistant Engineer in Nagercoil — addressed, plausible, and six
+    hundred kilometres from the pothole.
+    """
+    _give_phone(db, club, "ULB_ELECTRICAL", "9443130460")
+    issue = _report(db, club, member, lat=12.9716, lng=77.5946,
+                    place="Indiranagar, Bengaluru")
+
+    body = client.get("/api/v1/civic/ladder",
+                      params={"category": "STREET_LIGHT",
+                              "complaint_id": str(issue.id)},
+                      headers=auth).json()
+
+    assert body["covered"] is False
+    assert body["rungs"] == [], "no office here speaks for Bengaluru"
+    assert body["outside_place"] == "Indiranagar, Bengaluru", (
+        "the member should be able to see which place we read, in case their "
+        "GPS was wrong"
+    )
+
+
+def test_a_complaint_from_inside_the_district_still_gets_the_ladder(
+    client, db, club, member, auth
+):
+    _give_phone(db, club, "ULB_ELECTRICAL", "9443130460")
+    issue = _report(db, club, member, lat=8.1833, lng=77.4119, place="Nagercoil")
+
+    body = client.get("/api/v1/civic/ladder",
+                      params={"category": "STREET_LIGHT",
+                              "complaint_id": str(issue.id)},
+                      headers=auth).json()
+
+    assert body["covered"] is True
+    assert body["rungs"], "Nagercoil is exactly what this directory is for"
+
+
+def test_a_ladder_asked_for_without_a_complaint_is_still_answered(
+    client, db, club, auth
+):
+    """Coverage is only knowable when there is a report with coordinates.
+
+    Browsing the directory with no complaint in hand must not be treated as
+    being outside the district — unknown is not elsewhere.
+    """
+    body = client.get("/api/v1/civic/ladder",
+                      params={"category": "STREET_LIGHT"}, headers=auth).json()
+    assert body["covered"] is True
+    assert body["rungs"]
+
+
+def test_somebody_elses_complaint_does_not_steer_the_ladder(
+    client, db, club, member, auth
+):
+    """The complaint is a hint, and hints from strangers are ignored.
+
+    Passing an arbitrary id must not read another member's coordinates back —
+    the ladder falls back to the caller's own area instead.
+    """
+    other = User(
+        id=uuid.uuid4(), organization_id=club.id, phone_number="+919000000099",
+        email="other@example.invalid", password_hash="x", role="USER",
+        is_verified=True,
+    )
+    db.add(other)
+    db.commit()
+    issue = _report(db, club, other, lat=12.9716, lng=77.5946, place="Bengaluru")
+
+    body = client.get("/api/v1/civic/ladder",
+                      params={"category": "STREET_LIGHT",
+                              "complaint_id": str(issue.id)},
+                      headers=auth).json()
+
+    assert body["covered"] is True
+    assert body["outside_place"] is None

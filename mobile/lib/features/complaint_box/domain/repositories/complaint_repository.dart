@@ -9,7 +9,16 @@ import '../entities/complaint_entities.dart';
 abstract class ComplaintRepository {
   /// Every office worth trying, nearest first, including the ones nobody has
   /// filled in yet.
-  Future<CallLadder> ladder({required String category, String? geographyId});
+  Future<CallLadder> ladder(
+      {required String category, String? geographyId, String? complaintId});
+
+  /// Every complaint this member has open, and the ones they have ended.
+  ///
+  /// Ordered by the server: open before closed, and among the open ones the
+  /// longest-ignored first. That order is the whole point of the screen —
+  /// the complaint nobody has answered in three weeks is the one worth
+  /// doing something about today.
+  Future<List<ComplaintSummary>> mine({bool includeClosed});
 
   Future<ComplaintState> load(String complaintId);
 

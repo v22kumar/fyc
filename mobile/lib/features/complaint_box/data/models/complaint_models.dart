@@ -38,6 +38,10 @@ CallLadder ladderFromJson(Map<String, dynamic> j) => CallLadder(
       placeName: j['place_name'] as String?,
       fallbackHelpline: j['fallback_helpline'] as String?,
       fallbackPortalUrl: j['fallback_portal_url'] as String?,
+      // Absent on an older server: unknown is not "outside the district", and
+      // defaulting the other way would empty the ladder for everybody.
+      covered: j['covered'] as bool? ?? true,
+      outsidePlace: j['outside_place'] as String?,
       rungs: [
         for (final r in (j['rungs'] as List? ?? []))
           rungFromJson(r as Map<String, dynamic>)
@@ -58,6 +62,11 @@ ComplaintEvent eventFromJson(Map<String, dynamic> j) => ComplaintEvent(
 
 ComplaintState stateFromJson(Map<String, dynamic> j) => ComplaintState(
       id: j['id'] as String? ?? '',
+      category: j['category'] as String? ?? '',
+      description: j['description'] as String? ?? '',
+      placeName: j['place_name'] as String?,
+      photoUrl: j['photo_url'] as String?,
+      createdAt: DateTime.tryParse(j['created_at'] as String? ?? '')?.toLocal(),
       lane:
           (j['lane'] == 'VIA_CLUB') ? ComplaintLane.viaClub : ComplaintLane.self,
       severity: (j['severity'] == 'SERIOUS')
@@ -81,4 +90,26 @@ ComplaintDraft draftFromJson(Map<String, dynamic> j) => ComplaintDraft(
       cc: [for (final c in (j['cc'] as List? ?? [])) c as String],
       bcc: [for (final c in (j['bcc'] as List? ?? [])) c as String],
       aiWritten: j['ai_written'] as bool? ?? false,
+    );
+
+ComplaintSummary summaryFromJson(Map<String, dynamic> j) => ComplaintSummary(
+      id: j['id'] as String? ?? '',
+      category: j['category'] as String? ?? '',
+      description: j['description'] as String? ?? '',
+      placeName: j['place_name'] as String?,
+      photoUrl: j['photo_url'] as String?,
+      lane:
+          (j['lane'] == 'VIA_CLUB') ? ComplaintLane.viaClub : ComplaintLane.self,
+      severity: (j['severity'] == 'SERIOUS')
+          ? ComplaintSeverity.serious
+          : ComplaintSeverity.routine,
+      status: j['status'] as String? ?? '',
+      isClosed: j['is_closed'] as bool? ?? false,
+      closedReason: j['closed_reason'] as String?,
+      waitingDays: (j['waiting_days'] as num?)?.toInt(),
+      lastEvent: j['last_event'] as String?,
+      lastEventAt:
+          DateTime.tryParse(j['last_event_at'] as String? ?? '')?.toLocal(),
+      createdAt: DateTime.tryParse(j['created_at'] as String? ?? '')?.toLocal() ??
+          DateTime.now(),
     );

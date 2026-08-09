@@ -88,25 +88,34 @@ class ComplaintTimeline extends StatelessWidget {
       };
 
   /// Deliberately phrased as reported speech.
+  ///
+  /// And in the member's own language. These sentences were English literals
+  /// on a screen whose audience mostly reads Tamil, which meant the one part
+  /// of the Complaint Box that says what actually happened was the one part
+  /// they could not read.
   String _sentence(ComplaintEvent ev) {
-    final office = ev.authorityLabel;
+    final office = ev.authorityLabel ?? trId('the_office');
     return switch (ev.type) {
       'CALLED' => switch (ev.callOutcome) {
           CallOutcome.promised =>
-            'called ${office ?? 'the office'} — they promised to act',
-          CallOutcome.noAnswer => 'called ${office ?? 'the office'} — no answer',
-          _ => 'spoke to ${office ?? 'the office'}',
+            trId('ev_called_promised', {'office': office}),
+          CallOutcome.noAnswer =>
+            trId('ev_called_no_answer', {'office': office}),
+          _ => trId('ev_called', {'office': office}),
         },
-      'DRAFTED' => 'wrote a letter to ${office ?? 'the office'}',
-      'SENT' => 'sent the letter${office != null ? ' to $office' : ''}',
-      'COPY_RECEIVED' => 'received a copy of the letter',
-      'REPLY_RECEIVED' => 'had a reply',
-      'HANDED_TO_FYC' => 'asked FYC to take this on',
-      'FYC_FORWARDED' => 'forwarded it to ${office ?? 'the department'}',
-      'ESCALATED' => 'took it up a level',
-      'RESOLVED' => 'marked this resolved',
-      'CLOSED' => 'closed this',
-      'REOPENED' => 'reopened this',
+      'DRAFTED' => trId('ev_drafted', {'office': office}),
+      'SENT' => ev.authorityLabel != null
+          ? trId('ev_sent', {'office': ev.authorityLabel})
+          : trId('ev_sent_plain'),
+      'COPY_RECEIVED' => trId('ev_copy_received'),
+      'REPLY_RECEIVED' => trId('ev_reply_received'),
+      'HANDED_TO_FYC' => trId('ev_handed_to_fyc'),
+      'FYC_FORWARDED' => trId('ev_fyc_forwarded',
+          {'office': ev.authorityLabel ?? trId('the_department')}),
+      'ESCALATED' => trId('ev_escalated'),
+      'RESOLVED' => trId('ev_resolved'),
+      'CLOSED' => trId('ev_closed'),
+      'REOPENED' => trId('ev_reopened'),
       _ => ev.type.toLowerCase(),
     };
   }

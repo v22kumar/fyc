@@ -37,9 +37,18 @@ class _Fake implements ComplaintRepository {
     return current;
   }
 
+  /// What the last ladder fetch was told the complaint was, so a test can
+  /// check the ladder is built from where the problem is rather than from
+  /// where the member happens to live.
+  String? ladderComplaintId;
+
   @override
-  Future<CallLadder> ladder({required String category, String? geographyId}) async {
+  Future<CallLadder> ladder(
+      {required String category,
+      String? geographyId,
+      String? complaintId}) async {
     calls.add('ladder');
+    ladderComplaintId = complaintId;
     if (ladderThrows) throw Exception('network');
     return CallLadder(category: category, rungs: const [
       LadderRung(
@@ -54,6 +63,12 @@ class _Fake implements ComplaintRepository {
         designation: 'Commissioner',
       ),
     ]);
+  }
+
+  @override
+  Future<List<ComplaintSummary>> mine({bool includeClosed = true}) async {
+    calls.add('mine');
+    return const [];
   }
 
   @override
@@ -273,5 +288,51 @@ void main() {
     expect(rungs.any((r) => r.canCall), isTrue);
     expect(rungs.any((r) => !r.canCall), isTrue,
         reason: 'a gap the club cannot see is a gap nobody fills');
+  });
+
+  test('the ladder is built for the complaint, not for where the member lives',
+      () async {
+    // Passing the id is what lets the server answer "not our district" for a
+    // pothole photographed in Bengaluru. Without it the ladder fell back to
+    // the reporter's home area — wrong exactly when it matters.
+    bloc.add(const LoadComplaint('c1', category: 'STREET_LIGHT'));
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.ladderComplaintId, 'c1');
+  });
+
+  test('dismissing the send sheet clears the draft, so Write works again',
+      () async {
+    // The bug this covers: the draft stayed in the state after its sheet
+    // closed, so every later Write resolved to the same value, the listener
+    // saw no transition, and the button was dead for the rest of the session.
+    bloc.add(const LoadComplaint('c1'));
+    await Future<void>.delayed(Duration.zero);
+
+    bloc.add(const DraftRequested());
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.draft, isNotNull);
+
+    bloc.add(const DraftDismissed());
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.draft, isNull,
+        reason: 'a draft with no sheet is a value that never changes again');
+
+    bloc.add(const DraftRequested());
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.draft, isNotNull, reason: 'the second Write must work');
+  });
+
+  test('a failure carries the server\'s own words, not "action failed"',
+      () async {
+    // "This complaint is closed. Reopen it first." tells a member what to do.
+    // `err.toString()` on a typed Failure is "Instance of 'ConflictFailure'",
+    // which forced the screen into one blanket message for everything.
+    repo.actionsThrow = true;
+    bloc.add(const LoadComplaint('c1'));
+    await Future<void>.delayed(Duration.zero);
+    bloc.add(const Closed(resolved: true));
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.failure, isNotNull);
+    expect(bloc.state.failure, isNot(contains('Instance of')));
   });
 }
