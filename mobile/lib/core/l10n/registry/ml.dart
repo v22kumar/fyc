@@ -1448,4 +1448,5 @@ const Map<String, String> kMl = {
   'youre_in_the_draw': 'നിങ്ങൾ നറുക്കെടുപ്പിലുണ്ട്',
   'save': 'സേവ്',
   'copied': 'പകർത്തി',
+  'could_not_open_dialer': 'ഡയലർ തുറക്കാനായില്ല. വിളിക്കുക',
 };

@@ -275,9 +275,21 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
 
   Future<void> _call(String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
+    // A dead call button in an emergency flow must never be silent: if the
+    // dialer cannot open, show the number itself — a person can still dial.
+    var placed = false;
     try {
-      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
+      if (await canLaunchUrl(uri)) {
+        placed = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      placed = false;
+    }
+    if (!placed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${trId('could_not_open_dialer')}: $phone')),
+      );
+    }
   }
 
   @override

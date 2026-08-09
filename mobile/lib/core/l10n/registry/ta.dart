@@ -1448,4 +1448,5 @@ const Map<String, String> kTa = {
   'youre_in_the_draw': 'நீங்கள் குலுக்கலில் உள்ளீர்கள்',
   'save': 'சேமி',
   'copied': 'நகலெடுக்கப்பட்டது',
+  'could_not_open_dialer': 'டயலரைத் திறக்க முடியவில்லை. அழைக்கவும்',
 };

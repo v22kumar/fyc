@@ -1448,4 +1448,5 @@ const Map<String, String> kEn = {
   'youre_in_the_draw': 'You\'re in the draw',
   'save': 'Save',
   'copied': 'Copied',
+  'could_not_open_dialer': 'Could not open the dialer. Call',
 };

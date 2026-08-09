@@ -1448,4 +1448,5 @@ const Map<String, String> kHi = {
   'youre_in_the_draw': 'आप ड्रॉ में हैं',
   'save': 'सहेजें',
   'copied': 'कॉपी हो गया',
+  'could_not_open_dialer': 'डायलर नहीं खुल सका। कॉल करें',
 };

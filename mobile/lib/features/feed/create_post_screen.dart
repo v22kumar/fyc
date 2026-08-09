@@ -86,7 +86,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       // Support both images and videos (D1 requirement)
       final x = await _picker.pickMedia(imageQuality: 70, maxWidth: 1600);
       if (x != null) setState(() => _images.add(File(x.path)));
-    } catch (_) {}
+    } catch (_) {
+      // A picker that fails silently looks like a dead button — say why
+      // nothing appeared.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('request_failed'))),
+      );
+    }
   }
 
   void _appendTag(String tag) {

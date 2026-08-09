@@ -19,6 +19,15 @@ class _OfflineBannerState extends State<OfflineBanner> {
   @override
   void initState() {
     super.initState();
+    // Seed from the current state: the stream only reports *changes*, so an
+    // app opened while already offline would show no banner until the radio
+    // toggled — precisely the launch where the banner matters most.
+    Connectivity().checkConnectivity().then((results) {
+      final nowOffline = results.every((r) => r == ConnectivityResult.none);
+      if (mounted && nowOffline != _offline) {
+        setState(() => _offline = nowOffline);
+      }
+    });
     _sub = Connectivity().onConnectivityChanged.listen((results) {
       final nowOffline = results.every((r) => r == ConnectivityResult.none);
       if (mounted && nowOffline != _offline) setState(() => _offline = nowOffline);

@@ -267,7 +267,15 @@ class _ChallengePageState extends State<ChallengePage>
     try {
       await _ds.declineChallenge(c.id);
       _reload();
-    } catch (_) {}
+    } catch (_) {
+      // A silent failure left the challenge looking stuck on screen; reload
+      // so the list shows the truth, and say the decline did not go through.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(trId('request_failed'))),
+      );
+      _reload();
+    }
   }
 }
 
