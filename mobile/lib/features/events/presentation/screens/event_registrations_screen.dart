@@ -63,11 +63,11 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
   @override
   Widget build(BuildContext context) {
     final ta = widget.lang == 'ta';
-    final title = ta && widget.event.titleTa != null ? widget.event.titleTa! : widget.event.titleEn;
+    final title = ta ? widget.event.titleTa : widget.event.titleEn;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Registrations', style: const TextStyle(fontSize: 18)),
+        title: const Text('Registrations', style: TextStyle(fontSize: 18)),
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
@@ -105,7 +105,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
           title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Text('Mobile: $mobile • Gender: $gender'),
           leading: CircleAvatar(
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: TextStyle(color: AppColors.primary),

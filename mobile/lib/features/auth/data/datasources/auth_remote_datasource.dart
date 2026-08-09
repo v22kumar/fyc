@@ -208,7 +208,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw const AuthFailure(
           "Google login isn't configured yet — use your phone number");
     } catch (e) {
-      throw ServerFailure();
+      throw const ServerFailure();
     }
   }
 

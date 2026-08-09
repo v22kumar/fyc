@@ -160,8 +160,8 @@ class _DonorsAroundMapState extends State<DonorsAroundMap> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      context.cBackground.withOpacity(0.92),
-                      context.cBackground.withOpacity(0),
+                      context.cBackground.withValues(alpha: 0.92),
+                      context.cBackground.withValues(alpha: 0),
                     ],
                   ),
                 ),
@@ -319,7 +319,7 @@ class _DonorPin extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          BoxShadow(color: presence.color.withOpacity(0.4), blurRadius: 6),
+          BoxShadow(color: presence.color.withValues(alpha: 0.4), blurRadius: 6),
         ],
       ),
       child: FittedBox(
@@ -357,7 +357,7 @@ class _MePin extends StatelessWidget {
         border: Border.all(color: AppColors.textPrimary, width: 3.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.25),
+            color: AppColors.textPrimary.withValues(alpha: 0.25),
             blurRadius: 10,
           ),
         ],

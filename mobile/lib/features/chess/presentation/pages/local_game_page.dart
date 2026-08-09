@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
-import 'package:square_bishop/square_bishop.dart' hide GameState;
 import '../bloc/game_bloc.dart';
 import '../bloc/game_event.dart';
 import '../bloc/game_state.dart';
@@ -73,7 +72,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -87,18 +86,18 @@ class _LocalGamePageState extends State<LocalGamePage> {
         actions: [
           BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
-              if (state is! GameInProgress) return SizedBox.shrink();
+              if (state is! GameInProgress) return const SizedBox.shrink();
               return Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.swap_vert_rounded,
+                    icon: const Icon(Icons.swap_vert_rounded,
                         color: Colors.white54, size: 22),
                     tooltip: trId('flip_board'),
                     onPressed: () =>
                         context.read<GameBloc>().add(const FlipBoard()),
                   ),
                   IconButton(
-                    icon: Icon(Icons.flag_rounded,
+                    icon: const Icon(Icons.flag_rounded,
                         color: Colors.white54, size: 22),
                     tooltip: trId('resign'),
                     onPressed: () => _confirmResign(context, state),
@@ -117,7 +116,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
         builder: (context, state) {
           if (state is GameInProgress) return _buildGame(context, state);
           if (state is GameOver) return _buildGameOver(context, state);
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(color: _kGreen),
           );
         },
@@ -201,7 +200,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -214,7 +213,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -226,13 +225,13 @@ class _LocalGamePageState extends State<LocalGamePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(trId('new_game'),
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
               ),
             ],
@@ -252,13 +251,13 @@ class _LocalGamePageState extends State<LocalGamePage> {
             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text(
           '${state.currentPlayerName} will forfeit this game.',
-          style: TextStyle(color: Color(0xFF8B8682)),
+          style: const TextStyle(color: Color(0xFF8B8682)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(trId('cancel_2'),
-                style: TextStyle(color: Color(0xFF8B8682))),
+                style: const TextStyle(color: Color(0xFF8B8682))),
           ),
           TextButton(
             onPressed: () {
@@ -269,7 +268,7 @@ class _LocalGamePageState extends State<LocalGamePage> {
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('resign'),
-                style: TextStyle(fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -302,7 +301,7 @@ class _LocalActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: trId('resign'),
             onTap: onResign,
-            color: AppColors.danger.withOpacity(0.4),
+            color: AppColors.danger.withValues(alpha: 0.4),
           ),
         ],
       ),
@@ -330,12 +329,12 @@ class _Btn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 20, color: c),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(

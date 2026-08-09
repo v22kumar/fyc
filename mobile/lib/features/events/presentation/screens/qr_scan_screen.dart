@@ -97,22 +97,22 @@ class _QrScanScreenState extends State<QrScanScreen> {
               color: success ? AppColors.primary : AppColors.accent,
               size: 24,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
                 child: Text(title,
-                    style: TextStyle(fontSize: 16))),
+                    style: const TextStyle(fontSize: 16))),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(message, style: TextStyle(fontSize: 14)),
-            SizedBox(height: 8),
+            Text(message, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 8),
             Container(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.textSecondary.withOpacity(0.1),
+                color: AppColors.textSecondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -120,7 +120,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'monospace',
-                  color: AppColors.textSecondary.withOpacity(0.7),
+                  color: AppColors.textSecondary.withValues(alpha: 0.7),
                 ),
               ),
             ),

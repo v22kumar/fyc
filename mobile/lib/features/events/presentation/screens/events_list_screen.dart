@@ -74,7 +74,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
         floatingActionButton: _canCreate
             ? FloatingActionButton.extended(
                 onPressed: _openCreate,
-                icon: Icon(Icons.add),
+                icon: const Icon(Icons.add),
                 label: Text(trId('new')),
               )
             : null,
@@ -117,9 +117,9 @@ class _EventsListScreenState extends State<EventsListScreen> {
                   children: [
                     Icon(Icons.error_outline,
                         size: 48, color: context.cTextSecondary),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(state.message),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _refresh,
                       child: Text(trId('retry')),
@@ -141,7 +141,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 ],
               );
             }
-            return SizedBox.shrink();
+            return const SizedBox.shrink();
           },
         ),
       ),
@@ -163,7 +163,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
     return RefreshIndicator(
       onRefresh: () async => _refresh(),
       child: ListView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         children: [
           ...events.asMap().entries.map((entry) => FadeSlideIn(
                 delay: Duration(milliseconds: (entry.key * 45).clamp(0, 400)),
@@ -248,6 +248,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext context, String eventId) async {
+    // The bloc outlives the dialog; the context may not.
+    final bloc = context.read<EventBloc>();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -266,7 +268,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
       ),
     );
     if (confirm == true && mounted) {
-      context.read<EventBloc>().add(EventDeleteRequested(eventId));
+      bloc.add(EventDeleteRequested(eventId));
     }
   }
 }
@@ -317,7 +319,7 @@ class _EventCard extends StatelessWidget {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -359,7 +361,7 @@ class _EventCard extends StatelessWidget {
                 top: 12,
                 child: Container(
                   padding:
-                      EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor,
                     borderRadius: BorderRadius.circular(20),
@@ -374,7 +376,7 @@ class _EventCard extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -400,7 +402,7 @@ class _EventCard extends StatelessWidget {
                               path: '/e/${event.shortCode}',
                               title: event.displayTitle(lang),
                             ),
-                            child: Padding(
+                            child: const Padding(
                               padding: EdgeInsets.only(left: 8.0),
                               child: Icon(Icons.qr_code_2, size: 20, color: Color(0xFF0B6E4F)),
                             ),
@@ -409,7 +411,7 @@ class _EventCard extends StatelessWidget {
                           GestureDetector(
                             onTap: onViewAdminRegistrations,
                             child: Padding(
-                              padding: EdgeInsets.only(left: 8.0),
+                              padding: const EdgeInsets.only(left: 8.0),
                               child: Icon(Icons.people_outline, size: 20, color: AppColors.info),
                             ),
                           ),
@@ -417,7 +419,7 @@ class _EventCard extends StatelessWidget {
                           GestureDetector(
                             onTap: onDelete,
                             child: Padding(
-                              padding: EdgeInsets.only(left: 12.0),
+                              padding: const EdgeInsets.only(left: 12.0),
                               child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
                             ),
                           ),
@@ -425,18 +427,18 @@ class _EventCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   event.displayDescription(lang),
                   style: TextStyle(color: context.cTextSecondary, fontSize: 13),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Icon(Icons.schedule, size: 14, color: context.cTextSecondary),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         timeFmt.format(event.eventStart.toLocal()),
@@ -446,7 +448,7 @@ class _EventCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     GestureDetector(
@@ -455,7 +457,7 @@ class _EventCard extends StatelessWidget {
                       child:
                           _GoingRow(count: event.registrationCount, lang: lang),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     if (onRegister == null && onCheckin == null)
                       Text(statusText,
                           style: TextStyle(
@@ -467,7 +469,7 @@ class _EventCard extends StatelessWidget {
                 // both actions can coexist — a wrapping row keeps long Tamil
                 // labels from overflowing.
                 if (onRegister != null || onCheckin != null) ...[
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Wrap(
@@ -478,7 +480,7 @@ class _EventCard extends StatelessWidget {
                         if (onCheckin != null)
                           ElevatedButton.icon(
                             onPressed: onCheckin,
-                            icon: Icon(Icons.qr_code_scanner, size: 16),
+                            icon: const Icon(Icons.qr_code_scanner, size: 16),
                             label: Text(trId('check_in')),
                           ),
                         if (onRegister != null)
@@ -486,7 +488,7 @@ class _EventCard extends StatelessWidget {
                             onPressed: onRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 18, vertical: 10),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
@@ -531,11 +533,11 @@ class _DateBadge extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: 2),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(12)),
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Text(month,
                 textAlign: TextAlign.center,
@@ -545,7 +547,7 @@ class _DateBadge extends StatelessWidget {
                     fontWeight: FontWeight.w800)),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text('${d.day}',
                 style: TextStyle(
                     fontSize: 20,
@@ -600,7 +602,7 @@ class _GoingRow extends StatelessWidget {
               ],
             ),
           ),
-        if (count > 0) SizedBox(width: 6),
+        if (count > 0) const SizedBox(width: 6),
         Text(
           count > 0
               ? tr(en: '$count Going', ta: '$count பேர் வருகிறார்கள்', hi: '$count लोग आ रहे हैं', ml: '$count പേർ വരുന്നു')
@@ -716,10 +718,10 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         decoration: BoxDecoration(
           color: context.cSurface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         ),
         child: Form(
           key: _formKey,
@@ -732,7 +734,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  margin: EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: context.cBorder,
                     borderRadius: BorderRadius.circular(2),
@@ -746,25 +748,25 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                     fontWeight: FontWeight.w800,
                     color: context.cText),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 widget.event.displayTitle(widget.lang),
                 style: TextStyle(fontSize: 13, color: context.cTextSecondary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _name,
                 decoration: InputDecoration(
                   labelText: trId('full_name'),
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? trId('enter_your_name')
                     : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -773,7 +775,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: trId('dob'),
-                        prefixIcon: Icon(Icons.calendar_today),
+                        prefixIcon: const Icon(Icons.calendar_today),
                       ),
                       onTap: () async {
                         final date = await showDatePicker(
@@ -789,10 +791,10 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       validator: (v) => (v == null || v.trim().isEmpty) ? '*' : null,
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _gender,
+                      initialValue: _gender,
                       decoration: InputDecoration(
                         labelText: trId('gender'),
                       ),
@@ -813,7 +815,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -822,7 +824,7 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: trId('mobile'),
-                        prefixIcon: Icon(Icons.phone_outlined),
+                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
                       validator: (v) {
                         final s = (v ?? '').trim();
@@ -831,36 +833,36 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                       },
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: trId('email_optional'),
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _school,
                 decoration: InputDecoration(
                   labelText: trId('school_college'),
-                  prefixIcon: Icon(Icons.school_outlined),
+                  prefixIcon: const Icon(Icons.school_outlined),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty) ? '*' : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _grade,
+                initialValue: _grade,
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: trId('class_grade'),
                   hintText: trId('select'),
-                  prefixIcon: Icon(Icons.grade_outlined),
+                  prefixIcon: const Icon(Icons.grade_outlined),
                 ),
                 // Full range independent of any category: pre-KG to college & above.
                 items: const [
@@ -876,53 +878,53 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
                 }).toList(),
                 onChanged: (v) => setState(() => _grade = v),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _address,
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: trId('address_optional'),
-                  prefixIcon: Icon(Icons.location_on_outlined),
+                  prefixIcon: const Icon(Icons.location_on_outlined),
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _memberId,
                 decoration: InputDecoration(
                   labelText: trId('member_id_optional'),
-                  prefixIcon: Icon(Icons.badge_outlined),
+                  prefixIcon: const Icon(Icons.badge_outlined),
                 ),
               ),
               if (widget.event.registrationType == 'Submission') ...[
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _topic,
                   decoration: InputDecoration(
                     labelText: trId('topic'),
-                    prefixIcon: Icon(Icons.subject),
+                    prefixIcon: const Icon(Icons.subject),
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? trId('enter_topic')
                       : null,
                 ),
               ],
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _remarks,
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: trId('remarks_optional'),
-                  prefixIcon: Icon(Icons.notes),
+                  prefixIcon: const Icon(Icons.notes),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _submitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -980,11 +982,11 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
         color: context.cSurface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       ),
       child: Column(
         children: [
@@ -992,7 +994,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
             child: Container(
               width: 40,
               height: 4,
-              margin: EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: context.cBorder,
                 borderRadius: BorderRadius.circular(2),
@@ -1006,14 +1008,14 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
                 fontWeight: FontWeight.w800,
                 color: context.cText),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           if (_error != null)
             Expanded(
                 child: Center(
                     child: Text(_error!,
                         style: TextStyle(color: AppColors.accent))))
           else if (_names == null)
-            Expanded(child: Center(child: CircularProgressIndicator()))
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_names!.isEmpty)
             Expanded(
               child: Center(
@@ -1038,7 +1040,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
                     color: context.cTextSecondary),
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             // Names, Age, Class Grade — the member-facing list never shows phone numbers
             // or other personal details like exact DOB.
             Expanded(
@@ -1057,7 +1059,7 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
                     dense: true,
                     leading: CircleAvatar(
                       radius: 15,
-                      backgroundColor: AppColors.primary.withOpacity(0.10),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.10),
                       child: Text(
                         p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
                         style: TextStyle(

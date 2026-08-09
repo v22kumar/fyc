@@ -70,18 +70,18 @@ class _DailyNewsCardState extends State<DailyNewsCard>
         children: [
           // Header
           Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.accentSurface,
                     shape: BoxShape.circle,
                   ),
-                  child: Text('📰', style: TextStyle(fontSize: 16)),
+                  child: const Text('📰', style: TextStyle(fontSize: 16)),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Text(
                   trId('news_2'),
                   style: TextStyle(
@@ -90,7 +90,7 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                     color: context.cText,
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 // Manual refresh icon
                 IconButton(
                   onPressed: _retry,
@@ -112,8 +112,8 @@ class _DailyNewsCardState extends State<DailyNewsCard>
             indicatorWeight: 2,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: TextStyle(fontSize: 12),
+            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
             tabs: [
               // These two were hardcoded Tamil — the same bug as a hardcoded
               // English label, just pointed the other way.
@@ -219,7 +219,7 @@ class _NewsFeedState extends State<_NewsFeed> {
           physics: const ClampingScrollPhysics(),
           itemCount: items.length,
           separatorBuilder: (_, __) => Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Divider(height: 1, color: context.cBorder),
           ),
           // The first story gets the weight.
@@ -253,26 +253,26 @@ class _ErrorState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.cloud_off_rounded, size: 40, color: context.cTextSecondary),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(trId('couldn_t_load_news'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: context.cText,
                   fontSize: 13)),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(trId('check_connection_and_try_again'),
               style: TextStyle(fontSize: 11, color: context.cTextSecondary)),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: Icon(Icons.refresh_rounded, size: 16, color: AppColors.background),
             label: Text(trId('retry_6'), style: TextStyle(color: AppColors.background)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
-              textStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
         ],
@@ -292,23 +292,23 @@ class _EmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.newspaper_rounded, size: 36, color: context.cTextSecondary),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(trId('no_news_available'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: context.cText,
                   fontSize: 13)),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: Icon(Icons.refresh_rounded, size: 16, color: AppColors.background),
             label: Text(trId('retry_6'), style: TextStyle(color: AppColors.background)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
-              textStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
         ],
@@ -347,14 +347,14 @@ class _NewsRow extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (jobMode)
               Container(
-                margin: EdgeInsets.only(right: 10, top: 2),
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                margin: const EdgeInsets.only(right: 10, top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.primarySurface,
                   borderRadius: BorderRadius.circular(4),
@@ -384,7 +384,7 @@ class _NewsRow extends StatelessWidget {
                     maxLines: isLead ? 3 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Flexible(
@@ -417,7 +417,7 @@ class _NewsRow extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Icon(Icons.north_east, size: 14, color: context.cTextSecondary),
           ],
         ),
@@ -434,18 +434,18 @@ class _NewsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (int i = 0; i < 5; i++) ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             ShimmerBox(height: 14, width: i.isEven ? double.infinity : 280),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             ShimmerBox(height: 12, width: i.isOdd ? 240 : 200),
-            SizedBox(height: 6),
-            ShimmerBox(height: 10, width: 100),
-            SizedBox(height: 12),
+            const SizedBox(height: 6),
+            const ShimmerBox(height: 10, width: 100),
+            const SizedBox(height: 12),
             if (i < 4)
               Divider(height: 1, color: context.cBorder),
           ],

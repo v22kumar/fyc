@@ -170,7 +170,7 @@ class _ThirukkuralContent extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0D3D26), Color(0xFF145C36), Color(0xFF1A7A47)],
             begin: Alignment.topLeft,
@@ -180,19 +180,19 @@ class _ThirukkuralContent extends StatelessWidget {
         child: Stack(
           children: [
             // Decorative background pattern
-            Positioned(
+            const Positioned(
               right: -20,
               top: -20,
               child: CustomPaint(
-                size: const Size(160, 160),
+                size: Size(160, 160),
                 painter: _KuralBgPainter(),
               ),
             ),
-            Positioned(
+            const Positioned(
               left: -30,
               bottom: -30,
               child: CustomPaint(
-                size: const Size(120, 120),
+                size: Size(120, 120),
                 painter: _KuralBgPainter(opacity: 0.06),
               ),
             ),
@@ -205,13 +205,13 @@ class _ThirukkuralContent extends StatelessWidget {
                     fontSize: 90,
                     height: 0.9,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.background.withOpacity(0.07),
+                    color: AppColors.background.withValues(alpha: 0.07),
                     fontFamily: 'serif',
                   )),
             ),
             // Content
             Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -219,14 +219,14 @@ class _ThirukkuralContent extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.background.withOpacity(0.15),
+                          color: AppColors.background.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text('📜', style: TextStyle(fontSize: 18)),
+                        child: const Text('📜', style: TextStyle(fontSize: 18)),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +242,7 @@ class _ThirukkuralContent extends StatelessWidget {
                             ),
                             Text(
                               trId('thirukkural_of_the_day'),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.white60,
                                 fontWeight: FontWeight.w500,
@@ -252,11 +252,11 @@ class _ThirukkuralContent extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.background.withOpacity(0.18),
+                          color: AppColors.background.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.background.withOpacity(0.30)),
+                          border: Border.all(color: AppColors.background.withValues(alpha: 0.30)),
                         ),
                         child: Text(
                           'குறள் #${kural.number}',
@@ -270,15 +270,15 @@ class _ThirukkuralContent extends StatelessWidget {
                     ],
                   ),
 
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
                   // Tamil couplet
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.background.withOpacity(0.10),
+                      color: AppColors.background.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.background.withOpacity(0.15)),
+                      border: Border.all(color: AppColors.background.withValues(alpha: 0.15)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +307,7 @@ class _ThirukkuralContent extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
                   // Tamil meaning
                   Text(
@@ -315,13 +315,13 @@ class _ThirukkuralContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.55,
-                      color: AppColors.background.withOpacity(0.80),
+                      color: AppColors.background.withValues(alpha: 0.80),
                     ),
                   ),
 
-                  SizedBox(height: 14),
-                  Divider(height: 1, color: AppColors.background.withOpacity(0.15)),
-                  SizedBox(height: 14),
+                  const SizedBox(height: 14),
+                  Divider(height: 1, color: AppColors.background.withValues(alpha: 0.15)),
+                  const SizedBox(height: 14),
 
                   // English couplet
                   Text(
@@ -331,41 +331,41 @@ class _ThirukkuralContent extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
                       height: 1.5,
-                      color: AppColors.background.withOpacity(0.90),
+                      color: AppColors.background.withValues(alpha: 0.90),
                     ),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   Text(
                     kural.englishMeaning,
                     style: TextStyle(
                       fontSize: 12,
                       height: 1.5,
-                      color: AppColors.background.withOpacity(0.65),
+                      color: AppColors.background.withValues(alpha: 0.65),
                     ),
                   ),
 
-                  SizedBox(height: 14),
+                  const SizedBox(height: 14),
 
                   // Footer
                   Row(
                     children: [
-                      Icon(Icons.menu_book_outlined, size: 13, color: AppColors.background.withOpacity(0.55)),
-                      SizedBox(width: 6),
+                      Icon(Icons.menu_book_outlined, size: 13, color: AppColors.background.withValues(alpha: 0.55)),
+                      const SizedBox(width: 6),
                       Text(
                         '${kural.paalTa}  •  ${kural.paalEn}',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.background.withOpacity(0.55),
+                          color: AppColors.background.withValues(alpha: 0.55),
                         ),
                       ),
                       if (!isLive) ...[
-                        Spacer(),
-                        Icon(Icons.cloud_off_rounded, size: 12, color: AppColors.background.withOpacity(0.35)),
-                        SizedBox(width: 4),
+                        const Spacer(),
+                        Icon(Icons.cloud_off_rounded, size: 12, color: AppColors.background.withValues(alpha: 0.35)),
+                        const SizedBox(width: 4),
                         Text(
                           trId('offline'),
-                          style: TextStyle(fontSize: 10, color: AppColors.background.withOpacity(0.35)),
+                          style: TextStyle(fontSize: 10, color: AppColors.background.withValues(alpha: 0.35)),
                         ),
                       ],
                     ],
@@ -387,14 +387,14 @@ class _KuralBgPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.background.withOpacity(opacity)
+      ..color = AppColors.background.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     final cx = size.width / 2, cy = size.height / 2;
     for (int i = 0; i < 5; i++) {
       canvas.drawCircle(Offset(cx, cy), (i + 1) * size.width / 6, paint);
     }
-    final dotPaint = Paint()..color = AppColors.background.withOpacity(opacity * 1.5);
+    final dotPaint = Paint()..color = AppColors.background.withValues(alpha: opacity * 1.5);
     for (int i = 0; i < 8; i++) {
       final angle = i * math.pi / 4;
       canvas.drawCircle(

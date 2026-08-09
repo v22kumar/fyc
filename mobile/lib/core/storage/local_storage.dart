@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui' show PlatformDispatcher;
 
 import '../l10n/registry/registry.dart';
 import 'package:flutter/foundation.dart';

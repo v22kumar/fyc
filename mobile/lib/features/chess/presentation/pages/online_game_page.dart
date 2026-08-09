@@ -3,7 +3,6 @@ import '../../../../core/l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
-import 'package:square_bishop/square_bishop.dart';
 import '../bloc/online_game_bloc.dart';
 import '../bloc/online_game_event.dart';
 import '../bloc/online_game_state.dart';
@@ -31,7 +30,7 @@ class OnlineGamePage extends StatelessWidget {
         elevation: 0,
         leadingWidth: 44,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: BlocBuilder<OnlineGameBloc, OnlineGameState>(
@@ -42,27 +41,27 @@ class OnlineGamePage extends StatelessWidget {
                   : state.whiteName;
               return Text(
                 'vs $opp',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               );
             }
             return Text(trId('online_game'),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16));
           },
         ),
         actions: [
           BlocBuilder<OnlineGameBloc, OnlineGameState>(
             builder: (context, state) {
-              if (state is! OnlineGameInProgress) return SizedBox.shrink();
+              if (state is! OnlineGameInProgress) return const SizedBox.shrink();
               return Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.swap_vert_rounded,
+                    icon: const Icon(Icons.swap_vert_rounded,
                         color: Colors.white54, size: 22),
                     onPressed: () =>
                         context.read<OnlineGameBloc>().add(const FlipOnlineBoard()),
                   ),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert,
+                    icon: const Icon(Icons.more_vert,
                         color: Colors.white54, size: 22),
                     color: _kSurface,
                     onSelected: (v) {
@@ -115,10 +114,10 @@ class OnlineGamePage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: _kGreen),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: _kGreen),
+          const SizedBox(height: 16),
           Text(reconnecting ? trId('reconnecting') : trId('connecting'),
-              style: TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
+              style: const TextStyle(color: Color(0xFF8B8682), fontSize: 16)),
         ],
       ),
     );
@@ -128,12 +127,12 @@ class OnlineGamePage extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off_rounded, color: Color(0xFF8B8682), size: 48),
-              SizedBox(height: 16),
+              const Icon(Icons.wifi_off_rounded, color: Color(0xFF8B8682), size: 48),
+              const SizedBox(height: 16),
               Text(
                 state.message,
                 style: TextStyle(
@@ -142,7 +141,7 @@ class OnlineGamePage extends StatelessWidget {
                     fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -150,12 +149,12 @@ class OnlineGamePage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(trId('back_to_chess'),
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
               ),
             ],
@@ -170,18 +169,18 @@ class OnlineGamePage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('♛', style: TextStyle(fontSize: 64, color: _kGreen)),
-          SizedBox(height: 20),
-          CircularProgressIndicator(color: _kGreen),
-          SizedBox(height: 16),
+          const Text('♛', style: TextStyle(fontSize: 64, color: _kGreen)),
+          const SizedBox(height: 20),
+          const CircularProgressIndicator(color: _kGreen),
+          const SizedBox(height: 16),
           Text(
             trId('waiting_for_opponent'),
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'You play as ${state.myColor}',
-            style: TextStyle(color: Color(0xFF8B8682), fontSize: 13),
+            style: const TextStyle(color: Color(0xFF8B8682), fontSize: 13),
           ),
         ],
       ),
@@ -313,7 +312,7 @@ class OnlineGamePage extends StatelessWidget {
               left: 16,
               right: 16,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1B18),
                   borderRadius: BorderRadius.circular(12),
@@ -322,13 +321,13 @@ class OnlineGamePage extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.pause_circle_outline,
-                        size: 18, color: const Color(0xFFF1746A)),
-                    SizedBox(width: 10),
+                    const Icon(Icons.pause_circle_outline,
+                        size: 18, color: Color(0xFFF1746A)),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         trId('game_paused_organizer'),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600),
@@ -346,7 +345,7 @@ class OnlineGamePage extends StatelessWidget {
               left: 16,
               right: 16,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1B18),
                   borderRadius: BorderRadius.circular(12),
@@ -354,13 +353,13 @@ class OnlineGamePage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Color(0xFFB45309)),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         trId('reconnecting'),
@@ -380,7 +379,7 @@ class OnlineGamePage extends StatelessWidget {
               left: 16,
               right: 16,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFB45309),
                   borderRadius: BorderRadius.circular(12),
@@ -388,7 +387,7 @@ class OnlineGamePage extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.wifi_off, color: AppColors.background, size: 18),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         trId('opponent_disconnected_waiting_60s'),
@@ -408,7 +407,7 @@ class OnlineGamePage extends StatelessWidget {
               left: 16,
               right: 16,
               child: Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: _kSurface,
                   borderRadius: BorderRadius.circular(16),
@@ -422,7 +421,7 @@ class OnlineGamePage extends StatelessWidget {
                       style: TextStyle(
                           color: AppColors.background, fontWeight: FontWeight.w700),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -432,12 +431,12 @@ class OnlineGamePage extends StatelessWidget {
                                 .add(const SendDeclineDraw()),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.white70,
-                              side: BorderSide(color: Colors.white24),
+                              side: const BorderSide(color: Colors.white24),
                             ),
                             child: Text(trId('decline')),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () => context
@@ -465,7 +464,7 @@ class OnlineGamePage extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -477,7 +476,7 @@ class OnlineGamePage extends StatelessWidget {
                     fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -485,13 +484,13 @@ class OnlineGamePage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: AppColors.background,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(trId('back_to_chess'),
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
               ),
@@ -528,12 +527,12 @@ class OnlineGamePage extends StatelessWidget {
         title: Text(trId('resign_2'),
             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
         content: Text(trId('you_will_forfeit_this_game'),
-            style: TextStyle(color: Color(0xFF8B8682))),
+            style: const TextStyle(color: Color(0xFF8B8682))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(trId('cancel_2'),
-                  style: TextStyle(color: Color(0xFF8B8682)))),
+                  style: const TextStyle(color: Color(0xFF8B8682)))),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -541,7 +540,7 @@ class OnlineGamePage extends StatelessWidget {
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(trId('resign'),
-                style: TextStyle(fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -630,20 +629,20 @@ class _ChessClock extends StatelessWidget {
     final isLow = ms < 30000;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isActive
-            ? (isLow ? AppColors.danger.withOpacity(0.8) : _kGreen)
+            ? (isLow ? AppColors.danger.withValues(alpha: 0.8) : _kGreen)
             : const Color(0xFF1E1B18),
         borderRadius: BorderRadius.circular(8),
         border: isActive && isLow
-            ? Border.all(color: AppColors.danger.withOpacity(0.4), width: 1.5)
+            ? Border.all(color: AppColors.danger.withValues(alpha: 0.4), width: 1.5)
             : null,
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isActive ? AppColors.background : Color(0xFF6B6762),
+          color: isActive ? AppColors.background : const Color(0xFF6B6762),
           fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
           fontSize: 15,
           fontFeatures: const [FontFeature.tabularFigures()],
@@ -685,7 +684,7 @@ class _OnlineActionBar extends StatelessWidget {
             icon: Icons.flag_rounded,
             label: trId('resign'),
             onTap: onResign,
-            color: AppColors.danger.withOpacity(0.4),
+            color: AppColors.danger.withValues(alpha: 0.4),
           ),
         ],
       ),
@@ -713,12 +712,12 @@ class _Btn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 20, color: c),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
@@ -745,11 +744,11 @@ class _OnlineResultSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: _kSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(24, 12, 24, 36),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -761,22 +760,22 @@ class _OnlineResultSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
             state.resultLabel,
-            style: TextStyle(
+            style: const TextStyle(
               color: _kGreen,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '${state.moveSans.length} moves',
-            style: TextStyle(color: Color(0xFF8B8682), fontSize: 14),
+            style: const TextStyle(color: Color(0xFF8B8682), fontSize: 14),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -787,12 +786,12 @@ class _OnlineResultSheet extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kGreen,
                 foregroundColor: AppColors.background,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
               child: Text(trId('back_to_chess'),
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ],

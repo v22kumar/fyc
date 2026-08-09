@@ -30,10 +30,10 @@ class MeHubScreen extends StatelessWidget {
         builder: (context, state) {
           final user = state is AuthAuthenticated ? state.user : null;
           return ListView(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               _ProfileCard(user: user),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _MeTile(
                 icon: Icons.person_rounded,
                 label: trId('my_profile'),
@@ -116,9 +116,9 @@ class _ProfileCardState extends State<_ProfileCard> {
   String _dmy(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   Widget _line(String text) => Padding(
-        padding: EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.only(top: 2),
         child: Text(text,
-            style: TextStyle(color: AppColors.background.withOpacity(0.82), fontSize: 11.5),
+            style: TextStyle(color: AppColors.background.withValues(alpha: 0.82), fontSize: 11.5),
             maxLines: 1, overflow: TextOverflow.ellipsis),
       );
 
@@ -126,7 +126,7 @@ class _ProfileCardState extends State<_ProfileCard> {
   Widget build(BuildContext context) {
     final card = _card;
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F5132), Color(0xFF15803D)],
@@ -140,13 +140,13 @@ class _ProfileCardState extends State<_ProfileCard> {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: AppColors.background.withOpacity(0.2),
+            backgroundColor: AppColors.background.withValues(alpha: 0.2),
             child: Text(
               _initials,
               style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 19),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,18 +162,18 @@ class _ProfileCardState extends State<_ProfileCard> {
                   if (card.issuedAt != null)
                     _line('${trId('member_since')}: ${_monthYear(card.issuedAt!)}'),
                 ] else ...[
-                  SizedBox(height: 3),
-                  Text(_roleLabel, style: TextStyle(color: AppColors.background.withOpacity(0.85), fontSize: 13)),
+                  const SizedBox(height: 3),
+                  Text(_roleLabel, style: TextStyle(color: AppColors.background.withValues(alpha: 0.85), fontSize: 13)),
                   if (user?.phoneNumber != null) _line(user!.phoneNumber!),
                 ],
               ],
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Column(
             children: [
               Container(
-                padding: EdgeInsets.all(6),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(10),
@@ -185,10 +185,10 @@ class _ProfileCardState extends State<_ProfileCard> {
                 ),
               ),
               if (card != null) ...[
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   '${trId('valid_till')} ${_dmy(card.expiresAt)}',
-                  style: TextStyle(color: AppColors.background.withOpacity(0.8), fontSize: 8.5),
+                  style: TextStyle(color: AppColors.background.withValues(alpha: 0.8), fontSize: 8.5),
                 ),
               ],
             ],
@@ -208,7 +208,7 @@ class _MeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(14),
@@ -216,7 +216,7 @@ class _MeTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: context.cBorder),
@@ -224,7 +224,7 @@ class _MeTile extends StatelessWidget {
             child: Row(
               children: [
                 Icon(icon, color: AppColors.primary, size: 22),
-                SizedBox(width: 14),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     label,

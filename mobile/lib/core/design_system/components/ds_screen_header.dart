@@ -95,19 +95,19 @@ class DSScreenHeader extends StatelessWidget implements PreferredSizeWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      primary.withOpacity(0.55),
-                      Color.lerp(primary, Colors.black, 0.35)!.withOpacity(0.92),
+                      primary.withValues(alpha: 0.55),
+                      Color.lerp(primary, Colors.black, 0.35)!.withValues(alpha: 0.92),
                     ],
                   ),
                 ),
               ),
             ),
           if (image == null)
-            Positioned.fill(
+            const Positioned.fill(
               child: KolamBackground(
                 color: onBrand,
                 opacity: 0.10,
-                child: const SizedBox.expand(),
+                child: SizedBox.expand(),
               ),
             ),
           SafeArea(
@@ -158,14 +158,14 @@ class DSScreenHeader extends StatelessWidget implements PreferredSizeWidget {
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
-                                    ?.copyWith(color: onBrand.withOpacity(0.82)),
+                                    ?.copyWith(color: onBrand.withValues(alpha: 0.82)),
                               ),
                             ],
                           ],
                         ),
                       ),
                       ...actions.map((a) => IconTheme.merge(
-                            data: IconThemeData(color: onBrand),
+                            data: const IconThemeData(color: onBrand),
                             child: a,
                           )),
                     ],

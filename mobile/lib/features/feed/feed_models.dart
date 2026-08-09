@@ -1,4 +1,5 @@
 /// Lightweight models for the community feed.
+library;
 
 class PostAuthor {
   final String id;

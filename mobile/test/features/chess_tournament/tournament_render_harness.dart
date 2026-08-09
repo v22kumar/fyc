@@ -62,7 +62,7 @@ class _Repo implements AuthRepository {
   dynamic noSuchMethod(Invocation i) => throw UnimplementedError();
 }
 
-UserModel _organiser() => UserModel(
+UserModel _organiser() => const UserModel(
       id: kOrganiserId,
       phoneNumber: '+919000000001',
       role: 'ADMIN',

@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        final home = ApiConstants.useAppShellV2 ? '/app' : '/home';
+        const home = ApiConstants.useAppShellV2 ? '/app' : '/home';
         String? target;
         // Signed in or not, the app opens into the app.
         //
@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                       top: -100.0 + 60 * math.cos(t * 0.40),
                       child: _SplashBlob(
                         size: 320,
-                        color: const Color(0xFF0F5132).withOpacity(0.55),
+                        color: const Color(0xFF0F5132).withValues(alpha: 0.55),
                       ),
                     ),
                     // Medium secondary blob — bottom-right
@@ -107,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                       bottom: 60.0 + 70 * math.cos(t * 0.48 + 0.6),
                       child: _SplashBlob(
                         size: 280,
-                        color: const Color(0xFF16A34A).withOpacity(0.32),
+                        color: const Color(0xFF16A34A).withValues(alpha: 0.32),
                       ),
                     ),
                     // Small gold accent — center-bottom
@@ -116,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen>
                       bottom: -60.0 + 80 * math.cos(t * 0.38 + 1.8),
                       child: _SplashBlob(
                         size: 220,
-                        color: const Color(0xFFD4AF37).withOpacity(0.08),
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
                       ),
                     ),
                   ],
@@ -154,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: const Color(0xFF16A34A)
-                                      .withOpacity(ringOpacity),
+                                      .withValues(alpha: ringOpacity),
                                   width: 1.5,
                                 ),
                               ),
@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                           // Transparent eagle mark — sits inside the pulsing ring.
                           'assets/images/fyc_mark.png',
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Text(
+                          errorBuilder: (_, __, ___) => const Text(
                             '🌱',
                             style: TextStyle(fontSize: 46),
                           ),
@@ -178,7 +178,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    SizedBox(height: 36),
+                    const SizedBox(height: 36),
 
                     // App name
                     Text(
@@ -191,20 +191,20 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
 
                     // Tamil tagline
                     Text(
                       'சமூக சேவையில் இணைவோம்',
                       style: TextStyle(
-                        color: AppColors.background.withOpacity(0.60),
+                        color: AppColors.background.withValues(alpha: 0.60),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,
                       ),
                     ),
 
-                    SizedBox(height: 60),
+                    const SizedBox(height: 60),
 
                     // Animated dots loader
                     AnimatedBuilder(
@@ -220,13 +220,13 @@ class _SplashScreenState extends State<SplashScreen>
                                     .clamp(0.25, 1.0);
                             return Container(
                               margin:
-                                  EdgeInsets.symmetric(horizontal: 4),
+                                  const EdgeInsets.symmetric(horizontal: 4),
                               width: 8,
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: const Color(0xFF16A34A)
-                                    .withOpacity(opacity),
+                                    .withValues(alpha: opacity),
                               ),
                             );
                           }),

@@ -129,27 +129,27 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(4)))),
-          SizedBox(height: 18),
-          Text(widget.fixture != null ? 'Edit Fixture' : 'Schedule Fixture', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          SizedBox(height: 16),
+          const SizedBox(height: 18),
+          Text(widget.fixture != null ? 'Edit Fixture' : 'Schedule Fixture', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 16),
           
           DropdownButtonFormField<String>(
-            value: _teamAId,
+            initialValue: _teamAId,
             hint: Text(trId('select_team_a')),
             items: widget.teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
             onChanged: (val) => setState(() => _teamAId = val),
             decoration: InputDecoration(labelText: trId('team_a_2')),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           
           DropdownButtonFormField<String>(
-            value: _teamBId,
+            initialValue: _teamBId,
             hint: Text(trId('select_team_b')),
             items: widget.teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
             onChanged: (val) => setState(() => _teamBId = val),
             decoration: InputDecoration(labelText: trId('team_b_2')),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           Row(
             children: [
@@ -160,7 +160,7 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
                   decoration: InputDecoration(labelText: trId('match_number')),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: InkWell(
                   onTap: _selectDateTime,
@@ -177,13 +177,13 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           TextField(
             controller: _venueCtrl,
             decoration: InputDecoration(labelText: trId('venue')),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           
           SizedBox(
             width: double.infinity,

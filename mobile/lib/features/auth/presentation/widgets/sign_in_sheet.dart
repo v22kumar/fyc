@@ -235,7 +235,7 @@ class _SignInSheetState extends State<_SignInSheet> {
                 SizedBox(height: DSSpacing.lg),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
                   onPressed: _busy ? null : _primaryAction,
                   child: _busy
                       ? const SizedBox(

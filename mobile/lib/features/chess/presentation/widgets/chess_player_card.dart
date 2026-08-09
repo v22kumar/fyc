@@ -49,21 +49,21 @@ class ChessPlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isActive
-            ? const Color(0xFF1E2D1F).withOpacity(0.85)
-            : const Color(0xFF14181A).withOpacity(0.70),
+            ? const Color(0xFF1E2D1F).withValues(alpha: 0.85)
+            : const Color(0xFF14181A).withValues(alpha: 0.70),
         border: Border(
           top: BorderSide(
             color: isActive
-                ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : AppColors.background.withOpacity(0.04),
+                ? const Color(0xFF4A7C59).withValues(alpha: 0.60)
+                : AppColors.background.withValues(alpha: 0.04),
           ),
           bottom: BorderSide(
             color: isActive
-                ? const Color(0xFF4A7C59).withOpacity(0.60)
-                : AppColors.background.withOpacity(0.04),
+                ? const Color(0xFF4A7C59).withValues(alpha: 0.60)
+                : AppColors.background.withValues(alpha: 0.04),
           ),
         ),
       ),
@@ -75,9 +75,9 @@ class ChessPlayerCard extends StatelessWidget {
             height: 38,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: avatarColor.withOpacity(isActive ? 1.0 : 0.55),
+              color: avatarColor.withValues(alpha: isActive ? 1.0 : 0.55),
               boxShadow: isActive
-                  ? [BoxShadow(color: avatarColor.withOpacity(0.40), blurRadius: 8)]
+                  ? [BoxShadow(color: avatarColor.withValues(alpha: 0.40), blurRadius: 8)]
                   : null,
             ),
             child: Center(
@@ -91,7 +91,7 @@ class ChessPlayerCard extends StatelessWidget {
                   ),
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
 
           // Name + rating + captured
           Expanded(
@@ -113,13 +113,13 @@ class ChessPlayerCard extends StatelessWidget {
                       ),
                     ),
                     if (isThinking) ...[
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       const _ThinkingDots(),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         '$thinkingText…',
                         style: TextStyle(
-                          color: AppColors.background.withOpacity(0.45),
+                          color: AppColors.background.withValues(alpha: 0.45),
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
                         ),
@@ -127,19 +127,19 @@ class ChessPlayerCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     if (rating != null)
                       Row(
                         children: [
-                          Icon(Icons.shield_outlined,
+                          const Icon(Icons.shield_outlined,
                               size: 11, color: Color(0xFF7C8A80)),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 3),
                           Text(
                             'Rating $rating',
                             style: TextStyle(
-                              color: AppColors.background.withOpacity(0.42),
+                              color: AppColors.background.withValues(alpha: 0.42),
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -147,13 +147,13 @@ class ChessPlayerCard extends StatelessWidget {
                         ],
                       ),
                     if (captured.isNotEmpty) ...[
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           captured.join(''),
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.background.withOpacity(0.50),
+                            color: AppColors.background.withValues(alpha: 0.50),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -168,7 +168,7 @@ class ChessPlayerCard extends StatelessWidget {
           // "Your turn" badge (only when active and no clock present)
           if (isActive && clock == null)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFF4A7C59),
                 borderRadius: BorderRadius.circular(20),
@@ -188,8 +188,8 @@ class ChessPlayerCard extends StatelessWidget {
           if (clock != null) ...[
             if (isActive)
               Container(
-                margin: EdgeInsets.only(right: 8),
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4A7C59),
                   borderRadius: BorderRadius.circular(20),
@@ -228,18 +228,18 @@ class _ClockChip extends StatelessWidget {
         ? (isLow ? const Color(0xFF8E1B1B) : const Color(0xFF2A3A2C))
         : const Color(0xFF1A1D1E);
     final fg = isActive
-        ? (isLow ? AppColors.danger.withOpacity(0.2) : AppColors.background)
+        ? (isLow ? AppColors.danger.withValues(alpha: 0.2) : AppColors.background)
         : const Color(0xFF7C8A80);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8),
         border: isActive
             ? Border.all(
                 color: isLow
-                    ? AppColors.danger.withOpacity(0.4)
-                    : const Color(0xFF4A7C59).withOpacity(0.7),
+                    ? AppColors.danger.withValues(alpha: 0.4)
+                    : const Color(0xFF4A7C59).withValues(alpha: 0.7),
                 width: 1)
             : null,
       ),
@@ -293,14 +293,14 @@ class _ThinkingDotsState extends State<_ThinkingDots>
             final val = ((_ctrl.value + offset) % 1.0);
             final opacity = val < 0.5 ? val * 2 : 2 - val * 2;
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 1),
               child: Container(
                 width: 4,
                 height: 4,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF4A7C59)
-                      .withOpacity(0.4 + opacity * 0.6),
+                      .withValues(alpha: 0.4 + opacity * 0.6),
                 ),
               ),
             );

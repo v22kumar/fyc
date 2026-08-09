@@ -35,7 +35,7 @@ class DSTabBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final selected = onBrand ? Colors.white : AppColors.primary;
     final unselected =
-        onBrand ? Colors.white.withOpacity(0.68) : AppColors.textSecondary;
+        onBrand ? Colors.white.withValues(alpha: 0.68) : AppColors.textSecondary;
 
     return SizedBox(
       height: 48,
@@ -80,7 +80,7 @@ class DSFilterRow extends StatelessWidget {
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
         stops: const [0, 0.92, 1],
-        colors: [bg, bg, bg.withOpacity(0)],
+        colors: [bg, bg, bg.withValues(alpha: 0)],
       ).createShader(rect),
       blendMode: BlendMode.dstIn,
       child: SingleChildScrollView(

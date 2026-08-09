@@ -23,7 +23,7 @@ Future<void> showShareLinkSheet(
     showDragHandle: true,
     builder: (ctx) {
       return Padding(
-        padding: EdgeInsets.fromLTRB(24, 4, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -32,9 +32,9 @@ Future<void> showShareLinkSheet(
               style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(14),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
@@ -55,24 +55,24 @@ Future<void> showShareLinkSheet(
                 ),
               ),
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             SelectableText(
               url,
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
               trId('scan_to_open'),
               textAlign: TextAlign.center,
-              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.withOpacity(0.6)),
+              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary.withValues(alpha: 0.6)),
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: Icon(Icons.copy, size: 18),
+                    icon: const Icon(Icons.copy, size: 18),
                     label: Text(trId('copy_link')),
                     onPressed: () async {
                       final messenger = ScaffoldMessenger.of(ctx);
@@ -83,10 +83,10 @@ Future<void> showShareLinkSheet(
                     },
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    icon: Icon(Icons.share, size: 18),
+                    icon: const Icon(Icons.share, size: 18),
                     label: Text(trId('share_link')),
                     onPressed: () => Share.share(url),
                   ),

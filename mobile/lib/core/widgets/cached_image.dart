@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'shimmer_box.dart';
 import 'shimmer_loader.dart';
 import '../services/device_profile_service.dart';
 import '../../service_locator.dart';

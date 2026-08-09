@@ -320,7 +320,7 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
     // never double-count. Order is preserved: later balls queue behind earlier
     // ones and the single flush loop drains them in sequence.
     if (offlineSafe) {
-      _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
+      _enqueueOffline(payload, predicted, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
       _flushOutbox(); // background — deliberately not awaited
       return;
     }
@@ -352,7 +352,7 @@ class CricketScoringCubit extends Cubit<CricketScoringState> {
         // it syncs in order when the connection returns. Anything else (or an
         // unsafe ball offline) rolls back so the scorer can retry.
         if (failure is NetworkFailure && offlineSafe) {
-          _enqueueOffline(payload, predicted!, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
+          _enqueueOffline(payload, predicted, _nextAfterSimple(players, runsBatter, extrasType, extrasRuns));
         } else {
           emit(s.copyWith(
             submitting: false,

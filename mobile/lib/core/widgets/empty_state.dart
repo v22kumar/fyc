@@ -28,13 +28,13 @@ class EmptyState extends StatelessWidget {
 
   Widget _glyph(BuildContext context) => icon != null
       ? Icon(icon, size: 56, color: AppColors.primary)
-      : Text(emoji, style: TextStyle(fontSize: 64));
+      : Text(emoji, style: const TextStyle(fontSize: 64));
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppTheme.paddingPage),
+        padding: const EdgeInsets.all(AppTheme.paddingPage),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +45,7 @@ class EmptyState extends StatelessWidget {
                 width: 170,
                 height: 170,
                 errorBuilder: (_, __, ___) => Container(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: context.cSurface,
                     shape: BoxShape.circle,
@@ -56,7 +56,7 @@ class EmptyState extends StatelessWidget {
               )
             else
               Container(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: context.cSurface,
                   shape: BoxShape.circle,
@@ -64,7 +64,7 @@ class EmptyState extends StatelessWidget {
                 ),
                 child: _glyph(context),
               ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
               title,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -72,7 +72,7 @@ class EmptyState extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -81,7 +81,7 @@ class EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (buttonText != null && onAction != null) ...[
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: 200,
                 child: ElevatedButton(

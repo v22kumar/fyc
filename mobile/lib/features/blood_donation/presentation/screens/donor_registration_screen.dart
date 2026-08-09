@@ -186,59 +186,59 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
           }
         },
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _InfoBanner(lang: lang),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 trId('select_blood_group'),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               _BloodGroupGrid(
                 groups: _groups,
                 selected: _selectedGroup,
                 onSelect: (g) => setState(() => _selectedGroup = g),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 trId('availability'),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _AvailabilityToggle(
                 value: _isAvailable,
                 lang: lang,
                 onChanged: (v) => setState(() => _isAvailable = v),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 trId('last_donation_date_optional'),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _DatePickerField(
                 date: _lastDonationDate,
                 lang: lang,
                 onTap: _pickDate,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               // How an emergency finds you by real distance rather than by the
               // name of a taluk. On by default because that is what registering
               // as a donor means; a single base point, never continuous
               // tracking; and the phone is not asked anything until submit.
               Container(
-                padding: EdgeInsets.all(14),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _shareLocation
                         ? AppColors.primary
-                        : AppColors.textSecondary.withOpacity(0.3),
+                        : AppColors.textSecondary.withValues(alpha: 0.3),
                   ),
-                  color: _shareLocation ? AppColors.primary.withOpacity(0.06) : null,
+                  color: _shareLocation ? AppColors.primary.withValues(alpha: 0.06) : null,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,22 +247,22 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                       children: [
                         Icon(Icons.my_location_rounded,
                             color: _shareLocation ? AppColors.primary : AppColors.textSecondary),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(trId('share_location_for_emergencies'),
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                         ),
                         if (_capturing)
-                          SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                         else
                           Switch(
                             value: _shareLocation,
-                            activeColor: AppColors.primary,
+                            activeThumbColor: AppColors.primary,
                             onChanged: (v) => _toggleLocation(v),
                           ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     // Says what each position actually costs the member.
                     // Turning it off is a real choice, so it is worth stating
                     // the consequence rather than leaving it to be discovered:
@@ -299,7 +299,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 36),
+              const SizedBox(height: 36),
               BlocBuilder<BloodDonorBloc, BloodDonorState>(
                 builder: (context, state) {
                   return SizedBox(
@@ -314,7 +314,7 @@ class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
                             )
                           : Text(
                               trId('register_as_donor_3'),
-                              style: TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 16),
                             ),
                     ),
                   );
@@ -336,20 +336,20 @@ class _InfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
+        color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Icon(Icons.info_outline, color: AppColors.primary),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               trId('your_phone_number_will_only_be_shared_wh'),
-              style: TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 13),
             ),
           ),
         ],
@@ -385,10 +385,10 @@ class _BloodGroupGrid extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.accent : AppColors.textSecondary.withOpacity(0.1),
+              color: isSelected ? AppColors.accent : AppColors.textSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : AppColors.textSecondary.withOpacity(0.3),
+                color: isSelected ? AppColors.accent : AppColors.textSecondary.withValues(alpha: 0.3),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -398,7 +398,7 @@ class _BloodGroupGrid extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.background : AppColors.textSecondary.withOpacity(0.7),
+                  color: isSelected ? AppColors.background : AppColors.textSecondary.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -423,10 +423,10 @@ class _AvailabilityToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -434,19 +434,19 @@ class _AvailabilityToggle extends StatelessWidget {
             value ? Icons.check_circle : Icons.cancel,
             color: value ? AppColors.success : AppColors.textSecondary,
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               value
                   ? trId('i_am_available_to_donate')
                   : trId('not_available_right_now'),
-              style: TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15),
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),
@@ -470,15 +470,15 @@ class _DatePickerField extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
+          border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: AppColors.textSecondary),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(
               date != null
                   ? '${date!.day}/${date!.month}/${date!.year}'

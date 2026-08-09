@@ -28,25 +28,25 @@ class AiNewsSummaryCard extends ConsumerWidget {
     return aiNewsState.when(
       data: (data) {
         final summary = _localizedSummary(data);
-        if (summary.isEmpty) return SizedBox.shrink();
+        if (summary.isEmpty) return const SizedBox.shrink();
         final topics = List<String>.from(data['trending_topics'] ?? const []);
         return _shell(context, child: _content(context, summary, topics));
       },
       loading: () => _shell(context, child: _skeleton(context)),
-      error: (error, stack) => SizedBox.shrink(),
+      error: (error, stack) => const SizedBox.shrink(),
     );
   }
 
   Widget _shell(BuildContext context, {required Widget child}) {
     return Container(
-      margin: EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-      padding: EdgeInsets.all(18.0),
+      margin: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+      padding: const EdgeInsets.all(18.0),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: context.cBorder),
         boxShadow: [
-          BoxShadow(color: AppColors.textPrimary.withOpacity(0.05), blurRadius: 14, offset: Offset(0, 4)),
+          BoxShadow(color: AppColors.textPrimary.withValues(alpha: 0.05), blurRadius: 14, offset: const Offset(0, 4)),
         ],
       ),
       child: child,
@@ -59,14 +59,14 @@ class AiNewsSummaryCard extends ConsumerWidget {
         Container(
           width: 34,
           height: 34,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(colors: [_accent1, _accent2]),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Icon(Icons.newspaper_rounded, size: 18, color: AppColors.background),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,11 +87,11 @@ class AiNewsSummaryCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _header(context),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         Text(summary,
             style: TextStyle(color: context.cText, fontSize: 14, height: 1.55, fontWeight: FontWeight.w500)),
         if (topics.isNotEmpty) ...[
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -105,14 +105,14 @@ class AiNewsSummaryCard extends ConsumerWidget {
   Widget _chip(String topic) {
     final label = topic.startsWith('#') ? topic : '#$topic';
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [_accent1.withOpacity(0.12), _accent2.withOpacity(0.12)]),
+        gradient: LinearGradient(colors: [_accent1.withValues(alpha: 0.12), _accent2.withValues(alpha: 0.12)]),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _accent1.withOpacity(0.30)),
+        border: Border.all(color: _accent1.withValues(alpha: 0.30)),
       ),
       child: Text(label,
-          style: TextStyle(fontSize: 12, color: _accent1, fontWeight: FontWeight.w700)),
+          style: const TextStyle(fontSize: 12, color: _accent1, fontWeight: FontWeight.w700)),
     );
   }
 
@@ -122,11 +122,11 @@ class AiNewsSummaryCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _header(context),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         AiSkeletonBar(widthFactor: 0.95, color: c),
-        SizedBox(height: 9),
+        const SizedBox(height: 9),
         AiSkeletonBar(widthFactor: 0.78, color: c),
-        SizedBox(height: 9),
+        const SizedBox(height: 9),
         AiSkeletonBar(widthFactor: 0.55, color: c),
       ],
     );

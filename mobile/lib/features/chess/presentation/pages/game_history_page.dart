@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/chess_remote_datasource.dart';
 import '../../data/models/chess_game_model.dart';
@@ -36,12 +35,12 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
         foregroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
         title: Text(
           trId('game_history'),
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: Column(
@@ -50,7 +49,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
           FutureBuilder<ChessStatsModel>(
             future: _statsFuture,
             builder: (context, snap) {
-              if (!snap.hasData) return SizedBox(height: 72);
+              if (!snap.hasData) return const SizedBox(height: 72);
               final s = snap.data!;
               return _StatsBanner(stats: s);
             },
@@ -73,7 +72,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                       children: [
                         Icon(Icons.wifi_off_rounded,
                             color: AppColors.textSecondary, size: 48),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(trId('could_not_load_games'),
                             style: TextStyle(color: AppColors.textSecondary)),
                       ],
@@ -86,14 +85,14 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('♟', style: TextStyle(fontSize: 48)),
-                        SizedBox(height: 12),
+                        const Text('♟', style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
                         Text(trId('no_games_yet'),
                             style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600)),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(trId('play_your_first_game'),
                             style: TextStyle(color: AppColors.textSecondary)),
                       ],
@@ -101,7 +100,7 @@ class _GameHistoryPageState extends State<GameHistoryPage> {
                   );
                 }
                 return ListView.builder(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   itemCount: games.length,
                   itemBuilder: (context, i) => _GameTile(game: games[i]),
                 );
@@ -122,16 +121,16 @@ class _StatsBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.darkBg,
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Column(
         children: [
           // Prestige title card
           PrestigeCard(stats: stats),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Win / Games / Rate row
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: AppTheme.gradientPrimary,
               borderRadius: BorderRadius.circular(16),
@@ -182,10 +181,10 @@ class _Stat extends StatelessWidget {
             style: TextStyle(
                 color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22)),
         Text(label,
-            style: TextStyle(color: Colors.white70, fontSize: 11)),
-        SizedBox(height: 2),
+            style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        const SizedBox(height: 2),
         Text(sub,
-            style: TextStyle(color: Colors.white54, fontSize: 10)),
+            style: const TextStyle(color: Colors.white54, fontSize: 10)),
       ],
     );
   }
@@ -218,7 +217,7 @@ class _GameTile extends StatelessWidget {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -226,7 +225,7 @@ class _GameTile extends StatelessWidget {
         boxShadow: AppTheme.cardShadow,
       ),
       child: Padding(
-        padding: EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
         child: Row(
           children: [
             // Result badge
@@ -234,17 +233,17 @@ class _GameTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: resultColor.withOpacity(0.1),
+                color: resultColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
                   game.resultEmoji,
-                  style: TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 20),
                 ),
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
 
             // Players + result
             Expanded(
@@ -261,7 +260,7 @@ class _GameTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     game.resultLabel,
                     style: TextStyle(
@@ -281,23 +280,23 @@ class _GameTile extends StatelessWidget {
                 Text(dateStr,
                     style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 11)),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   '${game.totalMoves} moves',
                   style: TextStyle(
                       color: AppColors.textSecondary, fontSize: 11),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 GestureDetector(
                   onTap: () => context.push('/chess/replay/${game.id}'),
                   child: Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3)),
+                          color: AppColors.primary.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       trId('replay'),

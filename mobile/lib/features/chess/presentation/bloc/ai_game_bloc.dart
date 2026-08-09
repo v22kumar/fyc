@@ -80,7 +80,7 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
       playerName: event.playerName,
       aiName: _aiName(event.depth),
       playerIsWhite: event.playerIsWhite,
-      moveSans: [],
+      moveSans: const [],
       isPlayerTurn: event.playerIsWhite, // white always moves first
       isThinking: !event.playerIsWhite,   // AI goes first if player is black
     ));
@@ -184,7 +184,9 @@ class AiGameBloc extends Bloc<AiGameEvent, AiGameState> {
     if (s is! AiGameInProgress ||
         s.moveSans.length < 2 ||
         !s.isPlayerTurn ||
-        s.isThinking) return;
+        s.isThinking) {
+      return;
+    }
 
     // Undo AI move + player move (2 half-moves)
     s.engine.undo();

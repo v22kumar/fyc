@@ -57,7 +57,7 @@ class _DSBadgeState extends State<DSBadge> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final style = _badgeStyles[widget.kind]!;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: style.color, borderRadius: BorderRadius.circular(DSRadius.chip)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -71,10 +71,10 @@ class _DSBadgeState extends State<DSBadge> with SingleTickerProviderStateMixin {
                 decoration: BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
               ),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
           ] else if (style.icon != null) ...[
             Icon(style.icon, size: 12, color: AppColors.background),
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
           ],
           Text(
             widget.labelOverride ?? style.label,

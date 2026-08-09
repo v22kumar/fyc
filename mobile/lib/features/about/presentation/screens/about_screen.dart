@@ -78,12 +78,12 @@ class AboutScreen extends StatelessWidget {
         children: [
           _Hero(lang: lang),
           Padding(
-            padding: EdgeInsets.all(AppTheme.paddingPage),
+            padding: const EdgeInsets.all(AppTheme.paddingPage),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SectionTitle(trId('our_mission')),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
                   trId('based_in_nagercoil_friends_youth_club_ha'),
                   style: TextStyle(
@@ -92,9 +92,9 @@ class AboutScreen extends StatelessWidget {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 28),
+                const SizedBox(height: 28),
                 _SectionTitle(trId('our_values')),
-                SizedBox(height: 14),
+                const SizedBox(height: 14),
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -106,9 +106,9 @@ class AboutScreen extends StatelessWidget {
                       .map((v) => _ValueCard(value: v, lang: lang))
                       .toList(),
                 ),
-                SizedBox(height: 28),
+                const SizedBox(height: 28),
                 _SectionTitle(trId('our_journey')),
-                SizedBox(height: 14),
+                const SizedBox(height: 14),
                 ..._milestones.asMap().entries.map(
                       (e) => _TimelineTile(
                         milestone: e.value,
@@ -116,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                         isLast: e.key == _milestones.length - 1,
                       ),
                     ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -134,7 +134,7 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryLight],
@@ -144,8 +144,8 @@ class _Hero extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text('🎗️', style: TextStyle(fontSize: 56)),
-          SizedBox(height: 12),
+          const Text('🎗️', style: TextStyle(fontSize: 56)),
+          const SizedBox(height: 12),
           Text(
             trId('about_fyc_2'),
             style: TextStyle(
@@ -154,10 +154,10 @@ class _Hero extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             trId('friends_youth_club_nagercoil'),
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
@@ -190,7 +190,7 @@ class _ValueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -199,8 +199,8 @@ class _ValueCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value.emoji, style: TextStyle(fontSize: 30)),
-          SizedBox(height: 8),
+          Text(value.emoji, style: const TextStyle(fontSize: 30)),
+          const SizedBox(height: 8),
           Text(
             tr(en: value.en, ta: value.ta, hi: value.hi, ml: value.ml),
             textAlign: TextAlign.center,
@@ -237,7 +237,7 @@ class _TimelineTile extends StatelessWidget {
             children: [
               Container(
                 width: 52,
-                padding: EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(20),
@@ -261,10 +261,10 @@ class _TimelineTile extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: 20, top: 2),
+              padding: const EdgeInsets.only(bottom: 20, top: 2),
               child: Text(
                 tr(
                     en: milestone.en,

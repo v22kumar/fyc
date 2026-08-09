@@ -157,7 +157,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
     return Container(
       decoration: BoxDecoration(
         color: context.cSurface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
       ),
       padding: EdgeInsets.only(
         left: 22,
@@ -174,27 +174,27 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: EdgeInsets.only(bottom: 18),
+                margin: const EdgeInsets.only(bottom: 18),
                 decoration: BoxDecoration(
                     color: context.cBorder,
                     borderRadius: BorderRadius.circular(2)),
               ),
             )
           else
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
           // Icon + title
           Row(
             children: [
               Container(
                 width: 56,
                 height: 56,
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: AppTheme.gradientPrimary,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                        color: AppColors.primary.withOpacity(0.35),
+                        color: AppColors.primary.withValues(alpha: 0.35),
                         blurRadius: 14,
                         offset: const Offset(0, 6)),
                   ],
@@ -203,7 +203,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                     errorBuilder: (_, __, ___) =>
                         Icon(Icons.system_update, color: AppColors.background)),
               ),
-              SizedBox(width: 14),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,12 +213,12 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: context.cText)),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Container(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('v${u.latestVersionName}',
@@ -232,7 +232,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             u.notes.trim().isNotEmpty
                 ? u.notes
@@ -240,7 +240,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             style: TextStyle(
                 fontSize: 13.5, height: 1.4, color: context.cTextSecondary),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           // Where it comes from. The app is not on the public Play Store, and
           // a member looking for it there and finding nothing has no way to
           // tell whether the prompt is real.
@@ -251,10 +251,10 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             style: TextStyle(
                 fontSize: 11.5, height: 1.35, color: context.cTextSecondary),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _buildAction(context, ta),
           if (u.mandatory && !_failedAtLeastOnce) ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Center(
               child: Text(
                 trId('this_update_is_required_to_continue'),
@@ -284,7 +284,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                     AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(tr(en: 'Downloading… $pct%', ta: 'பதிவிறக்குகிறது… $pct%', hi: 'डाउनलोड हो रहा है… $pct%', ml: 'ഡൗൺലോഡ് ചെയ്യുന്നു… $pct%'),
                 style: TextStyle(
                     fontSize: 12.5,
@@ -300,7 +300,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                 height: 18,
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: AppColors.primary)),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(trId('opening_installer'),
                 style: TextStyle(
                     fontSize: 13.5,
@@ -315,7 +315,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               trId('download_failed_try_via_your_browser_ins'),
               style: TextStyle(fontSize: 12.5, color: AppColors.accent),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             // The commonest cause, named. "App not installed" is Android
             // refusing to swap one signing key for another, and nothing about
             // that message tells a member what to do next.
@@ -323,11 +323,11 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               trId('install_may_be_blocked'),
               style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _primaryButton(
                 trId('download_in_browser'),
                 _fallbackBrowser),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             // Always present after a failure, mandatory or not. See
             // [_failedAtLeastOnce].
             TextButton(
@@ -345,7 +345,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             else
               _primaryButton(trId('update_now'), _startUpdate),
             if (!widget.update.mandatory) ...[
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               TextButton(
                 onPressed: _later,
                 child: Text(trId('later'),
@@ -366,7 +366,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: AppColors.primary.withOpacity(0.30),
+                color: AppColors.primary.withValues(alpha: 0.30),
                 blurRadius: 12,
                 offset: const Offset(0, 6)),
           ],
@@ -382,7 +382,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            padding: EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),

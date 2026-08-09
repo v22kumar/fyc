@@ -123,7 +123,7 @@ class _GoldContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -137,14 +137,14 @@ class _GoldContent extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
                   color: _goldSurface,
                   shape: BoxShape.circle,
                 ),
-                child: Text('🪙', style: TextStyle(fontSize: 18)),
+                child: const Text('🪙', style: TextStyle(fontSize: 18)),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,15 +170,15 @@ class _GoldContent extends StatelessWidget {
               ),
               Container(
                 padding:
-                    EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: _goldSurface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _goldColor.withOpacity(0.4)),
+                  border: Border.all(color: _goldColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   trId('live_3'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: _goldColor,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -188,7 +188,7 @@ class _GoldContent extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Price rows
           _PriceRow(
@@ -198,7 +198,7 @@ class _GoldContent extends StatelessWidget {
             isHighlight: true,
           ),
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: context.cBorder),
           ),
           _PriceRow(
@@ -247,7 +247,7 @@ class _PriceRow extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
@@ -278,7 +278,7 @@ class _GoldError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -288,14 +288,14 @@ class _GoldError extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
               color: _goldSurface,
               shape: BoxShape.circle,
             ),
-            child: Text('🪙', style: TextStyle(fontSize: 18)),
+            child: const Text('🪙', style: TextStyle(fontSize: 18)),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Text(
             trId('gold_price_unavailable'),
             style: TextStyle(
@@ -317,7 +317,7 @@ class _GoldSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),
@@ -334,8 +334,8 @@ class _GoldSkeleton extends StatelessWidget {
                 height: 34,
                 borderRadius: BorderRadius.circular(17),
               ),
-              SizedBox(width: 12),
-              Expanded(
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -347,11 +347,11 @@ class _GoldSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           const ShimmerBox(height: 36),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           const ShimmerBox(height: 1),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           const ShimmerBox(height: 36),
         ],
       ),

@@ -19,11 +19,11 @@ class PlayerInfoBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isActive
-            ? AppColors.primary.withOpacity(0.08)
-            : AppColors.darkBg.withOpacity(0.04),
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : AppColors.darkBg.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isActive ? AppColors.primaryLight : AppColors.border,
@@ -52,7 +52,7 @@ class PlayerInfoBar extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +77,7 @@ class PlayerInfoBar extends StatelessWidget {
           ),
           if (isActive)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(20),

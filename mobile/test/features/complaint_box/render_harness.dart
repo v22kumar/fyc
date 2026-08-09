@@ -188,7 +188,7 @@ final _mine = <ComplaintSummary>[
 ];
 
 Widget _list(List<ComplaintSummary> all,
-        {Brightness brightness = Brightness.light, bool showClosed = false}) =>
+        {Brightness brightness = Brightness.light}) =>
     MaterialApp(
       theme: brightness == Brightness.light
           ? AppTheme.lightFor('en')

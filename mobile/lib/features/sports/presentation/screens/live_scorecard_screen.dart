@@ -118,12 +118,12 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
       body: _error != null
           ? Center(child: Text(_error!, style: TextStyle(color: context.cTextSecondary)))
           : s == null
-              ? Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: _fetch,
                   child: ListView(
-                    padding: EdgeInsets.all(16),
-                    children: [_scoreCard(context, s), SizedBox(height: 16), _crease(context, s)],
+                    padding: const EdgeInsets.all(16),
+                    children: [_scoreCard(context, s), const SizedBox(height: 16), _crease(context, s)],
                   ),
                 ),
     );
@@ -141,7 +141,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
     }
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: AppTheme.gradientAurora,
         borderRadius: BorderRadius.circular(20),
@@ -151,33 +151,33 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
         children: [
           Text(
             tr(en: 'Innings ${s.innings}', ta: 'இன்னிங்ஸ் ${s.innings}', hi: 'पारी ${s.innings}', ml: 'ഇന്നിംഗ്സ് ${s.innings}'),
-            style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text('${s.score}/${s.wickets}',
               style: TextStyle(color: AppColors.background, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: -1)),
           Text('${trId('overs_2')} ${s.overs}.${s.balls}',
-              style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+              style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
           if (note != null) ...[
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(color: AppColors.background.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: AppColors.background.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
               child: Text(note, style: TextStyle(color: AppColors.background, fontSize: 12.5, fontWeight: FontWeight.w700)),
             ),
           ],
           if (s.recentBalls.isNotEmpty) ...[
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(trId('this_over'),
-                style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
-            SizedBox(height: 6),
+                style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               children: s.recentBalls.take(8).map((b) => Container(
                     width: 28,
                     height: 28,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(color: AppColors.background.withOpacity(0.16), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: AppColors.background.withValues(alpha: 0.16), shape: BoxShape.circle),
                     child: Text(b, style: TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w700)),
                   )).toList(),
             ),
@@ -199,7 +199,7 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
       children: [
         Text(trId('batting_2'),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cTextSecondary)),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         ...atCrease.map((b) => _row(context,
             name: '${b.name}${b.id == striker ? '  *' : ''}',
             value: '${b.runs} (${b.balls})',
@@ -207,10 +207,10 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
         if (atCrease.isEmpty)
           Text(trId('yet_to_bat'),
               style: TextStyle(color: context.cTextSecondary, fontSize: 12)),
-        SizedBox(height: 18),
+        const SizedBox(height: 18),
         Text(trId('bowling_2'),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cTextSecondary)),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         if (bowler != null)
           _row(context,
               name: bowler.name,
@@ -223,12 +223,12 @@ class _LiveScorecardScreenState extends State<LiveScorecardScreen> {
 
   Widget _row(BuildContext context, {required String name, required String value, bool highlight = false}) {
     return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: highlight ? AppColors.primary.withOpacity(0.4) : context.cBorder),
+        border: Border.all(color: highlight ? AppColors.primary.withValues(alpha: 0.4) : context.cBorder),
       ),
       child: Row(
         children: [

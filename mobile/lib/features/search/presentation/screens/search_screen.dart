@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/storage/local_storage.dart';
@@ -178,8 +177,8 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () => _openResult(category, item),
       child: Pressable(
       child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: context.cSurface,
           borderRadius: BorderRadius.circular(16),
@@ -192,12 +191,12 @@ class _SearchScreenState extends State<SearchScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(context.isDark ? 0.22 : 0.12),
+                color: iconColor.withValues(alpha: context.isDark ? 0.22 : 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 22),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +212,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (subtitle != null && subtitle.isNotEmpty) ...[
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: TextStyle(
@@ -236,13 +235,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildCategorySection(String category, List<dynamic> items) {
-    if (items.isEmpty) return SizedBox.shrink();
+    if (items.isEmpty) return const SizedBox.shrink();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 12, top: 8),
+          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
           child: Text(
             category.toUpperCase(),
             style: TextStyle(
@@ -254,7 +253,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         ...items.map((item) => _buildResultItem(category, item)),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -266,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return ListView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       children: [
         if (_recent.isNotEmpty) ...[
           _sectionLabel(trId('recent')),
@@ -275,7 +274,7 @@ class _SearchScreenState extends State<SearchScreen> {
             runSpacing: 8,
             children: _recent.map((q) => _chip(q, () => run(q))).toList(),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
         ],
         _sectionLabel(trId('suggested')),
         Wrap(
@@ -288,7 +287,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _sectionLabel(String text) => Padding(
-        padding: EdgeInsets.only(left: 4, bottom: 12),
+        padding: const EdgeInsets.only(left: 4, bottom: 12),
         child: Text(
           text,
           style: TextStyle(
@@ -304,7 +303,7 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: context.cSurface,
             borderRadius: BorderRadius.circular(20),
@@ -314,7 +313,7 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.search, size: 15, color: context.cTextSecondary),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(label, style: TextStyle(color: context.cText, fontSize: 13)),
             ],
           ),
@@ -338,7 +337,7 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(color: context.cText, fontSize: 16),
           decoration: InputDecoration(
             hintText: trId('search_people_events_news'),
-            hintStyle: TextStyle(color: context.cTextSecondary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: context.cTextSecondary.withValues(alpha: 0.5)),
             border: InputBorder.none,
           ),
         ),
@@ -363,7 +362,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: Text(trId('no_results_found'), style: TextStyle(color: context.cTextSecondary, fontSize: 16)),
                         )
                       : ListView(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           children: _results.entries
                               .map((entry) => _buildCategorySection(entry.key, entry.value))
                               .toList(),

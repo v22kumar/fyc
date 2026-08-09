@@ -125,7 +125,7 @@ class _AppShellV2State extends State<AppShellV2> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(trId('press_back_again_to_exit')),
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 2),
       ));
   }
 
@@ -176,14 +176,14 @@ class _AppShellV2State extends State<AppShellV2> {
                 foregroundColor: AppColors.background,
                 elevation: DSElevation.floating,
                 shape: const CircleBorder(),
-                child: Icon(Icons.add_rounded, size: 30),
+                child: const Icon(Icons.add_rounded, size: 30),
               ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
           backgroundColor: context.dsSurface,
-          indicatorColor: context.dsAccent.withOpacity(0.15),
+          indicatorColor: context.dsAccent.withValues(alpha: 0.15),
           destinations: [
             for (final (id, icon) in _tabMeta)
               NavigationDestination(
@@ -213,7 +213,7 @@ class _SosButton extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: Padding(
-          padding: EdgeInsets.all(14),
+          padding: const EdgeInsets.all(14),
           child: Icon(Icons.sos_rounded, color: AppColors.background, size: 22),
         ),
       ),

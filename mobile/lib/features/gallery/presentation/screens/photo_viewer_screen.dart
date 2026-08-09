@@ -25,7 +25,7 @@ class PhotoViewerScreen extends StatelessWidget {
         backgroundColor: AppColors.textPrimary,
         foregroundColor: AppColors.background,
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: const Icon(Icons.close),
           onPressed: () => context.go('/gallery'),
         ),
       ),
@@ -44,7 +44,7 @@ class PhotoViewerScreen extends StatelessWidget {
                     child: CircularProgressIndicator(color: AppColors.background),
                   );
                 },
-                errorBuilder: (context, error, stack) => Center(
+                errorBuilder: (context, error, stack) => const Center(
                   child: Icon(
                     Icons.broken_image_outlined,
                     color: Colors.white54,
@@ -59,8 +59,8 @@ class PhotoViewerScreen extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 32),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -80,16 +80,16 @@ class PhotoViewerScreen extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                   ],
                   Row(
                     children: [
-                      Icon(Icons.calendar_today,
+                      const Icon(Icons.calendar_today,
                           size: 13, color: Colors.white70),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         dateLabel,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),

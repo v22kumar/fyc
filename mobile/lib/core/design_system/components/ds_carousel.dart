@@ -81,14 +81,14 @@ class _DSCarouselState extends State<DSCarousel> {
           ),
         ),
         if (widget.itemCount > 1) ...[
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(widget.itemCount, (i) {
               final active = i == _index;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: EdgeInsets.symmetric(horizontal: 3),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
                 width: active ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(

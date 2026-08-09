@@ -33,7 +33,7 @@ void main() {
     testWidgets('disabled button (onPressed null) does not respond to tap', (tester) async {
       var tapped = false;
       await tester.pumpWidget(_wrap(
-        DSButton.filled(label: 'Disabled', onPressed: null),
+        const DSButton.filled(label: 'Disabled', onPressed: null),
       ));
       await tester.tap(find.byType(DSButton), warnIfMissed: false);
       await tester.pump();

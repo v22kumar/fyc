@@ -75,7 +75,7 @@ void main() {
     final storage = await _storageWith(signedIn: true);
     await storage.saveCachedUser(_arun.toJson());
 
-    final bloc = _bloc(_Repo(Right(_arun)), storage);
+    final bloc = _bloc(_Repo(const Right(_arun)), storage);
     addTearDown(bloc.close);
 
     final states = <AuthState>[];

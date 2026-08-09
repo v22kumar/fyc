@@ -80,34 +80,34 @@ class ShimmerCardList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       itemCount: itemCount,
       itemBuilder: (context, index) {
         return Container(
-          margin: EdgeInsets.only(bottom: 12),
-          padding: EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
+                children: [
                   ShimmerSkeleton(width: 80, height: 20, borderRadius: 10),
                   Spacer(),
                   ShimmerSkeleton(width: 60, height: 16, borderRadius: 8),
                 ],
               ),
               SizedBox(height: 12),
-              const ShimmerSkeleton(width: double.infinity, height: 16, borderRadius: 8),
+              ShimmerSkeleton(width: double.infinity, height: 16, borderRadius: 8),
               SizedBox(height: 8),
-              const ShimmerSkeleton(width: 180, height: 16, borderRadius: 8),
+              ShimmerSkeleton(width: 180, height: 16, borderRadius: 8),
               SizedBox(height: 16),
               Row(
-                children: const [
+                children: [
                   ShimmerSkeleton(width: 110, height: 14, borderRadius: 7),
                   Spacer(),
                   ShimmerSkeleton(width: 80, height: 32, borderRadius: 16),

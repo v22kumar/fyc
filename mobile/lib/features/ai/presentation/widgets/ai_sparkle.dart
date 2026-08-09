@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class AiSparkle extends StatefulWidget {
   final double size;
   final Color color;
-  AiSparkle({super.key, this.size = 18, Color? color}) 
+  const AiSparkle({super.key, this.size = 18, Color? color}) 
       : color = color ?? const Color(0xFFF2F4FA);
 
   @override
@@ -50,7 +50,7 @@ class _AiSparkleState extends State<AiSparkle>
 class AiSkeletonBar extends StatelessWidget {
   final double widthFactor;
   final Color color;
-  AiSkeletonBar({super.key, this.widthFactor = 1, Color? color})
+  const AiSkeletonBar({super.key, this.widthFactor = 1, Color? color})
       : color = color ?? const Color(0xFFF2F4FA);
 
   @override
@@ -61,7 +61,7 @@ class AiSkeletonBar extends StatelessWidget {
       child: Container(
         height: 11,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.22),
+          color: color.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(6),
         ),
       ),

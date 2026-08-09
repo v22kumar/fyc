@@ -140,7 +140,7 @@ class _ImportedDirectoryScreenState extends State<ImportedDirectoryScreen> {
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(DSSpacing.md),
-            color: AppColors.warning.withOpacity(0.10),
+            color: AppColors.warning.withValues(alpha: 0.10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -385,10 +385,10 @@ class _ContactRow extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 20,
-        backgroundColor: DSColors.danger.withOpacity(0.10),
+        backgroundColor: DSColors.danger.withValues(alpha: 0.10),
         child: Text(
           contact.bloodGroup,
-          style: TextStyle(
+          style: const TextStyle(
             color: DSColors.danger,
             fontWeight: FontWeight.w800,
             fontSize: 13,

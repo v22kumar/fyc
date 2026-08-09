@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/theme_manager.dart';
 import '../theme/app_theme.dart';
-import 'package:fyc_connect/core/design_system/tokens.dart';
 
 /// FYC Connect Design System v2 — tokens.
 ///
@@ -109,14 +108,14 @@ class DSElevation {
 
   static List<BoxShadow> shadowFor(double level, {bool dark = false}) {
     if (level <= surface) return const [];
-    final base = dark ? AppColors.textPrimary : Color(0xFF0A1128);
+    final base = dark ? AppColors.textPrimary : const Color(0xFF0A1128);
     if (level <= card) {
       return [
-        BoxShadow(color: base.withOpacity(dark ? 0.35 : 0.06), blurRadius: 16, offset: const Offset(0, 4)),
+        BoxShadow(color: base.withValues(alpha: dark ? 0.35 : 0.06), blurRadius: 16, offset: const Offset(0, 4)),
       ];
     }
     return [
-      BoxShadow(color: base.withOpacity(dark ? 0.45 : 0.14), blurRadius: 28, offset: const Offset(0, 10)),
+      BoxShadow(color: base.withValues(alpha: dark ? 0.45 : 0.14), blurRadius: 28, offset: const Offset(0, 10)),
     ];
   }
 }

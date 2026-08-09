@@ -1,7 +1,6 @@
 import 'package:fyc_connect/core/l10n/tr.dart';
 import 'dart:async';
 import 'core/services/error_reporter.dart';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,10 +45,13 @@ Future<void> _onBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp();
 }
 
-void _handleNotificationClick(BuildContext context, RemoteMessage message) {
+/// Routes straight through the router singleton — a notification tap has no
+/// meaningful BuildContext of its own, and fetching one from the navigator key
+/// only to call `context.go` was borrowing trouble across async gaps.
+void _handleNotificationClick(RemoteMessage message) {
   final route = message.data['route'];
   if (route != null && route.isNotEmpty) {
-    context.go(route);
+    appRouter.go(route);
   }
 }
 
@@ -176,10 +178,7 @@ class _FycAppState extends State<FycApp> {
         if (message != null && mounted) {
           // Delay to allow router to initialize
           Future.delayed(const Duration(milliseconds: 500), () {
-            final navContext = appRouter.routerDelegate.navigatorKey.currentContext;
-            if (mounted && navContext != null) {
-              _handleNotificationClick(navContext, message);
-            }
+            if (mounted) _handleNotificationClick(message);
           });
         }
       });
@@ -203,10 +202,7 @@ class _FycAppState extends State<FycApp> {
 
       // Background interaction handler
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        final navContext = appRouter.routerDelegate.navigatorKey.currentContext;
-        if (mounted && navContext != null) {
-          _handleNotificationClick(navContext, message);
-        }
+        if (mounted) _handleNotificationClick(message);
       });
 
       // Token Sync

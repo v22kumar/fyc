@@ -29,7 +29,7 @@ class NeedBloodPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final danger = DSColors.danger;
+    const danger = DSColors.danger;
     return Padding(
       padding: EdgeInsets.fromLTRB(
           DSSpacing.md, DSSpacing.md, DSSpacing.md, DSSpacing.sm),
@@ -50,7 +50,7 @@ class NeedBloodPanel extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(DSSpacing.sm),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: Colors.white.withValues(alpha: 0.18),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.emergency_rounded,
@@ -75,7 +75,7 @@ class NeedBloodPanel extends StatelessWidget {
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
-                                ?.copyWith(color: Colors.white.withOpacity(0.9)),
+                                ?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
                           ),
                         ],
                       ),

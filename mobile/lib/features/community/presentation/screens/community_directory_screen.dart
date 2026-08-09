@@ -52,7 +52,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                     .add(const CommunityFetchRequested());
               },
               child: ListView(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 children: state.profiles
                     .asMap()
                     .entries
@@ -70,9 +70,9 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(state.message),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context
                         .read<CommunityBloc>()
@@ -83,7 +83,7 @@ class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
               ),
             );
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -113,9 +113,9 @@ class _ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final desc = profile.displayDescription(lang);
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -125,7 +125,7 @@ class _ProfileCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     profile.displayName(lang),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -133,13 +133,13 @@ class _ProfileCard extends StatelessWidget {
                 ),
                 if (profile.isVerified)
                   Padding(
-                    padding: EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.only(left: 6),
                     child: Icon(Icons.verified,
                         size: 18, color: AppColors.primaryLight),
                   ),
               ],
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -162,22 +162,22 @@ class _ProfileCard extends StatelessWidget {
               ],
             ),
             if (desc != null && desc.isNotEmpty) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 desc,
-                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 13),
+                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 13),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
             if (profile.serviceArea != null &&
                 profile.serviceArea!.isNotEmpty) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(Icons.place_outlined,
                       size: 14, color: AppColors.textSecondary),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       profile.serviceArea!,
@@ -188,12 +188,12 @@ class _ProfileCard extends StatelessWidget {
               ),
             ],
             if (profile.hasPhone) ...[
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => _call(context),
-                  icon: Icon(Icons.call, size: 16),
+                  icon: const Icon(Icons.call, size: 16),
                   label: Text(trId('call')),
                 ),
               ),
@@ -213,11 +213,11 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         text,
@@ -239,21 +239,21 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('👥', style: TextStyle(fontSize: 64)),
-            SizedBox(height: 16),
+            const Text('👥', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
             Text(
               trId('no_local_services_listed_yet'),
               style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               trId('this_is_a_directory_of_tradespeople_and'),
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withOpacity(0.6)),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withValues(alpha: 0.6)),
               textAlign: TextAlign.center,
             ),
           ],

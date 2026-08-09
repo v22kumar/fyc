@@ -15,7 +15,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
   Stream<Either<Failure, List<AnnouncementEntity>>> fetchAnnouncementsStream({
     String? category,
   }) async* {
-    final boxName = 'announcements_cache';
+    const boxName = 'announcements_cache';
     Box? box;
     bool servedCache = false;
     try {
@@ -49,7 +49,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
       // background refresh fails (e.g. user went offline).
       if (!servedCache) yield Left(f);
     } catch (e) {
-      if (!servedCache) yield Left(ServerFailure());
+      if (!servedCache) yield const Left(ServerFailure());
     }
   }
 
@@ -63,7 +63,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
-      return Left(ServerFailure());
+      return const Left(ServerFailure());
     }
   }
 }

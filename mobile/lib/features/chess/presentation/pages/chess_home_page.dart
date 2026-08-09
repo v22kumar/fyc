@@ -105,36 +105,36 @@ class _ChessHomePageState extends State<ChessHomePage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeader(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildStatsRow(),
               ),
               if (_statsLoaded && games == 0) ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: _buildCtaBanner(),
                 ),
               ],
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               _buildPlayModes(),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildAspirantCard(),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildLiveGames(),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildBottomGrid(),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -150,7 +150,7 @@ class _ChessHomePageState extends State<ChessHomePage>
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -185,7 +185,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           ),
           // Content
           Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -198,7 +198,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.background.withOpacity(0.08),
+                          color: AppColors.background.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -210,18 +210,18 @@ class _ChessHomePageState extends State<ChessHomePage>
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Tagline
                 Text(
                   trId('think_plan_win'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: _kTextSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 1.0,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 // FYC
                 Text(
                   trId('fyc'),
@@ -244,16 +244,16 @@ class _ChessHomePageState extends State<ChessHomePage>
                     height: 1.1,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 // Tamil subtitle
-                Text(
+                const Text(
                   'சதுரங்க களம்',
                   style: TextStyle(
                     color: _kTextSecondary,
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(height: 14),
+                const SizedBox(height: 14),
                 // Rating badge
                 if (!_statsLoaded)
                   _buildUnratedBadge()
@@ -261,11 +261,11 @@ class _ChessHomePageState extends State<ChessHomePage>
                   _buildRatingBadge(rating)
                 else
                   _buildUnratedBadge(),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 // Sub-text
                 Text(
                   trId('play_games_to_earn_your_rating'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: _kTextSecondary,
                     fontSize: 12,
                   ),
@@ -280,24 +280,24 @@ class _ChessHomePageState extends State<ChessHomePage>
 
   Widget _buildUnratedBadge() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _kTextSecondary.withOpacity(0.5), width: 1),
+        border: Border.all(color: _kTextSecondary.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             trId('unrated'),
-            style: TextStyle(
+            style: const TextStyle(
               color: _kTextSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(width: 4),
-          Text(
+          const SizedBox(width: 4),
+          const Text(
             'ⓘ',
             style: TextStyle(
               color: _kTextSecondary,
@@ -311,29 +311,29 @@ class _ChessHomePageState extends State<ChessHomePage>
 
   Widget _buildRatingBadge(int rating) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _kGold.withOpacity(0.6), width: 1),
-        color: _kGold.withOpacity(0.08),
+        border: Border.all(color: _kGold.withValues(alpha: 0.6), width: 1),
+        color: _kGold.withValues(alpha: 0.08),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, color: _kGold, size: 14),
-          SizedBox(width: 5),
+          const Icon(Icons.star_rounded, color: _kGold, size: 14),
+          const SizedBox(width: 5),
           Text(
             '$rating',
-            style: TextStyle(
+            style: const TextStyle(
               color: _kGold,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             trId('rating'),
-            style: TextStyle(
+            style: const TextStyle(
               color: _kTextSecondary,
               fontSize: 12,
             ),
@@ -348,7 +348,7 @@ class _ChessHomePageState extends State<ChessHomePage>
   Widget _buildStatsRow() {
     final s = _stats;
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: _kCard,
         borderRadius: BorderRadius.circular(16),
@@ -409,14 +409,14 @@ class _ChessHomePageState extends State<ChessHomePage>
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.background.withOpacity(0.05),
+            color: AppColors.background.withValues(alpha: 0.05),
             shape: BoxShape.circle,
           ),
           child: Center(
-            child: Text(icon, style: TextStyle(fontSize: 14)),
+            child: Text(icon, style: const TextStyle(fontSize: 14)),
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Text(
           value,
           style: TextStyle(
@@ -425,12 +425,12 @@ class _ChessHomePageState extends State<ChessHomePage>
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: 2),
+        const SizedBox(height: 2),
         Text(
           label,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
+          style: const TextStyle(
             color: _kTextSecondary,
             fontSize: 9,
             fontWeight: FontWeight.w500,
@@ -448,7 +448,7 @@ class _ChessHomePageState extends State<ChessHomePage>
     return GestureDetector(
       onTap: () => _startLocalGame(context),
       child: Container(
-        padding: EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
@@ -456,7 +456,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             colors: [Color(0xFF0C3320), Color(0xFF052612)],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kGreen.withOpacity(0.4), width: 1),
+          border: Border.all(color: _kGreen.withValues(alpha: 0.4), width: 1),
         ),
         child: Row(
           children: [
@@ -472,10 +472,10 @@ class _ChessHomePageState extends State<ChessHomePage>
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     trId('play_your_first_game_and_unlock_your_pot'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: _kTextSecondary,
                       fontSize: 12,
                     ),
@@ -483,15 +483,15 @@ class _ChessHomePageState extends State<ChessHomePage>
                 ],
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _kGreen.withOpacity(0.2),
+                color: _kGreen.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_forward,
                 color: _kGreenLight,
                 size: 18,
@@ -510,13 +510,13 @@ class _ChessHomePageState extends State<ChessHomePage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 trId('play_modes'),
-                style: TextStyle(
+                style: const TextStyle(
                   color: _kTextSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -527,7 +527,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 onTap: () => context.push('/chess/challenge'),
                 child: Text(
                   trId('explore_all'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: _kGreenLight,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -537,12 +537,12 @@ class _ChessHomePageState extends State<ChessHomePage>
             ],
           ),
         ),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         SizedBox(
           height: 185,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
               _PlayModeCard(
                 title: trId('local_game'),
@@ -551,7 +551,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 gradientColors: const [Color(0xFF2D1B69), Color(0xFF1A0F3E)],
                 onTap: () => _startLocalGame(context),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('vs_computer'),
                 subtitle: 'Practice & Improve',
@@ -559,7 +559,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 gradientColors: const [Color(0xFF1E1B4B), Color(0xFF0F0E2A)],
                 onTap: () => _startAiGame(context),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('online_match'),
                 subtitle: 'Challenge members',
@@ -569,7 +569,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                 badgeColor: _kGreen,
                 onTap: () => context.push('/chess/challenge'),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               _PlayModeCard(
                 title: trId('daily_challenge'),
                 subtitle: 'Win rewards',
@@ -617,7 +617,7 @@ class _ChessHomePageState extends State<ChessHomePage>
     }
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _kCard,
         borderRadius: BorderRadius.circular(16),
@@ -633,13 +633,13 @@ class _ChessHomePageState extends State<ChessHomePage>
                 height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _kGreen.withOpacity(0.15),
-                  border: Border.all(color: _kGreen.withOpacity(0.5), width: 1.5),
+                  color: _kGreen.withValues(alpha: 0.15),
+                  border: Border.all(color: _kGreen.withValues(alpha: 0.5), width: 1.5),
                 ),
                 child: Center(
                   child: Text(
                     trId('fyc'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: _kGreenLight,
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
@@ -648,7 +648,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                   ),
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               // Title + subtitle + XP
               Expanded(
                 child: Column(
@@ -664,19 +664,19 @@ class _ChessHomePageState extends State<ChessHomePage>
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.edit, color: _kTextSecondary, size: 12),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.edit, color: _kTextSecondary, size: 12),
                       ],
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       rankTitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: _kTextSecondary,
                         fontSize: 12,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     // XP bar
                     Row(
                       children: [
@@ -685,16 +685,16 @@ class _ChessHomePageState extends State<ChessHomePage>
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: xp / 10.0,
-                              backgroundColor: AppColors.background.withOpacity(0.08),
+                              backgroundColor: AppColors.background.withValues(alpha: 0.08),
                               valueColor: const AlwaysStoppedAnimation<Color>(_kGreen),
                               minHeight: 5,
                             ),
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           '$xp/10',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: _kTextSecondary,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -705,33 +705,33 @@ class _ChessHomePageState extends State<ChessHomePage>
                   ],
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               // Rank badge
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.04),
+                  color: AppColors.background.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _kCardBorder),
                 ),
                 child: Center(
                   child: Text(
                     rankEmoji,
-                    style: TextStyle(fontSize: 22),
+                    style: const TextStyle(fontSize: 22),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           // Divider
           Container(height: 1, color: _kCardBorder),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           // Motivational quote
           Text(
             trId('every_master_was_once_a_beginner'),
-            style: TextStyle(
+            style: const TextStyle(
               color: _kTextSecondary,
               fontSize: 11,
               fontStyle: FontStyle.italic,
@@ -761,7 +761,7 @@ class _ChessHomePageState extends State<ChessHomePage>
           onTap: () => context.push('/chess/tournaments'),
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF0B6E4F), Color(0xFFD4AF37)],
@@ -772,8 +772,8 @@ class _ChessHomePageState extends State<ChessHomePage>
             ),
             child: Row(
               children: [
-                Text('🏟️', style: TextStyle(fontSize: 26)),
-                SizedBox(width: 12),
+                const Text('🏟️', style: TextStyle(fontSize: 26)),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,7 +781,7 @@ class _ChessHomePageState extends State<ChessHomePage>
                       Text(trId('chess_tournaments'),
                           style: TextStyle(color: AppColors.background, fontSize: 15, fontWeight: FontWeight.w800)),
                       Text(trId('compete_in_the_fyc_arena'),
-                          style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          style: const TextStyle(color: Colors.white70, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -790,7 +790,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             ),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Row(
       children: [
         Expanded(
@@ -801,7 +801,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             onTap: () => context.push('/chess/legacy'),
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(
           child: _BottomGridCard(
             icon: '📋',
@@ -810,7 +810,7 @@ class _ChessHomePageState extends State<ChessHomePage>
             onTap: () => context.push('/chess/history'),
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(
           child: _BottomGridCard(
             icon: '📖',
@@ -908,7 +908,7 @@ class _PlayModeCard extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.background.withOpacity(0.07),
+            color: AppColors.background.withValues(alpha: 0.07),
             width: 1,
           ),
         ),
@@ -938,12 +938,12 @@ class _PlayModeCard extends StatelessWidget {
                 top: 10,
                 left: 10,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: (badgeColor ?? _kGreen).withOpacity(0.2),
+                    color: (badgeColor ?? _kGreen).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: (badgeColor ?? _kGreen).withOpacity(0.6),
+                      color: (badgeColor ?? _kGreen).withValues(alpha: 0.6),
                       width: 1,
                     ),
                   ),
@@ -973,10 +973,10 @@ class _PlayModeCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: _kTextSecondary,
                       fontSize: 10,
                     ),
@@ -1011,7 +1011,7 @@ class _BottomGridCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
         decoration: BoxDecoration(
           color: _kCard,
           borderRadius: BorderRadius.circular(14),
@@ -1019,8 +1019,8 @@ class _BottomGridCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(icon, style: TextStyle(fontSize: 22)),
-            SizedBox(height: 6),
+            Text(icon, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
@@ -1030,10 +1030,10 @@ class _BottomGridCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(
+              style: const TextStyle(
                 color: _kTextSecondary,
                 fontSize: 10,
               ),
@@ -1073,7 +1073,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _kCard,
         borderRadius: BorderRadius.circular(16),
@@ -1094,7 +1094,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                   letterSpacing: 1.2,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               AnimatedBuilder(
                 animation: widget.pulseOpacity,
                 builder: (_, __) => Opacity(
@@ -1109,12 +1109,12 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                   ),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               GestureDetector(
                 onTap: () => context.push('/chess/challenge'),
                 child: Text(
                   trId('view_all_3'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: _kGreenLight,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1123,12 +1123,12 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
               ),
             ],
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           FutureBuilder<List<LiveGameModel>>(
             future: _future,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return SizedBox(
+                return const SizedBox(
                   height: 48,
                   child: Center(
                     child: SizedBox(
@@ -1146,14 +1146,14 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
               if (games.isEmpty) {
                 return Column(
                   children: [
-                    Text(
+                    const Text(
                       '♟',
                       style: TextStyle(
                         fontSize: 48,
                         color: _kTextSecondary,
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(
                       trId('no_live_games_right_now'),
                       style: TextStyle(
@@ -1162,22 +1162,22 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       trId('be_the_first_to_start_a_game_and_let_oth'),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: _kTextSecondary,
                         fontSize: 12,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 14),
+                    const SizedBox(height: 14),
                     OutlinedButton(
                       onPressed: widget.onStartGame,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _kGreenLight,
-                        side: BorderSide(color: _kGreen, width: 1.5),
-                        padding: EdgeInsets.symmetric(
+                        side: const BorderSide(color: _kGreen, width: 1.5),
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -1185,7 +1185,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
                       ),
                       child: Text(
                         trId('start_a_game'),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -1213,8 +1213,8 @@ class _LiveGameTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF0D1117),
         borderRadius: BorderRadius.circular(12),
@@ -1224,7 +1224,7 @@ class _LiveGameTile extends StatelessWidget {
         children: [
           Text('♟',
               style: TextStyle(fontSize: 20, color: AppColors.background)),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1239,23 +1239,23 @@ class _LiveGameTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Text(
                       '${game.ply} moves',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: _kTextSecondary,
                         fontSize: 12,
                       ),
                     ),
-                    SizedBox(width: 10),
-                    Icon(Icons.visibility,
+                    const SizedBox(width: 10),
+                    const Icon(Icons.visibility,
                         size: 12, color: _kTextSecondary),
-                    SizedBox(width: 3),
+                    const SizedBox(width: 3),
                     Text(
                       '${game.spectatorCount} watching',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: _kTextSecondary,
                         fontSize: 12,
                       ),
@@ -1265,15 +1265,15 @@ class _LiveGameTile extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => _watch(context, game),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kGreen,
               foregroundColor: AppColors.background,
               minimumSize: const Size(64, 34),
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              textStyle: TextStyle(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              textStyle: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -1338,7 +1338,7 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(trId('player_names'),
-          style: TextStyle(fontWeight: FontWeight.w700)),
+          style: const TextStyle(fontWeight: FontWeight.w700)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1346,15 +1346,15 @@ class _PlayerNamesDialogState extends State<_PlayerNamesDialog> {
             controller: _white,
             decoration: InputDecoration(
               labelText: trId('white'),
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: _black,
             decoration: InputDecoration(
               labelText: trId('black'),
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
         ],
@@ -1420,7 +1420,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(trId('vs_computer'),
-          style: TextStyle(fontWeight: FontWeight.w700)),
+          style: const TextStyle(fontWeight: FontWeight.w700)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1430,7 +1430,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   fontSize: 13)),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1442,7 +1442,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   padding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: selected ? AppColors.primary : AppColors.surface,
                     borderRadius: BorderRadius.circular(10),
@@ -1463,13 +1463,13 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
               );
             }),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Text(trId('play_as'),
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   fontSize: 13)),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -1479,7 +1479,7 @@ class _DifficultyDialogState extends State<_DifficultyDialog> {
                   onTap: () => setState(() => _playerIsWhite = true),
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: _ColorChip(
                   label: trId('black'),
@@ -1528,7 +1528,7 @@ class _ColorChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(10),

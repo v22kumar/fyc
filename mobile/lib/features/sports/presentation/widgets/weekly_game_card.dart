@@ -36,6 +36,9 @@ class WeeklyGameCard extends StatelessWidget {
   }
 
   void _confirmDeleteGame(BuildContext context) async {
+    // Captured before the dialog's async gap; the context may be gone after.
+    final messenger = ScaffoldMessenger.of(context);
+    final bloc = context.read<SportsBloc>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -56,13 +59,11 @@ class WeeklyGameCard extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      final messenger = ScaffoldMessenger.of(context);
       try {
         await sl<ApiClient>().dio.delete(
           '${ApiConstants.weeklyGames}/${game.id}',
         );
-        if (!context.mounted) return;
-        context.read<SportsBloc>().add(const SportsFetchRequested());
+        bloc.add(const SportsFetchRequested());
         messenger.showSnackBar(
           SnackBar(content: Text(trId('weekly_game_deleted_successfully')), backgroundColor: AppColors.success),
         );
@@ -82,18 +83,18 @@ class WeeklyGameCard extends StatelessWidget {
     final bool isLive = game.status == 'LIVE';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: context.cText.withOpacity(0.05),
+            color: context.cText.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           )
         ],
-        border: Border.all(color: context.cBorder.withOpacity(0.5)),
+        border: Border.all(color: context.cBorder.withValues(alpha: 0.5)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -101,51 +102,51 @@ class WeeklyGameCard extends StatelessWidget {
           children: [
             // Header
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.1),
-                    AppColors.primary.withOpacity(0.02),
+                    AppColors.primary.withValues(alpha: 0.1),
+                    AppColors.primary.withValues(alpha: 0.02),
                   ],
                 ),
                 border: Border(
-                  bottom: BorderSide(color: context.cBorder.withOpacity(0.3)),
+                  bottom: BorderSide(color: context.cBorder.withValues(alpha: 0.3)),
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: context.cSurface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.textPrimary.withOpacity(0.05),
+                          color: AppColors.textPrimary.withValues(alpha: 0.05),
                           blurRadius: 5,
                         ),
                       ],
                     ),
-                    child: Text('🔥', style: TextStyle(fontSize: 18)),
+                    child: const Text('🔥', style: TextStyle(fontSize: 18)),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           game.title,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             Icon(Icons.sports_cricket, size: 14, color: AppColors.primary),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               game.sport.toUpperCase(),
                               style: TextStyle(
@@ -167,7 +168,7 @@ class WeeklyGameCard extends StatelessWidget {
                       children: [
                         _StatusBadge(status: game.status),
                         if (isOrganizer || isAdmin) ...[
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           PopupMenuButton<String>(
                             icon: Icon(Icons.more_vert, size: 20, color: AppColors.textSecondary),
                             padding: EdgeInsets.zero,
@@ -184,9 +185,9 @@ class WeeklyGameCard extends StatelessWidget {
                                 value: 'edit',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.edit, size: 16),
-                                    SizedBox(width: 8),
-                                    Text(trId('edit_game'), style: TextStyle(fontSize: 13)),
+                                    const Icon(Icons.edit, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(trId('edit_game'), style: const TextStyle(fontSize: 13)),
                                   ],
                                 ),
                               ),
@@ -195,7 +196,7 @@ class WeeklyGameCard extends StatelessWidget {
                                 child: Row(
                                   children: [
                                     Icon(Icons.delete, color: AppColors.danger, size: 16),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(trId('delete'), style: TextStyle(color: AppColors.danger, fontSize: 13)),
                                   ],
                                 ),
@@ -212,13 +213,13 @@ class WeeklyGameCard extends StatelessWidget {
             
             // Body
             Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   Row(
                     children: [
                       Icon(Icons.calendar_today_outlined, size: 18, color: context.cTextSecondary),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         DateFormat('EEE, MMM d • h:mm a').format(game.scheduledAt),
                         style: TextStyle(
@@ -229,11 +230,11 @@ class WeeklyGameCard extends StatelessWidget {
                     ],
                   ),
                   if (game.venue != null) ...[
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(Icons.location_on_outlined, size: 18, color: context.cTextSecondary),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           game.venue!,
                           style: TextStyle(color: context.cTextSecondary),
@@ -242,26 +243,26 @@ class WeeklyGameCard extends StatelessWidget {
                     ),
                   ],
                   
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   
                   // Players
                   Row(
                     children: [
-                      Icon(Icons.group_outlined, size: 18),
-                      SizedBox(width: 8),
+                      const Icon(Icons.group_outlined, size: 18),
+                      const SizedBox(width: 8),
                       Text(
                         '${game.players.length} Players RSVP\'d',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
                   if (game.players.isNotEmpty) ...[
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: game.players.map((p) => Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: context.cSurface,
                           borderRadius: BorderRadius.circular(12),
@@ -275,7 +276,7 @@ class WeeklyGameCard extends StatelessWidget {
                     ),
                   ],
                   
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   
                   // Actions
                   if (isUpcoming)
@@ -296,16 +297,16 @@ class WeeklyGameCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 side: hasJoined ? BorderSide(color: context.cBorder) : BorderSide.none,
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
                               hasJoined ? 'You\'re In! ✅' : 'Join Game',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                             ),
                           ),
                         ),
                         if (isOrganizer) ...[
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           ElevatedButton(
                             onPressed: game.players.length >= 2
                                 ? () {
@@ -317,9 +318,9 @@ class WeeklyGameCard extends StatelessWidget {
                               foregroundColor: AppColors.background,
                               elevation: 4,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                             ),
-                            child: Text(trId('start_game'), style: TextStyle(fontWeight: FontWeight.w700)),
+                            child: Text(trId('start_game'), style: const TextStyle(fontWeight: FontWeight.w700)),
                           ),
                         ],
                       ],
@@ -333,11 +334,11 @@ class WeeklyGameCard extends StatelessWidget {
                           context.push('/sports/fixture/${game.fixtureId}/live');
                         },
                         icon: Icon(Icons.analytics, color: AppColors.background),
-                        label: Text(trId('view_live_score'), style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: Text(trId('view_live_score'), style: const TextStyle(fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.danger.withOpacity(0.6),
+                          backgroundColor: AppColors.danger.withValues(alpha: 0.6),
                           foregroundColor: AppColors.background,
-                          padding: EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -364,25 +365,25 @@ class _StatusBadge extends StatelessWidget {
     String label;
     
     if (status == 'LIVE') {
-      bg = AppColors.danger.withOpacity(0.15);
-      fg = AppColors.danger.withOpacity(0.7);
+      bg = AppColors.danger.withValues(alpha: 0.15);
+      fg = AppColors.danger.withValues(alpha: 0.7);
       label = 'LIVE';
     } else if (status == 'COMPLETED') {
-      bg = AppColors.success.withOpacity(0.15);
-      fg = AppColors.success.withOpacity(0.7);
+      bg = AppColors.success.withValues(alpha: 0.15);
+      fg = AppColors.success.withValues(alpha: 0.7);
       label = 'COMPLETED';
     } else {
-      bg = AppColors.primary.withOpacity(0.15);
+      bg = AppColors.primary.withValues(alpha: 0.15);
       fg = AppColors.primary;
       label = 'UPCOMING';
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: fg.withOpacity(0.3)),
+        border: Border.all(color: fg.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,

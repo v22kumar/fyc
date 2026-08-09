@@ -118,7 +118,7 @@ class BloodDonorBloc extends Bloc<BloodDonorEvent, BloodDonorState> {
     Emitter<BloodDonorState> emit,
   ) async {
     final seq = ++_seq;
-    emit(BloodDonorLoading());
+    emit(const BloodDonorLoading());
     final result = await _repository.donorsNear(
       lat: event.lat,
       lng: event.lng,

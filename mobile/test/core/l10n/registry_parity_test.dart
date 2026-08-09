@@ -69,7 +69,7 @@ void main() {
               .toSet();
           final got =
               placeholder.allMatches(mine).map((m) => m.group(1)!).toSet();
-          if (!want.difference(got).isEmpty) {
+          if (want.difference(got).isNotEmpty) {
             broken.add('${entry.key}: expected ${want.toList()}, got ${got.toList()}');
           }
         }

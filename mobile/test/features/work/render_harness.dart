@@ -58,27 +58,27 @@ Widget _frame(Widget child, {Brightness brightness = Brightness.light}) =>
       ),
     );
 
-final _worked = WorkListing(
+const _worked = WorkListing(
   id: 'l1', kind: ListingKind.person, displayName: 'Murugan A.',
   category: 'CARPENTRY', phone: '9443132365', area: 'Vadasery',
   about: 'interlock brick work, doors, window frames',
-  trust: const ListingTrust(
+  trust: ListingTrust(
       phoneVerified: true, jobsConfirmed: 9, isNew: false,
       memberSinceYear: 2022),
 );
 
-final _fresh = WorkListing(
+const _fresh = WorkListing(
   id: 'l2', kind: ListingKind.business, displayName: 'Selvam Furniture',
   category: 'CARPENTRY', phone: '9443100000', area: 'Putheri',
   about: 'Custom furniture and repairs',
   hours: '9am – 8pm',
-  trust: const ListingTrust(
+  trust: ListingTrust(
       phoneVerified: true, jobsConfirmed: 0, isNew: true,
       memberSinceYear: 2026),
 );
 
 class _Stub implements WorkRepository {
-  _Stub({this.cats = const [], this.results = const []});
+  _Stub({this.cats = const []}) : results = const [];
   final List<WorkCategoryCount> cats;
   final List<WorkListing> results;
 
@@ -98,7 +98,7 @@ class _Stub implements WorkRepository {
     String? about, String? area, String? whatsapp, String? address,
     String? hours,
   }) async =>
-      MyListing(listing: _fresh, viewCount: 0, isActive: true, isHidden: false);
+      const MyListing(listing: _fresh, viewCount: 0, isActive: true, isHidden: false);
   @override
   Future<List<MyListing>> mine() async => [];
   @override

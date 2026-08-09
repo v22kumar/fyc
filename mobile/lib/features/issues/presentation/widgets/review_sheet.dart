@@ -334,7 +334,7 @@ class _Warning extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.09),
+        color: AppColors.accent.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

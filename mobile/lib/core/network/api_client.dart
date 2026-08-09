@@ -66,7 +66,7 @@ class _AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final token = await _storage.getToken();
-    final orgId = await _storage.getOrgId() ?? ApiConstants.defaultOrgId;
+    final orgId = _storage.getOrgId() ?? ApiConstants.defaultOrgId;
 
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';

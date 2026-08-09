@@ -34,7 +34,7 @@ Widget _themedChip(BuildContext context, {required String label, required bool s
       onTap: onSelected,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           gradient: selected ? LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]) : null,
           color: selected ? null : (disabled ? const Color(0xFFF5F6FA) : const Color(0xFFEFF2FA)),
@@ -46,7 +46,7 @@ Widget _themedChip(BuildContext context, {required String label, required bool s
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: selected ? AppColors.background : (disabled ? Color(0xFFB4B9C8) : Color(0xFF0A1128)),
+            color: selected ? AppColors.background : (disabled ? const Color(0xFFB4B9C8) : const Color(0xFF0A1128)),
           ),
         ),
       ),
@@ -78,13 +78,13 @@ Widget _gradientCTA({required String label, required VoidCallback? onPressed, Ic
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: enabled
-                ? [BoxShadow(color: AppColors.primary.withOpacity(0.28), blurRadius: 16, offset: Offset(0, 6))]
+                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.28), blurRadius: 16, offset: const Offset(0, 6))]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[Icon(icon, color: AppColors.background, size: 19), SizedBox(width: 8)],
+              if (icon != null) ...[Icon(icon, color: AppColors.background, size: 19), const SizedBox(width: 8)],
               Text(label, style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15.5)),
             ],
           ),
@@ -140,21 +140,21 @@ Future<bool> _pickNextBowler(BuildContext context, CricketScoringLoaded state) a
         children: [
           Text(
             trId('over_complete_who_bowls_next'),
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF5B6478)),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           if (options.isNotEmpty)
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: options
                   .map((o) => ActionChip(
-                        label: Text(o.value, style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: Text(o.value, style: const TextStyle(fontWeight: FontWeight.w700)),
                         onPressed: () => Navigator.pop(ctx, (o.key, o.value)),
                       ))
                   .toList(),
             ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: nameCtrl,
             autofocus: options.isEmpty,
@@ -233,15 +233,15 @@ class _CricketScoringView extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           '${fixture.teamAName ?? "Team A"} vs ${fixture.teamBName ?? "Team B"}',
-          style: TextStyle(fontSize: 16),
+          style: const TextStyle(fontSize: 16),
         ),
         actions: [
           BlocBuilder<CricketScoringCubit, CricketScoringState>(
             builder: (context, state) {
               if (state is CricketScoringLoaded && !state.matchState.isCompleted) {
                 return TextButton.icon(
-                  icon: Icon(Icons.undo),
-                  label: Text(trId('undo_last_ball_2'), style: TextStyle(fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.undo),
+                  label: Text(trId('undo_last_ball_2'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
@@ -264,7 +264,7 @@ class _CricketScoringView extends StatelessWidget {
                   },
                 );
               }
-              return SizedBox.shrink();
+              return const SizedBox.shrink();
             },
           ),
         ],
@@ -295,7 +295,7 @@ class _CricketScoringView extends StatelessWidget {
         },
         builder: (context, state) {
           if (state is CricketScoringLoading || state is CricketScoringInitial) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
           if (state is CricketScoringFailure) {
             return _ErrorRetry(message: state.message);
@@ -314,12 +314,12 @@ class _CricketScoringView extends StatelessWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _ScoreHeader(ms: ms, teamName: _teamName),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         if (ms.isCompleted)
                           _ResultCard(ms: ms, teamName: _teamName)
                         else if (ms.isInningsBreak)
@@ -327,9 +327,9 @@ class _CricketScoringView extends StatelessWidget {
                         else if (state.players == null)
                           _ConfirmPlayersPanel(ms: ms)
                         else
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         _Scorecard(ms: ms),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         CricketOversHistory(ms: ms),
                       ],
                     ),
@@ -341,18 +341,18 @@ class _CricketScoringView extends StatelessWidget {
                       color: Theme.of(context).colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.textPrimary.withOpacity(0.05),
+                          color: AppColors.textPrimary.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, -4),
                         ),
                       ],
                     ),
-                    padding: EdgeInsets.only(left: 16, right: 16, bottom: 24, top: 12),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24, top: 12),
                     child: _ScoringPad(state: state),
                   ),
               ],
             );}
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -367,12 +367,12 @@ class _ErrorRetry extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(message, textAlign: TextAlign.center),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             FilledButton(
               onPressed: () => context.read<CricketScoringCubit>().load(),
               child: Text(trId('retry_6')),
@@ -432,12 +432,12 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
   Widget build(BuildContext context) {
     final f = widget.fixture;
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary, AppColors.primaryLight],
@@ -449,7 +449,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
             child: Column(
               children: [
                 Icon(Icons.emoji_events_rounded, color: AppColors.background, size: 34),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
                   _notes ??
                       trId('match_completed'),
@@ -459,24 +459,24 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
               ],
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _row(context, f.teamAName ?? 'Team A', _scoreA),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _row(context, f.teamBName ?? 'Team B', _scoreB),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: _edit,
-            icon: Icon(Icons.edit_rounded, size: 18),
+            icon: const Icon(Icons.edit_rounded, size: 18),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             label: Text(trId('edit_result'),
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF3E0),
               borderRadius: BorderRadius.circular(12),
@@ -484,12 +484,12 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
-                SizedBox(width: 8),
+                const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     trId('recorded_as_a_result_only_no_ball_by_bal'),
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
                   ),
                 ),
               ],
@@ -502,7 +502,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
 
   Widget _row(BuildContext context, String name, String? score) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: context.cSurface,
         borderRadius: BorderRadius.circular(12),
@@ -510,7 +510,7 @@ class _ResultOnlyViewState extends State<_ResultOnlyView> {
       ),
       child: Row(
         children: [
-          Expanded(child: Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)))),
+          Expanded(child: Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0A1128)))),
           Text(score ?? '—', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primary)),
         ],
       ),
@@ -657,30 +657,30 @@ class _EditResultSheetState extends State<_EditResultSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: context.cBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 20),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: Container(width: 40, height: 4, margin: EdgeInsets.only(bottom: 14),
+                child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(color: context.cBorder, borderRadius: BorderRadius.circular(2))),
               ),
               Text(trId('edit_result'),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.cText)),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _teamFields(context, f.teamAName ?? 'Team A', _runsA, _wktsA, _oversA, _ballsA),
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
               _teamFields(context, f.teamBName ?? 'Team B', _runsB, _wktsB, _oversB, _ballsB),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(trId('winner'),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: _winner,
+                initialValue: _winner,
                 isExpanded: true,
                 decoration: _dec(context),
                 items: [
@@ -690,19 +690,19 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                 ],
                 onChanged: (v) => setState(() => _winner = v ?? ''),
               ),
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
               Text(trId('result_note_optional'),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.cTextSecondary)),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               TextField(controller: _notes, decoration: _dec(context, hint: trId('e_g_won_by_8_wickets'))),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
-                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: EdgeInsets.symmetric(vertical: 15)),
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)),
                 child: _saving
                     ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                     : Text(trId('save_result'),
-                        style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -716,7 +716,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
         isDense: true,
         filled: true,
         fillColor: context.cSurface,
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.cBorder)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.cBorder)),
       );
@@ -727,16 +727,16 @@ class _EditResultSheetState extends State<_EditResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.cText)),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(flex: 3, child: _num(context, r, trId('runs'))),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(flex: 2, child: _num(context, w, trId('wkts'))),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(flex: 2, child: _num(context, o, trId('overs'))),
-            Padding(padding: EdgeInsets.only(bottom: 12), child: Text('.', style: TextStyle(fontWeight: FontWeight.w900, color: context.cTextSecondary))),
+            Padding(padding: const EdgeInsets.only(bottom: 12), child: Text('.', style: TextStyle(fontWeight: FontWeight.w900, color: context.cTextSecondary))),
             Expanded(flex: 1, child: _num(context, b, trId('ball'))),
           ],
         ),
@@ -749,7 +749,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 10, color: context.cTextSecondary)),
-        SizedBox(height: 3),
+        const SizedBox(height: 3),
         TextField(
           controller: c,
           keyboardType: TextInputType.number,
@@ -802,17 +802,17 @@ class _TossSetupFormState extends State<_TossSetupForm> {
   Widget build(BuildContext context) {
     final f = widget.fixture;
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             trId('start_match'),
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
           ),
-          SizedBox(height: 18),
-          Text(trId('toss_won_by'), style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
-          SizedBox(height: 8),
+          const SizedBox(height: 18),
+          Text(trId('toss_won_by'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
@@ -826,9 +826,9 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                   onSelected: () => setState(() => _tossWinnerId = f.teamBId)),
             ],
           ),
-          SizedBox(height: 18),
-          Text(trId('decision'), style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
-          SizedBox(height: 8),
+          const SizedBox(height: 18),
+          Text(trId('decision'), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
@@ -842,7 +842,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                   onSelected: () => setState(() => _decision = 'BOWL')),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _overs,
             keyboardType: TextInputType.number,
@@ -852,7 +852,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: _striker,
             decoration: InputDecoration(
@@ -861,7 +861,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: _nonStriker,
             decoration: InputDecoration(
@@ -870,7 +870,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: _bowler,
             decoration: InputDecoration(
@@ -879,7 +879,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFCBD2E0)),
@@ -888,23 +888,23 @@ class _TossSetupFormState extends State<_TossSetupForm> {
             child: SwitchListTile(
               value: _villageWides,
               onChanged: (v) => setState(() => _villageWides = v),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               title: Text(
                 trId('2_free_wides_per_over'),
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               subtitle: Text(
                 trId('village_rule_first_two_wides_in_an_over'),
-                style: TextStyle(fontSize: 11.5),
+                style: const TextStyle(fontSize: 11.5),
               ),
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           if (!_valid)
             Container(
-              padding: EdgeInsets.all(12),
-              margin: EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(8),
@@ -916,7 +916,7 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                   Row(
                     children: [
                       Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         trId('complete_match_setup_first'),
                         style: TextStyle(
@@ -926,14 +926,14 @@ class _TossSetupFormState extends State<_TossSetupForm> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
-                  if (_tossWinnerId == null) Text(trId('select_toss_winner'), style: TextStyle(fontSize: 13)),
-                  if (int.tryParse(_overs.text) == null || int.parse(_overs.text) <= 0) Text(trId('enter_valid_overs'), style: TextStyle(fontSize: 13)),
-                  if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: TextStyle(fontSize: 13)),
-                  if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: TextStyle(fontSize: 13)),
-                  if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: TextStyle(fontSize: 13)),
+                  const SizedBox(height: 8),
+                  if (_tossWinnerId == null) Text(trId('select_toss_winner'), style: const TextStyle(fontSize: 13)),
+                  if (int.tryParse(_overs.text) == null || int.parse(_overs.text) <= 0) Text(trId('enter_valid_overs'), style: const TextStyle(fontSize: 13)),
+                  if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: const TextStyle(fontSize: 13)),
+                  if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: const TextStyle(fontSize: 13)),
+                  if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: const TextStyle(fontSize: 13)),
                   if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
-                    Text(trId('striker_and_non_striker_must_be_differen'), style: TextStyle(fontSize: 13)),
+                    Text(trId('striker_and_non_striker_must_be_differen'), style: const TextStyle(fontSize: 13)),
                 ],
               ),
             ),
@@ -981,10 +981,10 @@ class _ScoreHeader extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.32), blurRadius: 26, offset: Offset(0, 12)),
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.32), blurRadius: 26, offset: const Offset(0, 12)),
         ],
       ),
-      padding: EdgeInsets.symmetric(vertical: 26, horizontal: 18),
+      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
       child: Column(
         children: [
           Row(
@@ -993,59 +993,59 @@ class _ScoreHeader extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(color: Color(0xFF7DF3D2), shape: BoxShape.circle),
+                decoration: const BoxDecoration(color: Color(0xFF7DF3D2), shape: BoxShape.circle),
               ),
-              SizedBox(width: 9),
+              const SizedBox(width: 9),
               Text(
                 teamName(ms.battingTeamId).toUpperCase(),
                 style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.4),
               ),
             ],
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Text(
             '${ms.score}/${ms.wickets}',
             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w900, fontSize: 72, height: 1.0, letterSpacing: -1.5),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Overs ${ms.oversText}',
                   style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w600, fontSize: 15)),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Text('CRR ${rr.toStringAsFixed(1)}',
-                  style: TextStyle(color: AppColors.background.withOpacity(0.75), fontWeight: FontWeight.w600, fontSize: 15)),
+                  style: TextStyle(color: AppColors.background.withValues(alpha: 0.75), fontWeight: FontWeight.w600, fontSize: 15)),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.background.withOpacity(0.18),
+              color: AppColors.background.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text('Innings ${ms.innings}',
                 style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 13)),
           ),
           if (ms.target != null && !ms.isCompleted) ...[
-            SizedBox(height: 16),
-            Divider(color: AppColors.background.withOpacity(0.2)),
-            SizedBox(height: 8),
+            const SizedBox(height: 16),
+            Divider(color: AppColors.background.withValues(alpha: 0.2)),
+            const SizedBox(height: 8),
             Text('Need ${needed! > 0 ? needed : 0} runs',
-                style: TextStyle(color: Color(0xFFFFD37A), fontWeight: FontWeight.bold, fontSize: 20)),
-            SizedBox(height: 4),
+                style: const TextStyle(color: Color(0xFFFFD37A), fontWeight: FontWeight.bold, fontSize: 20)),
+            const SizedBox(height: 4),
             Text('Target ${ms.target}',
-                style: TextStyle(color: AppColors.background.withOpacity(0.75), fontSize: 13.5)),
+                style: TextStyle(color: AppColors.background.withValues(alpha: 0.75), fontSize: 13.5)),
           ],
           if (ms.recentBalls.isNotEmpty) ...[
-            SizedBox(height: 16),
-            Divider(color: AppColors.background.withOpacity(0.2)),
-            SizedBox(height: 8),
+            const SizedBox(height: 16),
+            Divider(color: AppColors.background.withValues(alpha: 0.2)),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: ms.recentBalls.skip(ms.recentBalls.length > 8 ? ms.recentBalls.length - 8 : 0).map((b) => Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Container(
                   width: 32,
                   height: 32,
@@ -1053,7 +1053,7 @@ class _ScoreHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: b == 'W'
                         ? const Color(0xFFF43F5E)
-                        : (b.contains('w') || b.contains('n') ? Color(0xFFF59E0B) : AppColors.background.withOpacity(0.16)),
+                        : (b.contains('w') || b.contains('n') ? const Color(0xFFF59E0B) : AppColors.background.withValues(alpha: 0.16)),
                     shape: BoxShape.circle,
                   ),
                   child: Text(b,
@@ -1108,11 +1108,11 @@ class _ResultCard extends StatelessWidget {
     return Card(
       color: theme.colorScheme.primaryContainer,
       child: Padding(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(Icons.emoji_events, size: 40),
-            SizedBox(height: 8),
+            const Icon(Icons.emoji_events, size: 40),
+            const SizedBox(height: 8),
             Text(
               _resultText(),
               textAlign: TextAlign.center,
@@ -1163,7 +1163,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
     final chasing = widget.teamName(widget.ms.bowlingTeamId);
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1172,7 +1172,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               tr(
                 en: '$chasing needs ${widget.ms.score + 1} to win',
@@ -1182,7 +1182,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: _striker,
               decoration: InputDecoration(
@@ -1191,7 +1191,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
               controller: _nonStriker,
               decoration: InputDecoration(
@@ -1200,7 +1200,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
               controller: _bowler,
               decoration: InputDecoration(
@@ -1210,11 +1210,11 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
               onChanged: (_) => setState(() {}),
             ),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (!_valid)
               Container(
-                padding: EdgeInsets.all(12),
-                margin: EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.errorContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -1226,7 +1226,7 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                     Row(
                       children: [
                         Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           trId('complete_match_setup_first'),
                           style: TextStyle(
@@ -1236,12 +1236,12 @@ class _SecondInningsFormState extends State<_SecondInningsForm> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
-                    if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: TextStyle(fontSize: 13)),
-                    if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: TextStyle(fontSize: 13)),
-                    if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: TextStyle(fontSize: 13)),
+                    const SizedBox(height: 8),
+                    if (_striker.text.trim().isEmpty) Text(trId('select_opening_striker'), style: const TextStyle(fontSize: 13)),
+                    if (_nonStriker.text.trim().isEmpty) Text(trId('select_opening_non_striker'), style: const TextStyle(fontSize: 13)),
+                    if (_bowler.text.trim().isEmpty) Text(trId('select_opening_bowler'), style: const TextStyle(fontSize: 13)),
                     if (_striker.text.trim().isNotEmpty && _sameName(_striker.text, _nonStriker.text))
-                      Text(trId('striker_and_non_striker_must_be_differen'), style: TextStyle(fontSize: 13)),
+                      Text(trId('striker_and_non_striker_must_be_differen'), style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
@@ -1318,7 +1318,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
   @override
   Widget build(BuildContext context) {
     if (_loadingSquads) {
-      return Card(
+      return const Card(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Center(child: CircularProgressIndicator()),
@@ -1354,15 +1354,15 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
         void Function(String) onPick, {Set<String> disabled = const {}}) {
       if (options.isEmpty) {
         return Container(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(10)),
           child: Row(children: [
-            Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFB45309)),
-            SizedBox(width: 8),
+            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFB45309)),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 trId('no_player_found_tap_undo_last_ball_above'),
-                style: TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
               ),
             ),
           ]),
@@ -1383,52 +1383,52 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
 
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Color(0xFFE3E7F0))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
-        padding: EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.sports_cricket_rounded, color: AppColors.background, size: 18),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   trId('confirm_current_players'),
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1128)),
                 ),
               ),
             ]),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(trId('striker'),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
-            SizedBox(height: 6),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(battingOptions, _strikerId, (id) => _strikerId = id,
                 disabled: {if (_nonStrikerId != null) _nonStrikerId!}),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(trId('non_striker'),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
-            SizedBox(height: 6),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(battingOptions, _nonStrikerId, (id) => _nonStrikerId = id,
                 disabled: {if (_strikerId != null) _strikerId!}),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(trId('bowler'),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
-            SizedBox(height: 6),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF5B6478))),
+            const SizedBox(height: 6),
             chips(bowlingOptions, _bowlerId, (id) => _bowlerId = id),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (_strikerId == null || _nonStrikerId == null || _bowlerId == null || _strikerId == _nonStrikerId)
               Container(
-                padding: EdgeInsets.all(12),
-                margin: EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.errorContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -1440,7 +1440,7 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                     Row(
                       children: [
                         Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error, size: 20),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           trId('complete_match_setup_first'),
                           style: TextStyle(
@@ -1450,11 +1450,11 @@ class _ConfirmPlayersPanelState extends State<_ConfirmPlayersPanel> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
-                    if (_strikerId == null) Text(trId('select_striker'), style: TextStyle(fontSize: 13)),
-                    if (_nonStrikerId == null) Text(trId('select_non_striker'), style: TextStyle(fontSize: 13)),
-                    if (_strikerId != null && _strikerId == _nonStrikerId) Text(trId('striker_and_non_striker_must_be_differen_2'), style: TextStyle(fontSize: 13)),
-                    if (_bowlerId == null) Text(trId('select_bowler'), style: TextStyle(fontSize: 13)),
+                    const SizedBox(height: 8),
+                    if (_strikerId == null) Text(trId('select_striker'), style: const TextStyle(fontSize: 13)),
+                    if (_nonStrikerId == null) Text(trId('select_non_striker'), style: const TextStyle(fontSize: 13)),
+                    if (_strikerId != null && _strikerId == _nonStrikerId) Text(trId('striker_and_non_striker_must_be_differen_2'), style: const TextStyle(fontSize: 13)),
+                    if (_bowlerId == null) Text(trId('select_bowler'), style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
@@ -1513,11 +1513,11 @@ class _ScoringPad extends StatelessWidget {
               ? const LinearProgressIndicator(minHeight: 3, backgroundColor: Colors.transparent)
               : null,
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         if (state.pendingSync > 0)
           Container(
-            margin: EdgeInsets.only(bottom: 12),
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF3E0),
               borderRadius: BorderRadius.circular(12),
@@ -1525,8 +1525,8 @@ class _ScoringPad extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.cloud_off_rounded, color: Color(0xFFB45309), size: 19),
-                SizedBox(width: 10),
+                const Icon(Icons.cloud_off_rounded, color: Color(0xFFB45309), size: 19),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     tr(
@@ -1535,7 +1535,7 @@ class _ScoringPad extends StatelessWidget {
                       hi: 'ऑफ़लाइन — ${state.pendingSync} गेंद फिर से कनेक्ट होने पर सिंक होंगी',
                       ml: 'ഓഫ്‌ലൈൻ — ${state.pendingSync} ബോൾ വീണ്ടും കണക്റ്റ് ചെയ്യുമ്പോൾ സിങ്ക് ചെയ്യും',
                     ),
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF92400E)),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF92400E)),
                   ),
                 ),
               ],
@@ -1553,7 +1553,7 @@ class _ScoringPad extends StatelessWidget {
                     TextSpan(text: ' ${strikerStats.name} *    ${strikerStats.runs}(${strikerStats.balls})'),
                   ]),
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text.rich(TextSpan(children: [
                     WidgetSpan(alignment: PlaceholderAlignment.middle, child: Icon(Icons.sports_cricket_rounded, size: 15, color: theme.colorScheme.onSurfaceVariant)),
                     TextSpan(text: ' ${nonStrikerStats.name}      ${nonStrikerStats.runs}(${nonStrikerStats.balls})'),
@@ -1563,11 +1563,11 @@ class _ScoringPad extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.swap_vert, size: 28),
+              icon: const Icon(Icons.swap_vert, size: 28),
               onPressed: cubit.swapStrike,
               style: IconButton.styleFrom(backgroundColor: theme.colorScheme.secondaryContainer),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -1576,7 +1576,7 @@ class _ScoringPad extends StatelessWidget {
                     WidgetSpan(alignment: PlaceholderAlignment.middle, child: Icon(Icons.my_location_rounded, size: 15, color: theme.colorScheme.primary)),
                     TextSpan(text: ' ${bowlerStats.name}'),
                   ]), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text('${bowlerStats.oversText}-${bowlerStats.runs}-${bowlerStats.wickets}',
                       style: theme.textTheme.bodyMedium),
                 ],
@@ -1586,7 +1586,7 @@ class _ScoringPad extends StatelessWidget {
         ),
         if (state.needsNewBowler)
           Padding(
-            padding: EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(top: 12),
             child: Pressable(
               child: Material(
                 color: Colors.transparent,
@@ -1594,7 +1594,7 @@ class _ScoringPad extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   onTap: () => _pickNextBowler(context, state),
                   child: Container(
-                    padding: EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF3E0),
                       borderRadius: BorderRadius.circular(12),
@@ -1602,12 +1602,12 @@ class _ScoringPad extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.sports_baseball_rounded, color: Color(0xFFB45309), size: 20),
-                        SizedBox(width: 10),
+                        const Icon(Icons.sports_baseball_rounded, color: Color(0xFFB45309), size: 20),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             trId('over_complete_tap_to_pick_the_next_bowle'),
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF92400E)),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF92400E)),
                           ),
                         ),
                       ],
@@ -1617,7 +1617,7 @@ class _ScoringPad extends StatelessWidget {
               ),
             ),
           ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         // Ball controls
         Row(
           children: [0, 1, 2, 3, 4, 6].map((runs) {
@@ -1632,7 +1632,7 @@ class _ScoringPad extends StatelessWidget {
                         : const [Color(0xFF14B891), Color(0xFF0F9B7E)];
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: Pressable(
                   child: Material(
                     color: Colors.transparent,
@@ -1645,7 +1645,7 @@ class _ScoringPad extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(colors: grad, begin: Alignment.topLeft, end: Alignment.bottomRight),
                           borderRadius: BorderRadius.circular(14),
-                          boxShadow: [BoxShadow(color: grad.last.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                          boxShadow: [BoxShadow(color: grad.last.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
                         ),
                         child: Text('$runs', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: AppColors.background)),
                       ),
@@ -1656,22 +1656,22 @@ class _ScoringPad extends StatelessWidget {
             );
           }).toList(),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Row(
           children: [
             // Every extra opens a run picker so it can carry runs — including a
             // free (village) wide that was still run on, and a bare "0nb".
             _actionBtn(context, state.matchState.nextWideIsFree ? 'Wide (free)' : 'Wide',
                 () => _extrasSheet(context, 'WIDE')),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             _actionBtn(context, 'No Ball', () => _extrasSheet(context, 'NO_BALL')),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             _actionBtn(context, 'Bye', () => _extrasSheet(context, 'BYE')),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             _actionBtn(context, 'Leg Bye', () => _extrasSheet(context, 'LEG_BYE')),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         SizedBox(
           height: 56,
           child: Pressable(
@@ -1683,7 +1683,7 @@ class _ScoringPad extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () => _wicketDialog(context),
-              child: Text(trId('wicket_3'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+              child: Text(trId('wicket_3'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
         ),
@@ -1699,11 +1699,11 @@ class _ScoringPad extends StatelessWidget {
             padding: EdgeInsets.zero,
             minimumSize: const Size(0, 52),
             foregroundColor: const Color(0xFF0A1128),
-            side: BorderSide(color: Color(0xFFCBD2E0), width: 1.4),
+            side: const BorderSide(color: Color(0xFFCBD2E0), width: 1.4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: onTap,
-          child: Text(label, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
+          child: Text(label, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
         ),
       ),
     );
@@ -1744,17 +1744,17 @@ class _ScoringPad extends StatelessWidget {
       backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 14, 20, 28),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFD7DCEA), borderRadius: BorderRadius.circular(4)))),
-            SizedBox(height: 16),
-            Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0A1128))),
-            SizedBox(height: 4),
-            Text(hint, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0A1128))),
+            const SizedBox(height: 4),
+            Text(hint, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF5B6478))),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -1772,7 +1772,7 @@ class _ScoringPad extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                                 borderRadius: BorderRadius.circular(14),
-                                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: Offset(0, 3))],
+                                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 3))],
                               ),
                               child: Text('$r', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.background)),
                             ),
@@ -1810,7 +1810,7 @@ class _ScoringPad extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DropdownButtonFormField<String>(
-                  value: wicketType,
+                  initialValue: wicketType,
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                   items: [
                     DropdownMenuItem(value: 'BOWLED', child: Text(trId('bowled'))),
@@ -1825,9 +1825,9 @@ class _ScoringPad extends StatelessWidget {
                 // Runs completed before a run-out (the batsmen crossed) — these
                 // count. The backend credits runs_batter alongside the wicket.
                 if (wicketType == 'RUN_OUT') ...[
-                  SizedBox(height: 14),
-                  Text(trId('runs_completed'), style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 14),
+                  Text(trId('runs_completed'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -1836,7 +1836,7 @@ class _ScoringPad extends StatelessWidget {
                               label: Text('$r',
                                   style: TextStyle(
                                       fontWeight: FontWeight.w700,
-                                      color: runOutRuns == r ? AppColors.background : Color(0xFF0A1128))),
+                                      color: runOutRuns == r ? AppColors.background : const Color(0xFF0A1128))),
                               selected: runOutRuns == r,
                               selectedColor: AppColors.primary,
                               backgroundColor: const Color(0xFFEFF2FA),
@@ -1845,8 +1845,8 @@ class _ScoringPad extends StatelessWidget {
                         .toList(),
                   ),
                 ],
-                SizedBox(height: 16),
-                Text(trId('who_is_out'), style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Text(trId('who_is_out'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 RadioListTile<String>(
                   dense: true,
                   title: Text('${players.strikerName} *'),
@@ -1862,12 +1862,12 @@ class _ScoringPad extends StatelessWidget {
                   onChanged: (v) => setDialogState(() => dismissedId = v!),
                 ),
                 if (!lastWicket) ...[
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: newBatter,
                     decoration: InputDecoration(
                       labelText: trId('new_batter_name'),
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                     ),
                     // Live-revalidate so Confirm enables/disables as they type —
                     // a blank name here used to be accepted silently, leaving
@@ -1882,19 +1882,19 @@ class _ScoringPad extends StatelessWidget {
                     final typed = newBatter.text.trim();
                     if (typed.isEmpty) {
                       return Padding(
-                        padding: EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: 6),
                         child: Text(trId('required_who_is_replacing_them'),
-                            style: TextStyle(fontSize: 12, color: Color(0xFF92400E))),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF92400E))),
                       );
                     }
                     if (_sameName(typed, survivingName)) {
                       return Padding(
-                        padding: EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: 6),
                         child: Text(trId('must_be_different_from_the_other_batter'),
-                            style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
                       );
                     }
-                    return SizedBox.shrink();
+                    return const SizedBox.shrink();
                   }),
                 ],
               ],
@@ -1920,7 +1920,7 @@ class _ScoringPad extends StatelessWidget {
         ),
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
     await _withBowlerIfNeeded(
       context,
       (nb) => cubit.scoreBall(
@@ -1943,21 +1943,21 @@ class _Scorecard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (ms.batters.isEmpty && ms.bowlers.isEmpty) return SizedBox.shrink();
+    if (ms.batters.isEmpty && ms.bowlers.isEmpty) return const SizedBox.shrink();
     const ink = Color(0xFF0A1128);
     const muted = Color(0xFF5B6478);
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Color(0xFFE3E7F0))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFFE3E7F0))),
       child: Padding(
-        padding: EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _sectionLabel(trId('batting')),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             ...ms.batters.map((b) => Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
                       Expanded(
@@ -1977,22 +1977,22 @@ class _Scorecard extends StatelessWidget {
                 )),
             if (ms.extrasTotal > 0)
               Padding(
-                padding: EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '${trId('extras')}: ${ms.extrasTotal}',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: muted),
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: muted),
                 ),
               ),
-            Divider(height: 24),
+            const Divider(height: 24),
             _sectionLabel(trId('bowling')),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             ...ms.bowlers.map((b) => Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      Expanded(child: Text(b.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
+                      Expanded(child: Text(b.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
                       Text('${b.oversText} ov · ${b.runs}r · ${b.wickets}w',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: ink)),
+                          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: ink)),
                     ],
                   ),
                 )),

@@ -61,7 +61,7 @@ class SirenController {
         // ALARM usage on Android so it sounds through a silenced ringer, and
         // `stayAwake` so the CPU is not allowed to doze mid-alarm.
         await player.setAudioContext(AudioContext(
-          android: AudioContextAndroid(
+          android: const AudioContextAndroid(
             isSpeakerphoneOn: true,
             stayAwake: true,
             contentType: AndroidContentType.sonification,

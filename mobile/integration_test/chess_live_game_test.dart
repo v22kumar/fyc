@@ -12,7 +12,7 @@
 /// Run with a backend on 127.0.0.1:8000 and a game seeded by the harness:
 ///   flutter test integration_test/chess_live_game_test.dart -d linux \
 ///     --dart-define=GAME_ID=... --dart-define=TOKEN=... --dart-define=WS_BASE=...
-import 'dart:async';
+library;
 import 'dart:convert';
 import 'dart:io';
 

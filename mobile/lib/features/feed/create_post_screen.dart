@@ -133,18 +133,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       appBar: AppBar(
         backgroundColor: context.cSurface,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
         title: Text(trId('create_post'),
             style: TextStyle(color: context.cText, fontWeight: FontWeight.w800, fontSize: 17)),
         centerTitle: true,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 10, top: 8, bottom: 8),
+            padding: const EdgeInsets.only(right: 10, top: 8, bottom: 8),
             child: ElevatedButton(
               onPressed: canPost ? _submit : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+                disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
               ),
@@ -159,12 +159,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
             onPressed: canPost ? _submit : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
               minimumSize: const Size.fromHeight(54),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
@@ -180,27 +180,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ),
       ),
       body: ListView(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
         children: [
           // Author + role + audience
           Row(
             children: [
               CircleAvatar(radius: 22,
-                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                   child: Text(_authorName.isNotEmpty ? _authorName[0].toUpperCase() : '?',
                       style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800))),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_authorName, style: TextStyle(fontWeight: FontWeight.w800,
                         fontSize: 15, color: context.cText)),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(_roleLabel, style: TextStyle(fontSize: 11,
@@ -210,21 +210,21 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: context.cBorder),
                 ),
                 child: Row(children: [
-                  Icon(Icons.public, size: 15),
-                  SizedBox(width: 5),
+                  const Icon(Icons.public, size: 15),
+                  const SizedBox(width: 5),
                   Text(trId('public'),
                       style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.cText)),
                 ]),
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Text area with counter
           Container(
@@ -233,7 +233,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: context.cBorder),
             ),
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -259,7 +259,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
           // Selected images
           if (_images.isNotEmpty) ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8, runSpacing: 8,
               children: [
@@ -271,8 +271,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       child: GestureDetector(
                         onTap: () => setState(() => _images.removeAt(i)),
                         child: Container(
-                          decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                          padding: EdgeInsets.all(2),
+                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                          padding: const EdgeInsets.all(2),
                           child: Icon(Icons.close, color: AppColors.background, size: 15),
                         ),
                       ),
@@ -281,14 +281,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ],
             ),
           ],
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           _OutlineAction(
             icon: Icons.image_outlined,
             label: trId('add_photos_videos'),
             onTap: _images.length >= 4 ? null : _pickImage,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _OutlineAction(
             icon: Icons.location_on_outlined,
             label: _showLocation
@@ -297,22 +297,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             onTap: () => setState(() => _showLocation = !_showLocation),
           ),
           if (_showLocation) ...[
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             TextField(
               controller: _locationCtrl,
               decoration: InputDecoration(
                 hintText: trId('where'),
-                prefixIcon: Icon(Icons.place_outlined, size: 20),
+                prefixIcon: const Icon(Icons.place_outlined, size: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
               ),
             ),
           ],
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Quick actions (Sprint 4: Poll, Event, Tournament, Volunteer)
           Text(trId('quick_actions'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -353,12 +353,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ],
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Instagram toggle (managers only)
           if (_isManager)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: context.cSurface,
                 borderRadius: BorderRadius.circular(14),
@@ -366,7 +366,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                secondary: Icon(Icons.camera_alt_outlined, color: Color(0xFFC13584)),
+                secondary: const Icon(Icons.camera_alt_outlined, color: Color(0xFFC13584)),
                 title: Text(trId('also_share_to_instagram'),
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.cText)),
                 subtitle: Text(trId('if_you_add_media_it_will_also_be_posted'),
@@ -375,12 +375,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 onChanged: (v) => setState(() => _shareToInstagram = v),
               ),
             ),
-          if (_isManager) SizedBox(height: 18),
+          if (_isManager) const SizedBox(height: 18),
 
           // Category
           Text(trId('choose_category'),
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8, runSpacing: 8,
             children: _categories.map((c) {
@@ -388,7 +388,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               return GestureDetector(
                 onTap: () => setState(() => _category = c),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: selected ? AppColors.primary : context.cSurface,
                     borderRadius: BorderRadius.circular(20),
@@ -400,11 +400,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               );
             }).toList(),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // How it works
           Container(
-            padding: EdgeInsets.all(14),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: context.cSurface,
               borderRadius: BorderRadius.circular(14),
@@ -416,36 +416,36 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 Row(children: [
                   Text(trId('how_it_works'),
                       style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
-                  Spacer(),
+                  const Spacer(),
                   Icon(Icons.info_outline, size: 16, color: context.cTextSecondary),
                 ]),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 _HowRow(icon: Icons.chat_bubble_outline, iconColor: AppColors.primary,
                     title: trId('text_only'),
                     subtitle: trId('posted_to_thread_community_feed')),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 _HowRow(icon: Icons.camera_alt_outlined, iconColor: const Color(0xFFC13584),
                     title: trId('with_photos_videos'),
                     subtitle: trId('posted_to_instagram_thread')),
               ],
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Guidelines
           Container(
-            padding: EdgeInsets.all(14),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.06),
+              color: AppColors.primary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(trId('community_guidelines'),
                     style: TextStyle(fontWeight: FontWeight.w800, color: context.cText)),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 for (final g in [
                   trId('be_respectful_and_positive'),
                   trId('no_hate_speech_or_bullying'),
@@ -453,29 +453,29 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   trId('keep_our_community_clean_and_safe'),
                 ])
                   Padding(
-                    padding: EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Row(children: [
                       Icon(Icons.check, size: 15, color: AppColors.primary),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Expanded(child: Text(g, style: TextStyle(fontSize: 12.5, color: context.cText))),
                     ]),
                   ),
               ],
             ),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
 
           // Recent hashtags
           if (_recentTags.isNotEmpty) ...[
             Text(trId('recent_hashtags'),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.cText)),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8, runSpacing: 8,
               children: _recentTags.map((t) => GestureDetector(
                 onTap: () => _appendTag(t),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: context.cSurface,
                     borderRadius: BorderRadius.circular(20),
@@ -486,7 +486,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               )).toList(),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ],
       ),
@@ -507,11 +507,11 @@ class _OutlineAction extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 20),
-        label: Text(label, style: TextStyle(fontWeight: FontWeight.w700)),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
-          padding: EdgeInsets.symmetric(vertical: 14),
+          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
@@ -534,12 +534,12 @@ class _HowRow extends StatelessWidget {
         Container(
           width: 38, height: 38,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.12),
+            color: iconColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,26 +570,26 @@ class _QuickActionBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
               Icon(icon, size: 16, color: color),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: color.withOpacity(context.isDark ? 0.9 : 1.0),
+                  color: color.withValues(alpha: context.isDark ? 0.9 : 1.0),
                 ),
               ),
             ],

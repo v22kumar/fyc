@@ -30,9 +30,9 @@ class GameResultSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(24, 12, 24, 36),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -45,7 +45,7 @@ class GameResultSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // Result emoji
           Container(
@@ -53,13 +53,13 @@ class GameResultSheet extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
             ),
             child: Center(
-              child: Text(emoji, style: TextStyle(fontSize: 36)),
+              child: Text(emoji, style: const TextStyle(fontSize: 36)),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           Text(
             state.resultLabel,
@@ -69,7 +69,7 @@ class GameResultSheet extends StatelessWidget {
               color: color,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             '${state.moveSans.length} moves played',
             style: TextStyle(
@@ -78,7 +78,7 @@ class GameResultSheet extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
 
           // New game button
           SizedBox(
@@ -88,7 +88,7 @@ class GameResultSheet extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.background,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
                 ),
@@ -96,11 +96,11 @@ class GameResultSheet extends StatelessWidget {
               ),
               child: Text(
                 trId('new_game'),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Review game button
           SizedBox(
@@ -109,7 +109,7 @@ class GameResultSheet extends StatelessWidget {
               onPressed: onClose,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(color: AppColors.border),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusBtn),
@@ -117,7 +117,7 @@ class GameResultSheet extends StatelessWidget {
               ),
               child: Text(
                 trId('review_position'),
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),
           ),

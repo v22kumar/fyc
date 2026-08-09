@@ -7,4 +7,5 @@
 /// This picks the real engine wherever `dart:ffi` exists (Android, iOS,
 /// desktop) and a stub everywhere else. Callers program against one API and
 /// check [isEngineAvailable] before offering the feature.
+library;
 export 'chess_engine_stub.dart' if (dart.library.ffi) 'chess_engine_native.dart';

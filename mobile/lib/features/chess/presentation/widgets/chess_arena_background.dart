@@ -39,18 +39,18 @@ class _ChessArenaBackgroundState extends State<ChessArenaBackground>
     return Stack(
       children: [
         // Base gradient
-        Positioned.fill(
+        const Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: const Alignment(0, -0.3),
+                center: Alignment(0, -0.3),
                 radius: 1.2,
                 colors: [
-                  const Color(0xFF14301F), // green-tinted center glow
-                  const Color(0xFF0E1A12),
-                  const Color(0xFF080C09), // near-black edges
+                  Color(0xFF14301F), // green-tinted center glow
+                  Color(0xFF0E1A12),
+                  Color(0xFF080C09), // near-black edges
                 ],
-                stops: const [0.0, 0.55, 1.0],
+                stops: [0.0, 0.55, 1.0],
               ),
             ),
           ),
@@ -112,13 +112,13 @@ class _ParticlePainter extends CustomPainter {
           0.5 + 0.5 * math.sin((t + p.phase) * math.pi * 4);
       final op = (p.opacity * twinkle).clamp(0.0, 1.0);
 
-      glow.color = const Color(0xFF34D17A).withOpacity(op);
+      glow.color = const Color(0xFF34D17A).withValues(alpha: op);
       glow.maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 1.2);
       canvas.drawCircle(Offset(dx, dy), p.size, glow);
 
       // Bright core
       glow.maskFilter = null;
-      glow.color = const Color(0xFF8CF0B8).withOpacity(op * 0.8);
+      glow.color = const Color(0xFF8CF0B8).withValues(alpha: op * 0.8);
       canvas.drawCircle(Offset(dx, dy), p.size * 0.5, glow);
     }
   }

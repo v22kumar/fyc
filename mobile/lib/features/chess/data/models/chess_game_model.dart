@@ -367,7 +367,7 @@ class WeeklyAwardsModel {
   });
 
   factory WeeklyAwardsModel.fromJson(Map<String, dynamic> json) {
-    AwardWinnerModel? _parse(String key) {
+    AwardWinnerModel? parse(String key) {
       final v = json[key];
       if (v == null) return null;
       return AwardWinnerModel.fromJson(v as Map<String, dynamic>);
@@ -375,10 +375,10 @@ class WeeklyAwardsModel {
 
     return WeeklyAwardsModel(
       weekStart: json['week_start'] as String? ?? '',
-      topPlayer: _parse('top_player'),
-      mostActive: _parse('most_active'),
-      bestNewcomer: _parse('best_newcomer'),
-      sharpestMind: _parse('sharpest_mind'),
+      topPlayer: parse('top_player'),
+      mostActive: parse('most_active'),
+      bestNewcomer: parse('best_newcomer'),
+      sharpestMind: parse('sharpest_mind'),
     );
   }
 }
