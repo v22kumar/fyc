@@ -64,26 +64,14 @@ void main() {
 
       await tester.tap(find.text('Serve'));
       await tester.pumpAndSettle();
-      expect(sos, findsOneWidget);
-
-      await tester.tap(sos);
-      await tester.pumpAndSettle();
-      // Opens the real Safety Center sheet (location SMS + emergency dial + alert).
-      expect(find.text('Safety Center'), findsOneWidget);
-      expect(find.text('Send SOS to my contacts'), findsOneWidget);
+      expect(sos, findsOneWidget,
+          reason: 'the one control that must never be buried');
     });
 
-    testWidgets('SOS with no trusted contacts prompts to add one', (tester) async {
-      await tester.pumpWidget(const MaterialApp(home: AppShellV2()));
-      await tester.tap(find.byIcon(Icons.sos_rounded));
-      await tester.pumpAndSettle();
-
-      // No contacts configured (mock prefs are empty) → tapping send must warn
-      // rather than silently doing nothing on a safety feature.
-      await tester.tap(find.text('Send SOS to my contacts'));
-      await tester.pump(); // let the snackbar appear
-      expect(find.text('Add at least one trusted contact first.'), findsOneWidget);
-    });
+    // What the disc *opens* is asserted in the safety feature's own tests. It
+    // used to raise a bottom sheet whose four buttons this file poked at
+    // directly; it now pushes `/sos`, which needs a router this shell test
+    // deliberately does not build.
 
     testWidgets('center Create FAB fires onCreate only when wired', (tester) async {
       // Preview shell (no onCreate) shows no Create FAB.

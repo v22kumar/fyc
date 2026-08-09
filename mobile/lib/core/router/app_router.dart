@@ -22,7 +22,6 @@ import '../../features/membership/presentation/screens/membership_card_screen.da
 import '../../features/membership/presentation/bloc/membership_bloc.dart';
 import '../../features/events/presentation/screens/qr_scan_screen.dart';
 import '../../service_locator.dart';
-import '../../features/settings/presentation/screens/safety_settings_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
@@ -108,6 +107,14 @@ import '../../features/work/presentation/bloc/work_bloc.dart';
 import '../../features/work/presentation/screens/create_listing_screen.dart';
 import '../../features/work/presentation/screens/work_home_screen.dart';
 import '../../features/complaint_box/domain/repositories/complaint_repository.dart';
+import '../../features/safety/domain/repositories/safety_repository.dart';
+import '../../features/safety/presentation/bloc/responder_bloc.dart';
+import '../../features/safety/presentation/bloc/safety_setup_bloc.dart';
+import '../../features/safety/presentation/bloc/sos_bloc.dart';
+import '../../features/safety/presentation/screens/live_incidents_screen.dart';
+import '../../features/safety/presentation/screens/responder_alert_screen.dart';
+import '../../features/safety/presentation/screens/safety_setup_screen.dart';
+import '../../features/safety/presentation/screens/sos_trigger_screen.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_bloc.dart';
 import '../../features/complaint_box/presentation/bloc/complaint_list_bloc.dart';
 import '../../features/complaint_box/presentation/screens/complaint_detail_screen.dart';
@@ -426,9 +433,36 @@ final appRouter = GoRouter(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
     ),
+    // ── Safety ────────────────────────────────────────────────────────────
+    // One committed act with a way to take it back, and three screens behind
+    // it. See docs/safety/01-architecture.md.
+    GoRoute(
+      path: '/sos',
+      builder: (context, state) => BlocProvider(
+        create: (_) => SosBloc(sl<SafetyRepository>()),
+        child: const SosTriggerScreen(),
+      ),
+    ),
+    GoRoute(
+      // Where the SOS push lands. A notification row was where the old
+      // broadcast ended — there was nothing on the other side of the tap, so
+      // nobody could answer it and nobody did.
+      path: '/safety/respond/:id',
+      builder: (context, state) => BlocProvider(
+        create: (_) => ResponderBloc(sl<SafetyRepository>()),
+        child: ResponderAlertScreen(incidentId: state.pathParameters['id']!),
+      ),
+    ),
+    GoRoute(
+      path: '/safety/live',
+      builder: (context, state) => const LiveIncidentsScreen(),
+    ),
     GoRoute(
       path: '/settings/safety',
-      builder: (context, state) => const SafetySettingsScreen(),
+      builder: (context, state) => BlocProvider(
+        create: (_) => SafetySetupBloc(sl<SafetyRepository>()),
+        child: const SafetySetupScreen(),
+      ),
     ),
     GoRoute(
       path: '/certificate',

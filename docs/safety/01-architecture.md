@@ -399,30 +399,47 @@ platform-plumbing and keeps its no-throw discipline:
 
 ---
 
-## 12. Build order
+## 12. Build order — all six done
 
-Each step is shippable and leaves the app better than it found it.
+1. **Stop lying.** ✅ The four ticks are gone. Every string is a registry id in
+   en/ta/hi/ml. *"FYC members have been alerted"* is replaced by counted facts:
+   *alerted 6 · nobody has answered yet · 2 trusted contacts messaged*.
+2. **A safe trigger.** ✅ Press-and-hold three seconds → five-second countdown
+   with CANCEL filling the screen. The siren moved to `SirenController`, a
+   process-level singleton with an ongoing notification carrying a **Stop**
+   action, so it outlives every screen. Shake is off by default and opens the
+   trigger screen rather than sending anything.
+3. **The incident exists.** ✅ `SosIncident` / `SosResponder` / `SosEvent`,
+   `POST /safety/sos`, wave 1 = nearest five within a kilometre, the responder
+   screen with **I'm coming** / **Can't**, the live screen, stand-down.
+4. **Contacts server-side.** ✅ `SafetyContact` with names, relationships and a
+   **Send a test** that sets `verified_at`; `sms_service` so the server sends
+   even when the handset cannot.
+5. **Waves and escalation.** ✅ 45 s → 3 km, 90 s → the district, driven by
+   `sweep_escalations` every fifteen seconds. A whole wave declining widens the
+   ring immediately. Organiser board at `/safety/live`, with a stand-down that
+   requires *"I have spoken to them"*.
+6. **Degradation.** ✅ No network → the SMS composer opens to the **cached**
+   trusted contacts and the incident is queued, then posted the next time the
+   trigger screen opens. No GPS → raised without coordinates and the ring goes
+   wide. The shell's red disc still dials 112 with no login and no network.
 
-1. **Stop lying.** Delete the four ticks; make every string a registry id in
-   four languages; replace *"FYC members have been alerted"* with a real count.
-   *One day. No new tables.*
-2. **Make the trigger safe.** Press-and-hold + five-second countdown + cancel;
-   siren to a foreground service; shake off by default and pointed at the new
-   screen. *Two days.*
-3. **The incident exists.** `SosIncident`/`SosResponder`/`SosEvent`, `POST
-   /safety/sos`, nearest-5-within-1 km wave 1, the responder screen with
-   I'm coming / Can't, the live screen with real counts, stand-down. **This is
-   the step that turns the feature from theatre into a product.** *One week.*
-4. **Contacts server-side.** Model, migration from device storage, names, the
-   picker, the test message, server-side SMS so a lost phone does not silence
-   the alert. *Three days.*
-5. **Waves and escalation.** The 45 s / 90 s timers, decline-triggers-next-wave,
-   organiser live board. *Three days.*
-6. **Degradation.** Offline SMS path, queued incident, the honest
-   "location unknown" alert. *Three days.*
+### Two things the code does that this document did not anticipate
 
-Steps 1 and 2 alone move it from actively misleading to trustworthy. Step 3 is
-where it becomes the thing only FYC can build.
+* **(0, 0) is not the Gulf of Guinea.** `public_issues.latitude` is NOT NULL,
+  so a refused location permission sends zeroes. The same trap exists here.
+* **Clock skew must never surface.** The first render of the live screen said
+  *"raised −1102 min ago"*, because the device clock and the fixture disagreed.
+  Elapsed time is decoration; the skew is not the member's problem.
+
+### Still not done
+
+* **A true foreground service.** The siren survives screen dismissal and has a
+  Stop action, but Android may still stop the audio after a long spell in the
+  background. That needs a native foreground service — a new plugin, and a
+  separate change.
+* **Nobody has raised a real SOS with this.** Until somebody does, it is a
+  design that passes its own tests.
 
 ---
 

@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -34,8 +34,8 @@ from app.models.user import User, UserProfile
 from app.schemas.safety import (
     ResponderAlertOut, ResponderSettingsIn, ResponderSettingsOut,
     SafetyContactIn, SafetyContactOut, SafetyContactPatch, SosEventOut,
-    SosIncidentOut, SosLocationIn, SosRaiseIn, SosResponderOut, SosSummaryOut,
-    StandDownIn,
+    SosIncidentOut, SosKindIn, SosLocationIn, SosRaiseIn, SosResponderOut,
+    SosSummaryOut, StandDownIn,
 )
 from app.services.sos_dispatch import (
     WAVES, coarsen, dispatch_wave, display_name, over_rate_limit, record,
@@ -366,7 +366,7 @@ def update_location(
 @router.post("/sos/{incident_id}/kind", response_model=SosIncidentOut)
 def set_kind(
     incident_id: UUID,
-    kind: str = Query(description="MEDICAL | THREAT | ACCIDENT | FIRE | OTHER"),
+    payload: SosKindIn,
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
     current_user: User = Depends(get_current_user),
@@ -380,12 +380,12 @@ def set_kind(
     incident = _get(db, incident_id, current_user, tenant_id)
     if incident.raised_by_user_id != current_user.id:
         raise HTTPException(status_code=403, detail="This is not your SOS")
-    if kind not in {k.value for k in SosKind}:
+    if payload.kind not in {k.value for k in SosKind}:
         raise HTTPException(status_code=422, detail="Unknown kind")
 
-    incident.kind = kind
+    incident.kind = payload.kind
     record(db, incident, author=SosAuthor.MEMBER, user_id=current_user.id,
-           event_type=SosEventType.KIND_SET, detail=kind)
+           event_type=SosEventType.KIND_SET, detail=payload.kind)
     db.commit()
     db.refresh(incident)
     return _out(db, incident)

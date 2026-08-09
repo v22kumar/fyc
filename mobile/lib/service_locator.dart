@@ -15,6 +15,9 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 // Blood donation
 import 'features/blood_donation/data/datasources/blood_donor_datasource.dart';
+import 'features/safety/data/datasources/safety_datasource.dart';
+import 'features/safety/data/repositories/safety_repository_impl.dart';
+import 'features/safety/domain/repositories/safety_repository.dart';
 import 'features/complaint_box/data/datasources/complaint_datasource.dart';
 import 'features/work/data/datasources/work_datasource.dart';
 import 'features/work/data/repositories/work_repository_impl.dart';
@@ -185,6 +188,14 @@ Future<void> initServiceLocator() async {
   );
   sl.registerLazySingleton<WorkRepository>(
     () => WorkRepositoryImpl(sl<WorkDataSource>()),
+  );
+
+  // Safety / SOS
+  sl.registerLazySingleton<SafetyDataSource>(
+    () => SafetyDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<SafetyRepository>(
+    () => SafetyRepositoryImpl(sl<SafetyDataSource>()),
   );
 
   // Complaint Box

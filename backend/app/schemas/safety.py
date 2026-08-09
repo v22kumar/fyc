@@ -104,6 +104,10 @@ class SosLocationIn(BaseModel):
     place_name: Optional[str] = Field(default=None, max_length=300)
 
 
+class SosKindIn(BaseModel):
+    kind: str = Field(description="MEDICAL | THREAT | ACCIDENT | FIRE | OTHER")
+
+
 class StandDownIn(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=500)
     #: An organiser standing down somebody else's SOS must tick this. Guessing

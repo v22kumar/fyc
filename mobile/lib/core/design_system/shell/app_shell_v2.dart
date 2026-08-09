@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
+import 'package:go_router/go_router.dart';
 import '../patterns/kolam_background.dart';
 import '../tokens.dart';
-import 'sos_sheet.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -83,7 +83,10 @@ class _AppShellV2State extends State<AppShellV2> {
     try {
       if (SosService.shakeToTriggerListenable.value) {
         _shake ??= ShakeDetector(onShake: () {
-          if (mounted) showSosSheet(context);
+          // Opens the trigger screen — it does not send anything. The hold and
+          // the countdown are still in front of the alert, which is what makes
+          // a hair-trigger like this affordable at all.
+          if (mounted) context.push('/sos');
         });
         _shake!.start();
       } else {
@@ -100,8 +103,9 @@ class _AppShellV2State extends State<AppShellV2> {
   }
 
   void _onSosTap() {
-    // Real SOS: location SMS to trusted contacts & emergency dial.
-    showSosSheet(context);
+    // A full screen with one thing on it, not a sheet with four buttons and a
+    // list of claims. See docs/safety/01-architecture.md §8.1.
+    context.push('/sos');
   }
 
   // The shell sits at the bottom of the GoRouter stack (reached via
