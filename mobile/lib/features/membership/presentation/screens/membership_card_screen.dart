@@ -8,8 +8,6 @@ import '../bloc/membership_event.dart';
 import '../bloc/membership_state.dart';
 import '../../domain/entities/membership_entity.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class MembershipCardScreen extends StatefulWidget {
@@ -53,7 +51,7 @@ class _MembershipCardScreenState extends State<MembershipCardScreen>
     setState(() => _showBack = !_showBack);
   }
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   Widget build(BuildContext context) {

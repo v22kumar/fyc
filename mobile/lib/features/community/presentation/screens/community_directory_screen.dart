@@ -7,9 +7,7 @@ import '../bloc/community_event.dart';
 import '../bloc/community_state.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/widgets/entrance.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class CommunityDirectoryScreen extends StatefulWidget {
@@ -21,7 +19,7 @@ class CommunityDirectoryScreen extends StatefulWidget {
 }
 
 class _CommunityDirectoryScreenState extends State<CommunityDirectoryScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

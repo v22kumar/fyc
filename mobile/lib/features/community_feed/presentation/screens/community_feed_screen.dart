@@ -4,8 +4,6 @@ import 'package:intl/intl.dart';
 import '../bloc/community_feed_bloc.dart';
 import '../../domain/entities/feed_item_entity.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/empty_state.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
@@ -18,7 +16,7 @@ class CommunityFeedScreen extends StatefulWidget {
 }
 
 class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

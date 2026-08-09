@@ -6,10 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
-import '../../../../service_locator.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -115,7 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
     if (!formOk) return;
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     final phone = _phoneEditable ? _phoneCtrl.text.trim() : widget.phoneNumber;
     final name = _nameCtrl.text.trim();
     context.read<AuthBloc>().add(AuthRegisterRequested(

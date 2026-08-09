@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
 
 /// The escalation ladder, drawn.
 ///
@@ -63,7 +61,7 @@ class _Rung extends StatelessWidget {
   String? _localised(String? ta, String? en) {
     String lang;
     try {
-      lang = sl<LocalStorage>().getLang();
+      lang = trLang();
     } catch (_) {
       lang = 'en';
     }

@@ -22,7 +22,7 @@ class TreeRegistrationScreen extends StatefulWidget {
 }
 
 class _TreeRegistrationScreenState extends State<TreeRegistrationScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   final _speciesTaCtrl = TextEditingController();
   final _speciesEnCtrl = TextEditingController();

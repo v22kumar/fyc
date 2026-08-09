@@ -7,8 +7,6 @@ import '../bloc/announcement_bloc.dart';
 import '../bloc/announcement_event.dart';
 import '../bloc/announcement_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -40,7 +38,7 @@ class AnnouncementsScreen extends StatefulWidget {
 }
 
 class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

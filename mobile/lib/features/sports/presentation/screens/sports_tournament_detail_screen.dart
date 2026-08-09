@@ -14,7 +14,6 @@ import '../widgets/register_team_sheet.dart' as import_RegisterTeamSheet;
 import '../widgets/add_fixture_sheet.dart' as import_AddFixtureSheet;
 import 'cricket_scoring_screen.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
@@ -43,7 +42,7 @@ class _SportsTournamentDetailScreenState
   @override
   void initState() {
     super.initState();
-    _lang = sl<LocalStorage>().getLang();
+    _lang = trLang();
     _reload();
   }
 

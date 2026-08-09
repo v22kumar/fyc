@@ -87,7 +87,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _submitting = false;
   bool _showAdvanced = false;
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

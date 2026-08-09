@@ -10,7 +10,6 @@ import '../bloc/event_bloc.dart';
 import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
@@ -34,7 +33,7 @@ class EventsListScreen extends StatefulWidget {
 }
 
 class _EventsListScreenState extends State<EventsListScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

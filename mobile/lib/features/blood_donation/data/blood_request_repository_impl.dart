@@ -1,16 +1,21 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../service_locator.dart';
 import 'models/blood_donor_model.dart';
 import 'blood_request_models.dart';
 
-/// Thin direct-Dio client for the blood emergency endpoints (P2 backend).
-class BloodRequestApi {
-  static Dio get _dio => sl<ApiClient>().dio;
+import '../domain/repositories/blood_request_repository.dart';
+
+/// Thin Dio client for the blood emergency endpoints (P2 backend).
+class BloodRequestRepositoryImpl implements BloodRequestRepository {
+  BloodRequestRepositoryImpl(this._api);
+
+  final ApiClient _api;
+  Dio get _dio => _api.dio;
   static const _base = '/api/v1/blood-requests';
 
-  static Future<BloodRequest> create({
+  @override
+  Future<BloodRequest> create({
     required String bloodGroup,
     int units = 1,
     String? hospital,
@@ -36,7 +41,8 @@ class BloodRequestApi {
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
-  static Future<List<BloodRequest>> list({String status = 'OPEN'}) async {
+  @override
+  Future<List<BloodRequest>> list({String status = 'OPEN'}) async {
     final res = await _dio.get(_base, queryParameters: {'status_filter': status});
     return ((res.data as List?) ?? const [])
         .whereType<Map>()
@@ -44,30 +50,35 @@ class BloodRequestApi {
         .toList();
   }
 
-  static Future<BloodRequest> detail(String id) async {
+  @override
+  Future<BloodRequest> detail(String id) async {
     final res = await _dio.get('$_base/$id');
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
-  static Future<BloodRequest> pledge(String id, String status) async {
+  @override
+  Future<BloodRequest> pledge(String id, String status) async {
     final res = await _dio.post('$_base/$id/pledge', data: {'status': status});
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
   /// Wake the whole club. Refused by the server once somebody has accepted,
   /// once it has already been sent, and beyond a few per club per day.
-  static Future<BloodRequest> broadcast(String id) async {
+  @override
+  Future<BloodRequest> broadcast(String id) async {
     final res = await _dio.post('$_base/$id/broadcast');
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
-  static Future<BloodRequest> close(String id, {bool fulfilled = true}) async {
+  @override
+  Future<BloodRequest> close(String id, {bool fulfilled = true}) async {
     final res = await _dio.post('$_base/$id/close', queryParameters: {'fulfilled': fulfilled});
     return BloodRequest.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
   /// Location-aware donor search (P1 /nearby).
-  static Future<List<BloodDonorModel>> nearby({
+  @override
+  Future<List<BloodDonorModel>> nearby({
     required double lat,
     required double lng,
     String? bloodGroup,

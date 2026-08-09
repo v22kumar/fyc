@@ -7,8 +7,6 @@ import '../bloc/directory_bloc.dart';
 import '../bloc/directory_event.dart';
 import '../bloc/directory_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../../../../core/widgets/scale_on_tap.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
 
@@ -20,7 +18,7 @@ class DirectoryScreen extends StatefulWidget {
 }
 
 class _DirectoryScreenState extends State<DirectoryScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   static const _categories = [
     'POLICE',

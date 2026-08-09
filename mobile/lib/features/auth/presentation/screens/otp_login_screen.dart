@@ -9,7 +9,6 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -197,7 +196,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final ta = sl<LocalStorage>().getLang() == 'ta';
+    final ta = trLang() == 'ta';
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
