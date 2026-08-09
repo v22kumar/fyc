@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui' show PlatformDispatcher;
 
 import '../l10n/registry/registry.dart';
@@ -167,6 +168,29 @@ class LocalStorage {
   bool get isLoggedIn =>
       (_prefs.getBool(AppConstants.hasSessionKey) ?? false) ||
       _prefs.getString(AppConstants.tokenKey) != null;
+
+  // ── The last profile the server confirmed ────────────────────────────────
+  //
+  // Home greets the member by name and draws their initial. Both came only
+  // from a live `GET /me`, so a cold start on a slow connection rendered
+  // "Good Morning" with nothing after it and a `?` in the avatar — the app
+  // not knowing whose it was, for somebody who had been signed in for months.
+
+  Future<void> saveCachedUser(Map<String, dynamic> user) =>
+      _prefs.setString(AppConstants.cachedUserKey, json.encode(user));
+
+  Map<String, dynamic>? getCachedUser() {
+    final raw = _prefs.getString(AppConstants.cachedUserKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return (json.decode(raw) as Map).cast<String, dynamic>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> clearCachedUser() =>
+      _prefs.remove(AppConstants.cachedUserKey);
 
 
 }

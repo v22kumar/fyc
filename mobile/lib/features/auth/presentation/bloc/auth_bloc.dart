@@ -3,10 +3,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
 import '../../domain/usecases/register_user_usecase.dart';
+import '../../data/models/user_model.dart';
+import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../service_locator.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -46,12 +49,66 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthUnauthenticated());
       return;
     }
-    emit(const AuthLoading());
+
+    // Start from what we already know, so the app opens knowing whose it is.
+    //
+    // This used to go straight to AuthLoading and wait for the network. Home
+    // reads the member's name off this state, so on a cold start — or a slow
+    // connection, or a train in a tunnel — it rendered "Good Morning" with
+    // nothing after it and a `?` where the initial goes, for somebody who had
+    // been signed in for months.
+    final cached = _cachedUser();
+    if (cached != null) {
+      emit(AuthAuthenticated(cached));
+    } else {
+      emit(const AuthLoading());
+    }
+
     final result = await _repository.getMe();
     result.fold(
-      (f) => emit(const AuthUnauthenticated()),
-      (user) => emit(AuthAuthenticated(user)),
+      (f) {
+        // Only the server saying no means signed out.
+        //
+        // Every failure used to land here as AuthUnauthenticated — a dropped
+        // request, a 500, a timeout — which silently un-personalised the app
+        // while the tokens sat valid in storage. A 401 is the token being
+        // rejected and is worth acting on; everything else is us failing to
+        // ask, and the honest response to that is to keep what we last knew.
+        if (f is AuthFailure) {
+          _storage.clearCachedUser();
+          emit(const AuthUnauthenticated());
+          return;
+        }
+        if (cached == null) emit(const AuthUnauthenticated());
+      },
+      (user) {
+        _remember(user);
+        _remember(user);
+        emit(AuthAuthenticated(user));
+      },
     );
+  }
+
+  /// The last profile the server confirmed, read back from disk.
+  ///
+  /// Returns null on anything unexpected — a cache that cannot be parsed is a
+  /// cache that does not exist, and this must never be the thing that stops
+  /// the app opening.
+  UserEntity? _cachedUser() {
+    try {
+      final raw = _storage.getCachedUser();
+      return raw == null ? null : UserModel.fromJson(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _remember(UserEntity user) {
+    try {
+      if (user is UserModel) _storage.saveCachedUser(user.toJson());
+    } catch (_) {
+      // Best-effort. Failing to cache must never fail the sign-in.
+    }
   }
 
   Future<void> _onSendOtp(
@@ -105,6 +162,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       },
       (user) {
+        _remember(user);
         emit(AuthAuthenticated(user));
         _registerFcmToken();
       },
@@ -132,6 +190,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
       (user) {
+        _remember(user);
         emit(AuthAuthenticated(user));
         _registerFcmToken();
       },
@@ -156,7 +215,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           case GoogleAuthSuccess(:final user):
             _pendingEmail = null;
             _pendingFullName = null;
-            emit(AuthAuthenticated(user));
+            _remember(user);
+        emit(AuthAuthenticated(user));
             _registerFcmToken();
           case GoogleAuthNeedsProfile(:final email, :final fullName):
             // New Google member — carry the Google name/email and route them to
@@ -195,6 +255,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _repository.logout();
+    // Signing out takes the remembered profile with it. A cache that outlived
+    // the session would greet the next person to open the app by the last
+    // person's name.
+    await _storage.clearCachedUser();
     emit(const AuthUnauthenticated());
   }
 }

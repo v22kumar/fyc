@@ -10,6 +10,10 @@ class AppConstants {
   static const String langKey = 'fyc_lang';
   static const String orgIdKey = 'fyc_org_id';
   static const String themeKey = 'fyc_theme'; // 'light' | 'dark' | 'system'
+  /// The last profile the server confirmed, kept so a cold start with no
+  /// network still knows whose app this is. Never a credential — the
+  /// tokens stay in secure storage.
+  static const String cachedUserKey = 'fyc_cached_user';
   static const String defaultLang = 'ta';
 
   static const List<String> bloodGroups = [

@@ -345,7 +345,7 @@ jobs:
           PY
           rm -f /tmp/sa.json
 
-      - name: Upload to Google Play Console (Internal Testing)
+      - name: Upload to Google Play Console
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
@@ -353,3 +353,39 @@ jobs:
           releaseFiles: mobile/build/app/outputs/bundle/release/app-release.aab
           track: ${{ vars.PLAY_TRACK || 'internal' }}
           status: ${{ vars.PLAY_STATUS || 'completed' }}
+
+      # Say where the build actually went.
+      #
+      # "It uploads to the Play Store" and "members can get it from the Play
+      # Store" are different sentences, and the gap between them is invisible
+      # from here: the default track is `internal`, which never appears in Play
+      # Store search and is reachable only by testers who have been added by
+      # email and have opted in through a link. Somebody looking for the app in
+      # the Play Store and finding nothing has no way to tell whether the
+      # upload failed or was never meant to be public.
+      - name: Say which Play track this went to
+        if: always()
+        run: |
+          TRACK="${{ vars.PLAY_TRACK || 'internal' }}"
+          {
+            echo "## Play Console"
+            echo ""
+            echo "Track: **$TRACK** · version **1.0.${{ github.run_number }}**"
+            echo ""
+            case "$TRACK" in
+              production)
+                echo "Public. Visible in Play Store search once Google finishes reviewing it."
+                ;;
+              internal|alpha|beta)
+                echo "**Not public.** This track does not appear in Play Store search."
+                echo "Only testers added in Play Console → Testing → $TRACK can install it,"
+                echo "and only after opening the opt-in link on that page."
+                echo ""
+                echo "To publish to everyone, set the repository variable"
+                echo '`PLAY_TRACK=production` (Settings → Secrets and variables → Actions → Variables).'
+                ;;
+            esac
+            echo ""
+            echo "Sideload APK (no Play account needed):"
+            echo "<${{ github.server_url }}/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk>"
+          } >> "$GITHUB_STEP_SUMMARY"

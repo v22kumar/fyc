@@ -76,16 +76,28 @@ class _HoldRingState extends State<HoldRing>
     _lastQuarter = 0;
   }
 
-  void _down(_) {
+  void _down(PointerDownEvent _) {
     _lastQuarter = 0;
     HapticFeedback.selectionClick();
     _fill.forward();
   }
 
-  void _up([_]) {
+  void _up([Object? _]) {
     // Reversed rather than reset: letting go halfway should look like letting
     // go, not like the app losing the gesture.
     if (_fill.status != AnimationStatus.completed) _fill.reverse();
+  }
+
+  /// A thumb that slides off the ring is somebody changing their mind.
+  ///
+  /// With a raw [Listener] there is no recognizer to notice this, so the check
+  /// is here: outside the disc, plus a little slack for a finger that rolls.
+  void _move(PointerMoveEvent event) {
+    if (_fill.status != AnimationStatus.forward) return;
+    final centre = Offset(widget.diameter / 2, widget.diameter / 2);
+    if ((event.localPosition - centre).distance > widget.diameter / 2 + 24) {
+      _up();
+    }
   }
 
   @override
@@ -93,11 +105,27 @@ class _HoldRingState extends State<HoldRing>
     return Semantics(
       button: true,
       label: '${widget.label}. ${widget.hint}',
-      child: GestureDetector(
-        onTapDown: _down,
-        onTapUp: _up,
-        onTapCancel: _up,
-        onLongPressEnd: _up,
+      // A raw [Listener], not a GestureDetector — and this is the whole reason
+      // the hold works at all.
+      //
+      // The first version used `onTapDown` / `onTapUp` / `onTapCancel` with an
+      // `onLongPressEnd` alongside. Declaring the long-press handler puts a
+      // LongPressGestureRecognizer into the gesture arena next to the tap
+      // recognizer; at `kLongPressTimeout` (500 ms) the long-press claims
+      // victory, the tap recognizer is rejected, and the rejection arrives as
+      // `onTapCancel`. Which reversed the fill. So the ring died at half a
+      // second, every time, and an SOS could never be sent by holding it.
+      //
+      // Listener takes pointer events directly and never enters the arena, so
+      // nothing can take the gesture away mid-hold — which is the correct
+      // guarantee for a button somebody is pressing because they are in
+      // trouble.
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _down,
+        onPointerMove: _move,
+        onPointerUp: _up,
+        onPointerCancel: _up,
         child: SizedBox(
           width: widget.diameter,
           height: widget.diameter,
