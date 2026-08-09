@@ -11,8 +11,6 @@ import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';

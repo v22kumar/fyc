@@ -8,11 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../domain/civic_categories.dart';
 import '../../../../core/location/member_location.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
+import '../../domain/repositories/issue_repository.dart';
 
 /// Report something broken, in three steps and one language.
 ///
@@ -34,7 +32,9 @@ import '../../../../service_locator.dart';
 /// in place: the old one posts to the old endpoint, which still works, and this
 /// can be put in front of people without a flag day.
 class ReportIssueScreen extends StatefulWidget {
-  const ReportIssueScreen({super.key});
+  const ReportIssueScreen({super.key, required this.repo});
+
+  final IssueRepository repo;
 
   @override
   State<ReportIssueScreen> createState() => _ReportIssueScreenState();
@@ -103,12 +103,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         _photo = bytes;
         _uploading = true;
       });
-      final form = FormData.fromMap({
-        'file': MultipartFile.fromBytes(bytes, filename: 'issue.jpg'),
-      });
-      final resp = await sl<ApiClient>().dio.post('/api/v1/media/upload', data: form);
+      final url = await widget.repo.uploadPhoto(bytes);
       if (!mounted) return;
-      setState(() => _photoUrl = resp.data['url'] as String?);
+      setState(() => _photoUrl = url);
     } catch (_) {
       // A failed upload must not take the photo away — they can send again.
       if (mounted) setState(() => _photoUrl = null);
@@ -134,7 +131,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
     setState(() => _sending = true);
     try {
-      final created = await sl<ApiClient>().dio.post('/api/v1/issues/v2', data: {
+      final createdId = await widget.repo.submitCivicReport({
         'category': _kind,
         // How bad it is, which decides what the next screen suggests: routine
         // problems go to the phone, serious ones to a letter, because a call
@@ -143,14 +140,13 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         'description': _words.text.trim(),
         // Which language the words are actually in, so nothing downstream is
         // passed off as a translation that never happened.
-        'description_lang': sl<LocalStorage>().getLang(),
+        'description_lang': trLang(),
         'latitude': _lat ?? 0,
         'longitude': _lng ?? 0,
         'photo_url': _photoUrl,
       });
       if (!mounted) return;
-      final id = (created.data is Map) ? created.data['id'] as String? : null;
-      await _showSent(complaintId: id);
+      await _showSent(complaintId: createdId);
     } on DioException catch (err) {
       if (!mounted) return;
       setState(() => _sending = false);

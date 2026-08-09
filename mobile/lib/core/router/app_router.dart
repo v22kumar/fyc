@@ -17,6 +17,7 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/blood_donation/presentation/screens/blood_request_flow.dart';
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
+import '../../features/issues/domain/repositories/issue_repository.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/issues/presentation/screens/review_queue_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
@@ -295,7 +296,8 @@ final appRouter = GoRouter(
     // resolution rate computed from two reports.
     GoRoute(
       path: '/issues',
-      builder: (context, state) => const ReportIssueScreen(),
+      builder: (context, state) =>
+          ReportIssueScreen(repo: sl<IssueRepository>()),
     ),
     // Kept so anything holding the old link still lands somewhere sensible.
     GoRoute(
