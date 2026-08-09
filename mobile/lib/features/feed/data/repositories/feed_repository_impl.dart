@@ -1,15 +1,19 @@
 import 'package:dio/dio.dart';
 
-import '../../core/network/api_client.dart';
-import '../../core/constants/api_constants.dart';
-import '../../service_locator.dart';
-import 'feed_models.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../domain/repositories/feed_repository.dart';
+import '../models/feed_models.dart';
 
 /// Thin wrapper over the /posts + /media endpoints for the community feed.
-class FeedApi {
-  static Dio get _dio => sl<ApiClient>().dio;
+class FeedRepositoryImpl implements FeedRepository {
+  FeedRepositoryImpl(this._api);
 
-  static Future<List<Post>> list({
+  final ApiClient _api;
+  Dio get _dio => _api.dio;
+
+  @override
+  Future<List<Post>> list({
     String scope = 'all',
     String feed = 'recent', // recent | popular | following
     String? category, // null/All = no filter
@@ -36,13 +40,15 @@ class FeedApi {
   /// The community *activity* feed (events, tournaments, issues, green) — used
   /// by the Feed screen's "Activity" tab. Returns raw items to keep this hub
   /// decoupled from the community_feed feature.
-  static Future<List<Map<String, dynamic>>> activityFeed() async {
+  @override
+  Future<List<Map<String, dynamic>>> activityFeed() async {
     final res = await _dio.get('${ApiConstants.community}/feed');
     final list = (res.data as List?) ?? const [];
     return list.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
   }
 
-  static Future<Post> create({
+  @override
+  Future<Post> create({
     required String content,
     required List<String> imageUrls,
     String? category,
@@ -61,17 +67,20 @@ class FeedApi {
     return Post.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
-  static Future<Map<String, dynamic>> toggleLike(String postId) async {
+  @override
+  Future<Map<String, dynamic>> toggleLike(String postId) async {
     final res = await _dio.post('/api/v1/posts/$postId/like');
     return (res.data as Map).cast<String, dynamic>();
   }
 
-  static Future<Map<String, dynamic>> toggleRepost(String postId) async {
+  @override
+  Future<Map<String, dynamic>> toggleRepost(String postId) async {
     final res = await _dio.post('/api/v1/posts/$postId/repost');
     return (res.data as Map).cast<String, dynamic>();
   }
 
-  static Future<List<String>> recentHashtags() async {
+  @override
+  Future<List<String>> recentHashtags() async {
     try {
       final res = await _dio.get('/api/v1/posts/hashtags');
       return ((res.data as List?) ?? const []).map((e) => e.toString()).toList();
@@ -80,7 +89,8 @@ class FeedApi {
     }
   }
 
-  static Future<List<PostComment>> comments(String postId) async {
+  @override
+  Future<List<PostComment>> comments(String postId) async {
     final res = await _dio.get('/api/v1/posts/$postId/comments');
     final list = (res.data as List?) ?? const [];
     return list
@@ -89,7 +99,8 @@ class FeedApi {
         .toList();
   }
 
-  static Future<PostComment> addComment(String postId, String content, {String? idempotencyKey}) async {
+  @override
+  Future<PostComment> addComment(String postId, String content, {String? idempotencyKey}) async {
     final res = await _dio.post('/api/v1/posts/$postId/comments', data: {
       'content': content,
       if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
@@ -97,26 +108,31 @@ class FeedApi {
     return PostComment.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
-  static Future<void> delete(String postId) async {
+  @override
+  Future<void> delete(String postId) async {
     await _dio.delete('/api/v1/posts/$postId');
   }
 
-  static Future<void> hide(String postId) async {
+  @override
+  Future<void> hide(String postId) async {
     await _dio.post('/api/v1/posts/$postId/hide');
   }
 
-  static Future<void> report(String postId, {String? reason}) async {
+  @override
+  Future<void> report(String postId, {String? reason}) async {
     await _dio.post('/api/v1/posts/$postId/report', data: {
       if (reason != null) 'reason': reason,
     });
   }
 
-  static Future<void> blockUser(String userId) async {
+  @override
+  Future<void> blockUser(String userId) async {
     await _dio.post('/api/v1/users/$userId/block');
   }
 
   /// Uploads an image file and returns its URL (Cloudinary or local).
-  static Future<String> uploadImage(String filePath) async {
+  @override
+  Future<String> uploadImage(String filePath) async {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
     });

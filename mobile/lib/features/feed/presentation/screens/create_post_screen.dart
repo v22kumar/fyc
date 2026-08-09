@@ -6,18 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
-import '../../core/storage/local_storage.dart';
-import '../../core/theme/app_theme.dart';
-import '../../service_locator.dart';
-import '../auth/presentation/bloc/auth_bloc.dart';
-import '../auth/presentation/bloc/auth_state.dart';
-import 'feed_api.dart';
-import '../../core/services/sync_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/feed_repository.dart';
+import '../../../../core/services/sync_service.dart';
 
 const _categories = ['All', 'Cricket', 'Events', 'Environment', 'Achievements', 'Announcement', 'Other'];
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  const CreatePostScreen({super.key, required this.repo});
+
+  final FeedRepository repo;
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -34,7 +34,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   String _category = 'All';
   List<String> _recentTags = const [];
 
-  bool get _ta => sl<LocalStorage>().getLang() == 'ta';
+  bool get _ta => trLang() == 'ta';
 
   String get _authorName {
     final s = context.read<AuthBloc>().state;
@@ -68,7 +68,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   void initState() {
     super.initState();
-    FeedApi.recentHashtags().then((t) {
+    widget.repo.recentHashtags().then((t) {
       if (mounted) setState(() => _recentTags = t);
     });
   }

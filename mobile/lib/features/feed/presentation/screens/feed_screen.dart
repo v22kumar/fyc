@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/design_system/components/ds_skeleton.dart';
-import '../../core/design_system/patterns/kolam_background.dart';
-import '../../core/storage/local_storage.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/entrance.dart';
-import '../../service_locator.dart';
-import '../auth/presentation/bloc/auth_bloc.dart';
-import '../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/design_system/components/ds_skeleton.dart';
+import '../../../../core/design_system/patterns/kolam_background.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/entrance.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'feed_api.dart';
-import 'feed_models.dart';
-import '../../core/services/sync_service.dart';
+import '../../domain/repositories/feed_repository.dart';
+import '../../data/models/feed_models.dart';
+import '../../../../core/services/sync_service.dart';
 
 String _fullUrl(String url) =>
     url.startsWith('http') ? url : '${ApiConstants.baseUrl}$url';
@@ -49,14 +47,16 @@ const _filters = <(String, IconData, String)>[
 ];
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key});
+  const FeedScreen({super.key, required this.repo});
+
+  final FeedRepository repo;
 
   @override
   State<FeedScreen> createState() => _FeedScreenState();
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  bool get _ta => sl<LocalStorage>().getLang() == 'ta';
+  bool get _ta => trLang() == 'ta';
 
   int _tab = 0;
   int _filter = 0;
@@ -82,14 +82,14 @@ class _FeedScreenState extends State<FeedScreen> {
     final t = _tabs[_tab];
     try {
       if (t.$5) {
-        final acts = await FeedApi.activityFeed();
+        final acts = await widget.repo.activityFeed();
         if (!mounted) return;
         setState(() {
           _activity = acts;
           _loading = false;
         });
       } else {
-        final posts = await FeedApi.list(
+        final posts = await widget.repo.list(
           feed: _filters[_filter].$3,
           category: t.$4,
           source: t.$3,
@@ -207,7 +207,7 @@ class _FeedScreenState extends State<FeedScreen> {
         delegate: SliverChildBuilderDelegate(
           (_, i) => FadeSlideIn(
             delay: Duration(milliseconds: (i * 45).clamp(0, 400)),
-            child: _PostCard(post: posts[i], ta: _ta),
+            child: _PostCard(post: posts[i], ta: _ta, repo: widget.repo),
           ),
           childCount: posts.length,
         ),
@@ -573,7 +573,9 @@ class _FilterChips extends StatelessWidget {
 class _PostCard extends StatefulWidget {
   final Post post;
   final bool ta;
-  const _PostCard({required this.post, required this.ta});
+  final FeedRepository repo;
+  const _PostCard(
+      {required this.post, required this.ta, required this.repo});
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -588,7 +590,7 @@ class _PostCardState extends State<_PostCard> {
       p.likeCount += p.likedByMe ? 1 : -1;
     });
     try {
-      final r = await FeedApi.toggleLike(p.id);
+      final r = await widget.repo.toggleLike(p.id);
       if (!mounted) return;
       setState(() {
         p.likedByMe = r['liked'] as bool? ?? p.likedByMe;
@@ -610,7 +612,7 @@ class _PostCardState extends State<_PostCard> {
       p.repostCount += p.repostedByMe ? 1 : -1;
     });
     try {
-      final r = await FeedApi.toggleRepost(p.id);
+      final r = await widget.repo.toggleRepost(p.id);
       if (!mounted) return;
       setState(() {
         p.repostedByMe = r['reposted'] as bool? ?? p.repostedByMe;
@@ -634,6 +636,7 @@ class _PostCardState extends State<_PostCard> {
       builder: (_) => _CommentsSheet(
         post: p,
         onAdded: () => setState(() => p.commentCount += 1),
+        repo: widget.repo,
       ),
     );
   }
@@ -674,7 +677,7 @@ class _PostCardState extends State<_PostCard> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('reporting_post'))));
                 try {
-                  await FeedApi.report(p.id, reason: 'Inappropriate content');
+                  await widget.repo.report(p.id, reason: 'Inappropriate content');
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_reported'))));
                 } catch (e) {
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_report'))));
@@ -688,7 +691,7 @@ class _PostCardState extends State<_PostCard> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Blocking ${p.author.name}...')));
                 try {
-                  await FeedApi.blockUser(p.author.id);
+                  await widget.repo.blockUser(p.author.id);
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('user_blocked_refresh_to_hide_their_posts'))));
                 } catch (e) {
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_block_user'))));
@@ -702,7 +705,7 @@ class _PostCardState extends State<_PostCard> {
                 onTap: () async {
                   Navigator.pop(context);
                   try {
-                    await FeedApi.hide(p.id);
+                    await widget.repo.hide(p.id);
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_hidden'))));
                   } catch (e) {
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_hide'))));
@@ -716,7 +719,7 @@ class _PostCardState extends State<_PostCard> {
                 onTap: () async {
                   Navigator.pop(context);
                   try {
-                    await FeedApi.delete(p.id);
+                    await widget.repo.delete(p.id);
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('post_deleted_refresh_feed'))));
                   } catch (e) {
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trId('failed_to_delete_you_may_not_have_permis'))));
@@ -1034,7 +1037,9 @@ class _PostImages extends StatelessWidget {
 class _CommentsSheet extends StatefulWidget {
   final Post post;
   final VoidCallback onAdded;
-  const _CommentsSheet({required this.post, required this.onAdded});
+  final FeedRepository repo;
+  const _CommentsSheet(
+      {required this.post, required this.onAdded, required this.repo});
 
   @override
   State<_CommentsSheet> createState() => _CommentsSheetState();
@@ -1059,7 +1064,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
   Future<void> _load() async {
     try {
-      final c = await FeedApi.comments(widget.post.id);
+      final c = await widget.repo.comments(widget.post.id);
       if (mounted) setState(() => _comments = c);
     } catch (_) {
       if (mounted) setState(() => _comments = const []);
