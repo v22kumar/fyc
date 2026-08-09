@@ -37,6 +37,7 @@ from app.services.chess_ws_manager import (
 from app.dependencies import get_current_user, get_current_user_optional, RoleChecker
 from app.middleware.tenant import require_tenant_id
 from app.core.short_code import generate_unique_short_code
+from app.services import tournament_flow as flow
 from app.core.config import settings
 
 router = APIRouter(prefix="/chess/tournaments", tags=["Chess Tournaments"])
@@ -45,13 +46,10 @@ require_exec = RoleChecker(["EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN"])
 
 
 # ── name helpers ─────────────────────────────────────────────────────────────
-def _name(u: Optional[User]) -> str:
-    if not u:
-        return "Player"
-    p = getattr(u, "profile", None)
-    if p:
-        return p.full_name_en or p.full_name_ta or "Player"
-    return "Player"
+# Moved to services/tournament_flow.py — the router keeps thin aliases so
+# its HTTP handlers read the same while the chess itself lives with the rest
+# of the flow logic.
+_name = flow.player_name
 
 
 class _NameBook:
@@ -101,45 +99,10 @@ def _bool(v) -> bool:
     return bool(v) if v is not None else False
 
 
-def _notify(db: Session, org_id, user_id, title_en, title_ta, body_en, body_ta, data=None):
-    """Best-effort single-user notification. Never breaks the primary action."""
-    if not user_id:
-        return
-    try:
-        from app.services.notification_service import NotificationService
-
-        NotificationService(db).send_notification(
-            user_id=user_id,
-            organization_id=org_id,
-            title_en=title_en,
-            title_ta=title_ta,
-            body_en=body_en,
-            body_ta=body_ta,
-            notification_type="TOURNAMENT",
-            data=data or {},
-        )
-    except Exception:
-        pass
+_notify = flow.notify_player
 
 
-# ── bracket helpers ──────────────────────────────────────────────────────────
-def _audit(db: Session, org_id, user_id, action_type: str, match_id, old_values=None, new_values=None):
-    """Append a critical-action audit row to the CURRENT transaction (committed by
-    the caller, so the audit is atomic with the state change). Best-effort — never
-    breaks the primary action."""
-    try:
-        from app.models.audit import AuditLog
-        db.add(AuditLog(
-            organization_id=org_id,
-            user_id=user_id,
-            action_type=action_type,
-            target_table="chess_tournament_matches",
-            target_id=match_id,
-            old_values=old_values,
-            new_values=new_values,
-        ))
-    except Exception:
-        pass
+_audit = flow.record_audit
 
 
 logger = logging.getLogger(__name__)
@@ -164,98 +127,12 @@ def _aware(dt):
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
 
 
-def _advance(db: Session, tour: ChessTournament, match: ChessTournamentMatch, winner_id):
-    """Record a winner and place them in the next round slot. Does NOT activate
-    the next round — that is the manager's manual "Start Next Round" decision.
-    Auto-records the result and notifies the organizer for real (non-bye) matches."""
-    was_bye = match.status == "BYE"
-    match.winner_id = winner_id
-    match.completed_at = datetime.now(timezone.utc)
-    if not was_bye:
-        match.status = "DONE"
-
-    if not was_bye:
-        winner = db.query(User).filter(User.id == winner_id).first()
-        wname = _name(winner)
-        _notify(
-            db, tour.organization_id, tour.created_by_user_id,
-            "Chess match decided", "செஸ் ஆட்டம் முடிந்தது",
-            f"{wname} won a match in {tour.name}.",
-            f"{tour.name} போட்டியில் {wname} வென்றார்.",
-            {"route": f"/chess/tournaments/{tour.id}"},
-        )
-
-    nxt = (
-        db.query(ChessTournamentMatch)
-        .filter(
-            ChessTournamentMatch.tournament_id == tour.id,
-            ChessTournamentMatch.round == match.round + 1,
-            ChessTournamentMatch.slot == match.slot // 2,
-        )
-        .first()
-    )
-    if nxt is None:
-        tour.champion_id = winner_id
-        tour.status = "COMPLETED"
-        # Congratulate the champion and let the organizer know it's a wrap.
-        _notify(
-            db, tour.organization_id, winner_id,
-            "🏆 You are the champion!", "🏆 நீங்கள் வெற்றியாளர்!",
-            f"You won {tour.name}. Congratulations!",
-            f"{tour.name} போட்டியில் நீங்கள் வென்றீர்கள்! வாழ்த்துக்கள்!",
-            {"route": f"/chess/tournaments/{tour.id}"},
-        )
-        _notify(
-            db, tour.organization_id, tour.created_by_user_id,
-            "Tournament complete", "போட்டி முடிந்தது",
-            f"{tour.name} has a champion.", f"{tour.name} போட்டிக்கு வெற்றியாளர் கிடைத்தார்.",
-            {"route": f"/chess/tournaments/{tour.id}"},
-        )
-        return
-
-    if match.slot % 2 == 0:
-        nxt.player_a_id = winner_id
-    else:
-        nxt.player_b_id = winner_id
-    # Only mark READY if the manager has already activated that round (normally
-    # they haven't yet — the round is activated later via Start Next Round).
-    if _bool(nxt.activated) and nxt.player_a_id and nxt.player_b_id:
-        nxt.status = "READY"
+_advance = flow.advance
 
 
 def _auto_resolve(db: Session, tour: ChessTournament):
-    """Resolve any LIVE match whose linked Arena game has finished."""
-    live = (
-        db.query(ChessTournamentMatch)
-        .filter(
-            ChessTournamentMatch.tournament_id == tour.id,
-            ChessTournamentMatch.status == "LIVE",
-            ChessTournamentMatch.game_id.isnot(None),
-            ChessTournamentMatch.winner_id.is_(None),
-        )
-        .all()
-    )
-    # Round one of a 100-player draw is 50 live matches, and this runs on every
-    # read of the tournament — so fetch the games together, not one at a time.
-    games = {}
-    if live:
-        for g in (db.query(ChessGame)
-                  .filter(ChessGame.id.in_([m.game_id for m in live]))
-                  .all()):
-            games[g.id] = g
-    changed = False
-    for m in live:
-        g = games.get(m.game_id)
-        if not g or not g.result:
-            continue
-        if g.result == "white_wins":
-            _advance(db, tour, m, m.player_a_id)
-            changed = True
-        elif g.result == "black_wins":
-            _advance(db, tour, m, m.player_b_id)
-            changed = True
-        # draws are left LIVE — a replay/decider is needed (admin can report).
-    if changed:
+    """Read finished Arena games into the bracket; commit if anything changed."""
+    if flow.auto_resolve(db, tour):
         db.commit()
 
 
@@ -595,7 +472,14 @@ def start_tournament(
     tour = _get_tour(db, tour_id, tenant_id)
     # Registration may be open or already closed — closing first is recommended
     # but not required. Once IN_PROGRESS/COMPLETED it cannot be started again.
-    if tour.status not in ("REGISTRATION_OPEN", "REGISTRATION_CLOSED"):
+    #
+    # STARTING_LOCK is startable too, deliberately: it means a previous start
+    # took the lock and then died before committing. That used to strand the
+    # tournament forever — a status no enum contains, that the app renders as a
+    # dead screen, and that no endpoint could clear. Pressing Start again is
+    # the recovery.
+    startable = ("REGISTRATION_OPEN", "REGISTRATION_CLOSED", "STARTING_LOCK")
+    if tour.status not in startable:
         raise HTTPException(status_code=400, detail="Tournament already started")
 
     entries = _entries(db, tour_id)
@@ -604,64 +488,36 @@ def start_tournament(
         raise HTTPException(status_code=400, detail="Need at least 2 approved players")
 
     # Optimistic lock: ensure we are the only ones starting it
+    prior_status = tour.status if tour.status != "STARTING_LOCK" else "REGISTRATION_CLOSED"
     updated = db.query(ChessTournament).filter(
         ChessTournament.id == tour_id,
-        ChessTournament.status.in_(["REGISTRATION_OPEN", "REGISTRATION_CLOSED"])
+        ChessTournament.status.in_(startable)
     ).update({"status": "STARTING_LOCK"}, synchronize_session=False)
-    
+
     if updated == 0:
         db.rollback()
         raise HTTPException(status_code=400, detail="Tournament already starting or started")
 
-    random.shuffle(players)
-    n = len(players)
-    size = 1 << (n - 1).bit_length()  # next power of 2 >= n
-    rounds = size.bit_length() - 1
-    padded = players + [None] * (size - n)
+    # From here to the commit, any failure must give the tournament back.
+    # The lock exists to stop a second concurrent start, not to hold the event
+    # hostage to a crash between these two lines.
+    try:
+        # A recovered start may find half-created matches from the attempt that
+        # died. Clear them: the draw below is the draw.
+        db.query(ChessTournamentMatch).filter(
+            ChessTournamentMatch.tournament_id == tour_id
+        ).delete(synchronize_session=False)
 
-    # Create empty matches for every round.
-    matches = {}  # (round, slot) -> ChessTournamentMatch
-    for r in range(1, rounds + 1):
-        for s in range(size // (2 ** r)):
-            m = ChessTournamentMatch(
-                id=uuid.uuid4(),
-                organization_id=tenant_id,
-                tournament_id=tour_id,
-                round=r,
-                slot=s,
-                status="PENDING",
-                activated=False,
-            )
-            matches[(r, s)] = m
-            db.add(m)
-
-    # Seed round 1 by pairing front-with-back so byes face real players.
-    for s in range(size // 2):
-        a = padded[s]
-        b = padded[size - 1 - s]
-        m = matches[(1, s)]
-        m.player_a_id = a
-        m.player_b_id = b
-        m.activated = True  # round 1 goes live when the tournament starts
-        m.activated_at = datetime.now(timezone.utc)
-        if a and b:
-            m.status = "READY"
-        elif a and not b:
-            m.status = "BYE"  # auto-advance below
-        else:
-            m.status = "PENDING"
-
-    tour.status = "IN_PROGRESS"
-    tour.current_round = 1
-    db.flush()
-
-    # Auto-advance byes into round 2 (slot filled, round 2 not yet activated).
-    for s in range(size // 2):
-        m = matches[(1, s)]
-        if m.status == "BYE" and m.player_a_id:
-            _advance(db, tour, m, m.player_a_id)
-
-    db.commit()
+        flow.draw_bracket(db, tour, tenant_id, players)
+        db.commit()
+    except Exception:
+        db.rollback()
+        db.query(ChessTournament).filter(
+            ChessTournament.id == tour_id,
+            ChessTournament.status == "STARTING_LOCK",
+        ).update({"status": prior_status}, synchronize_session=False)
+        db.commit()
+        raise
 
     # Notify every approved player the tournament has begun.
     for pid in players:
@@ -701,10 +557,7 @@ def start_next_round(
         raise HTTPException(status_code=400, detail="No further rounds")
 
     # Every match in the current round must be decided first.
-    undecided = [
-        m for m in all_matches
-        if m.round == cur and m.winner_id is None and m.status != "BYE"
-    ]
+    undecided = flow.undecided_in_round(all_matches, cur)
     if undecided:
         raise HTTPException(status_code=400, detail="Finish the current round first")
 
