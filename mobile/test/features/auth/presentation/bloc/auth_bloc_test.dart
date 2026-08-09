@@ -43,6 +43,12 @@ void main() {
     storage = MockLocalStorage();
 
     when(() => storage.isLoggedIn).thenReturn(false);
+    // The bloc now remembers the last confirmed profile so the app opens
+    // knowing whose it is. These tests exercise the no-cache path — a fresh
+    // install — so the reads answer null and the writes are no-ops.
+    when(() => storage.getCachedUser()).thenReturn(null);
+    when(() => storage.saveCachedUser(any())).thenAnswer((_) async {});
+    when(() => storage.clearCachedUser()).thenAnswer((_) async {});
 
     bloc = AuthBloc(
       sendOtp: sendOtp,
