@@ -11,6 +11,8 @@ abstract class EventDataSource {
   Future<Map<String, dynamic>> checkinEvent(String eventId);
   Future<EventModel> createEvent(Map<String, dynamic> body);
   Future<void> deleteEvent(String eventId);
+  Future<void> registerForEvent(String eventId, Map<String, dynamic> data);
+  Future<List<dynamic>> fetchRegistrationsAdmin(String eventId);
 }
 
 class EventDataSourceImpl implements EventDataSource {
@@ -72,4 +74,15 @@ class EventDataSourceImpl implements EventDataSource {
       throw mapDioException(e);
     }
   }
+
+  @override
+  Future<void> registerForEvent(String eventId, Map<String, dynamic> data) =>
+      _client.dio.post('${ApiConstants.events}/$eventId/register', data: data);
+
+  @override
+  Future<List<dynamic>> fetchRegistrationsAdmin(String eventId) async =>
+      ((await _client.dio
+                  .get('${ApiConstants.events}/$eventId/registrations'))
+              .data as List?) ??
+      const [];
 }

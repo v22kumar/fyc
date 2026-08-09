@@ -9,6 +9,7 @@ import '../../features/auth/presentation/screens/otp_login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/auth/presentation/widgets/sign_in_sheet.dart';
+import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -16,6 +17,7 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/blood_donation/presentation/screens/blood_request_flow.dart';
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
+import '../../features/issues/domain/repositories/issue_repository.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/issues/presentation/screens/review_queue_screen.dart';
 import '../../features/membership/presentation/screens/membership_card_screen.dart';
@@ -26,9 +28,11 @@ import '../storage/local_storage.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
+import '../../features/events/domain/repositories/event_repository.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
 
 // Sports
+import '../../features/sports/domain/repositories/sports_repository.dart';
 import '../../features/sports/presentation/bloc/sports_bloc.dart';
 import '../../features/sports/presentation/screens/sports_hub_screen.dart';
 import '../../features/sports/presentation/screens/sports_tournament_detail_screen.dart';
@@ -274,7 +278,10 @@ final appRouter = GoRouter(
       path: '/events',
       builder: (context, state) => BlocProvider(
         create: (_) => sl<EventBloc>(),
-        child: const EventsListScreen(),
+        child: RepositoryProvider<EventRepository>.value(
+          value: sl<EventRepository>(),
+          child: const EventsListScreen(),
+        ),
       ),
     ),
     // Reporting: photo first, asked once, and straight into the Complaint Box
@@ -289,7 +296,8 @@ final appRouter = GoRouter(
     // resolution rate computed from two reports.
     GoRoute(
       path: '/issues',
-      builder: (context, state) => const ReportIssueScreen(),
+      builder: (context, state) =>
+          ReportIssueScreen(repo: sl<IssueRepository>()),
     ),
     // Kept so anything holding the old link still lands somewhere sensible.
     GoRoute(
@@ -351,17 +359,20 @@ final appRouter = GoRouter(
               create: (_) => sl<SportsBloc>(),
               child: SportsTournamentDetailScreen(
                 tournamentId: extra?['tournamentId'] as String? ?? '',
+                repo: sl<SportsRepository>(),
               ),
             );
           },
         ),
         GoRoute(
           path: 'create',
-          builder: (context, state) => const CreateTournamentScreen(),
+          builder: (context, state) =>
+              CreateTournamentScreen(repo: sl<SportsRepository>()),
         ),
         GoRoute(
           path: 'approvals',
-          builder: (context, state) => const LiveEntriesApprovalScreen(),
+          builder: (context, state) =>
+              LiveEntriesApprovalScreen(repo: sl<SportsRepository>()),
         ),
       ],
     ),
@@ -681,7 +692,7 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
         }
       },
       tabs: [
-        const HomeScreen(),
+        HomeScreen(repo: sl<HomeRepository>()),
         FeedScreen(repo: sl<FeedRepository>()),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),

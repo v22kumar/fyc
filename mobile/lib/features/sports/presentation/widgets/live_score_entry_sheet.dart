@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/fixture_entity.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 /// Bottom sheet to record a live/final score for a non-cricket fixture.
 ///
@@ -98,9 +97,9 @@ class _LiveScoreEntrySheetState extends State<LiveScoreEntrySheet> {
     // Capture the messenger before popping so we don't use a dead context.
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await sl<ApiClient>().dio.post(
-        ApiConstants.sportsFixtureLiveEntry(widget.fixture.id),
-        data: {
+      await sl<SportsRepository>().submitLiveScore(
+        widget.fixture.id,
+        {
           'team_a_score': _scoreACtrl.text.trim().isEmpty ? null : _scoreACtrl.text.trim(),
           'team_b_score': _scoreBCtrl.text.trim().isEmpty ? null : _scoreBCtrl.text.trim(),
           'winner_id': _winnerId,

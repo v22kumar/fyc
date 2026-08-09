@@ -11,8 +11,6 @@ import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/widgets/share_link_sheet.dart';
 import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
@@ -197,6 +195,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                             builder: (_) => EventRegistrationsScreen(
                               event: entry.value,
                               lang: _lang,
+                              repo: context.read<EventRepository>(),
                             ),
                           ));
                         }
@@ -222,7 +221,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _EventRegisterSheet(event: event, lang: _lang),
+      builder: (_) => _EventRegisterSheet(
+          event: event, lang: _lang, repo: context.read<EventRepository>()),
     );
   }
 
@@ -619,9 +619,11 @@ class _GoingRow extends StatelessWidget {
 
 /// Bottom sheet to register (RSVP) for an event.
 class _EventRegisterSheet extends StatefulWidget {
+  final EventRepository repo;
   final EventEntity event;
   final String lang;
-  const _EventRegisterSheet({required this.event, required this.lang});
+  const _EventRegisterSheet(
+      {required this.event, required this.lang, required this.repo});
 
   @override
   State<_EventRegisterSheet> createState() => _EventRegisterSheetState();
@@ -665,9 +667,9 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
       if (widget.event.registrationType == 'Submission' && _topic.text.trim().isNotEmpty) {
         categories.add(_topic.text.trim());
       }
-      await sl<ApiClient>().dio.post(
-        '${ApiConstants.events}/${widget.event.id}/register',
-        data: {
+      await widget.repo.registerForEvent(
+        widget.event.id,
+        {
           'name': _name.text.trim(),
           'dob': DateTime.parse(_dob.text.trim()).toIso8601String(),
           'gender': _gender,

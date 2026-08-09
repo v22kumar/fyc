@@ -35,4 +35,13 @@ class IssueRepositoryImpl implements IssueRepository {
       return const Left(ServerFailure());
     }
   }
+
+  @override
+  Future<String?> uploadPhoto(List<int> bytes,
+          {String filename = 'issue.jpg'}) =>
+      _remote.uploadPhoto(bytes, filename: filename);
+
+  @override
+  Future<String?> submitCivicReport(Map<String, dynamic> data) =>
+      _remote.submitCivicReport(data);
 }

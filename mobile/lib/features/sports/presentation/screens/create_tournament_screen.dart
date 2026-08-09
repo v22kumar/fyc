@@ -4,10 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/tournament_entity.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 // Per-sport match configuration options
 const _matchConfigBySport = <String, List<String>>{
@@ -57,8 +56,9 @@ Map<String, String> get _formatLabels => {
     };
 
 class CreateTournamentScreen extends StatefulWidget {
+  final SportsRepository repo;
   final TournamentEntity? tournament;
-  const CreateTournamentScreen({super.key, this.tournament});
+  const CreateTournamentScreen({super.key, required this.repo, this.tournament});
 
   @override
   State<CreateTournamentScreen> createState() => _CreateTournamentScreenState();
@@ -235,15 +235,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ).toUtc().toIso8601String(),
       };
       if (widget.tournament != null) {
-        await sl<ApiClient>().dio.put(
-          '${ApiConstants.sportsTournaments}/${widget.tournament!.id}',
-          data: body,
-        );
+        await widget.repo.updateTournament(widget.tournament!.id, body);
         if (!mounted) return;
         Navigator.pop(context, true);
       } else {
-        final res = await sl<ApiClient>().dio.post(ApiConstants.sportsTournaments, data: body);
-        final id = res.data['id'] as String?;
+        final id = await widget.repo.createTournament(body);
         if (!mounted) return;
         final storage = sl<LocalStorage>();
         storage.clearDraft('tournament_draft_name');

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/team_entity.dart';
 import '../../domain/entities/fixture_entity.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class AddFixtureSheet extends StatefulWidget {
   final String tournamentId;
@@ -89,15 +88,11 @@ class _AddFixtureSheetState extends State<AddFixtureSheet> {
       };
 
       if (widget.fixture != null) {
-        await sl<ApiClient>().dio.patch(
-          '${ApiConstants.sportsTournaments}/${widget.tournamentId}/fixtures/${widget.fixture!.id}',
-          data: data,
-        );
+        await sl<SportsRepository>()
+            .updateFixture(widget.tournamentId, widget.fixture!.id, data);
       } else {
-        await sl<ApiClient>().dio.post(
-          ApiConstants.sportsTournamentFixtures(widget.tournamentId),
-          data: data,
-        );
+        await sl<SportsRepository>()
+            .createFixture(widget.tournamentId, data);
       }
       if (!mounted) return;
       Navigator.pop(context, true);

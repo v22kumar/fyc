@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/team_entity.dart';
 import '../screens/team_management_screen.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class EditTeamSheet extends StatefulWidget {
   final String tournamentId;
@@ -66,9 +65,10 @@ class _EditTeamSheetState extends State<EditTeamSheet> {
     setState(() => _submitting = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await sl<ApiClient>().dio.patch(
-        '${ApiConstants.sportsTournaments}/${widget.tournamentId}/teams/${widget.team.id}',
-        data: {
+      await sl<SportsRepository>().updateTeam(
+        widget.tournamentId,
+        widget.team.id,
+        {
           'name': _nameCtrl.text.trim(),
           'captain_name': _captainCtrl.text.trim().isEmpty ? null : _captainCtrl.text.trim(),
           'contact_phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),

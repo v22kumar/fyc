@@ -6,9 +6,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../../domain/entities/weekly_game_entity.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class CreateWeeklyGameSheet extends StatefulWidget {
   final WeeklyGameEntity? game;
@@ -70,10 +69,8 @@ class _CreateWeeklyGameSheetState extends State<CreateWeeklyGameSheet> {
       };
       
       if (widget.game != null) {
-        await sl<ApiClient>().dio.patch(
-          '${ApiConstants.weeklyGames}/${widget.game!.id}',
-          data: data,
-        );
+        await sl<SportsRepository>()
+            .updateWeeklyGame(widget.game!.id, data);
         if (!mounted) return;
         context.read<SportsBloc>().add(const SportsFetchRequested());
         Navigator.pop(context, true);

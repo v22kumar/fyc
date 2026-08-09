@@ -14,6 +14,8 @@ abstract class IssueDataSource {
     String? photoUrl,
     bool isEmergency = false,
   });
+  Future<String?> uploadPhoto(List<int> bytes, {String filename = 'issue.jpg'});
+  Future<String?> submitCivicReport(Map<String, dynamic> data);
 }
 
 class IssueDataSourceImpl implements IssueDataSource {
@@ -48,5 +50,21 @@ class IssueDataSourceImpl implements IssueDataSource {
     } on DioException catch (e) {
       throw mapDioException(e);
     }
+  }
+
+  @override
+  Future<String?> uploadPhoto(List<int> bytes,
+      {String filename = 'issue.jpg'}) async {
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final res = await _client.dio.post('/api/v1/media/upload', data: form);
+    return (res.data as Map?)?['url'] as String?;
+  }
+
+  @override
+  Future<String?> submitCivicReport(Map<String, dynamic> data) async {
+    final res = await _client.dio.post('/api/v1/issues/v2', data: data);
+    return (res.data is Map) ? res.data['id'] as String? : null;
   }
 }

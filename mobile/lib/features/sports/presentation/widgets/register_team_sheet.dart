@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class RegisterTeamSheet extends StatefulWidget {
   final String tournamentId;
@@ -32,9 +31,9 @@ class _RegisterTeamSheetState extends State<RegisterTeamSheet> {
     setState(() => _submitting = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await sl<ApiClient>().dio.post(
-        ApiConstants.sportsTournamentTeams(widget.tournamentId),
-        data: {
+      await sl<SportsRepository>().registerTeam(
+        widget.tournamentId,
+        {
           'name': _nameCtrl.text.trim(),
           'captain_name': _captainCtrl.text.trim(),
           'contact_phone': _phoneCtrl.text.trim(),

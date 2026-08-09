@@ -8,11 +8,10 @@ import '../../domain/entities/weekly_game_entity.dart';
 import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import 'create_weekly_game_sheet.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/sports_repository.dart';
 
 class WeeklyGameCard extends StatelessWidget {
   final WeeklyGameEntity game;
@@ -60,9 +59,7 @@ class WeeklyGameCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        await sl<ApiClient>().dio.delete(
-          '${ApiConstants.weeklyGames}/${game.id}',
-        );
+        await sl<SportsRepository>().deleteWeeklyGame(game.id);
         bloc.add(const SportsFetchRequested());
         messenger.showSnackBar(
           SnackBar(content: Text(trId('weekly_game_deleted_successfully')), backgroundColor: AppColors.success),
