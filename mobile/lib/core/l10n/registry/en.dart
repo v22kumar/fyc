@@ -1322,6 +1322,7 @@ const Map<String, String> kEn = {
   'ev_closed': 'closed this',
   'ev_reopened': 'reopened this',
   'share_a_post': 'Share a post',
+<<<<<<< HEAD
   'sos': 'SOS',
   'hold_to_send': 'Hold to\nsend SOS',
   'hold_three_seconds': 'Hold for 3 seconds',
@@ -1402,4 +1403,6 @@ const Map<String, String> kEn = {
   'no_network_sms_opened': 'No signal — your SMS app is open with the message. Press send.',
   'no_network_no_contacts': 'No signal, and no trusted contacts to fall back on. Call 112.',
   'queued_will_send': 'We\'ll send this to nearby members as soon as there\'s signal.',
+=======
+>>>>>>> origin/main
 };
