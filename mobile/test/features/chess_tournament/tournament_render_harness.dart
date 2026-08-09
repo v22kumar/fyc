@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fyc_connect/core/error/failures.dart';
-import 'package:fyc_connect/core/network/api_client.dart';
 import 'package:fyc_connect/core/storage/local_storage.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
 import 'package:fyc_connect/features/auth/data/models/user_model.dart';
@@ -21,37 +20,30 @@ import 'package:fyc_connect/features/auth/domain/usecases/send_otp_usecase.dart'
 import 'package:fyc_connect/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:fyc_connect/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:fyc_connect/features/auth/presentation/bloc/auth_event.dart';
-import 'package:fyc_connect/features/chess_tournament/chess_tournament_detail_screen.dart';
-import 'package:fyc_connect/features/chess_tournament/chess_tournament_list_screen.dart';
-import 'package:fyc_connect/features/chess_tournament/chess_tournament_models.dart';
+import 'package:fyc_connect/features/chess_tournament/domain/repositories/tournament_repository.dart';
+import 'package:fyc_connect/features/chess_tournament/presentation/bloc/tournament_bloc.dart';
+import 'package:fyc_connect/features/chess_tournament/presentation/screens/tournament_list_screen.dart';
+import 'package:fyc_connect/features/chess_tournament/presentation/screens/tournament_screen.dart';
 import 'package:fyc_connect/service_locator.dart';
 
+import 'fake_tournament_repository.dart';
 import 'tournament_fixtures.dart';
 
-/// Photographs a chess tournament from creation to champion.
+/// Photographs a chess tournament from creation to champion — the REAL
+/// screens, driven through the real bloc over a fake repository.
 ///
 /// A camera, not an assertion suite — named without `_test` so `flutter test`
-/// never collects it. Run it deliberately:
+/// never collects it. Run deliberately:
 ///
 ///     flutter test test/features/chess_tournament/tournament_render_harness.dart
-///
-/// The screens are the real ones, driven through the real `ApiClient`; only
-/// the socket is replaced. Anything wrong in these pictures is wrong in the
-/// app.
 const _shotKey = Key('shot-boundary');
 
 Future<void> _shoot(WidgetTester tester, String name) async {
-  // `runAsync` lets the real async plumbing below Dio — stream reads, the
-  // interceptor chain — actually run. Inside fake-async those futures are
-  // parked, so the screen sat on its spinner however long we pumped, and the
-  // first shot was a loading indicator.
-  await tester.runAsync(() => Future<void>.delayed(
-      const Duration(milliseconds: 120)));
   for (var i = 0; i < 10; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
-  final boundary =
-      find.byKey(_shotKey).evaluate().first.renderObject! as RenderRepaintBoundary;
+  final boundary = find.byKey(_shotKey).evaluate().first.renderObject!
+      as RenderRepaintBoundary;
   final image = await boundary.toImage(pixelRatio: 2.0);
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
   image.dispose();
@@ -70,15 +62,13 @@ class _Repo implements AuthRepository {
   dynamic noSuchMethod(Invocation i) => throw UnimplementedError();
 }
 
-/// The organiser sees manager controls; a player sees their own status.
 UserModel _organiser() => UserModel(
       id: kOrganiserId,
       phoneNumber: '+919000000001',
       role: 'ADMIN',
       isVerified: true,
       preferredLanguage: 'en',
-      fullNameEn: 'FYC Organiser',
-    );
+      fullNameEn: 'FYC Organiser');
 
 UserModel _player() => UserModel(
       id: uid(15),
@@ -86,48 +76,54 @@ UserModel _player() => UserModel(
       role: 'USER',
       isVerified: true,
       preferredLanguage: 'en',
-      fullNameEn: 'Prakash N.',
-    );
+      fullNameEn: 'Prakash N.');
 
 Future<void> _pump(
   WidgetTester tester, {
-  required Map<String, Object> routes,
-  required Widget screen,
+  required TournamentRepository repo,
   required UserModel as,
-  Size size = const Size(390, 844),
+  bool list = false,
+  Size size = const Size(390, 1400),
 }) async {
   SharedPreferences.setMockInitialValues({'fyc_has_session': true});
   final prefs = await SharedPreferences.getInstance();
   final storage = LocalStorage(prefs);
   await storage.saveLang('en');
   await storage.saveCachedUser(as.toJson());
-
   if (sl.isRegistered<LocalStorage>()) sl.unregister<LocalStorage>();
   sl.registerSingleton<LocalStorage>(storage);
 
-  final client = ApiClient(storage)..dio.httpClientAdapter = FakeAdapter(routes);
-  if (sl.isRegistered<ApiClient>()) sl.unregister<ApiClient>();
-  sl.registerSingleton<ApiClient>(client);
-
-  final repo = _Repo(as);
+  final authRepo = _Repo(as);
   final auth = AuthBloc(
-    sendOtp: SendOtpUseCase(repo),
-    verifyOtp: VerifyOtpUseCase(repo),
-    registerUser: RegisterUserUseCase(repo),
-    repository: repo,
+    sendOtp: SendOtpUseCase(authRepo),
+    verifyOtp: VerifyOtpUseCase(authRepo),
+    registerUser: RegisterUserUseCase(authRepo),
+    repository: authRepo,
     storage: storage,
   )..add(const AuthCheckRequested());
 
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(BlocProvider.value(
-    value: auth,
-    child: MaterialApp(
-      theme: AppTheme.lightFor('en'),
-      builder: (_, child) => RepaintBoundary(key: _shotKey, child: child),
-      home: screen,
+  await tester.pumpWidget(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: auth),
+        RepositoryProvider<TournamentRepository>.value(value: repo),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.lightFor('en'),
+        builder: (_, child) => RepaintBoundary(key: _shotKey, child: child),
+        home: list
+            ? BlocProvider(
+                create: (_) => TournamentListBloc(repo),
+                child: const TournamentListScreen())
+            : BlocProvider(
+                create: (_) => TournamentBloc(repo)
+                  ..add(TournamentRequested(uid(1000))),
+                child: TournamentScreen(tournamentId: uid(1000))),
+      ),
     ),
-  ));
+  );
   await tester.pump();
 }
 
@@ -151,86 +147,63 @@ void main() {
     }
   });
 
-  Widget detail(Map<String, dynamic> stage) => ChessTournamentDetailScreen(
-        tournamentId: uid(1000),
-        preload: ChessTournamentDetail.fromJson(stage),
-      );
-
-  testWidgets('40 · the list a member opens', (t) async {
+  testWidgets('50 · the list', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments': stageList},
-        screen: ChessTournamentListScreen(
-          preload: [for (final j in stageList) ChessTournament.fromJson(j)],
-        ),
-        as: _player());
-    await _shoot(t, '40_tournament_list');
+        repo: FakeTournamentRepository(stageOpenEmpty),
+        as: _player(),
+        list: true,
+        size: const Size(390, 844));
+    await _shoot(t, '50_list');
   });
 
-  testWidgets('41 · created, nobody has joined', (t) async {
+  testWidgets('51 · open, empty — organiser', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageOpenEmpty},
-        screen: detail(stageOpenEmpty),
+        repo: FakeTournamentRepository(stageOpenEmpty), as: _organiser());
+    await _shoot(t, '51_open_empty');
+  });
+
+  testWidgets('52 · approvals + roster — organiser', (t) async {
+    await _pump(t,
+        repo: FakeTournamentRepository(stageOpenWithPending),
         as: _organiser());
-    await _shoot(t, '41_open_empty');
+    await _shoot(t, '52_approvals_roster');
   });
 
-  testWidgets('42 · joining, three waiting on the manager', (t) async {
+  testWidgets('53 · ready to start, roster visible — organiser', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageOpenWithPending},
-        screen: detail(stageOpenWithPending),
+        repo: FakeTournamentRepository(stageClosedReadyToStart),
         as: _organiser());
-    await _shoot(t, '42_approvals');
+    await _shoot(t, '53_ready_to_start');
   });
 
-  testWidgets('43 · a player waiting to be let in', (t) async {
-    await _pump(t,
-        routes: {'/chess/tournaments/': stagePlayerPending},
-        screen: detail(stagePlayerPending),
-        as: _player());
-    await _shoot(t, '43_player_pending');
+  testWidgets('54 · my turn — player sees Ready without the bracket',
+      (t) async {
+    await _pump(t, repo: FakeTournamentRepository(stageMyTurn), as: _player());
+    await _shoot(t, '54_player_my_turn');
   });
 
-  testWidgets('44 · closed, eight in, waiting to start', (t) async {
+  testWidgets('55 · round one — organiser worklist', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageClosedReadyToStart},
-        screen: detail(stageClosedReadyToStart),
-        as: _organiser());
-    await _shoot(t, '44_ready_to_start');
+        repo: FakeTournamentRepository(stageRoundOneLive), as: _organiser());
+    await _shoot(t, '55_organiser_worklist');
   });
 
-  testWidgets('45 · round one in play', (t) async {
+  testWidgets('56 · between rounds — start semi-finals', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageRoundOneLive},
-        screen: detail(stageRoundOneLive),
-        as: _organiser(),
-        size: const Size(390, 1500));
-    await _shoot(t, '45_round_one_live');
+        repo: FakeTournamentRepository(stageBetweenRounds), as: _organiser());
+    await _shoot(t, '56_between_rounds');
   });
 
-  testWidgets('46 · between rounds', (t) async {
+  testWidgets('57 · semi-finals — bracket opens on the live round', (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageBetweenRounds},
-        screen: detail(stageBetweenRounds),
-        as: _organiser(),
-        size: const Size(390, 1500));
-    await _shoot(t, '46_between_rounds');
+        repo: FakeTournamentRepository(stageSemisPhysical), as: _organiser());
+    await _shoot(t, '57_semis');
   });
 
-  testWidgets('47 · semi-finals, one played in person', (t) async {
+  testWidgets('58 · completed — champion, runner-up, and the final visible',
+      (t) async {
     await _pump(t,
-        routes: {'/chess/tournaments/': stageSemisPhysical},
-        screen: detail(stageSemisPhysical),
-        as: _organiser(),
-        size: const Size(390, 1500));
-    await _shoot(t, '47_semis_physical');
-  });
-
-  testWidgets('48 · the champion', (t) async {
-    await _pump(t,
-        routes: {'/chess/tournaments/': stageCompleted},
-        screen: detail(stageCompleted),
-        as: _organiser(),
-        size: const Size(390, 1500));
-    await _shoot(t, '48_completed');
+        repo: FakeTournamentRepository(stageCompleted), as: _organiser());
+    await _shoot(t, '58_completed');
   });
 }

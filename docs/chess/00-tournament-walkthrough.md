@@ -177,3 +177,30 @@ nobody can share a tournament with anybody.
    restores the previous status.
 7. **Draw the crown and the trophy** instead of relying on emoji.
 8. **Surface `short_code`** so a tournament can be shared.
+
+---
+
+## The rebuild (this branch) — every item above is closed
+
+The feature was rebuilt rather than patched; `02-rebuild.md` records the
+shape. What this walkthrough photographed broken, the rebuild photographs
+fixed — shots `50`–`58` in `build/ui_shots/`, produced by the same harness
+from the same wire fixtures:
+
+| # | Stage | What it proves |
+|---|---|---|
+| 50 | The list | status chips, deadline on the open card, champion on the finished one |
+| 51 | Open, empty | deadline with day and time, share code |
+| 52 | Approvals + roster | pending approvals explained, approved players listed |
+| 53 | Ready to start | the roster **at the moment of the draw** (the shot-44 trap) |
+| 54 | My turn | Ready on screen with no bracket involved (the shot-45 defect) |
+| 55 | Round one, organiser | a vertical worklist — nothing off-screen (shot 45) |
+| 56 | Between rounds | "All decided — you can start the Semi-finals" |
+| 57 | Semi-finals | the bracket **opens on the semi-finals** (the shot-47 defect) |
+| 58 | Champion | banner with runner-up; bracket opens on the final |
+
+Each row is also pinned by a named regression test in
+`test/features/chess_tournament/tournament_surfaces_test.dart`, so the
+defect photographed in shots 40–48 cannot return unnoticed. Draw handling
+and `STARTING_LOCK` recovery are pinned by
+`backend/tests/test_tournament_flow.py`.

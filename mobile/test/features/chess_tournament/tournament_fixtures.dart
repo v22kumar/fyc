@@ -1,8 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:dio/dio.dart';
-
 /// Canned server responses for the chess tournament lifecycle.
 ///
 /// Written against `app/schemas/chess_tournament.py` rather than invented, so
@@ -221,43 +216,24 @@ List<Map<String, dynamic>> get stageList => [
       },
     ];
 
-// ── The adapter ──────────────────────────────────────────────────────────────
-
-/// Answers Dio from a table instead of the network.
-///
-/// Swapped in at `dio.httpClientAdapter`, below the interceptors, so the real
-/// ApiClient — auth header, error mapping, the lot — is exercised and only the
-/// socket is replaced.
-class FakeAdapter implements HttpClientAdapter {
-  FakeAdapter(this.routes);
-
-  /// Path suffix → body. Longest match wins, so `/tournaments/{id}` does not
-  /// shadow `/tournaments`.
-  final Map<String, Object> routes;
-
-  @override
-  void close({bool force = false}) {}
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options,
-      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
-    final path = options.path;
-    final keys = routes.keys.toList()
-      ..sort((a, b) => b.length.compareTo(a.length));
-    for (final key in keys) {
-      if (path.endsWith(key) || path.contains(key)) {
-        return ResponseBody.fromString(
-          json.encode(routes[key]),
-          200,
-          headers: {
-            Headers.contentTypeHeader: [Headers.jsonContentType],
-          },
-        );
-      }
-    }
-    return ResponseBody.fromString('{"detail":"no fixture for $path"}', 404,
-        headers: {
-          Headers.contentTypeHeader: [Headers.jsonContentType],
-        });
-  }
-}
+/// A player's own view of round one: Prakash (uid 15) has a READY match.
+Map<String, dynamic> get stageMyTurn => {
+      ..._base(status: 'IN_PROGRESS', currentRound: 1, entryCount: 8,
+          isRegistered: true, myStatus: 'APPROVED'),
+      'entries': [for (var i = 0; i < 8; i++) _entry(i, 'APPROVED')],
+      'rounds': 3,
+      'matches': [
+        _match(round: 1, slot: 0, a: 0, b: 1, winner: 0, status: 'DONE',
+            activated: true),
+        _match(round: 1, slot: 1, a: 2, b: 3, status: 'LIVE',
+            activated: true, aReady: true, bReady: true, live: true),
+        // Prakash (index 5) vs Latha (index 4) — Latha is already ready.
+        _match(round: 1, slot: 2, a: 4, b: 5, status: 'READY',
+            activated: true, aReady: true),
+        _match(round: 1, slot: 3, a: 6, b: 7, status: 'READY',
+            activated: true),
+        for (var s = 0; s < 2; s++)
+          _match(round: 2, slot: s, status: 'PENDING'),
+        _match(round: 3, slot: 0, status: 'PENDING'),
+      ],
+    };
