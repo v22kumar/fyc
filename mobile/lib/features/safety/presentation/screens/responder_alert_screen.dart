@@ -77,9 +77,22 @@ class _ResponderAlertScreenState extends State<ResponderAlertScreen> {
                           color: Colors.white54),
                     ),
                   ),
-                  const Spacer(),
-                  const Text('🆘', style: TextStyle(fontSize: 44)),
-                  const SizedBox(height: 14),
+                  const Spacer(flex: 2),
+                  // Drawn, not an emoji. Emoji coverage on cheap Android
+                  // handsets is patchy, and a tofu box at the top of an
+                  // emergency screen is a worse first impression than any
+                  // glyph is worth.
+                  Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.16),
+                    ),
+                    child: const Icon(Icons.emergency_rounded,
+                        color: Color(0xFFDC2626), size: 32),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     trId('needs_help', {'name': alert.raisedByName}),
                     style: const TextStyle(
@@ -104,7 +117,7 @@ class _ResponderAlertScreenState extends State<ResponderAlertScreen> {
                         color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 15),
                   ),
-                  const Spacer(),
+                  const Spacer(flex: 3),
                   if (over)
                     _Said(trId('sos_already_over'))
                   else if (!alert.answered)
