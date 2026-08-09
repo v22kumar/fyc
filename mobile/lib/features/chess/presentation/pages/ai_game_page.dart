@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:squares/squares.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../bloc/ai_game_bloc.dart';
 import '../bloc/ai_game_event.dart';
 import '../bloc/ai_game_state.dart';
@@ -43,8 +42,11 @@ class AiGamePage extends StatefulWidget {
     super.key,
     required this.depth,
     required this.skill,
+    required this.storage,
     this.playerIsWhite = true,
   });
+
+  final LocalStorage storage;
 
   @override
   State<AiGamePage> createState() => _AiGamePageState();
@@ -81,7 +83,7 @@ class _AiGamePageState extends State<AiGamePage>
     );
     _flipAnim = CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOutCubic);
 
-    final storage = sl<LocalStorage>();
+    final storage = widget.storage;
     final name = storage.getString('member_name') ?? 'You';
     final storedRating = storage.getString('chess_rating');
     if (storedRating != null) {

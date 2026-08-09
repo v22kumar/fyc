@@ -6,8 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
-import '../../data/datasources/chess_remote_datasource.dart';
+import '../../domain/repositories/chess_repository.dart';
 import '../../data/models/chess_game_model.dart';
 import '../bloc/game_bloc.dart';
 import '../bloc/game_event.dart';
@@ -26,7 +25,13 @@ const _kTextSecondary = Color(0xFF9CA3AF);
 // ── Chess Home Page ────────────────────────────────────────────────────────────
 
 class ChessHomePage extends StatefulWidget {
-  const ChessHomePage({super.key});
+  const ChessHomePage(
+      {super.key,
+      required this.repo,
+      required this.storage});
+
+  final ChessRepository repo;
+  final LocalStorage storage;
 
   @override
   State<ChessHomePage> createState() => _ChessHomePageState();
@@ -76,7 +81,7 @@ class _ChessHomePageState extends State<ChessHomePage>
     );
 
     // Load stats
-    sl<ChessRemoteDataSource>()
+    widget.repo
         .myStats()
         .then((s) {
           if (mounted) setState(() { _stats = s; _statsLoaded = true; });
@@ -748,6 +753,8 @@ class _ChessHomePageState extends State<ChessHomePage>
     return _LiveGamesSection(
       pulseOpacity: _pulseOpacity,
       onStartGame: () => _startLocalGame(context),
+      repo: widget.repo,
+      authToken: () => widget.storage.getToken(),
     );
   }
 
@@ -828,8 +835,7 @@ class _ChessHomePageState extends State<ChessHomePage>
   // ── Dialog launchers (preserved) ─────────────────────────────────────────────
 
   void _startLocalGame(BuildContext context) {
-    final storage = sl<LocalStorage>();
-    final myName = storage.getString('member_name') ?? 'White';
+    final myName = widget.storage.getString('member_name') ?? 'White';
     showDialog(
       context: context,
       builder: (ctx) => _PlayerNamesDialog(
@@ -1051,10 +1057,14 @@ class _BottomGridCard extends StatelessWidget {
 class _LiveGamesSection extends StatefulWidget {
   final Animation<double> pulseOpacity;
   final VoidCallback? onStartGame;
+  final ChessRepository repo;
+  final Future<String?> Function() authToken;
 
   const _LiveGamesSection({
     required this.pulseOpacity,
     this.onStartGame,
+    required this.repo,
+    required this.authToken,
   });
 
   @override
@@ -1067,7 +1077,7 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
   @override
   void initState() {
     super.initState();
-    _future = sl<ChessRemoteDataSource>().liveGames();
+    _future = widget.repo.liveGames();
   }
 
   @override
@@ -1196,7 +1206,10 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
               }
               return Column(
                 children:
-                    games.map((game) => _LiveGameTile(game: game)).toList(),
+                    games
+                        .map((game) => _LiveGameTile(
+                            game: game, authToken: widget.authToken))
+                        .toList(),
               );
             },
           ),
@@ -1208,7 +1221,8 @@ class _LiveGamesSectionState extends State<_LiveGamesSection> {
 
 class _LiveGameTile extends StatelessWidget {
   final LiveGameModel game;
-  const _LiveGameTile({required this.game});
+  final Future<String?> Function() authToken;
+  const _LiveGameTile({required this.game, required this.authToken});
 
   @override
   Widget build(BuildContext context) {
@@ -1289,7 +1303,7 @@ class _LiveGameTile extends StatelessWidget {
   }
 
   Future<void> _watch(BuildContext context, LiveGameModel game) async {
-    final token = await sl<LocalStorage>().getToken() ?? '';
+    final token = await authToken() ?? '';
     if (!context.mounted) return;
     context.push(
       '/chess/spectate/${game.id}',

@@ -1,16 +1,16 @@
 import '../constants/app_constants.dart';
-import '../storage/local_storage.dart';
-import '../../service_locator.dart';
 import 'registry/registry.dart';
 
+/// How the resolver learns the active language. Set once at bootstrap
+/// (service_locator wires it to LocalStorage); until then — an early frame,
+/// or a widget test that never registers storage — the default language
+/// answers, because a label lookup must never crash the whole widget tree.
+String Function()? langProvider;
+
 /// The active UI language, read fresh so it updates live on a language switch.
-///
-/// Falls back to the default language if the service locator isn't ready yet
-/// (an early frame, or a widget test that pumps a screen without registering
-/// storage) — a label lookup must never crash the whole widget tree.
 String _activeLang() {
   try {
-    return sl<LocalStorage>().getLang();
+    return langProvider?.call() ?? AppConstants.defaultLang;
   } catch (_) {
     return AppConstants.defaultLang;
   }

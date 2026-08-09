@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../l10n/registry/registry.dart';
+import '../l10n/tr.dart' as tr;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +19,13 @@ class LocalStorage {
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
 
-  LocalStorage(this._prefs);
+  LocalStorage(this._prefs) {
+    // Constructing the storage wires the string resolver's language source.
+    // This is the inversion that lets core/l10n stop importing the service
+    // locator: tr.dart asks a provider, and whoever owns the storage —
+    // the app's composition root or a test harness — is the provider.
+    tr.langProvider = getLang;
+  }
 
   /// A token supplied at build time, for harnesses that have no keyring.
   ///
