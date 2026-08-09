@@ -223,6 +223,52 @@ void main() {
     });
   });
 
+  group('touch —', () {
+    // kMinInteractiveDimension is 48: fingers, not cursors. Every action a
+    // member must hit under tournament stress gets measured, not eyeballed.
+    testWidgets('the player primary action is a full-width 48px target',
+        (tester) async {
+      await _pump(tester, stageMyTurn, as: _user(uid(15)));
+
+      final size =
+          tester.getSize(find.widgetWithText(FilledButton, "I'm ready"));
+      expect(size.height, greaterThanOrEqualTo(48));
+      expect(size.width, greaterThanOrEqualTo(300),
+          reason: 'one-handed: the whole card width taps, not a word');
+    });
+
+    testWidgets('recording a winner meets the minimum touch size',
+        (tester) async {
+      await _pump(tester, stageRoundOneLive,
+          as: _user(kOrganiserId, admin: true));
+
+      final buttons = find.byWidgetPredicate((w) =>
+          w is OutlinedButton &&
+          (w.child is Text) &&
+          ((w.child as Text).data ?? '').startsWith('Win:'));
+      expect(buttons, findsWidgets);
+      for (final el in buttons.evaluate()) {
+        final size = tester.getSize(find.byWidget(el.widget));
+        expect(size.height, greaterThanOrEqualTo(48),
+            reason: 'this tap records a winner — it cannot be a squint');
+      }
+    });
+
+    testWidgets('approval decisions meet the minimum touch size',
+        (tester) async {
+      await _pump(tester, stageOpenWithPending,
+          as: _user(kOrganiserId, admin: true));
+
+      final buttons = find.byType(IconButton);
+      expect(buttons, findsWidgets);
+      for (final el in buttons.evaluate()) {
+        final size = tester.getSize(find.byWidget(el.widget));
+        expect(size.height, greaterThanOrEqualTo(48));
+        expect(size.width, greaterThanOrEqualTo(48));
+      }
+    });
+  });
+
   group('accessibility —', () {
     // Elder members run their phones at large font sizes. An overflow throws
     // in a widget test, so pumping every surface at 1.3× IS the assertion.

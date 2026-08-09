@@ -131,12 +131,15 @@ class RoundBoard extends StatelessWidget {
     );
   }
 
+  // No compact density here: this tap records a winner, and 48px is the
+  // floor for anything a thumb does under tournament stress — the touch
+  // test measures it.
   Widget _winButton(BuildContext context, BracketMatch m, PlayerRef p) =>
       OutlinedButton(
         onPressed: busy ? null : () => onRecordResult(m, p),
         style: OutlinedButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10)),
         child: Text('${trId('win')}: ${p.name}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
