@@ -3,8 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/civic_api.dart';
 import 'ladder_view.dart';
+import '../../domain/repositories/civic_repository.dart';
+import '../../../../service_locator.dart';
 
 /// What happened to your complaint, and what happens next.
 ///
@@ -56,9 +57,9 @@ class _IssueTimelineState extends State<IssueTimeline> {
     setState(() => _loading = true);
     try {
       final results = await Future.wait([
-        CivicApi.history(widget.issueId),
-        CivicApi.route(widget.issueId),
-        CivicApi.issue(widget.issueId),
+        sl<CivicRepository>().history(widget.issueId),
+        sl<CivicRepository>().route(widget.issueId),
+        sl<CivicRepository>().issue(widget.issueId),
       ]);
       if (!mounted) return;
       setState(() {

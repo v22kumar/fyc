@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/civic_api.dart';
 import '../../domain/civic_categories.dart';
 import '../widgets/review_sheet.dart';
+import '../../domain/repositories/civic_repository.dart';
+import '../../../../service_locator.dart';
 
 /// The club's side of the workflow — and, until now, the missing half of it.
 ///
@@ -45,7 +46,7 @@ class _ReviewQueueScreenState extends State<ReviewQueueScreen> {
       _error = null;
     });
     try {
-      final data = await CivicApi.queue();
+      final data = await sl<CivicRepository>().queue();
       if (!mounted) return;
       setState(() {
         _queue = data;

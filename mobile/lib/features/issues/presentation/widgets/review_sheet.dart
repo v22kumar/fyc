@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/civic_api.dart';
 import 'ladder_view.dart';
+import '../../domain/repositories/civic_repository.dart';
+import '../../../../service_locator.dart';
 
 /// One complaint, the ladder it is on, and the two buttons that move it.
 ///
@@ -45,8 +46,8 @@ class _ReviewSheetState extends State<ReviewSheet> {
       // Both at once: the ladder to show, and the status that decides which
       // button belongs at the bottom of it.
       final results = await Future.wait([
-        CivicApi.route(widget.issueId),
-        CivicApi.issue(widget.issueId),
+        sl<CivicRepository>().route(widget.issueId),
+        sl<CivicRepository>().issue(widget.issueId),
       ]);
       if (!mounted) return;
       setState(() {
@@ -151,7 +152,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
       ),
     );
     if (reason == null || reason.isEmpty) return;
-    await _act(() => CivicApi.review(widget.issueId, approve: false, reason: reason));
+    await _act(() => sl<CivicRepository>().review(widget.issueId, approve: false, reason: reason));
   }
 
   /// Where this complaint thinks it is, said in the reviewer's language.
@@ -197,7 +198,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
         key: const ValueKey('review-approve'),
         onPressed: _busy
             ? null
-            : () => _act(() => CivicApi.review(widget.issueId, approve: true)),
+            : () => _act(() => sl<CivicRepository>().review(widget.issueId, approve: true)),
         // FittedBox because "Approve" is one short word in English and
         // considerably longer in every other language this app speaks.
         child: FittedBox(child: Text(trId('review_approve'))),
@@ -226,7 +227,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
       onPressed: _busy
           ? null
           : () => _act(
-                () => CivicApi.dispatch(widget.issueId),
+                () => sl<CivicRepository>().dispatch(widget.issueId),
                 toast: trId('review_sent', {'office': office}),
               ),
       child: FittedBox(child: Text(label)),
