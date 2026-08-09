@@ -218,3 +218,24 @@ def test_somebody_elses_complaint_does_not_steer_the_ladder(
 
     assert body["covered"] is True
     assert body["outside_place"] is None
+
+
+def test_a_report_with_no_gps_fix_still_gets_the_ladder(
+    client, db, club, member, auth
+):
+    """(0, 0) is not the Gulf of Guinea, it is "the phone would not say".
+
+    `public_issues.latitude` is NOT NULL, so the report screen sends zeroes
+    when location permission was refused. Reading that literally would tell a
+    member standing in Vadasery that their own town is out of area.
+    """
+    _give_phone(db, club, "ULB_ELECTRICAL", "9443130460")
+    issue = _report(db, club, member, lat=0, lng=0, place=None)
+
+    body = client.get("/api/v1/civic/ladder",
+                      params={"category": "STREET_LIGHT",
+                              "complaint_id": str(issue.id)},
+                      headers=auth).json()
+
+    assert body["covered"] is True
+    assert body["rungs"]

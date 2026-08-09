@@ -228,6 +228,13 @@ def is_covered(latitude, longitude) -> bool:
         lat, lng = float(latitude), float(longitude)
     except (TypeError, ValueError):
         return True
+    # (0, 0) is not the Gulf of Guinea, it is "the phone would not say".
+    # `public_issues.latitude` is NOT NULL, so the report screen sends zeroes
+    # when location permission was refused or the fix timed out. Reading that
+    # literally would tell a member standing in Vadasery that their own town is
+    # not an area FYC covers.
+    if lat == 0 and lng == 0:
+        return True
     b = KANNIYAKUMARI_BOUNDS
     return (b["min_lat"] <= lat <= b["max_lat"]
             and b["min_lng"] <= lng <= b["max_lng"])
