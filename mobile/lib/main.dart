@@ -26,6 +26,7 @@ import 'core/network/api_client.dart';
 import 'core/constants/api_constants.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
 import 'service_locator.dart';
 
 final localeNotifier = ValueNotifier<Locale>(const Locale('ta'));
@@ -134,7 +135,15 @@ Future<void> _bootstrap() async {
   // Poll "do I have a chess game to join?" app-wide, so a player is pulled into
   // an accepted game from any screen (no reliance on the challenge screen or a
   // best-effort push). Self-guards on auth state, so it's a no-op when logged out.
-  ChessActiveGameWatcher.instance.start();
+  ChessActiveGameWatcher.instance.start(
+    currentUserId: () {
+      final s = sl<AuthBloc>().state;
+      return s is AuthAuthenticated ? s.user.id : null;
+    },
+    fetchActive: () async =>
+        (await sl<ApiClient>().dio.get('${ApiConstants.chessGames}/active'))
+            .data,
+  );
   runApp(
     const ProviderScope(
       child: FycApp(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/design_system/components/ds_error_state.dart';
 import '../../../../core/l10n/tr.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../service_locator.dart';
@@ -32,7 +33,11 @@ class TeamManagementScreen extends StatelessWidget {
             if (state is TeamManagementLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is TeamManagementFailure) {
-              return Center(child: Text('Error: ${state.message}'));
+              return DSErrorState(
+                message: state.message,
+                onRetry: () =>
+                    context.read<TeamManagementCubit>().fetchPlayers(),
+              );
             } else if (state is TeamManagementLoaded) {
               if (state.players.isEmpty) {
                 return Center(child: Text(trId('no_players_registered_yet')));

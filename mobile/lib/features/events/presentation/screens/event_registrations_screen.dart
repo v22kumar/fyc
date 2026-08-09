@@ -54,7 +54,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open CSV link')),
+          SnackBar(content: Text(trId('could_not_open_csv_link'))),
         );
       }
     }
@@ -67,7 +67,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrations', style: TextStyle(fontSize: 18)),
+        title: Text(trId('registrations'), style: const TextStyle(fontSize: 18)),
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
@@ -88,7 +88,7 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_registrations!.isEmpty) {
-      return const Center(child: Text('No registrations yet.'));
+      return Center(child: Text(trId('no_registrations_yet')));
     }
 
     return ListView.separated(

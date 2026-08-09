@@ -3,11 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../../data/datasources/chess_ws_client.dart';
 import 'online_game_event.dart';
 import 'online_game_state.dart';
+
+/// Builds the socket for one game. Injected so a test can hand the bloc a
+/// fake socket instead of the bloc constructing a real one internally.
+typedef ChessWsFactory = ChessWsClient Function({
+  required String gameId,
+  required Future<String?> Function() tokenProvider,
+});
 
 class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   ChessWsClient? _wsClient;
@@ -15,7 +20,19 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
   String _myColor = 'white';
   Timer? _clockTimer;
 
-  OnlineGameBloc() : super(const OnlineGameConnecting()) {
+  /// The stored auth token, injected by the composition root — the bloc no
+  /// longer reaches into the service locator for storage.
+  final Future<String?> Function() _storedToken;
+  final ChessWsFactory _wsFactory;
+
+  OnlineGameBloc({
+    Future<String?> Function()? storedToken,
+    ChessWsFactory? wsFactory,
+  })  : _storedToken = storedToken ?? (() async => null),
+        _wsFactory = wsFactory ??
+            (({required gameId, required tokenProvider}) => ChessWsClient(
+                gameId: gameId, tokenProvider: tokenProvider)),
+        super(const OnlineGameConnecting()) {
     on<ConnectToGame>(_onConnect);
     on<SendMove>(_onSendMove);
     on<SendResign>(_onResign);
@@ -42,13 +59,13 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
     _myColor = event.myColor;
     emit(const OnlineGameConnecting());
 
-    _wsClient = ChessWsClient(
+    _wsClient = _wsFactory(
       gameId: event.gameId,
       // Read the token fresh from storage each connect; fall back to the token
       // passed at navigation. This makes push/deep-link entry (which carries no
       // token) work, and keeps reconnects using a non-expired token.
       tokenProvider: () async {
-        final stored = await sl<LocalStorage>().getToken();
+        final stored = await _storedToken();
         return (stored != null && stored.isNotEmpty) ? stored : event.token;
       },
     );

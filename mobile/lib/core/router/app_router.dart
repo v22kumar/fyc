@@ -548,7 +548,8 @@ final appRouter = GoRouter(
             final token = extra['token'] as String? ?? '';
             final myColor = (extra['color'] ?? extra['myColor']) as String? ?? 'white';
             return BlocProvider(
-              create: (_) => OnlineGameBloc()
+              create: (_) => OnlineGameBloc(
+                  storedToken: () => sl<LocalStorage>().getToken())
                 ..add(ConnectToGame(
                   gameId: gameId,
                   token: token,

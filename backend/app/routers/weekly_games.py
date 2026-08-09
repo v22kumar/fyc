@@ -14,6 +14,18 @@ from app.middleware.tenant import require_tenant_id
 
 router = APIRouter(prefix="/weekly-games", tags=["Weekly Games"])
 
+def _require_organizer(game: WeeklyGame, user: User) -> None:
+    """Edit and delete belong to the game's creator and admins. The app only
+    *shows* those buttons to them — but the API is the actual boundary, and it
+    accepted the calls from anyone signed in."""
+    if str(game.created_by_id) == str(user.id):
+        return
+    if user.role in ("ADMIN", "SUPER_ADMIN"):
+        return
+    raise HTTPException(status_code=403,
+                        detail="Only the organizer or an admin can change this game")
+
+
 def _name(user: User) -> str:
     if not user:
         return "Player"
@@ -184,10 +196,11 @@ def update_game(
     game = db.query(WeeklyGame).filter(WeeklyGame.id == game_id, WeeklyGame.organization_id == tenant_id).first()
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
-        
+    _require_organizer(game, current_user)
+
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(game, k, v)
-        
+
     db.commit()
     db.refresh(game)
     return _serialize(db, game)
@@ -203,7 +216,8 @@ def delete_game(
     game = db.query(WeeklyGame).filter(WeeklyGame.id == game_id, WeeklyGame.organization_id == tenant_id).first()
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
-        
+    _require_organizer(game, current_user)
+
     db.delete(game)
     db.commit()
     return None

@@ -2654,7 +2654,7 @@ class _ManagerDashboard extends StatelessWidget {
               child: _MiniCard(
                 sectionTitle: 'Pending Items',
                 title: trId('team_approvals'),
-                subtitle: 'Review tournament teams',
+                subtitle: trId('review_tournament_teams'),
                 icon: Icons.pending_actions,
                 iconColor: const Color(0xFFF59E0B),
                 onViewAll: () => context.push('/sports'),
@@ -2664,9 +2664,9 @@ class _ManagerDashboard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _MiniCard(
-                sectionTitle: 'Community',
+                sectionTitle: trId('community'),
                 title: trId('members'),
-                subtitle: 'Club member directory',
+                subtitle: trId('club_member_directory'),
                 icon: Icons.people,
                 iconColor: const Color(0xFF3B82F6),
                 onViewAll: () => context.push('/members'),
