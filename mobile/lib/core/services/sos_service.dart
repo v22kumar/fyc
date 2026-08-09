@@ -1,236 +1,165 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../network/api_client.dart';
-import '../../service_locator.dart';
-
-/// SOS emergency helper.
+/// Device-side safety plumbing: preferences, and the rung of the degradation
+/// ladder that runs when there is no network.
 ///
-/// Everything here is best-effort and never throws to the caller — in a real
-/// emergency a permission prompt or a missing GPS fix must not stop the user
-/// from getting a message out, so location is optional and failures degrade
-/// gracefully (send without a map link, still offer to dial).
-class SosService {
-  static const _contactsKey = 'sos_trusted_contacts';
+/// Everything that used to live here and is now elsewhere:
+///
+/// * **The siren** moved to [SirenController] — it was stopped by the bottom
+///   sheet's `dispose()`, so dismissing the screen silenced the alarm.
+/// * **`alertMembers`** is gone with the endpoint it called, which broadcast to
+///   every member of the organisation behind a button labelled "nearby".
+/// * **Trusted contacts** moved to the server, so a phone that is taken or
+///   smashed no longer takes the only copy with it. What stays here is a
+///   read-only *cache* of them, for exactly one purpose: sending from the
+///   handset when there is no network to raise an incident with.
+/// A trusted contact as the device remembers them.
+class CachedContact {
+  const CachedContact({required this.name, required this.phone});
+  final String name;
+  final String phone;
+}
 
-  /// India's single emergency number (police/fire/ambulance).
+class SosService {
+  SosService._();
+
+  /// India's single emergency number — police, fire and ambulance.
   static const emergencyNumber = '112';
 
-  static Future<List<String>> getContacts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_contactsKey);
-    if (raw == null || raw.isEmpty) return [];
-    try {
-      return List<String>.from(json.decode(raw) as List);
-    } catch (_) {
-      return [];
-    }
-  }
+  // ── Preferences ────────────────────────────────────────────────────────
 
-  static Future<void> saveContacts(List<String> numbers) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cleaned = numbers
-        .map((n) => n.trim())
-        .where((n) => n.isNotEmpty)
-        .toList();
-    await prefs.setString(_contactsKey, json.encode(cleaned));
-  }
-
-  // ── Loud Siren / Silent Mode ────────────────────────────────────────────────
   static const _sirenKey = 'sos_loud_siren';
-
-  static Future<bool> getLoudSiren() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_sirenKey) ?? true;
-  }
-
-  static Future<void> setLoudSiren(bool on) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_sirenKey, on);
-  }
-
-  // ── Shake to trigger ─────────────────────────────────────────────────────
   static const _shakeKey = 'sos_shake_to_trigger';
+  static const _cacheKey = 'sos_cached_contacts';
+  static const _pendingKey = 'sos_pending_incident';
 
-  /// Live shake-to-trigger state. The app shell listens to this so toggling the
-  /// setting starts/stops the shake detector immediately, without an app
-  /// restart. Seeded from storage by [getShakeToTrigger]; updated by
-  /// [setShakeToTrigger].
+  static Future<bool> getLoudSiren() async =>
+      (await SharedPreferences.getInstance()).getBool(_sirenKey) ?? true;
+
+  static Future<void> setLoudSiren(bool on) async =>
+      (await SharedPreferences.getInstance()).setBool(_sirenKey, on);
+
+  /// Live shake state, so toggling the setting starts and stops the detector
+  /// without an app restart.
+  ///
+  /// **Off by default now.** It used to be on for everybody, and what it did
+  /// was throw a modal over whatever they were doing — on a motorbike, in a
+  /// pocket, every day, until the member turned the whole feature off. It is
+  /// worth having only once the countdown exists to make a false trigger free.
   static final ValueNotifier<bool> shakeToTriggerListenable =
-      ValueNotifier<bool>(true);
+      ValueNotifier<bool>(false);
 
   static Future<bool> getShakeToTrigger() async {
-    final prefs = await SharedPreferences.getInstance();
-    final on = prefs.getBool(_shakeKey) ?? true;
+    final on =
+        (await SharedPreferences.getInstance()).getBool(_shakeKey) ?? false;
     shakeToTriggerListenable.value = on;
     return on;
   }
 
   static Future<void> setShakeToTrigger(bool on) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_shakeKey, on);
+    await (await SharedPreferences.getInstance()).setBool(_shakeKey, on);
     shakeToTriggerListenable.value = on;
   }
 
-  // ── Loud siren ──────────────────────────────────────────────────────────────
-  // A real, continuously-looping alarm — NOT a couple of quiet system beeps.
-  // Plays a bundled two-tone siren asset through the device ALARM channel at
-  // full volume (so it's loud even when media/ring volume is low), layered with
-  // a heavy-haptic pulse. It keeps blaring until stopSiren() is called, which is
-  // what an emergency alarm needs (attract attention / deter a threat).
-  static AudioPlayer? _sirenPlayer;
-  static Timer? _hapticTimer;
-  static bool _sirenOn = false;
+  // ── The offline rung ───────────────────────────────────────────────────
 
-  static bool get isSirenPlaying => _sirenOn;
+  /// Keep a copy of the trusted contacts on the device.
+  ///
+  /// Written every time the server hands them over. It is never the source of
+  /// truth — that moved to the server precisely so a lost phone cannot silence
+  /// it — but a phone with no signal still has hands, and this is what those
+  /// hands need.
+  static Future<void> cacheContacts(List<CachedContact> contacts) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _cacheKey,
+      json.encode([
+        for (final c in contacts) {'name': c.name, 'phone': c.phone}
+      ]),
+    );
+  }
 
-  /// Start the looping siren + haptic pulses. Idempotent. No-op in Silent mode.
-  /// Falls back to the built-in system alert tone if the audio player can't
-  /// start (e.g. widget tests / unsupported build), so there is always *some*
-  /// audible signal.
-  static Future<void> startSiren() async {
-    if (_sirenOn) return;
-    if (!await getLoudSiren()) return;
-    _sirenOn = true;
-
-    // Heavy-haptic pulse train — fires regardless of whether audio starts.
-    _hapticTimer?.cancel();
-    _hapticTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
-      if (!_sirenOn) return;
-      HapticFeedback.heavyImpact();
-    });
-
+  static Future<List<CachedContact>> cachedContacts() async {
+    final raw = (await SharedPreferences.getInstance()).getString(_cacheKey);
+    if (raw == null || raw.isEmpty) return const [];
     try {
-      final player = _sirenPlayer ??= AudioPlayer();
-      await player.setReleaseMode(ReleaseMode.loop);
-      // Route through the ALARM usage on Android so it plays loudly even on a
-      // muted ringer; playback category on iOS so it sounds with the app active.
-      try {
-        await player.setAudioContext(AudioContext(
-          android: AudioContextAndroid(
-            isSpeakerphoneOn: true,
-            stayAwake: true,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.alarm,
-            audioFocus: AndroidAudioFocus.gain,
-          ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: const {AVAudioSessionOptions.mixWithOthers},
-          ),
-        ));
-      } catch (_) {
-        // Older/newer plugin API mismatch must not stop playback entirely.
-      }
-      await player.setVolume(1.0);
-      await player.play(AssetSource('audio/sos_siren.wav'), volume: 1.0);
+      return [
+        for (final row in json.decode(raw) as List)
+          CachedContact(
+            name: (row as Map)['name'] as String? ?? '',
+            phone: row['phone'] as String? ?? '',
+          )
+      ].where((c) => c.phone.isNotEmpty).toList();
     } catch (_) {
-      // Audio unavailable — degrade to the system alert tone loop so the alarm
-      // is never completely silent.
-      _fallbackBeep();
+      return const [];
     }
   }
 
-  /// Stop the siren + haptics.
-  static Future<void> stopSiren() async {
-    _sirenOn = false;
-    _hapticTimer?.cancel();
-    _hapticTimer = null;
-    try {
-      await _sirenPlayer?.stop();
-    } catch (_) {}
+  /// An SOS that could not reach the server, kept until it can.
+  ///
+  /// Stored rather than dropped because the alternative is a member who
+  /// pressed the button, saw it fail, and has no record that they ever tried.
+  static Future<void> queuePending(Map<String, dynamic> incident) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingKey, json.encode(incident));
   }
 
-  static void _fallbackBeep() {
-    // Keep beeping via the system alert tone while the siren is "on".
-    Timer.periodic(const Duration(milliseconds: 500), (t) {
-      if (!_sirenOn) {
-        t.cancel();
-        return;
-      }
-      SystemSound.play(SystemSoundType.alert).catchError((_) {});
-    });
-  }
-
-  /// Broadcast an SOS to fellow FYC members in the org (Notify Nearby Members).
-  /// Best-effort; returns false on any failure.
-  static Future<bool> alertMembers({Position? pos}) async {
+  static Future<Map<String, dynamic>?> takePending() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingKey);
+    if (raw == null || raw.isEmpty) return null;
+    await prefs.remove(_pendingKey);
     try {
-      await sl<ApiClient>().dio.post('/api/v1/notifications/sos-alert', data: {
-        if (pos != null) 'latitude': pos.latitude,
-        if (pos != null) 'longitude': pos.longitude,
-      });
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Best-effort current location. Returns null (never throws) if location is
-  /// off, denied, or times out — the SOS still goes out without a map link.
-  static Future<Position?> currentLocation() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return null;
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        return null;
-      }
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
+      return (json.decode(raw) as Map).cast<String, dynamic>();
     } catch (_) {
       return null;
     }
   }
 
-  static String buildMessage({String? name, Position? pos}) {
+  /// The message a trusted contact gets when the device has to send it itself.
+  ///
+  /// Plain ASCII on purpose: a Tamil body is more thoughtful and also more
+  /// likely to arrive mangled on an old handset, and this is the one message
+  /// that absolutely must be readable when it lands.
+  static String offlineMessage({
+    String? name,
+    double? latitude,
+    double? longitude,
+  }) {
     final who = (name != null && name.trim().isNotEmpty) ? name.trim() : 'A FYC member';
-    final buf = StringBuffer('🆘 SOS — $who needs help.');
-    if (pos != null) {
-      buf.write(
-        ' Location: https://maps.google.com/?q=${pos.latitude},${pos.longitude}',
-      );
-    } else {
-      buf.write(' (location unavailable)');
-    }
-    return buf.toString();
+    final where = (latitude != null && longitude != null)
+        ? ' Location: https://maps.google.com/?q=$latitude,$longitude'
+        : ' (location unknown)';
+    return 'SOS - $who needs help.$where - FYC Connect';
   }
 
-  /// Open the SMS composer pre-filled with [message] to [numbers]. Returns
-  /// false if there is nothing to send to or the composer can't be opened.
-  static Future<bool> sendSms(List<String> numbers, String message) async {
+  /// Hand the message to the SMS app, pre-filled.
+  ///
+  /// This is a *fallback*, and it is honest about what it is: the member still
+  /// has to press send in another application. The screen says so rather than
+  /// claiming the feature "works offline", which is what the four green ticks
+  /// used to claim while nothing behind them did.
+  static Future<bool> composeSms(List<String> numbers, String message) async {
     final cleaned =
         numbers.map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
     if (cleaned.isEmpty) return false;
-    // iOS doesn't reliably honour comma-separated recipients in an sms: URL
-    // (it often opens only the first, or fails), so target just the primary
-    // contact there — better to reach one than none in an emergency. Android
-    // handles the comma-separated list fine.
+    // iOS does not reliably honour comma-separated recipients in an `sms:`
+    // URL — it often opens only the first, or fails outright. Better to reach
+    // one than none.
     final recipients = Platform.isIOS ? cleaned.first : cleaned.join(',');
-    final uri = Uri(
+    return _launch(Uri(
       scheme: 'sms',
       path: recipients,
       queryParameters: {'body': message},
-    );
-    return _launch(uri);
+    ));
   }
 
-  /// Open the dialer on the emergency number (does not auto-dial).
+  /// Open the dialler on 112. Does not auto-dial.
   static Future<bool> callEmergency() =>
       _launch(Uri(scheme: 'tel', path: emergencyNumber));
 

@@ -8,7 +8,6 @@ import '../../../../core/storage/local_storage.dart';
 import '../../../../core/services/update_service.dart';
 import '../../../../core/widgets/update_sheet.dart';
 import '../../../../service_locator.dart';
-import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -188,7 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _Divider(context),
                 _LinkRow(icon: Icons.shield_outlined, label: trId('privacy_and_security'), onTap: _showPrivacySheet, context: context),
                 _Divider(context),
-                _LinkRow(icon: Icons.health_and_safety_rounded, label: trId('safety_center'), onTap: () => context.push('/settings/safety'), context: context),
+                _LinkRow(icon: Icons.health_and_safety_rounded, label: trId('safety_setup'), onTap: () => context.push('/settings/safety'), context: context),
               ],
             ),
           ),

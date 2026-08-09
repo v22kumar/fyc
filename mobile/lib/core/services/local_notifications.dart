@@ -2,6 +2,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'siren_controller.dart';
+
 /// Shows system-tray notifications while the app is in the FOREGROUND.
 ///
 /// FCM auto-posts to the tray only when the app is backgrounded/killed; in the
@@ -32,8 +34,17 @@ class LocalNotifications {
     await _plugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (resp) {
+        // The alarm's Stop button. Handled here rather than on a screen
+        // because the whole point of the siren rewrite is that it outlives
+        // every screen — there may be nothing mounted to hear this.
+        if (resp.actionId == SirenController.stopActionId) {
+          SirenController.instance.stop();
+          return;
+        }
         final route = resp.payload;
-        if (route != null && route.isNotEmpty) onTapRoute?.call(route);
+        if (route != null && route.isNotEmpty && route != 'siren') {
+          onTapRoute?.call(route);
+        }
       },
     );
     // Create the channel up-front so the first notification shows immediately.

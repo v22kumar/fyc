@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
-import '../../../../core/design_system/shell/sos_sheet.dart';
 import '../../../../core/design_system/components/ds_feature_card.dart';
 import '../../../../core/design_system/components/ds_badge.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
@@ -964,8 +963,8 @@ class _QuickActions extends StatelessWidget {
           trId('weekly_game'),
           () => context.push('/sports')),
       (Icons.emergency_share_rounded, const Color(0xFFDC2626),
-          trId('emergency_contacts'),
-          () => showSosSheet(context)),
+          trId('sos'),
+          () => context.push('/sos')),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

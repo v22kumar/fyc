@@ -182,42 +182,15 @@ def broadcast_notification(
     return {"message": "Broadcast scheduled successfully"}
 
 
-class SosAlertRequest(BaseModel):
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-
-
-@router.post("/sos-alert")
-def sos_alert(
-    data: SosAlertRequest,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Any member: raise an SOS to fellow members in the org so nearby FYC
-    members are notified they need urgent help. Includes a maps link when a
-    location is shared."""
-    prof = (
-        db.query(UserProfile)
-        .filter(UserProfile.user_id == current_user.id)
-        .first()
-    )
-    name = (prof.full_name_en or prof.full_name_ta) if prof else "A member"
-    maps = None
-    if data.latitude is not None and data.longitude is not None:
-        maps = f"https://maps.google.com/?q={data.latitude},{data.longitude}"
-    payload = {"type": "SOS", "from_user_id": str(current_user.id)}
-    if maps:
-        payload["location_url"] = maps
-    svc = NotificationService(db)
-    background_tasks.add_task(
-        svc.broadcast,
-        organization_id=current_user.organization_id,
-        title_en=f"🆘 SOS from {name}",
-        title_ta=f"🆘 {name} உதவி கேட்கிறார்",
-        body_en="A member needs urgent help." + (f" Location: {maps}" if maps else ""),
-        body_ta="ஒரு உறுப்பினருக்கு அவசர உதவி தேவை." + (f" இடம்: {maps}" if maps else ""),
-        notification_type="SOS",
-        data=payload,
-    )
-    return {"message": "Alert sent to members"}
+# `POST /notifications/sos-alert` lived here and is gone.
+#
+# It was labelled "Alert nearby FYC members" and its body was
+# `NotificationService.broadcast(organization_id=...)` — every member of
+# the club, in Nagercoil, Chennai and Dubai alike. There was no radius
+# anywhere in the feature, nothing was stored, and it answered a member in
+# danger with "Alert sent to members" after merely *queueing* a background
+# task.
+#
+# Replaced by `/api/v1/safety/sos`, which dispatches to the nearest few,
+# widens only on silence, and records who was told and what they did.
+# See docs/safety/01-architecture.md.

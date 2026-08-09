@@ -114,6 +114,10 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_VERIFY_SID: str = ""              # e.g. VA2b65749ba818b322b7e071963388cd06
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+    # Plain SMS, for the one message that has to arrive even when the
+    # member's phone is already gone: the SOS to their trusted contacts.
+    # Unset means the server cannot send, and the setup screen says so.
+    TWILIO_SMS_FROM: str = ""
 
     # Google OAuth — create two separate OAuth 2.0 client IDs in Google Cloud Console:
     #   Android type → used by the Flutter mobile app
