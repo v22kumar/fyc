@@ -46,6 +46,7 @@ from app.routers import awards as awards_router
 from app.routers import weekly_games as weekly_games_router
 from app.routers import ai as ai_router
 from app.routers import social_auth as social_auth_router
+from app.routers import safety as safety_router
 from app.models.directory import seed_default_contacts
 
 # Import all models so Base.metadata sees them before create_all
@@ -749,6 +750,18 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(sync_social_feeds, "interval", hours=1,
                           id="social_media_sync", replace_existing=True)
 
+        # SOS escalation — the thing that notices nobody answered.
+        #
+        # Fifteen seconds is frequent for a cron job and cheap in practice: the
+        # query is an indexed `status IN (RAISED, WIDENING)` and in a club this
+        # size it almost always returns nothing. It is deliberately the only
+        # timer in the feature, and it can only ever *widen* a ring — marking
+        # somebody safe is a thing only a person knows.
+        from app.services.sos_escalation import sweep_escalations
+        scheduler.add_job(sweep_escalations, "interval", seconds=15,
+                          id="sos_escalation", replace_existing=True,
+                          max_instances=1, coalesce=True)
+
         if settings.MORNING_BROADCAST_ENABLED:
             from app.services.whatsapp_broadcast import daily_broadcast
             scheduler.add_job(
@@ -921,6 +934,7 @@ app.include_router(facebook_router.router, prefix="/api/v1/facebook")
 
 from app.routers import notifications as notifications_router
 app.include_router(notifications_router.router, prefix="/api/v1")
+app.include_router(safety_router.router, prefix="/api/v1")
 from app.routers import diagnostics as diagnostics_router
 app.include_router(diagnostics_router.router, prefix="/api/v1")
 

@@ -15,6 +15,10 @@ from app.models.civic import (
     LocalBodyType, JurisdictionScope, GovTier, Rung, CivicCategory,
     EscalationOutcome, normalise_category,
 )
+from app.models.safety import (
+    SafetyContact, ResponderProfile, SosIncident, SosResponder, SosEvent,
+    SosStatus, SosKind, SosEventType, SosAuthor,
+)
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.community import CommunityProfile
 from app.models.sports import Tournament, Team, Fixture, LiveScoreEntry, ChallengeMatch, Player
@@ -117,4 +121,13 @@ __all__ = [
     "WeeklyGame",
     "WeeklyGamePlayer",
     "AIContent",
+    "SafetyContact",
+    "ResponderProfile",
+    "SosIncident",
+    "SosResponder",
+    "SosEvent",
+    "SosStatus",
+    "SosKind",
+    "SosEventType",
+    "SosAuthor",
 ]
