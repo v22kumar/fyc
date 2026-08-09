@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../services/update_service.dart';
+import '../services/update_service.dart' show UpdateInfo, UpdateService, kAndroidPackage;
 import '../services/update_installer.dart';
 import '../storage/local_storage.dart';
 import '../theme/app_theme.dart';
@@ -59,6 +59,17 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
   _Phase _phase = _Phase.idle;
   double _progress = 0;
 
+  /// An attempt has failed, so even a mandatory update must let them back in.
+  ///
+  /// `mandatory` blocks the drag, the barrier tap and the back button, and
+  /// hides "Later". That is right up to the moment the update cannot be
+  /// installed — a download that 404s, a signature Android rejects, no storage
+  /// — at which point the member is not being *encouraged* to update, they are
+  /// locked out of the app with no way back. The prompt returns on the next
+  /// launch; being unable to open the app at all is a worse outcome than being
+  /// a version behind.
+  bool _failedAtLeastOnce = false;
+
   bool get _ta => sl<LocalStorage>().getLang() == 'ta';
 
   Future<void> _startUpdate() async {
@@ -79,8 +90,51 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
       // returns to a clean app once they confirm/deny the install.
       if (mounted && !widget.update.mandatory) Navigator.of(context).maybePop();
     } catch (_) {
-      if (mounted) setState(() => _phase = _Phase.error);
+      if (mounted) {
+        setState(() {
+          _phase = _Phase.error;
+          _failedAtLeastOnce = true;
+        });
+      }
     }
+  }
+
+  /// Send a Play-installed copy to Play.
+  ///
+  /// The APK on the release cannot install over it — Play re-signs with
+  /// Google's key, the release APK carries the upload key, and Android refuses
+  /// to swap one for the other. Offering the download would be offering a
+  /// button that cannot work.
+  Future<void> _openPlayStore() async {
+    for (final uri in [
+      Uri.parse('market://details?id=$kAndroidPackage'),
+      Uri.parse('https://play.google.com/store/apps/details?id=$kAndroidPackage'),
+    ]) {
+      try {
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } catch (_) {
+        // Try the web fallback.
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _phase = _Phase.error;
+        _failedAtLeastOnce = true;
+      });
+    }
+  }
+
+  void _continueAnyway() {
+    sl<LocalStorage>()
+        .saveString(UpdateSheet._skipKey, '${widget.update.latestVersionCode}');
+    // `pop`, not `maybePop`. A mandatory sheet is wrapped in
+    // `PopScope(canPop: false)`, which intercepts `maybePop` as well as the
+    // system back button — so the escape hatch would have been a button that
+    // did nothing, which is the exact failure it exists to prevent.
+    Navigator.of(context).pop();
   }
 
   Future<void> _fallbackBrowser() async {
@@ -186,9 +240,20 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
             style: TextStyle(
                 fontSize: 13.5, height: 1.4, color: context.cTextSecondary),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 10),
+          // Where it comes from. The app is not on the public Play Store, and
+          // a member looking for it there and finding nothing has no way to
+          // tell whether the prompt is real.
+          Text(
+            u.installedFromPlay
+                ? trId('installed_from_play_note')
+                : trId('downloads_from_github'),
+            style: TextStyle(
+                fontSize: 11.5, height: 1.35, color: context.cTextSecondary),
+          ),
+          SizedBox(height: 16),
           _buildAction(context, ta),
-          if (u.mandatory) ...[
+          if (u.mandatory && !_failedAtLeastOnce) ...[
             SizedBox(height: 12),
             Center(
               child: Text(
@@ -250,16 +315,35 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               trId('download_failed_try_via_your_browser_ins'),
               style: TextStyle(fontSize: 12.5, color: AppColors.accent),
             ),
+            SizedBox(height: 6),
+            // The commonest cause, named. "App not installed" is Android
+            // refusing to swap one signing key for another, and nothing about
+            // that message tells a member what to do next.
+            Text(
+              trId('install_may_be_blocked'),
+              style: TextStyle(fontSize: 11.5, color: context.cTextSecondary),
+            ),
             SizedBox(height: 10),
             _primaryButton(
                 trId('download_in_browser'),
                 _fallbackBrowser),
+            SizedBox(height: 6),
+            // Always present after a failure, mandatory or not. See
+            // [_failedAtLeastOnce].
+            TextButton(
+              onPressed: _continueAnyway,
+              child: Text(trId('continue_for_now'),
+                  style: TextStyle(color: context.cTextSecondary)),
+            ),
           ],
         );
       case _Phase.idle:
         return Column(
           children: [
-            _primaryButton(trId('update_now'), _startUpdate),
+            if (widget.update.installedFromPlay)
+              _primaryButton(trId('update_from_play'), _openPlayStore)
+            else
+              _primaryButton(trId('update_now'), _startUpdate),
             if (!widget.update.mandatory) ...[
               SizedBox(height: 6),
               TextButton(

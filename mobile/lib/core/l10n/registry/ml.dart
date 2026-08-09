@@ -1406,4 +1406,9 @@ const Map<String, String> kMl = {
   'rings_like_an_alarm': 'അവരുടെ ഫോൺ അലാറം പോലെ മുഴങ്ങും',
   'sms_only': 'SMS മാത്രം — അവർ ആപ്പ് ഉപയോഗിക്കുന്നില്ല',
   'your_person': 'നിങ്ങളുടെ ആൾ',
+  'update_from_play': 'Play Store-ൽ അപ്ഡേറ്റ് ചെയ്യുക',
+  'installed_from_play_note': 'നിങ്ങൾ FYC Connect Play Store-ൽ നിന്നാണ് ഇൻസ്റ്റാൾ ചെയ്തത്, അതിനാൽ അപ്ഡേറ്റും അവിടെ നിന്നുതന്നെ വരണം.',
+  'downloads_from_github': 'FYC Connect പൊതു Play Store-ൽ ഇല്ല. അപ്ഡേറ്റ് ക്ലബ്ബിന്റെ റിലീസ് പേജിൽ നിന്ന് നേരിട്ട് ഡൗൺലോഡ് ചെയ്യുന്നു.',
+  'continue_for_now': 'അപ്ഡേറ്റ് ചെയ്യാതെ തുടരുക',
+  'install_may_be_blocked': 'Android "App not installed" എന്ന് പറഞ്ഞാൽ, നിങ്ങളുടെ പകർപ്പ് മറ്റൊരു വഴിയിലാണ് ഇൻസ്റ്റാൾ ചെയ്തത്. ആദ്യം അത് അൺഇൻസ്റ്റാൾ ചെയ്യുക, അല്ലെങ്കിൽ എവിടെ നിന്ന് കിട്ടിയോ അവിടെ നിന്ന് അപ്ഡേറ്റ് ചെയ്യുക.',
 };

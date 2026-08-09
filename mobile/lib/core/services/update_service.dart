@@ -14,14 +14,29 @@ class UpdateInfo {
   final bool mandatory;
   final String notes;
 
+  /// Whether this copy of the app was installed by the Play Store.
+  ///
+  /// This decides which update is even *possible*, and getting it wrong bricks
+  /// the app. A build delivered through Play is re-signed by Google (Play App
+  /// Signing); the APK on the GitHub release is signed with the upload key.
+  /// Android will not install one over the other — it refuses with "App not
+  /// installed" — so offering a Play user the APK is offering them a download
+  /// that cannot possibly succeed. They have to be sent to Play.
+  final bool installedFromPlay;
+
   const UpdateInfo({
     required this.latestVersionCode,
     required this.latestVersionName,
     required this.apkUrl,
     required this.mandatory,
     required this.notes,
+    this.installedFromPlay = false,
   });
 }
+
+/// The Play Store's own package name, which is what `installerStore` reports
+/// for anything Play installed.
+const _playStorePackage = 'com.android.vending';
 
 /// Checks the backend for a newer Android build. Best-effort: any failure
 /// (offline, parse error, missing fields) returns null so it never blocks the app.
@@ -35,6 +50,7 @@ class UpdateService {
       // the Android versionCode as a string.
       final currentName = info.version;
       final currentCode = int.tryParse(info.buildNumber) ?? 0;
+      final fromPlay = info.installerStore == _playStorePackage;
 
       final res = await sl<ApiClient>()
           .dio
@@ -67,6 +83,7 @@ class UpdateService {
         apkUrl: apkUrl,
         mandatory: data['mandatory'] as bool? ?? false,
         notes: (data['notes'] as String?) ?? '',
+        installedFromPlay: fromPlay,
       );
     } catch (e) {
       if (kDebugMode) debugPrint('UpdateService.check failed: $e');
@@ -89,3 +106,10 @@ class UpdateService {
     return 0;
   }
 }
+
+/// The app's own package name, for the Play Store deep link.
+///
+/// Kept next to the updater rather than read from `PackageInfo` because it is
+/// also the answer to "where would I even find this app", and that question
+/// has to be answerable when the update has failed.
+const kAndroidPackage = 'com.fycconnect.app';
