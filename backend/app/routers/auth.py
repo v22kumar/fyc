@@ -1,6 +1,7 @@
-import random
+import secrets
 import uuid
-from typing import Dict, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Dict, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.core.rate_limit import limiter
@@ -22,16 +23,34 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 OTP_TTL_MINUTES = 10
 
-# In-memory OTP store: verification_id → (phone, otp_code_or_None, org_id, expires_at)
-# otp_code is None when Twilio Verify is used (Twilio manages the code server-side)
-otp_store: Dict[str, Tuple[str, str | None, uuid.UUID, datetime]] = {}
+# A 6-digit code has a million possibilities and a 10-minute lifetime. The two
+# defences that make that safe are here: the code comes from a CSPRNG, and a
+# verification_id dies after a handful of wrong guesses instead of surviving
+# the whole TTL as a stable target to grind against.
+OTP_MAX_ATTEMPTS = 5
+
+
+@dataclass
+class _PendingOtp:
+    phone_number: str
+    # None when Twilio Verify holds the code server-side.
+    otp_code: str | None
+    organization_id: uuid.UUID
+    expires_at: datetime
+    attempts: int = field(default=0)
+
+
+otp_store: Dict[str, _PendingOtp] = {}
 
 
 def _generate_otp() -> str:
     """Return a fixed bypass code in test/dev, or a random 6-digit code otherwise."""
     if settings.OTP_BYPASS_CODE:
         return settings.OTP_BYPASS_CODE
-    return f"{random.randint(0, 999999):06d}"
+    # secrets, not random: Mersenne Twister output is reconstructible from
+    # observed values, and an attacker can observe codes sent to numbers they
+    # control.
+    return f"{secrets.randbelow(1_000_000):06d}"
 
 
 @router.post("/otp/send", response_model=OTPResponse)
@@ -71,14 +90,14 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
 
     if settings.TWILIO_VERIFY_SID and send_verify_otp(payload.phone_number):
         # Twilio Verify manages the code itself; we only remember phone + org.
-        otp_store[verification_id] = (
+        otp_store[verification_id] = _PendingOtp(
             payload.phone_number, None, payload.organization_id, expires_at
         )
         channel = "sms"
     else:
         # Every remaining channel needs a code we generated ourselves.
         otp_code = _generate_otp()
-        otp_store[verification_id] = (
+        otp_store[verification_id] = _PendingOtp(
             payload.phone_number, otp_code, payload.organization_id, expires_at
         )
         results = deliver_otp(payload.phone_number, otp_code, email=payload.email)
@@ -135,7 +154,8 @@ def _graduate_from_directory(db: Session, user: User) -> None:
 
 
 @router.post("/otp/verify", response_model=Union[Token, OTPVerifySuccess])
-def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_db)):
     """
     Verify OTP. Returns JWT on success; or OTPVerifySuccess with a registration_token if user not yet registered.
     """
@@ -146,21 +166,36 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
             detail="Invalid or expired verification ID",
         )
 
-    phone_number, otp_code, org_id, expires_at = stored
+    phone_number = stored.phone_number
+    otp_code = stored.otp_code
+    org_id = stored.organization_id
 
-    if datetime.now(timezone.utc) > expires_at:
+    if datetime.now(timezone.utc) > stored.expires_at:
         otp_store.pop(payload.verification_id, None)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP has expired. Please request a new one.",
         )
 
+    def _wrong_code():
+        # Every wrong guess burns one of a small number of attempts; when they
+        # run out the verification_id itself is destroyed, so a fresh /otp/send
+        # (itself rate-limited, with a fresh random code) is the only way on.
+        stored.attempts += 1
+        if stored.attempts >= OTP_MAX_ATTEMPTS:
+            otp_store.pop(payload.verification_id, None)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Too many wrong codes. Please request a new one.",
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
+
     if otp_code is None:
         # Twilio Verify flow — delegate check to Twilio
         if not check_verify_otp(phone_number, payload.otp_code):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
+            _wrong_code()
     elif payload.otp_code != otp_code:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
+        _wrong_code()
 
     user = db.query(User).filter(
         User.organization_id == org_id,
@@ -206,7 +241,8 @@ def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
 
 
 @router.post("/register", response_model=Token)
-def register_user(payload: UserRegister, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register_user(request: Request, payload: UserRegister, db: Session = Depends(get_db)):
     """Register a new Citizen or Volunteer after OTP verification."""
     
     # 1. Validate the registration_token to ensure the phone number was verified.
@@ -474,7 +510,8 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login/password", response_model=Token)
-def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login_password(request: Request, payload: AdminLogin, db: Session = Depends(get_db)):
     """Password login for Administrators, Executives, and Club Members."""
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
@@ -508,7 +545,8 @@ def login_password(payload: AdminLogin, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=AccessTokenResponse)
-def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def refresh_access_token(request: Request, payload: RefreshRequest, db: Session = Depends(get_db)):
     """Exchange a valid refresh token for a fresh access token. The app calls
     this silently when an access token expires, so the user stays signed in
     until they explicitly log out (or the refresh token itself expires)."""

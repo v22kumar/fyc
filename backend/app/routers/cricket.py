@@ -78,6 +78,24 @@ def _get_or_create_player(db: Session, team_id: str, name: str, org_id=None) -> 
     return player
 
 
+def _tenant_match(db: Session, fixture_id: str, user: User) -> Optional[CricketMatch]:
+    """The org gate for every scoring mutation.
+
+    require_exec proves the caller is an exec of *their* organization — not
+    that this fixture belongs to it. Joining through the fixture's
+    organization_id closes that gap; a cross-org fixture id looks exactly
+    like an unknown one."""
+    return (
+        db.query(CricketMatch)
+        .join(Fixture, Fixture.id == CricketMatch.fixture_id)
+        .filter(
+            CricketMatch.fixture_id == fixture_id,
+            Fixture.organization_id == user.organization_id,
+        )
+        .first()
+    )
+
+
 def _reject_if_same_name(a: Optional[str], b: Optional[str]) -> None:
     """Two people at the crease (or two openers) must be distinct players.
     Names are matched case-insensitively/trimmed because that's how
@@ -421,10 +439,13 @@ def init_cricket_match(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    fixture = db.query(Fixture).filter(Fixture.id == fixture_id).first()
+    fixture = db.query(Fixture).filter(
+        Fixture.id == fixture_id,
+        Fixture.organization_id == current_user.organization_id,
+    ).first()
     if not fixture:
         raise HTTPException(404, "Fixture not found")
-        
+
     match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
     if match:
         # Already initialized — keep the response shape consistent with a fresh
@@ -569,7 +590,7 @@ def score_ball(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    match = _tenant_match(db, fixture_id, current_user)
     if not match:
         return JSONResponse(status_code=400, content={"code": "MATCH_SETUP_INCOMPLETE", "message": "Match not initialized"})
         
@@ -726,7 +747,7 @@ def undo_last_ball(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    match = _tenant_match(db, fixture_id, current_user)
     if not match:
         raise HTTPException(404, "Match not initialized")
         
@@ -750,7 +771,7 @@ def start_second_innings(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    match = _tenant_match(db, fixture_id, current_user)
     if not match:
         raise HTTPException(404, "Match not initialized")
     if match.status != "INNINGS_BREAK":
@@ -807,7 +828,7 @@ def edit_cricket_ball(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    match = _tenant_match(db, fixture_id, current_user)
     if not match:
         raise HTTPException(404, "Match not initialized")
     
@@ -878,7 +899,7 @@ def undo_ball_edit(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_exec)
 ):
-    match = db.query(CricketMatch).filter(CricketMatch.fixture_id == fixture_id).first()
+    match = _tenant_match(db, fixture_id, current_user)
     if not match:
         raise HTTPException(404, "Match not initialized")
     
