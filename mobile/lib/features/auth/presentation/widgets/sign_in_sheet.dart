@@ -137,7 +137,7 @@ class _SignInSheetState extends State<_SignInSheet> {
           registrationToken: _registrationToken ?? '',
           fullNameEn: _name.text.trim(),
           fullNameTa: _name.text.trim(),
-          preferredLanguage: sl<LocalStorage>().getLang(),
+          preferredLanguage: trLang(),
         ));
   }
 

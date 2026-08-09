@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class QrScanScreen extends StatefulWidget {
@@ -20,7 +18,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
   bool _hasScanned = false;
   bool _torchOn = false;
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void dispose() {

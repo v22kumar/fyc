@@ -243,7 +243,7 @@ class _Header extends StatelessWidget {
         // Read the name in the member's own script first. Reaching for the
         // English spelling regardless of language is why a Tamil home screen
         // greeted people in Latin letters.
-        final lang = sl<LocalStorage>().getLang();
+        final lang = trLang();
         String? firstName;
         if (state is AuthAuthenticated) {
           final u = state.user;
@@ -1463,7 +1463,7 @@ class _MoreSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final ta = sl<LocalStorage>().getLang() == 'ta';
+    final ta = trLang() == 'ta';
 
     final sections = <(String, List<_MenuItem>)>[
       (
@@ -1651,7 +1651,7 @@ class _NextEventCardState extends State<_NextEventCard> {
   Map<String, dynamic>? _event;
   bool _loaded = false;
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {
@@ -1828,7 +1828,7 @@ class _LiveUpdatesState extends State<_LiveUpdates> {
   List<Map<String, dynamic>> _items = [];
   bool _loaded = false;
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {
@@ -2030,7 +2030,7 @@ class _TodayImpactHubState extends State<_TodayImpactHub> {
   int _volunteers = 0, _events = 0, _donations = 0, _trees = 0, _issues = 0;
   bool _loaded = false;
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

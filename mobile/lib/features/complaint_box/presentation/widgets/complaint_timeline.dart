@@ -3,9 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
 import '../../domain/entities/complaint_entities.dart';
 
 /// What has happened, and who says so.
@@ -22,7 +20,7 @@ class ComplaintTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     final fmt = DateFormat.MMMd(lang);
 
     return Column(

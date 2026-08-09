@@ -6,8 +6,6 @@ import '../bloc/blood_donor_bloc.dart';
 import '../bloc/blood_donor_event.dart';
 import '../bloc/blood_donor_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class DonorRegistrationScreen extends StatefulWidget {
@@ -19,7 +17,7 @@ class DonorRegistrationScreen extends StatefulWidget {
 }
 
 class _DonorRegistrationScreenState extends State<DonorRegistrationScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 

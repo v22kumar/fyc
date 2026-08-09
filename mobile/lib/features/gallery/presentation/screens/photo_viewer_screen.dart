@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/photo_entity.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import 'package:fyc_connect/core/theme/app_theme.dart';
 
@@ -12,7 +10,7 @@ class PhotoViewerScreen extends StatelessWidget {
 
   const PhotoViewerScreen({super.key, required this.photo});
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   Widget build(BuildContext context) {

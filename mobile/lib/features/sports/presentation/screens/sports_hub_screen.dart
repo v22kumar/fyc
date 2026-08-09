@@ -7,8 +7,6 @@ import '../bloc/sports_bloc.dart';
 import '../bloc/sports_event.dart';
 import '../bloc/sports_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
@@ -50,7 +48,7 @@ class SportsHubScreen extends StatefulWidget {
 }
 
 class _SportsHubScreenState extends State<SportsHubScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
   String _selectedSport = '';
 
   @override

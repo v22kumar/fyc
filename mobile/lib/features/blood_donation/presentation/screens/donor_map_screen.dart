@@ -5,9 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/location/member_location.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
 import '../../data/blood_request_api.dart';
 import '../../data/models/blood_donor_model.dart';
 import '../widgets/donor_presence.dart';
@@ -78,7 +76,7 @@ class _DonorMapScreenState extends State<DonorMapScreen> {
   }
 
   void _openCluster(_Cluster c) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     showModalBottomSheet(
       context: context,
       backgroundColor: context.cSurface,

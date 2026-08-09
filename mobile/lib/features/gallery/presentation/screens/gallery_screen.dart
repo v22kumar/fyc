@@ -6,8 +6,6 @@ import '../bloc/gallery_bloc.dart';
 import '../bloc/gallery_event.dart';
 import '../bloc/gallery_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class GalleryScreen extends StatefulWidget {
@@ -18,7 +16,7 @@ class GalleryScreen extends StatefulWidget {
 }
 
 class _GalleryScreenState extends State<GalleryScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/entrance.dart';
-import '../../../../service_locator.dart';
 import '../../domain/repositories/community_repository.dart';
 
 /// Club member roster — the real "Members" directory (names, role, photo).
@@ -57,7 +55,7 @@ class _MembersRosterScreenState extends State<MembersRosterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ta = sl<LocalStorage>().getLang() == 'ta';
+    final ta = trLang() == 'ta';
     return Scaffold(
       backgroundColor: context.cBackground,
       appBar: AppBar(

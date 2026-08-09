@@ -8,8 +8,6 @@ import '../bloc/green_bloc.dart';
 import '../bloc/green_event.dart';
 import '../bloc/green_state.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class GreenFycScreen extends StatefulWidget {
@@ -20,7 +18,7 @@ class GreenFycScreen extends StatefulWidget {
 }
 
 class _GreenFycScreenState extends State<GreenFycScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   void initState() {

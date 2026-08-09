@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/announcement_entity.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'announcements_screen.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
@@ -11,7 +9,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
   final AnnouncementEntity announcement;
   const AnnouncementDetailScreen({super.key, required this.announcement});
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   Widget build(BuildContext context) {

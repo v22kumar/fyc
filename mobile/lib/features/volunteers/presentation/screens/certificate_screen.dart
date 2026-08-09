@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 
 class CertificateScreen extends StatelessWidget {
   const CertificateScreen({super.key});
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   // Primary path: open the certificate URL in the system browser/downloader.
   // NOTE: this loses the auth header (see NOTES). When path_provider is added,

@@ -70,7 +70,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
   /// a version behind.
   bool _failedAtLeastOnce = false;
 
-  bool get _ta => sl<LocalStorage>().getLang() == 'ta';
+  bool get _ta => trLang() == 'ta';
 
   Future<void> _startUpdate() async {
     setState(() {

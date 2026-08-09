@@ -18,7 +18,6 @@ import '../bloc/blood_donor_state.dart';
 import 'blood_request_flow.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/location/member_location.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../service_locator.dart';
@@ -33,7 +32,7 @@ class BloodDonationHubScreen extends StatefulWidget {
 }
 
 class _BloodDonationHubScreenState extends State<BloodDonationHubScreen> {
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   String? _selectedGroup;
@@ -429,7 +428,7 @@ class _EmergencyBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -491,7 +490,7 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     Widget chip(String text, bool sel, VoidCallback onTap) => Padding(
           padding: const EdgeInsets.only(right: 8),
           child: ChoiceChip(
@@ -620,7 +619,7 @@ class _EmptyDonors extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -677,7 +676,7 @@ class _ContactDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = sl<LocalStorage>().getLang();
+    final lang = trLang();
     return AlertDialog(
       title: Text(trId('request_contact')),
       content: Text(

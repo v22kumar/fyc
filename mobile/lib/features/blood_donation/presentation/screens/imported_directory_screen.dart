@@ -4,7 +4,6 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/blood_donor_entity.dart';
@@ -42,7 +41,7 @@ class ImportedDirectoryScreen extends StatefulWidget {
 class _ImportedDirectoryScreenState extends State<ImportedDirectoryScreen> {
   static const _groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   String? _group;
   String? _talukId;

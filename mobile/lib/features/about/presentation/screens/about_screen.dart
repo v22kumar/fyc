@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/storage/local_storage.dart';
-import '../../../../service_locator.dart';
 
 class _Value {
   final String emoji;
@@ -65,7 +63,7 @@ const List<_Milestone> _milestones = [
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  String get _lang => sl<LocalStorage>().getLang();
+  String get _lang => trLang();
 
   @override
   Widget build(BuildContext context) {

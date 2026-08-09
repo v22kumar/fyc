@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/tr.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../service_locator.dart';
 import '../../data/civic_api.dart';
 import 'ladder_view.dart';
 
@@ -81,7 +79,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
   String _officeOf(Map<String, dynamic> rung) {
     String lang;
     try {
-      lang = sl<LocalStorage>().getLang();
+      lang = trLang();
     } catch (_) {
       lang = 'en';
     }
