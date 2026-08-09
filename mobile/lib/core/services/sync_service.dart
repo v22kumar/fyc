@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
-import '../../features/feed/feed_api.dart';
+import '../../features/feed/domain/repositories/feed_repository.dart';
+import '../../service_locator.dart';
 
 class SyncService {
   static const _boxName = 'outbox';
@@ -108,7 +109,7 @@ class SyncService {
           // _ItemResult.skip → leave item, continue to next
         } else if (data['type'] == 'comment') {
           try {
-            await FeedApi.addComment(
+            await sl<FeedRepository>().addComment(
               data['postId'],
               data['content'],
               idempotencyKey: data['idempotencyKey'],
@@ -143,7 +144,7 @@ class SyncService {
         continue;
       }
       try {
-        uploaded.add(await FeedApi.uploadImage(p));
+        uploaded.add(await sl<FeedRepository>().uploadImage(p));
         consumed.add(p);
       } catch (_) {
         // Network/server hiccup — retry the whole item on the next pass. Persist
@@ -168,7 +169,7 @@ class SyncService {
     }
 
     try {
-      await FeedApi.create(
+      await sl<FeedRepository>().create(
         content: content,
         imageUrls: allUrls,
         category: data['category'],

@@ -101,8 +101,9 @@ import '../../features/journey/presentation/bloc/journey_bloc.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 
 // Community Feed
-import '../../features/feed/feed_screen.dart';
-import '../../features/feed/create_post_screen.dart';
+import '../../features/feed/domain/repositories/feed_repository.dart';
+import '../../features/feed/presentation/screens/feed_screen.dart';
+import '../../features/feed/presentation/screens/create_post_screen.dart';
 
 // Design System v2 (Sprint 1)
 import '../design_system/design_system_gallery_screen.dart';
@@ -225,11 +226,12 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/feed',
-      builder: (context, state) => const FeedScreen(),
+      builder: (context, state) => FeedScreen(repo: sl<FeedRepository>()),
       routes: [
         GoRoute(
           path: 'create',
-          builder: (context, state) => const CreatePostScreen(),
+          builder: (context, state) =>
+              CreatePostScreen(repo: sl<FeedRepository>()),
         ),
       ],
     ),
@@ -680,7 +682,7 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
       },
       tabs: [
         const HomeScreen(),
-        const FeedScreen(),
+        FeedScreen(repo: sl<FeedRepository>()),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),
           child: const SportsHubScreen(),

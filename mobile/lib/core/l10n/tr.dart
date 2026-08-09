@@ -8,6 +8,10 @@ import 'registry/registry.dart';
 String Function()? langProvider;
 
 /// The active UI language, read fresh so it updates live on a language switch.
+/// The active UI language code ('ta', 'en', …), for screens that branch on
+/// language rather than looking up a string.
+String trLang() => _activeLang();
+
 String _activeLang() {
   try {
     return langProvider?.call() ?? AppConstants.defaultLang;
