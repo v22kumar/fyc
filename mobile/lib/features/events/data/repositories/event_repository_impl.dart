@@ -84,4 +84,12 @@ class EventRepositoryImpl implements EventRepository {
       return const Left(ServerFailure());
     }
   }
+
+  @override
+  Future<void> registerForEvent(String eventId, Map<String, dynamic> data) =>
+      _remote.registerForEvent(eventId, data);
+
+  @override
+  Future<List<dynamic>> fetchRegistrationsAdmin(String eventId) =>
+      _remote.fetchRegistrationsAdmin(eventId);
 }

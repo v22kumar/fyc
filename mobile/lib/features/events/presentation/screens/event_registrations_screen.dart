@@ -7,16 +7,20 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/repositories/event_repository.dart';
 
 class EventRegistrationsScreen extends StatefulWidget {
   final EventEntity event;
   final String lang;
 
   const EventRegistrationsScreen({
+    required this.repo,
     super.key,
     required this.event,
     required this.lang,
   });
+
+  final EventRepository repo;
 
   @override
   State<EventRegistrationsScreen> createState() => _EventRegistrationsScreenState();
@@ -34,10 +38,10 @@ class _EventRegistrationsScreenState extends State<EventRegistrationsScreen> {
 
   Future<void> _fetch() async {
     try {
-      final response = await sl<ApiClient>().dio.get('${ApiConstants.events}/${widget.event.id}/registrations');
+      final rows = await widget.repo.fetchRegistrationsAdmin(widget.event.id);
       if (mounted) {
         setState(() {
-          _registrations = response.data as List<dynamic>;
+          _registrations = rows;
         });
       }
     } on DioException catch (e) {

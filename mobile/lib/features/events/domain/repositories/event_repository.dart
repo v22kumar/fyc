@@ -12,4 +12,10 @@ abstract class EventRepository {
 
   Future<Either<Failure, String>> checkinEvent(String eventId);
   Future<Either<Failure, String>> deleteEvent(String eventId);
+
+  // One-shot form submissions; the callers own the try/catch + snackbar.
+  Future<void> registerForEvent(String eventId, Map<String, dynamic> data);
+
+  /// Full registration rows for the admin screen (name, mobile, gender…).
+  Future<List<dynamic>> fetchRegistrationsAdmin(String eventId);
 }

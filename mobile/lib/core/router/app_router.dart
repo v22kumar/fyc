@@ -27,6 +27,7 @@ import '../storage/local_storage.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../constants/api_constants.dart';
 import '../../features/blood_donation/presentation/bloc/blood_donor_bloc.dart';
+import '../../features/events/domain/repositories/event_repository.dart';
 import '../../features/events/presentation/bloc/event_bloc.dart';
 
 // Sports
@@ -276,7 +277,10 @@ final appRouter = GoRouter(
       path: '/events',
       builder: (context, state) => BlocProvider(
         create: (_) => sl<EventBloc>(),
-        child: const EventsListScreen(),
+        child: RepositoryProvider<EventRepository>.value(
+          value: sl<EventRepository>(),
+          child: const EventsListScreen(),
+        ),
       ),
     ),
     // Reporting: photo first, asked once, and straight into the Complaint Box
