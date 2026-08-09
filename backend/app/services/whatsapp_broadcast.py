@@ -27,10 +27,13 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_ORG_ID = uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d")
 
-# In-memory status for /broadcasts/status endpoint
+# In-memory status for /broadcasts/status endpoint.
+#
+# `group_ok` is gone with the group send. It only ever reported False, so an
+# admin reading this screen was being told a delivery had failed when in fact
+# no such delivery was possible.
 _last_broadcast: dict = {
     "run_at": None,
-    "group_ok": None,
     "members_sent": 0,
     "members_failed": 0,
 }
@@ -64,38 +67,27 @@ async def compose_morning_message() -> str:
     return "\n".join(lines)
 
 
-async def send_to_group(message: str) -> bool:
-    """POST message to the FYC WhatsApp group via Meta Cloud API."""
-    if not (settings.META_WA_TOKEN and settings.META_WA_PHONE_NUMBER_ID and settings.META_WA_GROUP_ID):
-        logger.info("[broadcast] Meta Cloud API not configured — skipping group send")
-        return False
-    try:
-        url = f"https://graph.facebook.com/v20.0/{settings.META_WA_PHONE_NUMBER_ID}/messages"
-        payload = {
-            "messaging_product": "whatsapp",
-            "recipient_type": "group",
-            "to": settings.META_WA_GROUP_ID,
-            "type": "text",
-            "text": {"body": message, "preview_url": False},
-        }
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(
-                url,
-                json=payload,
-                headers={"Authorization": f"Bearer {settings.META_WA_TOKEN}"},
-            )
-            resp.raise_for_status()
-            logger.info(f"[broadcast] Group message sent OK: {resp.json()}")
-            return True
-    except httpx.TimeoutException:
-        logger.warning("[broadcast] Group send failed: Timeout")
-        return False
-    except httpx.HTTPStatusError as e:
-        logger.warning(f"[broadcast] Group send failed: HTTP error {e.response.status_code}")
-        return False
-    except Exception as e:
-        logger.warning(f"[broadcast] Group send failed: {e}")
-        return False
+# The group send is gone, and this note is why.
+#
+# It used to POST `"recipient_type": "group"` with a `…@g.us` id to
+# `/{phone_number_id}/messages`. The WhatsApp Cloud API has no group messaging
+# on that endpoint: `recipient_type` takes `individual`, and a group JID is not
+# a recipient it will deliver to. The call could only ever fail — and it did.
+# The exception was caught, logged at WARNING, and `group_ok` reported False on
+# every run since the feature was written.
+#
+# It stayed invisible because failing looked exactly like not-being-configured.
+# Both paths returned False, and the credentials were never set, so nothing
+# distinguished "we skipped it" from "it cannot work".
+#
+# Removed rather than replaced, deliberately. Posting to a WhatsApp group
+# programmatically needs a group-enabled number through Meta's Business
+# Management API, or a third-party BSP — a vendor decision with a monthly bill
+# attached, not a code fix. Until somebody makes that decision, the per-member
+# send below is the delivery path, and it works.
+#
+# META_WA_GROUP_ID stays in config.py as an inert setting so an existing
+# deployment does not fail to boot; nothing reads it.
 
 
 async def send_to_members(message: str, org_id: uuid.UUID = _DEFAULT_ORG_ID) -> dict:
@@ -155,15 +147,13 @@ async def run_morning_broadcast() -> None:
         logger.error(f"[broadcast] Failed to compose message: {e}")
         return
 
-    group_ok = await send_to_group(message)
     result = await send_to_members(message)
 
     _last_broadcast["run_at"] = datetime.now(timezone.utc).isoformat()
-    _last_broadcast["group_ok"] = group_ok
     _last_broadcast["members_sent"] = result["sent"]
     _last_broadcast["members_failed"] = result["failed"]
 
     logger.info(
-        f"[broadcast] Done — group: {'OK' if group_ok else 'SKIP/FAIL'} | "
+        f"[broadcast] Done — "
         f"members: {result['sent']} sent, {result['failed']} failed"
     )

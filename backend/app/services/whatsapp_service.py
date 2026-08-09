@@ -1,13 +1,18 @@
 import logging
 import os
 import requests
-from typing import Dict, Any
+from typing import Any, Dict, Sequence, Union
+
+# Meta's template body parameters are positional ({{1}}, {{2}}, …). A sequence
+# says that; a dict is accepted only for backward compatibility and is sorted
+# by key, which is a guess. New callers should pass a list or tuple.
+TemplateParams = Union[Sequence[Any], Dict[str, Any], None]
 
 logger = logging.getLogger(__name__)
 
 class WhatsAppProvider:
     """Abstract interface for WhatsApp delivery."""
-    def send_template(self, phone: str, template_name: str, parameters: Dict[str, Any]) -> bool:
+    def send_template(self, phone: str, template_name: str, parameters: TemplateParams = None) -> bool:
         raise NotImplementedError()
 
 class MetaCloudWhatsAppProvider(WhatsAppProvider):
@@ -18,9 +23,9 @@ class MetaCloudWhatsAppProvider(WhatsAppProvider):
         # WhatsApp graph API version
         self.api_version = "v25.0"
 
-    def send_template(self, phone: str, template_name: str, parameters: Dict[str, Any]) -> bool:
+    def send_template(self, phone: str, template_name: str, parameters: TemplateParams = None) -> bool:
         logger.info(f"[META CLOUD API] Sending template '{template_name}' to {phone}")
-        
+
         # Strip any leading '+' from phone number as WhatsApp API expects pure numbers
         clean_phone = phone.lstrip('+')
 
@@ -29,7 +34,7 @@ class MetaCloudWhatsAppProvider(WhatsAppProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
+
         data = {
             "messaging_product": "whatsapp",
             "to": clean_phone,
@@ -39,7 +44,36 @@ class MetaCloudWhatsAppProvider(WhatsAppProvider):
                 "language": {"code": "en_US"},
             }
         }
-        
+
+        # The parameters were accepted and then thrown away: this payload
+        # carried a template name and a language and no `components` block, so
+        # every {{1}} in an approved template went out empty — or, more often,
+        # Meta rejected the whole message, because it requires the body
+        # parameter count to match the template exactly.
+        #
+        # Meta's body parameters are POSITIONAL ({{1}}, {{2}}), and a dict has
+        # no order that survives a round trip. `sorted()` gives a stable one,
+        # which is not the same as a correct one: the caller must name its keys
+        # so that sorting them yields {{1}}, {{2}}, … For the two callers today
+        # ({"title": …, "body": …}) that happens to be wrong — "body" sorts
+        # before "title" — so they pass an ordered sequence instead. A dict is
+        # still accepted for compatibility, sorted, and logged as a guess.
+        if parameters:
+            if isinstance(parameters, dict):
+                logger.warning(
+                    "[META CLOUD API] template '%s' got parameters as a dict; "
+                    "ordering them by key, which may not match the template's "
+                    "{{1}}, {{2}} positions. Pass a list or tuple to be sure.",
+                    template_name,
+                )
+                ordered = [parameters[k] for k in sorted(parameters)]
+            else:
+                ordered = list(parameters)
+            data["template"]["components"] = [{
+                "type": "body",
+                "parameters": [{"type": "text", "text": str(v)} for v in ordered],
+            }]
+
         try:
             response = requests.post(url, headers=headers, json=data, timeout=10)
             response.raise_for_status()
@@ -58,13 +92,13 @@ class TwilioWhatsAppProvider(WhatsAppProvider):
         self.auth_token = auth_token
         self.from_number = from_number
 
-    def send_template(self, phone: str, template_name: str, parameters: Dict[str, Any]) -> bool:
+    def send_template(self, phone: str, template_name: str, parameters: TemplateParams = None) -> bool:
         logger.info(f"[TWILIO API] Sent template '{template_name}' to {phone}")
         # Use twilio client here
         return True
 
 class WhatsAppMockProvider(WhatsAppProvider):
-    def send_template(self, phone: str, template_name: str, parameters: Dict[str, Any]) -> bool:
+    def send_template(self, phone: str, template_name: str, parameters: TemplateParams = None) -> bool:
         logger.info(f"[MOCK WHATSAPP] Delivered '{template_name}' to {phone} with params {parameters}")
         return True
 
@@ -76,7 +110,7 @@ class WhatsAppQueueManager:
     def __init__(self, provider: WhatsAppProvider):
         self.provider = provider
 
-    def enqueue_template(self, phone: str, template_name: str, parameters: Dict[str, Any]) -> bool:
+    def enqueue_template(self, phone: str, template_name: str, parameters: TemplateParams = None) -> bool:
         # In a real system, push to Redis Queue. 
         # Here we process synchronously for the MVP abstraction.
         try:

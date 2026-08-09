@@ -91,6 +91,75 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "hi": "X-Organization-ID हेडर आवश्यक है",
         "ml": "X-Organization-ID ഹെഡർ ആവശ്യമാണ്",
     },
+
+    # ── Civic issues ─────────────────────────────────────────────────────────
+    # The reporter's acknowledgement and the volunteer's assignment are
+    # different messages. They used to be the same one: creating an issue sent
+    # the reporter "A {category} issue has been assigned to you. Please act
+    # promptly", which reads as an instruction to fix the pothole they had just
+    # photographed.
+    "issue.received.title": {
+        "en": "Complaint received",
+        "ta": "புகார் பெறப்பட்டது",
+        "hi": "शिकायत प्राप्त हुई",
+        "ml": "പരാതി ലഭിച്ചു",
+    },
+    "issue.received.body": {
+        "en": "Your {category} complaint has been received. We'll let you know when it moves.",
+        "ta": "உங்கள் {category} புகார் பெறப்பட்டது. முன்னேற்றம் இருக்கும்போது தெரிவிக்கிறோம்.",
+        "hi": "आपकी {category} शिकायत प्राप्त हो गई है। प्रगति होने पर हम आपको बताएंगे।",
+        "ml": "നിങ്ങളുടെ {category} പരാതി ലഭിച്ചു. പുരോഗതി ഉണ്ടാകുമ്പോൾ അറിയിക്കാം.",
+    },
+    "issue.assigned.title": {
+        "en": "New task assigned",
+        "ta": "புதிய பணி ஒதுக்கப்பட்டது",
+        "hi": "नया कार्य सौंपा गया",
+        "ml": "പുതിയ ചുമതല നൽകി",
+    },
+    "issue.assigned.body": {
+        "en": "A {category} issue has been assigned to you. Please act promptly.",
+        "ta": "{category} பிரச்சனை உங்களுக்கு ஒதுக்கப்பட்டது. உடனடியாக செயல்படுங்கள்.",
+        "hi": "{category} समस्या आपको सौंपी गई है। कृपया शीघ्र कार्रवाई करें।",
+        "ml": "{category} പ്രശ്നം നിങ്ങൾക്ക് നൽകിയിരിക്കുന്നു. ഉടൻ നടപടിയെടുക്കുക.",
+    },
+    "issue.resolved.title": {
+        "en": "Your complaint is resolved",
+        "ta": "உங்கள் புகார் தீர்க்கப்பட்டது",
+        "hi": "आपकी शिकायत हल हो गई",
+        "ml": "നിങ്ങളുടെ പരാതി പരിഹരിച്ചു",
+    },
+    "issue.resolved.body": {
+        "en": "The issue you reported has been resolved. Thank you!",
+        "ta": "நீங்கள் தெரிவித்த சிக்கல் தீர்க்கப்பட்டது. நன்றி!",
+        "hi": "आपके द्वारा बताई गई समस्या हल कर दी गई है। धन्यवाद!",
+        "ml": "നിങ്ങൾ അറിയിച്ച പ്രശ്നം പരിഹരിച്ചു. നന്ദി!",
+    },
+
+    # ── Birthdays ────────────────────────────────────────────────────────────
+    "birthday.self.title": {
+        "en": "Happy birthday! 🎂",
+        "ta": "பிறந்த நாள் வாழ்த்துக்கள்! 🎂",
+        "hi": "जन्मदिन मुबारक! 🎂",
+        "ml": "ജന്മദിനാശംസകൾ! 🎂",
+    },
+    "birthday.self.body": {
+        "en": "Warm wishes from the whole FYC family. Have a wonderful day!",
+        "ta": "FYC குடும்பத்தின் அன்பான வாழ்த்துக்கள்! உங்கள் நாள் மகிழ்ச்சியாக அமையட்டும்!",
+        "hi": "पूरे FYC परिवार की ओर से हार्दिक शुभकामनाएं। आपका दिन शानदार हो!",
+        "ml": "മുഴുവൻ FYC കുടുംബത്തിന്റെയും ഹൃദയംഗമമായ ആശംസകൾ. ദിനം സന്തോഷകരമാകട്ടെ!",
+    },
+    "birthday.member.title": {
+        "en": "🎂 It's {name}'s birthday",
+        "ta": "🎂 இன்று {name} அவர்களின் பிறந்த நாள்",
+        "hi": "🎂 आज {name} का जन्मदिन है",
+        "ml": "🎂 ഇന്ന് {name} ന്റെ ജന്മദിനമാണ്",
+    },
+    "birthday.member.body": {
+        "en": "Wish them a happy birthday from the FYC family.",
+        "ta": "FYC குடும்பத்தின் சார்பாக வாழ்த்துக்கள் தெரிவியுங்கள்.",
+        "hi": "FYC परिवार की ओर से उन्हें शुभकामनाएं दें।",
+        "ml": "FYC കുടുംബത്തിന്റെ പേരിൽ ആശംസകൾ നേരുക.",
+    },
 }
 
 

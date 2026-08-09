@@ -16,7 +16,9 @@ from app.schemas.issue import (
 )
 from app.dependencies import get_current_user, RoleChecker, get_current_token_payload
 from app.middleware.tenant import get_current_tenant_id, require_tenant_id
-from app.services.notifications import notify_issue_assigned, notify_issue_resolved
+from app.services.issue_notifications import (
+    notify_issue_assigned, notify_issue_received, notify_issue_resolved,
+)
 from app.services.geocoding import reverse_geocode
 from app.services import mailer
 from app.services.ai_service import AIService
@@ -176,8 +178,12 @@ def submit_issue(
         )
 
     # Attempt to extract user from token (optional auth)
+    #
+    # The reporter's FCM token used to be read here and threaded into the
+    # notification call. It no longer is: NotificationService resolves the user
+    # itself, so it can also check their push preference and write the in-app
+    # record. All this needs is who reported it.
     reported_by_user_id = None
-    reporter_fcm_token = None
     auth_header = request.headers.get("Authorization")
     if auth_header:
         try:
@@ -185,11 +191,7 @@ def submit_issue(
             parts = auth_header.split()
             if len(parts) == 2 and parts[0].lower() == "bearer":
                 payload_token = decode_token(parts[1])
-                uid = UUID(payload_token["sub"])
-                reported_by_user_id = uid
-                user = db.query(User).filter(User.id == uid).first()
-                if user:
-                    reporter_fcm_token = getattr(user, "fcm_token", None)
+                reported_by_user_id = UUID(payload_token["sub"])
         except Exception:
             pass
 
@@ -217,13 +219,15 @@ def submit_issue(
         _geocode_and_store, issue.id, float(payload.latitude), float(payload.longitude)
     )
 
-    # Notify reporter: issue received
-    if reporter_fcm_token:
+    # Acknowledge to the reporter — NOT the same message a volunteer gets when
+    # the complaint is assigned to them, which is what this used to send.
+    if reported_by_user_id:
         try:
             dept = _DEPT_MAP.get(payload.category.value, "the relevant department")
             background_tasks.add_task(
-                notify_issue_assigned,
-                fcm_token=reporter_fcm_token,
+                notify_issue_received,
+                user_id=reported_by_user_id,
+                organization_id=tenant_id,
                 issue_id=str(issue.id),
                 category=dept,
             )
@@ -491,10 +495,12 @@ def update_issue_status(
     # Notify reporter when issue is resolved
     if new_status in {IssueStatus.RESOLVED, IssueStatus.CLOSED} and issue.reported_by_user_id:
         try:
-            reporter = db.query(User).filter(User.id == issue.reported_by_user_id).first()
-            fcm = getattr(reporter, "fcm_token", None) if reporter else None
-            if fcm:
-                background_tasks.add_task(notify_issue_resolved, fcm_token=fcm, issue_id=str(issue.id))
+            background_tasks.add_task(
+                notify_issue_resolved,
+                user_id=issue.reported_by_user_id,
+                organization_id=issue.organization_id,
+                issue_id=str(issue.id),
+            )
         except Exception:
             pass
 
@@ -552,14 +558,17 @@ def assign_issue_volunteer(
 
     # Notify assigned volunteer
     try:
-        volunteer = db.query(User).filter(User.id == payload.volunteer_id).first()
-        fcm = getattr(volunteer, "fcm_token", None) if volunteer else None
-        if fcm:
-            dept = _DEPT_MAP.get(
-                issue.category.value if hasattr(issue.category, 'value') else str(issue.category),
-                "General"
-            )
-            background_tasks.add_task(notify_issue_assigned, fcm_token=fcm, issue_id=str(issue.id), category=dept)
+        dept = _DEPT_MAP.get(
+            issue.category.value if hasattr(issue.category, 'value') else str(issue.category),
+            "General"
+        )
+        background_tasks.add_task(
+            notify_issue_assigned,
+            user_id=payload.volunteer_id,
+            organization_id=issue.organization_id,
+            issue_id=str(issue.id),
+            category=dept,
+        )
     except Exception:
         pass
 
