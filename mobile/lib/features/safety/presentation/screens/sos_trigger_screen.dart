@@ -10,7 +10,6 @@ import '../../../../core/l10n/tr.dart';
 import '../../../../core/services/siren_controller.dart';
 import '../bloc/sos_bloc.dart';
 import '../widgets/hold_ring.dart';
-import 'sos_live_screen.dart';
 
 /// India's single emergency number — police, fire and ambulance.
 const kEmergencyNumber = '112';
@@ -134,7 +133,6 @@ class _SosTriggerScreenState extends State<SosTriggerScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<SosBloc, SosViewState>(
       listenWhen: (a, b) =>
-          (a.incident == null && b.incident != null) ||
           (!a.wentOffline && b.wentOffline) ||
           (a.failure != b.failure && b.failure != null),
       listener: (context, state) {
@@ -153,14 +151,10 @@ class _SosTriggerScreenState extends State<SosTriggerScreen> {
             ));
           return;
         }
-        if (state.incident != null) {
-          // Straight through to the live screen. The trigger screen has done
-          // its job and must not stay behind the thing that matters now.
-          Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-            builder: (_) => const SosLiveScreen(),
-          ));
-          return;
-        }
+        // Nothing here navigates. [SosScreen] swaps to the live screen when
+        // an incident appears, because pushing a route put that screen
+        // outside the BlocProvider it depends on — and disposed the bloc on
+        // the way. See the note on SosScreen.
         if (state.failure != null) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()

@@ -9,7 +9,10 @@ import '../../../../core/services/sos_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/safety_entities.dart' as e;
 import '../bloc/safety_setup_bloc.dart';
-import 'sos_trigger_screen.dart';
+import '../../../../service_locator.dart';
+import '../../domain/repositories/safety_repository.dart';
+import '../bloc/sos_bloc.dart';
+import 'sos_screen.dart';
 
 /// Everything an emergency has no time for, done in advance.
 ///
@@ -163,9 +166,15 @@ class _SafetySetupScreenState extends State<SafetySetupScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
+                  // Its own bloc, because the rehearsal is a real run of
+                  // the real screen — the only difference is that nothing is
+                  // ever sent.
                   onPressed: () =>
                       Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => const SosTriggerScreen(rehearsal: true),
+                    builder: (_) => BlocProvider(
+                      create: (_) => SosBloc(sl<SafetyRepository>()),
+                      child: const SosScreen(rehearsal: true),
+                    ),
                   )),
                   icon: const Icon(Icons.play_circle_outline_rounded),
                   label: Text(trId('rehearse')),

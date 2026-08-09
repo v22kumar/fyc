@@ -61,6 +61,7 @@ class _HoldRingState extends State<HoldRing>
   }
 
   void _pulse() {
+    if (!mounted) return;
     final quarter = (_fill.value * 4).floor();
     if (quarter != _lastQuarter && quarter > 0) {
       _lastQuarter = quarter;
@@ -69,7 +70,7 @@ class _HoldRingState extends State<HoldRing>
   }
 
   void _onStatus(AnimationStatus status) {
-    if (status != AnimationStatus.completed) return;
+    if (status != AnimationStatus.completed || !mounted) return;
     HapticFeedback.heavyImpact();
     widget.onComplete();
     _fill.value = 0;
@@ -77,12 +78,22 @@ class _HoldRingState extends State<HoldRing>
   }
 
   void _down(PointerDownEvent _) {
+    if (!mounted) return;
     _lastQuarter = 0;
     HapticFeedback.selectionClick();
     _fill.forward();
   }
 
   void _up([Object? _]) {
+    // Guarded on `mounted`, because the finger outlives the widget.
+    //
+    // A completed hold starts a five-second countdown, and when it ends the
+    // screen swaps to the live incident — often while the thumb is still on
+    // the button. The pointer-up that follows arrives at a Listener whose
+    // State has been disposed, and touching the controller then throws
+    // "AnimationController.reverse() called after dispose". On this screen an
+    // uncaught exception is a grey rectangle where the SOS should be.
+    if (!mounted) return;
     // Reversed rather than reset: letting go halfway should look like letting
     // go, not like the app losing the gesture.
     if (_fill.status != AnimationStatus.completed) _fill.reverse();
@@ -93,6 +104,7 @@ class _HoldRingState extends State<HoldRing>
   /// With a raw [Listener] there is no recognizer to notice this, so the check
   /// is here: outside the disc, plus a little slack for a finger that rolls.
   void _move(PointerMoveEvent event) {
+    if (!mounted) return;
     if (_fill.status != AnimationStatus.forward) return;
     final centre = Offset(widget.diameter / 2, widget.diameter / 2);
     if ((event.localPosition - centre).distance > widget.diameter / 2 + 24) {
