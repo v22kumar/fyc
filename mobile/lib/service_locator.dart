@@ -152,6 +152,10 @@ import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/domain/repositories/feed_repository.dart';
 import 'features/home/data/repositories/home_repository_impl.dart';
 import 'features/home/domain/repositories/home_repository.dart';
+import 'features/profile/data/repositories/profile_repository_impl.dart';
+import 'features/profile/domain/repositories/profile_repository.dart';
+import 'features/search/data/repositories/search_repository_impl.dart';
+import 'features/search/domain/repositories/search_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -472,5 +476,13 @@ Future<void> initServiceLocator() async {
   // Home dashboard
   sl.registerLazySingleton<HomeRepository>(
     () => HomeRepositoryImpl(sl<ApiClient>()),
+  );
+
+  // Profile + search
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(sl<ApiClient>()),
   );
 }

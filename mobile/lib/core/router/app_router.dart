@@ -11,6 +11,8 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/auth/presentation/widgets/sign_in_sheet.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/search/domain/repositories/search_repository.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../features/blood_donation/presentation/screens/blood_donation_hub_screen.dart';
@@ -218,11 +220,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/search',
-      builder: (context, state) => const SearchScreen(),
+      builder: (context, state) =>
+          SearchScreen(repo: sl<SearchRepository>()),
     ),
     GoRoute(
       path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) =>
+          ProfileScreen(repo: sl<ProfileRepository>()),
     ),
     GoRoute(
       path: '/journey',
@@ -696,7 +700,9 @@ Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2
         }
       },
       tabs: [
-        HomeScreen(repo: sl<HomeRepository>()),
+        HomeScreen(
+            repo: sl<HomeRepository>(),
+            promptRepo: sl<ProfileRepository>()),
         FeedScreen(repo: sl<FeedRepository>()),
         BlocProvider(
           create: (_) => sl<SportsBloc>(),

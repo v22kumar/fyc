@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../service_locator.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/pressable.dart';
 import 'package:fyc_connect/core/l10n/tr.dart';
+import '../../domain/repositories/search_repository.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final SearchRepository repo;
+  const SearchScreen({super.key, required this.repo});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -96,12 +97,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _error = '';
     });
     try {
-      final response = await sl<ApiClient>().dio.get(
-        '/api/v1/search',
-        queryParameters: {'q': query},
-      );
-      
-      final data = response.data;
+      final data = await widget.repo.search(query);
       final newResults = <String, List<dynamic>>{};
       
       if (data is Map<String, dynamic>) {
