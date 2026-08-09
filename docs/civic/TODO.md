@@ -68,6 +68,16 @@ place; `scripts/import_civic_contacts.py` checks it.
       the same shape as blood donation. All strings in the four-language
       registry.
 - [x] Capture flows straight into the Complaint Box rather than a list.
+- [x] **"My complaints"** — `GET /civic/complaints` and the screen on it.
+      Replaced the old track screen, which listed issues by a status column the
+      server maintained by inference: a complaint nobody had touched read
+      "Under review", which was nobody's statement. Rows now say what somebody
+      said, ordered open-first then longest-ignored-first.
+- [x] **Coverage** — a complaint from outside Kanniyakumari gets no ladder and
+      is told why. It used to be handed four officers in Nagercoil.
+- [x] **The feature has one name.** Home, the More sheet, the create sheet and
+      the profile menu called it Report an Issue, Public Issues, Track Issues
+      and My Reports. All four now say Complaint Box / My complaints.
 
 ## Decisions already made, so nobody reopens them by accident
 
@@ -103,6 +113,11 @@ Left in place rather than deleted, because removing a six-hundred-line screen
 is a separate decision from fixing a route. But it should go: dead code that
 contradicts the product is how the contradiction comes back.
 
+`issues_track_screen.dart`, `issue_detail_screen.dart` and the two blocs behind
+them **have** gone, for exactly that reason: both asserted a status nobody had
+stated, and leaving them registered in the service locator would have kept two
+contradicting screens compiling and looking maintained.
+
 ## Known rough edges
 
 - `can_call` / `can_write` are computed per request from the Authority row.
@@ -111,10 +126,13 @@ contradicts the product is how the contradiction comes back.
   *"your ward"*. It is currently English and Tamil only, unlike the rest of the
   app, which does four languages through the registry. Move it there when the
   screen exists to show it.
-- `GET /civic/ladder` resolves jurisdiction from the reporter's own geography
-  when the report has no tag. Right most of the time, wrong for somebody
-  reporting a pothole outside their ward. Coordinates would fix it and need
-  boundary data the project does not have.
+- `GET /civic/ladder` now takes `complaint_id` and resolves jurisdiction from
+  the report's own geography, falling back to the reporter's. What it still
+  cannot do is turn a coordinate into a local body — that needs boundary data
+  the project does not have. Coverage is a bounding box (`jurisdiction.
+  is_covered`), drawn generously: it catches Bengaluru, not a village on the
+  Tirunelveli line. Being wrong at the margin means offering the ladder to
+  somebody just outside it, which is the cheaper error.
 - The send sheet uses `mailto:`, which every device with a mail app handles but
   which cannot attach a file and breaks on very long bodies. The letter is
   trimmed at 4000 characters to stay inside that. An `ACTION_SEND` intent is

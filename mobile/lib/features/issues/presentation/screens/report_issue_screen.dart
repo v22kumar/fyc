@@ -10,6 +10,7 @@ import '../../domain/civic_categories.dart';
 import '../../../../core/location/member_location.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 
@@ -150,6 +151,21 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       if (!mounted) return;
       final id = (created.data is Map) ? created.data['id'] as String? : null;
       await _showSent(complaintId: id);
+    } on DioException catch (err) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      // The server's own sentence. This swallowed every failure into one
+      // "action failed", so a member whose photo was too large, whose session
+      // had expired and whose train was in a tunnel all read the same line and
+      // none of them could tell what to do about it.
+      final failure = mapDioException(err);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(failure.message),
+          backgroundColor: AppColors.accent,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _sending = false);

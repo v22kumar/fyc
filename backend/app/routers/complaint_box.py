@@ -28,8 +28,8 @@ from app.models.issue import (
 )
 from app.models.user import User, UserProfile
 from app.schemas.complaint_box import (
-    CallLogIn, CloseIn, ComplaintEventOut, ComplaintStateOut, DraftIn, DraftOut,
-    ReplyIn, SentIn,
+    CallLogIn, CloseIn, ComplaintEventOut, ComplaintStateOut,
+    ComplaintSummaryOut, DraftIn, DraftOut, ReplyIn, SentIn,
 )
 from app.services.complaint_letter import CallRecord, Recipient, build_letter
 
@@ -122,6 +122,11 @@ def _state(db: Session, issue: PublicIssue) -> ComplaintStateOut:
 
     return ComplaintStateOut(
         id=issue.id,
+        category=issue.category or "",
+        description=issue.description_en or issue.description_ta or "",
+        place_name=issue.location_name,
+        photo_url=issue.photo_url,
+        created_at=issue.created_at,
         lane=issue.lane or ComplaintLane.SELF.value,
         severity=issue.severity or ComplaintSeverity.ROUTINE.value,
         status=issue.status.value if hasattr(issue.status, "value") else str(issue.status),
@@ -151,6 +156,90 @@ def _reject_if_closed(issue: PublicIssue) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail="This complaint is closed. Reopen it first.",
         )
+
+
+@router.get("", response_model=list[ComplaintSummaryOut])
+def my_complaints(
+    include_closed: bool = True,
+    db: Session = Depends(get_db),
+    tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
+):
+    """The member's own complaints, with where each one actually stands.
+
+    The old tracking screen listed issues by a status column the server
+    maintained by guessing. This lists them by what somebody said: the last
+    authored event, and how long it has been since anything left. Closed ones
+    are included but sort last — a list that hides them looks like work
+    disappeared, and a list that mixes them in is mostly dead rows.
+    """
+    issues = (
+        db.query(PublicIssue)
+        .filter(PublicIssue.organization_id == tenant_id,
+                PublicIssue.reported_by_user_id == current_user.id)
+        .order_by(PublicIssue.created_at.desc())
+        .all()
+    )
+    if not issues:
+        return []
+
+    # One query for every complaint's events rather than one per complaint.
+    ids = [i.id for i in issues]
+    events = (
+        db.query(ComplaintEvent)
+        .filter(ComplaintEvent.issue_id.in_(ids))
+        .order_by(ComplaintEvent.created_at.asc())
+        .all()
+    )
+    by_issue: dict = {}
+    for e in events:
+        by_issue.setdefault(e.issue_id, []).append(e)
+
+    now = datetime.now(timezone.utc)
+    out: list[ComplaintSummaryOut] = []
+    for issue in issues:
+        closed = issue.status in (IssueStatus.RESOLVED, IssueStatus.CLOSED)
+        if closed and not include_closed:
+            continue
+
+        mine = by_issue.get(issue.id, [])
+        waiting = None
+        if not closed:
+            outbound = [e for e in mine if e.event_type in (
+                ComplaintEventType.SENT.value,
+                ComplaintEventType.CALLED.value,
+                ComplaintEventType.FYC_FORWARDED.value)]
+            if outbound:
+                waiting = max(
+                    0, (now - _aware(outbound[-1].created_at)).days)
+
+        last = mine[-1] if mine else None
+        out.append(ComplaintSummaryOut(
+            id=issue.id,
+            category=issue.category,
+            description=(issue.description_en or issue.description_ta or ""),
+            place_name=issue.location_name,
+            photo_url=issue.photo_url,
+            lane=issue.lane or ComplaintLane.SELF.value,
+            severity=issue.severity or ComplaintSeverity.ROUTINE.value,
+            status=(issue.status.value if hasattr(issue.status, "value")
+                    else str(issue.status)),
+            is_closed=closed,
+            closed_reason=issue.closed_reason,
+            waiting_days=waiting,
+            last_event=(last.event_type if last else None),
+            last_event_at=(last.created_at if last else None),
+            created_at=issue.created_at,
+        ))
+
+    # Open first, then closed. Inside each, the ones waiting longest first —
+    # a complaint nobody has answered in three weeks is the one that needs
+    # somebody to look at it.
+    out.sort(key=lambda c: (
+        c.is_closed,
+        -(c.waiting_days if c.waiting_days is not None else -1),
+    ))
+    return out
 
 
 @router.get("/{complaint_id}", response_model=ComplaintStateOut)

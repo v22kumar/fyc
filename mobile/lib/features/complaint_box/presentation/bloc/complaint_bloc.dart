@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/failures.dart';
 import '../../domain/entities/complaint_entities.dart' as e;
 import '../../domain/repositories/complaint_repository.dart';
 
@@ -35,6 +36,17 @@ class DraftRequested extends ComplaintBlocEvent {
   final bool bccClub;
   @override
   List<Object?> get props => [authorityId, bccClub];
+}
+
+/// The send sheet closed without the letter being handed over.
+///
+/// The draft has to leave the state when its sheet does. Left behind, it is a
+/// value that never changes again, and every later "Write" resolves to the
+/// same object — so the listener that opens the sheet sees no transition and
+/// nothing happens. A member who dismissed the sheet once found the button
+/// dead for the rest of the session.
+class DraftDismissed extends ComplaintBlocEvent {
+  const DraftDismissed();
 }
 
 class SendConfirmed extends ComplaintBlocEvent {
@@ -162,6 +174,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
     on<LoadComplaint>(_onLoad);
     on<CallLogged>(_onCall);
     on<DraftRequested>(_onDraft);
+    on<DraftDismissed>(_onDraftDismissed);
     on<SendConfirmed>(_onSent);
     on<ReplyRecorded>(_onReply);
     on<Closed>(_onClose);
@@ -173,6 +186,16 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
   final ComplaintRepository _repo;
   String? _id;
 
+  /// What went wrong, in words a member can act on.
+  ///
+  /// This used to be `err.toString()`, which for a typed [Failure] is
+  /// "Instance of 'ConflictFailure'" — so the screen had no choice but to show
+  /// one blanket "action failed" for everything. "This complaint is closed.
+  /// Reopen it first." and "check your connection" need different responses,
+  /// and the member cannot pick one if we never tell them which happened.
+  String _reason(Object err) =>
+      err is Failure ? err.message : 'Something went wrong. Please try again.';
+
   Future<void> _guard(
     Emitter<ComplaintViewState> emit,
     Future<e.ComplaintState> Function() action,
@@ -181,7 +204,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
     try {
       emit(state.copyWith(complaint: await action(), busy: false));
     } catch (err) {
-      emit(state.copyWith(failure: err.toString(), busy: false));
+      emit(state.copyWith(failure: _reason(err), busy: false));
     }
   }
 
@@ -196,7 +219,12 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
       var ladderFailed = false;
       if (ev.category != null) {
         try {
-          ladder = await _repo.ladder(category: ev.category!);
+          // Built from where the complaint is, not from where the member
+          // lives. Without the id the server fell back to the reporter's
+          // own area, which is wrong exactly when it matters — somebody
+          // reporting a problem while away from home.
+          ladder = await _repo.ladder(
+              category: ev.category!, complaintId: ev.id);
         } catch (_) {
           // A missing ladder is a directory gap, not a reason to fail the
           // screen — the member can still write, or hand it to the club.
@@ -215,7 +243,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
           ladder: ladder,
           ladderFailed: ladderFailed));
     } catch (err) {
-      emit(state.copyWith(loading: false, failure: err.toString()));
+      emit(state.copyWith(loading: false, failure: _reason(err)));
     }
   }
 
@@ -235,9 +263,13 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
       final refreshed = await _repo.load(_id!);
       emit(state.copyWith(draft: draft, complaint: refreshed, busy: false));
     } catch (err) {
-      emit(state.copyWith(failure: err.toString(), busy: false));
+      emit(state.copyWith(failure: _reason(err), busy: false));
     }
   }
+
+  void _onDraftDismissed(
+          DraftDismissed ev, Emitter<ComplaintViewState> emit) =>
+      emit(state.copyWith(clearDraft: true));
 
   Future<void> _onSent(SendConfirmed ev, Emitter<ComplaintViewState> emit) =>
       _guard(emit, () => _repo.markSent(_id!, authorityLabel: ev.authorityLabel));
@@ -266,7 +298,7 @@ class ComplaintBloc extends Bloc<ComplaintBlocEvent, ComplaintViewState> {
       // app claiming something nobody has approved.
       emit(state.copyWith(busy: false, contactSuggested: true));
     } catch (err) {
-      emit(state.copyWith(failure: err.toString(), busy: false));
+      emit(state.copyWith(failure: _reason(err), busy: false));
     }
   }
 }

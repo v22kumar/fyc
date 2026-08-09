@@ -89,6 +89,17 @@ class ComplaintStateOut(BaseModel):
     """What we are allowed to say about this complaint right now."""
 
     id: UUID
+
+    #: What the complaint is about, in the member's own words and their own
+    #: photograph. The screen used to open straight onto a ladder of officers
+    #: with no reminder of which problem this was, which is unreadable for
+    #: anybody carrying more than one complaint.
+    category: str = ""
+    description: str = ""
+    place_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+
     lane: str
     severity: str
     status: str
@@ -98,3 +109,36 @@ class ComplaintStateOut(BaseModel):
     is_closed: bool
     closed_reason: Optional[str] = None
     events: list[ComplaintEventOut] = []
+
+
+class ComplaintSummaryOut(BaseModel):
+    """One row in "my complaints".
+
+    A summary rather than the full state: the list needs enough to say where
+    each one stands and nothing more, and fetching every timeline to render a
+    list would be a query per row for information nobody reads until they tap.
+    """
+
+    id: UUID
+    category: str
+    description: str
+    place_name: Optional[str] = None
+    photo_url: Optional[str] = None
+
+    lane: str
+    severity: str
+    status: str
+    is_closed: bool
+    closed_reason: Optional[str] = None
+
+    #: Days since the last thing that left — a letter, a call, a forward. Null
+    #: when nothing has, which is not the same as nothing being known: a report
+    #: nobody has acted on is not waiting for a reply.
+    waiting_days: Optional[int] = None
+
+    #: What the member last did, so the row can say it in their words rather
+    #: than showing a status nobody asserted.
+    last_event: Optional[str] = None
+    last_event_at: Optional[datetime] = None
+
+    created_at: datetime
