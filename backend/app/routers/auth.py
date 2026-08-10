@@ -1,7 +1,8 @@
+import hashlib
+import hmac
 import secrets
 import uuid
-from dataclasses import dataclass, field
-from typing import Dict, Union
+from typing import Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.core.rate_limit import limiter
@@ -17,6 +18,7 @@ from app.dependencies import get_current_user
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
+from app.models.otp import PendingOtp
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -30,17 +32,85 @@ OTP_TTL_MINUTES = 10
 OTP_MAX_ATTEMPTS = 5
 
 
-@dataclass
-class _PendingOtp:
-    phone_number: str
-    # None when Twilio Verify holds the code server-side.
-    otp_code: str | None
-    organization_id: uuid.UUID
-    expires_at: datetime
-    attempts: int = field(default=0)
+# ── Where a half-finished sign-in lives ──────────────────────────────────────
+#
+# This was a module-level dict. On one machine with one worker that looks
+# correct, and it is — until the process restarts. A deploy, a crash, an OOM
+# kill, a host migration: any of them empties the dict, and every member
+# holding an SMS they have not typed yet is told "Invalid or expired
+# verification ID".
+#
+# That message is the damaging part. It is indistinguishable from mistyping the
+# code, so nobody reports a server fault: they assume they fumbled it, ask for
+# another code, and hit the same wall. Across a run of frequent deploys it
+# reads exactly like "login has been down for days and we don't know why".
+#
+# A row costs one insert and one delete per sign-in, outlives every restart,
+# and lets a second instance answer /otp/verify if this ever grows past one
+# machine. See app/models/otp.py.
 
 
-otp_store: Dict[str, _PendingOtp] = {}
+def _hash_code(code: str) -> str:
+    """HMAC the code under the app secret — the code itself is never stored.
+
+    A six-digit code is trivially brute-forced from a plain hash, so this is
+    keyed rather than bare SHA-256: without SECRET_KEY a leaked table is inert
+    for the ten minutes the row exists.
+    """
+    return hmac.new(
+        settings.SECRET_KEY.encode(), code.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def _as_utc(moment: datetime) -> datetime:
+    """SQLite hands back naive datetimes; Postgres hands back aware ones.
+
+    Comparing the two raises TypeError, which would turn every verification on
+    SQLite into a 500. Stored values are always UTC, so an absent tzinfo simply
+    means "nobody wrote it down".
+    """
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+
+
+def _otp_put(db: Session, verification_id: str, phone_number: str,
+             otp_code: str | None, organization_id: uuid.UUID,
+             expires_at: datetime) -> None:
+    db.add(PendingOtp(
+        verification_id=verification_id,
+        phone_number=phone_number,
+        organization_id=organization_id,
+        code_hash=_hash_code(otp_code) if otp_code is not None else None,
+        expires_at=expires_at,
+        attempts=0,
+    ))
+    db.commit()
+
+
+def _otp_get(db: Session, verification_id: str) -> "PendingOtp | None":
+    return db.get(PendingOtp, verification_id)
+
+
+def _otp_drop(db: Session, verification_id: str) -> None:
+    row = db.get(PendingOtp, verification_id)
+    if row is not None:
+        db.delete(row)
+        db.commit()
+
+
+def _otp_sweep(db: Session) -> None:
+    """Delete rows nobody can use any more.
+
+    Best-effort housekeeping on the send path: a member who never types the
+    code leaves a row behind, and without this the table only grows. A failure
+    here must never stop somebody signing in, so it is swallowed.
+    """
+    try:
+        db.query(PendingOtp).filter(
+            PendingOtp.expires_at < datetime.now(timezone.utc)
+        ).delete(synchronize_session=False)
+        db.commit()
+    except Exception:
+        db.rollback()
 
 
 def _generate_otp() -> str:
@@ -73,6 +143,10 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     verification_id = f"v_{uuid.uuid4().hex[:12]}"
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
 
+    # Codes nobody came back for. Cheap, and it keeps the table the size of
+    # "sign-ins in progress" rather than "sign-ins ever started".
+    _otp_sweep(db)
+
     # A ladder, not a single rung.
     #
     # This used to be an if/else: with TWILIO_VERIFY_SID configured, a failed
@@ -90,16 +164,14 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
 
     if settings.TWILIO_VERIFY_SID and send_verify_otp(payload.phone_number):
         # Twilio Verify manages the code itself; we only remember phone + org.
-        otp_store[verification_id] = _PendingOtp(
-            payload.phone_number, None, payload.organization_id, expires_at
-        )
+        _otp_put(db, verification_id, payload.phone_number, None,
+                 payload.organization_id, expires_at)
         channel = "sms"
     else:
         # Every remaining channel needs a code we generated ourselves.
         otp_code = _generate_otp()
-        otp_store[verification_id] = _PendingOtp(
-            payload.phone_number, otp_code, payload.organization_id, expires_at
-        )
+        _otp_put(db, verification_id, payload.phone_number, otp_code,
+                 payload.organization_id, expires_at)
         results = deliver_otp(payload.phone_number, otp_code, email=payload.email)
         channel = next((name for name, ok in results.items() if ok), None)
 
@@ -107,7 +179,7 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
         # Nothing carried it. A bypass code means this is dev or staging, where
         # a log line is the delivery channel.
         if not settings.OTP_BYPASS_CODE:
-            otp_store.pop(verification_id, None)
+            _otp_drop(db, verification_id)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="We could not send your code by SMS, WhatsApp or email. "
@@ -159,7 +231,7 @@ def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_d
     """
     Verify OTP. Returns JWT on success; or OTPVerifySuccess with a registration_token if user not yet registered.
     """
-    stored = otp_store.get(payload.verification_id)
+    stored = _otp_get(db, payload.verification_id)
     if not stored:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -167,11 +239,11 @@ def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_d
         )
 
     phone_number = stored.phone_number
-    otp_code = stored.otp_code
+    code_hash = stored.code_hash
     org_id = stored.organization_id
 
-    if datetime.now(timezone.utc) > stored.expires_at:
-        otp_store.pop(payload.verification_id, None)
+    if datetime.now(timezone.utc) > _as_utc(stored.expires_at):
+        _otp_drop(db, payload.verification_id)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP has expired. Please request a new one.",
@@ -183,18 +255,21 @@ def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_d
         # (itself rate-limited, with a fresh random code) is the only way on.
         stored.attempts += 1
         if stored.attempts >= OTP_MAX_ATTEMPTS:
-            otp_store.pop(payload.verification_id, None)
+            _otp_drop(db, payload.verification_id)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Too many wrong codes. Please request a new one.",
             )
+        db.commit()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code")
 
-    if otp_code is None:
+    if code_hash is None:
         # Twilio Verify flow — delegate check to Twilio
         if not check_verify_otp(phone_number, payload.otp_code):
             _wrong_code()
-    elif payload.otp_code != otp_code:
+    # compare_digest, not `!=`: the comparison runs against attacker-supplied
+    # input, and both sides are fixed-length hex here.
+    elif not hmac.compare_digest(_hash_code(payload.otp_code), code_hash):
         _wrong_code()
 
     user = db.query(User).filter(
@@ -202,7 +277,8 @@ def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_d
         User.phone_number == phone_number,
     ).first()
 
-    otp_store.pop(payload.verification_id, None)
+    # Single use: the code has done its job, and the handle dies with it.
+    _otp_drop(db, payload.verification_id)
 
     if not user:
         # Generate a temporary token proving this phone number was verified
