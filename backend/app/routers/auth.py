@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import secrets
 import uuid
-from typing import Union
+from typing import Dict, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.core.rate_limit import limiter
@@ -123,8 +123,47 @@ def _generate_otp() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
+
+# One phone, a few codes. One hall, sixty phones.
+#
+# The per-IP limit on /otp/send was 5/minute, and slowapi keys on the caller's
+# address. At a venue every player is behind the same NAT, so sixty people
+# signing in on the hall's wifi are one bucket: five get a code each minute and
+# the rest get 429s that look, from a phone, exactly like the app being broken.
+# A registration desk would take a quarter of an hour to get through the room,
+# and nobody would understand why.
+#
+# The limit belongs on the *number*, which is what a code is actually sent to
+# and what an abuser would have to cycle. The IP limit stays as a backstop
+# against a script, set high enough that a crowded hall never reaches it.
+_OTP_PER_PHONE = 3
+_OTP_PHONE_WINDOW_SECONDS = 600
+_otp_sends: Dict[str, list] = {}
+
+# Flipped on by the throttle's own tests, which need the real behaviour.
+_throttle_in_tests = False
+
+
+def _too_many_for_this_number(phone: str) -> bool:
+    # Off under test for the same reason the IP limiter is: the store is
+    # process-global, so one test's retries would otherwise refuse another
+    # test's first attempt. The throttle has its own tests, which clear it.
+    if settings.TESTING and not _throttle_in_tests:
+        return False
+    now = datetime.now(timezone.utc).timestamp()
+    recent = [t for t in _otp_sends.get(phone, [])
+              if now - t < _OTP_PHONE_WINDOW_SECONDS]
+    _otp_sends[phone] = recent
+    if len(recent) >= _OTP_PER_PHONE:
+        return True
+    recent.append(now)
+    return False
+
+
 @router.post("/otp/send", response_model=OTPResponse)
-@limiter.limit("5/minute")
+# Generous on purpose: sixty players on one hall wifi share this bucket. The
+# real guard is per-number, below.
+@limiter.limit("120/minute")
 def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db)):
     """
     Initiate authentication by sending a 6-digit OTP to the phone number.
@@ -139,6 +178,13 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if _too_many_for_this_number(payload.phone_number):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many codes requested for this number. "
+                   "Please wait a few minutes and try again.",
+        )
 
     verification_id = f"v_{uuid.uuid4().hex[:12]}"
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
@@ -226,7 +272,10 @@ def _graduate_from_directory(db: Session, user: User) -> None:
 
 
 @router.post("/otp/verify", response_model=Union[Token, OTPVerifySuccess])
-@limiter.limit("10/minute")
+# Also per-IP, and also shared by a whole hall. Guessing is already bounded by
+# OTP_MAX_ATTEMPTS, which destroys the handle after five wrong codes — that is
+# the limit that matters, and it is per sign-in rather than per building.
+@limiter.limit("120/minute")
 def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_db)):
     """
     Verify OTP. Returns JWT on success; or OTPVerifySuccess with a registration_token if user not yet registered.
