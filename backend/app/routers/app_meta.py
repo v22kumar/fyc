@@ -47,16 +47,35 @@ async def _release_version() -> dict | None:
     return _version_cache["data"]
 
 
-@router.get("/download")
-async def download_app():
-    """302 redirect to the latest FYC Connect Android APK (arm64)."""
-    rel = await _release_version() or {}
-    url = rel.get("apk_url") or settings.APP_APK_URL or _CANONICAL_APK
+def _distributed_apk(release: dict) -> str:
+    """The single APK this club hands out, resolved the same way everywhere.
+
+    Both the website's download button and the in-app updater call this. That
+    is the whole point of it existing: Play re-signs an app bundle with its own
+    key, so a Play-signed APK and a CI-signed one **cannot replace each other**.
+    If the two endpoints resolved the URL independently — as they did — the
+    club could serve one from the website and the other from the updater, and a
+    member would install happily and then be permanently unable to update.
+    Android refuses the swap, and the app nags for a version it cannot install.
+
+    APK_DOWNLOAD_URL wins when set: that is the deliberate choice to distribute
+    the Play-signed universal APK instead of the CI build.
+    """
+    if settings.APK_DOWNLOAD_URL:
+        return settings.APK_DOWNLOAD_URL
+    url = release.get("apk_url") or settings.APP_APK_URL or _CANONICAL_APK
     # Self-heal: an older APP_APK_URL may still point at the removed
     # fyc-connect-latest.apk (which 404s) — fall back to the canonical asset.
     if not url or "fyc-connect-latest.apk" in url:
         url = _CANONICAL_APK
-    return RedirectResponse(url=url, status_code=302)
+    return url
+
+
+@router.get("/download")
+async def download_app():
+    """302 redirect to the latest FYC Connect Android APK (arm64)."""
+    rel = await _release_version() or {}
+    return RedirectResponse(url=_distributed_apk(rel), status_code=302)
 
 
 @router.get("/info")
@@ -76,9 +95,10 @@ async def app_info():
 
     latest_name = rel.get("version_name") or settings.APP_LATEST_VERSION_NAME
 
-    apk_url = rel.get("apk_url") or settings.APP_APK_URL or _CANONICAL_APK
-    if "fyc-connect-latest.apk" in apk_url:
-        apk_url = _CANONICAL_APK
+    # The same artifact the website hands out — see _distributed_apk. Two
+    # different signatures across these two endpoints is an app that installs
+    # and can never update.
+    apk_url = _distributed_apk(rel)
 
     mandatory = rel.get("mandatory")
     if not isinstance(mandatory, bool):
