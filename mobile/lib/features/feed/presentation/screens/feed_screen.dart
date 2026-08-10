@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/design_system/components/ds_skeleton.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
+import '../../../../core/router/app_router.dart' show pushMemberRoute;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -391,7 +392,7 @@ class _Header extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(Icons.notifications_none_rounded, color: AppColors.background),
-                onPressed: () => context.push('/notifications'),
+                onPressed: () => pushMemberRoute(context, '/notifications'),
               ),
             ],
               ),
