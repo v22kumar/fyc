@@ -22,4 +22,12 @@ class CommunityRepositoryImpl implements CommunityRepository {
 
   @override
   Future<List<dynamic>> fetchRoster() => _remote.fetchRoster();
+
+  @override
+  Future<Map<String, dynamic>> fetchMemberCard(String userId) =>
+      _remote.fetchMemberCard(userId);
+
+  @override
+  Future<List<dynamic>> fetchCelebrationsToday() =>
+      _remote.fetchCelebrationsToday();
 }

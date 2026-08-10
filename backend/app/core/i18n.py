@@ -160,6 +160,30 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "hi": "FYC परिवार की ओर से उन्हें शुभकामनाएं दें।",
         "ml": "FYC കുടുംബത്തിന്റെ പേരിൽ ആശംസകൾ നേരുക.",
     },
+    "anniversary.self.title": {
+        "en": "Happy wedding anniversary! 💐",
+        "ta": "திருமண நாள் வாழ்த்துக்கள்! 💐",
+        "hi": "शादी की सालगिरह मुबारक! 💐",
+        "ml": "വിവാഹ വാർഷിക ആശംസകൾ! 💐",
+    },
+    "anniversary.self.body": {
+        "en": "Warm wishes to you both from the whole FYC family!",
+        "ta": "உங்கள் இருவருக்கும் FYC குடும்பத்தின் அன்பான வாழ்த்துக்கள்!",
+        "hi": "आप दोनों को पूरे FYC परिवार की ओर से हार्दिक शुभकामनाएं!",
+        "ml": "നിങ്ങൾ ഇരുവർക്കും മുഴുവൻ FYC കുടുംബത്തിന്റെയും ആശംസകൾ!",
+    },
+    "anniversary.member.title": {
+        "en": "💐 It's {name}'s wedding anniversary",
+        "ta": "💐 இன்று {name} அவர்களின் திருமண நாள்",
+        "hi": "💐 आज {name} की शादी की सालगिरह है",
+        "ml": "💐 ഇന്ന് {name} ന്റെ വിവാഹ വാർഷികമാണ്",
+    },
+    "anniversary.member.body": {
+        "en": "Wish them well from the FYC family.",
+        "ta": "FYC குடும்பத்தின் சார்பாக வாழ்த்துக்கள் தெரிவியுங்கள்.",
+        "hi": "FYC परिवार की ओर से उन्हें शुभकामनाएं दें।",
+        "ml": "FYC കുടുംബത്തിന്റെ പേരിൽ ആശംസകൾ നേരുക.",
+    },
 }
 
 

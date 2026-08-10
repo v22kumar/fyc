@@ -180,6 +180,8 @@ class ProfileUpdate(_BaseModel):
     date_of_birth: Optional[date] = None
     gender: Optional[str] = None          # MALE / FEMALE / OTHER
     phone_number: Optional[str] = None    # Only for Google-only users who want to add phone
+    wedding_anniversary: Optional[date] = None
+    celebrate_publicly: Optional[bool] = None
 
 
 @router.patch("/me/profile", response_model=UserOut)
@@ -217,6 +219,10 @@ def update_my_profile(
         if payload.gender not in ("MALE", "FEMALE", "OTHER"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="gender must be MALE, FEMALE, or OTHER")
         profile.gender = payload.gender
+    if payload.wedding_anniversary is not None:
+        profile.wedding_anniversary = payload.wedding_anniversary
+    if payload.celebrate_publicly is not None:
+        profile.celebrate_publicly = payload.celebrate_publicly
 
     db.commit()
     db.refresh(current_user)
@@ -502,3 +508,141 @@ def admin_block_user(
         
     db.commit()
     return {"ok": True, "user_id": str(user_id), "is_blocked": target.is_blocked}
+
+# ── Celebrations & the member card ────────────────────────────────────────────
+#
+# The plan, decided deliberately (see the feature ask): a birthday and a
+# wedding anniversary recur every year and the club remembers them FOR the
+# member. Where cards appear: the member's own notification (always), the
+# club's celebration list and Home card (only when celebrate_publicly), and
+# the feed (only if the member chooses to share). Where they never appear:
+# ages and years — day and month leave the profile, the year does not.
+
+class CelebrationOut(_BaseModel):
+    user_id: uuid.UUID
+    full_name_ta: str
+    full_name_en: str
+    kind: str  # 'birthday' | 'anniversary'
+
+
+@router.get("/celebrations/today", response_model=List[CelebrationOut])
+def celebrations_today(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Who is celebrating today, org-scoped, opt-outs respected."""
+    today = datetime.date.today()
+    rows = (
+        db.query(User, UserProfile)
+        .join(UserProfile, UserProfile.user_id == User.id)
+        .filter(
+            User.organization_id == current_user.organization_id,
+            UserProfile.celebrate_publicly.is_(True),
+        )
+        .all()
+    )
+    out: list[CelebrationOut] = []
+    for user, profile in rows:
+        for field, kind in ((profile.date_of_birth, "birthday"),
+                            (profile.wedding_anniversary, "anniversary")):
+            if field is None:
+                continue
+            # Feb-29 celebrants are wished on Mar-1 in ordinary years rather
+            # than skipped for three years out of four.
+            matches = (field.month == today.month and field.day == today.day)
+            if not matches and field.month == 2 and field.day == 29:
+                matches = today.month == 3 and today.day == 1 and not _is_leap(today.year)
+            if matches:
+                out.append(CelebrationOut(
+                    user_id=user.id,
+                    full_name_ta=profile.full_name_ta or "",
+                    full_name_en=profile.full_name_en or "",
+                    kind=kind,
+                ))
+    return out
+
+
+def _is_leap(year: int) -> bool:
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+class MemberCardOut(_BaseModel):
+    user_id: uuid.UUID
+    full_name_ta: str
+    full_name_en: str
+    role: str
+    profile_image_url: Optional[str] = None
+    member_since: Optional[datetime.date] = None
+    # Day-and-month only, when the member celebrates publicly. Never a year.
+    birthday_day_month: Optional[str] = None      # e.g. '09-08' (MM-DD)
+    anniversary_day_month: Optional[str] = None
+    is_birthday_today: bool = False
+    is_anniversary_today: bool = False
+    events_attended: int = 0
+    blood_donations: int = 0
+    trees_planted: int = 0
+    sports_matches_played: int = 0
+
+
+@router.get("/{user_id}/card", response_model=MemberCardOut)
+def member_card(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """The minimal public profile — what one member may know about another.
+
+    Deliberately excluded: phone, email, address, blood group, gender, age.
+    Contact flows exist elsewhere with their own consent steps (the blood
+    ask-a-donor exchange); the card is a face and a community record."""
+    row = (
+        db.query(User, UserProfile)
+        .join(UserProfile, UserProfile.user_id == User.id)
+        .filter(
+            User.id == user_id,
+            User.organization_id == current_user.organization_id,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Member not found")
+    user, profile = row
+
+    from app.models.event import EventAttendance
+    from app.models.blood_donor import BloodDonor
+    from app.models.green_fyc import TreeRegistration
+    from app.models.sports import Player
+    from sqlalchemy.sql import func
+
+    today = datetime.date.today()
+
+    def _dm(d):
+        return f"{d.month:02d}-{d.day:02d}" if d else None
+
+    public = bool(profile.celebrate_publicly)
+    dob = profile.date_of_birth
+    ann = profile.wedding_anniversary
+    return MemberCardOut(
+        user_id=user.id,
+        full_name_ta=profile.full_name_ta or "",
+        full_name_en=profile.full_name_en or "",
+        role=user.role,
+        profile_image_url=profile.profile_image_url,
+        member_since=user.created_at.date() if user.created_at else None,
+        birthday_day_month=_dm(dob) if public else None,
+        anniversary_day_month=_dm(ann) if public else None,
+        is_birthday_today=bool(public and dob and dob.month == today.month
+                               and dob.day == today.day),
+        is_anniversary_today=bool(public and ann and ann.month == today.month
+                                  and ann.day == today.day),
+        events_attended=db.query(EventAttendance)
+            .filter(EventAttendance.user_id == user.id).count(),
+        blood_donations=db.query(BloodDonor)
+            .filter(BloodDonor.user_id == user.id).count(),
+        trees_planted=db.query(TreeRegistration)
+            .filter(TreeRegistration.registered_by_user_id == user.id).count(),
+        sports_matches_played=int(
+            db.query(func.sum(Player.matches_played))
+            .filter(Player.user_id == user.id).scalar() or 0),
+    )

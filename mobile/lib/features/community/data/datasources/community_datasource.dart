@@ -7,6 +7,8 @@ import '../models/community_profile_model.dart';
 abstract class CommunityDataSource {
   Future<List<CommunityProfileModel>> fetchProfiles();
   Future<List<dynamic>> fetchRoster();
+  Future<Map<String, dynamic>> fetchMemberCard(String userId);
+  Future<List<dynamic>> fetchCelebrationsToday();
 }
 
 class CommunityDataSourceImpl implements CommunityDataSource {
@@ -35,5 +37,16 @@ class CommunityDataSourceImpl implements CommunityDataSource {
   @override
   Future<List<dynamic>> fetchRoster() async =>
       ((await _client.dio.get('/api/v1/users/roster')).data as List?) ??
+      const [];
+
+  @override
+  Future<Map<String, dynamic>> fetchMemberCard(String userId) async =>
+      ((await _client.dio.get('/api/v1/users/$userId/card')).data as Map)
+          .cast<String, dynamic>();
+
+  @override
+  Future<List<dynamic>> fetchCelebrationsToday() async =>
+      ((await _client.dio.get('/api/v1/users/celebrations/today')).data
+          as List?) ??
       const [];
 }

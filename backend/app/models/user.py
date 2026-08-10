@@ -60,6 +60,13 @@ class UserProfile(Base):
     gender = Column(String(20), nullable=True)  # 'MALE', 'FEMALE', or 'OTHER'
     blood_group = Column(String(10), nullable=True)
     date_of_birth = Column(Date, nullable=True)
+    # Celebrations. The anniversary recurs yearly like the birthday; the flag
+    # decides whether the CLUB is told — the personal greeting always comes.
+    # Only day and month are ever shown publicly; the year (someone's age,
+    # someone's wedding year) never leaves the profile.
+    wedding_anniversary = Column(Date, nullable=True)
+    celebrate_publicly = Column(Boolean(), nullable=False, default=True,
+                                server_default="1")
     profile_image_url = Column(String(255), nullable=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
