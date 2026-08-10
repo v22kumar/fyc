@@ -67,6 +67,8 @@ def create_event(
         registration_deadline=payload.registration_deadline,
         max_participants=payload.max_participants,
         registration_type=payload.registration_type,
+        event_kind=(payload.event_kind or "OTHER").strip().upper(),
+        venue=payload.venue,
         status="active",
         competition_categories=payload.competition_categories,
         created_by_user_id=current_user.id,

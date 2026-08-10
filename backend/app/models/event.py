@@ -27,6 +27,32 @@ class Event(Base, TimestampMixin, TenantModelMixin):
     registration_enabled = Column(Boolean, default=True)
     registration_deadline = Column(DateTime(timezone=True), nullable=True)
     max_participants = Column(Integer, nullable=True)
+    # What kind of gathering this is — as distinct from `registration_type`,
+    # which is only how people sign up for it.
+    #
+    # The club runs competitions, blood camps, weddings, funerals, temple
+    # festivals, AGMs and training days, and until now an Event could not say
+    # which of those it was. Everything was rendered identically, sorted
+    # identically and announced identically, and an organiser creating a
+    # wedding had the same four boxes as one creating a cricket tournament.
+    #
+    # A plain string rather than an enum: a village club will invent a kind
+    # nobody thought of, and a database migration is the wrong price for that.
+    # The vocabulary below is a convention the UI offers, not a cage.
+    #
+    #   COMPETITION  — sports, drawing, quiz; the thing with participants
+    #   SERVICE      — blood camp, cleaning drive, plantation; volunteers
+    #   CELEBRATION  — wedding, birthday, house-warming; a family's day
+    #   CULTURAL     — music, dance, drama, temple festival
+    #   MEETING      — AGM, committee, planning
+    #   TRAINING     — workshop, coaching camp
+    #   OTHER        — the honest default
+    event_kind = Column(String(30), nullable=True, default="OTHER")
+
+    # Where it actually happens. `geography_id` says which village; a wedding
+    # invitation needs the hall's name, and a blood camp needs the room.
+    venue = Column(String(200), nullable=True)
+
     registration_type = Column(String(50), nullable=False, default="General") # e.g., "General", "Submission"
     status = Column(String(50), nullable=False, default="active") # "active", "deleted"
     competition_categories = Column(JSON, nullable=True)

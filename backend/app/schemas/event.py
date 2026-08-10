@@ -15,6 +15,11 @@ class EventCreate(BaseModel):
     is_published: Optional[bool] = False
     registration_enabled: Optional[bool] = True
     registration_type: Optional[str] = "General"
+    # What kind of gathering this is, as opposed to how people sign up for it.
+    # See app/models/event.py for the vocabulary; unknown values are accepted
+    # because a village club will invent a kind nobody thought of.
+    event_kind: Optional[str] = "OTHER"
+    venue: Optional[str] = None
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
     competition_categories: Optional[List[str]] = None
@@ -31,6 +36,8 @@ class EventUpdate(BaseModel):
     is_published: Optional[bool] = None
     registration_enabled: Optional[bool] = None
     registration_type: Optional[str] = None
+    event_kind: Optional[str] = None
+    venue: Optional[str] = None
     status: Optional[str] = None
     registration_deadline: Optional[datetime] = None
     max_participants: Optional[int] = None
@@ -54,6 +61,8 @@ class EventOut(BaseModel):
     is_published: Optional[bool]
     registration_enabled: Optional[bool]
     registration_type: str
+    event_kind: Optional[str] = None
+    venue: Optional[str] = None
     status: str
     registration_deadline: Optional[datetime]
     max_participants: Optional[int]

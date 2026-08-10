@@ -20,6 +20,29 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
   final _titleTa = TextEditingController();
   final _descEn = TextEditingController();
   final _descTa = TextEditingController();
+  final _venue = TextEditingController();
+
+  /// What kind of gathering this is — the question the form never asked.
+  ///
+  /// The club runs competitions, blood camps, weddings, temple festivals, AGMs
+  /// and coaching camps, and every one of them got the same four boxes. An
+  /// organiser creating a wedding had no way to say it was a wedding, and a
+  /// member scrolling the list could not tell one from a drawing competition
+  /// without reading the description.
+  ///
+  /// Offered as chips rather than a dropdown: there are seven, they are the
+  /// first real decision about the event, and a closed dropdown hides the fact
+  /// that the choice exists at all.
+  static const _kinds = <(String, String, IconData)>[
+    ('COMPETITION', 'Competition', Icons.emoji_events_rounded),
+    ('SERVICE', 'Service / camp', Icons.volunteer_activism_rounded),
+    ('CELEBRATION', 'Celebration', Icons.celebration_rounded),
+    ('CULTURAL', 'Cultural', Icons.music_note_rounded),
+    ('MEETING', 'Meeting', Icons.groups_rounded),
+    ('TRAINING', 'Training', Icons.school_rounded),
+    ('OTHER', 'Other', Icons.event_rounded),
+  ];
+  String _kind = 'COMPETITION';
   DateTime? _start;
   DateTime? _end;
   bool _requiresRegistration = true;
@@ -32,6 +55,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
     _titleTa.dispose();
     _descEn.dispose();
     _descTa.dispose();
+    _venue.dispose();
     super.dispose();
   }
 
@@ -93,6 +117,8 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
       'event_end': _end!.toUtc().toIso8601String(),
       'is_published': _publishNow,
       'registration_enabled': _requiresRegistration,
+      'event_kind': _kind,
+      if (_venue.text.trim().isNotEmpty) 'venue': _venue.text.trim(),
     };
     try {
       await sl<EventDataSource>().createEvent(body);
@@ -128,6 +154,28 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // The first real decision about an event, so it is the first thing
+            // asked — not buried under four text boxes.
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(trId('what_kind_of_event'),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, color: context.cText)),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final (value, label, icon) in _kinds)
+                  ChoiceChip(
+                    selected: _kind == value,
+                    onSelected: (_) => setState(() => _kind = value),
+                    avatar: Icon(icon, size: 16),
+                    label: Text(label),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
             _field(_titleEn,
                 trId('title_english'),
                 required: true),
@@ -139,6 +187,7 @@ class _EventCreateScreenState extends State<EventCreateScreen> {
             _field(_descTa,
                 trId('description_tamil_optional'),
                 maxLines: 4),
+            _field(_venue, trId('venue_optional')),
             _dateTile(
               label: trId('starts'),
               value: _start == null ? null : fmt.format(_start!),
