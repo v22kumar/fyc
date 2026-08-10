@@ -1105,6 +1105,49 @@ def _session_store_report(db: Session) -> dict:
     return report
 
 
+def _recent_image_hosts(db: Session) -> dict:
+    """Where the photos people have actually uploaded are being served from.
+
+    `storage_status()` below reports what the *configuration* says. This
+    reports what the *data* says, and they are not the same claim: a correctly
+    configured Cloudinary tells you nothing about the rows written before it
+    was switched on, and those are the ones that will 404 after the next
+    deploy.
+
+    So this is the end-to-end test, readable in one page load: upload a photo,
+    reload, and see which host it landed on. `res.cloudinary.com` means the CDN
+    is carrying it. Anything pointing back at this API means local disk, and
+    that file dies with the next deploy.
+
+    Hosts and counts only — never a URL, never who posted it.
+    """
+    from urllib.parse import urlparse
+    from collections import Counter
+
+    hosts: Counter = Counter()
+    newest = None
+    try:
+        from app.models.post import Post
+        rows = (db.query(Post.image_urls, Post.created_at)
+                .filter(Post.image_urls.isnot(None))
+                .order_by(Post.created_at.desc()).limit(25).all())
+        for urls, created in rows:
+            for url in (urls or []):
+                host = urlparse(str(url)).hostname or "relative-path"
+                hosts[host] += 1
+                if newest is None:
+                    newest = host
+    except Exception as exc:  # noqa: BLE001 — the failure IS the finding
+        return {"error": type(exc).__name__}
+
+    return {
+        # The single most useful line: where the last photo posted went.
+        "most_recent_image_host": newest,
+        "recent_image_hosts": dict(hosts),
+        "images_examined": sum(hosts.values()),
+    }
+
+
 @app.get("/api/health/production", tags=["System"])
 def production_readiness_check():
     """Whether this deployment could run as ENVIRONMENT=production.
@@ -1154,7 +1197,7 @@ def search_sources_check(db: Session = Depends(get_db)):
 
 
 @app.get("/api/health/media", tags=["System"])
-def media_storage_check():
+def media_storage_check(db: Session = Depends(get_db)):
     """Where uploaded photos go, and whether they survive a deploy.
 
     Same reasoning as /api/health/auth: the interesting failures here are
@@ -1168,7 +1211,13 @@ def media_storage_check():
     """
     from app.routers.media import storage_status
 
-    return storage_status()
+    return {
+        **storage_status(),
+        # What the configuration says, and what the data says, are two
+        # different claims. Photos written before Cloudinary was switched on
+        # are still on a disk the next deploy throws away.
+        **_recent_image_hosts(db),
+    }
 
 
 @app.get("/api/health/ready", tags=["System"])

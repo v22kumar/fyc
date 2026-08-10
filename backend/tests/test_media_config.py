@@ -89,3 +89,20 @@ def test_the_reported_blockers_are_the_ones_that_refuse_the_boot():
         _validate_production_secrets(unsafe)
     for reason in reported:
         assert reason in str(refused.value)
+
+
+def test_the_media_check_says_where_photos_actually_are(client):
+    """Configuration and data are two different claims.
+
+    A correctly configured Cloudinary says nothing about the rows written
+    before it was switched on — and those are exactly the ones that will 404
+    after the next deploy. So the check reports the hosts the stored URLs
+    actually point at, which is also the end-to-end test: upload a photo,
+    reload this, see where it landed.
+    """
+    body = client.get("/api/health/media").json()
+    assert "most_recent_image_host" in body
+    assert "recent_image_hosts" in body
+    assert isinstance(body["images_examined"], int)
+    # Hosts and counts only — never a URL, never who posted it.
+    assert "author" not in str(body) and "https://" not in str(body)
