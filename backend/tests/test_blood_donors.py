@@ -151,7 +151,14 @@ def test_request_contact_authenticated(client, db):
     assert "wa.me" in data["whatsapp_link"]
 
 
-def test_request_contact_public_no_auth_required(client, db):
+def test_a_stranger_cannot_take_a_number(client, db):
+    """Handing out a member's phone number needs a name behind the request.
+
+    This endpoint used to answer anyone holding the org id, and wrote an audit
+    row reading `accessed_by: anonymous_public_site`. Anybody could have walked
+    the donor list and collected every number in it, and the club's own record
+    would have said only that somebody did.
+    """
     org = _make_org(db)
     token = _register(client, org.id, "+919111111119")
     reg_res = client.post(
@@ -165,10 +172,48 @@ def test_request_contact_public_no_auth_required(client, db):
         f"/api/v1/blood-donors/{donor_id}/request-contact",
         headers={"X-Organization-ID": str(org.id)}
     )
+    assert res.status_code == 401
+
+
+def test_the_club_can_always_say_who_took_a_number(client, db):
+    """The point of requiring a session: the audit row names a person.
+
+    `user_id` is the join key; the name and number are copied in beside it so
+    the row still answers "who took it" after that account has been renamed,
+    blocked or deleted.
+    """
+    from app.models.audit import AuditLog
+
+    org = _make_org(db)
+    donor_token = _register(client, org.id, "+919111111131")
+    taker_token = _register(client, org.id, "+919111111132")
+
+    donor_id = client.post(
+        "/api/v1/blood-donors/register",
+        json={"blood_group": "B+", "is_available": True},
+        headers={"Authorization": f"Bearer {donor_token}",
+                 "X-Organization-ID": str(org.id)},
+    ).json()["id"]
+
+    res = client.post(
+        f"/api/v1/blood-donors/{donor_id}/request-contact",
+        headers={"Authorization": f"Bearer {taker_token}",
+                 "X-Organization-ID": str(org.id)},
+    )
     assert res.status_code == 200
-    data = res.json()
-    assert "phone_number" in data
-    assert "whatsapp_link" in data
+
+    db.expire_all()
+    log = (
+        db.query(AuditLog)
+        .filter(AuditLog.action_type == "CONTACT_EXTRACTION_DONOR",
+                AuditLog.target_id == uuid.UUID(donor_id))
+        .one()
+    )
+    assert log.user_id is not None, "an unattributed extraction is not a trail"
+    assert log.new_values["accessed_by_phone"] == "+919111111132"
+    assert log.new_values["accessed_by_user_id"] == str(log.user_id)
+    assert log.new_values["accessed_by_name"] == "Donor Test"
+    assert log.new_values["donor_id"] == donor_id
 
 
 def test_request_contact_missing_tenant_header_rejected(client, db):

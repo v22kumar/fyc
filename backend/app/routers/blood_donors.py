@@ -407,11 +407,25 @@ def request_contact(
     donor_id: UUID,
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Retrieve a donor's contact details (phone + WhatsApp link).
-    Public endpoint, tenant-scoped via X-Organization-ID. Every access is
-    still audit-logged (anonymously) so misuse can be traced.
+
+    **Signing in is required, and that is the whole point.** This endpoint
+    hands out a real person's phone number. It used to do so anonymously and
+    write an audit row saying `accessed_by: anonymous_public_site` — a trail
+    that names nobody is not a trail, it is a record that the number left. Any
+    stranger with the org id could have walked the donor list and collected
+    every number in it, and the log would have said only that somebody did.
+
+    Now every extraction is stamped with **who asked**: their id, and the name
+    and number the club already knows them by. The name and number are copied
+    into the row rather than joined at read time, so the answer to "who took
+    it" survives that account later being renamed, blocked or deleted.
+
+    A member who wants to reach a donor still gets the number in one tap. What
+    changed is that the club can always say whose tap it was.
     """
     donor = db.query(BloodDonor).filter(
         BloodDonor.id == donor_id,
@@ -424,15 +438,27 @@ def request_contact(
     if not donor_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Donor user not found")
 
-    # Log this contact extraction to audit trail (no authenticated user on
-    # the public site, so it's recorded anonymously rather than skipped).
+    # Who asked, written down at the moment of asking. `user_id` is the join
+    # key; the name and number beside it are the human answer, kept verbatim so
+    # the row still reads if that account is gone by the time anyone looks.
+    asker = db.query(UserProfile).filter(
+        UserProfile.user_id == current_user.id
+    ).first()
     log = AuditLog(
         organization_id=tenant_id,
-        user_id=None,
+        user_id=current_user.id,
         action_type="CONTACT_EXTRACTION_DONOR",
         target_table="blood_donors",
         target_id=donor_id,
-        new_values={"accessed_by": "anonymous_public_site", "donor_id": str(donor_id)}
+        new_values={
+            "accessed_by_user_id": str(current_user.id),
+            "accessed_by_name": (
+                (asker.full_name_en or asker.full_name_ta) if asker else None
+            ),
+            "accessed_by_phone": current_user.phone_number,
+            "accessed_by_role": current_user.role,
+            "donor_id": str(donor_id),
+        },
     )
     db.add(log)
     db.commit()

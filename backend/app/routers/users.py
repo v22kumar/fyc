@@ -254,8 +254,20 @@ class BirthdayOut(_BaseModel):
 def todays_birthdays(
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
+    current_user: User = Depends(get_current_user),
 ):
-    """Return names of org members whose birthday is today (month + day match)."""
+    """
+    Names of org members whose birthday is today (month + day match).
+
+    **Members only.** A birthday is the club's own news — who is celebrating,
+    told to the people who know them. This was readable by anyone holding the
+    org id, which turned a warm internal signal into a roster of names and
+    dates that a stranger could collect. The newer `/celebrations/today` always
+    required a session; this older endpoint was simply never brought in line.
+
+    Nothing that should work stops working: the website already fetches this
+    only when it has a token, and sends it.
+    """
     today = date.today()
     rows = (
         db.query(UserProfile)
