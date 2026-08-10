@@ -726,6 +726,12 @@ final appRouter = GoRouter(
 /// the center Create FAB wired to Home's create-actions sheet. Shared by
 /// `/app` (the post-login entry point) and `/v2` (review alias).
 Widget _appShellBuilder(BuildContext context, GoRouterState state) => AppShellV2(
+      // Opening the app asks who you are — once per launch, and never again
+      // once a session exists. Ignoring it is a real answer: dismiss and the
+      // whole noticeboard is still open, which is why `kMembersOnly` above is
+      // unchanged. The door is now offered rather than hidden; it is still not
+      // locked.
+      askWhoYouAreOnLaunch: true,
       // Creating anything is signed by whoever created it, so this is one of
       // the moments identity is actually needed. Everything else in the shell —
       // the noticeboard, the feed, live scores, the service hub — reads fine
