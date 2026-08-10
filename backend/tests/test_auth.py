@@ -595,3 +595,28 @@ def test_the_code_itself_is_never_written_down(db, monkeypatch):
 
     assert sent["code"] not in (row.code_hash or ""), "the code must not be recoverable"
     assert len(row.code_hash) == 64, "sha256 hex"
+
+
+def test_the_app_can_say_where_a_half_finished_sign_in_is_kept(client):
+    """"The code arrived, then the server said the handle was invalid" has
+    several causes that look identical from a phone.
+
+    Production is unreachable from a development machine, so the only way to
+    tell a lost-on-restart store from a missing table from two instances
+    answering in turn is to let the deployment say so itself. Counts and names,
+    never a phone number and never a code.
+    """
+    body = client.get("/api/health/auth").json()
+    store = body["session_store"]
+
+    assert store["otp_store"] == "database", \
+        "a store that dies with the process is the bug this reports"
+    assert store["table_present"] is True
+    assert isinstance(store["pending_sign_ins"], int)
+    assert store["database"] in {"postgresql", "sqlite"}
+    # Two loads showing different instances is the whole diagnosis for
+    # "it works every other time".
+    assert store["instance"]
+
+    # Nothing here may carry a secret, a number or a code.
+    assert "url" not in str(store).lower()
