@@ -1495,4 +1495,6 @@ const Map<String, String> kHi = {
   'close': 'बंद करें',
   'back': 'वापस',
   'could_not_open_dialer': 'डायलर नहीं खुल सका। कॉल करें',
+  'go_to': 'यहाँ जाएँ',
+  'results': 'परिणाम',
 };

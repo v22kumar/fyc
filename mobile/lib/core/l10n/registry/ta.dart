@@ -1495,4 +1495,6 @@ const Map<String, String> kTa = {
   'close': 'மூடு',
   'back': 'பின்செல்',
   'could_not_open_dialer': 'டயலரைத் திறக்க முடியவில்லை. அழைக்கவும்',
+  'go_to': 'செல்க',
+  'results': 'முடிவுகள்',
 };

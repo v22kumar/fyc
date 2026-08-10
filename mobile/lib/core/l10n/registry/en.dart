@@ -1495,4 +1495,6 @@ const Map<String, String> kEn = {
   'close': 'Close',
   'back': 'Back',
   'could_not_open_dialer': 'Could not open the dialer. Call',
+  'go_to': 'Go to',
+  'results': 'Results',
 };
