@@ -9,7 +9,7 @@ from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
 import jwt
 
-from app.core.config import settings
+from app.core.config import KNOWN_DEFAULT_PASSWORDS, settings
 from app.core.database import get_db
 from app.core.security import create_access_token, create_refresh_token, decode_token, verify_password, get_password_hash
 from app.dependencies import get_current_user
@@ -603,6 +603,27 @@ def login_password(request: Request, payload: AdminLogin, db: Session = Depends(
 
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
+
+    # A password published in this repository is not a password.
+    #
+    # The seeded superadmin is created with FIRST_SUPERADMIN_PASSWORD on the
+    # *first* boot only, so on a database that already has an organisation the
+    # account keeps its original hash and setting the secret afterwards changes
+    # nothing. The default is a literal in app/core/config.py, and this app is
+    # public — so `admin@fycconnect.org` plus a string anyone can read was a
+    # working SUPER_ADMIN login: every member's phone number, every child's
+    # event registration, broadcast to the whole club, delete anything.
+    #
+    # Refused here rather than only at boot, because a check that runs at boot
+    # protects nothing on a machine that is already running, and because this
+    # holds whatever ENVIRONMENT is set to.
+    if payload.password.strip().lower() in KNOWN_DEFAULT_PASSWORDS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account still uses a default password and cannot be "
+                   "used until it is changed. Set FIRST_SUPERADMIN_PASSWORD "
+                   "and restart to rotate it.",
+        )
         
     if getattr(user, 'is_blocked', False):
         raise HTTPException(
