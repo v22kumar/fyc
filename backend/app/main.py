@@ -1073,6 +1073,30 @@ def _session_store_report(db: Session) -> dict:
     return report
 
 
+@app.get("/api/health/search", tags=["System"])
+def search_sources_check(db: Session = Depends(get_db)):
+    """Which of search's sources can actually be queried.
+
+    Search fans out across a dozen tables in one request, and `db.query(Model)`
+    is `SELECT *` — so a single column that has drifted out of step with its
+    model takes down every result. That is exactly what shipped: a search box
+    answering "Failed to load results" for every query, because of one table.
+
+    Each source is now isolated, so a broken one costs only its own results.
+    This says *which* one, in one page load, without anybody reading a log or
+    having production access. Names and exception classes only — never a row,
+    never a value. Unauthenticated for the same reason as the other health
+    endpoints: the moment you need it is the moment things are broken.
+    """
+    from app.services.search import probe
+    report = probe(db)
+    return {
+        "all_sources_healthy": all(v == "ok" for v in report.values()),
+        "broken": [k for k, v in report.items() if v != "ok"],
+        "sources": report,
+    }
+
+
 @app.get("/api/health/media", tags=["System"])
 def media_storage_check():
     """Where uploaded photos go, and whether they survive a deploy.

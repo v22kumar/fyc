@@ -1497,4 +1497,7 @@ const Map<String, String> kMl = {
   'could_not_open_dialer': 'ഡയലർ തുറക്കാനായില്ല. വിളിക്കുക',
   'go_to': 'ഇവിടേക്ക് പോകുക',
   'results': 'ഫലങ്ങൾ',
+  'already_registered_title': 'ഇതിനകം പട്ടികയിൽ',
+  'already_registered_body': '{name} ({details}) ഇതിനകം ഈ പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്തിട്ടുണ്ട്. വീണ്ടും രജിസ്റ്റർ ചെയ്യണോ?',
+  'register_again': 'വീണ്ടും രജിസ്റ്റർ ചെയ്യുക',
 };

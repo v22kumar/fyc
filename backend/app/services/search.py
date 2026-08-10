@@ -31,6 +31,7 @@ happened.
 """
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any, Callable, NamedTuple, Optional
 from uuid import UUID
@@ -39,6 +40,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.services.search_destinations import DESTINATIONS
+
+logger = logging.getLogger(__name__)
 
 # How many rows each source may contribute before ranking. Generous enough that
 # the best answer is inside the candidate set, small enough that a one-letter
@@ -296,6 +299,79 @@ def _search_people(db: Session, query: str, tenant_id: UUID) -> list[Hit]:
     return hits
 
 
+def _isolated(kind: str, run: Callable[[], list[Hit]]) -> list[Hit]:
+    """Run one source; if it fails, lose that source and nothing else.
+
+    Search fans out across a dozen tables in a single request, and
+    `db.query(Model)` is `SELECT *` — so one column that has drifted out of
+    step with the model takes down **every** result, including the ones that
+    were fine. That is what happened the first time this shipped: a search box
+    that answered "Failed to load results" for every query, because of one
+    table nobody was searching for.
+
+    A search that returns most of the answers is worth far more than one that
+    returns an error page. The failure is swallowed here and reported at
+    `/api/health/search`, which names the broken source instead of leaving
+    somebody to guess.
+    """
+    try:
+        return run()
+    except Exception:  # noqa: BLE001 — one bad table must not blank the page
+        logger.exception("search source %s failed", kind)
+        return []
+
+
+def _search_source(db: Session, src: Source, query: str, like: str,
+                   tenant_id: UUID) -> list[Hit]:
+    tenant_col = getattr(src.model, src.tenant_column, None)
+    q = db.query(src.model)
+    if tenant_col is not None:
+        q = q.filter(tenant_col == tenant_id)
+    conditions = [c.ilike(like) for c in src.columns(src.model) if c is not None]
+    if not conditions:
+        return []
+    rows = q.filter(or_(*conditions)).limit(_CANDIDATES_PER_SOURCE).all()
+    hits = []
+    for row in rows:
+        best = score(query, *src.rank_on(row))
+        if not best:
+            # Matched only on a field we do not rank (a description, an
+            # address). Still a real find, just a weak one.
+            best = 15
+        title, subtitle, image_url, route = src.present(row)
+        if not title:
+            continue
+        hits.append(Hit(
+            id=str(row.id), type=src.type, title=title, subtitle=subtitle,
+            image_url=image_url, route=route, score=best + src.weight,
+        ))
+    return hits
+
+
+def probe(db: Session) -> dict[str, str]:
+    """Which sources can actually be queried right now.
+
+    Production is unreachable from a development machine, so "search is
+    failing" needs to become "this table is failing" without anybody having to
+    read a log. One trivial query per source; the exception class is the
+    finding. Names only — never a row, never a value.
+    """
+    report: dict[str, str] = {}
+    for src in _sources():
+        try:
+            db.query(src.model).limit(1).all()
+            report[src.type] = "ok"
+        except Exception as exc:  # noqa: BLE001 — the failure IS the finding
+            report[src.type] = type(exc).__name__
+    try:
+        from app.models.user import UserProfile
+        db.query(UserProfile).limit(1).all()
+        report["USER"] = "ok"
+    except Exception as exc:  # noqa: BLE001
+        report["USER"] = type(exc).__name__
+    return report
+
+
 def search(db: Session, query: str, tenant_id: UUID, *,
            lang: str = "en", types: Optional[list[str]] = None) -> list[Hit]:
     """Everything that answers this query, best first."""
@@ -309,37 +385,22 @@ def search(db: Session, query: str, tenant_id: UUID, *,
         return wanted is None or kind in wanted
 
     hits: list[Hit] = []
+
+    # Places first, and they cannot fail: pure Python over a static list, no
+    # database involved. Whatever else is broken, "Events" still opens the
+    # events page.
     if allowed("DESTINATION"):
         hits += _search_destinations(query, lang)
+
     if allowed("USER"):
-        hits += _search_people(db, query, tenant_id)
+        hits += _isolated("USER", lambda: _search_people(db, query, tenant_id))
 
     like = f"%{query}%"
     for src in _sources():
         if not allowed(src.type):
             continue
-        tenant_col = getattr(src.model, src.tenant_column, None)
-        q = db.query(src.model)
-        if tenant_col is not None:
-            q = q.filter(tenant_col == tenant_id)
-        conditions = [c.ilike(like) for c in src.columns(src.model)
-                      if c is not None]
-        if not conditions:
-            continue
-        rows = q.filter(or_(*conditions)).limit(_CANDIDATES_PER_SOURCE).all()
-        for row in rows:
-            best = score(query, *src.rank_on(row))
-            if not best:
-                # Matched only on a field we do not rank (a description, an
-                # address). Still a real find, just a weak one.
-                best = 15
-            title, subtitle, image_url, route = src.present(row)
-            if not title:
-                continue
-            hits.append(Hit(
-                id=str(row.id), type=src.type, title=title, subtitle=subtitle,
-                image_url=image_url, route=route, score=best + src.weight,
-            ))
+        hits += _isolated(
+            src.type, lambda s=src: _search_source(db, s, query, like, tenant_id))
 
     hits.sort(key=lambda h: (-h.score, h.title.lower()))
     return hits[:_MAX_RESULTS]
