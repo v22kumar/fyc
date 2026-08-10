@@ -159,15 +159,26 @@ def parse_rss(xml_text: str) -> list[dict]:
 #
 # Three rules keep that from becoming a liability:
 #
-#   * **Never on the critical path.** Headlines are returned whether or not a
-#     picture was found. A slow publisher costs a picture, never a news card.
+#   * **Bounded, and honest about what that means.** The request DOES wait for
+#     enrichment — up to _IMAGE_BUDGET_SECONDS — and whatever has arrived by
+#     then is what ships. Headlines are never lost to a slow publisher, but
+#     saying this is "off the critical path" would be wrong: it costs the
+#     request that misses the cache, once every thirty minutes per feed. The
+#     budget and the shared semaphore are what keep that cost small enough to
+#     sit beside live chess on a two-core machine.
 #   * **Only the few that show one.** The hero and the top rows; nobody scrolls
 #     forty items on a home screen.
 #   * **Remembered.** An article's picture does not change, so it is looked up
 #     once and kept for a day. The 30-minute news refresh reuses it.
 _IMAGE_CACHE: dict[str, tuple[float, Optional[str]]] = {}
 _IMAGE_TTL_SECONDS = 24 * 60 * 60
-_IMAGE_BUDGET_SECONDS = 6.0
+_IMAGE_BUDGET_SECONDS = 3.0
+
+# Across ALL feeds, not per feed. Five categories refreshing together would
+# otherwise open forty outbound connections at once from a two-core machine
+# that is also holding chess websockets open. The pictures are worth having;
+# they are not worth a stutter in somebody's game.
+_IMAGE_CONCURRENCY = asyncio.Semaphore(6)
 _IMAGE_FETCH_TIMEOUT = 4.0
 _IMAGES_PER_FEED = 8
 _HTML_HEAD_BYTES = 60_000
@@ -220,12 +231,13 @@ async def _og_image(client: httpx.AsyncClient, link: str) -> Optional[str]:
 
     found: Optional[str] = None
     try:
-        response = await client.get(
+        async with _IMAGE_CONCURRENCY:
+            response = await client.get(
             link,
-            headers={"User-Agent": _USER_AGENT},
-            timeout=_IMAGE_FETCH_TIMEOUT,
-            follow_redirects=True,
-        )
+                headers={"User-Agent": _USER_AGENT},
+                timeout=_IMAGE_FETCH_TIMEOUT,
+                follow_redirects=True,
+            )
         head = response.text[:_HTML_HEAD_BYTES]
         for pattern in (_OG_IMAGE_RE, _OG_IMAGE_REVERSED_RE, _TWITTER_IMAGE_RE):
             match = pattern.search(head)
