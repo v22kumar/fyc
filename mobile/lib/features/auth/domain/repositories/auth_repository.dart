@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/user_entity.dart';
+import '../entities/otp_challenge.dart';
 
 /// Result of a Google sign-in: either the member is logged in, or they're a
 /// new account that must complete registration (phone + DOB) with their
@@ -19,7 +20,7 @@ class GoogleAuthNeedsProfile extends GoogleAuthOutcome {
 }
 
 abstract class AuthRepository {
-  Future<Either<Failure, String>> sendOtp({
+  Future<Either<Failure, OtpChallenge>> sendOtp({
     required String organizationId,
     required String phoneNumber,
   });

@@ -5,6 +5,7 @@ import '../../../../core/storage/local_storage.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../../domain/entities/otp_challenge.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
@@ -13,16 +14,16 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._remote, this._storage);
 
   @override
-  Future<Either<Failure, String>> sendOtp({
+  Future<Either<Failure, OtpChallenge>> sendOtp({
     required String organizationId,
     required String phoneNumber,
   }) async {
     try {
-      final verificationId = await _remote.sendOtp(
+      final challenge = await _remote.sendOtp(
         organizationId: organizationId,
         phoneNumber: phoneNumber,
       );
-      return Right(verificationId);
+      return Right(challenge);
     } on Failure catch (f) {
       return Left(f);
     } catch (e) {
