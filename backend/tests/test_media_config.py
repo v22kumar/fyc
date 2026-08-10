@@ -56,3 +56,36 @@ def test_the_masked_url_from_the_dashboard_is_refused():
 def test_a_url_that_is_not_a_cloudinary_url_is_ignored():
     assert Settings(CLOUDINARY_URL="https://example.com/x").cloudinary == \
         ("", "", "")
+
+
+def test_the_production_flip_can_be_checked_before_it_is_made(client):
+    """Turning on ENVIRONMENT=production must not be a coin toss.
+
+    The app refuses to boot with known-insecure defaults, so a wrong guess
+    takes the club offline until somebody reads a crash log they cannot reach.
+    The same list that would refuse the boot is readable first.
+    """
+    body = client.get("/api/health/production").json()
+    assert "can_run_as_production" in body
+    assert isinstance(body["blockers"], list)
+    # Reasons, never values — a blocker must never quote the secret it is about.
+    from app.core.config import settings
+    for blocker in body["blockers"]:
+        assert settings.SECRET_KEY not in blocker
+        assert settings.FIRST_SUPERADMIN_PASSWORD not in blocker
+
+
+def test_the_reported_blockers_are_the_ones_that_refuse_the_boot():
+    """One list, two readers. If these ever drift, the check is a lie."""
+    from app.core.config import Settings, production_blockers, _validate_production_secrets
+    import pytest
+
+    unsafe = Settings(ENVIRONMENT="production", SECRET_KEY="changeme",
+                      DATABASE_URL="postgresql://x/y")
+    reported = production_blockers(unsafe)
+    assert reported, "this configuration is not safe"
+
+    with pytest.raises(RuntimeError) as refused:
+        _validate_production_secrets(unsafe)
+    for reason in reported:
+        assert reason in str(refused.value)

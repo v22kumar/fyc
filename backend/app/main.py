@@ -1073,6 +1073,30 @@ def _session_store_report(db: Session) -> dict:
     return report
 
 
+@app.get("/api/health/production", tags=["System"])
+def production_readiness_check():
+    """Whether this deployment could run as ENVIRONMENT=production.
+
+    Flipping that switch is otherwise a coin toss. The app *refuses to boot*
+    with known-insecure defaults — a dev SECRET_KEY, an OTP bypass code left
+    on, a wildcard CORS origin, the default superadmin password, a SQLite
+    database — and if any of those are wrong the club goes offline until
+    somebody works out why from a crash log they cannot reach.
+
+    So the same list that would refuse the boot is reported here first, without
+    raising. Reasons only, never values: "SECRET_KEY must be set to a real
+    secret" names the problem without disclosing the secret, and an empty list
+    means the flip is safe.
+    """
+    from app.core.config import production_blockers
+    blockers = production_blockers(settings)
+    return {
+        "environment": settings.ENVIRONMENT,
+        "can_run_as_production": not blockers,
+        "blockers": blockers,
+    }
+
+
 @app.get("/api/health/search", tags=["System"])
 def search_sources_check(db: Session = Depends(get_db)):
     """Which of search's sources can actually be queried.
