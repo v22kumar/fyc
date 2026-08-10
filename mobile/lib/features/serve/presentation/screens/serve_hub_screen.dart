@@ -16,6 +16,11 @@ class ServeHubScreen extends StatelessWidget {
   const ServeHubScreen({super.key});
 
   static const _emergency = <_Emergency>[
+    // 112 leads: it is India's unified emergency number — the one that still
+    // works when a panicked person cannot remember which service they need.
+    _Emergency(Icons.sos_rounded, Color(0xFFDC2626), '112',
+        en: 'Any emergency', ta: 'எந்த அவசரமும்', hi: 'कोई भी आपातकाल',
+        ml: 'ഏത് അടിയന്തരാവസ്ഥയും'),
     _Emergency(Icons.local_police_rounded, Color(0xFF2B4494), '100',
         en: 'Police', ta: 'காவல்துறை', hi: 'पुलिस', ml: 'പോലീസ്'),
     _Emergency(Icons.local_hospital_rounded, Color(0xFFE53935), '108',
@@ -24,12 +29,31 @@ class ServeHubScreen extends StatelessWidget {
         en: 'Fire', ta: 'தீயணைப்பு', hi: 'अग्निशमन', ml: 'അഗ്നിശമനം'),
     _Emergency(Icons.bolt_rounded, Color(0xFFF59E0B), '1912',
         en: 'Electricity', ta: 'மின்சாரம்', hi: 'बिजली', ml: 'വൈദ്യുതി'),
+    _Emergency(Icons.woman_rounded, Color(0xFF9333EA), '181',
+        en: 'Women helpline', ta: 'மகளிர் உதவி எண்', hi: 'महिला हेल्पलाइन',
+        ml: 'വനിതാ ഹെൽപ്പ്‌ലൈൻ'),
+    _Emergency(Icons.child_care_rounded, Color(0xFF0891B2), '1098',
+        en: 'Child helpline', ta: 'குழந்தைகள் உதவி எண்',
+        hi: 'चाइल्ड हेल्पलाइन', ml: 'ചൈൽഡ് ഹെൽപ്പ്‌ലൈൻ'),
   ];
 
-  Future<void> _dial(String number) async {
+  Future<void> _dial(BuildContext context, String number) async {
+    final messenger = ScaffoldMessenger.of(context);
     final uri = Uri(scheme: 'tel', path: number);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    // On this page a dead call button is the worst possible silence: show
+    // the number itself so a person can still dial it by hand.
+    var placed = false;
+    try {
+      if (await canLaunchUrl(uri)) {
+        placed = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      placed = false;
+    }
+    if (!placed) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('${trId('could_not_open_dialer')}: $number')),
+      );
     }
   }
 
@@ -49,6 +73,11 @@ class ServeHubScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
+          // ── The app's own emergency feature, first ───────────────────────
+          // A member in trouble opens the help page; the thing built exactly
+          // for them must not hide behind a floating dot in the shell.
+          const _SosCard(),
+          const SizedBox(height: 24),
           // ── Quick actions ────────────────────────────────────────────────
           Row(
             children: [
@@ -56,18 +85,21 @@ class ServeHubScreen extends StatelessWidget {
                 icon: Icons.bloodtype_rounded,
                 tint: const Color(0xFFE53935),
                 label: trId('blood'),
+                sublabel: trId('donate_and_request'),
                 onTap: () => context.push('/blood-donation'),
               ),
               _Action(
                 icon: Icons.report_problem_rounded,
                 tint: const Color(0xFFF59E0B),
                 label: trId('report'),
+                sublabel: trId('civic_complaint'),
                 onTap: () => context.push('/issues'),
               ),
               _Action(
                 icon: Icons.volunteer_activism_rounded,
                 tint: const Color(0xFF14B891),
                 label: trId('volunteer_4'),
+                sublabel: trId('events_and_seva'),
                 onTap: () => context.push('/events'),
               ),
             ],
@@ -119,7 +151,9 @@ class ServeHubScreen extends StatelessWidget {
               children: [
                 for (var i = 0; i < _emergency.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: context.cBorder),
-                  _EmergencyRow(item: _emergency[i], onCall: () => _dial(_emergency[i].number)),
+                  _EmergencyRow(
+                      item: _emergency[i],
+                      onCall: () => _dial(context, _emergency[i].number)),
                 ],
               ],
             ),
@@ -134,8 +168,14 @@ class _Action extends StatelessWidget {
   final IconData icon;
   final Color tint;
   final String label;
+  final String? sublabel;
   final VoidCallback onTap;
-  const _Action({required this.icon, required this.tint, required this.label, required this.onTap});
+  const _Action(
+      {required this.icon,
+      required this.tint,
+      required this.label,
+      this.sublabel,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -161,8 +201,21 @@ class _Action extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: context.cTextSecondary, fontSize: 12),
+                style: TextStyle(
+                    color: context.cText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700),
               ),
+              if (sublabel != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  sublabel!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(color: context.cTextSecondary, fontSize: 10.5),
+                ),
+              ],
             ],
           ),
         ),
@@ -272,4 +325,73 @@ class _Emergency {
   final String en, ta, hi, ml;
   const _Emergency(this.icon, this.tint, this.number,
       {required this.en, required this.ta, required this.hi, required this.ml});
+}
+
+/// The help page's headline: what SOS does and where it lives, in the
+/// member's language, before any phone number.
+class _SosCard extends StatelessWidget {
+  const _SosCard();
+
+  @override
+  Widget build(BuildContext context) {
+    const danger = Color(0xFFDC2626);
+    return InkWell(
+      onTap: () => context.push('/sos'),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: danger.withValues(alpha: context.isDark ? 0.14 : 0.06),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: danger.withValues(alpha: 0.4), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: danger,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                      color: danger.withValues(alpha: 0.35), blurRadius: 14),
+                ],
+              ),
+              child: const Center(
+                child: Text('SOS',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(trId('emergency_q'),
+                      style: TextStyle(
+                          color: context.cText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 3),
+                  Text(
+                    trId('sos_serve_explainer'),
+                    style: TextStyle(
+                        color: context.cTextSecondary,
+                        fontSize: 12,
+                        height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, color: context.cTextSecondary),
+          ],
+        ),
+      ),
+    );
+  }
 }

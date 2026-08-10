@@ -107,10 +107,19 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            trId('sos_sent'),
-            style: const TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+          // Flexible, because the title is a registry string in four
+          // languages and the header must never overflow the emergency
+          // screen — caught 71px over at 390px width.
+          Flexible(
+            child: Text(
+              trId('sos_sent'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800),
+            ),
           ),
           const Spacer(),
           Text(
