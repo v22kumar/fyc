@@ -99,8 +99,10 @@ class ServeHubScreen extends StatelessWidget {
                 icon: Icons.volunteer_activism_rounded,
                 tint: const Color(0xFF14B891),
                 label: trId('volunteer_4'),
-                sublabel: trId('events_and_seva'),
-                onTap: () => context.push('/events'),
+                // Green FYC is where volunteering is a signup, not a
+                // spectator list — '/events' answered a different question.
+                sublabel: trId('drives_and_seva'),
+                onTap: () => context.push('/green'),
               ),
             ],
           ),
@@ -111,23 +113,15 @@ class ServeHubScreen extends StatelessWidget {
             style: TextStyle(color: context.cText, fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          _PeerCard(
-            icon: Icons.work_rounded,
-            tint: const Color(0xFF16255A),
-            title: trId('jobs_gigs'),
-            subtitle: trId('find_work_post_a_job'),
-            // The rebuilt index. The old /opportunities screen could create a
-            // posting nobody could browse; this is the directory that makes a
-            // posting worth making.
-            onTap: () => context.push('/work'),
-          ),
-          const SizedBox(height: 12),
+          // ONE card, because /work is deliberately one directory (see
+          // docs/work/01-architecture.md: "there is one kind of thing").
+          // Two cards to the same screen promised two products that do not
+          // exist — a member tapped both and landed in the same place.
           _PeerCard(
             icon: Icons.handyman_rounded,
             tint: const Color(0xFF14B891),
-            title: trId('skills_directory'),
-            subtitle: trId('hire_local_skills_offer_yours'),
-            // Was '/community' — the feed, not a directory of anybody.
+            title: trId('jobs_and_skills'),
+            subtitle: trId('find_work_hire_skills'),
             onTap: () => context.push('/work'),
           ),
           const SizedBox(height: 28),
