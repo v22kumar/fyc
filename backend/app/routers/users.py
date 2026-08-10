@@ -12,6 +12,8 @@ from app.core.database import get_db
 from app.dependencies import get_current_user, RoleChecker
 from app.models.user import User, UserProfile, VolunteerMetadata, UserBlock
 from app.models.tenant import Organization
+from app.models.audit import AuditLog
+from app.services.account_merge import merge_accounts
 from app.schemas.auth import UserOut, _build_user_out
 from app.services.certificates import generate_volunteer_certificate
 from app.middleware.tenant import require_tenant_id
@@ -675,3 +677,87 @@ def member_card(
             db.query(func.sum(Player.matches_played))
             .filter(Player.user_id == user.id).scalar() or 0),
     )
+
+
+# Merging accounts is not an ordinary admin action. It moves ownership of
+# everything one account has ever done and then deletes it, so it sits above
+# the EXECUTIVE_MEMBER tier that `require_admin` above happens to include.
+require_account_owner = RoleChecker(["ADMIN", "SUPER_ADMIN"])
+
+
+class MergeAccountsPayload(_BaseModel):
+    keep_user_id: UUID
+    merge_user_id: UUID
+    # Defaults to a rehearsal. Somebody who means it has to say so.
+    dry_run: bool = True
+
+
+@router.post("/merge")
+def merge_accounts_endpoint(
+    payload: MergeAccountsPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_account_owner),
+):
+    """Fold one account into another: two rows for one person become one.
+
+    A member can end up with two accounts without doing anything wrong — one
+    created by email with a password (how officers were set up), one created
+    later by signing in with a phone number. Because a phone number is unique
+    per club, OTP sign-in can only ever reach the phone one, so an officer signs
+    in and finds themselves an ordinary member.
+
+    `keep_user_id` survives and takes everything: every row in all 58 tables
+    that reference a user, the phone number, and any profile field it was
+    missing. `merge_user_id` is deleted. The surviving role is whichever of the
+    two was stronger — a merge must not quietly demote anybody, and must not
+    promote them either.
+
+    **Runs as a rehearsal unless `dry_run` is false.** The rehearsal executes
+    every statement for real inside a savepoint and then rolls back, so the
+    report is what happened rather than a guess at what would. Read it, check
+    the numbers look like the accounts you meant, then send it again with
+    `dry_run: false`.
+    """
+    if payload.keep_user_id == payload.merge_user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="An account cannot be merged into itself")
+
+    def _load(uid: UUID) -> User:
+        found = db.query(User).filter(
+            User.id == uid,
+            User.organization_id == current_user.organization_id,
+        ).first()
+        if not found:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"User {uid} not found in this organization")
+        return found
+
+    keep = _load(payload.keep_user_id)
+    merged = _load(payload.merge_user_id)
+
+    if merged.id == current_user.id:
+        # Deleting the row your own token points at ends the session mid-request
+        # and leaves no way back in if anything else goes wrong.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sign in as the account you are keeping, then merge the other one",
+        )
+
+    try:
+        report = merge_accounts(db, keep, merged, dry_run=payload.dry_run)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=str(exc)) from exc
+
+    if not payload.dry_run:
+        db.add(AuditLog(
+            organization_id=current_user.organization_id,
+            user_id=current_user.id,
+            action_type="ACCOUNT_MERGE",
+            target_table="users",
+            target_id=keep.id,
+            new_values=report,
+        ))
+        db.commit()
+
+    return report
