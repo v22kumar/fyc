@@ -7,6 +7,7 @@ import '../../../../core/widgets/shimmer_box.dart';
 import '../../../../service_locator.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/models/news_item_model.dart';
+import 'news_story_tile.dart';
 
 /// News card with five tabs: Kanyakumari local, Tamil, India, TN Jobs, Central Jobs.
 /// Sourced from Google News RSS via the backend proxy.
@@ -54,6 +55,44 @@ class _DailyNewsCardState extends State<DailyNewsCard>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Widget _chip(BuildContext context, int index, IconData icon, String label) {
+    final selected = _tabController.index == index;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: () => setState(() => _tabController.animateTo(index)),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? AppColors.primary : context.cBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 13,
+                  color: selected ? Colors.white : context.cTextSecondary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected ? Colors.white : context.cTextSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -112,30 +151,39 @@ class _DailyNewsCardState extends State<DailyNewsCard>
               ],
             ),
           ),
-          // Tabs
-          TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: context.cTextSecondary,
-            indicatorColor: AppColors.primary,
-            indicatorWeight: 2,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
-            tabs: [
-              // These two were hardcoded Tamil — the same bug as a hardcoded
-              // English label, just pointed the other way.
-              Tab(text: trId('kanyakumari_news')),
-              Tab(text: trId('tamil_news')),
-              Tab(text: trId('india_news')),
-              Tab(text: trId('tn_jobs')),
-              Tab(text: trId('central_news')),
-            ],
-          ),
-          // Content — fixed height so page doesn't jump when loading
+          // Pills, not an underlined tab bar.
+          //
+          // An underline marks the selected tab and leaves the rest as plain
+          // text, so on a dark card the five sections read as a sentence and
+          // the one you are on is a thin line most people miss. A filled pill
+          // says which is selected from across the room, which is how far away
+          // a phone is when somebody is deciding whether to keep scrolling.
           SizedBox(
-            height: 380,
+            height: 40,
+            child: AnimatedBuilder(
+              animation: _tabController,
+              builder: (context, _) => ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  // These two were hardcoded Tamil — the same bug as a
+                  // hardcoded English label, just pointed the other way.
+                  _chip(context, 0, Icons.place_rounded, trId('kanyakumari_news')),
+                  _chip(context, 1, Icons.language_rounded, trId('tamil_news')),
+                  _chip(context, 2, Icons.public_rounded, trId('india_news')),
+                  _chip(context, 3, Icons.work_outline_rounded, trId('tn_jobs')),
+                  _chip(context, 4, Icons.account_balance_rounded, trId('central_news')),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Fixed height so the page does not jump while loading. Raised from
+          // 380 when the lead story gained a picture: at the old height the
+          // hero left room for exactly one headline beneath it, which is a
+          // magazine cover rather than a news feed.
+          SizedBox(
+            height: 640,
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -347,19 +395,162 @@ class _NewsRow extends StatelessWidget {
     return '${diff.inDays}d';
   }
 
+  void _open() {
+    if (item.link.isNotEmpty) {
+      launchUrl(Uri.parse(item.link), mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// The top story, given the room a top story earns.
+  ///
+  /// A list where every headline is the same size says every headline matters
+  /// equally, which is never true and makes a member read all of them to find
+  /// the one that does. The lead gets the picture, the space and the label; the
+  /// rest get a thumbnail and one line of context.
+  Widget _hero(BuildContext context) {
+    final time = newsAgo(item.publishedAt);
+    return InkWell(
+      onTap: _open,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            // A shade off the card rather than the page's own black — inside a
+            // surface, true background reads as a hole punched through it.
+            color: context.isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.black.withValues(alpha: 0.02),
+            border: Border.all(color: context.cBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  NewsThumb(
+                      item: item,
+                      size: const Size(double.infinity, 168),
+                      radius: 0),
+                  // A scrim, so a white sky behind white type does not eat the
+                  // label. Cheap, and it makes the badge legible on any photo.
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.45),
+                            Colors.transparent,
+                          ],
+                          stops: const [0, 0.55],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Text(
+                        jobMode ? trId('jobs_3') : trId('top_story'),
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (time.isNotEmpty)
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Text(time,
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.white)),
+                      ),
+                    ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.32,
+                        color: context.cText,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.source,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(Icons.north_east,
+                            size: 14, color: context.cTextSecondary),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLead) return _hero(context);
     return InkWell(
-      onTap: () {
-        if (item.link.isNotEmpty) {
-          launchUrl(Uri.parse(item.link), mode: LaunchMode.externalApplication);
-        }
-      },
+      onTap: _open,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // The picture earns its place by making a list scannable: a member
+            // recognises a story by its photograph before they have read a word
+            // of the headline.
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: NewsThumb(item: item, size: const Size(64, 64)),
+            ),
             if (jobMode)
               Container(
                 margin: const EdgeInsets.only(right: 10, top: 2),

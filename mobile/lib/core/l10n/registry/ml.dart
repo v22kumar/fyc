@@ -1501,4 +1501,5 @@ const Map<String, String> kMl = {
   'already_registered_body': '{name} ({details}) ഇതിനകം ഈ പരിപാടിക്ക് രജിസ്റ്റർ ചെയ്തിട്ടുണ്ട്. വീണ്ടും രജിസ്റ്റർ ചെയ്യണോ?',
   'register_again': 'വീണ്ടും രജിസ്റ്റർ ചെയ്യുക',
   'what_kind_of_event': 'ഏത് തരം പരിപാടി?',
+  'top_story': 'പ്രധാന വാർത്ത',
 };

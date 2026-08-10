@@ -1501,4 +1501,5 @@ const Map<String, String> kEn = {
   'already_registered_body': '{name} ({details}) is already registered for this event. Register again?',
   'register_again': 'Register again',
   'what_kind_of_event': 'What kind of event?',
+  'top_story': 'TOP STORY',
 };

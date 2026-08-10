@@ -106,11 +106,11 @@ void main() {
 
   tearDown(() => GetIt.I.reset());
 
-  testWidgets('news card as it ships today', (t) async {
-    await t.binding.setSurfaceSize(const Size(390, 900));
+  testWidgets('news card, image-led', (t) async {
+    await t.binding.setSurfaceSize(const Size(390, 1000));
     addTearDown(() => t.binding.setSurfaceSize(null));
     await t.pumpWidget(_frame(const DailyNewsCard()));
     await t.pump(const Duration(milliseconds: 600));
-    await _shoot(t, 'news_current');
+    await _shoot(t, 'news_after');
   });
 }
