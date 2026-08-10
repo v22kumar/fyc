@@ -20,6 +20,7 @@ import '../../features/blood_donation/presentation/screens/donor_registration_sc
 import '../../features/blood_donation/presentation/screens/blood_request_flow.dart';
 import '../../features/blood_donation/presentation/screens/imported_directory_screen.dart';
 import '../../features/events/presentation/screens/events_list_screen.dart';
+import '../../features/events/presentation/screens/event_create_screen.dart';
 import '../../features/issues/domain/repositories/issue_repository.dart';
 import '../../features/issues/presentation/screens/report_issue_screen.dart';
 import '../../features/issues/presentation/screens/review_queue_screen.dart';
@@ -708,6 +709,14 @@ final appRouter = GoRouter(
     // `/app` is the live post-login entry point (behind ApiConstants
     // .useAppShellV2); `/v2` stays as an explicit review alias. Home is
     // embedded so the shell owns the bottom nav.
+    // The create-event form existed and had no route at all — it could not be
+    // reached from anywhere in the app. Home's "Create Event" tile opened the
+    // generic Create sheet instead, which offers a post, a donor registration,
+    // a complaint and a tree: four things that are not an event.
+    GoRoute(
+      path: '/events/create',
+      builder: (context, state) => const EventCreateScreen(),
+    ),
     GoRoute(path: '/app', builder: _appShellBuilder),
     GoRoute(path: '/v2', builder: _appShellBuilder),
     // Account/profile hub — reached from the avatar in Home's top-right

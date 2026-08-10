@@ -286,6 +286,12 @@ def _seed_database():
             # BOOLEAN with no default: a plain add Postgres accepts (an integer
             # default on a boolean is what broke it the first time).
             ("user_profiles", "wedding_anniversary", "ALTER TABLE user_profiles ADD COLUMN wedding_anniversary DATE"),
+            # What kind of gathering an event is — a competition, a blood camp,
+            # a wedding — as opposed to how people register for it. The generic
+            # reconcile above adds these too; listed explicitly because the feed
+            # and the events list both read them on every request.
+            ("events", "event_kind", "ALTER TABLE events ADD COLUMN event_kind VARCHAR(30)"),
+            ("events", "venue", "ALTER TABLE events ADD COLUMN venue VARCHAR(200)"),
             ("user_profiles", "celebrate_publicly", "ALTER TABLE user_profiles ADD COLUMN celebrate_publicly BOOLEAN"),
         ]:
             try:

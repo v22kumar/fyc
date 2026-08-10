@@ -1004,7 +1004,10 @@ class _QuickActions extends StatelessWidget {
           () => context.push('/issues')),
       (Icons.event_rounded, const Color(0xFF16A34A),
           trId('create_event_2'),
-          () => showHomeCreateSheet(context)),
+          // Straight to the form. This opened the generic Create sheet, which
+          // offers a post, a donor registration, a complaint and a tree —
+          // four things that are not an event, and no way to make one.
+          () => pushMemberRoute(context, '/events/create')),
       (Icons.emoji_events_rounded, const Color(0xFFD97706),
           trId('weekly_game'),
           () => context.push('/sports')),

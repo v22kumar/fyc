@@ -1500,4 +1500,5 @@ const Map<String, String> kTa = {
   'already_registered_title': 'ஏற்கனவே பட்டியலில்',
   'already_registered_body': '{name} ({details}) ஏற்கனவே இந்த நிகழ்வுக்குப் பதிவு செய்யப்பட்டுள்ளார். மீண்டும் பதிவு செய்யவா?',
   'register_again': 'மீண்டும் பதிவு செய்',
+  'what_kind_of_event': 'எந்த வகை நிகழ்வு?',
 };
