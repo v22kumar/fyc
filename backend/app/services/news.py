@@ -568,35 +568,67 @@ async def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]
 def image_report() -> dict:
     """How many headlines actually have a picture, per feed.
 
-    Added because the first attempt shipped and produced nothing: every item
-    came back without an image, and from outside there was no way to tell
-    whether the cause was the cache, the fetch, or Google handing us its own
-    page instead of the publisher's. Guessing twice at the same bug is one time
-    too many.
+    Reads whichever cache is *serving*, which is the correction that makes this
+    honest. The first version read the in-process dicts — and `_get_cached`
+    returns from Valkey before it ever touches those, so on a deployment with
+    Valkey configured every feed reported zero items and a null timestamp while
+    the app was visibly full of news. A diagnostic that reports nothing when
+    everything is working is worse than none: it sends you hunting a bug that
+    is not there.
 
     Counts only — no headlines, no links, no image addresses.
     """
     feeds = {
-        "tamil": _cache,
-        "india": _india_cache,
-        "kanyakumari": _kanyakumari_cache,
-        "tn_jobs": _tn_jobs_cache,
-        "central_jobs": _central_jobs_cache,
+        "tamil": (_cache, GOOGLE_NEWS_RSS_URL),
+        "india": (_india_cache, INDIA_NEWS_RSS_URL),
+        "kanyakumari": (_kanyakumari_cache, KANYAKUMARI_NEWS_RSS_URL),
+        "tn_jobs": (_tn_jobs_cache, TN_JOBS_RSS_URL),
+        "central_jobs": (_central_jobs_cache, CENTRAL_JOBS_RSS_URL),
     }
+
+    try:
+        from app.core.cache import get_valkey
+        valkey = get_valkey()
+    except Exception:
+        valkey = None
+
     report = {}
-    for name, cache in feeds.items():
-        items = cache.get("items") or []
-        with_image = sum(1 for i in items if i.get("image_url"))
-        resolved = sum(1 for i in items if i.get("_publisher_url"))
+    for name, (cache, url) in feeds.items():
+        items, source, fetched_at = [], "empty", None
+
+        if valkey:
+            try:
+                raw = valkey.get(f"news_cache:{url}")
+                if raw:
+                    items = json.loads(raw)
+                    source = "valkey"
+            except Exception:
+                pass
+
+        if not items:
+            items = cache.get("items") or []
+            if items:
+                source = "memory"
+            fetched_at = (cache["fetched_at"].isoformat()
+                          if cache.get("fetched_at") else None)
+
         report[name] = {
             "items": len(items),
-            "with_image": with_image,
-            "publisher_url_resolved": resolved,
-            "fetched_at": cache["fetched_at"].isoformat()
-            if cache.get("fetched_at") else None,
+            "with_image": sum(1 for i in items if i.get("image_url")),
+            # The decisive number: a picture can only be found once Google's
+            # pointer has been unwrapped to the newspaper.
+            "publisher_url_resolved": sum(
+                1 for i in items if i.get("_publisher_url")),
+            "served_from": source,
+            "fetched_at": fetched_at,
         }
+
     return {
         "feeds": report,
+        # Without this, zeros are unreadable — they could mean no news, or a
+        # cache this was not looking in.
+        "valkey_in_use": bool(valkey),
         "images_remembered": len(_IMAGE_CACHE),
         "image_budget_seconds": _IMAGE_BUDGET_SECONDS,
+        "cache_ttl_minutes": int(_CACHE_TTL.total_seconds() // 60),
     }
