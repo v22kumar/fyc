@@ -188,3 +188,27 @@ def test_a_legacy_row_with_null_flag_is_still_announced(client, db):
                                  headers=H).json()}
     assert "Legacy Member" in names
 
+
+
+def test_a_birthday_only_reaches_members(client, db):
+    """Who is celebrating today is the club's own news.
+
+    `/users/birthdays/today` answered anyone holding the org id, which turned a
+    warm internal signal into a roster of names and dates a stranger could
+    collect. The newer `/celebrations/today` always required a session; this
+    older endpoint was never brought in line.
+    """
+    org = _make_org(db)
+    today = datetime.date.today()
+    _make_user(db, org.id, "9910000030", name="Celebrant",
+               dob=datetime.date(1988, today.month, today.day))
+
+    anon = client.get("/api/v1/users/birthdays/today",
+                      headers={"X-Organization-ID": str(org.id)})
+    assert anon.status_code == 401
+
+    _make_user(db, org.id, "9910000031", name="Viewer")
+    H = _h(org.id, _login(client, org.id, "9910000031"))
+    signed_in = client.get("/api/v1/users/birthdays/today", headers=H)
+    assert signed_in.status_code == 200
+    assert "Celebrant" in {b["full_name_en"] for b in signed_in.json()}

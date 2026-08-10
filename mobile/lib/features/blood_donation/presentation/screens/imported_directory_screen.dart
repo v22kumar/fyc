@@ -4,6 +4,7 @@ import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
+import '../../../auth/presentation/widgets/sign_in_sheet.dart';
 import '../../domain/entities/blood_donor_entity.dart';
 import '../../domain/repositories/blood_donor_repository.dart';
 
@@ -89,6 +90,9 @@ class _ImportedDirectoryScreenState extends State<ImportedDirectoryScreen> {
   }
 
   Future<void> _reveal(BloodDonorEntity contact) async {
+    // Taking somebody's phone number is an act with a name on it. The club
+    // records who took which number, and it cannot record "somebody".
+    if (!await SignInSheet.ensure(context) || !mounted) return;
     final result = await sl<BloodDonorRepository>().requestContact(contact.id);
     if (!mounted) return;
     result.fold(
