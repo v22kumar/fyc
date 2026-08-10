@@ -201,3 +201,44 @@ def test_the_report_says_whether_pictures_are_arriving():
     assert report["publisher_url_resolved"] == 2
     # Counts only — never a headline, a link or an image address.
     assert "cdn" not in str(report)
+
+
+def test_the_report_reads_the_cache_that_is_actually_serving(monkeypatch):
+    """The correction that makes this diagnostic honest.
+
+    `_get_cached` returns from Valkey *before* it touches the in-process dicts.
+    So the first version of this report read a cache that is never populated on
+    a deployment with Valkey configured, and answered "0 items, never fetched"
+    for every feed while the app was visibly full of news. A diagnostic that
+    reports nothing when everything is working sends you hunting a bug that is
+    not there.
+    """
+    import json as _json
+
+    served = [
+        {"title": "a", "image_url": "https://cdn/1.jpg", "_publisher_url": "https://p/1"},
+        {"title": "b", "image_url": "https://cdn/2.jpg", "_publisher_url": "https://p/2"},
+    ]
+
+    class _Valkey:
+        def get(self, key):
+            return _json.dumps(served) if "news_cache:" in key else None
+
+    monkeypatch.setattr("app.core.cache.get_valkey", lambda: _Valkey())
+    # The in-process dict is empty, exactly as it is in production.
+    service._cache["items"] = []
+    service._cache["fetched_at"] = None
+
+    report = service.image_report()
+    assert report["valkey_in_use"] is True
+    tamil = report["feeds"]["tamil"]
+    assert tamil["items"] == 2, "must count what is being served, not what is not"
+    assert tamil["with_image"] == 2
+    assert tamil["served_from"] == "valkey"
+
+
+def test_zeros_are_readable_because_the_report_says_where_it_looked():
+    """Zeros meant two different things and looked identical."""
+    report = service.image_report()
+    assert "valkey_in_use" in report
+    assert all("served_from" in f for f in report["feeds"].values())
