@@ -142,6 +142,10 @@ def parse_rss(xml_text: str) -> list[dict]:
             "link": link,
             "published_at": _parse_pubdate(item.findtext("pubDate")),
             "image_url": _image_from_rss(item),
+            # Kept beside the Google link rather than replacing it: the Google
+            # URL still works for a human tapping through, and this is only
+            # used server-side to find a picture.
+            "_publisher_url": _publisher_url(item),
         })
     return items
 
@@ -217,6 +221,51 @@ def _image_from_rss(item) -> Optional[str]:
     return None
 
 
+
+_GOOGLE_HOSTS = ("news.google.com", "google.com", "www.google.com")
+_HREF_RE = re.compile(r'href=["\']?(https?://[^"\'>\s]+)', re.IGNORECASE)
+
+
+def _publisher_url(item) -> Optional[str]:
+    """The article's real address, not Google's pointer to it.
+
+    An RSS <link> is `news.google.com/rss/articles/CBMi...`, which is a
+    redirect Google resolves in the browser. Fetching it server-side lands on
+    Google's own page, which carries no publisher og:image — so every headline
+    came back without a picture, exactly as the club saw.
+
+    Google does hand over the real address twice in each item: as an anchor
+    inside the HTML-escaped <description>, and as the publisher's home page in
+    <source url>. The first is the article; the second is the masthead, which
+    is a poor picture but an honest one and better than a blank hero.
+    """
+    description = item.findtext("description") or ""
+    for candidate in _HREF_RE.findall(html.unescape(description)):
+        host = candidate.split("/")[2].lower() if "//" in candidate else ""
+        if host and not any(g in host for g in _GOOGLE_HOSTS):
+            return candidate
+    source_el = item.find("source")
+    if source_el is not None:
+        url = (source_el.get("url") or "").strip()
+        if url.startswith("http"):
+            return url
+    return None
+
+
+def _escape_google(head: str) -> Optional[str]:
+    """Pull the publisher's address out of a Google interstitial.
+
+    When the redirect is not a 30x it is a page whose only content is a link
+    onwards. One extra hop, never more — a chain of redirects is somebody
+    else's problem and we are on a clock.
+    """
+    for candidate in _HREF_RE.findall(head):
+        host = candidate.split("/")[2].lower() if "//" in candidate else ""
+        if host and not any(g in host for g in _GOOGLE_HOSTS):
+            return candidate
+    return None
+
+
 async def _og_image(client: httpx.AsyncClient, link: str) -> Optional[str]:
     """The publisher's own picture for this article, or None.
 
@@ -239,6 +288,18 @@ async def _og_image(client: httpx.AsyncClient, link: str) -> Optional[str]:
                 follow_redirects=True,
             )
         head = response.text[:_HTML_HEAD_BYTES]
+        # Landed on Google rather than the publisher: take the one link out.
+        if any(g in str(response.url).lower() for g in _GOOGLE_HOSTS):
+            onward = _escape_google(head)
+            if onward:
+                async with _IMAGE_CONCURRENCY:
+                    response = await client.get(
+                        onward,
+                        headers={"User-Agent": _USER_AGENT},
+                        timeout=_IMAGE_FETCH_TIMEOUT,
+                        follow_redirects=True,
+                    )
+                head = response.text[:_HTML_HEAD_BYTES]
         for pattern in (_OG_IMAGE_RE, _OG_IMAGE_REVERSED_RE, _TWITTER_IMAGE_RE):
             match = pattern.search(head)
             if match:
@@ -272,7 +333,8 @@ async def _attach_images(items: list[dict]) -> None:
         async with httpx.AsyncClient() as client:
             results = await asyncio.wait_for(
                 asyncio.gather(
-                    *(_og_image(client, i["link"]) for i in pending),
+                    *(_og_image(client, i.get("_publisher_url") or i["link"])
+                      for i in pending),
                     return_exceptions=True,
                 ),
                 timeout=_IMAGE_BUDGET_SECONDS,
@@ -501,3 +563,40 @@ async def get_kanyakumari_news(limit: int = MAX_KANYAKUMARI_ITEMS) -> list[dict]
     )
     
     return combined[:limit]
+
+
+def image_report() -> dict:
+    """How many headlines actually have a picture, per feed.
+
+    Added because the first attempt shipped and produced nothing: every item
+    came back without an image, and from outside there was no way to tell
+    whether the cause was the cache, the fetch, or Google handing us its own
+    page instead of the publisher's. Guessing twice at the same bug is one time
+    too many.
+
+    Counts only — no headlines, no links, no image addresses.
+    """
+    feeds = {
+        "tamil": _cache,
+        "india": _india_cache,
+        "kanyakumari": _kanyakumari_cache,
+        "tn_jobs": _tn_jobs_cache,
+        "central_jobs": _central_jobs_cache,
+    }
+    report = {}
+    for name, cache in feeds.items():
+        items = cache.get("items") or []
+        with_image = sum(1 for i in items if i.get("image_url"))
+        resolved = sum(1 for i in items if i.get("_publisher_url"))
+        report[name] = {
+            "items": len(items),
+            "with_image": with_image,
+            "publisher_url_resolved": resolved,
+            "fetched_at": cache["fetched_at"].isoformat()
+            if cache.get("fetched_at") else None,
+        }
+    return {
+        "feeds": report,
+        "images_remembered": len(_IMAGE_CACHE),
+        "image_budget_seconds": _IMAGE_BUDGET_SECONDS,
+    }

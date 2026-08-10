@@ -69,6 +69,10 @@ def test_no_picture_is_not_an_error():
 def test_the_publishers_own_picture_is_found(head, expected, monkeypatch):
     class _Response:
         text = head
+        # The real httpx response carries the final URL after redirects, and
+        # the resolver reads it to notice when it has landed on Google rather
+        # than the publisher.
+        url = "https://www.publisher.test/article"
 
     class _Client:
         async def get(self, *a, **k):
@@ -96,6 +100,7 @@ def test_a_picture_is_looked_up_once_and_remembered():
 
     class _Response:
         text = '<meta property="og:image" content="https://cdn.test/once.jpg">'
+        url = "https://www.publisher.test/article"
 
     class _Client:
         async def get(self, *a, **k):
@@ -129,3 +134,70 @@ def test_enrichment_stops_at_the_items_that_show_a_picture():
         service._og_image = original
 
     assert len(asked) == service._IMAGES_PER_FEED
+
+
+def test_the_google_pointer_is_unwrapped_to_the_publisher():
+    """Why the first attempt produced no pictures at all.
+
+    An RSS <link> is `news.google.com/rss/articles/CBMi...` — Google's pointer,
+    which a browser resolves and a server does not. Fetching it lands on
+    Google's own page, which carries no publisher og:image, so every headline
+    came back blank.
+
+    Google hands over the real address anyway: as an anchor inside the
+    HTML-escaped <description>.
+    """
+    xml = """<?xml version="1.0"?><rss><channel>
+      <item>
+        <title>Vivek Express cancelled - Daily Thanthi</title>
+        <link>https://news.google.com/rss/articles/CBMiABCDEF?oc=5</link>
+        <description>&lt;a href="https://www.dailythanthi.com/news/real"&gt;H&lt;/a&gt;
+          &lt;font color="#6f6f6f"&gt;Daily Thanthi&lt;/font&gt;</description>
+        <source url="https://www.dailythanthi.com">Daily Thanthi</source>
+      </item>
+    </channel></rss>"""
+    item = service.parse_rss(xml)[0]
+    assert item["_publisher_url"] == "https://www.dailythanthi.com/news/real"
+    assert item["link"].startswith("https://news.google.com"), \
+        "the tap target stays Google's, which works fine in a browser"
+
+
+def test_the_masthead_is_the_last_resort_not_a_blank():
+    """No anchor in the description: fall back to the publisher's home page.
+
+    A masthead is a poor picture and an honest one — better than a blank hero.
+    """
+    xml = """<?xml version="1.0"?><rss><channel>
+      <item>
+        <title>Something - News18</title>
+        <link>https://news.google.com/rss/articles/XYZ</link>
+        <source url="https://tamil.news18.com">News18 Tamil</source>
+      </item>
+    </channel></rss>"""
+    assert service.parse_rss(xml)[0]["_publisher_url"] == "https://tamil.news18.com"
+
+
+def test_a_google_link_inside_the_description_is_not_mistaken_for_a_publisher():
+    xml = """<?xml version="1.0"?><rss><channel>
+      <item>
+        <title>X - Y</title>
+        <link>https://news.google.com/rss/articles/A</link>
+        <description>&lt;a href="https://news.google.com/stories/B"&gt;X&lt;/a&gt;</description>
+      </item>
+    </channel></rss>"""
+    assert service.parse_rss(xml)[0]["_publisher_url"] is None
+
+
+def test_the_report_says_whether_pictures_are_arriving():
+    """"No images" had three possible causes and no way to tell them apart."""
+    service._kanyakumari_cache["items"] = [
+        {"title": "a", "image_url": "https://cdn/x.jpg", "_publisher_url": "https://p/1"},
+        {"title": "b", "image_url": None, "_publisher_url": "https://p/2"},
+        {"title": "c", "image_url": None, "_publisher_url": None},
+    ]
+    report = service.image_report()["feeds"]["kanyakumari"]
+    assert report["items"] == 3
+    assert report["with_image"] == 1
+    assert report["publisher_url_resolved"] == 2
+    # Counts only — never a headline, a link or an image address.
+    assert "cdn" not in str(report)

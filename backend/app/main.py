@@ -1178,6 +1178,24 @@ def production_readiness_check():
     }
 
 
+@app.get("/api/health/news", tags=["System"])
+def news_images_check():
+    """Whether the news headlines are getting their pictures.
+
+    The first attempt at this shipped and produced nothing — every item came
+    back without an image, and from outside there was no way to tell whether
+    the cause was a warm cache, a blocked fetch, or Google handing us its own
+    interstitial instead of the publisher's page. Counts, per feed, so the
+    answer is one page load rather than another guess.
+
+    `publisher_url_resolved` is the decisive number: an RSS <link> points at
+    news.google.com, not the newspaper, and a picture can only be found once
+    that has been unwrapped.
+    """
+    from app.services.news import image_report
+    return image_report()
+
+
 @app.get("/api/health/search", tags=["System"])
 def search_sources_check(db: Session = Depends(get_db)):
     """Which of search's sources can actually be queried.
