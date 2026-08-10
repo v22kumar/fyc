@@ -3,7 +3,7 @@ import os
 import pathlib
 import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter
 from app.core.config import settings
-from app.core.database import Base, engine, SessionLocal
+from sqlalchemy.orm import Session
+from app.core.database import Base, engine, SessionLocal, get_db
 from app.middleware.tenant import TenantMiddleware
 from app.models.tenant import Organization
 from app.models.user import User, UserProfile
@@ -982,7 +983,7 @@ def health_check():
 
 
 @app.get("/api/health/auth", tags=["System"])
-def auth_channels_check():
+def auth_channels_check(db: Session = Depends(get_db)):
     """Which ways into this app are actually configured right now.
 
     Written after a deploy where OTP and Google sign-in both stopped working and
@@ -1030,7 +1031,46 @@ def auth_channels_check():
         },
         "environment": settings.ENVIRONMENT,
         "allowed_origins": settings.allowed_origins_list,
+        "session_store": _session_store_report(db),
     }
+
+
+def _session_store_report(db: Session) -> dict:
+    """Where a half-finished sign-in is kept, and who is keeping it.
+
+    "The code arrived, and then the server said the handle was invalid" has
+    several causes that look identical from a phone, and each needs a different
+    fix:
+
+    * the store is not the database at all, so a restart loses it;
+    * the store is the database, but the table was never created;
+    * more than one instance is answering, and send/verify landed on different
+      ones — which only matters if the store is per-process.
+
+    Load this twice, a few seconds apart. **If `instance` changes between the
+    two loads, more than one machine is serving.** `pending_sign_ins` counts
+    rows and never reads them, so it says whether `/otp/send` is actually
+    writing anything without exposing a phone number or a code.
+    """
+    report = {
+        # Dialect name only — the URL carries a password.
+        "database": engine.dialect.name,
+        # Fly gives every machine its own id. Two different values across two
+        # loads is the entire diagnosis for "it works every other time".
+        "instance": (os.getenv("FLY_MACHINE_ID")
+                     or os.getenv("FLY_ALLOC_ID", "")[:8]
+                     or "single"),
+        "otp_store": "database",
+        "table_present": False,
+        "pending_sign_ins": None,
+    }
+    try:
+        from app.models.otp import PendingOtp
+        report["pending_sign_ins"] = db.query(PendingOtp).count()
+        report["table_present"] = True
+    except Exception as exc:  # noqa: BLE001 — the failure IS the finding
+        report["error"] = type(exc).__name__
+    return report
 
 
 @app.get("/api/health/media", tags=["System"])
