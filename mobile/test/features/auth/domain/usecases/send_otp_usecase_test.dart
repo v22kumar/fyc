@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:fyc_connect/core/error/failures.dart';
 import 'package:fyc_connect/features/auth/domain/repositories/auth_repository.dart';
 import 'package:fyc_connect/features/auth/domain/usecases/send_otp_usecase.dart';
+import 'package:fyc_connect/features/auth/domain/entities/otp_challenge.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -16,18 +17,24 @@ void main() {
     useCase = SendOtpUseCase(repository);
   });
 
-  test('returns verificationId on success', () async {
+  // Note what this cannot see: it mocks the repository, so the hop where the
+  // server's answer is actually read never runs. That is precisely where the
+  // handle was being replaced by the literal text `$id`, and why every test
+  // here passed while no member could sign in. See
+  // test/features/auth/send_otp_datasource_test.dart.
+  test('returns the challenge on success', () async {
     when(() => repository.sendOtp(
           organizationId: any(named: 'organizationId'),
           phoneNumber: any(named: 'phoneNumber'),
-        )).thenAnswer((_) async => const Right('vid-abc'));
+        )).thenAnswer(
+            (_) async => const Right(OtpChallenge(id: 'vid-abc', channel: 'sms')));
 
     final result = await useCase(
       organizationId: 'org-1',
       phoneNumber: '+919876543210',
     );
 
-    expect(result, const Right('vid-abc'));
+    expect(result, const Right(OtpChallenge(id: 'vid-abc', channel: 'sms')));
     verify(() => repository.sendOtp(
           organizationId: 'org-1',
           phoneNumber: '+919876543210',

@@ -7,9 +7,10 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/token_model.dart';
 import '../models/user_model.dart';
+import '../../domain/entities/otp_challenge.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<String> sendOtp({
+  Future<OtpChallenge> sendOtp({
     required String organizationId,
     required String phoneNumber,
   });
@@ -58,7 +59,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl(this._client);
 
   @override
-  Future<String> sendOtp({
+  Future<OtpChallenge> sendOtp({
     required String organizationId,
     required String phoneNumber,
   }) async {
@@ -67,14 +68,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ApiConstants.otpSend,
         data: {'organization_id': organizationId, 'phone_number': phoneNumber},
       );
-      // "sms", "whatsapp", "email" or "log" — packed alongside the id so the
-      // member can be told where to look. The server tries channels in order
-      // and only one of them carried the code; pointing somebody at their
-      // messages when it went to WhatsApp is indistinguishable, to them, from
-      // nothing arriving.
-      final id = response.data['verification_id'] as String;
-      final channel = response.data['channel'] as String?;
-      return channel == null ? id : '\$id|\$channel';
+      // The server tries channels in order and reports which one carried the
+      // code, so the member can be told where to look: "check WhatsApp" and
+      // "check your messages" send them to different places.
+      return OtpChallenge(
+        id: response.data['verification_id'] as String,
+        channel: response.data['channel'] as String?,
+      );
     } on DioException catch (e) {
       throw mapDioException(e);
     }

@@ -1,12 +1,13 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
+import '../entities/otp_challenge.dart';
 import '../repositories/auth_repository.dart';
 
 class SendOtpUseCase {
   final AuthRepository repository;
   SendOtpUseCase(this.repository);
 
-  Future<Either<Failure, String>> call({
+  Future<Either<Failure, OtpChallenge>> call({
     required String organizationId,
     required String phoneNumber,
   }) {

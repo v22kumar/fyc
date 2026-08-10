@@ -150,16 +150,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
-      (verificationId) {
-        // The datasource packs "<id>|<channel>" so the transport stays a plain
-        // String all the way through the existing use-case signature.
-        final parts = verificationId.split('|');
-        emit(AuthOtpSent(
-          verificationId: parts.first,
-          phoneNumber: event.phoneNumber,
-          channel: parts.length > 1 ? parts[1] : null,
-        ));
-      },
+      (challenge) => emit(AuthOtpSent(
+        verificationId: challenge.id,
+        phoneNumber: event.phoneNumber,
+        channel: challenge.channel,
+      )),
     );
   }
 

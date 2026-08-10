@@ -12,6 +12,7 @@ import 'package:fyc_connect/features/auth/domain/usecases/register_user_usecase.
 import 'package:fyc_connect/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:fyc_connect/features/auth/presentation/bloc/auth_event.dart';
 import 'package:fyc_connect/features/auth/presentation/bloc/auth_state.dart';
+import 'package:fyc_connect/features/auth/domain/entities/otp_challenge.dart';
 
 class MockSendOtpUseCase extends Mock implements SendOtpUseCase {}
 class MockVerifyOtpUseCase extends Mock implements VerifyOtpUseCase {}
@@ -113,7 +114,8 @@ void main() {
         when(() => sendOtp(
               organizationId: any(named: 'organizationId'),
               phoneNumber: any(named: 'phoneNumber'),
-            )).thenAnswer((_) async => const Right('vid-123'));
+            )).thenAnswer((_) async =>
+                const Right(OtpChallenge(id: 'vid-123', channel: 'sms')));
         return bloc;
       },
       act: (b) => b.add(const AuthSendOtpRequested(
@@ -125,6 +127,7 @@ void main() {
         const AuthOtpSent(
           verificationId: 'vid-123',
           phoneNumber: '+919876543210',
+          channel: 'sms',
         ),
       ],
     );
