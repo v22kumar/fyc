@@ -40,7 +40,7 @@ def run_birthday_notifications() -> None:
     today = date.today()
     db = SessionLocal()
     try:
-        rows = (
+        birthday_rows = (
             db.query(UserProfile, User)
             .join(User, User.id == UserProfile.user_id)
             .filter(
@@ -50,32 +50,57 @@ def run_birthday_notifications() -> None:
             )
             .all()
         )
+        # Anniversaries recur yearly exactly like birthdays — the club
+        # remembers so the member does not have to announce themselves.
+        anniversary_rows = (
+            db.query(UserProfile, User)
+            .join(User, User.id == UserProfile.user_id)
+            .filter(
+                UserProfile.wedding_anniversary.isnot(None),
+                extract("month", UserProfile.wedding_anniversary) == today.month,
+                extract("day", UserProfile.wedding_anniversary) == today.day,
+            )
+            .all()
+        )
+
+        rows = [(p, u, "birthday") for p, u in birthday_rows] + \
+               [(p, u, "anniversary") for p, u in anniversary_rows]
 
         if not rows:
-            logger.info("[birthday] No birthdays today.")
+            logger.info("[birthday] No celebrations today.")
             return
 
         svc = NotificationService(db)
 
-        for profile, user in rows:
+        for profile, user, kind in rows:
+            key = "birthday" if kind == "birthday" else "anniversary"
             name_en = profile.full_name_en or profile.full_name_ta or "Friend"
             name_ta = profile.full_name_ta or profile.full_name_en or "நண்பர்"
             org_id = user.organization_id
 
-            # 1. The member themselves.
+            # 1. The member themselves — always, opt-out or not: a private
+            #    greeting is not a public announcement.
             try:
                 svc.send_push_only(
                     user_id=user.id,
                     organization_id=org_id,
-                    title_en=i18n.t("birthday.self.title", "en") or "",
-                    title_ta=i18n.t("birthday.self.title", "ta") or "",
-                    body_en=i18n.t("birthday.self.body", "en") or "",
-                    body_ta=i18n.t("birthday.self.body", "ta") or "",
+                    title_en=i18n.t(f"{key}.self.title", "en") or "",
+                    title_ta=i18n.t(f"{key}.self.title", "ta") or "",
+                    body_en=i18n.t(f"{key}.self.body", "en") or "",
+                    body_ta=i18n.t(f"{key}.self.body", "ta") or "",
                     notification_type=NotificationCategory.COMMUNITY.value,
-                    data={"i18n_key": "birthday.self", "type": "BIRTHDAY_SELF"},
+                    data={"i18n_key": f"{key}.self",
+                          "type": f"{kind.upper()}_SELF"},
                 )
             except Exception as e:
                 logger.warning("[birthday] self greeting failed for %s: %s", name_en, e)
+
+            # A member who switched off public celebration gets ONLY the
+            # private greeting — the club is not told.
+            if not getattr(profile, "celebrate_publicly", True):
+                logger.info("[birthday] %s celebrates privately; club not told",
+                            name_en)
+                continue
 
             # 2. Their club.
             #
@@ -86,15 +111,15 @@ def run_birthday_notifications() -> None:
             try:
                 svc.broadcast(
                     organization_id=org_id,
-                    title_en=i18n.t("birthday.member.title", "en", name=name_en) or "",
-                    title_ta=i18n.t("birthday.member.title", "ta", name=name_ta) or "",
-                    body_en=i18n.t("birthday.member.body", "en") or "",
-                    body_ta=i18n.t("birthday.member.body", "ta") or "",
+                    title_en=i18n.t(f"{key}.member.title", "en", name=name_en) or "",
+                    title_ta=i18n.t(f"{key}.member.title", "ta", name=name_ta) or "",
+                    body_en=i18n.t(f"{key}.member.body", "en") or "",
+                    body_ta=i18n.t(f"{key}.member.body", "ta") or "",
                     notification_type=NotificationCategory.COMMUNITY.value,
                     data={
-                        "i18n_key": "birthday.member",
+                        "i18n_key": f"{key}.member",
                         "i18n_params": {"name": name_en},
-                        "type": "BIRTHDAY_MEMBER",
+                        "type": f"{kind.upper()}_MEMBER",
                     },
                 )
             except Exception as e:

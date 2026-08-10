@@ -102,6 +102,7 @@ import '../../features/volunteers/presentation/screens/certificate_screen.dart';
 import '../../features/community/domain/repositories/community_repository.dart';
 import '../../features/community/presentation/bloc/community_bloc.dart';
 import '../../features/community/presentation/screens/community_directory_screen.dart';
+import '../../features/community/presentation/screens/member_profile_screen.dart';
 import '../../features/community/presentation/screens/members_roster_screen.dart';
 
 // Journey
@@ -506,6 +507,15 @@ final appRouter = GoRouter(
       path: '/members',
       builder: (context, state) =>
           MembersRosterScreen(repo: sl<CommunityRepository>()),
+      routes: [
+        GoRoute(
+          path: ':id',
+          builder: (context, state) => MemberProfileScreen(
+            userId: state.pathParameters['id']!,
+            repo: sl<CommunityRepository>(),
+          ),
+        ),
+      ],
     ),
     // The local work index — one place for skills, jobs and gigs.
     //
