@@ -82,12 +82,21 @@ class _DailyNewsCardState extends State<DailyNewsCard>
                   child: const Text('📰', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  trId('news_2'),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: context.cText,
+                // Flexible, not bare: a Row with a Spacer gives an unbounded
+                // Text all the width it asks for and then overflows. The label
+                // is longer in Tamil ("செய்திகள் · News") than in English, so
+                // this only broke for the members who read it in Tamil — on
+                // narrow phones, which is most of them.
+                Flexible(
+                  child: Text(
+                    trId('news_2'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: context.cText,
+                    ),
                   ),
                 ),
                 const Spacer(),
