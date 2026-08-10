@@ -45,13 +45,16 @@ def _looks_like_image(content: bytes) -> bool:
 
 
 def _cloudinary_configured() -> bool:
-    """Return True if Cloudinary credentials are set and the library is installed."""
-    return (
-        _CLOUDINARY_AVAILABLE
-        and bool(settings.CLOUDINARY_CLOUD_NAME)
-        and bool(settings.CLOUDINARY_API_KEY)
-        and bool(settings.CLOUDINARY_API_SECRET)
-    )
+    """Whether Cloudinary can actually be used: library installed AND all three
+    credentials present, however they were supplied (three separate secrets or
+    the single CLOUDINARY_URL the dashboard gives you)."""
+    return _CLOUDINARY_AVAILABLE and all(settings.cloudinary)
+
+
+def _configure_cloudinary() -> None:
+    name, key, secret = settings.cloudinary
+    cloudinary.config(cloud_name=name, api_key=key, api_secret=secret,
+                      secure=True)
 
 
 def storage_status() -> dict:
@@ -74,11 +77,14 @@ def storage_status() -> dict:
         # that a deploy throws away.
         "survives_a_deploy": durable,
         "library_installed": _CLOUDINARY_AVAILABLE,
-        "credentials_set": bool(
-            settings.CLOUDINARY_CLOUD_NAME
-            and settings.CLOUDINARY_API_KEY
-            and settings.CLOUDINARY_API_SECRET
-        ),
+        "credentials_set": all(settings.cloudinary),
+        # Which shape the credentials arrived in — the single URL from the
+        # dashboard, or three secrets set by hand. Names the mechanism, never a
+        # value.
+        "configured_via": (
+            "CLOUDINARY_URL" if settings.CLOUDINARY_URL
+            and not settings.CLOUDINARY_CLOUD_NAME else "separate_secrets"
+        ) if all(settings.cloudinary) else None,
         "environment": settings.ENVIRONMENT,
     }
 
@@ -135,11 +141,7 @@ async def upload_file(
 
     if _cloudinary_configured():
         # Configure Cloudinary credentials (idempotent — safe to call on every request)
-        cloudinary.config(
-            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
-            api_key=settings.CLOUDINARY_API_KEY,
-            api_secret=settings.CLOUDINARY_API_SECRET,
-        )
+        _configure_cloudinary()
 
         ext = Path(file.filename or "upload.jpg").suffix.lstrip(".") or "jpg"
         public_id = f"fyc/{org_id}/{uuid.uuid4().hex}"
@@ -207,6 +209,7 @@ def mirror_remote_image(url: str, *, tenant_id, public_id: str) -> str | None:
     if not url or not _cloudinary_configured():
         return None
     try:
+        _configure_cloudinary()
         result = cloudinary.uploader.upload(
             url,
             folder=f"fyc/{tenant_id}/social",

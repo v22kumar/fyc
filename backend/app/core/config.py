@@ -130,6 +130,14 @@ class Settings(BaseSettings):
     GOOGLE_WEB_CLIENT_ID: str = ""  # Web browser client ID
 
     # Cloudinary — image hosting (replaces local disk uploads)
+    #
+    # Two ways in, because the dashboard and this file disagreed about the
+    # shape. Cloudinary shows you ONE value — CLOUDINARY_URL, of the form
+    # cloudinary://<key>:<secret>@<cloud-name> — and asking somebody to take it
+    # apart into three secrets is three chances to paste the wrong half, and
+    # three secrets to get wrong. Set CLOUDINARY_URL and the three below are
+    # derived from it; set them individually and they win.
+    CLOUDINARY_URL: str = ""
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
@@ -217,6 +225,39 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT.lower() == "production"
+
+    @property
+    def cloudinary(self) -> tuple[str, str, str]:
+        """(cloud_name, api_key, api_secret), however they were supplied.
+
+        `CLOUDINARY_URL` is what the Cloudinary dashboard actually hands you,
+        and it carries all three. Parsing it here means one secret to set
+        rather than three to split apart by hand — and a half-pasted pair of
+        credentials fails as "not configured" rather than as a confusing
+        authentication error at upload time.
+        """
+        name, key, secret = (
+            self.CLOUDINARY_CLOUD_NAME,
+            self.CLOUDINARY_API_KEY,
+            self.CLOUDINARY_API_SECRET,
+        )
+        if not (name and key and secret) and self.CLOUDINARY_URL:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(self.CLOUDINARY_URL)
+            if parsed.scheme == "cloudinary":
+                name = name or (parsed.hostname or "")
+                key = key or (parsed.username or "")
+                secret = secret or (parsed.password or "")
+
+        # The dashboard displays the URL with the key and secret masked as
+        # <your_api_key>:<your_api_secret>. Pasting that verbatim is the obvious
+        # mistake, and it would otherwise read as fully configured right up
+        # until the first upload failed with an authentication error days
+        # later. A placeholder is not a credential.
+        if any("<" in value for value in (name, key, secret)):
+            return "", "", ""
+        return name, key, secret
 
     @property
     def allowed_origins_list(self) -> list[str]:
