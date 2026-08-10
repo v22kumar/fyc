@@ -464,8 +464,10 @@ def test_a_twilio_outage_does_not_lock_the_club_out(db, monkeypatch):
 
     # And the code minted for the fallback channel actually verifies, rather
     # than the request pointing at a Twilio verification that never happened.
-    pending = auth_router.otp_store[res.verification_id]
-    assert pending.otp_code is not None, \
+    from app.models.otp import PendingOtp
+    pending = db.get(PendingOtp, res.verification_id)
+    assert pending is not None, "the handle must outlive the request"
+    assert pending.code_hash is not None, \
         "a fallback channel needs a code we generated"
 
 
@@ -487,12 +489,13 @@ def test_every_channel_down_says_so_and_leaves_nothing_dangling(db, monkeypatch)
     monkeypatch.setattr(auth_router, "deliver_otp",
                         lambda phone, otp, email=None: {"whatsapp": False, "email": False})
 
-    before = len(auth_router.otp_store)
+    from app.models.otp import PendingOtp
+    before = db.query(PendingOtp).count()
     with pytest.raises(HTTPException) as raised:
         _send_otp_direct(db, org.id, "+919876500012")
     assert raised.value.status_code == 502
     assert "organizer" in raised.value.detail.lower()
-    assert len(auth_router.otp_store) == before, "no dangling verification"
+    assert db.query(PendingOtp).count() == before, "no dangling verification"
 
 
 def test_the_app_can_say_which_doors_are_open(client):
@@ -512,3 +515,83 @@ def test_the_app_can_say_which_doors_are_open(client):
     blob = r.text.lower()
     for leak in ("auth_token", "password", "sid", "secret_key"):
         assert leak not in blob, f"{leak} must not appear in a public probe"
+
+
+def test_a_restart_does_not_lose_a_sign_in_in_progress(db, monkeypatch):
+    """The pending code must outlive the process that minted it.
+
+    It used to live in a module-level dict. On one machine with one worker that
+    looks correct — until the process restarts. A deploy, a crash, an OOM kill:
+    any of them emptied the dict, and every member holding an SMS they had not
+    typed yet got "Invalid or expired verification ID".
+
+    That message is the damaging part. It is indistinguishable from mistyping
+    the code, so nobody reports a server fault — they assume they fumbled it,
+    ask for a new code, and hit the same wall. Across a run of frequent deploys
+    it reads exactly like "login has been down for days".
+
+    Here the restart is simulated the only way that proves the point: throw
+    away every scrap of module state and re-import, then verify.
+    """
+    import importlib
+    from app.core.config import settings as app_settings
+    from app.routers import auth as auth_router
+
+    org = Organization(id=uuid.uuid4(), slug=f"t-{uuid.uuid4().hex[:6]}",
+                       name_ta="அ", name_en="Org")
+    db.add(org)
+    db.commit()
+
+    monkeypatch.setattr(app_settings, "TWILIO_VERIFY_SID", "", raising=False)
+    monkeypatch.setattr(app_settings, "OTP_BYPASS_CODE", "", raising=False)
+    sent = {}
+
+    def _capture(phone, otp, email=None):
+        sent["code"] = otp
+        return {"sms": True}
+
+    monkeypatch.setattr(auth_router, "deliver_otp", _capture)
+    res = _send_otp_direct(db, org.id, "+919876500099")
+
+    # ── the machine goes away and comes back ──────────────────────────────
+    importlib.reload(auth_router)
+
+    from app.schemas.auth import OTPVerify
+    out = auth_router.verify_otp.__wrapped__(
+        request=None,
+        payload=OTPVerify(verification_id=res.verification_id,
+                          otp_code=sent["code"]),
+        db=db,
+    )
+    assert getattr(out, "registration_token", None) or getattr(out, "access_token", None), \
+        "the code that was sent must still work after a restart"
+
+
+def test_the_code_itself_is_never_written_down(db, monkeypatch):
+    """Only an HMAC of the code is stored.
+
+    A six-digit code is a million guesses — trivially reversed from a plain
+    hash — so the digest is keyed with the app secret. A leaked table is inert
+    to anyone without SECRET_KEY, for the ten minutes the row exists at all.
+    """
+    from app.core.config import settings as app_settings
+    from app.models.otp import PendingOtp
+    from app.routers import auth as auth_router
+
+    org = Organization(id=uuid.uuid4(), slug=f"t-{uuid.uuid4().hex[:6]}",
+                       name_ta="அ", name_en="Org")
+    db.add(org)
+    db.commit()
+
+    monkeypatch.setattr(app_settings, "TWILIO_VERIFY_SID", "", raising=False)
+    monkeypatch.setattr(app_settings, "OTP_BYPASS_CODE", "", raising=False)
+    sent = {}
+    monkeypatch.setattr(auth_router, "deliver_otp",
+                        lambda phone, otp, email=None: (sent.update(code=otp),
+                                                        {"sms": True})[1])
+
+    res = _send_otp_direct(db, org.id, "+919876500098")
+    row = db.get(PendingOtp, res.verification_id)
+
+    assert sent["code"] not in (row.code_hash or ""), "the code must not be recoverable"
+    assert len(row.code_hash) == 64, "sha256 hex"
