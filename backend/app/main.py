@@ -246,6 +246,14 @@ def _seed_database():
         for table, col, sql in [
             ("user_profiles", "date_of_birth", "ALTER TABLE user_profiles ADD COLUMN date_of_birth DATE"),
             ("users", "fcm_token", "ALTER TABLE users ADD COLUMN fcm_token VARCHAR(255)"),
+            # Celebrations. Added explicitly here — not left to the generic
+            # reconcile — because these two missing columns 500'd EVERY query
+            # that selects a user profile (/users/me, login, the member card),
+            # which shows up as the app opening with "?" where the name goes.
+            # BOOLEAN with no default: a plain add Postgres accepts (an integer
+            # default on a boolean is what broke it the first time).
+            ("user_profiles", "wedding_anniversary", "ALTER TABLE user_profiles ADD COLUMN wedding_anniversary DATE"),
+            ("user_profiles", "celebrate_publicly", "ALTER TABLE user_profiles ADD COLUMN celebrate_publicly BOOLEAN"),
         ]:
             try:
                 existing = {c["name"] for c in _mig_insp.get_columns(table)}
