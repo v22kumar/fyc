@@ -1502,4 +1502,9 @@ const Map<String, String> kTa = {
   'register_again': 'மீண்டும் பதிவு செய்',
   'what_kind_of_event': 'எந்த வகை நிகழ்வு?',
   'top_story': 'முதன்மை செய்தி',
+  'remove_participant': 'பங்கேற்பாளரை நீக்கவா?',
+  'remove_participant_body': '{name} ({details}) இந்த நிகழ்விலிருந்து நீக்கவா? இதை மீட்க முடியாது.',
+  'remove': 'நீக்கு',
+  'repeated': 'மீண்டும்',
+  'long_press_to_remove': 'நீக்க பெயரை நீண்ட நேரம் அழுத்தவும்',
 };

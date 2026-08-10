@@ -1502,4 +1502,9 @@ const Map<String, String> kEn = {
   'register_again': 'Register again',
   'what_kind_of_event': 'What kind of event?',
   'top_story': 'TOP STORY',
+  'remove_participant': 'Remove participant?',
+  'remove_participant_body': 'Remove {name} ({details}) from this event? This cannot be undone.',
+  'remove': 'Remove',
+  'repeated': 'REPEAT',
+  'long_press_to_remove': 'Long-press a name to remove it',
 };

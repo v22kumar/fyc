@@ -92,4 +92,8 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<List<dynamic>> fetchRegistrationsAdmin(String eventId) =>
       _remote.fetchRegistrationsAdmin(eventId);
+
+  @override
+  Future<void> deleteRegistration(String eventId, String registrationId) =>
+      _remote.deleteRegistration(eventId, registrationId);
 }
