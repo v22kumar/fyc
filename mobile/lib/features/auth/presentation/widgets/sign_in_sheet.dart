@@ -305,12 +305,27 @@ class _SignInSheetState extends State<_SignInSheet> {
         _Step.name => _finish(),
       };
 
+  /// Every step's field carries its own key, and that is not decoration.
+  ///
+  /// All three steps put a `TextField` at the same position in the same list.
+  /// Without a key Flutter matches them by type and position, reuses one
+  /// element across all three, and keeps the open text-input connection —
+  /// including the keyboard the *previous* step asked for. Phone and code are
+  /// both numeric so nobody noticed, but the name step then opened a number pad
+  /// and a member was asked to type their name on a keypad with no letters.
+  ///
+  /// Distinct keys force a fresh element per step, so each one configures the
+  /// keyboard it actually wants. The explicit `keyboardType` on every field is
+  /// the belt to that braces: never inherit an input type by accident.
   List<Widget> _fields() => switch (_step) {
         _Step.phone => [
             TextField(
+              key: const ValueKey('sign-in-phone'),
               controller: _phone,
               autofocus: true,
               keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) => _sendCode(),
               // Lets Android offer the SIM's own number, so most members never
               // type it at all.
               autofillHints: const [AutofillHints.telephoneNumberNational],
@@ -327,6 +342,7 @@ class _SignInSheetState extends State<_SignInSheet> {
           ],
         _Step.code => [
             TextField(
+              key: const ValueKey('sign-in-code'),
               controller: _code,
               autofocus: true,
               keyboardType: TextInputType.number,
@@ -349,10 +365,16 @@ class _SignInSheetState extends State<_SignInSheet> {
           ],
         _Step.name => [
             TextField(
+              key: const ValueKey('sign-in-name'),
               controller: _name,
               autofocus: true,
+              // A name is letters. Leaving this to the default meant inheriting
+              // whatever the previous step opened, which was a number pad.
+              keyboardType: TextInputType.name,
               textCapitalization: TextCapitalization.words,
               autofillHints: const [AutofillHints.name],
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _finish(),
               decoration: InputDecoration(
                 labelText: trId('full_name'),
                 border: const OutlineInputBorder(),
