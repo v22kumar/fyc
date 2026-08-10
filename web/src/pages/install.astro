@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+/**
+ * One link, one QR code, one signed APK.
+ *
+ * The problem this solves: sixty players arriving for a tournament with no way
+ * to get the app. The Play listing is an unreviewed test build, so it cannot be
+ * searched for or installed; the opt-in link for an open test only appears
+ * after Google approves the release, which is hours at best and days at worst.
+ * Neither is something to bet an Independence Day event on.
+ *
+ * So this page is the guaranteed path, and it is entirely ours. It redirects to
+ * the same signed APK the release pipeline publishes — signed with the club's
+ * release keystore, not a debug key, which is the thing people mean when they
+ * ask "is it signed".
+ *
+ * The QR is a static SVG committed to the repo, generated once from this
+ * page's own URL. Not a third-party QR service and not client-side JavaScript:
+ * on the one morning this page matters, sixty people will be standing in a hall
+ * pointing cameras at it, and it must not depend on somebody else's uptime or
+ * on a script that failed to load over village 4G. Print it and tape it to the
+ * registration desk.
+ */
+// The backend 302s to the current signed release asset, so this link never
+// goes stale as builds roll — one URL on a printed poster, forever.
+const APK_URL = 'https://api.fycconnect.com/api/v1/app/download';
+---
+
+<BaseLayout
+  title="ஆப் நிறுவவும் · Install FYC Connect"
+  description="Scan, download and install the FYC Connect Android app"
+>
+  <section class="text-white" style="background:#030C06;min-height:100vh;">
+    <div class="max-w-3xl mx-auto px-5 py-12">
+
+      <header class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-2">FYC Connect</h1>
+        <p class="text-white/70 text-lg">
+          ஆண்ட்ராய்டு ஆப் · Android app
+        </p>
+      </header>
+
+      <!-- The QR: the whole point of the page. -->
+      <div class="bg-white rounded-3xl p-6 mx-auto mb-8" style="max-width:320px;">
+        <img
+          src="/install-qr.svg"
+          alt="QR code linking to fycconnect.com/install"
+          width="264"
+          height="264"
+          class="mx-auto block"
+        />
+        <p class="text-center text-black/60 text-sm mt-3 font-medium">
+          கேமராவால் ஸ்கேன் செய்யவும் · Scan with your camera
+        </p>
+      </div>
+
+      <div class="text-center mb-12">
+        <a
+          href={APK_URL}
+          class="inline-block px-8 py-4 rounded-2xl font-bold text-lg"
+          style="background:#F59E0B;color:#000;"
+        >
+          ⬇ பதிவிறக்கம் · Download
+        </a>
+        <p class="text-white/50 text-sm mt-3">
+          ~30 MB · Android 6.0 மேல் · Android 6.0 and above
+        </p>
+      </div>
+
+      <!-- Android will ask permission the first time, and somebody who is not
+           expecting that reads it as the app being unsafe. Saying so up front
+           turns a scary warning into an expected step. -->
+      <div class="rounded-2xl p-6 mb-8" style="background:rgba(255,255,255,0.06);">
+        <h2 class="font-bold text-xl mb-4">நிறுவும் முறை · How to install</h2>
+        <ol class="space-y-4 text-white/80">
+          <li class="flex gap-3">
+            <span class="font-bold" style="color:#F59E0B;">1</span>
+            <span>
+              மேலே உள்ள பொத்தானை அழுத்தவும்<br />
+              <span class="text-white/50 text-sm">Tap Download above</span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold" style="color:#F59E0B;">2</span>
+            <span>
+              “இந்த மூலத்திலிருந்து நிறுவ அனுமதி” கேட்டால், <b>அனுமதிக்கவும்</b><br />
+              <span class="text-white/50 text-sm">
+                If Android asks to allow installs from your browser, tap Settings → Allow.
+                It asks once, for that browser only.
+              </span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold" style="color:#F59E0B;">3</span>
+            <span>
+              “Play Protect” எச்சரிக்கை வந்தால் <b>“Install anyway”</b> தேர்வு செய்யவும்<br />
+              <span class="text-white/50 text-sm">
+                Play Protect may warn because it has not seen this app before.
+                Choose “More details” → “Install anyway”.
+              </span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold" style="color:#F59E0B;">4</span>
+            <span>
+              ஆப் திறந்து Google அல்லது தொலைபேசி எண்ணில் உள்நுழையவும்<br />
+              <span class="text-white/50 text-sm">Open the app and sign in</span>
+            </span>
+          </li>
+        </ol>
+      </div>
+
+      <div class="rounded-2xl p-5 text-sm" style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.3);">
+        <p class="text-white/80">
+          <b>ஏற்கனவே Play Store-ல் இருந்து நிறுவியிருந்தால்:</b>
+          முதலில் பழையதை நீக்கவும்.
+        </p>
+        <p class="text-white/60 mt-2">
+          <b>Already installed from the Play Store?</b> Uninstall that copy first.
+          Android refuses to replace a Play-signed app with this one — they carry
+          different signatures, and that is Android protecting you, not a fault.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</BaseLayout>
