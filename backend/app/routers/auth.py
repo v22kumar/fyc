@@ -590,6 +590,41 @@ def logout(current_user: User = Depends(get_current_user), db: Session = Depends
 
 @router.get("/users/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Return the currently authenticated user with profile."""
-    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
-    return _build_user_out(current_user, profile)
+    """Return the currently authenticated user with profile.
+
+    The profile load is defended: `db.query(UserProfile)` selects every mapped
+    column, so a column that exists in the model but not yet in the live DB
+    (deploy lands before the migration boots) turns THIS request — the one the
+    app makes on every open to learn whose it is — into a 500, and the home
+    screen shows "?" where the name goes. Rather than take the whole app down
+    over schema drift, fall back to a targeted read of only the columns the
+    response actually needs, which cannot reference an un-migrated column.
+    """
+    try:
+        profile = db.query(UserProfile).filter(
+            UserProfile.user_id == current_user.id).first()
+        return _build_user_out(current_user, profile)
+    except Exception:
+        # The failed ORM query poisons this request's session; read the name
+        # through a FRESH session (targeted to only the stable columns, so it
+        # cannot touch an un-migrated one) rather than rolling this one back.
+        from sqlalchemy import text as _text
+        from app.core.database import SessionLocal as _Fresh
+        row = None
+        try:
+            with _Fresh() as _s:
+                row = _s.execute(_text(
+                    "SELECT full_name_en, full_name_ta, date_of_birth, "
+                    "gender, blood_group FROM user_profiles "
+                    "WHERE user_id = :uid"
+                ), {"uid": str(current_user.id)}).first()
+        except Exception:
+            row = None
+
+        class _P:  # a stand-in the builder reads attributes off
+            full_name_en = row[0] if row else None
+            full_name_ta = row[1] if row else None
+            date_of_birth = row[2] if row else None
+            gender = row[3] if row else None
+            blood_group = row[4] if row else None
+        return _build_user_out(current_user, _P() if row else None)
