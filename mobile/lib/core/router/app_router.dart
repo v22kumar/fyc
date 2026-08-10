@@ -166,6 +166,31 @@ const kMembersOnly = <String>[
   '/notifications',
 ];
 
+/// Go to a route that may be members-only, asking who you are on the way.
+///
+/// The redirect below is a backstop, not an experience. It returns a signed-out
+/// member to Home silently, which from the other end of a tap is
+/// indistinguishable from a broken button — and on a fresh install, where
+/// nobody has a session yet, that is *every* personal tap. The home screen's
+/// own avatar was the worst case: the one control that says "this is me" did
+/// nothing at all, so there was no way to sign in from the front page.
+///
+/// So every affordance on a public surface that offers a personal route goes
+/// through here rather than `context.push`. The sheet comes up, the member
+/// finishes, and the app continues to where they were already going. Dismissing
+/// the sheet is an ordinary answer: we simply don't navigate.
+///
+/// Routes that aren't members-only pass straight through, so callers don't have
+/// to know which list a route is on — that knowledge stays here, beside it.
+Future<void> pushMemberRoute(BuildContext context, String route,
+    {Object? extra}) async {
+  if (kMembersOnly.any(route.startsWith)) {
+    final signedIn = await SignInSheet.ensure(context);
+    if (!signedIn) return;
+  }
+  if (context.mounted) context.push(route, extra: extra);
+}
+
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {

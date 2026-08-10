@@ -27,6 +27,7 @@ import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/router/app_router.dart' show pushMemberRoute;
 import '../../../thirukkural/presentation/widgets/daily_thirukkural_card.dart';
 import '../../../news/presentation/widgets/daily_news_card.dart';
 import '../widgets/weather_card.dart';
@@ -310,19 +311,7 @@ class _Header extends StatelessWidget {
             const SizedBox(width: 8),
             _NotificationBell(repo: repo),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () => context.push('/me'),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.background.withValues(alpha: 0.15),
-                child: Text(
-                  (firstName != null && firstName.isNotEmpty)
-                      ? firstName[0].toUpperCase()
-                      : '?',
-                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
+            _AvatarButton(signedIn: state is AuthAuthenticated, initial: firstName),
             const SizedBox(width: 16),
           ],
           flexibleSpace: FlexibleSpaceBar(
@@ -476,6 +465,47 @@ class _CircleBtn extends StatelessWidget {
   }
 }
 
+/// The top-right identity control: your initial when we know you, an invitation
+/// to sign in when we don't.
+///
+/// This used to be a bare "?" that pushed `/me` regardless. For a signed-out
+/// member that tap did nothing visible — `kMembersOnly` in the router redirects
+/// an unauthenticated `/me` straight back to Home — so the one affordance that
+/// looks like "this is where I am" was a dead end, and there was no way at all
+/// to sign in from the home screen. A fresh install is exactly the case where
+/// that matters: the app deliberately opens without a login wall (identity is a
+/// step in an action, not a gate), which makes this the door people look for.
+///
+/// Signed out it reads as a door, not as missing data. Signing in from here
+/// lands on the profile, because asking to see yourself is what the tap meant.
+class _AvatarButton extends StatelessWidget {
+  final bool signedIn;
+  final String? initial;
+  const _AvatarButton({required this.signedIn, this.initial});
+
+  @override
+  Widget build(BuildContext context) {
+    final letter = (initial != null && initial!.isNotEmpty) ? initial![0].toUpperCase() : null;
+    return Tooltip(
+      message: signedIn ? trId('my_profile') : trId('sign_in_title'),
+      child: GestureDetector(
+        onTap: () => pushMemberRoute(context, '/me'),
+        child: CircleAvatar(
+          radius: 18,
+          backgroundColor: AppColors.background.withValues(alpha: signedIn ? 0.15 : 0.22),
+          child: letter != null
+              ? Text(letter,
+                  style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700))
+              // A signed-in member with no name on file is still a member, so
+              // they get a face — only a stranger gets the door.
+              : Icon(signedIn ? Icons.person_rounded : Icons.login_rounded,
+                  size: 19, color: AppColors.background),
+        ),
+      ),
+    );
+  }
+}
+
 /// Notification bell with an unread-count badge. Taps through to /notifications.
 class _NotificationBell extends StatefulWidget {
   final HomeRepository repo;
@@ -512,7 +542,7 @@ class _NotificationBellState extends State<_NotificationBell> {
         _CircleBtn(
           icon: Icons.notifications_outlined,
           onTap: () async {
-            await context.push('/notifications');
+            await pushMemberRoute(context, '/notifications');
             _loadUnread();
           },
         ),
@@ -2601,7 +2631,7 @@ class _VolunteerDashboard extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF8B5CF6)),
-                onPressed: () => context.push('/journey'),
+                onPressed: () => pushMemberRoute(context, '/journey'),
               ),
             ],
           ),
@@ -2701,8 +2731,8 @@ class _ManagerDashboard extends StatelessWidget {
                 subtitle: trId('club_member_directory'),
                 icon: Icons.people,
                 iconColor: const Color(0xFF3B82F6),
-                onViewAll: () => context.push('/members'),
-                onTap: () => context.push('/members'),
+                onViewAll: () => pushMemberRoute(context, '/members'),
+                onTap: () => pushMemberRoute(context, '/members'),
               ),
             ),
           ],

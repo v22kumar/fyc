@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/tr.dart';
+import '../../../../core/router/app_router.dart' show pushMemberRoute;
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/repositories/home_repository.dart';
 
@@ -189,7 +190,7 @@ class _CelebrantRow extends StatelessWidget {
 
     return InkWell(
       onTap: () =>
-          context.push('/members/${celebration['user_id']}'),
+          pushMemberRoute(context, '/members/${celebration['user_id']}'),
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
