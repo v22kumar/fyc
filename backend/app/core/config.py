@@ -264,15 +264,18 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
 
-def _validate_production_secrets(s: "Settings") -> None:
-    """
-    Refuse to boot with known-insecure defaults when ENVIRONMENT=production.
-    Dev/staging are left untouched — OTP_BYPASS_CODE remains usable there
-    until real OTP delivery is wired up.
-    """
-    if not s.is_production:
-        return
+def production_blockers(s: "Settings") -> list[str]:
+    """Everything that would stop this configuration booting as production.
 
+    Extracted from the guard below so the two can never drift: the same list
+    that refuses the boot is the one reported by `/api/health/production`. That
+    matters because flipping ENVIRONMENT to production is otherwise a coin
+    toss — if anything here is wrong the app refuses to start, and the club is
+    offline until somebody works out why. Reading the answer first turns a
+    risky flip into a checked one.
+
+    Returns reasons, never values.
+    """
     errors = []
     if s.OTP_BYPASS_CODE:
         errors.append("OTP_BYPASS_CODE must be unset in production")
@@ -284,10 +287,22 @@ def _validate_production_secrets(s: "Settings") -> None:
         errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
     # A single-file SQLite DB cannot be shared across Fly instances — if the
     # Postgres/Supabase secret is ever missing, the app would silently fall back
-    # to a per-machine SQLite file and split-brain writes across instances. Fail
-    # loudly instead so production always runs on the shared Postgres.
+    # to a per-machine SQLite file and split-brain writes across instances.
     if s.DATABASE_URL.strip().lower().startswith("sqlite"):
         errors.append("DATABASE_URL must point to Postgres in production (not SQLite)")
+    return errors
+
+
+def _validate_production_secrets(s: "Settings") -> None:
+    """
+    Refuse to boot with known-insecure defaults when ENVIRONMENT=production.
+    Dev/staging are left untouched — OTP_BYPASS_CODE remains usable there
+    until real OTP delivery is wired up.
+    """
+    if not s.is_production:
+        return
+
+    errors = production_blockers(s)
 
     if errors:
         raise RuntimeError(
