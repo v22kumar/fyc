@@ -1497,4 +1497,7 @@ const Map<String, String> kEn = {
   'could_not_open_dialer': 'Could not open the dialer. Call',
   'go_to': 'Go to',
   'results': 'Results',
+  'already_registered_title': 'Already on the list',
+  'already_registered_body': '{name} ({details}) is already registered for this event. Register again?',
+  'register_again': 'Register again',
 };

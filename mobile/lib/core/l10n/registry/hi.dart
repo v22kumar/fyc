@@ -1497,4 +1497,7 @@ const Map<String, String> kHi = {
   'could_not_open_dialer': 'डायलर नहीं खुल सका। कॉल करें',
   'go_to': 'यहाँ जाएँ',
   'results': 'परिणाम',
+  'already_registered_title': 'पहले से सूची में',
+  'already_registered_body': '{name} ({details}) पहले से इस कार्यक्रम के लिए पंजीकृत है। फिर से पंजीकरण करें?',
+  'register_again': 'फिर से पंजीकरण करें',
 };

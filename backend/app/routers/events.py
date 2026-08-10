@@ -8,6 +8,7 @@ from sqlalchemy import func
 
 from app.core.database import get_db
 from app.core.etag import etag_not_modified, set_etag
+from app.models.audit import AuditLog
 from app.models.event import Event, EventAttendance, EventRegistration
 from app.models.user import User, VolunteerMetadata
 from app.schemas.event import EventCreate, EventUpdate, EventOut, EventCheckinOut, EventCheckoutOut, EventRegistrationCreate, EventRegistrationOut, EventRegistrantsOut
@@ -195,6 +196,57 @@ def get_event(
     _attach_registration_counts(db, [event])
     return event
 
+
+# A second identical submission this soon after the first is a finger, not a
+# decision: a double-tap on Submit, or a retry after a flaky connection. Asking
+# "are you sure?" for that is noise, and filing it as a second participant is
+# the bug the club actually hit — one child listed six times.
+_DOUBLE_TAP_SECONDS = 120
+
+
+def _same_person(a: str | None, b: str | None) -> bool:
+    """Names match ignoring case and spacing. "Anshika R" is "anshika  r"."""
+    return " ".join((a or "").lower().split()) == " ".join((b or "").lower().split())
+
+
+def _existing_entries(db: Session, event_id: UUID, payload) -> list:
+    """Registrations in this event that look like the same person.
+
+    Two ways to be the same person, and both are needed:
+
+    * **name + date of birth** — the ordinary case. A parent filling the form
+      again for the same child types the same name and the same birthday.
+    * **name + mobile number** — catches a birthday typed differently on the
+      second attempt, while the number stays the family's own.
+
+    Deliberately *not* name alone. This is a village club: two children called
+    the same thing at the same event is unremarkable, and refusing the second
+    one would be worse than the duplicate. A different age or a different
+    number is a different child until proven otherwise.
+    """
+    candidates = db.query(EventRegistration).filter(
+        EventRegistration.event_id == event_id,
+    ).all()
+    phone = (payload.mobile_number or "").strip()
+    matches = []
+    for row in candidates:
+        if not _same_person(row.name, payload.name):
+            continue
+        same_dob = payload.dob is not None and row.dob == payload.dob
+        same_phone = bool(phone) and (row.mobile_number or "").strip() == phone
+        if same_dob or same_phone:
+            matches.append(row)
+    return matches
+
+
+def _age_from(dob) -> Optional[int]:
+    if not dob:
+        return None
+    today = datetime.now(timezone.utc).date()
+    birth = dob.date() if hasattr(dob, "date") else dob
+    return today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+
+
 @router.post("/{event_id}/register", response_model=EventRegistrationOut)
 def register_for_event(
     event_id: UUID,
@@ -248,6 +300,40 @@ def register_for_event(
         ).first()
         if existing:
             raise HTTPException(status_code=400, detail="You are already registered for this event")
+
+    # Anyone may register anyone for a public event — that is the point, and it
+    # is also why the only guard here used to be `user_id`, which is NULL for
+    # every public registration. Nothing stopped the same child being filed six
+    # times, and the participant list showed exactly that.
+    duplicates = _existing_entries(db, event_id, payload)
+    if duplicates:
+        newest = max(duplicates, key=lambda r: r.created_at or datetime.min.replace(tzinfo=timezone.utc))
+        created = newest.created_at
+        if created is not None and created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        just_now = (
+            created is not None
+            and (datetime.now(timezone.utc) - created).total_seconds() < _DOUBLE_TAP_SECONDS
+        )
+        if just_now and not payload.confirm_duplicate:
+            # A finger, not a decision. Hand back the row that already exists
+            # so the app shows success — which is what actually happened.
+            return newest
+        if not payload.confirm_duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "code": "ALREADY_REGISTERED",
+                    "message": "Someone with this name and age is already registered.",
+                    "existing": {
+                        "name": newest.name,
+                        "age": _age_from(newest.dob),
+                        "class_grade": newest.class_grade,
+                        "registered_at": created.isoformat() if created else None,
+                        "times_already": len(duplicates),
+                    },
+                },
+            )
 
     registration = EventRegistration(
         event_id=event_id,
@@ -589,3 +675,51 @@ def get_registration_status(
         "is_registered": is_registered,
         "total_registrations": total
     }
+
+
+@router.delete("/{event_id}/registrations/{registration_id}")
+def remove_registration(
+    event_id: UUID,
+    registration_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_executive),
+    tenant_id: UUID = Depends(require_tenant_id),
+):
+    """Remove one registration from an event (organisers only).
+
+    The gap this fills: the club could see a child listed six times and had no
+    way to remove five of them. `DELETE /{event_id}/register` cancels *your
+    own* registration by `user_id`, which is NULL for every public entry — so
+    the rows a parent created by tapping Submit twice were permanently
+    unremovable, and the participant count was permanently wrong.
+
+    Scoped to the event and the club, so an id guessed from elsewhere deletes
+    nothing, and audited like any other destructive organiser action.
+    """
+    event = db.query(Event).filter(
+        Event.id == event_id,
+        Event.organization_id == tenant_id,
+    ).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    registration = db.query(EventRegistration).filter(
+        EventRegistration.id == registration_id,
+        EventRegistration.event_id == event_id,
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+
+    db.add(AuditLog(
+        organization_id=tenant_id,
+        user_id=current_user.id,
+        action_type="EVENT_REGISTRATION_REMOVED",
+        target_table="event_registrations",
+        target_id=registration_id,
+        old_values={"name": registration.name,
+                    "event_id": str(event_id),
+                    "class_grade": registration.class_grade},
+    ))
+    db.delete(registration)
+    db.commit()
+    return {"message": "Registration removed"}

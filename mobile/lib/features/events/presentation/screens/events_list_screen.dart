@@ -666,22 +666,37 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
       if (widget.event.registrationType == 'Submission' && _topic.text.trim().isNotEmpty) {
         categories.add(_topic.text.trim());
       }
-      await widget.repo.registerForEvent(
-        widget.event.id,
-        {
-          'name': _name.text.trim(),
-          'dob': DateTime.parse(_dob.text.trim()).toIso8601String(),
-          'gender': _gender,
-          'mobile_number': _mobile.text.trim(),
-          'email': _email.text.trim().isEmpty ? null : _email.text.trim(),
-          'address': _address.text.trim().isEmpty ? null : _address.text.trim(),
-          'school_college': _school.text.trim(),
-          'class_grade': _grade,
-          'member_id': _memberId.text.trim().isEmpty ? null : _memberId.text.trim(),
-          'competition_category': categories,
-          'remarks': _remarks.text.trim().isEmpty ? null : _remarks.text.trim(),
-        },
-      );
+      final entry = {
+        'name': _name.text.trim(),
+        'dob': DateTime.parse(_dob.text.trim()).toIso8601String(),
+        'gender': _gender,
+        'mobile_number': _mobile.text.trim(),
+        'email': _email.text.trim().isEmpty ? null : _email.text.trim(),
+        'address': _address.text.trim().isEmpty ? null : _address.text.trim(),
+        'school_college': _school.text.trim(),
+        'class_grade': _grade,
+        'member_id': _memberId.text.trim().isEmpty ? null : _memberId.text.trim(),
+        'competition_category': categories,
+        'remarks': _remarks.text.trim().isEmpty ? null : _remarks.text.trim(),
+      };
+      try {
+        await widget.repo.registerForEvent(widget.event.id, entry);
+      } on DioException catch (e) {
+        // Somebody with this name and age is already on the list. Anyone may
+        // register anyone here, so this is a question rather than an error —
+        // and it names the person, because "duplicate detected" tells a parent
+        // nothing about whether they already did this.
+        final already = _alreadyRegistered(e);
+        if (already == null) rethrow;
+        if (!mounted) return;
+        final again = await _askRegisterAgain(already);
+        if (!again) {
+          setState(() => _submitting = false);
+          return;
+        }
+        await widget.repo.registerForEvent(
+            widget.event.id, {...entry, 'confirm_duplicate': true});
+      }
       if (!mounted) return;
       Navigator.pop(context);
       SuccessSnackbar.show(
@@ -709,6 +724,54 @@ class _EventRegisterSheetState extends State<_EventRegisterSheet> {
         ),
       );
     }
+  }
+
+
+  /// The 409 body, when the server recognised this person already.
+  ///
+  /// Read as a map rather than a string: the existing handler below only
+  /// understood `detail` as text, so a structured answer fell through to
+  /// "Registration failed, please try again" — which is both wrong and
+  /// unhelpful, since nothing failed.
+  Map<String, dynamic>? _alreadyRegistered(DioException e) {
+    if (e.response?.statusCode != 409) return null;
+    final data = e.response?.data;
+    if (data is! Map) return null;
+    final detail = data['detail'];
+    if (detail is! Map || detail['code'] != 'ALREADY_REGISTERED') return null;
+    final existing = detail['existing'];
+    return existing is Map ? Map<String, dynamic>.from(existing) : null;
+  }
+
+  Future<bool> _askRegisterAgain(Map<String, dynamic> existing) async {
+    final age = existing['age'];
+    final grade = existing['class_grade'];
+    final details = [
+      if (age != null) '\$age',
+      if (grade != null && '\$grade'.isNotEmpty) '\$grade',
+    ].join(' · ');
+
+    final answer = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(trId('already_registered_title')),
+        content: Text(trId('already_registered_body', {
+          'name': existing['name'] ?? '',
+          'details': details,
+        })),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(trId('cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(trId('register_again')),
+          ),
+        ],
+      ),
+    );
+    return answer ?? false;
   }
 
   @override

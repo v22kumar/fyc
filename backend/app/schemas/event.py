@@ -84,6 +84,21 @@ class EventRegistrationCreate(BaseModel):
     member_id: Optional[str] = None
     competition_category: Optional[List[str]] = None
     remarks: Optional[str] = None
+    # Set only after the member has been shown who is already registered and
+    # has said "yes, register them again". Anyone can register anyone for a
+    # public event, so the same child arriving twice is a question, not an
+    # error — but it must be asked out loud rather than filed silently.
+    confirm_duplicate: bool = False
+
+
+class DuplicateRegistration(BaseModel):
+    """Who is already on the list, so the app can ask about *this* person."""
+    name: str
+    age: Optional[int] = None
+    class_grade: Optional[str] = None
+    registered_at: Optional[datetime] = None
+    times_already: int = 1
+
 
 class PublicRegistrant(BaseModel):
     name: str

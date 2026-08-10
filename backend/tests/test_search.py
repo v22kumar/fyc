@@ -202,3 +202,70 @@ def test_a_type_filter_narrows_without_breaking_ranking(client, db):
     hits = _find(client, org.id, "blood", types=["EVENT"])
     assert hits and all(h["type"] == "EVENT" for h in hits), \
         "asking for events must not return the blood-donation page"
+
+
+def test_one_broken_table_does_not_blank_the_whole_search(client, db, monkeypatch):
+    """The fault that shipped with the rewrite.
+
+    Search fans out across a dozen tables in one request, and `db.query(Model)`
+    is `SELECT *` — so one column that has drifted out of step with its model
+    took down *every* result, including the ones that were fine. The search box
+    answered "Failed to load results" for every query, because of one table
+    nobody was even searching for.
+
+    A search that returns most of the answers beats one that returns an error
+    page. Each source is isolated; a broken one costs only its own results.
+    """
+    from app.services import search as search_service
+
+    org = _org(db)
+    _event(db, org.id, "Drawing Competition")
+
+    real_sources = search_service._sources()
+
+    def _with_a_broken_one():
+        # Break a source the query does not even need — the point is that its
+        # failure used to take the healthy ones down with it.
+        return [
+            s._replace(columns=lambda m: (_ for _ in ()).throw(
+                RuntimeError("column gone"))) if s.type == "WORK" else s
+            for s in real_sources
+        ]
+
+    monkeypatch.setattr(search_service, "_sources", _with_a_broken_one)
+
+    hits = _find(client, org.id, "Drawing")
+    assert any(h["title"] == "Drawing Competition" for h in hits), \
+        "a broken table must not blank the page"
+
+
+def test_places_answer_even_if_every_table_is_broken(client, db, monkeypatch):
+    """Destinations are pure Python over a static list — no database at all.
+
+    Whatever else is down, "Events" still opens the events page. That is the
+    floor this search should never fall below.
+    """
+    from app.services import search as search_service
+
+    org = _org(db)
+
+    real_sources = search_service._sources()
+    broken = [s._replace(columns=lambda m: (_ for _ in ()).throw(
+        RuntimeError("gone"))) for s in real_sources]
+
+    monkeypatch.setattr(search_service, "_sources", lambda: broken)
+    monkeypatch.setattr(search_service, "_search_people",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError()))
+
+    hits = _find(client, org.id, "Events")
+    assert hits and hits[0]["route"] == "/events"
+
+
+def test_the_app_can_say_which_search_source_is_broken(client):
+    """"Search is failing" has to become "this table is failing" without
+    anybody reading a log or holding production access."""
+    body = client.get("/api/health/search").json()
+    assert "sources" in body and body["sources"], "every source must report"
+    assert body["all_sources_healthy"] is True
+    assert body["broken"] == []
+    assert "EVENT" in body["sources"] and "USER" in body["sources"]
