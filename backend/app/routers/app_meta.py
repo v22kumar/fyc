@@ -84,6 +84,19 @@ async def app_info():
     if not isinstance(mandatory, bool):
         mandatory = settings.APP_UPDATE_MANDATORY
 
+    # The floor, not the ceiling.
+    #
+    # "There is a newer version" and "this version can no longer run" are
+    # different facts, and conflating them is what locked the club out: every
+    # build shipped mandatory=true, so the app demanded a version the Play
+    # Store had not finished reviewing, and the only button led to a page with
+    # no Update on it.
+    #
+    # A client blocks only when it is below this floor — which moves when a
+    # breaking API change or a security fix genuinely makes an old build
+    # unusable, not on every green pipeline.
+    min_supported = rel.get("min_supported_version_name") or "0.0.0"
+
     notes = rel.get("notes") or settings.APP_UPDATE_NOTES
 
     return {
@@ -100,5 +113,10 @@ async def app_info():
         "latest_version_code": latest_code,
         "latest_version_name": latest_name,
         "mandatory": mandatory,
+        # Clients decide blocking from this, not from `mandatory`. Kept
+        # alongside it so an old client that only understands `mandatory`
+        # keeps working — and since that flag now defaults to false, an old
+        # client stops blocking too, which is the behaviour we want.
+        "min_supported_version_name": min_supported,
         "notes": notes,
     }

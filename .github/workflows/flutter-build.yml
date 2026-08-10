@@ -185,12 +185,28 @@ jobs:
       # ── Version manifest for the in-app updater ──────────────────────────────
       # Published to the release on EVERY build via GITHUB_TOKEN, so the backend
       # always learns the latest version — no dependence on a Fly secret that can
-      # silently break. Set repo variable FORCE_UPDATE=false to make updates
-      # optional (defaults to mandatory so village users are always on latest).
+      # silently break.
+      #
+      # MANDATORY defaults to FALSE, and that reversal is the point.
+      #
+      # It used to default to true, so every one of the ~277 builds told every
+      # member "this update is required to continue". On a Play install that is
+      # a trap with no exit: Play review lags behind CI by hours or days, so the
+      # app demanded a version the Play Store did not yet have, and the only
+      # button led to a page with no Update on it. The club was locked out of
+      # its own app by its own release pipeline.
+      #
+      # Forcing is now expressed as a floor, not a per-build flag: set the repo
+      # variable MIN_SUPPORTED_VERSION to the oldest version that still works
+      # (e.g. after a breaking API change or a security fix) and only builds
+      # below it are refused. Everything else updates quietly in the background,
+      # the way Play already does it.
       - name: Generate version.json (in-app updater source of truth)
         run: |
           MANDATORY="${{ vars.FORCE_UPDATE }}"
-          if [ "$MANDATORY" = "false" ]; then MANDATORY="false"; else MANDATORY="true"; fi
+          if [ "$MANDATORY" = "true" ]; then MANDATORY="true"; else MANDATORY="false"; fi
+          MIN_SUPPORTED="${{ vars.MIN_SUPPORTED_VERSION }}"
+          if [ -z "$MIN_SUPPORTED" ]; then MIN_SUPPORTED="0.0.0"; fi
           # The distributed APK is arm64 (apk_url below). Flutter's
           # --split-per-abi rewrites each split's versionCode to
           # (abi_offset*1000 + build-number); arm64-v8a's offset is 2, so the
@@ -208,6 +224,7 @@ jobs:
             "version_name": "1.0.${{ github.run_number }}",
             "apk_url": "${{ github.server_url }}/${{ github.repository }}/releases/download/app-latest/fyc-connect-arm64.apk",
             "mandatory": $MANDATORY,
+            "min_supported_version_name": "$MIN_SUPPORTED",
             "notes": "A new version of FYC Connect is available. Please update for the latest features and fixes."
           }
           JSON

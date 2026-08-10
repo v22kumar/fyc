@@ -10,7 +10,19 @@ class UpdateInfo {
   final int latestVersionCode;
   final String latestVersionName;
   final String apkUrl;
+  /// Whether the SERVER flagged this build as mandatory. Retained because the
+  /// endpoint still sends it, but it is no longer what blocks anybody — see
+  /// [blocking]. Every build used to ship this as true.
   final bool mandatory;
+
+  /// The oldest version that can still run. Below it the app genuinely cannot
+  /// work — a breaking API change, a security fix — and only then is anyone
+  /// stopped.
+  final String minSupportedVersionName;
+
+  /// The version actually installed on this phone.
+  final String installedVersionName;
+
   final String notes;
 
   /// Whether this copy of the app was installed by the Play Store.
@@ -29,8 +41,47 @@ class UpdateInfo {
     required this.apkUrl,
     required this.mandatory,
     required this.notes,
+    this.minSupportedVersionName = '0.0.0',
+    this.installedVersionName = '',
     this.installedFromPlay = false,
+    this.playHasIt = false,
   });
+
+  /// Whether this member must update before continuing.
+  ///
+  /// Three conditions, and all three have to hold. The old rule was one — the
+  /// server said so — and every build said so.
+  ///
+  /// 1. **Below the floor.** Not merely "newer exists". A newer version is an
+  ///    invitation; an unusable version is a wall, and only the second is
+  ///    worth stopping somebody for.
+  ///
+  /// 2. **The update can actually be obtained.** This is the condition whose
+  ///    absence locked the club out of its own app. Play review lags CI by
+  ///    hours or days, so the app demanded a version the Play Store did not
+  ///    have yet, and the only button led to a page with no Update on it.
+  ///    Never block on something a member cannot get: if we are below the
+  ///    floor but Play has not published it, the honest move is to let them
+  ///    keep working.
+  ///
+  /// 3. Blocking is opt-in per release, not per build. See
+  ///    MIN_SUPPORTED_VERSION in flutter-build.yml.
+  bool get blocking {
+    if (installedVersionName.isEmpty) return false;
+    final belowFloor = UpdateService.compareVersions(
+            minSupportedVersionName, installedVersionName) >
+        0;
+    if (!belowFloor) return false;
+    // A Play install can only be updated once Play has the build. Until then a
+    // block is a locked door with the key on the other side.
+    if (installedFromPlay && !playHasIt) return false;
+    return true;
+  }
+
+  /// Whether the newest build is actually downloadable from where this copy
+  /// came from. For a sideloaded APK that is always true; for a Play install
+  /// it is only true once Play has finished reviewing and publishing.
+  final bool playHasIt;
 }
 
 /// The Play Store's own package name, which is what `installerStore` reports
@@ -72,7 +123,7 @@ class UpdateService {
       // increases every build, so it's the correct signal. Fall back to the
       // code only when a name is missing/unparseable.
       final bool isNewer = (latestName.isNotEmpty && currentName.isNotEmpty)
-          ? _compareVersions(latestName, currentName) > 0
+          ? compareVersions(latestName, currentName) > 0
           : latestCode > currentCode;
       if (!isNewer) return null; // already up to date
 
@@ -81,8 +132,16 @@ class UpdateService {
         latestVersionName: latestName,
         apkUrl: apkUrl,
         mandatory: data['mandatory'] as bool? ?? false,
+        minSupportedVersionName:
+            (data['min_supported_version_name'] as String?) ?? '0.0.0',
+        installedVersionName: currentName,
         notes: (data['notes'] as String?) ?? '',
         installedFromPlay: fromPlay,
+        // The server publishes the moment CI finishes; Play publishes when
+        // review finishes. We cannot see Play's state from here, so we assume
+        // it does NOT have the build yet. That errs towards letting members
+        // keep working, which is the right way to be wrong.
+        playHasIt: data['play_has_it'] as bool? ?? false,
       );
     } catch (e) {
       if (kDebugMode) debugPrint('UpdateService.check failed: $e');
@@ -93,7 +152,7 @@ class UpdateService {
   /// Compares dotted numeric versions ("1.0.81" vs "1.0.80").
   /// Returns >0 if [a] is newer than [b], 0 if equal, <0 if older.
   /// Non-numeric segments are treated as 0 so a malformed value never throws.
-  static int _compareVersions(String a, String b) {
+  static int compareVersions(String a, String b) {
     final pa = a.split('.').map((e) => int.tryParse(e.trim()) ?? 0).toList();
     final pb = b.split('.').map((e) => int.tryParse(e.trim()) ?? 0).toList();
     final n = pa.length > pb.length ? pa.length : pb.length;

@@ -112,6 +112,7 @@ dependencies:
   # AI Feature Dependencies
 
   http: any
+  in_app_update: ^5.0.0
 dev_dependencies:
   integration_test:
     sdk: flutter

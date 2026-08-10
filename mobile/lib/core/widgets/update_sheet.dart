@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/update_service.dart' show UpdateInfo, UpdateService, kAndroidPackage;
+import '../services/play_update.dart';
 import '../services/update_installer.dart';
 import '../storage/local_storage.dart';
 import '../theme/app_theme.dart';
@@ -20,8 +21,31 @@ class UpdateSheet {
     final update = await UpdateService.check();
     if (update == null || !context.mounted) return;
 
+    // A copy that came from Play is Play's to update, and Google's In-App
+    // Updates API answers the question this code never could: is there an
+    // update *available to this device right now*? Our version comparison only
+    // ever knew what CI had published, which is why the app demanded builds
+    // the Play Store had not finished reviewing.
+    if (update.installedFromPlay) {
+      if (update.blocking) {
+        // Play's own blocking flow. It cannot deadlock the way ours did: Play
+        // shows it only when Play actually has the update.
+        if (await PlayUpdate.runImmediate()) return;
+        // Play had nothing to offer, so there is nothing to demand. Let them
+        // work — being wrong in this direction costs a stale build, not a
+        // locked-out club.
+        return;
+      }
+      // Quietly, in the background, while they carry on. No sheet at all:
+      // this is what "update in the background" means on Android, and an
+      // optional update is not worth a modal.
+      await PlayUpdate.startBackgroundDownload();
+      return;
+    }
+
+    // Sideloaded from the GitHub release: we are the only updater there is.
     final storage = sl<LocalStorage>();
-    if (!update.mandatory) {
+    if (!update.blocking) {
       final skipped = int.tryParse(storage.getString(_skipKey) ?? '') ?? 0;
       if (skipped >= update.latestVersionCode) return;
     }
@@ -34,11 +58,11 @@ class UpdateSheet {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: !update.mandatory,
-      enableDrag: !update.mandatory,
+      isDismissible: !update.blocking,
+      enableDrag: !update.blocking,
       backgroundColor: Colors.transparent,
       builder: (_) => PopScope(
-        canPop: !update.mandatory,
+        canPop: !update.blocking,
         child: _UpdateSheetBody(update: update),
       ),
     );
@@ -88,7 +112,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
       if (mounted) setState(() => _phase = _Phase.installing);
       // The OS installer is now in the foreground; close the sheet so the user
       // returns to a clean app once they confirm/deny the install.
-      if (mounted && !widget.update.mandatory) Navigator.of(context).maybePop();
+      if (mounted && !widget.update.blocking) Navigator.of(context).maybePop();
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -169,7 +193,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!u.mandatory)
+          if (!u.blocking)
             Center(
               child: Container(
                 width: 40,
@@ -253,7 +277,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
           ),
           const SizedBox(height: 16),
           _buildAction(context, ta),
-          if (u.mandatory && !_failedAtLeastOnce) ...[
+          if (u.blocking && !_failedAtLeastOnce) ...[
             const SizedBox(height: 12),
             Center(
               child: Text(
@@ -344,7 +368,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
               _primaryButton(trId('update_from_play'), _openPlayStore)
             else
               _primaryButton(trId('update_now'), _startUpdate),
-            if (!widget.update.mandatory) ...[
+            if (!widget.update.blocking) ...[
               const SizedBox(height: 6),
               TextButton(
                 onPressed: _later,
