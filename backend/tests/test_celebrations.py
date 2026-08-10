@@ -142,3 +142,29 @@ def test_anniversary_saves_through_the_profile_patch(client, db):
         UserProfile.user_id == me.id).first()
     assert str(profile.wedding_anniversary) == "2018-11-25"
     assert profile.celebrate_publicly is False
+
+
+def test_milestone_anniversaries_carry_their_ordinal(client, db):
+    """A 10th anniversary IS the story — the member typed the year in
+    themselves. A birthday still never carries an age."""
+    org = _make_org(db)
+    today = datetime.date.today()
+    _make_user(db, org.id, "9910000014", name="Viewer")
+    _make_user(db, org.id, "9910000015", name="Ten Years",
+               anniversary=datetime.date(today.year - 10, today.month, today.day))
+    _make_user(db, org.id, "9910000016", name="Three Years",
+               anniversary=datetime.date(today.year - 3, today.month, today.day))
+    _make_user(db, org.id, "9910000017", name="Birthday Person",
+               dob=datetime.date(1990, today.month, today.day))
+    H = _h(org.id, _login(client, org.id, "9910000014"))
+
+    got = {c["full_name_en"]: c
+           for c in client.get("/api/v1/users/celebrations/today",
+                               headers=H).json()}
+    assert got["Ten Years"]["years"] == 10
+    assert got["Ten Years"]["is_milestone"] is True
+    assert got["Three Years"]["years"] == 3
+    assert got["Three Years"]["is_milestone"] is False
+    assert got["Birthday Person"]["years"] is None, \
+        "an age is nobody's announcement to make"
+

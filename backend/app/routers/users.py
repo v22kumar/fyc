@@ -523,6 +523,15 @@ class CelebrationOut(_BaseModel):
     full_name_ta: str
     full_name_en: str
     kind: str  # 'birthday' | 'anniversary'
+    # Anniversaries carry their ordinal — a 10th anniversary IS the story,
+    # and the member typed the year in themselves. Birthdays never carry
+    # one: an age is nobody's announcement to make.
+    years: Optional[int] = None
+    is_milestone: bool = False
+
+
+# The years a Tamil household marks with a function, not just a wish.
+_MILESTONES = {1, 5, 10, 15, 20, 25, 30, 40, 50, 60}
 
 
 @router.get("/celebrations/today", response_model=List[CelebrationOut])
@@ -553,11 +562,14 @@ def celebrations_today(
             if not matches and field.month == 2 and field.day == 29:
                 matches = today.month == 3 and today.day == 1 and not _is_leap(today.year)
             if matches:
+                years = (today.year - field.year) if kind == "anniversary" else None
                 out.append(CelebrationOut(
                     user_id=user.id,
                     full_name_ta=profile.full_name_ta or "",
                     full_name_en=profile.full_name_en or "",
                     kind=kind,
+                    years=years,
+                    is_milestone=bool(years in _MILESTONES),
                 ))
     return out
 
@@ -578,6 +590,7 @@ class MemberCardOut(_BaseModel):
     anniversary_day_month: Optional[str] = None
     is_birthday_today: bool = False
     is_anniversary_today: bool = False
+    anniversary_years: Optional[int] = None
     events_attended: int = 0
     blood_donations: int = 0
     trees_planted: int = 0
@@ -636,6 +649,9 @@ def member_card(
                                and dob.day == today.day),
         is_anniversary_today=bool(public and ann and ann.month == today.month
                                   and ann.day == today.day),
+        anniversary_years=(today.year - ann.year)
+            if (public and ann and ann.month == today.month
+                and ann.day == today.day) else None,
         events_attended=db.query(EventAttendance)
             .filter(EventAttendance.user_id == user.id).count(),
         blood_donations=db.query(BloodDonor)

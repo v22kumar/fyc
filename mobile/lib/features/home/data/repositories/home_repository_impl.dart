@@ -43,4 +43,10 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<Map<String, dynamic>> goldPrice() async =>
       ((await _api.dio.get(ApiConstants.goldPrice)).data as Map)
           .cast<String, dynamic>();
+
+  @override
+  Future<List<dynamic>> celebrationsToday() async =>
+      ((await _api.dio.get('/api/v1/users/celebrations/today')).data
+          as List?) ??
+      const [];
 }

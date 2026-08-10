@@ -15,16 +15,20 @@ import '../../../../core/services/sync_service.dart';
 const _categories = ['All', 'Cricket', 'Events', 'Environment', 'Achievements', 'Announcement', 'Other'];
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key, required this.repo});
+  const CreatePostScreen({super.key, required this.repo, this.initialText});
 
   final FeedRepository repo;
+
+  /// Prefills the composer — the celebration card's "share the joy" path.
+  final String? initialText;
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final _controller = TextEditingController();
+  late final _controller =
+      TextEditingController(text: widget.initialText ?? '');
   final _locationCtrl = TextEditingController();
   final _picker = ImagePicker();
   final List<File> _images = [];

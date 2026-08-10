@@ -242,8 +242,9 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'create',
-          builder: (context, state) =>
-              CreatePostScreen(repo: sl<FeedRepository>()),
+          builder: (context, state) => CreatePostScreen(
+              repo: sl<FeedRepository>(),
+              initialText: state.extra as String?),
         ),
       ],
     ),
