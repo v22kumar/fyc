@@ -59,7 +59,13 @@ def test_the_download_and_the_updater_never_disagree(client, monkeypatch):
     The risk is somebody later adding a second way to resolve the URL in one of
     these two handlers.
     """
+    from app.routers import app_meta
+
     monkeypatch.setattr(settings, "APK_DOWNLOAD_URL", _PLAY_APK, raising=False)
+    # The endpoint now verifies the override before handing it out, so the
+    # check is seeded as already-passed. Without this the test would exercise
+    # the network — and prove the fallback rather than the agreement.
+    app_meta._OVERRIDE_CHECK.update({"ts": 9e9, "ok": True, "url": _PLAY_APK})
 
     download = client.get("/api/v1/app/download", follow_redirects=False)
     assert download.status_code == 302
@@ -68,3 +74,51 @@ def test_the_download_and_the_updater_never_disagree(client, monkeypatch):
     info = client.get("/api/v1/app/info").json()
     assert info["apk_url"] == _PLAY_APK, \
         "the updater must download exactly what the website handed out"
+    app_meta._OVERRIDE_CHECK.update({"ts": 0.0, "ok": None, "url": ""})
+
+
+def test_a_download_url_that_serves_nothing_is_not_handed_out(monkeypatch):
+    """The mistake that broke the club's only download link.
+
+    APK_DOWNLOAD_URL was set to an address copied from an example — it looked
+    like a real one and nothing was hosted there, so every member who tapped
+    Download got a 404. Nothing between the secret and the member checked.
+
+    A misconfigured secret should cost the override, not the app.
+    """
+    from app.routers import app_meta
+
+    monkeypatch.setattr(settings, "APK_DOWNLOAD_URL", _PLAY_APK, raising=False)
+    # As if the reachability check has already run and failed.
+    app_meta._OVERRIDE_CHECK.update({"ts": 9e9, "ok": False, "url": _PLAY_APK})
+    try:
+        assert _distributed_apk({}) == _CANONICAL_APK, \
+            "a link that serves nothing must never be what the club hands out"
+    finally:
+        app_meta._OVERRIDE_CHECK.update({"ts": 0.0, "ok": None, "url": ""})
+
+
+def test_a_reachable_url_is_used(monkeypatch):
+    from app.routers import app_meta
+
+    monkeypatch.setattr(settings, "APK_DOWNLOAD_URL", _PLAY_APK, raising=False)
+    app_meta._OVERRIDE_CHECK.update({"ts": 9e9, "ok": True, "url": _PLAY_APK})
+    try:
+        assert _distributed_apk({}) == _PLAY_APK
+    finally:
+        app_meta._OVERRIDE_CHECK.update({"ts": 0.0, "ok": None, "url": ""})
+
+
+def test_the_fallback_reaches_the_member_not_just_the_resolver(client, monkeypatch):
+    """End to end: a broken override must still yield a working download."""
+    from app.routers import app_meta
+
+    monkeypatch.setattr(settings, "APK_DOWNLOAD_URL", _PLAY_APK, raising=False)
+    app_meta._OVERRIDE_CHECK.update({"ts": 9e9, "ok": False, "url": _PLAY_APK})
+    try:
+        r = client.get("/api/v1/app/download", follow_redirects=False)
+        assert r.status_code == 302
+        assert r.headers["location"] == _CANONICAL_APK
+        assert client.get("/api/v1/app/info").json()["apk_url"] == _CANONICAL_APK
+    finally:
+        app_meta._OVERRIDE_CHECK.update({"ts": 0.0, "ok": None, "url": ""})

@@ -1,3 +1,4 @@
+import logging
 import time
 
 import httpx
@@ -6,6 +7,7 @@ from fastapi.responses import RedirectResponse
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/app", tags=["App"])
 
 # Canonical, always-present release asset (published by flutter-build.yml).
@@ -47,6 +49,49 @@ async def _release_version() -> dict | None:
     return _version_cache["data"]
 
 
+_OVERRIDE_CHECK: dict = {"ts": 0.0, "ok": None, "url": ""}
+_OVERRIDE_RECHECK_SECONDS = 300
+
+
+async def _override_is_real(url: str) -> bool:
+    """Does APK_DOWNLOAD_URL actually serve a file?
+
+    Added because it did not, and the club's only download link 404'd for
+    everybody until somebody noticed. The setting was pasted from an example
+    that looked like a real address, which is exactly the mistake a placeholder
+    invites — and nothing between the secret and the member checked.
+
+    A misconfigured secret should cost the club the *override*, not the app. So
+    the URL is verified before it is handed out, cached for five minutes so the
+    check costs one request per interval rather than one per download, and a
+    failure falls back to the build that is known to exist.
+    """
+    now = time.time()
+    if (_OVERRIDE_CHECK["url"] == url
+            and _OVERRIDE_CHECK["ok"] is not None
+            and now - _OVERRIDE_CHECK["ts"] < _OVERRIDE_RECHECK_SECONDS):
+        return bool(_OVERRIDE_CHECK["ok"])
+
+    ok = False
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.head(url, timeout=4.0, follow_redirects=True)
+            # Some hosts refuse HEAD; a ranged GET settles it without pulling
+            # ninety megabytes to answer a yes/no question.
+            if r.status_code >= 400:
+                r = await client.get(url, timeout=4.0, follow_redirects=True,
+                                     headers={"Range": "bytes=0-0"})
+            ok = r.status_code < 400
+    except Exception:
+        ok = False
+
+    _OVERRIDE_CHECK.update({"ts": now, "ok": ok, "url": url})
+    if not ok:
+        logger.warning(
+            "[app] APK_DOWNLOAD_URL does not serve a file; falling back")
+    return ok
+
+
 def _distributed_apk(release: dict) -> str:
     """The single APK this club hands out, resolved the same way everywhere.
 
@@ -61,7 +106,7 @@ def _distributed_apk(release: dict) -> str:
     APK_DOWNLOAD_URL wins when set: that is the deliberate choice to distribute
     the Play-signed universal APK instead of the CI build.
     """
-    if settings.APK_DOWNLOAD_URL:
+    if settings.APK_DOWNLOAD_URL and _OVERRIDE_CHECK.get("ok") is not False:
         return settings.APK_DOWNLOAD_URL
     url = release.get("apk_url") or settings.APP_APK_URL or _CANONICAL_APK
     # Self-heal: an older APP_APK_URL may still point at the removed
@@ -75,6 +120,8 @@ def _distributed_apk(release: dict) -> str:
 async def download_app():
     """302 redirect to the latest FYC Connect Android APK (arm64)."""
     rel = await _release_version() or {}
+    if settings.APK_DOWNLOAD_URL:
+        await _override_is_real(settings.APK_DOWNLOAD_URL)
     return RedirectResponse(url=_distributed_apk(rel), status_code=302)
 
 
@@ -88,6 +135,8 @@ async def app_info():
     still works if the release can't be reached.
     """
     rel = await _release_version() or {}
+    if settings.APK_DOWNLOAD_URL:
+        await _override_is_real(settings.APK_DOWNLOAD_URL)
 
     latest_code = rel.get("version_code")
     if not isinstance(latest_code, int):
