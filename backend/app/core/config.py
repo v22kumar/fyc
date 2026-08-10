@@ -264,6 +264,21 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
 
+# Passwords that must never authenticate anybody, anywhere.
+#
+# These are the literal defaults in this file, which lives in a public
+# repository. The seeded superadmin is created with FIRST_SUPERADMIN_PASSWORD
+# on the *first* boot only — so on any database that already has an
+# organisation, that account keeps whatever it was seeded with, and setting the
+# secret afterwards changes nothing. The credential stays live and publicly
+# documented, and the production guard would report itself satisfied.
+KNOWN_DEFAULT_PASSWORDS = frozenset({
+    "changeme",
+    "changeme_admin_password",
+    "test-superadmin-password",
+})
+
+
 def production_blockers(s: "Settings") -> list[str]:
     """Everything that would stop this configuration booting as production.
 
@@ -283,7 +298,7 @@ def production_blockers(s: "Settings") -> list[str]:
         errors.append("SECRET_KEY must be set to a real secret in production")
     if any(origin == "*" for origin in s.allowed_origins_list):
         errors.append("ALLOWED_ORIGINS must not be '*' in production")
-    if s.FIRST_SUPERADMIN_PASSWORD.strip().lower() in ("changeme", "changeme_admin_password", "test-superadmin-password"):
+    if s.FIRST_SUPERADMIN_PASSWORD.strip().lower() in KNOWN_DEFAULT_PASSWORDS:
         errors.append("FIRST_SUPERADMIN_PASSWORD must be changed from the default in production")
     # A single-file SQLite DB cannot be shared across Fly instances — if the
     # Postgres/Supabase secret is ever missing, the app would silently fall back

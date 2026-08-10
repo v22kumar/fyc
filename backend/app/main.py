@@ -94,6 +94,38 @@ def _seed_database():
             db.commit()
             print("Database seeded with default organization and superadmin credentials.")
 
+        # Rotate a superadmin still holding a published default.
+        #
+        # FIRST_SUPERADMIN_PASSWORD reads like "the superadmin's password", but
+        # it only ever applied on the *first* boot, when the database was empty.
+        # On any established database the account kept whatever it was seeded
+        # with — so setting the secret satisfied the production guard while the
+        # publicly-documented credential stayed live. That gap is the whole
+        # problem: the fix looked done and was not.
+        #
+        # Now the secret means what its name says. If a SUPER_ADMIN still
+        # authenticates with a known default and a real password has been
+        # supplied, it is replaced on boot. Idempotent: once rotated, no default
+        # matches and this does nothing.
+        try:
+            from app.core.config import KNOWN_DEFAULT_PASSWORDS
+            from app.core.security import verify_password
+            desired = settings.FIRST_SUPERADMIN_PASSWORD.strip()
+            if desired and desired.lower() not in KNOWN_DEFAULT_PASSWORDS:
+                for admin in db.query(User).filter(
+                        User.role == "SUPER_ADMIN").all():
+                    if not admin.password_hash:
+                        continue
+                    if any(verify_password(default, admin.password_hash)
+                           for default in KNOWN_DEFAULT_PASSWORDS):
+                        admin.password_hash = get_password_hash(desired)
+                        db.commit()
+                        logger.warning(
+                            "[security] rotated a SUPER_ADMIN password that was "
+                            "still a published default")
+        except Exception as _re:
+            logger.error("[security] superadmin rotation failed: %s", _re)
+
         # Always ensure default contacts are seeded (idempotent)
         seed_default_contacts(db, uuid.UUID("8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
 
