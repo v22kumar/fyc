@@ -184,3 +184,37 @@ async def upload_file(
     await run_in_threadpool(_write_local)  # offload blocking disk I/O
 
     return {"url": f"/uploads/{org_id}/{filename}", "filename": filename}
+
+
+def mirror_remote_image(url: str, *, tenant_id, public_id: str) -> str | None:
+    """Copy someone else's image into our own storage, and return our URL.
+
+    **Instagram and Facebook media URLs expire.** They are signed, short-lived
+    links into Meta's CDN, and the feed sync stored them verbatim — so a post
+    looked right the day it synced and became a broken box some days later,
+    silently, with nothing in any log tying the two events together. The club
+    would simply notice that older feed items had lost their pictures.
+
+    Mirroring is done by handing Cloudinary the URL rather than streaming the
+    bytes through this server: it fetches, stores and serves from its own CDN in
+    one call, so nothing is buffered here.
+
+    Returns None when Cloudinary is not configured, and the caller keeps the
+    original link. That is honest degradation — a feed with pictures that
+    expire is still better than a feed with none — and `/api/health/media`
+    already reports which of the two you are running.
+    """
+    if not url or not _cloudinary_configured():
+        return None
+    try:
+        result = cloudinary.uploader.upload(
+            url,
+            folder=f"fyc/{tenant_id}/social",
+            public_id=public_id,
+            overwrite=False,
+            resource_type="image",
+        )
+        return result.get("secure_url")
+    except Exception:
+        logger.warning("could not mirror %s", public_id, exc_info=True)
+        return None
