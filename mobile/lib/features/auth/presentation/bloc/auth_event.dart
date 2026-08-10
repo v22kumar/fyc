@@ -83,3 +83,9 @@ class AuthGoogleSignInRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
+
+/// Raised when the session marker turns out not to be backed by a token.
+/// Fired by the auth check itself, never by the UI.
+class AuthSessionInvalid extends AuthEvent {
+  const AuthSessionInvalid();
+}

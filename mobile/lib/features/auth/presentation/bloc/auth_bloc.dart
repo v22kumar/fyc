@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
@@ -31,6 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _storage = storage,
         super(const AuthInitial()) {
     on<AuthCheckRequested>(_onCheckRequested);
+    on<AuthSessionInvalid>(_onSessionInvalid);
     on<AuthSendOtpRequested>(_onSendOtp);
     on<AuthVerifyOtpRequested>(_onVerifyOtp);
     on<AuthRegisterRequested>(_onRegister);
@@ -46,6 +48,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthUnauthenticated());
       return;
     }
+
+    // A session marker without a token is not a session.
+    //
+    // Android auto-backup restores SharedPreferences onto a fresh install —
+    // including `fyc_has_session` and the cached profile — but the token sits
+    // in the Keystore and does not come with them. The app read the restored
+    // flag, skipped the login screen, and opened as somebody it could not
+    // name: signed in on paper, anonymous in fact. Backup is refused in the
+    // manifest now; this heals installs already carrying the restored flag.
+    //
+    // Deliberately NOT awaited: this reads the Keystore over a platform
+    // channel, and the app must open at the speed of local data whatever the
+    // keyring is doing. It arrives in milliseconds and signs out cleanly if
+    // the marker was lying.
+    unawaited(_storage.hasToken().then((ok) {
+      if (!ok && !isClosed) add(const AuthSessionInvalid());
+    }).catchError((_) {/* cannot tell — leave the session alone */}));
 
     // Start from what we already know, so the app opens knowing whose it is.
     //
@@ -84,6 +103,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthAuthenticated(user));
       },
     );
+  }
+
+  /// The stored marker claimed a session the Keystore cannot back. Clear
+  /// both, so the member gets the login screen instead of an app that does
+  /// not know who they are — and so it cannot recur on the next open.
+  Future<void> _onSessionInvalid(
+    AuthSessionInvalid event,
+    Emitter<AuthState> emit,
+  ) async {
+    await _storage.clearToken();
+    await _storage.clearCachedUser();
+    emit(const AuthUnauthenticated());
   }
 
   /// The last profile the server confirmed, read back from disk.

@@ -85,7 +85,10 @@ Future<void> _pump(
   bool list = false,
   Size size = const Size(390, 1400),
 }) async {
-  SharedPreferences.setMockInitialValues({'fyc_has_session': true});
+  SharedPreferences.setMockInitialValues(
+      // Marker AND token: a signed-in member has both. Seeding only
+      // the marker is the reinstall bug the session gate now refuses.
+      {'fyc_has_session': true, 'fyc_auth_token': 'test-token'});
   final prefs = await SharedPreferences.getInstance();
   final storage = LocalStorage(prefs);
   await storage.saveLang('en');
