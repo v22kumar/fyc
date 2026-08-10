@@ -10,4 +10,7 @@ abstract class HomeRepository {
   Future<Map<String, dynamic>> liveScores();
   Future<Map<String, dynamic>> weather({required double lat, required double lon});
   Future<Map<String, dynamic>> goldPrice();
+
+  /// Who celebrates today — birthdays and anniversaries, opt-outs respected.
+  Future<List<dynamic>> celebrationsToday();
 }

@@ -35,6 +35,7 @@ import '../../../ai/presentation/widgets/ai_daily_digest_card.dart';
 import '../../../profile/presentation/widgets/quick_question_card.dart';
 import '../../../ai/presentation/widgets/ai_news_summary_card.dart';
 import '../../domain/repositories/home_repository.dart';
+import '../widgets/celebrations_card.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -2513,6 +2514,10 @@ class _CitizenDashboard extends StatelessWidget {
     // V2 1.4 — sections enter with a top-to-bottom stagger (FadeSlideIn is
     // reduce-motion aware, so this is a no-op when animations are disabled).
     final sections = <Widget>[
+      // The member opens the app on somebody's day and the card is simply
+      // there — a hero greeting when it is their own, a tappable list when
+      // it is someone else's, nothing at all on ordinary days.
+      _CelebrationsSection(repo: repo),
       // One question, now and then. Renders nothing at all most days — the
       // server decides when there is something worth asking, and the answer
       // is what makes the blood-donation screen able to work.
@@ -2728,5 +2733,19 @@ class _ManagerDashboard extends StatelessWidget {
         GoldPriceCard(key: ValueKey('gold-$refreshKey'), repo: repo),
       ],
     );
+  }
+}
+
+/// Wraps [CelebrationsCard] with the signed-in member's id from the auth
+/// bloc, so the card can greet YOU differently from everyone else.
+class _CelebrationsSection extends StatelessWidget {
+  const _CelebrationsSection({required this.repo});
+  final HomeRepository repo;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthBloc>().state;
+    final myId = auth is AuthAuthenticated ? auth.user.id : null;
+    return CelebrationsCard(repo: repo, myUserId: myId);
   }
 }
