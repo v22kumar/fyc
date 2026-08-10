@@ -18,4 +18,7 @@ abstract class EventRepository {
 
   /// Full registration rows for the admin screen (name, mobile, gender…).
   Future<List<dynamic>> fetchRegistrationsAdmin(String eventId);
+
+  /// Remove one registration (organisers only).
+  Future<void> deleteRegistration(String eventId, String registrationId);
 }

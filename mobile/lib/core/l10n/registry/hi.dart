@@ -1502,4 +1502,9 @@ const Map<String, String> kHi = {
   'register_again': 'फिर से पंजीकरण करें',
   'what_kind_of_event': 'किस प्रकार का कार्यक्रम?',
   'top_story': 'मुख्य समाचार',
+  'remove_participant': 'प्रतिभागी हटाएँ?',
+  'remove_participant_body': '{name} ({details}) को इस कार्यक्रम से हटाएँ? यह वापस नहीं होगा।',
+  'remove': 'हटाएँ',
+  'repeated': 'दोहराव',
+  'long_press_to_remove': 'हटाने के लिए नाम को देर तक दबाएँ',
 };

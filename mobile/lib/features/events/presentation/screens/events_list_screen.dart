@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/entities/participant_row.dart';
 import '../../domain/entities/public_registrant.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../bloc/event_bloc.dart';
@@ -1025,8 +1026,21 @@ class _EventParticipantsSheet extends StatefulWidget {
 }
 
 class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
-  List<PublicRegistrant>? _names;
+  List<ParticipantRow>? _names;
   String? _error;
+  bool _busy = false;
+
+  /// Organisers see ids and can remove rows; everybody else sees the names.
+  bool get _isOrganiser {
+    final state = sl<AuthBloc>().state;
+    if (state is! AuthAuthenticated) return false;
+    return const {'EXECUTIVE_MEMBER', 'ADMIN', 'SUPER_ADMIN'}
+        .contains(state.user.role.toUpperCase());
+  }
+
+  /// How many rows share each fingerprint.
+  Map<String, int> get _counts =>
+      ParticipantRow.countBy(_names ?? const <ParticipantRow>[]);
 
   @override
   void initState() {
@@ -1034,17 +1048,108 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
     _fetch();
   }
 
+  int? _ageFrom(String? dob) {
+    if (dob == null) return null;
+    final born = DateTime.tryParse(dob);
+    if (born == null) return null;
+    final now = DateTime.now();
+    var age = now.year - born.year;
+    if (now.month < born.month ||
+        (now.month == born.month && now.day < born.day)) {
+      age--;
+    }
+    return age;
+  }
+
   Future<void> _fetch() async {
-    final res = await sl<EventRepository>().fetchEventRegistrants(widget.event.id);
+    if (_isOrganiser) {
+      // The full record, because only it carries the id a delete needs.
+      try {
+        final rows =
+            await sl<EventRepository>().fetchRegistrationsAdmin(widget.event.id);
+        if (!mounted) return;
+        setState(() {
+          _names = rows.whereType<Map<String, dynamic>>().map((r) {
+            return ParticipantRow(
+              id: r['id']?.toString(),
+              name: (r['name'] as String?) ?? 'Unknown',
+              age: _ageFrom(r['dob'] as String?),
+              classGrade: r['class_grade'] as String?,
+            );
+          }).toList();
+          _error = null;
+        });
+        return;
+      } catch (_) {
+        // An organiser whose token has expired still deserves the list.
+      }
+    }
+
+    final res =
+        await sl<EventRepository>().fetchEventRegistrants(widget.event.id);
     if (!mounted) return;
     res.fold(
       (l) => setState(() => _error = trId('failed_to_load_participants')),
-      (names) => setState(() => _names = names),
+      (names) => setState(() => _names = names
+          .map((p) => ParticipantRow(
+              name: p.name, age: p.age, classGrade: p.classGrade))
+          .toList()),
     );
+  }
+
+  /// Long-press to remove, and only after saying who is being removed.
+  ///
+  /// Long-press rather than a row of delete buttons: this list is read far more
+  /// often than it is edited, and a delete button beside every child's name is
+  /// an accident waiting for a thumb.
+  Future<void> _confirmDelete(ParticipantRow p) async {
+    if (!_isOrganiser || p.id == null || _busy) return;
+    final details = [
+      if (p.age != null) '${p.age}',
+      if ((p.classGrade ?? '').isNotEmpty) p.classGrade,
+    ].join(' · ');
+
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(trId('remove_participant')),
+        content: Text(trId('remove_participant_body',
+            {'name': p.name, 'details': details})),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(trId('cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(trId('remove')),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await sl<EventRepository>()
+          .deleteRegistration(widget.event.id, p.id!);
+      await _fetch();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(trId('registration_failed_please_try_again')),
+          backgroundColor: AppColors.accent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final counts = _counts;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       height: MediaQuery.of(context).size.height * 0.75,
@@ -1107,38 +1212,106 @@ class _EventParticipantsSheetState extends State<_EventParticipantsSheet> {
             const SizedBox(height: 8),
             // Names, Age, Class Grade — the member-facing list never shows phone numbers
             // or other personal details like exact DOB.
+            if (_isOrganiser)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(trId('long_press_to_remove'),
+                      style: TextStyle(
+                          fontSize: 11, color: context.cTextSecondary)),
+                ),
+              ),
             Expanded(
               child: ListView.separated(
                 itemCount: _names!.length,
                 separatorBuilder: (_, __) => Divider(color: context.cBorder),
                 itemBuilder: (ctx, i) {
                   final p = _names![i];
+                  final duplicated = (counts[p.fingerprint] ?? 0) > 1;
                   final details = [
                     if (p.age != null) '${p.age} years',
                     if (p.classGrade != null && p.classGrade!.isNotEmpty) p.classGrade,
                   ].join(' • ');
+                  final tint = duplicated ? AppColors.danger : AppColors.primary;
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: 15,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                      child: Text(
-                        p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary),
-                      ),
-                    ),
-                    title: Text(p.name,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, color: context.cText)),
-                    subtitle: details.isNotEmpty
-                        ? Text(details,
-                            style: TextStyle(fontSize: 11, color: context.cTextSecondary))
+                  return Container(
+                    // A repeat is tinted rather than hidden. The organiser is
+                    // the one who knows whether two "Anshika R, 12, Class 8"
+                    // are one child entered twice or twins — so the list points
+                    // at it and leaves the judgement where it belongs.
+                    decoration: duplicated
+                        ? BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: AppColors.danger.withValues(alpha: 0.35)),
+                          )
                         : null,
+                    margin: EdgeInsets.symmetric(vertical: duplicated ? 3 : 0),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: duplicated ? 8 : 0, vertical: duplicated ? 2 : 0),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      // Long-press, not a delete button beside every child's
+                      // name: this list is read far more often than edited, and
+                      // a row of red buttons is an accident waiting for a thumb.
+                      onLongPress: (_isOrganiser && p.id != null)
+                          ? () => _confirmDelete(p)
+                          : null,
+                      leading: CircleAvatar(
+                        radius: 15,
+                        backgroundColor: tint.withValues(alpha: 0.10),
+                        child: Text(
+                          p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: tint),
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(p.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: context.cText)),
+                          ),
+                          if (duplicated) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.danger.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                trId('repeated'),
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.4,
+                                    color: AppColors.danger),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      subtitle: details.isNotEmpty
+                          ? Text(details,
+                              style: TextStyle(
+                                  fontSize: 11, color: context.cTextSecondary))
+                          : null,
+                      trailing: (_isOrganiser && p.id != null)
+                          ? Icon(Icons.more_horiz_rounded,
+                              size: 16, color: context.cTextSecondary)
+                          : null,
+                    ),
                   );
                 },
               ),

@@ -13,6 +13,9 @@ abstract class EventDataSource {
   Future<void> deleteEvent(String eventId);
   Future<void> registerForEvent(String eventId, Map<String, dynamic> data);
   Future<List<dynamic>> fetchRegistrationsAdmin(String eventId);
+
+  /// Remove one registration. Organisers only — the server enforces it.
+  Future<void> deleteRegistration(String eventId, String registrationId);
 }
 
 class EventDataSourceImpl implements EventDataSource {
@@ -80,6 +83,16 @@ class EventDataSourceImpl implements EventDataSource {
       _client.dio.post('${ApiConstants.events}/$eventId/register', data: data);
 
   @override
+  @override
+  Future<void> deleteRegistration(String eventId, String registrationId) async {
+    try {
+      await _client.dio.delete(
+          '${ApiConstants.events}/$eventId/registrations/$registrationId');
+    } on DioException catch (e) {
+      throw mapDioException(e);
+    }
+  }
+
   Future<List<dynamic>> fetchRegistrationsAdmin(String eventId) async =>
       ((await _client.dio
                   .get('${ApiConstants.events}/$eventId/registrations'))

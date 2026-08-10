@@ -1502,4 +1502,9 @@ const Map<String, String> kMl = {
   'register_again': 'വീണ്ടും രജിസ്റ്റർ ചെയ്യുക',
   'what_kind_of_event': 'ഏത് തരം പരിപാടി?',
   'top_story': 'പ്രധാന വാർത്ത',
+  'remove_participant': 'പങ്കാളിയെ നീക്കണോ?',
+  'remove_participant_body': '{name} ({details}) ഈ പരിപാടിയിൽ നിന്ന് നീക്കണോ? ഇത് പഴയപടിയാക്കാനാവില്ല.',
+  'remove': 'നീക്കുക',
+  'repeated': 'ആവർത്തനം',
+  'long_press_to_remove': 'നീക്കാൻ പേരിൽ ദീർഘനേരം അമർത്തുക',
 };
