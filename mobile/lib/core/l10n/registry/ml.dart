@@ -1495,4 +1495,6 @@ const Map<String, String> kMl = {
   'close': 'അടയ്ക്കുക',
   'back': 'തിരികെ',
   'could_not_open_dialer': 'ഡയലർ തുറക്കാനായില്ല. വിളിക്കുക',
+  'go_to': 'ഇവിടേക്ക് പോകുക',
+  'results': 'ഫലങ്ങൾ',
 };

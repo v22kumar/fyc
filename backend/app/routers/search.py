@@ -1,159 +1,64 @@
-from typing import List, Optional, Any
-from uuid import UUID
+"""The search endpoint.
+
+Thin on purpose: it validates, delegates to `app.services.search`, and shapes
+the answer. The ranking, the destination catalogue and the list of searchable
+things all live in the service, where they can be read and tested without an
+HTTP client. This file used to hold all three, inline, as seven near-identical
+blocks — which is why nobody added an eighth, and why fourteen screens were
+never searchable.
+"""
+from typing import Any, List, Optional
+
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from app.core.database import get_db
 from app.dependencies import get_current_user_optional
 from app.middleware.tenant import require_tenant_id
-from app.models.user import User, UserProfile
-from app.models.event import Event
-from app.models.sports import Tournament, Team, Player
-from app.models.issue import PublicIssue
-from app.models.blood_donor import BloodDonor
-from app.models.announcement import Announcement
-from pydantic import BaseModel
+from app.services.search import search as run_search
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
+
 class SearchResult(BaseModel):
-    id: UUID
-    type: str # 'USER', 'EVENT', 'TOURNAMENT', 'TEAM', 'PLAYER', 'NEWS', 'ISSUE', 'BLOOD_DONOR'
+    # A string, not a UUID: a destination is identified by a slug ("events"),
+    # and forcing it into a UUID column is what kept places out of search.
+    id: str
+    type: str
     title: str
     subtitle: Optional[str] = None
     image_url: Optional[str] = None
+    # Where tapping this goes. Previously the app kept its own type→route map
+    # and sent every result to a section index, so finding one specific event
+    # landed you on the full list. The server knows what it found; it should
+    # say where the thing lives.
+    route: str
+    score: int
+
 
 @router.get("", response_model=List[SearchResult])
 def global_search(
     q: str = Query(..., min_length=2, description="Search query string"),
-    types: Optional[List[str]] = Query(None, description="Filter by types (e.g., USER, EVENT)"),
+    types: Optional[List[str]] = Query(
+        None, description="Restrict to types, e.g. DESTINATION, EVENT, USER"),
+    lang: str = Query("en", description="Language for destination titles"),
     db: Session = Depends(get_db),
     tenant_id: UUID = Depends(require_tenant_id),
-    current_user: Any = Depends(get_current_user_optional) # Optional for public vs private visibility
+    current_user: Any = Depends(get_current_user_optional),
 ):
+    """Everything that answers this query, best first.
+
+    One ranked list rather than a bag of per-type buckets: relevance is a
+    property of the whole result set, and the old shape made it impossible to
+    say that an exactly-named event beats a tournament that merely mentions it.
+
+    Results include **places** as well as things — see
+    `app.services.search_destinations`. A member typing "Events" gets the events
+    page, which is what they meant and what the old search could never return.
     """
-    Global search engine across the platform.
-    """
-    results = []
-    q_like = f"%{q}%"
-    filter_types = [t.upper() for t in types] if types else []
-
-    def should_search(t: str):
-        return not filter_types or t in filter_types
-
-    # Users / People — excludes imported Friends2Support donor contacts (they're
-    # directory entries, not real people to surface in a member search; they
-    # still appear under the blood-donor results below).
-    if should_search("USER"):
-        users = db.query(UserProfile).join(UserProfile.user).filter(
-            User.organization_id == tenant_id,
-            (User.source.is_(None)) | (User.source != "F2S_IMPORT"),
-            (UserProfile.full_name_en.ilike(q_like) | UserProfile.full_name_ta.ilike(q_like))
-        ).limit(10).all()
-        for u in users:
-            results.append(SearchResult(
-                id=u.user_id,
-                type="USER",
-                title=u.full_name_en or u.full_name_ta,
-                image_url=u.profile_image_url
-            ))
-
-    # Events
-    if should_search("EVENT"):
-        events = db.query(Event).filter(
-            Event.organization_id == tenant_id,
-            (Event.title_en.ilike(q_like) | Event.title_ta.ilike(q_like) | Event.description_en.ilike(q_like))
-        ).limit(10).all()
-        for e in events:
-            results.append(SearchResult(
-                id=e.id,
-                type="EVENT",
-                title=e.title_en or e.title_ta,
-                subtitle="Event",
-                image_url=e.banner_url
-            ))
-
-    # Tournaments
-    if should_search("TOURNAMENT"):
-        tournaments = db.query(Tournament).filter(
-            Tournament.organization_id == tenant_id,
-            (Tournament.name_en.ilike(q_like) | Tournament.name_ta.ilike(q_like) | Tournament.sport.ilike(q_like))
-        ).limit(10).all()
-        for t in tournaments:
-            results.append(SearchResult(
-                id=t.id,
-                type="TOURNAMENT",
-                title=t.name_en or t.name_ta,
-                subtitle=f"Sport: {t.sport}"
-            ))
-
-    # Teams
-    if should_search("TEAM"):
-        teams = db.query(Team).filter(
-            Team.organization_id == tenant_id,
-            Team.name.ilike(q_like)
-        ).limit(10).all()
-        for t in teams:
-            results.append(SearchResult(
-                id=t.id,
-                type="TEAM",
-                title=t.name,
-                subtitle="Team",
-                image_url=t.logo_url
-            ))
-
-    # News search omitted — there is no News model in the schema (public news
-    # is sourced from Google RSS, not a local table).
-
-    # Issues
-    if should_search("ISSUE"):
-        issues = db.query(PublicIssue).filter(
-            PublicIssue.organization_id == tenant_id,
-            (PublicIssue.description_en.ilike(q_like) | PublicIssue.description_ta.ilike(q_like))
-        ).limit(10).all()
-        for i in issues:
-            results.append(SearchResult(
-                id=i.id,
-                type="ISSUE",
-                title="Public Issue",
-                subtitle=i.description_en[:50] if i.description_en else "",
-                image_url=i.photo_url
-            ))
-
-    # Blood donors — matched by donor name (join to profile) or blood group,
-    # so a query like "O+" or a member's name both surface available donors.
-    if should_search("BLOOD_DONOR"):
-        donors = db.query(BloodDonor, UserProfile).join(
-            UserProfile, UserProfile.user_id == BloodDonor.user_id
-        ).filter(
-            BloodDonor.organization_id == tenant_id,
-            (BloodDonor.blood_group.ilike(q_like)
-             | UserProfile.full_name_en.ilike(q_like)
-             | UserProfile.full_name_ta.ilike(q_like))
-        ).limit(10).all()
-        for d, p in donors:
-            results.append(SearchResult(
-                id=d.id,
-                type="BLOOD_DONOR",
-                title=p.full_name_en or p.full_name_ta or "Donor",
-                subtitle=f"Blood Donor · {d.blood_group}",
-                image_url=p.profile_image_url,
-            ))
-
-    # Announcements
-    if should_search("ANNOUNCEMENT"):
-        anns = db.query(Announcement).filter(
-            Announcement.organization_id == tenant_id,
-            (Announcement.title_en.ilike(q_like)
-             | Announcement.title_ta.ilike(q_like)
-             | Announcement.body_en.ilike(q_like))
-        ).limit(10).all()
-        for a in anns:
-            results.append(SearchResult(
-                id=a.id,
-                type="ANNOUNCEMENT",
-                title=a.title_en or a.title_ta,
-                subtitle="Announcement",
-            ))
-
-    return results
+    return [
+        SearchResult(**hit._asdict())
+        for hit in run_search(db, q, tenant_id, lang=lang, types=types)
+    ]
