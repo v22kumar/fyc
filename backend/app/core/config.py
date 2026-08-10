@@ -183,6 +183,18 @@ class Settings(BaseSettings):
     #   flyctl secrets set APP_APK_URL=https://fyc-backend.fly.dev/uploads/fyc-connect-latest.apk
     APP_APK_URL: str = ""
 
+    # The one artifact the club hands out, when it is not the CI build.
+    #
+    # Set this to the "Signed, universal APK" downloaded from Play Console
+    # (Test & release → Latest releases and bundles → Downloads) and both the
+    # website and the in-app updater serve it. Both, deliberately and together:
+    # Play re-signs with its own key, so a Play-signed APK and a CI-signed one
+    # cannot replace each other. If the website handed out one and the updater
+    # the other, a member would install fine and then be unable to ever update
+    # — Android refuses the swap, and the app would nag for a version it could
+    # not install. One setting, read in both places, so they cannot drift.
+    APK_DOWNLOAD_URL: str = ""
+
     # In-app updater: latest published Android build. Set by the flutter-build CI
     # on every release so the app can detect a newer version and offer to update.
     APP_LATEST_VERSION_CODE: int = 0          # numeric build number (must increase)
