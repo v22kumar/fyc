@@ -97,7 +97,7 @@ def run_birthday_notifications() -> None:
 
             # A member who switched off public celebration gets ONLY the
             # private greeting — the club is not told.
-            if not getattr(profile, "celebrate_publicly", True):
+            if getattr(profile, "celebrate_publicly", None) is False:
                 logger.info("[birthday] %s celebrates privately; club not told",
                             name_en)
                 continue

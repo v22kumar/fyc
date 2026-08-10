@@ -168,3 +168,23 @@ def test_milestone_anniversaries_carry_their_ordinal(client, db):
     assert got["Birthday Person"]["years"] is None, \
         "an age is nobody's announcement to make"
 
+
+def test_a_legacy_row_with_null_flag_is_still_announced(client, db):
+    """Production rows existed before the column did — NULL means the member
+    never chose, and never-chose counts as public (the pre-feature default)."""
+    org = _make_org(db)
+    today = datetime.date.today()
+    _make_user(db, org.id, "9910000018", name="Viewer")
+    legacy = _make_user(db, org.id, "9910000019", name="Legacy Member",
+                        dob=datetime.date(1990, today.month, today.day))
+    profile = db.query(UserProfile).filter(
+        UserProfile.user_id == legacy.id).first()
+    profile.celebrate_publicly = None
+    db.commit()
+    H = _h(org.id, _login(client, org.id, "9910000018"))
+
+    names = {c["full_name_en"]
+             for c in client.get("/api/v1/users/celebrations/today",
+                                 headers=H).json()}
+    assert "Legacy Member" in names
+

@@ -365,6 +365,11 @@ async def lifespan(app: FastAPI):
                         # ADD COLUMN. Such columns are added nullable instead.
                         sd = getattr(col.server_default, "arg", None)
                         if sd is not None and isinstance(sd, (str, int, float)):
+                            # Postgres rejects integer defaults on BOOLEAN
+                            # ('DEFAULT 1'); translate to true/false first.
+                            from sqlalchemy import Boolean as _Bool
+                            if isinstance(col.type, _Bool) and str(sd) in ("0", "1"):
+                                sd = "true" if str(sd) == "1" else "false"
                             ddl += f" DEFAULT {sd}"
                         for attempt in range(3):
                             try:
