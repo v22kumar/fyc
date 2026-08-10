@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../features/auth/presentation/bloc/auth_state.dart';
+import '../../../features/auth/presentation/widgets/sign_in_sheet.dart';
 import '../../services/shake_detector.dart';
 import '../../services/sos_service.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +31,35 @@ class AppShellV2 extends StatefulWidget {
   /// router wires this to the Home create-actions sheet.
   final VoidCallback? onCreate;
 
-  const AppShellV2({super.key, this.tabs, this.onCreate});
+  /// Whether opening the app asks who you are, once, before anything else.
+  ///
+  /// The club's call, and it overrides the older "no door" stance: a member
+  /// should be met by the sign-in sheet the moment the app opens, so signing in
+  /// is the default rather than something you have to go looking for. Ignoring
+  /// it is a real answer — dismiss and the whole noticeboard is still there,
+  /// exactly as before. Once signed in, the session is stored and this never
+  /// appears again.
+  ///
+  /// Off by default so the design-system gallery and widget tests can mount the
+  /// shell without a modal opening over them.
+  final bool askWhoYouAreOnLaunch;
+
+  const AppShellV2({
+    super.key,
+    this.tabs,
+    this.onCreate,
+    this.askWhoYouAreOnLaunch = false,
+  });
+
+  /// Whether this launch has already asked. Once per launch, not once per
+  /// rebuild: the shell rebuilds on every tab change and on `/app` ↔ `/v2`, and
+  /// a sheet that reappears after being dismissed is nagging, not asking.
+  ///
+  /// Process-lifetime on purpose — "next launch" means the next launch, and a
+  /// member who said no is left alone until then. Tests share one process, so
+  /// they reset it between cases.
+  @visibleForTesting
+  static bool askedThisLaunch = false;
 
   @override
   State<AppShellV2> createState() => _AppShellV2State();
@@ -62,6 +94,34 @@ class _AppShellV2State extends State<AppShellV2> {
     _initShake();
     // React live to the Safety-settings toggle — no app restart needed.
     SosService.shakeToTriggerListenable.addListener(_applyShakePref);
+    if (widget.askWhoYouAreOnLaunch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _askWhoYouAre());
+    }
+  }
+
+  /// Meet the member at the door, unless we already know them.
+  ///
+  /// The wait matters. At this point the startup session check may still be in
+  /// flight, and the bloc's state is `AuthInitial` — which is not "signed out",
+  /// it is "we haven't looked yet". Asking on that would put a login sheet in
+  /// front of somebody who has been signed in for months, every single launch.
+  /// So we wait for the check to settle, and only ask if the answer is really
+  /// nobody. The timeout is the honest fallback: if the keyring or the network
+  /// never answers, asking is better than a door that never opens.
+  Future<void> _askWhoYouAre() async {
+    if (AppShellV2.askedThisLaunch || !mounted) return;
+    AppShellV2.askedThisLaunch = true;
+
+    final auth = context.read<AuthBloc>();
+    var state = auth.state;
+    if (state is! AuthAuthenticated && state is! AuthUnauthenticated) {
+      state = await auth.stream
+          .firstWhere((s) => s is AuthAuthenticated || s is AuthUnauthenticated)
+          .timeout(const Duration(seconds: 5), onTimeout: () => auth.state);
+    }
+    if (state is AuthAuthenticated) return; // we know them — never ask again
+    if (!mounted) return;
+    await SignInSheet.ensure(context);
   }
 
   // Shake-to-trigger opens the same Safety Center sheet as the SOS button —
