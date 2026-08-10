@@ -1501,4 +1501,5 @@ const Map<String, String> kHi = {
   'already_registered_body': '{name} ({details}) पहले से इस कार्यक्रम के लिए पंजीकृत है। फिर से पंजीकरण करें?',
   'register_again': 'फिर से पंजीकरण करें',
   'what_kind_of_event': 'किस प्रकार का कार्यक्रम?',
+  'top_story': 'मुख्य समाचार',
 };

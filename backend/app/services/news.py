@@ -141,8 +141,135 @@ def parse_rss(xml_text: str) -> list[dict]:
             "source": source,
             "link": link,
             "published_at": _parse_pubdate(item.findtext("pubDate")),
+            "image_url": _image_from_rss(item),
         })
     return items
+
+
+# ── Pictures ─────────────────────────────────────────────────────────────────
+#
+# Google News RSS carries no images. Its <description> is a list of links and
+# its items have no media:content, no enclosure, nothing — which is why the
+# news card has always been a wall of text while every news app people actually
+# use is led by pictures.
+#
+# The image lives on the publisher's page, in the og:image meta tag that exists
+# precisely so a link can be shown with a picture. Getting it means following
+# Google's redirect to the publisher and reading the first few KB of their HTML.
+#
+# Three rules keep that from becoming a liability:
+#
+#   * **Never on the critical path.** Headlines are returned whether or not a
+#     picture was found. A slow publisher costs a picture, never a news card.
+#   * **Only the few that show one.** The hero and the top rows; nobody scrolls
+#     forty items on a home screen.
+#   * **Remembered.** An article's picture does not change, so it is looked up
+#     once and kept for a day. The 30-minute news refresh reuses it.
+_IMAGE_CACHE: dict[str, tuple[float, Optional[str]]] = {}
+_IMAGE_TTL_SECONDS = 24 * 60 * 60
+_IMAGE_BUDGET_SECONDS = 6.0
+_IMAGE_FETCH_TIMEOUT = 4.0
+_IMAGES_PER_FEED = 8
+_HTML_HEAD_BYTES = 60_000
+
+_OG_IMAGE_RE = re.compile(
+    r'<meta[^>]+(?:property|name)=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+    re.IGNORECASE)
+_OG_IMAGE_REVERSED_RE = re.compile(
+    r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']og:image["\']',
+    re.IGNORECASE)
+_TWITTER_IMAGE_RE = re.compile(
+    r'<meta[^>]+(?:property|name)=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+    re.IGNORECASE)
+
+
+def _image_from_rss(item) -> Optional[str]:
+    """A picture the feed handed us outright, if it ever does.
+
+    Google News does not, but these feeds are swapped and extended over time
+    and reading the standard fields costs nothing.
+    """
+    for path, attr in (
+        ("{http://search.yahoo.com/mrss/}content", "url"),
+        ("{http://search.yahoo.com/mrss/}thumbnail", "url"),
+        ("enclosure", "url"),
+    ):
+        el = item.find(path)
+        if el is not None:
+            url = (el.get(attr) or "").strip()
+            if url.startswith("http"):
+                return url
+    description = item.findtext("description") or ""
+    match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description, re.IGNORECASE)
+    if match and match.group(1).startswith("http"):
+        return match.group(1)
+    return None
+
+
+async def _og_image(client: httpx.AsyncClient, link: str) -> Optional[str]:
+    """The publisher's own picture for this article, or None.
+
+    Reads only the head of the document: og:image is a meta tag, so the answer
+    is in the first few KB and pulling a megabyte of article body to find it
+    would be rude to them and slow for us.
+    """
+    now = datetime.now(timezone.utc).timestamp()
+    hit = _IMAGE_CACHE.get(link)
+    if hit and now - hit[0] < _IMAGE_TTL_SECONDS:
+        return hit[1]
+
+    found: Optional[str] = None
+    try:
+        response = await client.get(
+            link,
+            headers={"User-Agent": _USER_AGENT},
+            timeout=_IMAGE_FETCH_TIMEOUT,
+            follow_redirects=True,
+        )
+        head = response.text[:_HTML_HEAD_BYTES]
+        for pattern in (_OG_IMAGE_RE, _OG_IMAGE_REVERSED_RE, _TWITTER_IMAGE_RE):
+            match = pattern.search(head)
+            if match:
+                candidate = html.unescape(match.group(1).strip())
+                if candidate.startswith("//"):
+                    candidate = "https:" + candidate
+                if candidate.startswith("http"):
+                    found = candidate
+                    break
+    except Exception:
+        # A publisher that is slow, blocking us, or serving something that is
+        # not HTML costs this one picture. Nothing else.
+        found = None
+
+    _IMAGE_CACHE[link] = (now, found)
+    return found
+
+
+async def _attach_images(items: list[dict]) -> None:
+    """Fill in `image_url` for the items that will show one.
+
+    Bounded twice over — by how many are enriched and by a wall-clock budget —
+    so a bad morning on somebody else's website can never hold up the club's
+    home screen. Whatever has arrived when the budget runs out is what gets
+    used.
+    """
+    pending = [i for i in items[:_IMAGES_PER_FEED] if not i.get("image_url")]
+    if not pending:
+        return
+    try:
+        async with httpx.AsyncClient() as client:
+            results = await asyncio.wait_for(
+                asyncio.gather(
+                    *(_og_image(client, i["link"]) for i in pending),
+                    return_exceptions=True,
+                ),
+                timeout=_IMAGE_BUDGET_SECONDS,
+            )
+        for item, result in zip(pending, results):
+            if isinstance(result, str):
+                item["image_url"] = result
+    except Exception:
+        logger.info("[news] image enrichment gave up within its budget")
 
 
 async def _fetch(url: str) -> list[dict]:
@@ -154,7 +281,9 @@ async def _fetch(url: str) -> list[dict]:
             follow_redirects=True,
         )
     response.raise_for_status()
-    return parse_rss(response.text)
+    items = parse_rss(response.text)
+    await _attach_images(items)
+    return items
 
 
 async def _get_cached(cache_dict: dict, url: str, limit: int) -> list[dict]:
