@@ -546,7 +546,8 @@ def celebrations_today(
         .join(UserProfile, UserProfile.user_id == User.id)
         .filter(
             User.organization_id == current_user.organization_id,
-            UserProfile.celebrate_publicly.is_(True),
+            # NULL (never chose) counts as public; only explicit False hides.
+            UserProfile.celebrate_publicly.isnot(False),
         )
         .all()
     )
@@ -633,7 +634,7 @@ def member_card(
     def _dm(d):
         return f"{d.month:02d}-{d.day:02d}" if d else None
 
-    public = bool(profile.celebrate_publicly)
+    public = profile.celebrate_publicly is not False
     dob = profile.date_of_birth
     ann = profile.wedding_anniversary
     return MemberCardOut(

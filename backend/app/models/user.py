@@ -65,8 +65,12 @@ class UserProfile(Base):
     # Only day and month are ever shown publicly; the year (someone's age,
     # someone's wedding year) never leaves the profile.
     wedding_anniversary = Column(Date, nullable=True)
-    celebrate_publicly = Column(Boolean(), nullable=False, default=True,
-                                server_default="1")
+    # Nullable with NO server default, deliberately: the startup reconcile
+    # adds missing columns with a plain ADD COLUMN, and Postgres rejects
+    # `BOOLEAN DEFAULT 1` (an integer default on a boolean) — which left this
+    # column missing in production and 500'd every query selecting a profile.
+    # NULL means "never chose" and is treated as public wherever it is read.
+    celebrate_publicly = Column(Boolean(), nullable=True, default=True)
     profile_image_url = Column(String(255), nullable=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
