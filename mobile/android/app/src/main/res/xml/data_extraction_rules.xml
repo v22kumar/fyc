@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31) governs cloud backup and device-to-device transfer
+  separately from android:allowBackup. Both are refused here for the same
+  reason: this app's "you are signed in" marker lives in SharedPreferences
+  while the token itself lives in the Keystore, and the Keystore key CANNOT
+  travel. Restoring the preferences without the token produced an app that
+  believed it had a session it did not have — it opened straight past the
+  login screen with nobody signed in.
+
+  A member reinstalling should sign in again. That is one OTP, once.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" />
+        <exclude domain="database" />
+        <exclude domain="file" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" />
+        <exclude domain="database" />
+        <exclude domain="file" />
+    </device-transfer>
+</data-extraction-rules>

@@ -60,9 +60,21 @@ AuthBloc _bloc(_Repo repo, LocalStorage storage) => AuthBloc(
       storage: storage,
     );
 
-Future<LocalStorage> _storageWith({required bool signedIn, Map<String, Object>? extra}) async {
+/// A genuinely signed-in member has BOTH the marker and a token.
+///
+/// These fixtures used to set only the marker — the same assumption that let
+/// Android auto-backup restore a "session" onto a fresh install with no token
+/// and open the app as nobody. The token is seeded in the legacy plaintext
+/// slot because the Keystore has no platform channel under `flutter test`;
+/// getToken() migrates it, which is the path a real upgrade takes anyway.
+Future<LocalStorage> _storageWith({
+  required bool signedIn,
+  bool withToken = true,
+  Map<String, Object>? extra,
+}) async {
   SharedPreferences.setMockInitialValues({
     if (signedIn) 'fyc_has_session': true,
+    if (signedIn && withToken) 'fyc_auth_token': 'a-real-token',
     ...?extra,
   });
   return LocalStorage(await SharedPreferences.getInstance());
@@ -82,7 +94,7 @@ void main() {
     bloc.stream.listen(states.add);
 
     bloc.add(const AuthCheckRequested());
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
 
     expect(states.first, isA<AuthAuthenticated>(),
         reason: 'the cached profile arrives before any request completes');
@@ -164,5 +176,32 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
 
     expect(bloc.state, isA<AuthUnauthenticated>());
+  });
+
+  test('a restored session marker without a token does not open the app',
+      () async {
+    // The reinstall bug, exactly: Android auto-backup puts `fyc_has_session`
+    // and the cached profile back on a FRESH install, but the token lives in
+    // the Keystore and cannot travel. The app skipped the login screen and
+    // opened as somebody it could not name — signed in on paper, anonymous in
+    // fact, which is the "?" where the member's name belongs.
+    final storage = await _storageWith(signedIn: true, withToken: false);
+    await storage.saveCachedUser(_arun.toJson());
+
+    final repo = _Repo(const Right(_arun));
+    final bloc = _bloc(repo, storage);
+    addTearDown(bloc.close);
+
+    final states = <AuthState>[];
+    bloc.stream.listen(states.add);
+
+    bloc.add(const AuthCheckRequested());
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(states.last, isA<AuthUnauthenticated>(),
+        reason: 'no token is no session — the member lands on login, '
+            'without needing the network to discover it');
+    expect(storage.getCachedUser(), isNull,
+        reason: 'the restored profile is cleared, so nothing lingers');
   });
 }

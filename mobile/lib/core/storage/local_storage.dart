@@ -69,6 +69,18 @@ class LocalStorage {
     await _prefs.setBool(AppConstants.hasSessionKey, true);
   }
 
+  /// Whether a usable token actually exists.
+  ///
+  /// [isLoggedIn] reads a plain boolean in SharedPreferences, which Android's
+  /// auto-backup happily restores onto a FRESH INSTALL — while the token it
+  /// stands for lives in the Keystore and cannot travel. The app then believed
+  /// it had a session it did not have and opened straight past the login
+  /// screen with nobody signed in. The flag is a hint; this is the truth.
+  Future<bool> hasToken() async {
+    final t = await getToken();
+    return t != null && t.isNotEmpty;
+  }
+
   Future<String?> getToken() async {
     if (_useDebugToken) return _debugToken;
     return _secureRead(AppConstants.tokenKey)

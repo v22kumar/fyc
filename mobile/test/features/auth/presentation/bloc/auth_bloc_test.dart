@@ -43,6 +43,10 @@ void main() {
     storage = MockLocalStorage();
 
     when(() => storage.isLoggedIn).thenReturn(false);
+    // A signed-in member has a token; the session gate now asks for it
+    // rather than trusting the marker alone.
+    when(() => storage.hasToken()).thenAnswer((_) async => true);
+    when(() => storage.clearToken()).thenAnswer((_) async {});
     // The bloc now remembers the last confirmed profile so the app opens
     // knowing whose it is. These tests exercise the no-cache path — a fresh
     // install — so the reads answer null and the writes are no-ops.

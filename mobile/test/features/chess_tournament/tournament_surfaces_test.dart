@@ -57,7 +57,10 @@ Future<FakeTournamentRepository> _pump(
   required UserModel as,
   double textScale = 1.0,
 }) async {
-  SharedPreferences.setMockInitialValues({'fyc_has_session': true});
+  SharedPreferences.setMockInitialValues(
+      // Marker AND token: a signed-in member has both. Seeding only
+      // the marker is the reinstall bug the session gate now refuses.
+      {'fyc_has_session': true, 'fyc_auth_token': 'test-token'});
   final prefs = await SharedPreferences.getInstance();
   final storage = LocalStorage(prefs);
   await storage.saveLang('en');
