@@ -89,3 +89,43 @@ def test_one_persons_retries_never_block_the_person_beside_them(client, db,
 
     assert _send(client, org.id, "+919000000002").status_code == 200, \
         "a neighbour's impatience is not this player's problem"
+
+
+def test_a_refused_number_is_counted_not_just_logged(client, db, monkeypatch):
+    """"It works for me and not for them" needs a number, not a log.
+
+    A trial SMS plan only delivers to numbers verified in the provider's
+    console. The owner's phone works; every player's does not — and from the
+    server's side nothing looks wrong, because the request succeeded and the
+    message simply never arrived. On the morning sixty players try at once
+    that distinction is the whole event.
+    """
+    _clear()
+    org = _org(db)
+    before = auth_router.delivery_report()["refused"]
+
+    monkeypatch.setattr(auth_router.settings, "TWILIO_VERIFY_SID", "VAtest",
+                        raising=False)
+    monkeypatch.setattr(auth_router.settings, "OTP_BYPASS_CODE", "",
+                        raising=False)
+    # Twilio refuses this number, and so does every fallback.
+    monkeypatch.setattr(auth_router, "send_verify_otp", lambda phone: False)
+    monkeypatch.setattr(auth_router, "deliver_otp",
+                        lambda phone, otp, email=None: {"whatsapp": False,
+                                                        "email": False})
+
+    r = _send(client, org.id, "+919363608792")
+    assert r.status_code == 502, "the club is told nobody could carry it"
+    assert "organizer" in r.json()["detail"].lower()
+    assert auth_router.delivery_report()["refused"] == before + 1
+
+
+def test_a_delivered_code_is_counted_by_channel(client, db, monkeypatch):
+    _clear()
+    org = _org(db)
+    monkeypatch.setattr(auth_router.settings, "TWILIO_VERIFY_SID", "VAtest",
+                        raising=False)
+    monkeypatch.setattr(auth_router, "send_verify_otp", lambda phone: True)
+
+    assert _send(client, org.id, "+919000000123").status_code == 200
+    assert auth_router.delivery_report()["by_channel"].get("sms", 0) >= 1
