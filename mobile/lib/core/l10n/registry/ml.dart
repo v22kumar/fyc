@@ -1507,4 +1507,6 @@ const Map<String, String> kMl = {
   'remove': 'നീക്കുക',
   'repeated': 'ആവർത്തനം',
   'long_press_to_remove': 'നീക്കാൻ പേരിൽ ദീർഘനേരം അമർത്തുക',
+  'report_photo_sending': "ഫോട്ടോ അയയ്ക്കുന്നു — ഒരു നിമിഷം",
+  'report_photo_failed': "ഫോട്ടോ അപ്‌ലോഡ് ആയില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.",
 };

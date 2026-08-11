@@ -1507,4 +1507,6 @@ const Map<String, String> kHi = {
   'remove': 'हटाएँ',
   'repeated': 'दोहराव',
   'long_press_to_remove': 'हटाने के लिए नाम को देर तक दबाएँ',
+  'report_photo_sending': "फ़ोटो भेजी जा रही है — एक क्षण",
+  'report_photo_failed': "फ़ोटो अपलोड नहीं हुई। दोबारा कोशिश करने के लिए टैप करें।",
 };

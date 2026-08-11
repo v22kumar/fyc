@@ -47,6 +47,22 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   Uint8List? _photo;
   String? _photoUrl;
   bool _uploading = false;
+
+  /// The upload in flight, so Send can wait for it rather than refuse.
+  ///
+  /// The preview appears the instant the shutter closes, but the *report*
+  /// needs a URL, and that arrives seconds later. Somebody who filled the form
+  /// quickly and pressed Send was told "Add a photo so the officer can see it"
+  /// while looking straight at their photo — an instruction they could not
+  /// follow, about a thing they had already done.
+  Future<void>? _uploadInFlight;
+
+  /// Set when the upload genuinely failed, as opposed to still running.
+  ///
+  /// It used to be neither: the failure was caught, `_photoUrl` was quietly
+  /// set to null, and nothing was said. The comment beside it read "they can
+  /// send again" — but nothing on the screen ever told them to.
+  bool _uploadFailed = false;
   String? _kind;
   double? _lat;
   double? _lng;
@@ -91,37 +107,65 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   }
 
   Future<void> _takePhoto() async {
-    try {
-      final picked = await ImagePicker().pickImage(
-        source: ImageSource.camera,
-        imageQuality: 70,
-        maxWidth: 1280,
-      );
-      if (picked == null || !mounted) return;
-      final bytes = await picked.readAsBytes();
-      setState(() {
-        _photo = bytes;
-        _uploading = true;
-      });
-      final url = await widget.repo.uploadPhoto(bytes);
-      if (!mounted) return;
-      setState(() => _photoUrl = url);
-    } catch (_) {
-      // A failed upload must not take the photo away — they can send again.
-      if (mounted) setState(() => _photoUrl = null);
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+      maxWidth: 1280,
+    );
+    if (picked == null || !mounted) return;
+    final bytes = await picked.readAsBytes();
+    setState(() {
+      _photo = bytes;
+      _uploadFailed = false;
+      _photoUrl = null;
+    });
+    await _upload(bytes);
+  }
+
+  Future<void> _upload(Uint8List bytes) async {
+    setState(() => _uploading = true);
+    final future = () async {
+      try {
+        final url = await widget.repo.uploadPhoto(bytes);
+        if (!mounted) return;
+        setState(() {
+          _photoUrl = url;
+          _uploadFailed = false;
+        });
+      } catch (_) {
+        // The photo stays on screen — it is still the right photo. What
+        // changes is that the screen now says so out loud, and offers the
+        // retry the old comment only promised.
+        if (mounted) setState(() => _uploadFailed = true);
+      } finally {
+        if (mounted) setState(() => _uploading = false);
+      }
+    }();
+    _uploadInFlight = future;
+    await future;
   }
 
   String? _whatIsMissing() {
-    if (_photoUrl == null) return trId('report_photo_needed');
+    // The three states of a photo are not one state. Telling somebody to add
+    // a photo they are looking at is worse than saying nothing.
+    if (_photo == null) return trId('report_photo_needed');
+    if (_uploadFailed) return trId('report_photo_failed');
+    if (_photoUrl == null) return trId('report_photo_sending');
     if (_kind == null) return trId('report_category_needed');
     if (_words.text.trim().isEmpty) return trId('report_words_needed');
     return null;
   }
 
   Future<void> _send() async {
+    // They pressed Send while the photo was still going up. Finish the job
+    // rather than refuse it — the alternative is telling somebody to do a
+    // thing they have already done.
+    if (_uploading && _uploadInFlight != null) {
+      setState(() => _sending = true);
+      await _uploadInFlight;
+      if (!mounted) return;
+      setState(() => _sending = false);
+    }
     final missing = _whatIsMissing();
     if (missing != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -252,7 +296,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           _PhotoBox(
             photo: _photo,
             uploading: _uploading,
+            failed: _uploadFailed,
             onTap: _takePhoto,
+            onRetry: () {
+              final bytes = _photo;
+              if (bytes != null) _upload(bytes);
+            },
           ),
           const SizedBox(height: 6),
           Text(
@@ -432,8 +481,16 @@ class _StepLabel extends StatelessWidget {
 class _PhotoBox extends StatelessWidget {
   final Uint8List? photo;
   final bool uploading;
+  final bool failed;
   final VoidCallback onTap;
-  const _PhotoBox({required this.photo, required this.uploading, required this.onTap});
+  final VoidCallback onRetry;
+  const _PhotoBox({
+    required this.photo,
+    required this.uploading,
+    required this.failed,
+    required this.onTap,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -468,6 +525,32 @@ class _PhotoBox extends StatelessWidget {
                       color: Colors.black38,
                       alignment: Alignment.center,
                       child: const CircularProgressIndicator(color: Colors.white),
+                    ),
+                  // A failure that is only described in a line of text below
+                  // the picture is a failure nobody acts on. It is said here,
+                  // on the thing that failed, and tapping it tries again.
+                  if (failed && !uploading)
+                    GestureDetector(
+                      onTap: onRetry,
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.refresh_rounded,
+                                size: 34, color: AppColors.danger),
+                            const SizedBox(height: 8),
+                            Text(
+                              trId('report_photo_failed'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   Positioned(
                     right: 10, bottom: 10,

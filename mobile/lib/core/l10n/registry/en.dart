@@ -1507,4 +1507,6 @@ const Map<String, String> kEn = {
   'remove': 'Remove',
   'repeated': 'REPEAT',
   'long_press_to_remove': 'Long-press a name to remove it',
+  'report_photo_sending': "Still sending your photo — one moment",
+  'report_photo_failed': "The photo didn't upload. Tap it to try again.",
 };
