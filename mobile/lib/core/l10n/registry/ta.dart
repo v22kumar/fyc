@@ -1507,4 +1507,6 @@ const Map<String, String> kTa = {
   'remove': 'நீக்கு',
   'repeated': 'மீண்டும்',
   'long_press_to_remove': 'நீக்க பெயரை நீண்ட நேரம் அழுத்தவும்',
+  'report_photo_sending': "புகைப்படம் அனுப்பப்படுகிறது — ஒரு நிமிடம்",
+  'report_photo_failed': "புகைப்படம் பதிவேற்றப்படவில்லை. மீண்டும் முயற்சிக்க அழுத்தவும்.",
 };
