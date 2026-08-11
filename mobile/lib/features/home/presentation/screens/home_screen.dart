@@ -291,7 +291,7 @@ class _Header extends StatelessWidget {
                   border: Border.all(color: AppColors.background.withValues(alpha: 0.25)),
                 ),
                 child: Image.asset(
-                  'assets/images/fyc_mark.png',
+                  'assets/images/fyc_mark.webp',
                   width: 26,
                   height: 26,
                   errorBuilder: (_, __, ___) => const Icon(Icons.eco_rounded, size: 14, color: Colors.white70),
@@ -325,7 +325,7 @@ class _Header extends StatelessWidget {
                   child: Opacity(
                     opacity: 0.32,
                     child: Image.asset(
-                      'assets/images/hero_community.png',
+                      'assets/images/hero_community.webp',
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),

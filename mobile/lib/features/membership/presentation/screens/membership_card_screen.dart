@@ -242,7 +242,7 @@ class _CardFront extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.asset(
-                        'assets/images/fyc_mark.png',
+                        'assets/images/fyc_mark.webp',
                         width: 48,
                         height: 48,
                         fit: BoxFit.contain,
@@ -625,7 +625,7 @@ class _NoCardView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/fyc_mark.png',
+              'assets/images/fyc_mark.webp',
               width: 80,
               height: 80,
               errorBuilder: (_, __, ___) =>

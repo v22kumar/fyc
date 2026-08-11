@@ -223,7 +223,7 @@ class _UpdateSheetBodyState extends State<_UpdateSheetBody> {
                         offset: const Offset(0, 6)),
                   ],
                 ),
-                child: Image.asset('assets/images/fyc_mark.png',
+                child: Image.asset('assets/images/fyc_mark.webp',
                     errorBuilder: (_, __, ___) =>
                         Icon(Icons.system_update, color: AppColors.background)),
               ),

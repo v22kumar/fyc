@@ -151,7 +151,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
     if (events.isEmpty) {
       return EmptyState(
         icon: Icons.event_rounded,
-        imageAsset: 'assets/illustrations/empty_events.png',
+        imageAsset: 'assets/illustrations/empty_events.webp',
         title: trId('no_events_right_now'),
         message: trId('check_back_later_for_upcoming_community'),
         buttonText: trId('refresh'),
@@ -345,12 +345,12 @@ class _EventCard extends StatelessWidget {
                           event.bannerUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Image.asset(
-                            'assets/images/event_placeholder.png',
+                            'assets/images/event_placeholder.webp',
                             fit: BoxFit.cover,
                           ),
                         )
                       : Image.asset(
-                          'assets/images/event_placeholder.png',
+                          'assets/images/event_placeholder.webp',
                           fit: BoxFit.cover,
                         ),
                 ),

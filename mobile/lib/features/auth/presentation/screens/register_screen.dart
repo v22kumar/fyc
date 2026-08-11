@@ -240,7 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                             ],
                           ),
                           child: Image.asset(
-                            'assets/images/fyc_mark.png',
+                            'assets/images/fyc_mark.webp',
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>

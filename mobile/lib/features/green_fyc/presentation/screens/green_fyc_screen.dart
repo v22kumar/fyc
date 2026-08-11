@@ -71,7 +71,7 @@ class _GreenFycScreenState extends State<GreenFycScreen> {
                         fit: StackFit.expand,
                         children: [
                           Image.asset(
-                            'assets/images/impact_sapling.png',
+                            'assets/images/impact_sapling.webp',
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                                 color: AppColors.primary.withValues(alpha: 0.15)),
