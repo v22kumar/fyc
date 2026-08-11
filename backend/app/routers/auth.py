@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import hmac
 import secrets
 import uuid
@@ -21,6 +22,7 @@ from app.models.club_request import ClubMemberRequest
 from app.models.otp import PendingOtp
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 OTP_TTL_MINUTES = 10
@@ -113,6 +115,20 @@ def _otp_sweep(db: Session) -> None:
         db.rollback()
 
 
+def delivery_report() -> dict:
+    """How many codes actually went out, and how many nobody could carry.
+
+    Counts only — never a number, never a code. `refused` climbing while `sent`
+    stays flat is one specific thing: the SMS provider is rejecting numbers it
+    has not been told about, which is what a trial plan does.
+    """
+    return {
+        "sent": _delivery["sent"],
+        "refused": _delivery["refused"],
+        "by_channel": dict(_delivery_by_channel),
+    }
+
+
 def _generate_otp() -> str:
     """Return a fixed bypass code in test/dev, or a random 6-digit code otherwise."""
     if settings.OTP_BYPASS_CODE:
@@ -139,6 +155,16 @@ def _generate_otp() -> str:
 _OTP_PER_PHONE = 3
 _OTP_PHONE_WINDOW_SECONDS = 600
 _otp_sends: Dict[str, list] = {}
+
+# Delivery outcomes, so "nobody can sign in" is answerable without a log.
+#
+# A code that never arrives is invisible from the server's side: the request
+# succeeded, the member simply never got a message. On a trial SMS account
+# every number except the ones verified in the provider's console is refused —
+# which looks exactly like "it works for me and not for them", and is
+# catastrophic the morning sixty players try at once.
+_delivery: Dict[str, int] = {"sent": 0, "refused": 0}
+_delivery_by_channel: Dict[str, int] = {}
 
 # Flipped on by the throttle's own tests, which need the real behaviour.
 _throttle_in_tests = False
@@ -222,6 +248,10 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
         channel = next((name for name, ok in results.items() if ok), None)
 
     if channel is None:
+        _delivery["refused"] += 1
+        logger.warning(
+            "[otp] every channel refused this number — check the SMS provider "
+            "is not on a trial plan that only allows verified numbers")
         # Nothing carried it. A bypass code means this is dev or staging, where
         # a log line is the delivery channel.
         if not settings.OTP_BYPASS_CODE:
@@ -233,6 +263,8 @@ def send_otp(request: Request, payload: OTPRequest, db: Session = Depends(get_db
             )
         channel = "log"
 
+    _delivery["sent"] += 1
+    _delivery_by_channel[channel] = _delivery_by_channel.get(channel, 0) + 1
     return OTPResponse(
         message="OTP sent successfully",
         verification_id=verification_id,

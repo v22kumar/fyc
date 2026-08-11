@@ -1070,6 +1070,11 @@ def auth_channels_check(db: Session = Depends(get_db)):
         "environment": settings.ENVIRONMENT,
         "allowed_origins": settings.allowed_origins_list,
         "session_store": _session_store_report(db),
+        # Whether codes are actually reaching phones. A request can succeed
+        # while the message never arrives — that failure is invisible unless
+        # it is counted.
+        "delivery": __import__(
+            "app.routers.auth", fromlist=["delivery_report"]).delivery_report(),
     }
 
 

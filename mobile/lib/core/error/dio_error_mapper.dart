@@ -46,6 +46,26 @@ Failure mapDioException(DioException e) {
   }
 
   final statusCode = e.response?.statusCode ?? 0;
+
+  // 502/503 are the server telling us somebody ELSE failed — an SMS gateway
+  // that refused the number, a provider that is down. It writes those messages
+  // for members to read, and they are the only useful thing on the screen:
+  //
+  //   "We could not send your code by SMS, WhatsApp or email.
+  //    Please ask an organizer to let you in."
+  //
+  // That was being replaced with "Something went wrong on our end. Please try
+  // again in a moment." — which is wrong twice over. Nothing went wrong on our
+  // end, and trying again in a moment will fail exactly the same way. A member
+  // stood at a registration desk retrying a thing that could never work, with
+  // no idea that an organiser could let them in.
+  //
+  // 500 keeps the canned message: an unhandled exception's detail is an
+  // internal leak, not an explanation.
+  if (statusCode == 502 || statusCode == 503) {
+    return ServerFailure(serverMsg ??
+        'A service we rely on is not answering. Please try again shortly.');
+  }
   if (statusCode >= 500) {
     return const ServerFailure('Something went wrong on our end. Please try again in a moment.');
   }
