@@ -134,7 +134,7 @@ class _SportsHubScreenState extends State<SportsHubScreen> {
               fit: StackFit.expand,
               children: [
                 Image.asset(
-                  'assets/images/sports_cricket.png',
+                  'assets/images/sports_cricket.webp',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
                       Container(color: AppColors.primary.withValues(alpha: 0.15)),

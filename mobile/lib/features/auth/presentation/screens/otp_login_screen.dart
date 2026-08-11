@@ -270,7 +270,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
               child: Opacity(
                 opacity: 0.30,
                 child: Image.asset(
-                  'assets/images/auth_bg.png',
+                  'assets/images/auth_bg.webp',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
@@ -347,7 +347,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                             ],
                           ),
                           child: Image.asset(
-                            'assets/images/fyc_mark.png',
+                            'assets/images/fyc_mark.webp',
                             width: 64,
                             height: 64,
                             errorBuilder: (_, __, ___) =>

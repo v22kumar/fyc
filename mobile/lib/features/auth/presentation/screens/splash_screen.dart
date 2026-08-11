@@ -168,7 +168,7 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 118,
                         child: Image.asset(
                           // Transparent eagle mark — sits inside the pulsing ring.
-                          'assets/images/fyc_mark.png',
+                          'assets/images/fyc_mark.webp',
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Text(
                             '🌱',

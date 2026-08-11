@@ -150,7 +150,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                         ],
                       ),
                       child: Image.asset(
-                        'assets/images/fyc_mark.png',
+                        'assets/images/fyc_mark.webp',
                         width: 72,
                         height: 72,
                         errorBuilder: (_, __, ___) =>

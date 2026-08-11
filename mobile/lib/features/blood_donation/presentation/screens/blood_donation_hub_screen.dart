@@ -622,7 +622,7 @@ class _EmptyDonors extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
-            'assets/illustrations/empty_donors.png',
+            'assets/illustrations/empty_donors.webp',
             width: 150,
             height: 150,
             errorBuilder: (_, __, ___) =>
