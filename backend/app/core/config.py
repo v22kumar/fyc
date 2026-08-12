@@ -129,6 +129,24 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""      # Android / Flutter client ID
     GOOGLE_WEB_CLIENT_ID: str = ""  # Web browser client ID
 
+    # Browser-based Google sign-in (the fallback for when the native plugin
+    # answers DEVELOPER_ERROR because Google does not recognise this build's
+    # signing certificate). It runs the ordinary web OAuth code exchange, which
+    # needs the *web* client's secret. Unset = the fallback stays dormant and
+    # the app never offers it, rather than offering a button that fails.
+    GOOGLE_CLIENT_SECRET: str = ""
+
+    # Where Google sends the member back. Must be listed verbatim as an
+    # authorised redirect URI on the web client in Google Cloud Console.
+    # Empty = derived from API_PUBLIC_BASE_URL below.
+    GOOGLE_OAUTH_REDIRECT_URI: str = ""
+
+    # This backend's public address, used to build the redirect URI. It is a
+    # setting rather than a guess from the request because Google matches the
+    # redirect string exactly, and a proxy hop can change what the request
+    # thinks its own host is.
+    API_PUBLIC_BASE_URL: str = "https://api.fycconnect.com"
+
     # Cloudinary — image hosting (replaces local disk uploads)
     #
     # Two ways in, because the dashboard and this file disagreed about the

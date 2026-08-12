@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import issues_workflow
+from app.routers import finance as finance_router
 from app.routers import civic as civic_router
 from app.routers import complaint_box as complaint_box_router
 from app.routers import work as work_router
@@ -479,6 +480,7 @@ async def lifespan(app: FastAPI):
         # unique index fail, log and continue rather than blocking startup.
         try:
             from sqlalchemy import text as _idx_text
+            from app.models.finance import REFERENCE_UNIQUE_INDEX_DDL
             _idem_indexes = [
                 'CREATE UNIQUE INDEX IF NOT EXISTS uq_post_idempotency '
                 'ON posts (organization_id, author_id, idempotency_key) '
@@ -486,13 +488,26 @@ async def lifespan(app: FastAPI):
                 'CREATE UNIQUE INDEX IF NOT EXISTS uq_comment_idempotency '
                 'ON comments (organization_id, author_id, entity_id, idempotency_key) '
                 'WHERE idempotency_key IS NOT NULL',
+                # A transaction reference is unique in the real world, so two
+                # of them in one collection is always an error. The router
+                # checks first and returns a sentence naming the existing row;
+                # this is the backstop that a check-then-insert cannot be,
+                # because two concurrent requests both pass the check. Withdrawn
+                # rows leave the index, so a reference typed in error and
+                # cancelled does not block the correct entry replacing it.
+                REFERENCE_UNIQUE_INDEX_DDL,
             ]
-            with engine.begin() as conn:
-                for _ddl in _idem_indexes:
-                    try:
+            # One transaction each. On Postgres a failed statement poisons the
+            # whole transaction, so a pre-existing duplicate key in posts would
+            # take every later index down with it — including the contribution
+            # reference index, whose absence is invisible until two identical
+            # UTRs land from concurrent requests.
+            for _ddl in _idem_indexes:
+                try:
+                    with engine.begin() as conn:
                         conn.execute(_idx_text(_ddl))
-                    except Exception as _ie:
-                        logger.warning(f"[idempotency-index] could not create: {_ie}")
+                except Exception as _ie:
+                    logger.warning(f"[idempotency-index] could not create: {_ie}")
         except Exception as _ide:
             logger.warning(f"[idempotency-index] block failed: {_ide}")
 
@@ -1006,6 +1021,7 @@ app.include_router(diagnostics_router.router, prefix="/api/v1")
 
 from app.routers import profile_prompts as profile_prompts_router
 app.include_router(profile_prompts_router.router, prefix="/api/v1")
+app.include_router(finance_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
@@ -1040,6 +1056,8 @@ def auth_channels_check(db: Session = Depends(get_db)):
     unauthenticated for the same reason a health check is: the moment you need
     it most is the moment nobody can sign in.
     """
+    from app.services import google_browser_auth
+
     google_ids = [
         cid for cid in (settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID)
         if cid
@@ -1071,6 +1089,20 @@ def auth_channels_check(db: Session = Depends(get_db)):
             # anything was set deliberately.
             "configured_client_ids": len(google_ids),
             "accepts_first_party_defaults": True,
+            # The road that does not depend on how the APK was signed. The
+            # native plugin matches on (package name, signing certificate), and
+            # Play re-signs uploaded bundles with its own key — so a build can
+            # be refused with DEVELOPER_ERROR while every other check passes.
+            # When this is true the app falls back to browser OAuth instead of
+            # telling the member to use their phone number.
+            "browser_fallback": {
+                "available": google_browser_auth.is_configured(),
+                "missing": google_browser_auth.missing_configuration(),
+                # Must match an authorised redirect URI on the web client,
+                # character for character. That mismatch is the one mistake
+                # here that is invisible until somebody tries to sign in.
+                "redirect_uri": google_browser_auth.redirect_uri(),
+            },
         },
         "environment": settings.ENVIRONMENT,
         "allowed_origins": settings.allowed_origins_list,

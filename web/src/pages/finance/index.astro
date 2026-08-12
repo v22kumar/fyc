@@ -1,0 +1,749 @@
+---
+import FinanceLayout from '../../layouts/FinanceLayout.astro';
+---
+
+<FinanceLayout title="Collection">
+  <a slot="header-action" id="admin-link" href="/finance/admin"
+     class="hidden rounded-lg px-2.5 py-1.5 text-[13px] font-medium hover:bg-white/10">
+    Dashboard
+  </a>
+
+  <!-- Loading ------------------------------------------------------------- -->
+  <div id="loading" class="space-y-3 pt-6">
+    <div class="h-24 animate-pulse rounded-2xl bg-slate-200"></div>
+    <div class="h-40 animate-pulse rounded-2xl bg-slate-200"></div>
+  </div>
+
+  <!-- Not part of any collection ------------------------------------------ -->
+  <div id="empty" class="hidden pt-16 text-center">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200">
+      <svg class="h-7 w-7 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="M3 10h18M7 15h4" stroke-linecap="round" />
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+      </svg>
+    </div>
+    <h2 class="mt-4 text-lg font-semibold">No collection assigned to you yet</h2>
+    <p class="mx-auto mt-1.5 max-w-xs text-sm text-slate-500">
+      A club official adds you as a treasurer for a collection. Once they do,
+      it appears here.
+    </p>
+    <button id="empty-signout" class="mt-6 text-sm font-medium text-[#0F5132] underline">
+      Sign in as someone else
+    </button>
+  </div>
+
+  <!-- The page ------------------------------------------------------------ -->
+  <div id="page" class="hidden space-y-4">
+
+    <!-- Which collection. Hidden entirely when there is only one, because a
+         dropdown with one option is a decision nobody needs to make. -->
+    <div id="campaign-picker" class="hidden">
+      <label for="campaign" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Collection
+      </label>
+      <select id="campaign"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[15px] focus:border-[#0F5132] focus:outline-none focus:ring-2 focus:ring-[#0F5132]/20">
+      </select>
+    </div>
+
+    <!-- What I have collected ------------------------------------------- -->
+    <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">My collection</h2>
+        <span id="campaign-name" class="max-w-[55%] truncate text-[13px] text-slate-400"></span>
+      </div>
+      <p id="my-total" class="mt-1.5 text-4xl font-bold tracking-tight tabular-nums">₹0</p>
+      <dl class="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-center">
+        <div>
+          <dt class="text-[11px] uppercase tracking-wide text-slate-400">Verified</dt>
+          <dd id="my-verified" class="mt-0.5 text-sm font-semibold tabular-nums text-emerald-700">₹0</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] uppercase tracking-wide text-slate-400">Pending</dt>
+          <dd id="my-pending" class="mt-0.5 text-sm font-semibold tabular-nums text-amber-700">₹0</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] uppercase tracking-wide text-slate-400">People</dt>
+          <dd id="my-people" class="mt-0.5 text-sm font-semibold tabular-nums">0</dd>
+        </div>
+      </dl>
+      <p id="campaign-total" class="mt-3 border-t border-slate-100 pt-3 text-[13px] text-slate-500"></p>
+    </section>
+
+    <!-- Add a contribution ------------------------------------------------ -->
+    <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Add a contribution</h2>
+
+      <!-- Amount first, and biggest. It is the one field that is never
+           skipped and never defaulted wrongly. -->
+      <div class="mt-3">
+        <label for="amount" class="sr-only">Amount in rupees</label>
+        <div class="flex items-center gap-2 rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-[#0F5132]">
+          <span class="text-3xl font-semibold text-slate-400">₹</span>
+          <input id="amount" type="text" inputmode="numeric" enterkeyhint="next"
+                 autocomplete="off" placeholder="0"
+                 class="w-full bg-transparent text-3xl font-bold tabular-nums outline-none placeholder:text-slate-300" />
+        </div>
+        <div id="amount-chips" class="mt-2 flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Who -->
+      <div class="relative mt-4">
+        <label for="who" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          From
+        </label>
+        <input id="who" type="text" autocomplete="off" enterkeyhint="next"
+               placeholder="Name — type to search"
+               class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px] focus:border-[#0F5132] focus:outline-none focus:ring-2 focus:ring-[#0F5132]/20" />
+        <div id="who-hits"
+             class="absolute z-20 mt-1 hidden w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"></div>
+        <div id="who-chosen" class="mt-1.5 hidden items-center gap-2 text-[13px] text-slate-500">
+          <span id="who-chosen-label"></span>
+          <button id="who-clear" type="button" class="font-medium text-[#0F5132] underline">change</button>
+        </div>
+        <input id="phone" type="tel" inputmode="tel" autocomplete="off"
+               placeholder="Phone (optional)"
+               class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px] focus:border-[#0F5132] focus:outline-none focus:ring-2 focus:ring-[#0F5132]/20" />
+      </div>
+
+      <!-- How. Chips, not a dropdown: one tap instead of three, and the
+           choice sticks between entries because a treasurer taking cash all
+           evening should never pick "Cash" twice. -->
+      <fieldset class="mt-4">
+        <legend class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Paid by</legend>
+        <div id="methods" class="grid grid-cols-4 gap-2"></div>
+      </fieldset>
+
+      <div id="reference-wrap" class="mt-3 hidden">
+        <label for="reference" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Reference / UTR
+        </label>
+        <input id="reference" type="text" autocomplete="off" placeholder="e.g. 412345678901"
+               class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px] uppercase focus:border-[#0F5132] focus:outline-none focus:ring-2 focus:ring-[#0F5132]/20" />
+      </div>
+
+      <details class="mt-3">
+        <summary class="cursor-pointer text-[13px] font-medium text-slate-500">Date and notes</summary>
+        <div class="mt-2 space-y-2">
+          <input id="paid-on" type="date"
+                 class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+          <textarea id="notes" rows="2" placeholder="Notes (optional)"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]"></textarea>
+        </div>
+      </details>
+
+      <p id="form-error" class="mt-3 hidden rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700"></p>
+
+      <button id="save" type="button"
+              class="mt-4 w-full rounded-2xl bg-[#0F5132] py-3.5 text-[17px] font-semibold text-white active:bg-[#0b3d26] disabled:opacity-50">
+        Save contribution
+      </button>
+      <p class="mt-2 text-center text-[12px] text-slate-400">
+        Saves and clears for the next person. Nothing is lost if you go offline.
+      </p>
+    </section>
+
+    <!-- Waiting for me to confirm ----------------------------------------- -->
+    <!--
+      An executive who collected money has made a claim on this treasurer's
+      cash box. It becomes the club's record when the person who actually
+      holds the cash says it arrived — so it waits here, not on a dashboard.
+    -->
+    <section id="confirm" class="hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Waiting for you to confirm
+        </h2>
+        <span id="confirm-count" class="text-[13px] text-slate-400"></span>
+      </div>
+      <p class="mt-1 text-[12px] text-slate-400">
+        Money someone else recorded. Confirm it once it has reached you.
+      </p>
+      <div id="confirm-list" class="mt-2 space-y-2"></div>
+    </section>
+
+    <!-- Waiting to send --------------------------------------------------- -->
+    <section id="outbox" class="hidden rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-amber-800">On this phone, not yet sent</h2>
+      <div id="outbox-list" class="mt-2 space-y-2"></div>
+    </section>
+
+    <!-- What I entered ---------------------------------------------------- -->
+    <section>
+      <div class="flex items-baseline justify-between px-1">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Recent entries</h2>
+        <button id="refresh" class="text-[13px] font-medium text-[#0F5132]">Refresh</button>
+      </div>
+      <div id="entries" class="mt-2 space-y-2"></div>
+    </section>
+
+    <div class="pt-2 text-center">
+      <button id="signout" class="text-[13px] text-slate-400 underline">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Saved confirmation. A strip, not a dialog: a dialog is a tap to
+       dismiss, fifty times an evening. -->
+  <div id="toast"
+       class="pointer-events-none fixed inset-x-0 bottom-4 z-40 mx-auto hidden max-w-md px-4">
+    <div id="toast-body"
+         class="rounded-2xl bg-slate-900 px-4 py-3 text-center text-[15px] font-medium text-white shadow-xl"></div>
+  </div>
+
+  <!-- Possible repeat. The one question worth interrupting for. -->
+  <div id="dupe" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 p-4 sm:items-center">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+         role="dialog" aria-modal="true" aria-labelledby="dupe-title">
+      <h2 id="dupe-title" class="text-lg font-semibold">Is this the same payment?</h2>
+      <p id="dupe-message" class="mt-1.5 text-sm text-slate-600"></p>
+      <div id="dupe-rows" class="mt-3 space-y-2"></div>
+      <div class="mt-5 flex gap-2">
+        <button id="dupe-cancel"
+                class="flex-1 rounded-xl border border-slate-300 py-2.5 text-[15px] font-medium">
+          Yes — don't add
+        </button>
+        <button id="dupe-confirm"
+                class="flex-1 rounded-xl bg-[#0F5132] py-2.5 text-[15px] font-semibold text-white">
+          No — add it
+        </button>
+      </div>
+    </div>
+  </div>
+</FinanceLayout>
+
+<script is:inline>
+(function () {
+  'use strict';
+  if (!window.FYC.requireAuth()) return;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = FYC.esc, money = FYC.money;
+
+  var METHODS = [
+    { id: 'CASH', label: 'Cash', ref: false },
+    { id: 'UPI', label: 'UPI', ref: true },
+    { id: 'BANK_TRANSFER', label: 'Bank', ref: true },
+    { id: 'OTHER', label: 'Other', ref: false }
+  ];
+  var LAST_METHOD_KEY = 'fyc_finance_last_method';
+
+  var state = {
+    campaigns: [],
+    campaign: null,
+    method: localStorage.getItem(LAST_METHOD_KEY) || 'CASH',
+    chosenUser: null,
+    suggestions: [],
+    pendingBody: null      // held while we ask about a possible repeat
+  };
+
+  // ── Boot ────────────────────────────────────────────────────────────────
+
+  FYC.api('/finance/campaigns?status=ACTIVE').then(function (list) {
+    // A closed collection still deserves to be readable, so fall back to all.
+    if (!list.length) return FYC.api('/finance/campaigns');
+    return list;
+  }).then(function (list) {
+    state.campaigns = list.filter(function (c) { return c.can_record; });
+    $('loading').classList.add('hidden');
+
+    if (!state.campaigns.length) {
+      $('empty').classList.remove('hidden');
+      return;
+    }
+    if (list.some(function (c) { return c.can_view_all; })) {
+      $('admin-link').classList.remove('hidden');
+    }
+
+    $('page').classList.remove('hidden');
+    renderMethods();
+    $('paid-on').value = FYC.today();
+
+    if (state.campaigns.length > 1) {
+      $('campaign-picker').classList.remove('hidden');
+      $('campaign').innerHTML = state.campaigns.map(function (c) {
+        return '<option value="' + c.id + '">' + esc(c.title_en) + '</option>';
+      }).join('');
+      var remembered = localStorage.getItem('fyc_finance_campaign');
+      if (remembered && state.campaigns.some(function (c) { return c.id === remembered; })) {
+        $('campaign').value = remembered;
+      }
+    }
+    select($('campaign').value || state.campaigns[0].id);
+  }).catch(function (err) {
+    $('loading').classList.add('hidden');
+    $('empty').classList.remove('hidden');
+    $('empty').querySelector('h2').textContent = "Couldn't load your collections";
+    $('empty').querySelector('p').textContent = err.message;
+  });
+
+  function select(id) {
+    state.campaign = state.campaigns.find(function (c) { return c.id === id; });
+    if (!state.campaign) return;
+    localStorage.setItem('fyc_finance_campaign', id);
+    $('campaign-name').textContent = state.campaign.title_en;
+    renderAmountChips();
+    loadSummary();
+    loadEntries();
+    loadConfirmQueue();
+    drainOutbox();
+  }
+
+  $('campaign').addEventListener('change', function (e) { select(e.target.value); });
+
+  // ── The numbers ─────────────────────────────────────────────────────────
+
+  function loadSummary() {
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/summary').then(function (s) {
+      var mine = s.mine || s;
+      $('my-total').textContent = money(mine.recorded_paise != null ? mine.recorded_paise : s.collected_paise);
+      $('my-verified').textContent = money(mine.verified_paise);
+      $('my-pending').textContent = money(mine.pending_paise);
+      $('my-people').textContent = mine.contributors;
+
+      var line = 'Collection so far: ' + s.display.collected;
+      if (s.display.target) {
+        line += ' of ' + s.display.target + ' (' + s.collection_percent + '%)';
+      }
+      line += ' · ' + s.contributors + ' contributor' + (s.contributors === 1 ? '' : 's');
+      $('campaign-total').textContent = line;
+    }).catch(function () {/* the totals are the least important thing here */});
+  }
+
+  function renderAmountChips() {
+    // The planned amount per head, plus the round numbers around it. Sourced
+    // from the campaign so next year's figure needs no change here.
+    var suggested = state.campaign.suggested_amount_paise;
+    var values = [];
+    if (suggested) values.push(suggested);
+    [50000, 100000, 200000, 500000].forEach(function (p) {
+      if (values.indexOf(p) < 0 && p !== suggested) values.push(p);
+    });
+    $('amount-chips').innerHTML = values.slice(0, 5).map(function (p, i) {
+      return '<button type="button" data-paise="' + p + '" ' +
+        'class="rounded-full border px-3 py-1.5 text-[13px] font-medium ' +
+        (i === 0 && suggested
+          ? 'border-[#0F5132] bg-[#0F5132]/5 text-[#0F5132]'
+          : 'border-slate-300 text-slate-600') + '">' +
+        money(p) + (i === 0 && suggested ? ' · planned' : '') + '</button>';
+    }).join('');
+  }
+
+  $('amount-chips').addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-paise]');
+    if (!chip) return;
+    $('amount').value = FYC.groupIndian(Math.trunc(Number(chip.dataset.paise) / 100));
+    $('who').focus();
+  });
+
+  // Digits only, grouped as they type, so ₹100000 never reads as a mystery.
+  $('amount').addEventListener('input', function (e) {
+    var digits = e.target.value.replace(/[^\d]/g, '');
+    e.target.value = digits ? FYC.groupIndian(Number(digits)) : '';
+  });
+
+  // ── Who ─────────────────────────────────────────────────────────────────
+
+  var whoTimer = null;
+  var whoSeq = 0;
+  var rosterCache = null;
+
+  /* The roster changes far more slowly than a treasurer types. */
+  function roster() {
+    if (rosterCache) return Promise.resolve(rosterCache);
+    return FYC.api('/users/roster').then(function (rows) {
+      rosterCache = rows;
+      return rows;
+    }).catch(function () { return []; });
+  }
+  $('who').addEventListener('input', function () {
+    state.chosenUser = null;
+    $('who-chosen').classList.add('hidden');
+    clearTimeout(whoTimer);
+    var q = $('who').value.trim();
+    if (q.length < 2) { hideHits(); return; }
+    whoTimer = setTimeout(function () { searchWho(q); }, 180);
+  });
+
+  function searchWho(q) {
+    var seq = ++whoSeq;
+    Promise.all([
+      FYC.api('/finance/campaigns/' + state.campaign.id +
+              '/contributor-suggestions?q=' + encodeURIComponent(q)).catch(function () { return []; }),
+      roster()
+    ]).then(function (results) {
+      // Two searches can be in flight at 180 ms of debounce. If the older one
+      // lands last it repaints the list for the previous query — and the name
+      // under the treasurer's finger is not the one they typed, which
+      // attributes the money to the wrong person.
+      if (seq !== whoSeq) return;
+      var past = results[0].map(function (p) {
+        return { label: p.name, sub: p.phone || 'gave before', user_id: p.user_id, phone: p.phone };
+      });
+      var lower = q.toLowerCase();
+      var members = results[1].filter(function (m) {
+        var n = (m.full_name_en || m.full_name_ta || '');
+        return n.toLowerCase().indexOf(lower) >= 0;
+      }).slice(0, 6).map(function (m) {
+        return { label: m.full_name_en || m.full_name_ta, sub: 'member', user_id: m.id, phone: null };
+      });
+
+      // Past contributors first: the person in front of you is far more often
+      // somebody who gave last week than a name from the roster.
+      var seen = {};
+      var hits = past.concat(members).filter(function (h) {
+        var key = (h.user_id || h.label).toString();
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      }).slice(0, 8);
+
+      state.suggestions = hits;
+      if (!hits.length) { hideHits(); return; }
+      $('who-hits').innerHTML = hits.map(function (h, i) {
+        return '<button type="button" data-i="' + i + '" ' +
+          'class="flex w-full items-baseline gap-2 px-3 py-2.5 text-left hover:bg-slate-50">' +
+          '<span class="text-[15px]">' + esc(h.label) + '</span>' +
+          '<span class="text-[12px] text-slate-400">' + esc(h.sub) + '</span></button>';
+      }).join('');
+      $('who-hits').classList.remove('hidden');
+    });
+  }
+
+  function hideHits() { $('who-hits').classList.add('hidden'); }
+
+  $('who-hits').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-i]');
+    if (!btn) return;
+    var hit = state.suggestions[Number(btn.dataset.i)];
+    $('who').value = hit.label;
+    if (hit.phone) $('phone').value = hit.phone;
+    state.chosenUser = hit.user_id || null;
+    $('who-chosen-label').textContent = hit.user_id ? 'Linked to their member record' : 'Gave before';
+    $('who-chosen').classList.remove('hidden');
+    $('who-chosen').classList.add('flex');
+    hideHits();
+  });
+
+  $('who-clear').addEventListener('click', function () {
+    state.chosenUser = null;
+    $('who-chosen').classList.add('hidden');
+    $('who').focus();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#who-hits') && !e.target.closest('#who')) hideHits();
+  });
+
+  // ── How ─────────────────────────────────────────────────────────────────
+
+  function renderMethods() {
+    // The last-used method comes from localStorage. If that id is ever renamed
+    // or dropped, find() returns undefined, reading .ref throws, and the page
+    // never leaves the loading skeleton — no contribution can be recorded at
+    // all. Fall back rather than fail.
+    if (!METHODS.some(function (m) { return m.id === state.method; })) {
+      state.method = METHODS[0].id;
+    }
+    $('methods').innerHTML = METHODS.map(function (m) {
+      var on = m.id === state.method;
+      return '<button type="button" data-method="' + m.id + '" aria-pressed="' + on + '" ' +
+        'class="rounded-xl border py-2.5 text-[14px] font-medium ' +
+        (on ? 'border-[#0F5132] bg-[#0F5132] text-white' : 'border-slate-300 text-slate-700') +
+        '">' + m.label + '</button>';
+    }).join('');
+    var needsRef = METHODS.find(function (m) { return m.id === state.method; }).ref;
+    $('reference-wrap').classList.toggle('hidden', !needsRef);
+  }
+
+  $('methods').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-method]');
+    if (!btn) return;
+    state.method = btn.dataset.method;
+    localStorage.setItem(LAST_METHOD_KEY, state.method);
+    // Cash carries no reference, and a leftover one must not ride along —
+    // the server drops it, and the field should agree.
+    if (state.method === 'CASH') $('reference').value = '';
+    renderMethods();
+  });
+
+  // ── Saving ──────────────────────────────────────────────────────────────
+
+  function readForm() {
+    var rupees = Number($('amount').value.replace(/[^\d]/g, ''));
+    if (!rupees) { return { error: 'Enter the amount.' }; }
+    var name = $('who').value.trim();
+    if (!name) { return { error: 'Who is this from?' }; }
+    return {
+      body: {
+        contributor_user_id: state.chosenUser || undefined,
+        contributor_name: name,
+        contributor_phone: $('phone').value.trim() || undefined,
+        amount: rupees,
+        method: state.method,
+        reference_no: $('reference').value.trim() || undefined,
+        paid_on: $('paid-on').value || undefined,
+        notes: $('notes').value.trim() || undefined,
+        client_contribution_id: FYC.newClientId()
+      }
+    };
+  }
+
+  $('save').addEventListener('click', function () {
+    var read = readForm();
+    if (read.error) { showError(read.error); return; }
+    send(read.body);
+  });
+
+  function send(body) {
+    showError(null);
+    $('save').disabled = true;
+    $('save').textContent = 'Saving…';
+
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/contributions', {
+      method: 'POST', body: body
+    }).then(function (saved) {
+      done(saved);
+    }).catch(function (err) {
+      $('save').disabled = false;
+      $('save').textContent = 'Save contribution';
+
+      if (err.isApiError && err.status === 409) {
+        askAboutRepeat(err.body, body);
+        return;
+      }
+      if (!err.isApiError) {
+        // The network, not the server. Keep the entry and say so plainly —
+        // this is the moment a treasurer would otherwise re-type it.
+        if (!FYC.enqueue(state.campaign.id, body)) {
+          // Storage full, or a browser that refuses it. Saying "saved on this
+          // phone" here would be a lie about money.
+          showError('This phone could not store the entry — write it down, ' +
+                    'then try again when you have signal.');
+          return;
+        }
+        done(null, 'Saved on this phone — will send when signal returns.');
+        return;
+      }
+      showError(err.message);
+    });
+  }
+
+  function done(saved, message) {
+    var amount = saved ? saved.amount_display : money(0);
+    toast(message || ('Saved · ' + amount + ' from ' + (saved ? saved.contributor_name : '')));
+    clearForNextPerson();
+    $('save').disabled = false;
+    $('save').textContent = 'Save contribution';
+    refreshAll();
+    renderOutbox();
+  }
+
+  /* Keep the collection, the method and the date. Clear the person and the
+     amount. That is the difference between fifty entries and fifty forms. */
+  function clearForNextPerson() {
+    $('amount').value = '';
+    $('who').value = '';
+    $('phone').value = '';
+    $('reference').value = '';
+    $('notes').value = '';
+    state.chosenUser = null;
+    $('who-chosen').classList.add('hidden');
+    hideHits();
+    $('amount').focus();
+  }
+
+  function showError(message) {
+    var el = $('form-error');
+    el.textContent = message || '';
+    el.classList.toggle('hidden', !message);
+  }
+
+  var toast = FYC.toast;
+
+  // ── Possible repeat ─────────────────────────────────────────────────────
+
+  function askAboutRepeat(detail, body) {
+    if (!detail || !detail.can_confirm) {
+      // A repeated reference is never legitimate, so it is not a question.
+      showError((detail && detail.detail) || 'Already recorded.');
+      return;
+    }
+    state.pendingBody = body;
+    $('dupe-message').textContent = detail.detail;
+    $('dupe-rows').innerHTML = (detail.candidates || []).map(function (c) {
+      return '<div class="rounded-xl bg-slate-50 px-3 py-2 text-[13px]">' +
+        '<span class="font-semibold">' + esc(c.amount_display) + '</span> from ' +
+        esc(c.contributor_name) +
+        (c.recorded_by_name ? ' · by ' + esc(c.recorded_by_name) : '') +
+        ' · ' + esc(FYC.ago(c.created_at)) + '</div>';
+    }).join('');
+    FYC.openDialog('dupe', 'dupe-confirm');
+  }
+
+  function closeDupe() {
+    FYC.closeDialog('dupe');
+    state.pendingBody = null;
+  }
+
+  // Escape answers it the safe way: don't add a possible repeat.
+  FYC.dismissDialogsOnEscape({ dupe: function () {
+    closeDupe();
+    toast('Not added.');
+  } });
+
+  $('dupe-cancel').addEventListener('click', function () {
+    closeDupe();
+    clearForNextPerson();
+    toast('Not added — it was already recorded.');
+  });
+
+  $('dupe-confirm').addEventListener('click', function () {
+    var body = state.pendingBody;
+    closeDupe();
+    if (!body) return;
+    body.confirm_duplicate = true;
+    send(body);
+  });
+
+  // ── The outbox ──────────────────────────────────────────────────────────
+
+  function drainOutbox() {
+    FYC.flush(function () { renderOutbox(); refreshAll(); });
+    renderOutbox();
+  }
+
+  window.addEventListener('online', drainOutbox);
+
+  function renderOutbox() {
+    var items = FYC.readOutbox();
+    $('outbox').classList.toggle('hidden', items.length === 0);
+    if (!items.length) return;
+
+    $('outbox-list').innerHTML = items.map(function (i) {
+      var who = esc(i.body.contributor_name);
+      var amount = money(Number(i.body.amount) * 100);
+      var cid = esc(i.body.client_contribution_id);
+
+      if (i.state === 'conflict') {
+        return '<div class="rounded-xl bg-white p-3 text-[13px] ring-1 ring-amber-300">' +
+          '<p class="font-medium">' + amount + ' from ' + who + '</p>' +
+          '<p class="mt-0.5 text-slate-500">' + esc((i.conflict && i.conflict.detail) || 'Looks like a repeat.') + '</p>' +
+          '<div class="mt-2 flex gap-2">' +
+          '<button data-keep="' + cid + '" class="rounded-lg bg-[#0F5132] px-3 py-1.5 font-medium text-white">It\'s another one</button>' +
+          '<button data-drop="' + cid + '" class="rounded-lg border border-slate-300 px-3 py-1.5 font-medium">Remove</button>' +
+          '</div></div>';
+      }
+      if (i.state === 'rejected') {
+        return '<div class="rounded-xl bg-white p-3 text-[13px] ring-1 ring-red-300">' +
+          '<p class="font-medium">' + amount + ' from ' + who + '</p>' +
+          '<p class="mt-0.5 text-red-700">' + esc(i.error || 'Refused by the server.') + '</p>' +
+          '<button data-drop="' + cid + '" class="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 font-medium">Remove</button>' +
+          '</div>';
+      }
+      return '<div class="flex items-center justify-between rounded-xl bg-white px-3 py-2 text-[13px] ring-1 ring-amber-200">' +
+        '<span>' + amount + ' from ' + who + '</span>' +
+        '<span class="text-amber-700">waiting</span></div>';
+    }).join('');
+  }
+
+  $('outbox-list').addEventListener('click', function (e) {
+    var keep = e.target.closest('[data-keep]');
+    var drop = e.target.closest('[data-drop]');
+    if (keep) { FYC.resolveConflict(keep.dataset.keep, true); drainOutbox(); }
+    if (drop) { FYC.discard(drop.dataset.drop); renderOutbox(); }
+  });
+
+  // ── Recent entries ──────────────────────────────────────────────────────
+
+  /* Money somebody else recorded, waiting on the person who holds the cash.
+   *
+   * The list endpoint hands a treasurer their own rows plus anything pending,
+   * so the split is here: mine below, theirs to confirm above. */
+  function loadConfirmQueue() {
+    if (!state.campaign.can_verify) return;
+    var me = String((FYC.user() || {}).id || '');
+    FYC.api('/finance/campaigns/' + state.campaign.id +
+            '/contributions?status=RECORDED&limit=50').then(function (rows) {
+      var theirs = rows.filter(function (c) {
+        return String(c.recorded_by_user_id || '') !== me;
+      });
+      $('confirm').classList.toggle('hidden', theirs.length === 0);
+      if (!theirs.length) return;
+      $('confirm-count').textContent = theirs.length + ' waiting';
+      $('confirm-list').innerHTML = theirs.map(function (c) {
+        return '<div class="rounded-xl bg-slate-50 p-3">' +
+          '<div class="flex items-baseline justify-between gap-2">' +
+          '<p class="min-w-0 truncate text-[15px] font-medium">' + esc(c.contributor_name) + '</p>' +
+          '<p class="shrink-0 text-[15px] font-semibold tabular-nums">' + esc(c.amount_display) + '</p></div>' +
+          '<p class="mt-0.5 text-[12px] text-slate-500">' +
+          esc(c.method.replace('_', ' ').toLowerCase()) +
+          (c.reference_no ? ' · ' + esc(c.reference_no) : '') +
+          (c.recorded_by_name ? ' · from ' + esc(c.recorded_by_name) : '') +
+          ' · ' + esc(FYC.ago(c.created_at)) + '</p>' +
+          '<div class="mt-2 flex gap-2">' +
+          '<button data-confirm="' + esc(c.id) + '" class="rounded-lg bg-[#0F5132] px-3 py-1.5 text-[13px] font-medium text-white">Received</button>' +
+          '<button data-refuse="' + esc(c.id) + '" class="rounded-lg border border-slate-300 px-3 py-1.5 text-[13px] font-medium">Not received</button>' +
+          '</div></div>';
+      }).join('');
+    }).catch(function () {});
+  }
+
+  $('confirm-list').addEventListener('click', function (e) {
+    var ok = e.target.closest('[data-confirm]');
+    var no = e.target.closest('[data-refuse]');
+    if (ok) {
+      ok.disabled = true;
+      FYC.api('/finance/contributions/' + ok.dataset.confirm + '/verify', { method: 'POST' })
+        .then(function () { toast('Confirmed as received.'); refreshAll(); })
+        .catch(function (err) { toast(err.message); ok.disabled = false; });
+      return;
+    }
+    if (no) {
+      var why = prompt('Why has this not reached you?');
+      if (!why || why.trim().length < 3) return;
+      FYC.api('/finance/contributions/' + no.dataset.refuse + '/reject',
+              { method: 'POST', body: { reason: why.trim() } })
+        .then(function () { toast('Marked as not received.'); refreshAll(); })
+        .catch(function (err) { toast(err.message); });
+    }
+  });
+
+  function refreshAll() { loadSummary(); loadEntries(); loadConfirmQueue(); }
+
+  function loadEntries() {
+    var me = String((FYC.user() || {}).id || '');
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/contributions?limit=40')
+      .then(function (all) {
+        var rows = all.filter(function (c) {
+          return String(c.recorded_by_user_id || '') === me;
+        }).slice(0, 25);
+        if (!rows.length) {
+          $('entries').innerHTML =
+            '<p class="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate-400 ring-1 ring-slate-200">' +
+            'Nothing recorded yet. The first entry appears here.</p>';
+          return;
+        }
+        $('entries').innerHTML = rows.map(function (c) {
+          var tone = c.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-700'
+            : c.status === 'RECORDED' ? 'bg-amber-50 text-amber-700'
+            : 'bg-slate-100 text-slate-500';
+          var label = FYC.statusWord(c.status);
+          return '<div class="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200">' +
+            '<div class="min-w-0 flex-1">' +
+            '<p class="truncate text-[15px] font-medium">' + esc(c.contributor_name) + '</p>' +
+            '<p class="text-[12px] text-slate-400">' + esc(c.method.replace('_', ' ').toLowerCase()) +
+            (c.reference_no ? ' · ' + esc(c.reference_no) : '') +
+            ' · ' + esc(FYC.ago(c.created_at)) + '</p></div>' +
+            '<div class="text-right">' +
+            '<p class="text-[15px] font-semibold tabular-nums">' + esc(c.amount_display) + '</p>' +
+            '<span class="mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ' + tone + '">' +
+            label + '</span></div></div>';
+        }).join('');
+      }).catch(function () {});
+  }
+
+  $('refresh').addEventListener('click', function () { refreshAll(); drainOutbox(); });
+  $('signout').addEventListener('click', FYC.signOut);
+  $('empty-signout').addEventListener('click', FYC.signOut);
+})();
+</script>

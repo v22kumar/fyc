@@ -68,6 +68,16 @@ class ApiConstants {
   static const String register = '/api/v1/auth/register';
   static const String loginPassword = '/api/v1/auth/login/password';
   static const String googleSignIn = '/api/v1/auth/google';
+
+  // Google sign-in that runs in the browser instead of the native plugin.
+  // The native one authenticates with the pair (package name, signing
+  // certificate); Play re-signs uploaded bundles with its own key, so the Play
+  // copy and the sideloaded copy present different certificates and either can
+  // be missing from the console. When one is, Google answers code 10 and the
+  // member is stuck behind a fingerprint nothing in the app can reach. The
+  // browser road has no certificate in it at all.
+  static const String googleBrowserStart = '/api/v1/auth/google/browser/start';
+  static const String googleBrowserResult = '/api/v1/auth/google/browser/result';
   static const String authRefresh = '/api/v1/auth/refresh';
   static const String authLogout = '/api/v1/auth/logout';
   static const String me = '/api/v1/auth/users/me';

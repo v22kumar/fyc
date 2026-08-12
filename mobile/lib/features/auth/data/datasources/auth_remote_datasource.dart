@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/error/failures.dart';
@@ -222,6 +223,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             '(serverClientId=${ApiConstants.googleServerClientId.split("-").first})',
             null,
             context: 'auth/google');
+        final viaBrowser = await _signInWithGoogleInBrowser(organizationId);
+        if (viaBrowser != null) return viaBrowser;
         throw const AuthFailure(
             "Google sign-in isn't available on this build (no-token) — "
             "please use your phone number");
@@ -263,13 +266,116 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'package=$package sha1=$sha1',
           null,
           context: 'auth/google');
+      // Before telling a member their build is the problem, try the road that
+      // does not involve the build. Ordinary web OAuth in the browser has no
+      // certificate in it, so it works on exactly the copies this failure is
+      // about — and the member gets what they asked for instead of an excuse.
+      final viaBrowser = await _signInWithGoogleInBrowser(organizationId);
+      if (viaBrowser != null) return viaBrowser;
+
       throw AuthFailure(
           "Google sign-in isn't available on this build ($code)"
           "${sha1 != null ? "\nThis build: $package\n$sha1" : ""}"
           "\nPlease use your phone number.");
-    } catch (e) {
+    } catch (e, stack) {
+      // Every other failure in this method reports. An unexpected fault in the
+      // browser fallback was the one that left no trace at all.
+      ErrorReporter.instance.report(e, stack, context: 'auth/google');
       throw const ServerFailure();
     }
+  }
+
+  // ── The road that does not care how this build was signed ────────────────
+  //
+  // The native plugin shows Google the pair (package name, signing
+  // certificate). Play re-signs uploaded bundles with its own key, so the Play
+  // copy and the sideloaded copy present *different* certificates and either
+  // can be missing from the Firebase console while the other is fine. When one
+  // is missing Google answers DEVELOPER_ERROR — code 10 — and no amount of app
+  // code can fix a fingerprint that lives in a console.
+  //
+  // This is ordinary web OAuth in the phone's browser, against the web client
+  // id. There is no certificate anywhere in it, so it works on every copy.
+  // Rather than register a custom URL scheme — one more per-build thing that
+  // can be wrong, which is exactly what we are escaping — the app holds a
+  // secret handle and asks the server whether the browser has finished.
+
+  /// Opens a URL in the phone's browser. Replaced in tests, which have none.
+  static Future<bool> Function(String url) openInBrowser = launchExternally;
+
+  static Future<bool> launchExternally(String url) => launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+
+  /// How long to keep asking. Long enough to find a Google password on a slow
+  /// phone; short enough that an abandoned attempt stops eventually.
+  static Duration browserSignInTimeout = const Duration(minutes: 3);
+
+  /// The wait between polls. Replaced in tests so they do not sleep.
+  static Future<void> Function(Duration d) pollDelay = Future.delayed;
+
+  /// Returns the finished sign-in, or null if this road is not open — in which
+  /// case the caller falls back to telling the member what went wrong.
+  Future<GoogleAuthResult?> _signInWithGoogleInBrowser(
+      String organizationId) async {
+    final String sessionId;
+    final String url;
+    try {
+      final start = await _client.dio.post(
+        ApiConstants.googleBrowserStart,
+        data: {'organization_id': organizationId},
+      );
+      final data = start.data as Map<String, dynamic>;
+      sessionId = data['session_id'] as String;
+      url = data['authorization_url'] as String;
+    } on DioException {
+      // 503 = the server has no web client secret, so this road was never
+      // open. Not an error to show; just fall back to the native diagnosis.
+      return null;
+    } catch (_) {
+      return null;
+    }
+
+    try {
+      if (!await openInBrowser(url)) return null;
+    } catch (_) {
+      return null;
+    }
+
+    final deadline = DateTime.now().add(browserSignInTimeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await pollDelay(const Duration(seconds: 2));
+      final Map<String, dynamic> body;
+      try {
+        final r = await _client.dio.get(
+          ApiConstants.googleBrowserResult,
+          queryParameters: {'session_id': sessionId},
+        );
+        body = r.data as Map<String, dynamic>;
+      } on DioException {
+        // A dropped poll is not a failed sign-in — the member may be on the
+        // Google page with the phone's data flapping. Keep asking.
+        continue;
+      }
+
+      switch (body['status'] as String?) {
+        case 'ready':
+          final result = body['result'];
+          if (result is Map<String, dynamic>) {
+            return GoogleAuthResult.fromJson(result);
+          }
+          return null;
+        case 'failed':
+          // Google itself refused, or the member cancelled. That sentence is
+          // more useful than "this build isn't recognised", so it wins.
+          throw AuthFailure(
+              (body['error'] as String?) ?? 'Google sign-in did not complete.');
+        case 'expired':
+          return null;
+      }
+    }
+    return null;
   }
 
   @override

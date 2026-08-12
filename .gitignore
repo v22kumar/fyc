@@ -53,3 +53,6 @@ Thumbs.db
 *.zip
 *.db-wal
 *.db-shm
+
+# End-to-end screenshots, written by the browser tests.
+e2e-*.png

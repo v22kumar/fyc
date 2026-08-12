@@ -1,0 +1,767 @@
+---
+import FinanceLayout from '../../layouts/FinanceLayout.astro';
+---
+
+<FinanceLayout title="Collection dashboard" back="/finance">
+
+  <div id="loading" class="space-y-3 pt-6">
+    <div class="h-32 animate-pulse rounded-2xl bg-slate-200"></div>
+    <div class="h-24 animate-pulse rounded-2xl bg-slate-200"></div>
+  </div>
+
+  <div id="denied" class="hidden pt-16 text-center">
+    <h2 class="text-lg font-semibold">This page is for club officials</h2>
+    <p class="mx-auto mt-1.5 max-w-xs text-sm text-slate-500">
+      Your collection page has everything you need to record contributions.
+    </p>
+    <a href="/finance" class="mt-6 inline-block text-sm font-medium text-[#0F5132] underline">
+      Go to my collection
+    </a>
+  </div>
+
+  <div id="page" class="hidden space-y-4">
+
+    <!-- No collection yet: the very first thing an admin ever does here ---- -->
+    <section id="first-run" class="hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Start the club's first collection</h2>
+      <p class="mt-1.5 text-sm text-slate-500">
+        Give it a name and a planned amount per head. Everything else — the
+        target, the dates, who collects — can be set now or changed later.
+      </p>
+      <button id="first-run-open"
+              class="mt-4 w-full rounded-2xl bg-[#0F5132] py-3 text-[16px] font-semibold text-white">
+        Create a collection
+      </button>
+    </section>
+
+    <div id="picker-row" class="hidden items-center gap-2">
+      <select id="campaign"
+              class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[15px]"></select>
+      <button id="new-campaign"
+              class="shrink-0 rounded-xl border border-[#0F5132] px-3 py-2.5 text-[14px] font-medium text-[#0F5132]">
+        + New
+      </button>
+    </div>
+
+    <!-- The numbers ------------------------------------------------------- -->
+    <section id="summary-card" class="hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-baseline justify-between gap-3">
+        <h2 id="c-title" class="truncate text-[15px] font-semibold"></h2>
+        <span id="c-status" class="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium"></span>
+      </div>
+
+      <p id="collected" class="mt-2 text-4xl font-bold tracking-tight tabular-nums">₹0</p>
+
+      <!-- Hidden until the summary says there is a target. A bar drawn before
+           we know is a bar that reads 0% for a collection that has no target
+           at all, which is a different and wrong statement. -->
+      <div id="target-row" class="mt-3 hidden">
+        <div class="h-2 overflow-hidden rounded-full bg-slate-100">
+          <div id="bar" class="h-full rounded-full bg-[#0F5132] transition-[width] duration-500" style="width:0%"></div>
+        </div>
+        <p id="target-line" class="mt-1.5 text-[13px] text-slate-500"></p>
+      </div>
+
+      <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-4">
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-400">Verified</dt>
+          <dd id="verified" class="mt-0.5 font-semibold tabular-nums text-emerald-700">₹0</dd></div>
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-400">Pending</dt>
+          <dd id="pending" class="mt-0.5 font-semibold tabular-nums text-amber-700">₹0</dd></div>
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-400">Contributors</dt>
+          <dd id="contributors" class="mt-0.5 font-semibold tabular-nums">0</dd></div>
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-400">Average</dt>
+          <dd id="average" class="mt-0.5 font-semibold tabular-nums">₹0</dd></div>
+      </dl>
+
+      <p id="withdrawn-line" class="mt-3 hidden border-t border-slate-100 pt-3 text-[13px] text-slate-500"></p>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button id="edit-campaign" class="rounded-xl border border-slate-300 px-3 py-2 text-[14px] font-medium">
+          Target &amp; details
+        </button>
+        <a id="export" href="#" class="rounded-xl border border-slate-300 px-3 py-2 text-[14px] font-medium">
+          Export CSV
+        </a>
+        <a href="/finance" class="rounded-xl bg-[#0F5132] px-3 py-2 text-[14px] font-medium text-white">
+          Record a contribution
+        </a>
+      </div>
+    </section>
+
+    <!-- Waiting to be verified -------------------------------------------- -->
+    <section id="verify-card" class="hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-baseline justify-between">
+        <h2 id="verify-title" class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Waiting for the treasurer
+        </h2>
+        <span id="verify-count" class="text-[13px] text-slate-400"></span>
+      </div>
+      <div id="verify-list" class="mt-2 space-y-2"></div>
+    </section>
+
+    <!-- Treasurers -------------------------------------------------------- -->
+    <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Treasurers</h2>
+        <button id="add-treasurer" class="text-[13px] font-medium text-[#0F5132]">+ Add</button>
+      </div>
+      <div id="treasurers" class="mt-2 space-y-2"></div>
+      <p class="mt-3 text-[12px] text-slate-400">
+        A treasurer records contributions for this collection only. Verifying
+        stays with club officials.
+      </p>
+    </section>
+
+    <!-- Breakdowns -------------------------------------------------------- -->
+    <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div class="flex gap-1.5" role="tablist" aria-label="Breakdown">
+        <button role="tab" data-by="treasurer" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By treasurer</button>
+        <button role="tab" data-by="method" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By method</button>
+        <button role="tab" data-by="day" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By day</button>
+      </div>
+      <div id="breakdown" class="mt-3 space-y-2"></div>
+    </section>
+
+    <!-- All contributions ------------------------------------------------- -->
+    <section>
+      <div class="flex items-baseline justify-between px-1">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">All contributions</h2>
+        <span id="all-count" class="text-[13px] text-slate-400"></span>
+      </div>
+      <input id="search" type="search" placeholder="Search name, phone or reference"
+             class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+      <div class="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+        <button data-status="" class="fchip whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px]">All</button>
+        <button data-status="RECORDED" class="fchip whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px]">Pending</button>
+        <button data-status="VERIFIED" class="fchip whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px]">Verified</button>
+        <button data-status="REJECTED" class="fchip whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px]">Rejected</button>
+        <button data-status="CANCELLED" class="fchip whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px]">Cancelled</button>
+      </div>
+      <div id="all" class="mt-2 space-y-2"></div>
+    </section>
+  </div>
+
+  <!-- Create / edit a collection ------------------------------------------ -->
+  <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
+    <div class="max-h-[92svh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+      <h2 id="sheet-title" class="text-lg font-semibold">New collection</h2>
+
+      <div class="mt-4 space-y-3">
+        <div>
+          <label for="f-title" class="mb-1 block text-[13px] font-medium text-slate-600">Name</label>
+          <input id="f-title" type="text" placeholder="FYC Anniversary Celebration 2026"
+                 class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+        </div>
+        <div>
+          <label for="f-title-ta" class="mb-1 block text-[13px] font-medium text-slate-600">Name in Tamil <span class="text-slate-400">(optional)</span></label>
+          <input id="f-title-ta" type="text" placeholder="எஃப்ஒய்சி ஆண்டு விழா 2026"
+                 class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+        </div>
+        <div>
+          <label for="f-purpose" class="mb-1 block text-[13px] font-medium text-slate-600">What is it for</label>
+          <select id="f-purpose" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]">
+            <option value="ANNIVERSARY">Anniversary</option>
+            <option value="FESTIVAL">Festival</option>
+            <option value="TOURNAMENT">Tournament</option>
+            <option value="RELIEF">Relief</option>
+            <option value="CONSTRUCTION">Construction</option>
+            <option value="OTHER">Something else</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="f-suggested" class="mb-1 block text-[13px] font-medium text-slate-600">Planned per head</label>
+            <input id="f-suggested" type="number" inputmode="numeric" placeholder="3500"
+                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+          </div>
+          <div>
+            <label for="f-target" class="mb-1 block text-[13px] font-medium text-slate-600">Target <span class="text-slate-400">(optional)</span></label>
+            <input id="f-target" type="number" inputmode="numeric" placeholder="Not set"
+                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="f-start" class="mb-1 block text-[13px] font-medium text-slate-600">From</label>
+            <input id="f-start" type="date" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+          </div>
+          <div>
+            <label for="f-end" class="mb-1 block text-[13px] font-medium text-slate-600">Until</label>
+            <input id="f-end" type="date" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+          </div>
+        </div>
+        <label id="f-event-row" class="flex items-start gap-2.5 rounded-xl bg-slate-50 p-3">
+          <input id="f-event" type="checkbox" checked class="mt-0.5 h-4 w-4 rounded" />
+          <span class="text-[13px] text-slate-600">
+            Also create this as an event, so it appears in the club's event list.
+          </span>
+        </label>
+        <p class="text-[12px] text-slate-400">
+          The target can be set, changed or removed at any time. Planned per head is
+          only the amount the form starts with — people give more and less.
+        </p>
+      </div>
+
+      <p id="sheet-error" class="mt-3 hidden rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700"></p>
+
+      <div class="mt-5 flex gap-2">
+        <button id="sheet-cancel" class="flex-1 rounded-xl border border-slate-300 py-2.5 font-medium">Cancel</button>
+        <button id="sheet-save" class="flex-1 rounded-xl bg-[#0F5132] py-2.5 font-semibold text-white">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appoint a treasurer -------------------------------------------------- -->
+  <div id="pick" role="dialog" aria-modal="true" aria-labelledby="pick-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
+    <div class="max-h-[80svh] w-full max-w-sm overflow-hidden rounded-t-2xl bg-white sm:rounded-2xl">
+      <div class="border-b border-slate-100 p-4">
+        <h2 id="pick-title" class="text-lg font-semibold">Add a treasurer</h2>
+        <input id="pick-search" type="search" placeholder="Search members"
+               class="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+      </div>
+      <div id="pick-list" class="max-h-[50svh] overflow-y-auto"></div>
+      <div class="border-t border-slate-100 p-3">
+        <button id="pick-cancel" class="w-full rounded-xl border border-slate-300 py-2.5 font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdraw a contribution ---------------------------------------------- -->
+  <div id="resolve" role="dialog" aria-modal="true" aria-labelledby="resolve-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 p-4 sm:items-center">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-5">
+      <h2 id="resolve-title" class="text-lg font-semibold">Reject this contribution</h2>
+      <p id="resolve-sub" class="mt-1 text-sm text-slate-500"></p>
+      <label for="resolve-reason" class="mt-4 mb-1 block text-[13px] font-medium text-slate-600">Why</label>
+      <input id="resolve-reason" type="text" placeholder="e.g. Cheque bounced"
+             class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
+      <p class="mt-1.5 text-[12px] text-slate-400">
+        The record is kept either way — the reason is what explains the total later.
+      </p>
+      <p id="resolve-error" class="mt-3 hidden text-sm text-red-700"></p>
+      <div class="mt-5 flex gap-2">
+        <button id="resolve-cancel" class="flex-1 rounded-xl border border-slate-300 py-2.5 font-medium">Cancel</button>
+        <button id="resolve-save" class="flex-1 rounded-xl bg-red-700 py-2.5 font-semibold text-white">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="pointer-events-none fixed inset-x-0 bottom-4 z-40 mx-auto hidden max-w-md px-4">
+    <div id="toast-body" class="rounded-2xl bg-slate-900 px-4 py-3 text-center text-[15px] font-medium text-white shadow-xl"></div>
+  </div>
+</FinanceLayout>
+
+<style>
+  .tab { background: #f1f5f9; color: #475569; }
+  .tab[aria-selected="true"] { background: #0F5132; color: #fff; }
+  .fchip { border-color: #cbd5e1; color: #475569; }
+  .fchip[aria-pressed="true"] { border-color: #0F5132; background: #0F5132; color: #fff; }
+</style>
+
+<script is:inline>
+(function () {
+  'use strict';
+  if (!window.FYC.requireAuth()) return;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = FYC.esc, money = FYC.money;
+  var API_BASE = (window.FYC_FINANCE_CONFIG || {}).apiBase;
+
+  var state = {
+    campaigns: [], campaign: null, by: 'treasurer', status: '', q: '',
+    roster: [], editing: false, resolving: null, resolveKind: 'reject'
+  };
+
+  var statusWord = FYC.statusWord;
+
+  // ── Boot ────────────────────────────────────────────────────────────────
+
+  FYC.api('/finance/campaigns').then(function (list) {
+    $('loading').classList.add('hidden');
+    state.campaigns = list.filter(function (c) { return c.can_view_all; });
+
+    if (!state.campaigns.length && !list.length) {
+      // Nothing exists yet. Whether they may create one is the server's call —
+      // try, and let the create button be the thing that finds out.
+      $('page').classList.remove('hidden');
+      $('first-run').classList.remove('hidden');
+      return;
+    }
+    if (!state.campaigns.length) { $('denied').classList.remove('hidden'); return; }
+
+    $('page').classList.remove('hidden');
+    $('picker-row').classList.remove('hidden');
+    $('picker-row').classList.add('flex');
+    $('campaign').innerHTML = state.campaigns.map(function (c) {
+      return '<option value="' + c.id + '">' + esc(c.title_en) + '</option>';
+    }).join('');
+    select(state.campaigns[0].id);
+  }).catch(function (err) {
+    $('loading').classList.add('hidden');
+    $('denied').classList.remove('hidden');
+    $('denied').querySelector('h2').textContent = "Couldn't load the dashboard";
+    $('denied').querySelector('p').textContent = err.message;
+  });
+
+  function select(id) {
+    state.campaign = state.campaigns.find(function (c) { return c.id === id; });
+    if (!state.campaign) return;
+    $('campaign').value = id;
+    $('summary-card').classList.remove('hidden');
+    $('c-title').textContent = state.campaign.title_en;
+
+    var st = state.campaign.status;
+    $('c-status').textContent = st.charAt(0) + st.slice(1).toLowerCase();
+    $('c-status').className = 'shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ' +
+      (st === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500');
+
+    // Not an href. Every finance call needs Authorization and
+    // X-Organization-ID, and a top-level navigation from an anchor sends
+    // neither — the official would have got an error body, not a file.
+    $('export').setAttribute('href', '#');
+
+    loadSummary(); loadTreasurers(); loadBreakdown(); loadAll(); loadVerifyQueue();
+  }
+
+  $('campaign').addEventListener('change', function (e) { select(e.target.value); });
+
+  $('export').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (!state.campaign) return;
+    var label = $('export').textContent;
+    $('export').textContent = 'Preparing…';
+    fetch(API_BASE + '/api/v1/finance/campaigns/' + state.campaign.id +
+          '/contributions.csv', {
+      headers: {
+        'Authorization': 'Bearer ' + FYC.token(),
+        'X-Organization-ID': (window.FYC_FINANCE_CONFIG || {}).orgId
+      }
+    }).then(function (r) {
+      if (!r.ok) throw new Error('The export did not come through.');
+      return r.blob();
+    }).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'contributions.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }).catch(function (err) {
+      toast(err.message);
+    }).then(function () { $('export').textContent = label; });
+  });
+
+  // ── Numbers ─────────────────────────────────────────────────────────────
+
+  function loadSummary() {
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/summary').then(function (s) {
+      $('collected').textContent = s.display.collected;
+      $('verified').textContent = s.display.verified;
+      $('pending').textContent = s.display.pending;
+      $('contributors').textContent = s.contributors;
+      $('average').textContent = s.display.average;
+
+      // No target is a real state, not a zero. A bar at 100% on the first
+      // rupee would be worse than no bar.
+      if (s.target_paise) {
+        $('target-row').classList.remove('hidden');
+        $('bar').style.width = Math.min(100, s.collection_percent) + '%';
+        $('target-line').textContent =
+          s.collection_percent + '% of ' + s.display.target + ' · ' +
+          s.display.remaining + ' to go · ' + s.payments + ' payments';
+      } else {
+        $('target-row').classList.add('hidden');
+        $('target-line').textContent = '';
+      }
+
+      var notes = [];
+      if (s.withdrawn_count) {
+        notes.push(s.withdrawn_count + ' withdrawn (' + money(s.withdrawn_paise) + ')');
+      }
+      if (s.override_verified_count) {
+        notes.push(s.override_verified_count +
+          ' confirmed without the treasurer (admin override)');
+      }
+      $('withdrawn-line').textContent = notes.join(' · ');
+      $('withdrawn-line').classList.toggle('hidden', !notes.length);
+    }).catch(function () {});
+  }
+
+  // ── Verify queue ────────────────────────────────────────────────────────
+
+  function loadVerifyQueue() {
+    FYC.api('/finance/campaigns/' + state.campaign.id +
+            '/contributions?status=RECORDED&limit=50&sort=latest')
+      .then(function (rows) {
+        $('verify-card').classList.toggle('hidden', rows.length === 0);
+        if (!rows.length) return;
+        $('verify-count').textContent =
+          rows.length + (rows.length === 50 ? '+' : '') + ' waiting';
+        $('verify-title').textContent = state.campaign.can_verify
+          ? 'Waiting for you to confirm'
+          : 'Waiting for the treasurer to confirm';
+        $('verify-list').innerHTML = rows.map(function (c) {
+          // An entry an executive made is a claim on the treasurer's cash box.
+          // Only the person holding that box is offered the buttons.
+          var actions = state.campaign.can_verify
+            ? '<div class="mt-2 flex gap-2">' +
+              '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-3 py-1.5 text-[13px] font-medium text-white">Confirm received</button>' +
+              '<button data-reject="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-3 py-1.5 text-[13px] font-medium">Reject</button>' +
+              '</div>'
+            : '';
+          return '<div class="rounded-xl bg-slate-50 p-3">' +
+            '<div class="flex items-baseline justify-between gap-2">' +
+            '<p class="min-w-0 truncate text-[15px] font-medium">' + esc(c.contributor_name) + '</p>' +
+            '<p class="shrink-0 text-[15px] font-semibold tabular-nums">' + esc(c.amount_display) + '</p></div>' +
+            '<p class="mt-0.5 text-[12px] text-slate-500">' +
+            esc(c.method.replace('_', ' ').toLowerCase()) +
+            (c.reference_no ? ' · ' + esc(c.reference_no) : '') +
+            (c.recorded_by_name ? ' · by ' + esc(c.recorded_by_name) : '') +
+            ' · ' + esc(FYC.ago(c.created_at)) + '</p>' + actions + '</div>';
+        }).join('');
+      }).catch(function () {});
+  }
+
+  document.addEventListener('click', function (e) {
+    var v = e.target.closest('[data-verify]');
+    if (v) {
+      v.disabled = true;
+      FYC.api('/finance/contributions/' + v.dataset.verify + '/verify', { method: 'POST' })
+        .then(function () { toast('Confirmed as received.'); refresh(); })
+        .catch(function (err) { toast(err.message); v.disabled = false; });
+      return;
+    }
+    var r = e.target.closest('[data-reject]');
+    if (r) { openResolve('reject', r.dataset.reject, r.dataset.name, r.dataset.amount); return; }
+    var c = e.target.closest('[data-cancel]');
+    if (c) { openResolve('cancel', c.dataset.cancel, c.dataset.name, c.dataset.amount); }
+  });
+
+  function refresh() { loadSummary(); loadVerifyQueue(); loadBreakdown(); loadAll(); }
+
+  // ── Treasurers ──────────────────────────────────────────────────────────
+
+  function loadTreasurers() {
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/assignments').then(function (rows) {
+      if (!rows.length) {
+        $('treasurers').innerHTML =
+          '<p class="rounded-xl bg-slate-50 px-3 py-4 text-center text-[13px] text-slate-400">' +
+          'Nobody appointed yet. Add the people who will collect.</p>';
+        return;
+      }
+      $('treasurers').innerHTML = rows.map(function (t) {
+        return '<div class="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">' +
+          '<div class="min-w-0 flex-1">' +
+          '<p class="truncate text-[15px] font-medium">' + esc(t.name) + '</p>' +
+          '<p class="text-[12px] text-slate-500">' + money(t.recorded_paise) +
+          ' · ' + t.payments + ' payment' + (t.payments === 1 ? '' : 's') + '</p></div>' +
+          '<button data-revoke="' + t.user_id + '" data-name="' + esc(t.name) + '" ' +
+          'class="shrink-0 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[13px]">Remove</button>' +
+          '</div>';
+      }).join('');
+    }).catch(function () {});
+  }
+
+  $('treasurers').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-revoke]');
+    if (!btn) return;
+    if (!confirm('Remove ' + btn.dataset.name + ' as a treasurer? What they already recorded stays.')) return;
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/assignments/' + btn.dataset.revoke,
+            { method: 'DELETE' })
+      .then(function () { toast('Removed.'); loadTreasurers(); loadSummary(); })
+      .catch(function (err) { toast(err.message); });
+  });
+
+  $('add-treasurer').addEventListener('click', function () {
+    $('pick-search').value = '';
+    FYC.openDialog('pick', 'pick-search');
+    if (state.roster.length) { renderRoster(''); }
+    else {
+      FYC.api('/users/roster').then(function (rows) {
+        state.roster = rows;
+        // Render against what is in the box *now*, not against the empty
+        // string this fetch started with. An admin types faster than a
+        // request completes, and rendering the stale query put somebody
+        // else's name under their finger.
+        renderRoster($('pick-search').value.trim());
+      }).catch(function (err) {
+        $('pick-list').innerHTML = '<p class="p-4 text-sm text-red-700">' + esc(err.message) + '</p>';
+      });
+    }
+  });
+
+  function renderRoster(q) {
+    var lower = q.toLowerCase();
+    var rows = state.roster.filter(function (m) {
+      var n = (m.full_name_en || m.full_name_ta || '');
+      return !q || n.toLowerCase().indexOf(lower) >= 0;
+    }).slice(0, 60);
+    if (!rows.length) {
+      $('pick-list').innerHTML = '<p class="p-4 text-center text-sm text-slate-400">No members match.</p>';
+      return;
+    }
+    $('pick-list').innerHTML = rows.map(function (m) {
+      return '<button data-appoint="' + m.id + '" class="flex w-full items-baseline gap-2 px-4 py-3 text-left hover:bg-slate-50">' +
+        '<span class="text-[15px]">' + esc(m.full_name_en || m.full_name_ta) + '</span>' +
+        '<span class="text-[12px] text-slate-400">' + esc((m.role || '').replace('_', ' ').toLowerCase()) + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  $('pick-search').addEventListener('input', function (e) { renderRoster(e.target.value.trim()); });
+
+  $('pick-list').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-appoint]');
+    if (!btn) return;
+    btn.disabled = true;
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/assignments',
+            { method: 'POST', body: { user_id: btn.dataset.appoint } })
+      .then(function (a) { closePick(); toast(a.name + ' can now record contributions.'); loadTreasurers(); })
+      .catch(function (err) { toast(err.message); btn.disabled = false; });
+  });
+
+  function closePick() { FYC.closeDialog('pick'); }
+  $('pick-cancel').addEventListener('click', closePick);
+
+  // ── Breakdown ───────────────────────────────────────────────────────────
+
+  function loadBreakdown() {
+    document.querySelectorAll('.tab').forEach(function (t) {
+      t.setAttribute('aria-selected', String(t.dataset.by === state.by));
+    });
+    FYC.api('/finance/campaigns/' + state.campaign.id + '/breakdown?by=' + state.by)
+      .then(function (res) {
+        var rows = res.rows;
+        if (!rows.length) {
+          $('breakdown').innerHTML =
+            '<p class="py-4 text-center text-[13px] text-slate-400">Nothing to show yet.</p>';
+          return;
+        }
+        var top = Math.max.apply(null, rows.map(function (r) { return r.amount_paise; })) || 1;
+        $('breakdown').innerHTML = rows.map(function (r) {
+          var label = state.by === 'treasurer' ? r.name
+            : state.by === 'method' ? r.method.replace('_', ' ')
+            : new Date(r.day).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          var sub = state.by === 'treasurer'
+            ? r.contributors + ' contributor' + (r.contributors === 1 ? '' : 's')
+            : r.payments + ' payment' + (r.payments === 1 ? '' : 's');
+          // A bar, not a chart library. The comparison is the whole message.
+          return '<div>' +
+            '<div class="flex items-baseline justify-between gap-2 text-[14px]">' +
+            '<span class="min-w-0 truncate font-medium">' + esc(label) +
+            ' <span class="text-[12px] font-normal text-slate-400">' + esc(sub) + '</span></span>' +
+            '<span class="shrink-0 font-semibold tabular-nums">' + esc(r.amount_display) + '</span></div>' +
+            '<div class="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">' +
+            '<div class="h-full rounded-full bg-[#0F5132]" style="width:' +
+            Math.round(r.amount_paise * 100 / top) + '%"></div></div></div>';
+        }).join('');
+      }).catch(function () {});
+  }
+
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () { state.by = t.dataset.by; loadBreakdown(); });
+  });
+
+  // ── All contributions ───────────────────────────────────────────────────
+
+  var searchTimer = null;
+  $('search').addEventListener('input', function (e) {
+    clearTimeout(searchTimer);
+    state.q = e.target.value.trim();
+    searchTimer = setTimeout(loadAll, 220);
+  });
+
+  document.querySelectorAll('.fchip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      state.status = chip.dataset.status;
+      document.querySelectorAll('.fchip').forEach(function (c) {
+        c.setAttribute('aria-pressed', String(c.dataset.status === state.status));
+      });
+      loadAll();
+    });
+  });
+  document.querySelector('.fchip').setAttribute('aria-pressed', 'true');
+
+  function loadAll() {
+    var url = '/finance/campaigns/' + state.campaign.id + '/contributions?limit=200';
+    if (state.status) url += '&status=' + state.status;
+    if (state.q) url += '&q=' + encodeURIComponent(state.q);
+
+    FYC.api(url).then(function (rows) {
+      $('all-count').textContent = rows.length + (rows.length === 200 ? '+' : '');
+      if (!rows.length) {
+        $('all').innerHTML =
+          '<p class="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate-400 ring-1 ring-slate-200">' +
+          'Nothing matches.</p>';
+        return;
+      }
+      $('all').innerHTML = rows.map(function (c) {
+        var tone = c.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-700'
+          : c.status === 'RECORDED' ? 'bg-amber-50 text-amber-700'
+          : 'bg-slate-100 text-slate-500';
+        var actions = '';
+        if (state.campaign.can_verify && c.status === 'RECORDED') {
+          actions = '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-2.5 py-1 text-[12px] font-medium text-white">Confirm received</button>' +
+            '<button data-reject="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-2.5 py-1 text-[12px]">Reject</button>';
+        } else if (state.campaign.can_verify && c.status === 'VERIFIED') {
+          actions = '<button data-cancel="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-2.5 py-1 text-[12px]">Withdraw</button>';
+        }
+        return '<div class="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200">' +
+          '<div class="flex items-baseline justify-between gap-2">' +
+          '<p class="min-w-0 truncate text-[15px] font-medium">' + esc(c.contributor_name) + '</p>' +
+          '<p class="shrink-0 text-[15px] font-semibold tabular-nums">' + esc(c.amount_display) + '</p></div>' +
+          '<div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[12px] text-slate-400">' +
+          '<span>' + esc(c.method.replace('_', ' ').toLowerCase()) + '</span>' +
+          (c.reference_no ? '<span>· ' + esc(c.reference_no) + '</span>' : '') +
+          (c.recorded_by_name ? '<span>· by ' + esc(c.recorded_by_name) + '</span>' : '') +
+          '<span>· ' + esc(FYC.ago(c.created_at)) + '</span>' +
+          '<span class="rounded px-1.5 py-0.5 font-medium ' + tone + '">' +
+          esc(statusWord(c.status)) + '</span></div>' +
+          (c.resolution_reason
+            ? '<p class="mt-1 text-[12px] italic text-slate-500">' + esc(c.resolution_reason) + '</p>' : '') +
+          (actions ? '<div class="mt-2 flex gap-2">' + actions + '</div>' : '') +
+          '</div>';
+      }).join('');
+    }).catch(function () {});
+  }
+
+  // ── Withdrawing ─────────────────────────────────────────────────────────
+
+  function openResolve(kind, id, name, amount) {
+    state.resolving = id;
+    state.resolveKind = kind;
+    $('resolve-title').textContent = kind === 'reject'
+      ? 'Reject this contribution' : 'Withdraw this contribution';
+    $('resolve-sub').textContent = amount + ' from ' + name + '. ' + (kind === 'reject'
+      ? 'Use this when the payment never really happened.'
+      : 'Use this when it happened and has since been returned.');
+    $('resolve-reason').value = '';
+    $('resolve-error').classList.add('hidden');
+    FYC.openDialog('resolve', 'resolve-reason');
+  }
+
+  function closeResolve() { FYC.closeDialog('resolve'); }
+  $('resolve-cancel').addEventListener('click', closeResolve);
+
+  $('resolve-save').addEventListener('click', function () {
+    var reason = $('resolve-reason').value.trim();
+    if (reason.length < 3) {
+      $('resolve-error').textContent = 'Please say why — it is what explains the total later.';
+      $('resolve-error').classList.remove('hidden');
+      return;
+    }
+    $('resolve-save').disabled = true;
+    FYC.api('/finance/contributions/' + state.resolving + '/' + state.resolveKind,
+            { method: 'POST', body: { reason: reason } })
+      .then(function () {
+        closeResolve();
+        toast(state.resolveKind === 'reject' ? 'Rejected.' : 'Withdrawn.');
+        refresh();
+      })
+      .catch(function (err) {
+        $('resolve-error').textContent = err.message;
+        $('resolve-error').classList.remove('hidden');
+      })
+      .then(function () { $('resolve-save').disabled = false; });
+  });
+
+  // ── Create / edit a collection ──────────────────────────────────────────
+
+  function openSheet(editing) {
+    state.editing = editing;
+    $('sheet-title').textContent = editing ? 'Target & details' : 'New collection';
+    $('sheet-error').classList.add('hidden');
+    $('f-event-row').classList.toggle('hidden', editing);
+
+    if (editing && state.campaign) {
+      var c = state.campaign;
+      $('f-title').value = c.title_en || '';
+      $('f-title-ta').value = c.title_ta || '';
+      $('f-purpose').value = c.purpose || 'OTHER';
+      $('f-suggested').value = c.suggested_amount_paise ? c.suggested_amount_paise / 100 : '';
+      $('f-target').value = c.target_amount_paise ? c.target_amount_paise / 100 : '';
+      $('f-start').value = c.starts_on || '';
+      $('f-end').value = c.ends_on || '';
+    } else {
+      $('f-title').value = '';
+      $('f-title-ta').value = '';
+      $('f-purpose').value = 'ANNIVERSARY';
+      $('f-suggested').value = '3500';
+      $('f-target').value = '';
+      $('f-start').value = FYC.today();
+      $('f-end').value = '';
+      $('f-event').checked = true;
+    }
+    FYC.openDialog('sheet', 'f-title');
+  }
+
+  $('first-run-open').addEventListener('click', function () { openSheet(false); });
+  $('new-campaign').addEventListener('click', function () { openSheet(false); });
+  $('edit-campaign').addEventListener('click', function () { openSheet(true); });
+  function closeSheet() { FYC.closeDialog('sheet'); }
+  $('sheet-cancel').addEventListener('click', closeSheet);
+
+  FYC.dismissDialogsOnEscape({
+    sheet: closeSheet, pick: closePick, resolve: closeResolve
+  });
+
+  $('sheet-save').addEventListener('click', function () {
+    var title = $('f-title').value.trim();
+    if (title.length < 2) {
+      $('sheet-error').textContent = 'Give the collection a name.';
+      $('sheet-error').classList.remove('hidden');
+      return;
+    }
+    var target = $('f-target').value.trim();
+    var body = {
+      title_en: title,
+      title_ta: $('f-title-ta').value.trim() || undefined,
+      purpose: $('f-purpose').value,
+      suggested_amount: $('f-suggested').value ? Number($('f-suggested').value) : undefined,
+      starts_on: $('f-start').value || undefined,
+      ends_on: $('f-end').value || undefined
+    };
+    if (target) body.target_amount = Number(target);
+
+    $('sheet-save').disabled = true;
+    var request;
+    if (state.editing) {
+      // An empty target field means "no target", which is a real state and
+      // needs saying explicitly — otherwise a target once set could never be
+      // removed.
+      if (!target) body.clear_target = true;
+      request = FYC.api('/finance/campaigns/' + state.campaign.id, { method: 'PATCH', body: body });
+    } else {
+      body.status = 'ACTIVE';
+      body.create_event = $('f-event').checked;
+      request = FYC.api('/finance/campaigns', { method: 'POST', body: body });
+    }
+
+    request.then(function (saved) {
+      closeSheet();
+      // The reload below tears the page down, so a toast here would never be
+      // read. Park it and let the fresh page show it.
+      sessionStorage.setItem('fyc_finance_toast',
+        state.editing ? 'Saved.' : 'Collection created. Add your treasurers next.');
+      // Reload rather than patch state in place: a brand-new collection
+      // changes which branch of the page is even showing.
+      location.reload();
+    }).catch(function (err) {
+      $('sheet-error').textContent = err.message;
+      $('sheet-error').classList.remove('hidden');
+    }).then(function () { $('sheet-save').disabled = false; });
+  });
+
+  // ── Toast ───────────────────────────────────────────────────────────────
+
+  var toast = FYC.toast;
+
+  // A message parked by the page that reloaded itself.
+  var carried = sessionStorage.getItem('fyc_finance_toast');
+  if (carried) {
+    sessionStorage.removeItem('fyc_finance_toast');
+    toast(carried);
+  }
+})();
+</script>

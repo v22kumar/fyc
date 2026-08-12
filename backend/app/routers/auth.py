@@ -1,5 +1,6 @@
 from pydantic import BaseModel as _BaseModel, Field
 import hashlib
+import html as _html
 import logging
 import hmac
 import secrets
@@ -7,6 +8,8 @@ import uuid
 from typing import Dict, Optional, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import HTMLResponse
 from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
 import jwt
@@ -23,6 +26,7 @@ from app.models.club_request import ClubMemberRequest
 from app.models.otp import PendingOtp
 from app.services.account_claims import (mark_phone_verified, owner_of_phone,
                                           release_claims)
+from app.services import google_browser_auth
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 logger = logging.getLogger(__name__)
@@ -573,16 +577,30 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    # Accepted token audiences = configured client IDs + known first-party client
-    # IDs. The Android app (Firebase project 986299606001 / fyc-connect-25ab0) mints
-    # tokens with its own web client ID, while the website uses the 717823550652
-    # web client; both are legitimate. OAuth client IDs are not secrets (they ship
-    # inside the APK and google-services.json), so listing them here is safe and
-    # avoids "Token has wrong audience" rejections from env drift.
-    _KNOWN_GOOGLE_CLIENT_IDS = [
-        "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",  # Android (fyc-connect-25ab0)
-        "717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com",  # Web
-    ]
+    idinfo = _verify_google_id_token(payload.id_token)
+    return session_for_google_identity(db, payload.organization_id, idinfo)
+
+
+# Accepted token audiences = configured client IDs + known first-party client
+# IDs. The Android app (Firebase project 986299606001 / fyc-connect-25ab0) mints
+# tokens with its own web client ID, while the website uses the 717823550652
+# web client; both are legitimate. OAuth client IDs are not secrets (they ship
+# inside the APK and google-services.json), so listing them here is safe and
+# avoids "Token has wrong audience" rejections from env drift.
+_KNOWN_GOOGLE_CLIENT_IDS = [
+    "986299606001-jj9nkt5grit2ra01dsf8gcqbt9k50lar.apps.googleusercontent.com",  # Android (fyc-connect-25ab0)
+    "717823550652-71od456bvv5q7k5fhifqbbe5h378sdq6.apps.googleusercontent.com",  # Web
+]
+
+
+def _verify_google_id_token(token: str) -> dict:
+    """Check an ID token against every client id this club legitimately uses.
+
+    Both roads in — the native plugin and the browser fallback — arrive with an
+    ID token minted by a different client, so the audience is not knowable in
+    advance. Trying each accepted one in turn is what keeps a config change on
+    one road from silently invalidating the other.
+    """
     valid_client_ids = list(dict.fromkeys(
         [cid for cid in [settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID] if cid]
         + _KNOWN_GOOGLE_CLIENT_IDS
@@ -598,9 +616,7 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
         last_err: Exception = ValueError("no client IDs configured")
         for cid in valid_client_ids:
             try:
-                idinfo = id_token.verify_oauth2_token(
-                    payload.id_token, requests.Request(), cid
-                )
+                idinfo = id_token.verify_oauth2_token(token, requests.Request(), cid)
                 break
             except ValueError as e:
                 last_err = e
@@ -608,7 +624,18 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
             raise last_err
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid Google token: {e}")
-        
+    return idinfo
+
+
+def session_for_google_identity(db: Session, organization_id, idinfo: dict):
+    """Turn a *verified* Google identity into a session for this club.
+
+    Split out of `login_google` because the browser fallback reaches the same
+    place by a different road: the native plugin hands us an ID token directly,
+    the browser flow trades an authorization code for one. Only the road
+    differs — who the member is, whether they already exist, and what happens
+    when they do not, must not.
+    """
     email = idinfo.get("email")
     if not email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google account has no email")
@@ -618,13 +645,13 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     given_name = idinfo.get("given_name", name)
 
     user = db.query(User).filter(
-        User.organization_id == payload.organization_id,
+        User.organization_id == organization_id,
         User.email == email,
     ).first()
 
     if not user and google_sub:
         user = db.query(User).filter(
-            User.organization_id == payload.organization_id,
+            User.organization_id == organization_id,
             User.google_sub == google_sub,
         ).first()
 
@@ -649,7 +676,7 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     # Owner bootstrap only — auto-create so the super admin is never locked out.
     if not user:
         user = User(
-            organization_id=payload.organization_id,
+            organization_id=organization_id,
             email=email,
             google_sub=google_sub,
             role="SUPER_ADMIN",
@@ -689,6 +716,165 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
     return Token(access_token=access_token, refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
+
+
+
+# ── Google sign-in that does not depend on how this build was signed ────────
+#
+# The native plugin shows Google the pair (package name, signing certificate).
+# Play re-signs uploaded bundles with its own key, so the Play copy and the
+# sideloaded copy present different certificates and can fail independently —
+# and when Google does not recognise one, it answers DEVELOPER_ERROR (code 10)
+# and the member is stuck behind a fingerprint that lives in a console.
+#
+# These three endpoints are the way round it. Ordinary web OAuth, in the system
+# browser, against the web client id: no certificate anywhere in it.
+
+class BrowserLoginStart(_BaseModel):
+    organization_id: uuid.UUID
+
+
+@router.get("/google/browser/available")
+def google_browser_available():
+    """Should the app offer this at all?
+
+    A member who has just been refused once should not be handed a second
+    failure, so the app asks before showing the button.
+    """
+    return {
+        "available": google_browser_auth.is_configured(),
+        "missing": google_browser_auth.missing_configuration(),
+        "redirect_uri": google_browser_auth.redirect_uri(),
+    }
+
+
+@router.post("/google/browser/start")
+@limiter.limit("10/minute")
+def google_browser_start(request: Request, payload: BrowserLoginStart,
+                         db: Session = Depends(get_db)):
+    """Open a browser sign-in and hand the app a handle to watch it by."""
+    if not google_browser_auth.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Browser sign-in is not configured on the server.",
+        )
+    org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    session_id, url = google_browser_auth.start(db, payload.organization_id)
+    return {
+        "session_id": session_id,
+        "authorization_url": url,
+        "expires_in": int(google_browser_auth.SESSION_TTL.total_seconds()),
+    }
+
+
+def _browser_result_page(title: str, message: str, ok: bool) -> HTMLResponse:
+    """What the member sees in the browser when Google sends them back.
+
+    They still have the app open behind this tab, so the page's only job is to
+    say which way it went and get out of the way.
+    """
+    tick = "&#10003;" if ok else "&#33;"
+    colour = "#137333" if ok else "#c5221f"
+    # `message` carries Google's error_description, or the first 160 characters
+    # of whatever Google's token endpoint returned. Interpolating that into a
+    # page served from the API origin, unescaped, is a hole somebody else fills.
+    title = _html.escape(title)
+    message = _html.escape(message)
+    return HTMLResponse(f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title></head>
+<body style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+background:#fafafa;display:flex;align-items:center;justify-content:center;min-height:100vh">
+<div style="text-align:center;padding:32px;max-width:420px">
+  <div style="font-size:44px;color:{colour};line-height:1">{tick}</div>
+  <h1 style="font-size:20px;margin:16px 0 8px;color:#202124">{title}</h1>
+  <p style="font-size:15px;color:#5f6368;margin:0">{message}</p>
+</div></body></html>""")
+
+
+@router.get("/google/browser/callback")
+async def google_browser_callback(request: Request, db: Session = Depends(get_db)):
+    """Where Google returns the member. Finishes the exchange, parks the result.
+
+    Nothing sensitive reaches this page: the session lands in the database and
+    only the app, which holds the handle, can collect it.
+    """
+    params = request.query_params
+    state = params.get("state") or ""
+    row = google_browser_auth.load(db, state) if state else None
+    # Only a session still waiting for Google may be written to. A second
+    # callback carrying the same state would otherwise replace a finished
+    # result with a different identity, which the app would then collect.
+    if row is None or row.status != "pending":
+        return _browser_result_page(
+            "This sign-in has expired",
+            "Go back to FYC Connect and start again.", ok=False)
+
+    if params.get("error"):
+        google_browser_auth.fail(db, row, f"Google reported: {params.get('error')}")
+        return _browser_result_page(
+            "Sign-in cancelled",
+            "Nothing was changed. You can close this tab.", ok=False)
+
+    code = params.get("code")
+    if not code:
+        google_browser_auth.fail(db, row, "Google returned no authorization code.")
+        return _browser_result_page(
+            "Sign-in did not complete",
+            "Go back to FYC Connect and try again.", ok=False)
+
+    try:
+        id_tok = await google_browser_auth.exchange_code_for_id_token(code)
+    except Exception as e:
+        google_browser_auth.fail(db, row, str(e))
+        return _browser_result_page(
+            "Sign-in did not complete", str(e), ok=False)
+
+    try:
+        idinfo = await run_in_threadpool(_verify_google_id_token, id_tok)
+        result = await run_in_threadpool(
+            session_for_google_identity, db, row.organization_id, idinfo)
+    except HTTPException as e:
+        google_browser_auth.fail(db, row, str(e.detail))
+        return _browser_result_page("Sign-in did not complete", str(e.detail), ok=False)
+    except Exception as e:
+        logger.exception("[google-browser] callback failed")
+        google_browser_auth.fail(db, row, "Something went wrong finishing sign-in.")
+        return _browser_result_page(
+            "Sign-in did not complete",
+            "Something went wrong. Go back to FYC Connect and try again.", ok=False)
+
+    payload = result if isinstance(result, dict) else result.model_dump(mode="json")
+    google_browser_auth.finish(db, row, payload)
+    return _browser_result_page(
+        "You're signed in",
+        "Return to FYC Connect — it is already picking this up.", ok=True)
+
+
+@router.get("/google/browser/result")
+@limiter.limit("120/minute")
+def google_browser_result(request: Request, session_id: str,
+                          db: Session = Depends(get_db)):
+    """The app polls this. Answers once, then the handle is spent."""
+    row = google_browser_auth.load(db, session_id)
+    if row is None:
+        return {"status": "expired"}
+    if row.status == "failed":
+        error = row.error or "Sign-in did not complete."
+        db.delete(row)
+        db.commit()
+        return {"status": "failed", "error": error}
+    if row.status != "ready":
+        return {"status": "pending"}
+
+    result = google_browser_auth.claim(db, row)
+    if result is None:
+        return {"status": "failed", "error": "Sign-in did not complete."}
+    return {"status": "ready", "result": result}
 
 
 @router.post("/login/password", response_model=Token)
