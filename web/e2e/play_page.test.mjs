@@ -13,6 +13,7 @@
  * Exits non-zero if any check fails, so CI can gate on it.
  */
 import { chromium } from 'playwright';
+import { launchOptions } from './browser_path.mjs';
 import WebSocket from 'ws';
 
 const cfg = JSON.parse(process.argv[2]);
@@ -34,11 +35,7 @@ opp.on('message', (raw) => {
 });
 await new Promise((r, j) => { opp.on('open', r); opp.on('error', j); });
 
-// E2E_CHROMIUM points at a browser that is already on the machine, for
-// environments that ship one rather than letting Playwright download its own.
-const browser = await chromium.launch(
-  process.env.E2E_CHROMIUM ? { executablePath: process.env.E2E_CHROMIUM } : {},
-);
+const browser = await chromium.launch(launchOptions());
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));

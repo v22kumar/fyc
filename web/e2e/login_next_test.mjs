@@ -9,17 +9,10 @@
  *
  *   node e2e/login_next_test.mjs
  */
-import { existsSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { launchOptions } from './browser_path.mjs';
 
 const WEB = process.env.E2E_WEB_BASE || 'http://127.0.0.1:4321';
-
-function browserPath() {
-  for (const c of [process.env.E2E_CHROMIUM, '/opt/pw-browsers/chromium']) {
-    if (c && existsSync(c)) return c;
-  }
-  return undefined;
-}
 
 /* Where the browser came to rest.
  *
@@ -56,7 +49,7 @@ const check = (what, ok, detail = '') => {
   else { failures++; console.error(`  ✗ ${what}\n    ${detail}`); }
 };
 
-const browser = await chromium.launch({ executablePath: browserPath() });
+const browser = await chromium.launch(launchOptions());
 
 /** Land on /login already carrying a session, and see where it throws us. */
 async function landsAt(next, { signedIn = true } = {}) {
