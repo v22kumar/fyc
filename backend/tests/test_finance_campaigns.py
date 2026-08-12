@@ -143,10 +143,11 @@ def test_the_dashboard_an_admin_opens_the_app_to_see(client, db):
     arun = make_user(db, org, "CLUB_MEMBER", "Arun")
     appoint(db, campaign, arun, by=admin)
 
-    verified = record(client, campaign, auth(arun), contributor_name="Ravi",
-                      amount=55000).json()["id"]
-    client.post(f"/api/v1/finance/contributions/{verified}/verify", headers=auth(admin))
-    record(client, campaign, auth(arun), contributor_name="Meena", amount=7500)
+    # Arun is the treasurer, so what he records is verified as he records it.
+    record(client, campaign, auth(arun), contributor_name="Ravi", amount=55000)
+    # Kumar is an executive: his entry is a claim until Arun confirms it.
+    exec_member = make_user(db, org, "EXECUTIVE_MEMBER", "Kumar")
+    record(client, campaign, auth(exec_member), contributor_name="Meena", amount=7500)
 
     s = client.get(f"/api/v1/finance/campaigns/{campaign.id}/summary",
                    headers=auth(admin)).json()
@@ -186,19 +187,27 @@ def test_a_treasurer_gets_their_own_four_numbers(client, db):
     appoint(db, campaign, arun, by=admin)
     appoint(db, campaign, suresh, by=admin)
 
-    cid = record(client, campaign, auth(arun), contributor_name="Ravi",
-                 amount=15000).json()["id"]
-    client.post(f"/api/v1/finance/contributions/{cid}/verify", headers=auth(admin))
-    record(client, campaign, auth(arun), contributor_name="Meena", amount=3500)
+    record(client, campaign, auth(arun), contributor_name="Ravi", amount=15000)
+    # Kumar hands Arun ₹3,500 he collected; it waits for Arun to confirm it.
+    exec_member = make_user(db, org, "EXECUTIVE_MEMBER", "Kumar")
+    pending = record(client, campaign, auth(exec_member),
+                     contributor_name="Meena", amount=3500).json()["id"]
     record(client, campaign, auth(suresh), contributor_name="Kavi", amount=99000)
 
     mine = client.get(f"/api/v1/finance/campaigns/{campaign.id}/my-summary",
                       headers=auth(arun)).json()
-    assert mine["recorded_paise"] == 1850000
+    assert mine["recorded_paise"] == 1500000
     assert mine["verified_paise"] == 1500000
-    assert mine["pending_paise"] == 350000
-    assert mine["contributors"] == 2
-    assert mine["display"]["recorded"] == "₹18,500"
+    assert mine["pending_paise"] == 0
+    assert mine["contributors"] == 1
+    assert mine["display"]["recorded"] == "₹15,000"
+
+    # Once Arun confirms Kumar's ₹3,500, it counts toward the campaign — but
+    # it is still Kumar's entry, not Arun's collection.
+    client.post(f"/api/v1/finance/contributions/{pending}/verify", headers=auth(arun))
+    after = client.get(f"/api/v1/finance/campaigns/{campaign.id}/my-summary",
+                       headers=auth(arun)).json()
+    assert after["recorded_paise"] == 1500000
 
 
 def test_a_treasurers_summary_carries_the_campaign_total_and_their_own(client, db):
@@ -298,14 +307,14 @@ def test_every_change_to_money_is_written_to_the_audit_log_the_club_already_has(
     cid = record(client, campaign, auth(arun), amount=1000).json()["id"]
     client.patch(f"/api/v1/finance/contributions/{cid}", json={"amount": 1500},
                  headers=auth(arun))
-    client.post(f"/api/v1/finance/contributions/{cid}/verify", headers=auth(admin))
 
     logs = (db.query(AuditLog)
               .filter(AuditLog.target_table == "contributions")
               .order_by(AuditLog.created_at.asc()).all())
     actions = [entry.action_type for entry in logs]
-    assert actions == ["CONTRIBUTION_RECORDED", "CONTRIBUTION_UPDATED",
-                       "CONTRIBUTION_VERIFIED"]
+    # RECEIVED, not RECORDED: a treasurer's entry arrives already confirmed, so
+    # there is no separate verification to log.
+    assert actions == ["CONTRIBUTION_RECEIVED", "CONTRIBUTION_UPDATED"]
 
     edit = logs[1]
     assert edit.old_values["amount_paise"] == 100000

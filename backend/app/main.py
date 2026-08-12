@@ -497,12 +497,17 @@ async def lifespan(app: FastAPI):
                 # cancelled does not block the correct entry replacing it.
                 REFERENCE_UNIQUE_INDEX_DDL,
             ]
-            with engine.begin() as conn:
-                for _ddl in _idem_indexes:
-                    try:
+            # One transaction each. On Postgres a failed statement poisons the
+            # whole transaction, so a pre-existing duplicate key in posts would
+            # take every later index down with it — including the contribution
+            # reference index, whose absence is invisible until two identical
+            # UTRs land from concurrent requests.
+            for _ddl in _idem_indexes:
+                try:
+                    with engine.begin() as conn:
                         conn.execute(_idx_text(_ddl))
-                    except Exception as _ie:
-                        logger.warning(f"[idempotency-index] could not create: {_ie}")
+                except Exception as _ie:
+                    logger.warning(f"[idempotency-index] could not create: {_ie}")
         except Exception as _ide:
             logger.warning(f"[idempotency-index] block failed: {_ide}")
 

@@ -109,22 +109,32 @@ def find_by_reference(db: Session, campaign_id,
 
 
 def find_similar(db: Session, campaign_id, key: str, amount_paise: int,
-                 *, now: Optional[datetime] = None) -> list[Contribution]:
+                 *, now: Optional[datetime] = None,
+                 recorder_id=None) -> list[Contribution]:
     """Layer 3. Same giver, same amount, in the last few minutes.
 
     Returned rather than refused. Two neighbours can each hand over ₹500 a
     minute apart, and a system that will not let a treasurer record the second
     one is a system they stop using.
+
+    `recorder_id` narrows the search to one person's entries. It is passed for
+    a caller who may only see their own rows, because the answer carries the
+    matching contributor's name and who recorded it — and telling somebody
+    "this looks like a repeat" is not a reason to show them a row they are
+    otherwise not allowed to read.
     """
     now = now or datetime.now(timezone.utc)
     since = now - DUPLICATE_WINDOW
-    return db.query(Contribution).filter(
+    q = db.query(Contribution).filter(
         Contribution.campaign_id == campaign_id,
         Contribution.contributor_key == key,
         Contribution.amount_paise == amount_paise,
         Contribution.status.notin_(("CANCELLED", "REJECTED")),
         Contribution.created_at >= since,
-    ).order_by(Contribution.created_at.desc()).limit(5).all()
+    )
+    if recorder_id is not None:
+        q = q.filter(Contribution.recorded_by_user_id == recorder_id)
+    return q.order_by(Contribution.created_at.desc()).limit(5).all()
 
 
 # ── Audit ───────────────────────────────────────────────────────────────────

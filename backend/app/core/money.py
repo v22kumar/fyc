@@ -57,6 +57,13 @@ def rupees_to_paise(value) -> int:
             raise ValueError(f"'{value}' is not an amount.")
 
     paise = dec * 100
+    # Decimal("Infinity") satisfies the precision check below, because
+    # to_integral_value() of infinity is infinity — and int() then raises
+    # OverflowError, which escapes the validator as a 500 instead of a
+    # "that is not an amount" the member can act on. NaN gets the wrong
+    # message for the same reason.
+    if not paise.is_finite():
+        raise ValueError(f"'{value}' is not an amount.")
     if paise != paise.to_integral_value():
         raise ValueError("Amounts go down to paise, no further.")
     return int(paise)

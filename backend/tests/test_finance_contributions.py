@@ -37,7 +37,8 @@ def test_a_contribution_from_somebody_who_is_not_a_member(client, db):
     assert body["contributor_user_id"] is None
     assert body["contributor_name"] == "Ravi"
     assert body["amount_display"] == "₹3,500"
-    assert body["status"] == "RECORDED"
+    # The treasurer holds the money, so their entry is the record, not a claim.
+    assert body["status"] == "VERIFIED"
 
 
 def test_a_contribution_from_a_member_keeps_the_name_as_well_as_the_link(client, db):
@@ -138,7 +139,11 @@ def test_one_payment_written_down_by_two_treasurers_is_caught(client, db):
     body = r.json()["detail"]
     assert body["kind"] == "similar"
     assert body["can_confirm"] is True
-    assert body["candidates"][0]["recorded_by_name"] == "Arun"
+    # Suresh may not read Arun's rows, so the warning names the role, not the
+    # person — enough to act on, nothing he was not allowed to see.
+    assert body["candidates"][0]["recorded_by_name"] == "another treasurer"
+    assert body["candidates"][0]["reference_no"] is None
+    assert "Another treasurer recorded" in body["detail"]
 
 
 # ── Layer 2: the same reference ─────────────────────────────────────────────
@@ -238,14 +243,17 @@ def test_a_treasurer_can_fix_their_own_unverified_entry(client, db):
     assert r.json()["amount_display"] == "₹1,500"
 
 
-def test_once_verified_a_treasurer_can_no_longer_change_it(client, db):
-    """It stopped being their claim and became the club's record."""
+def test_once_the_treasurer_confirms_it_the_recorder_can_no_longer_change_it(client, db):
+    """An executive's entry stops being their claim the moment the person who
+    holds the money says it arrived."""
     org, admin, campaign, arun = _setup(db)
-    cid = record(client, campaign, auth(arun)).json()["id"]
-    client.post(f"/api/v1/finance/contributions/{cid}/verify", headers=auth(admin))
+    exec_member = make_user(db, org, "EXECUTIVE_MEMBER", "Kumar")
+
+    cid = record(client, campaign, auth(exec_member)).json()["id"]
+    client.post(f"/api/v1/finance/contributions/{cid}/verify", headers=auth(arun))
 
     r = client.patch(f"/api/v1/finance/contributions/{cid}",
-                     json={"amount": 9999}, headers=auth(arun))
+                     json={"amount": 9999}, headers=auth(exec_member))
     assert r.status_code == 403
     assert "verified" in r.json()["detail"].lower()
 
@@ -353,7 +361,8 @@ def test_the_filters_an_admin_actually_uses(client, db):
     assert len(client.get(f"{base}?q=UTR1", headers=h).json()) == 1
     assert len(client.get(f"{base}?min_amount=2000", headers=h).json()) == 1
     assert len(client.get(f"{base}?from_date=2026-08-05", headers=h).json()) == 1
-    assert len(client.get(f"{base}?status=RECORDED", headers=h).json()) == 2
+    # Recorded by a treasurer, so both are the club's record already.
+    assert len(client.get(f"{base}?status=VERIFIED", headers=h).json()) == 2
 
     by_amount = client.get(f"{base}?sort=amount", headers=h).json()
     assert [c["contributor_name"] for c in by_amount] == ["Meena", "Ravi"]

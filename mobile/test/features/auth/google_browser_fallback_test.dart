@@ -168,8 +168,8 @@ void main() {
       };
     });
 
-    expect(
-      () => ds.signInWithGoogle(organizationId: 'org-1'),
+    await expectLater(
+      ds.signInWithGoogle(organizationId: 'org-1'),
       throwsA(isA<AuthFailure>().having((f) => f.message, 'message',
           contains('redirect_uri_mismatch'))),
     );

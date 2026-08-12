@@ -32,7 +32,12 @@ TREASURER_PHONE = "+919770000102"
 
 
 def _person(db, org, name, phone, role):
-    user = db.query(User).filter(User.phone_number == phone).first()
+    # Scoped to the organisation. Matching on the phone alone would adopt a
+    # user from another org and never correct it, and the token then carries an
+    # organisation the campaign does not belong to — every call 403s.
+    user = (db.query(User)
+              .filter(User.phone_number == phone, User.organization_id == org.id)
+              .first())
     if user is None:
         user = User(
             id=uuid.uuid4(),
@@ -53,7 +58,10 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        org = db.query(Organization).first()
+        # By slug, not "whichever is first". The backend runs its own startup
+        # seed before this script does, and adopting that organisation would
+        # point PUBLIC_DEFAULT_ORG_ID somewhere this test never built.
+        org = db.query(Organization).filter(Organization.slug == "fyc-e2e").first()
         if org is None:
             org = Organization(id=uuid.uuid4(), slug="fyc-e2e",
                                name_en="Friends Youth Club", name_ta="அ")
@@ -71,16 +79,21 @@ def main() -> None:
             "admin": {
                 "id": str(admin.id),
                 "name": "Kumar Official",
+                "role": admin.role,
                 "token": create_access_token(subject=admin.id, role=admin.role,
                                              organization_id=str(org.id)),
             },
             "treasurer": {
                 "id": str(treasurer.id),
                 "name": "Arun Treasurer",
+                "role": treasurer.role,
                 "token": create_access_token(subject=treasurer.id, role=treasurer.role,
                                              organization_id=str(org.id)),
             },
         }))
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

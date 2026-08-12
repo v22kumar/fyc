@@ -12,8 +12,8 @@ collection — and next year is another row, not another deployment.
 """
 import uuid
 
-from sqlalchemy import (Boolean, Column, Date, DateTime, ForeignKey, Index,
-                        Integer, String, Text, UniqueConstraint)
+from sqlalchemy import (BigInteger, Boolean, Column, Date, DateTime,
+                        ForeignKey, Index, String, Text, UniqueConstraint)
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -67,17 +67,23 @@ class FinanceCampaign(Base, TimestampMixin, TenantModelMixin):
     # ANNIVERSARY | FESTIVAL | TOURNAMENT | RELIEF | CONSTRUCTION | OTHER
     purpose = Column(String(30), nullable=True, default="OTHER")
 
+    # BigInteger, not Integer: a 4-byte column tops out at ₹2,14,74,836.47 in
+    # paise. A single contribution is capped well below that, but a campaign
+    # target is not capped at all, and a club raising ₹3 crore for a building
+    # would hit a DataError on write. There is no migration tool here, so the
+    # column type is only cheap to get right while the table is new.
+    #
     # No target until somebody sets one, and re-settable at any time. A club
     # that has not decided yet is a normal state, not a missing value to be
     # papered over with zero — zero would make the dashboard claim 100%
     # collected on the first rupee.
-    target_amount_paise = Column(Integer, nullable=True)
+    target_amount_paise = Column(BigInteger, nullable=True)
 
     # What the club planned per head. The entry screen pre-fills it; people
     # give more and less and the schema does not care. Storing it on the
     # campaign is what stops it from being a constant in the app that has to
     # be changed — and re-released — every year.
-    suggested_amount_paise = Column(Integer, nullable=True)
+    suggested_amount_paise = Column(BigInteger, nullable=True)
 
     currency = Column(String(3), nullable=False, default="INR")
 
@@ -177,7 +183,7 @@ class Contribution(Base, TimestampMixin):
     contributor_key = Column(String(80), nullable=False, index=True)
 
     # ── What ───────────────────────────────────────────────────────────────
-    amount_paise = Column(Integer, nullable=False)
+    amount_paise = Column(BigInteger, nullable=False)
     currency = Column(String(3), nullable=False, default="INR")
     method = Column(String(20), nullable=False)
     reference_no = Column(String(60), nullable=True)

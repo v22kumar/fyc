@@ -41,10 +41,20 @@ So `finance_campaign_assignments` is a row, scoped to one campaign, revoked
 rather than deleted. "Who was allowed to take money in August" is a question
 the club may need to answer later, and a deleted row cannot answer it.
 
-**Verification follows the role.** Executives and above turn a treasurer's
-claim into the club's record. Being appointed to collect does not make somebody
-a verifier, which is the entire point of the distinction between *recorded* and
-*verified*.
+**Verification belongs to the treasurer**, because the treasurer holds the
+money. This is the right way round: an executive who hands over ₹5,000 has made
+a *claim*, and it becomes the club's record when the person who physically
+receives and keeps the cash says it arrived. So an appointed treasurer's own
+entry is verified the moment they write it — they are not confirming somebody
+else's word, they are the authority — and everybody else's entry waits for
+them. They can also correct their own entries afterwards, verified or not: a
+treasurer who cannot fix their own typo keeps a second list on paper, which is
+worse than the typo.
+
+ADMIN and SUPER_ADMIN keep the power as a break-glass, because a club whose
+treasurer is unreachable must not be a club whose money can never be confirmed.
+Those verifications are audited under their own action and counted on the
+dashboard, so reaching for it is visible rather than silent.
 
 The rule lives in exactly one function, `finance_access.resolve`. Cricket
 answers the equivalent question with the same four-line comparison copy-pasted
@@ -125,9 +135,11 @@ eventual expense module a rewrite instead of an addition.
 
 ## What is not here
 
-**The app.** This is the backend: three tables, one router, 76 tests. The
-screens a treasurer will actually use are the next milestone, and they are
-deliberately not shipping in the week of a code freeze and a chess tournament.
+**The Flutter screens.** The web pages at `/finance` and `/finance/admin` ship
+with this, driven end to end by a browser test as two different people. The
+native screens are still the next milestone, and they are deliberately not
+shipping in the week of a code freeze and a chess tournament — the web pages
+need no app release, which is why they could go first.
 
 **Cash in hand.** The system will confidently report ₹62,500 collected while
 some of it is still in a treasurer's pocket, and that gap is what causes an

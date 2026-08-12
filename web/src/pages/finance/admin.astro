@@ -91,7 +91,9 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     <!-- Waiting to be verified -------------------------------------------- -->
     <section id="verify-card" class="hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
       <div class="flex items-baseline justify-between">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Waiting for you to verify</h2>
+        <h2 id="verify-title" class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Waiting for the treasurer
+        </h2>
         <span id="verify-count" class="text-[13px] text-slate-400"></span>
       </div>
       <div id="verify-list" class="mt-2 space-y-2"></div>
@@ -112,10 +114,10 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
 
     <!-- Breakdowns -------------------------------------------------------- -->
     <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <div class="flex gap-1.5" role="tablist">
-        <button data-by="treasurer" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By treasurer</button>
-        <button data-by="method" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By method</button>
-        <button data-by="day" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By day</button>
+      <div class="flex gap-1.5" role="tablist" aria-label="Breakdown">
+        <button role="tab" data-by="treasurer" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By treasurer</button>
+        <button role="tab" data-by="method" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By method</button>
+        <button role="tab" data-by="day" class="tab rounded-lg px-3 py-1.5 text-[13px] font-medium">By day</button>
       </div>
       <div id="breakdown" class="mt-3 space-y-2"></div>
     </section>
@@ -140,7 +142,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
   </div>
 
   <!-- Create / edit a collection ------------------------------------------ -->
-  <div id="sheet" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
+  <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
     <div class="max-h-[92svh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 sm:rounded-2xl">
       <h2 id="sheet-title" class="text-lg font-semibold">New collection</h2>
 
@@ -210,10 +212,10 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
   </div>
 
   <!-- Appoint a treasurer -------------------------------------------------- -->
-  <div id="pick" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
+  <div id="pick" role="dialog" aria-modal="true" aria-labelledby="pick-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 sm:items-center">
     <div class="max-h-[80svh] w-full max-w-sm overflow-hidden rounded-t-2xl bg-white sm:rounded-2xl">
       <div class="border-b border-slate-100 p-4">
-        <h2 class="text-lg font-semibold">Add a treasurer</h2>
+        <h2 id="pick-title" class="text-lg font-semibold">Add a treasurer</h2>
         <input id="pick-search" type="search" placeholder="Search members"
                class="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[15px]" />
       </div>
@@ -225,7 +227,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
   </div>
 
   <!-- Withdraw a contribution ---------------------------------------------- -->
-  <div id="resolve" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 p-4 sm:items-center">
+  <div id="resolve" role="dialog" aria-modal="true" aria-labelledby="resolve-title" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/40 p-4 sm:items-center">
     <div class="w-full max-w-sm rounded-2xl bg-white p-5">
       <h2 id="resolve-title" class="text-lg font-semibold">Reject this contribution</h2>
       <p id="resolve-sub" class="mt-1 text-sm text-slate-500"></p>
@@ -252,7 +254,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
   .tab { background: #f1f5f9; color: #475569; }
   .tab[aria-selected="true"] { background: #0F5132; color: #fff; }
   .fchip { border-color: #cbd5e1; color: #475569; }
-  .fchip[aria-selected="true"] { border-color: #0F5132; background: #0F5132; color: #fff; }
+  .fchip[aria-pressed="true"] { border-color: #0F5132; background: #0F5132; color: #fff; }
 </style>
 
 <script is:inline>
@@ -269,16 +271,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     roster: [], editing: false, resolving: null, resolveKind: 'reject'
   };
 
-  /* One word per status, the same word everywhere.
-   *
-   * The database calls an unverified contribution RECORDED, which is right —
-   * somebody recorded it. To the people using this it is *pending*, and the
-   * treasurer's page already said so. Two words for one state across two
-   * screens is how a member ends up asking which of them is true. */
-  function statusWord(status) {
-    return status === 'RECORDED' ? 'Pending'
-      : status.charAt(0) + status.slice(1).toLowerCase();
-  }
+  var statusWord = FYC.statusWord;
 
   // ── Boot ────────────────────────────────────────────────────────────────
 
@@ -321,12 +314,43 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     $('c-status').className = 'shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ' +
       (st === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500');
 
-    $('export').href = API_BASE + '/api/v1/finance/campaigns/' + id + '/contributions.csv';
+    // Not an href. Every finance call needs Authorization and
+    // X-Organization-ID, and a top-level navigation from an anchor sends
+    // neither — the official would have got an error body, not a file.
+    $('export').setAttribute('href', '#');
 
     loadSummary(); loadTreasurers(); loadBreakdown(); loadAll(); loadVerifyQueue();
   }
 
   $('campaign').addEventListener('change', function (e) { select(e.target.value); });
+
+  $('export').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (!state.campaign) return;
+    var label = $('export').textContent;
+    $('export').textContent = 'Preparing…';
+    fetch(API_BASE + '/api/v1/finance/campaigns/' + state.campaign.id +
+          '/contributions.csv', {
+      headers: {
+        'Authorization': 'Bearer ' + FYC.token(),
+        'X-Organization-ID': (window.FYC_FINANCE_CONFIG || {}).orgId
+      }
+    }).then(function (r) {
+      if (!r.ok) throw new Error('The export did not come through.');
+      return r.blob();
+    }).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'contributions.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }).catch(function (err) {
+      toast(err.message);
+    }).then(function () { $('export').textContent = label; });
+  });
 
   // ── Numbers ─────────────────────────────────────────────────────────────
 
@@ -355,8 +379,9 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       if (s.withdrawn_count) {
         notes.push(s.withdrawn_count + ' withdrawn (' + money(s.withdrawn_paise) + ')');
       }
-      if (s.self_verified_count) {
-        notes.push(s.self_verified_count + ' verified by the same person who recorded it');
+      if (s.override_verified_count) {
+        notes.push(s.override_verified_count +
+          ' confirmed without the treasurer (admin override)');
       }
       $('withdrawn-line').textContent = notes.join(' · ');
       $('withdrawn-line').classList.toggle('hidden', !notes.length);
@@ -371,8 +396,20 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       .then(function (rows) {
         $('verify-card').classList.toggle('hidden', rows.length === 0);
         if (!rows.length) return;
-        $('verify-count').textContent = rows.length + ' waiting';
+        $('verify-count').textContent =
+          rows.length + (rows.length === 50 ? '+' : '') + ' waiting';
+        $('verify-title').textContent = state.campaign.can_verify
+          ? 'Waiting for you to confirm'
+          : 'Waiting for the treasurer to confirm';
         $('verify-list').innerHTML = rows.map(function (c) {
+          // An entry an executive made is a claim on the treasurer's cash box.
+          // Only the person holding that box is offered the buttons.
+          var actions = state.campaign.can_verify
+            ? '<div class="mt-2 flex gap-2">' +
+              '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-3 py-1.5 text-[13px] font-medium text-white">Confirm received</button>' +
+              '<button data-reject="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-3 py-1.5 text-[13px] font-medium">Reject</button>' +
+              '</div>'
+            : '';
           return '<div class="rounded-xl bg-slate-50 p-3">' +
             '<div class="flex items-baseline justify-between gap-2">' +
             '<p class="min-w-0 truncate text-[15px] font-medium">' + esc(c.contributor_name) + '</p>' +
@@ -381,11 +418,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
             esc(c.method.replace('_', ' ').toLowerCase()) +
             (c.reference_no ? ' · ' + esc(c.reference_no) : '') +
             (c.recorded_by_name ? ' · by ' + esc(c.recorded_by_name) : '') +
-            ' · ' + esc(FYC.ago(c.created_at)) + '</p>' +
-            '<div class="mt-2 flex gap-2">' +
-            '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-3 py-1.5 text-[13px] font-medium text-white">Verify</button>' +
-            '<button data-reject="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-3 py-1.5 text-[13px] font-medium">Reject</button>' +
-            '</div></div>';
+            ' · ' + esc(FYC.ago(c.created_at)) + '</p>' + actions + '</div>';
         }).join('');
       }).catch(function () {});
   }
@@ -395,7 +428,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     if (v) {
       v.disabled = true;
       FYC.api('/finance/contributions/' + v.dataset.verify + '/verify', { method: 'POST' })
-        .then(function () { toast('Verified.'); refresh(); })
+        .then(function () { toast('Confirmed as received.'); refresh(); })
         .catch(function (err) { toast(err.message); v.disabled = false; });
       return;
     }
@@ -441,9 +474,8 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
   });
 
   $('add-treasurer').addEventListener('click', function () {
-    $('pick').classList.remove('hidden');
-    $('pick').classList.add('flex');
     $('pick-search').value = '';
+    FYC.openDialog('pick', 'pick-search');
     if (state.roster.length) { renderRoster(''); }
     else {
       FYC.api('/users/roster').then(function (rows) {
@@ -489,7 +521,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       .catch(function (err) { toast(err.message); btn.disabled = false; });
   });
 
-  function closePick() { $('pick').classList.add('hidden'); $('pick').classList.remove('flex'); }
+  function closePick() { FYC.closeDialog('pick'); }
   $('pick-cancel').addEventListener('click', closePick);
 
   // ── Breakdown ───────────────────────────────────────────────────────────
@@ -544,12 +576,12 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     chip.addEventListener('click', function () {
       state.status = chip.dataset.status;
       document.querySelectorAll('.fchip').forEach(function (c) {
-        c.setAttribute('aria-selected', String(c.dataset.status === state.status));
+        c.setAttribute('aria-pressed', String(c.dataset.status === state.status));
       });
       loadAll();
     });
   });
-  document.querySelector('.fchip').setAttribute('aria-selected', 'true');
+  document.querySelector('.fchip').setAttribute('aria-pressed', 'true');
 
   function loadAll() {
     var url = '/finance/campaigns/' + state.campaign.id + '/contributions?limit=200';
@@ -569,10 +601,10 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
           : c.status === 'RECORDED' ? 'bg-amber-50 text-amber-700'
           : 'bg-slate-100 text-slate-500';
         var actions = '';
-        if (c.status === 'RECORDED') {
-          actions = '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-2.5 py-1 text-[12px] font-medium text-white">Verify</button>' +
+        if (state.campaign.can_verify && c.status === 'RECORDED') {
+          actions = '<button data-verify="' + c.id + '" class="rounded-lg bg-[#0F5132] px-2.5 py-1 text-[12px] font-medium text-white">Confirm received</button>' +
             '<button data-reject="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-2.5 py-1 text-[12px]">Reject</button>';
-        } else if (c.status === 'VERIFIED') {
+        } else if (state.campaign.can_verify && c.status === 'VERIFIED') {
           actions = '<button data-cancel="' + c.id + '" data-name="' + esc(c.contributor_name) + '" data-amount="' + esc(c.amount_display) + '" class="rounded-lg border border-slate-300 px-2.5 py-1 text-[12px]">Withdraw</button>';
         }
         return '<div class="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200">' +
@@ -606,15 +638,11 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       : 'Use this when it happened and has since been returned.');
     $('resolve-reason').value = '';
     $('resolve-error').classList.add('hidden');
-    $('resolve').classList.remove('hidden');
-    $('resolve').classList.add('flex');
-    setTimeout(function () { $('resolve-reason').focus(); }, 50);
+    FYC.openDialog('resolve', 'resolve-reason');
   }
 
-  $('resolve-cancel').addEventListener('click', function () {
-    $('resolve').classList.add('hidden');
-    $('resolve').classList.remove('flex');
-  });
+  function closeResolve() { FYC.closeDialog('resolve'); }
+  $('resolve-cancel').addEventListener('click', closeResolve);
 
   $('resolve-save').addEventListener('click', function () {
     var reason = $('resolve-reason').value.trim();
@@ -627,8 +655,7 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     FYC.api('/finance/contributions/' + state.resolving + '/' + state.resolveKind,
             { method: 'POST', body: { reason: reason } })
       .then(function () {
-        $('resolve').classList.add('hidden');
-        $('resolve').classList.remove('flex');
+        closeResolve();
         toast(state.resolveKind === 'reject' ? 'Rejected.' : 'Withdrawn.');
         refresh();
       })
@@ -666,16 +693,17 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       $('f-end').value = '';
       $('f-event').checked = true;
     }
-    $('sheet').classList.remove('hidden');
-    $('sheet').classList.add('flex');
+    FYC.openDialog('sheet', 'f-title');
   }
 
   $('first-run-open').addEventListener('click', function () { openSheet(false); });
   $('new-campaign').addEventListener('click', function () { openSheet(false); });
   $('edit-campaign').addEventListener('click', function () { openSheet(true); });
-  $('sheet-cancel').addEventListener('click', function () {
-    $('sheet').classList.add('hidden');
-    $('sheet').classList.remove('flex');
+  function closeSheet() { FYC.closeDialog('sheet'); }
+  $('sheet-cancel').addEventListener('click', closeSheet);
+
+  FYC.dismissDialogsOnEscape({
+    sheet: closeSheet, pick: closePick, resolve: closeResolve
   });
 
   $('sheet-save').addEventListener('click', function () {
@@ -711,9 +739,11 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     }
 
     request.then(function (saved) {
-      $('sheet').classList.add('hidden');
-      $('sheet').classList.remove('flex');
-      toast(state.editing ? 'Saved.' : 'Collection created. Add your treasurers next.');
+      closeSheet();
+      // The reload below tears the page down, so a toast here would never be
+      // read. Park it and let the fresh page show it.
+      sessionStorage.setItem('fyc_finance_toast',
+        state.editing ? 'Saved.' : 'Collection created. Add your treasurers next.');
       // Reload rather than patch state in place: a brand-new collection
       // changes which branch of the page is even showing.
       location.reload();
@@ -725,12 +755,13 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
 
   // ── Toast ───────────────────────────────────────────────────────────────
 
-  var toastTimer = null;
-  function toast(message) {
-    $('toast-body').textContent = message;
-    $('toast').classList.remove('hidden');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { $('toast').classList.add('hidden'); }, 2800);
+  var toast = FYC.toast;
+
+  // A message parked by the page that reloaded itself.
+  var carried = sessionStorage.getItem('fyc_finance_toast');
+  if (carried) {
+    sessionStorage.removeItem('fyc_finance_toast');
+    toast(carried);
   }
 })();
 </script>

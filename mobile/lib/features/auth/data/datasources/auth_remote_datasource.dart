@@ -277,7 +277,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           "Google sign-in isn't available on this build ($code)"
           "${sha1 != null ? "\nThis build: $package\n$sha1" : ""}"
           "\nPlease use your phone number.");
-    } catch (e) {
+    } catch (e, stack) {
+      // Every other failure in this method reports. An unexpected fault in the
+      // browser fallback was the one that left no trace at all.
+      ErrorReporter.instance.report(e, stack, context: 'auth/google');
       throw const ServerFailure();
     }
   }

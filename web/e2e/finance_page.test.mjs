@@ -10,7 +10,8 @@
  *
  *   Kumar is a club official. He creates the collection and appoints Arun.
  *   Arun is an ordinary member. Before Kumar appoints him he can do nothing;
- *   afterwards he can record, and still cannot verify.
+ *   afterwards he holds the club's money, so what he records is the record —
+ *   and what Kumar records waits for Arun to confirm it arrived.
  *
  * Seeding Arun as an admin would make every assertion here pass while proving
  * nothing about the permission model.
@@ -22,6 +23,10 @@ import { chromium } from 'playwright';
 
 const WEB = process.env.E2E_WEB_BASE || 'http://127.0.0.1:4321';
 const seed = JSON.parse(process.argv[2] || '{}');
+if (!seed.org_id || !seed.admin?.token || !seed.treasurer?.token) {
+  console.error('Pass the JSON from scripts/e2e/seed_finance_e2e.py as argv[2].');
+  process.exit(1);
+}
 
 /* Where the browser actually is.
  *
@@ -67,6 +72,11 @@ async function signedInPage(browser, person, path) {
     // The browser logs every non-2xx as a console error. A 409 here is the
     // duplicate guard doing its job — counting it as a page fault would mean
     // the test fails precisely when the feature works.
+    // The browser logs every non-2xx as a console error, and its message for a
+    // failed subresource does not always carry the URL — so this can only key
+    // on the status. 409 is the duplicate guard doing its job; the backend
+    // test suite pins that code, so a change there fails loudly elsewhere
+    // rather than quietly widening what this ignores.
     if (m.type() === 'error' && !/status of 409/.test(m.text())) problems.push(m.text());
   });
   page.on('pageerror', (e) => problems.push(String(e)));
@@ -264,10 +274,14 @@ async function main() {
       { timeout: 15000 });
     pass('confirming it is a different payment records it — total ₹12,000');
 
-    // Arun must not be able to bless his own entries.
-    check('no verify control anywhere on a treasurer’s page',
-      (await page.locator('[data-verify]').count()) === 0,
-      'a treasurer was offered a way to verify their own money');
+    // Nothing to confirm: everything on this page is his own, and his own
+    // entries are the record the moment he writes them.
+    check('a treasurer is not asked to confirm their own money',
+      await page.isHidden('#confirm'),
+      'the confirm queue appeared for a treasurer’s own entries');
+    const first = await page.textContent('#entries');
+    check('and those entries read as verified straight away',
+      /Verified/.test(first), `entries read: ${first.replace(/\s+/g, ' ').slice(0, 120)}`);
 
     await page.screenshot({ path: 'e2e-finance-treasurer.png', fullPage: true });
     check('no page errors along the way', problems.length === 0, problems.join('\n    '));
@@ -309,33 +323,58 @@ async function main() {
     await context.close();
   }
 
-  // ── Kumar verifies ───────────────────────────────────────────────────────
+  // ── Kumar hands money in, and Arun confirms it arrived ───────────────────
+  console.log('\nKumar hands over money he collected himself');
+  {
+    const { context, page } = await signedInPage(browser, seed.admin, '/finance');
+    await page.waitForSelector('#page:not(.hidden)', { timeout: 15000 });
+    await page.fill('#amount', '1000');
+    await page.fill('#who', 'Anbu');
+    await page.click('#save');
+    await page.waitForSelector('#toast:not(.hidden)', { timeout: 15000 });
+    pass('an official can record too');
+
+    // The list refreshes after the save, so wait for the row rather than
+    // reading whatever was on screen when the toast appeared.
+    await page.waitForFunction(
+      () => /Anbu/.test(document.getElementById('entries').textContent), null,
+      { timeout: 15000 });
+    const rows = await page.textContent('#entries');
+    check('but their entry is a claim, not the record',
+      /Pending/.test(rows), `entries read: ${rows.replace(/\s+/g, ' ').slice(0, 120)}`);
+    await context.close();
+  }
+
+  console.log('\nArun confirms what reached him');
+  {
+    const { context, page } = await signedInPage(browser, seed.treasurer, '/finance');
+    await page.waitForSelector('#confirm:not(.hidden)', { timeout: 15000 });
+    const queue = await page.textContent('#confirm-list');
+    check('it is waiting on the person who holds the cash',
+      /Anbu/.test(queue) && /₹1,000/.test(queue),
+      `queue read: ${queue.replace(/\s+/g, ' ').slice(0, 140)}`);
+
+    await page.click('#confirm-list [data-confirm]');
+    await page.waitForFunction(
+      () => document.getElementById('confirm').classList.contains('hidden'), null,
+      { timeout: 15000 });
+    pass('confirming it clears the queue');
+    await context.close();
+  }
+
+  // ── Kumar reads the dashboard ────────────────────────────────────────────
   console.log('\nKumar checks the evening’s money');
   {
     const { context, page, problems } = await signedInPage(browser, seed.admin, '/finance/admin');
     await page.waitForSelector('#summary-card:not(.hidden)', { timeout: 15000 });
 
     const collected = await page.textContent('#collected');
-    check('the dashboard shows everything Arun took', /14,000/.test(collected),
+    check('the dashboard shows everything taken', /15,000/.test(collected),
       `collected read: ${collected}`);
 
-    await page.waitForSelector('#verify-card:not(.hidden)', { timeout: 15000 });
-    const waiting = await page.textContent('#verify-count');
-    check('four entries are waiting to be verified', /4 waiting/.test(waiting),
-      `queue read: ${waiting}`);
-
-    await page.click('#verify-list [data-verify]');
-    await page.waitForFunction(
-      () => /3 waiting/.test(document.getElementById('verify-count').textContent), null,
-      { timeout: 15000 });
-    pass('verifying one takes it off the queue');
-
-    await page.waitForFunction(
-      () => !/₹0$/.test(document.getElementById('verified').textContent), null,
-      { timeout: 15000 });
     const verified = await page.textContent('#verified');
-    check('and moves that money into verified', /₹3,500|₹5,000|₹2,000/.test(verified),
-      `verified read: ${verified}`);
+    check('and all of it is verified, because the treasurer took or confirmed it',
+      /15,000/.test(verified), `verified read: ${verified}`);
 
     // The treasurer breakdown should attribute everything to Arun.
     await page.click('.tab[data-by="treasurer"]');

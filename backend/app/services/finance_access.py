@@ -29,13 +29,24 @@ from sqlalchemy.orm import Session
 from app.models.finance import FinanceCampaign, FinanceCampaignAssignment
 from app.models.user import User
 
-# Full control: create campaigns, appoint treasurers, edit and verify anything.
+# Run the collection: create campaigns, appoint treasurers, see everything.
 MANAGING_ROLES = ("ADMIN", "SUPER_ADMIN")
+ORGANISING_ROLES = ("EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN")
 
-# Executives run the club's events, and the club decided they confirm its money
-# too. They can create and run campaigns and verify contributions; only ADMIN
-# and above can archive a campaign or overrule a verified record.
-VERIFYING_ROLES = ("EXECUTIVE_MEMBER", "ADMIN", "SUPER_ADMIN")
+# Verification belongs to the treasurer, because the treasurer holds the money.
+#
+# This is the club's rule and it is the right way round. An executive who hands
+# over ₹5,000 has made a *claim*; it becomes the club's record when the person
+# who physically receives and keeps the cash says it arrived. So an appointed
+# treasurer's own entry is verified the moment they write it — they are not
+# confirming somebody else's word, they are the authority — and everybody
+# else's entry waits for them.
+#
+# ADMIN and SUPER_ADMIN keep the power as a break-glass, because a club whose
+# treasurer is unreachable must not be a club whose money can never be
+# confirmed. Those verifications are audited as an override and counted on the
+# dashboard, so using it is visible rather than silent.
+OVERRIDE_ROLES = ("ADMIN", "SUPER_ADMIN")
 
 
 @dataclass(frozen=True)
@@ -54,13 +65,12 @@ class Access:
 
     @property
     def scope_is_own(self) -> bool:
-        """True when this caller may only see contributions they recorded.
+        """True when this caller may only see their own rows, plus their queue.
 
-        An appointed treasurer sees their own collection in full and the
-        campaign's totals — not other treasurers' contributor names and phone
-        numbers. The club already decided that contact details are attributed
-        rather than freely browsable, and a contributor list is a list of who
-        has money.
+        A treasurer sees the money they took and the entries waiting on their
+        confirmation — not other treasurers' contributor names and numbers. The
+        club already decided contact details are attributed rather than freely
+        browsable, and a contributor list is a list of who has money.
         """
         return not self.can_view_all
 
@@ -70,19 +80,21 @@ def resolve(db: Session, campaign: FinanceCampaign, user: User) -> Access:
     role = (user.role or "").upper()
     appointed = _is_appointed(db, campaign.id, user.id)
 
-    manages = role in MANAGING_ROLES or role == "EXECUTIVE_MEMBER"
-    verifies = role in VERIFYING_ROLES
+    organises = role in ORGANISING_ROLES
 
     return Access(
         campaign=campaign,
         user=user,
-        can_manage=manages,
+        can_manage=organises,
         can_archive=role in MANAGING_ROLES,
         # An executive can record without being appointed — they run the event.
         # Anybody else needs the appointment, which is the whole point of it.
-        can_record=manages or appointed,
-        can_verify=verifies,
-        can_view_all=manages or verifies,
+        can_record=organises or appointed,
+        can_verify=appointed or role in OVERRIDE_ROLES,
+        # Seeing every contributor's name and number is a separate question
+        # from confirming money, and it stays with the people who run the club.
+        # A treasurer sees their own rows plus whatever is waiting on them.
+        can_view_all=organises,
         is_appointed=appointed,
     )
 
@@ -121,24 +133,36 @@ def visible_campaigns(db: Session, user: User):
         FinanceCampaign.deleted_at.is_(None),
     )
     role = (user.role or "").upper()
-    if role in VERIFYING_ROLES:
+    if role in ORGANISING_ROLES:
         return q
+    # distinct(), because nothing at the database level stops two live
+    # assignment rows for one person on one campaign — two taps on "Add" that
+    # race, and the join returns the campaign twice.
     return (q.join(FinanceCampaignAssignment,
                    FinanceCampaignAssignment.campaign_id == FinanceCampaign.id)
              .filter(FinanceCampaignAssignment.user_id == user.id,
-                     FinanceCampaignAssignment.revoked_at.is_(None)))
+                     FinanceCampaignAssignment.revoked_at.is_(None))
+             .distinct())
 
 
 def can_touch_contribution(access: Access, contribution) -> bool:
     """May this caller edit this specific row?
 
-    A treasurer owns what they recorded, and only while it is still a claim.
-    Once an executive has verified it, it is the club's record and changing it
-    is an executive's decision — logged, like every other change to it.
+    An appointed treasurer owns what they recorded, verified or not. They are
+    the authority on money they physically received, so "you can no longer
+    correct this" would be the system overruling the person who counted it —
+    and a treasurer who cannot fix their own typo will keep a second list on
+    paper, which is worse than the typo.
+
+    Everybody else may edit only their own entry, and only while it is still a
+    claim. Once a treasurer has confirmed it, changing it needs the authority
+    that confirmed it. Either way the previous values go to the audit log.
     """
+    same_person = str(contribution.recorded_by_user_id or "") == str(access.user.id)
+    if access.is_appointed and same_person:
+        return True
     if access.can_verify:
         return True
     if not access.can_record:
         return False
-    same_person = str(contribution.recorded_by_user_id or "") == str(access.user.id)
     return same_person and contribution.status == "RECORDED"

@@ -1,5 +1,6 @@
 from pydantic import BaseModel as _BaseModel, Field
 import hashlib
+import html as _html
 import logging
 import hmac
 import secrets
@@ -777,6 +778,11 @@ def _browser_result_page(title: str, message: str, ok: bool) -> HTMLResponse:
     """
     tick = "&#10003;" if ok else "&#33;"
     colour = "#137333" if ok else "#c5221f"
+    # `message` carries Google's error_description, or the first 160 characters
+    # of whatever Google's token endpoint returned. Interpolating that into a
+    # page served from the API origin, unescaped, is a hole somebody else fills.
+    title = _html.escape(title)
+    message = _html.escape(message)
     return HTMLResponse(f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -800,7 +806,10 @@ async def google_browser_callback(request: Request, db: Session = Depends(get_db
     params = request.query_params
     state = params.get("state") or ""
     row = google_browser_auth.load(db, state) if state else None
-    if row is None:
+    # Only a session still waiting for Google may be written to. A second
+    # callback carrying the same state would otherwise replace a finished
+    # result with a different identity, which the app would then collect.
+    if row is None or row.status != "pending":
         return _browser_result_page(
             "This sign-in has expired",
             "Go back to FYC Connect and start again.", ok=False)

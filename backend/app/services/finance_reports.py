@@ -67,7 +67,10 @@ def summary(db: Session, campaign) -> dict:
         "contributors": int(contributors),
         "payments": int(payments),
         "average_paise": int(collected // payments) if payments else 0,
-        "self_verified_count": int(self_verified),
+        # Confirmed by somebody other than the appointed treasurer. Normally
+        # zero — a treasurer's own entry is the record the moment they write
+        # it. A number here means the break-glass was used.
+        "override_verified_count": int(self_verified),
         # Null, not zero, when there is no target. The app shows a plain total
         # instead of a progress bar, which is the honest rendering of "nobody
         # has decided how much we need yet".

@@ -90,6 +90,16 @@ class CampaignUpdate(BaseModel):
             raise ValueError(f"Status must be one of {', '.join(CAMPAIGN_STATUSES)}")
         return v.upper() if v else v
 
+    # Create refuses a negative target; update has to as well, or a target set
+    # correctly can be edited into one that makes the dashboard report a
+    # negative percentage collected.
+    @field_validator("target_amount", "suggested_amount")
+    @classmethod
+    def _non_negative(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("Amount cannot be negative.")
+        return v
+
 
 class CampaignOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

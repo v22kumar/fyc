@@ -66,11 +66,24 @@
     if (token()) headers['Authorization'] = 'Bearer ' + token();
     if (options.body) headers['Content-Type'] = 'application/json';
 
+    // fetch has no timeout. On one bar of signal or behind a captive portal the
+    // promise never settles, the save button sits on "Saving…", and the offline
+    // path — which exists for exactly this network — never runs.
+    var controller = window.AbortController ? new AbortController() : null;
+    var timer = controller && setTimeout(function () { controller.abort(); },
+                                         options.timeout || 20000);
+    var done = function () { if (timer) clearTimeout(timer); };
+
     return fetch(API + '/api/v1' + path, {
       method: options.method || 'GET',
       headers: headers,
-      body: options.body ? JSON.stringify(options.body) : undefined
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller ? controller.signal : undefined
+    }).catch(function (err) {
+      done();
+      throw err;                       // a dead network, not an API answer
     }).then(function (res) {
+      done();
       if (res.status === 401) {
         signOut();
         throw ApiError('Your session has ended. Please sign in again.', 401, null);
@@ -114,12 +127,26 @@
   // that already landed is recorded once by the server rather than twice.
 
   function readOutbox() {
-    try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); }
-    catch (e) { return []; }
+    try {
+      var parsed = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]');
+      // A corrupted key would otherwise make findIndex and filter throw on
+      // every call, which takes the whole page down rather than one entry.
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
   }
 
+  /** True when the queue actually reached the disk. */
   function writeOutbox(items) {
-    try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(items)); } catch (e) {}
+    try {
+      localStorage.setItem(OUTBOX_KEY, JSON.stringify(items));
+      return true;
+    } catch (e) {
+      // Storage full, or a private-browsing mode that throws on access.
+      // Swallowing this told the treasurer "saved on this phone" about an
+      // entry that no longer existed anywhere — the one failure mode that
+      // loses money silently.
+      return false;
+    }
   }
 
   function newClientId() {
@@ -135,8 +162,7 @@
       state: 'pending',
       queued_at: new Date().toISOString()
     });
-    writeOutbox(items);
-    return items;
+    return writeOutbox(items) ? items : null;
   }
 
   var flushing = false;
@@ -160,10 +186,18 @@
       method: 'POST', body: item.body
     }).then(function (saved) {
       var all = readOutbox();
-      all.splice(all.indexOf(all.find(function (i) {
+      // findIndex, and only splice on a hit. indexOf(find(...)) returns -1 when
+      // the item has already gone — the treasurer pressed Remove while this
+      // request was in flight, or a second tab drained the queue — and
+      // splice(-1, 1) deletes the LAST entry instead: a different contribution,
+      // not yet sent, gone for good.
+      var at = all.findIndex(function (i) {
         return i.body.client_contribution_id === item.body.client_contribution_id;
-      })), 1);
-      writeOutbox(all);
+      });
+      if (at >= 0) {
+        all.splice(at, 1);
+        writeOutbox(all);
+      }
       flushing = false;
       if (onChange) onChange({ saved: saved, remaining: all.length });
       return flush(onChange);
@@ -178,10 +212,14 @@
           // or forcing it through — either would be us deciding.
           mine.state = 'conflict';
           mine.conflict = err.body;
-        } else if (err.isApiError && err.status >= 400 && err.status < 500) {
+        } else if (err.isApiError && err.status >= 400 && err.status < 500 &&
+                   err.status !== 401 && err.status !== 403) {
           mine.state = 'rejected';
           mine.error = err.message;
         }
+        // 401 and 403 stay pending. A session that expired mid-queue is a
+        // sign-in away from working; marking the entry "refused by the server"
+        // would leave the treasurer with nothing to press but Remove.
         // A 5xx or a dead network leaves it pending, to try again later.
         writeOutbox(all);
       }
@@ -217,15 +255,31 @@
 
   // ── Small helpers every page repeats otherwise ───────────────────────────
 
+  /* Safe in an attribute, not only in a text node.
+   *
+   * The textContent round-trip this used to do escapes &, < and > and leaves
+   * both quote characters alone — which is fine for `<span>NAME</span>` and an
+   * injection point for `data-name="NAME"`, which is how these pages carry a
+   * contributor into a button. A treasurer types the contributor's name, so
+   * the name is untrusted input by definition.
+   */
   function esc(text) {
-    var d = document.createElement('div');
-    d.textContent = text == null ? '' : String(text);
-    return d.innerHTML;
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function ago(iso) {
     if (!iso) return '';
-    var seconds = (Date.now() - new Date(iso).getTime()) / 1000;
+    // A server that serialises "2026-08-12T10:00:00" with no offset means UTC,
+    // but `new Date` reads it as local — five and a half hours out in IST,
+    // which reads as a future timestamp and makes everything say "just now".
+    var text = String(iso);
+    if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(text)) text += 'Z';
+    var seconds = (Date.now() - new Date(text).getTime()) / 1000;
     if (seconds < 60) return 'just now';
     if (seconds < 3600) return Math.floor(seconds / 60) + ' min ago';
     if (seconds < 86400) return Math.floor(seconds / 3600) + ' h ago';
@@ -238,11 +292,71 @@
            '-' + String(d.getDate()).padStart(2, '0');
   }
 
+  /* One word per status, shared, because two screens invented two.
+   *
+   * The database calls an unverified contribution RECORDED — correct, somebody
+   * recorded it. To the people using this it is *pending*. */
+  function statusWord(status) {
+    return status === 'RECORDED' ? 'Pending'
+      : String(status || '').charAt(0) + String(status || '').slice(1).toLowerCase();
+  }
+
+  var toastTimer = null;
+  function toast(message, ms) {
+    var host = document.getElementById('toast');
+    var body = document.getElementById('toast-body');
+    if (!host || !body) return;
+    body.textContent = message;
+    host.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { host.classList.add('hidden'); }, ms || 2600);
+  }
+
+  /* Dialogs that a keyboard can leave.
+   *
+   * All four of these open by toggling a class. Without this, focus stays on
+   * the page behind the overlay and Escape does nothing, so a dialog asking
+   * "is this the same payment?" is unanswerable without a pointer.
+   */
+  var focusBeforeDialog = null;
+
+  function openDialog(id, focusId) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    focusBeforeDialog = document.activeElement;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    var target = focusId && document.getElementById(focusId);
+    if (target) setTimeout(function () { target.focus(); }, 30);
+  }
+
+  function closeDialog(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+    if (focusBeforeDialog && focusBeforeDialog.focus) focusBeforeDialog.focus();
+    focusBeforeDialog = null;
+  }
+
+  /** Escape closes whichever dialog is open, and runs its cancel behaviour. */
+  function dismissDialogsOnEscape(handlers) {
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      Object.keys(handlers).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden')) handlers[id]();
+      });
+    });
+  }
+
   window.FYC = {
     api: api, token: token, user: user, requireAuth: requireAuth, signOut: signOut,
     money: money, groupIndian: groupIndian,
     enqueue: enqueue, flush: flush, readOutbox: readOutbox, pendingCount: pendingCount,
     resolveConflict: resolveConflict, discard: discard, newClientId: newClientId,
-    esc: esc, ago: ago, today: today
+    esc: esc, ago: ago, today: today, statusWord: statusWord, toast: toast,
+    openDialog: openDialog, closeDialog: closeDialog,
+    dismissDialogsOnEscape: dismissDialogsOnEscape
   };
 })();

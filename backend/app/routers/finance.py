@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv as _csv
 import io as _io
 import logging
+import re
 import uuid
 from datetime import date, datetime, timezone
 from typing import List, Optional
@@ -68,6 +69,17 @@ def _names_for(db: Session, contributions) -> dict:
               .outerjoin(UserProfile, UserProfile.user_id == User.id)
               .filter(User.id.in_(ids)).all())
     return {str(uid): (name or phone or "Member") for uid, name, phone in rows}
+
+
+def _csv_safe(value) -> str:
+    """A spreadsheet must read this cell as text, not run it.
+
+    Excel and LibreOffice evaluate a cell beginning =, +, - or @ as a formula,
+    so a contributor called `=HYPERLINK(...)` executes on the machine of
+    whoever opens the club's ledger.
+    """
+    text = value or ""
+    return f"'{text}" if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
 
 
 def _require(condition: bool, message: str) -> None:
@@ -207,6 +219,17 @@ def update_campaign(campaign_id: UUID, payload: CampaignUpdate,
         campaign.target_amount_paise = rupees_to_paise(payload.target_amount)
     if payload.suggested_amount is not None:
         campaign.suggested_amount_paise = rupees_to_paise(payload.suggested_amount)
+
+    # Create checks that the event belongs to this club; update did not, so a
+    # campaign could be pointed at another organisation's Event id — a
+    # cross-tenant reference, and a way to ask whether an id exists elsewhere.
+    if data.get("event_id") is not None:
+        owned = db.query(Event.id).filter(
+            Event.id == data["event_id"],
+            Event.organization_id == current_user.organization_id,
+        ).first()
+        if not owned:
+            raise HTTPException(status_code=404, detail="Event not found")
 
     for field in ("title_en", "title_ta", "description", "purpose",
                   "starts_on", "ends_on", "status", "event_id"):
@@ -414,11 +437,27 @@ def record_contribution(campaign_id: UUID, payload: ContributionCreate,
     if not payload.confirm_duplicate:
         similar = finance_ledger.find_similar(db, campaign_id, key, amount_paise)
         if similar:
+            # Deliberately not narrowed to this caller. The duplicate that
+            # actually happens at an event is one payment written down by two
+            # people who cannot see each other's list, so nothing but the
+            # server is in a position to notice it.
+            mine = any(str(c.recorded_by_user_id) == str(current_user.id)
+                       for c in similar)
             raise HTTPException(status_code=409, detail=_duplicate_body(
                 db, "similar",
-                f"You recorded {format_paise(amount_paise)} from {name} a few "
-                f"minutes ago. Is this the same payment?",
-                similar, can_confirm=True))
+                f"{'You' if mine else 'Another treasurer'} recorded "
+                f"{format_paise(amount_paise)} from {name} a few minutes ago. "
+                f"Is this the same payment?",
+                similar, can_confirm=True,
+                viewer_id=current_user.id if access.scope_is_own else None))
+
+    # The treasurer holds the money, so what they write down is the record.
+    # An executive handing over ₹5,000 has made a claim; it becomes the club's
+    # record when the person who physically receives and keeps the cash says it
+    # arrived. Written at creation rather than making them verify their own
+    # entry afterwards, which would be a hundred taps where fifty will do.
+    verified_on_entry = access.is_appointed
+    now = datetime.now(timezone.utc)
 
     contribution = Contribution(
         campaign_id=campaign_id,
@@ -432,7 +471,13 @@ def record_contribution(campaign_id: UUID, payload: ContributionCreate,
         method=method,
         reference_no=reference,
         paid_on=payload.paid_on or date.today(),
-        status="RECORDED",
+        status="VERIFIED" if verified_on_entry else "RECORDED",
+        verified_by_user_id=current_user.id if verified_on_entry else None,
+        verified_at=now if verified_on_entry else None,
+        # Not self-verification in the sense the dashboard warns about: a
+        # treasurer confirming their own receipt is the design. That flag is
+        # for somebody who is not the appointed authority doing it.
+        self_verified=False,
         recorded_by_user_id=current_user.id,
         notes=payload.notes,
         client_contribution_id=payload.client_contribution_id,
@@ -454,7 +499,8 @@ def record_contribution(campaign_id: UUID, payload: ContributionCreate,
 
     db.refresh(contribution)
     finance_ledger.record_audit(
-        db, user=current_user, action="CONTRIBUTION_RECORDED",
+        db, user=current_user,
+        action="CONTRIBUTION_RECEIVED" if verified_on_entry else "CONTRIBUTION_CLAIMED",
         contribution_id=contribution.id,
         new=finance_ledger.snapshot(contribution),
     )
@@ -491,21 +537,36 @@ def _resolve_contributor(db: Session, payload, current_user):
     return None, name[:150], payload.contributor_phone
 
 
-def _duplicate_body(db: Session, kind: str, message: str, rows, *, can_confirm: bool):
+def _duplicate_body(db: Session, kind: str, message: str, rows, *,
+                    can_confirm: bool, viewer_id=None):
+    """What comes back with a 409, so the app can ask instead of guessing.
+
+    `viewer_id` is set for a caller who may only see their own rows. Their own
+    matches come back whole; somebody else's come back as "another treasurer",
+    with the reference dropped. The contributor's name and the amount are safe
+    either way — they are what this person just typed — and withholding the
+    warning entirely would lose the one duplicate nobody else can catch.
+    """
     names = _names_for(db, rows)
-    return {
-        "detail": message,
-        "kind": kind,
-        "can_confirm": can_confirm,
-        "candidates": [DuplicateCandidate(
+    candidates = []
+    for r in rows:
+        hide = (viewer_id is not None
+                and str(r.recorded_by_user_id) != str(viewer_id))
+        candidates.append(DuplicateCandidate(
             id=r.id,
             contributor_name=r.contributor_name,
             amount_display=format_paise(r.amount_paise),
             method=r.method,
-            reference_no=r.reference_no,
-            recorded_by_name=names.get(str(r.recorded_by_user_id)),
+            reference_no=None if hide else r.reference_no,
+            recorded_by_name=("another treasurer" if hide
+                              else names.get(str(r.recorded_by_user_id))),
             created_at=r.created_at,
-        ).model_dump(mode="json") for r in rows],
+        ).model_dump(mode="json"))
+    return {
+        "detail": message,
+        "kind": kind,
+        "can_confirm": can_confirm,
+        "candidates": candidates,
     }
 
 
@@ -521,8 +582,8 @@ def list_contributions(
     min_amount: Optional[float] = None,
     max_amount: Optional[float] = None,
     sort: str = Query("latest", pattern="^(latest|amount|name|treasurer)$"),
-    limit: int = Query(100, le=500),
-    offset: int = 0,
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -538,10 +599,14 @@ def list_contributions(
         Contribution.organization_id == current_user.organization_id,
     )
 
-    # A treasurer sees their own collection, not the club's contributor list.
-    # That list is a list of who has money and their phone numbers.
+    # A treasurer sees the money they took, plus whatever is waiting on their
+    # confirmation — they cannot be asked to confirm something they may not
+    # read. Not the whole contributor list, which is a list of who in the
+    # village has money and their phone numbers.
     if access.scope_is_own:
-        query = query.filter(Contribution.recorded_by_user_id == current_user.id)
+        mine = Contribution.recorded_by_user_id == current_user.id
+        query = query.filter(or_(mine, Contribution.status == "RECORDED")
+                             if access.can_verify else mine)
 
     if q:
         like = f"%{q.strip()}%"
@@ -631,9 +696,23 @@ def contributor_suggestions(campaign_id: UUID, q: str = Query("", max_length=60)
 def get_contribution(contribution_id: UUID, db: Session = Depends(get_db),
                      current_user: User = Depends(get_current_user)):
     contribution, access = _contribution_and_access(db, contribution_id, current_user)
-    if access.scope_is_own and str(contribution.recorded_by_user_id) != str(current_user.id):
-        raise HTTPException(status_code=404, detail="Contribution not found")
+    _require_readable(access, contribution)
     return contribution_out(contribution, _names_for(db, [contribution]))
+
+
+def _require_readable(access, contribution) -> None:
+    """404 for a row this caller may not read — never 403.
+
+    A 403 here would answer "does this id exist?", which is the question the
+    404 on an unknown id is there to refuse. The distinction that matters:
+    unreadable is 404, readable-but-not-yours-to-change is 403.
+    """
+    if not access.scope_is_own:
+        return
+    mine = str(contribution.recorded_by_user_id) == str(access.user.id)
+    awaiting_me = access.can_verify and contribution.status == "RECORDED"
+    if not (mine or awaiting_me):
+        raise HTTPException(status_code=404, detail="Contribution not found")
 
 
 def _contribution_and_access(db: Session, contribution_id: UUID, user: User):
@@ -661,6 +740,7 @@ def update_contribution(contribution_id: UUID, payload: ContributionUpdate,
     log rather than being overwritten out of existence.
     """
     contribution, access = _contribution_and_access(db, contribution_id, current_user)
+    _require_readable(access, contribution)
     if not finance_access.can_touch_contribution(access, contribution):
         raise HTTPException(
             status_code=403,
@@ -686,9 +766,20 @@ def update_contribution(contribution_id: UUID, payload: ContributionUpdate,
                 raise HTTPException(status_code=409,
                                     detail=f"{reference} is already recorded here.")
         contribution.reference_no = reference
-    for field in ("contributor_name", "contributor_phone", "paid_on", "notes"):
+    # exclude_unset keeps a key the client sent as null, and contributor_name
+    # and paid_on are NOT NULL — so {"paid_on": null} used to reach commit and
+    # come back as a 500 rather than "that field is required".
+    for field in ("contributor_phone", "notes"):
         if field in data:
             setattr(contribution, field, data[field])
+    if data.get("paid_on") is not None:
+        contribution.paid_on = data["paid_on"]
+    if "contributor_name" in data:
+        name = (data["contributor_name"] or "").strip()
+        if not name:
+            raise HTTPException(status_code=422,
+                                detail="Who is this contribution from?")
+        contribution.contributor_name = name[:150]
 
     # The identity key is derived, so it has to move when the identity does —
     # otherwise the contributor count silently keeps counting the old spelling.
@@ -722,15 +813,18 @@ def verify_contribution(contribution_id: UUID, db: Session = Depends(get_db),
     contribution.status = "VERIFIED"
     contribution.verified_by_user_id = current_user.id
     contribution.verified_at = datetime.now(timezone.utc)
-    # Allowed, because a club of five cannot always find two pairs of eyes —
-    # but counted and shown, rather than indistinguishable from a real check.
-    contribution.self_verified = (
-        str(contribution.recorded_by_user_id or "") == str(current_user.id))
+    # Confirmed by somebody who is not the appointed treasurer. Allowed, so a
+    # club whose treasurer is unreachable is not a club whose money can never
+    # be confirmed — but marked, counted and audited under its own action, so
+    # reaching for it is visible rather than silent.
+    override = not access.is_appointed
+    contribution.self_verified = override
 
     db.commit()
     db.refresh(contribution)
     finance_ledger.record_audit(
-        db, user=current_user, action="CONTRIBUTION_VERIFIED",
+        db, user=current_user,
+        action="CONTRIBUTION_VERIFIED_OVERRIDE" if override else "CONTRIBUTION_VERIFIED",
         contribution_id=contribution.id, old=before,
         new=finance_ledger.snapshot(contribution))
     db.commit()
@@ -767,6 +861,14 @@ def _resolve(db: Session, contribution_id: UUID, user: User, new_status: str,
              "Only club officials can withdraw a contribution.")
     if contribution.status == new_status:
         return contribution_out(contribution, _names_for(db, [contribution]))
+    # "Never real" and "real and undone" are different facts, and the reason is
+    # what explains the total later. Letting one overwrite the other loses the
+    # only record of which happened. update_contribution already refuses these
+    # rows; this path had not.
+    if contribution.status in ("CANCELLED", "REJECTED"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"This contribution is already {contribution.status.lower()}.")
 
     before = finance_ledger.snapshot(contribution)
     contribution.status = new_status
@@ -865,7 +967,7 @@ def export_contributions_csv(campaign_id: UUID, db: Session = Depends(get_db),
                 "Reason", "Notes", "Recorded at"])
     for c in rows:
         w.writerow([
-            c.contributor_name or "",
+            _csv_safe(c.contributor_name),
             c.contributor_phone or "",
             str(paise_to_rupees(c.amount_paise)),
             c.method or "",
@@ -875,12 +977,16 @@ def export_contributions_csv(campaign_id: UUID, db: Session = Depends(get_db),
             names.get(str(c.recorded_by_user_id), ""),
             names.get(str(c.verified_by_user_id), ""),
             c.verified_at.isoformat() if c.verified_at else "",
-            c.resolution_reason or "",
-            (c.notes or "").replace("\n", " "),
+            _csv_safe(c.resolution_reason),
+            _csv_safe((c.notes or "").replace("\n", " ")),
             c.created_at.isoformat() if c.created_at else "",
         ])
     out.seek(0)
-    fname = f"contributions_{campaign.title_en}".replace(" ", "_")[:60]
+    # The title is member-supplied and 200 characters wide. A quote truncates
+    # the filename parameter; a newline produces a header the server refuses,
+    # so the export 500s instead of downloading.
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "_", campaign.title_en or "").strip("_")
+    fname = f"contributions_{slug or 'campaign'}"[:60]
     return StreamingResponse(
         iter([out.getvalue()]),
         media_type="text/csv",
