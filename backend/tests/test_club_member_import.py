@@ -1,15 +1,13 @@
 """Importing the club's membership form.
 
-Eleven people filled in a Google Form. Two of the rows are wrong in ways that
-matter, and both would be invisible after the fact:
+Eleven people filled in a Google Form. Three answers came back unusable — a
+blood group reading "Column 1", a blank one, and a date of birth that would
+make that member four months old. None of them is a parsing problem. They parse
+fine, which is precisely why they need catching.
 
-* one blood group came back as the spreadsheet's own column header
-* one date of birth would make that member four months old
-
-Neither is a parsing problem — they parse fine. That is precisely why they need
-catching: they are answers that cannot be true, and storing them would put a
-member in a blood-group search they never asked for, and another one's birthday
-greeting on the wrong day, every year.
+The club has since supplied the real values. They live in a corrections table
+rather than being edited into the CSV, so the file stays the record of what
+people actually typed and the difference between the two is still readable.
 """
 import uuid
 from datetime import date
@@ -68,6 +66,18 @@ def test_a_date_that_makes_a_member_four_months_old_is_not_a_birthday():
     assert parse_birthday("not a date", today=today) is None
 
 
+def test_every_member_ends_up_with_both_fields(client, db):
+    """After the corrections there are no gaps left to chase."""
+    org = _org(db)
+    import_members(db, org)
+
+    profiles = (db.query(UserProfile).join(User, User.id == UserProfile.user_id)
+                  .filter(User.organization_id == org.id).all())
+    assert len(profiles) == 11
+    assert all(p.blood_group for p in profiles)
+    assert all(p.date_of_birth for p in profiles)
+
+
 def test_the_committed_csv_is_the_one_the_club_submitted():
     """Read from the real file, not a fixture — a change to it should be
     visible here."""
@@ -118,22 +128,44 @@ def test_they_appear_in_the_roster_a_treasurer_searches(client, db):
     assert "R.Alexander" in names
 
 
-def test_the_two_bad_answers_are_dropped_and_reported(client, db):
+def test_the_clubs_corrections_win_over_the_form(client, db):
+    """The three unusable answers, replaced by what the club knows — and only
+    the named fields, never the rest of the row."""
     org = _org(db)
     report = import_members(db, org)
 
-    assert "Ratheesh R" in report["no_blood_group"]
-    assert "John" in report["no_birthday"]
-
-    ratheesh = db.query(User).filter(User.email == "ratheeshrtr1987@gmail.com").first()
-    profile = db.query(UserProfile).filter(UserProfile.user_id == ratheesh.id).first()
-    assert profile.blood_group is None, "'Column 1' must not reach the database"
-    assert profile.date_of_birth == date(1987, 6, 10), "his real birthday is fine"
+    assert report["no_blood_group"] == [], "both blanks are now filled"
+    assert report["no_birthday"] == []
 
     john = db.query(User).filter(User.email == "johnjothis8@gmail.com").first()
     john_profile = db.query(UserProfile).filter(UserProfile.user_id == john.id).first()
-    assert john_profile.date_of_birth is None
-    assert john_profile.blood_group == "B+", "only the impossible field is dropped"
+    assert john_profile.date_of_birth == date(2003, 3, 21), (
+        "the form's 2026 was a date picker left on the current year")
+    assert john_profile.blood_group == "B+", "his own answer stands"
+
+    for email in ("ratheeshrtr1987@gmail.com", "vijay19rahavan@gmail.com"):
+        user = db.query(User).filter(User.email == email).first()
+        profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+        assert profile.blood_group == "O+"
+
+    ratheesh = db.query(User).filter(User.email == "ratheeshrtr1987@gmail.com").first()
+    r_profile = db.query(UserProfile).filter(UserProfile.user_id == ratheesh.id).first()
+    assert r_profile.date_of_birth == date(1987, 6, 10), (
+        "correcting his blood group must not disturb the date he got right")
+
+
+def test_the_csv_still_says_what_the_form_said(client, db):
+    """A correction applied on top, not edited into the record. If the two ever
+    stop differing, somebody has quietly rewritten what people submitted."""
+    import csv as _csv
+    from seeds.import_club_members import CSV_PATH
+
+    with open(CSV_PATH, encoding="utf-8-sig", newline="") as fh:
+        raw = {r["Email"]: r for r in _csv.DictReader(fh)}
+
+    assert raw["johnjothis8@gmail.com"]["Date of birth "] == "2026-03-21"
+    assert raw["ratheeshrtr1987@gmail.com"]["Blood Group "] == "Column 1"
+    assert raw["vijay19rahavan@gmail.com"]["Blood Group "] == ""
 
 
 def test_running_it_again_changes_nothing(client, db):

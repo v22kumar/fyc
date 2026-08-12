@@ -51,6 +51,26 @@ BLOOD_GROUPS = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"}
 
 _DIGITS = re.compile(r"\D+")
 
+# What the club knows that the form does not.
+#
+# The CSV stays exactly as it was submitted — it is the record of what people
+# typed — and these are applied on top of it. Keeping them apart is the point:
+# a year silently edited into the source file would erase the fact that the
+# form said something else, and with it any way to tell a correction from a
+# transcription error.
+#
+# Keyed by email, because that is the field that does not change when somebody
+# fixes their own name.
+CORRECTIONS: dict[str, dict] = {
+    # The form read 2026-03-21, which would have made him four months old — a
+    # date picker that opened on the current year. The club supplied the year.
+    "johnjothis8@gmail.com": {"date_of_birth": date(2003, 3, 21)},
+    # His answer came back as the spreadsheet's own column header.
+    "ratheeshrtr1987@gmail.com": {"blood_group": "O+"},
+    # He left it blank.
+    "vijay19rahavan@gmail.com": {"blood_group": "O+"},
+}
+
 
 def normalise_phone(raw: str | None) -> str | None:
     """+91 followed by ten digits, however it was typed.
@@ -125,13 +145,17 @@ def read_rows(path: str = CSV_PATH) -> list[dict]:
             phone = normalise_phone(row.get("Phone number"))
             if not name or not (email or phone):
                 continue      # nothing to identify them by
-            out.append({
+            record = {
                 "name": name[:150],
                 "email": email,
                 "phone": phone,
                 "blood_group": clean_blood_group(row.get("Blood Group")),
                 "date_of_birth": parse_birthday(row.get("Date of birth")),
-            })
+            }
+            # The club's corrections win over the form, and only over the
+            # fields they name.
+            record.update(CORRECTIONS.get(email or "", {}))
+            out.append(record)
     return out
 
 
