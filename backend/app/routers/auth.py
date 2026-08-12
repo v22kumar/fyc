@@ -1,9 +1,10 @@
+from pydantic import BaseModel as _BaseModel, Field
 import hashlib
 import logging
 import hmac
 import secrets
 import uuid
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.core.rate_limit import limiter
@@ -20,6 +21,8 @@ from app.models.tenant import Organization
 from app.models.user import User, UserProfile, VolunteerMetadata
 from app.models.club_request import ClubMemberRequest
 from app.models.otp import PendingOtp
+from app.services.account_claims import (mark_phone_verified, owner_of_phone,
+                                          release_claims)
 from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
 
 logger = logging.getLogger(__name__)
@@ -357,6 +360,28 @@ def verify_otp(request: Request, payload: OTPVerify, db: Session = Depends(get_d
         User.organization_id == org_id,
         User.phone_number == phone_number,
     ).first()
+
+    # Answering a code on a number is proof of owning it. Holding a row that
+    # merely *contains* the number is not.
+    #
+    # Password sign-up lets somebody type any number they like, so a row can
+    # hold a number nobody proved. Logging this person into that row would hand
+    # the account of whoever typed it to whoever owns the phone — or, read the
+    # other way, let anyone claim a number and inherit the member who later
+    # verifies it. Account takeover needing nothing but a keyboard.
+    #
+    # So an unproven claim is released here and the code-answerer continues as
+    # a new member. The claimant keeps their account, their password and their
+    # name; they lose only a number that was never theirs, and can still sign
+    # in by email.
+    if user is not None and user.phone_verified_at is None and user.password_hash:
+        released = release_claims(db, org_id, phone_number, keep=user)
+        user.phone_number = None
+        db.flush()
+        logger.warning(
+            "[auth] released an unverified claim on a number somebody has now "
+            "proven (%s other claim(s) cleared)", released)
+        user = None
 
     # Single use: the code has done its job, and the handle dies with it.
     _otp_drop(db, payload.verification_id)
@@ -806,3 +831,114 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
             gender = row[3] if row else None
             blood_group = row[4] if row else None
         return _build_user_out(current_user, _P() if row else None)
+
+
+class PasswordSignup(_BaseModel):
+    organization_id: uuid.UUID
+    full_name: str = Field(min_length=2, max_length=120)
+    phone_number: str = Field(min_length=10, max_length=15)
+    # A plain string, checked lightly. Pydantic's EmailStr needs the
+    # email-validator package, and adding a dependency two days before a code
+    # freeze buys a stricter regex at the price of a new thing that can break
+    # the build. The address is proven by sending mail to it, not by parsing.
+    email: str = Field(min_length=5, max_length=120)
+    password: str = Field(min_length=8, max_length=128)
+    preferred_language: Optional[str] = "ta"
+
+
+@router.post("/register/password", response_model=Token, status_code=201)
+@limiter.limit("20/minute")
+def register_with_password(request: Request, payload: PasswordSignup,
+                           db: Session = Depends(get_db)):
+    """Join with a name, a number, an email and a password. Verify later.
+
+    **Why this exists.** Signing in depended entirely on two outside services —
+    an SMS gateway and Google. When either refuses, nobody can join, and the
+    club has no way to let them in. This is a door the club owns end to end: no
+    provider, no review queue, no trial-plan surprise on the morning of an
+    event.
+
+    **What it does not do is pretend.** The account is created immediately and
+    the identifiers are recorded as *claims*: `phone_verified_at` and
+    `email_verified_at` stay NULL until somebody answers a code. A member can
+    read, browse and be greeted by name straight away. Anything that turns on
+    who they really are waits for proof — see `require_verified_phone`.
+
+    The number is not owned by typing it. If someone else later answers a code
+    on it, the claim is released to them (see services/account_claims.py). That
+    rule is what makes deferring verification safe rather than an invitation.
+    """
+    org = db.query(Organization).filter(
+        Organization.id == payload.organization_id).first()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Organization not found")
+
+    phone = payload.phone_number.strip()
+    if len(phone) == 10 and phone.isdigit():
+        phone = f"+91{phone}"
+    elif not phone.startswith("+"):
+        phone = f"+{phone}"
+
+    email = payload.email.strip().lower()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Please enter a valid email address.")
+
+    if payload.password.strip().lower() in KNOWN_DEFAULT_PASSWORDS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please choose a password of your own.")
+
+    # A number already proven by somebody is theirs. Say so plainly rather than
+    # failing on a constraint — "that number is already a member" is something
+    # a person can act on.
+    if owner_of_phone(db, org.id, phone):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="That number already belongs to a member. "
+                   "Sign in with the code we send to it.")
+
+    # A number merely claimed by somebody else blocks this sign-up, because the
+    # database keeps one row per number. The way through is to prove it: a code
+    # answered on that number releases the claim.
+    if db.query(User).filter(User.organization_id == org.id,
+                             User.phone_number == phone).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Someone has already registered that number. "
+                   "If it is yours, sign in with the code we send to it.")
+
+    if db.query(User).filter(
+            User.organization_id == org.id,
+            User.email == email).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="That email is already registered.")
+
+    user = User(
+        organization_id=org.id,
+        phone_number=phone,
+        email=email,
+        password_hash=get_password_hash(payload.password),
+        role="PUBLIC_CITIZEN",
+        # Deliberately false. Nothing has been proven yet, and the older
+        # `is_verified` flag is what several screens still read.
+        is_verified=False,
+        preferred_language=payload.preferred_language or "ta",
+    )
+    db.add(user)
+    db.flush()
+    profile = UserProfile(user_id=user.id,
+                          full_name_en=payload.full_name.strip(),
+                          full_name_ta=payload.full_name.strip())
+    db.add(profile)
+    db.commit()
+    db.refresh(user)
+
+    access_token = create_access_token(subject=user.id, role=user.role,
+                                       organization_id=str(user.organization_id))
+    refresh_token = create_refresh_token(subject=user.id,
+                                         token_version=user.token_version)
+    return Token(access_token=access_token, refresh_token=refresh_token,
+                 token_type="bearer",
+                 user=_build_user_out(user, profile))

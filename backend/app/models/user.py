@@ -17,6 +17,19 @@ class User(Base, TimestampMixin, TenantModelMixin):
     password_hash = Column(String(255), nullable=True)
     role = Column(String(30), nullable=False)  # 'PUBLIC_CITIZEN', 'VOLUNTEER', 'CLUB_MEMBER', 'EXECUTIVE_MEMBER', 'ADMIN', 'SUPER_ADMIN'
     is_verified = Column(Boolean(), default=False)
+
+    # Verification is per channel, not per person.
+    #
+    # `is_verified` above is one boolean for a whole human, which cannot say
+    # the true thing: that a phone is proven while an email is not, or the
+    # reverse. It is kept for the code that still reads it and now means "at
+    # least one identifier is proven".
+    #
+    # These two are what actually govern trust. A NULL is not a smaller truth
+    # than a date — it is the difference between a number somebody typed and a
+    # number somebody answered.
+    phone_verified_at = Column(DateTime(timezone=True), nullable=True)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
     is_blocked = Column(Boolean(), default=False)
     preferred_language = Column(String(5), default="ta")  # 'ta' or 'en'
     fcm_token = Column(String(255), nullable=True)
