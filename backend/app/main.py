@@ -200,7 +200,17 @@ def _seed_database():
             _sys.path.insert(0, ".")
             from seeds.import_club_members import (ensure_treasurers,
                                                    import_members)
-            _org_for_members = db.query(Organization).first()
+            # This club by id, not "whichever organisation is first". The
+            # schema is multi-tenant and .first() has no ORDER BY, so on a
+            # database that ever holds a second organisation it is a coin toss
+            # — and the cost of losing it is eleven members in the wrong club.
+            # Same id the contact and civic seeds already name.
+            _org_for_members = (
+                db.query(Organization)
+                  .filter(Organization.id == uuid.UUID(
+                      "8f8b80b7-4b71-4770-b183-5c5f49e49a1d"))
+                  .first()
+                or db.query(Organization).first())
             if _org_for_members is not None:
                 _members = import_members(db, _org_for_members)
                 if _members["created"] or _members["updated"]:
