@@ -18,28 +18,14 @@
  *
  *   node e2e/finance_page.test.mjs '<seed json>'
  */
-import { existsSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { launchOptions } from './browser_path.mjs';
 
 const WEB = process.env.E2E_WEB_BASE || 'http://127.0.0.1:4321';
 const seed = JSON.parse(process.argv[2] || '{}');
 if (!seed.org_id || !seed.admin?.token || !seed.treasurer?.token) {
   console.error('Pass the JSON from scripts/e2e/seed_finance_e2e.py as argv[2].');
   process.exit(1);
-}
-
-/* Where the browser actually is.
- *
- * Playwright looks for a build number matched to its own version, and CI
- * images pin a browser independently of the package. When the two disagree the
- * error is "run npx playwright install", which on an image with no network is
- * a dead end — so prefer an explicitly provided binary when one exists.
- */
-function browserPath() {
-  for (const candidate of [process.env.E2E_CHROMIUM, '/opt/pw-browsers/chromium']) {
-    if (candidate && existsSync(candidate)) return candidate;
-  }
-  return undefined;   // let Playwright resolve it the usual way
 }
 
 let failures = 0;
@@ -117,7 +103,7 @@ async function signedInPage(browser, person, path) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ executablePath: browserPath() });
+  const browser = await chromium.launch(launchOptions());
 
   // ── Arun, before anybody has appointed him ───────────────────────────────
   console.log('\nArun, an ordinary member, before he is appointed');
