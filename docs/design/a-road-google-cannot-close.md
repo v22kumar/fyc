@@ -42,6 +42,38 @@ copy the SHA-1 → add it to `com.fycconnect.app` in the Firebase console →
 re-download `google-services.json`. Both fingerprints should be registered,
 upload and app-signing, so sideloaded and Play builds both work.
 
+## What the phone actually said
+
+It reported this, in the failure, on the build the club is running:
+
+```
+Google sign-in isn't available on this build (code 10)
+This build: com.fycconnect.app
+23:E2:1A:60:16:1A:7B:B7:D5:B2:0B:64:C9:67:7B:A5:97:22:A7:41
+```
+
+That fingerprint is **neither of the two registered against
+`com.fycconnect.app`** — not the CI release key `BB:DA:57:3D…`, and not
+`AE:D4:C4:10…`. It is a third certificate, and it is registered nowhere.
+
+Which is the answer, and had been all along. A third certificate signing a
+build the club distributes is Play App Signing: Google re-signed the uploaded
+bundle with a key it generated and holds, and that key was never added to the
+Firebase project. Every check that passed was a check on the artifact CI
+builds; nobody is running that artifact.
+
+**The fix takes two minutes and no release.** Add
+`23:E2:1A:60:16:1A:7B:B7:D5:B2:0B:64:C9:67:7B:A5:97:22:A7:41` as an SHA-1
+fingerprint on `com.fycconnect.app` in the Firebase console. Google performs
+the (package, certificate) lookup on its own servers, so registering it fixes
+every copy already on a phone — no rebuild, no Play submission, no waiting for
+anybody to update. Propagation is minutes.
+
+Worth confirming while there: Play Console → Test and release → Setup → App
+integrity → *App signing key certificate*. Its SHA-1 should read
+`23:E2:1A:60…`. If it does, this document's guess and the phone's answer are
+the same fact arrived at from two directions.
+
 ## Why we did not stop there
 
 Because that is a fix for *this* occurrence, and the shape of the problem

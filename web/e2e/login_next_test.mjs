@@ -21,6 +21,35 @@ function browserPath() {
   return undefined;
 }
 
+/* Where the browser came to rest.
+ *
+ * An inline script decides where to go, so there is no navigation for `goto`
+ * to await. Two earlier attempts were both wrong in instructive ways: a fixed
+ * 600 ms sleep passed here and lost the race on a loaded CI runner, and
+ * waiting for "no longer on /login" caught the *middle* of a journey — an
+ * expired session goes login → finance → login, and the check fired on the
+ * hop through finance.
+ *
+ * So: wait for the URL to stop changing. A late redirect resets the clock,
+ * which is what makes this adapt to a slow machine instead of guessing at one.
+ */
+async function settledUrl(page, { quiet = 700, timeout = 20000 } = {}) {
+  const deadline = Date.now() + timeout;
+  let last = page.url();
+  let since = Date.now();
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(100);
+    const now = page.url();
+    if (now !== last) {
+      last = now;
+      since = Date.now();
+    } else if (Date.now() - since >= quiet) {
+      return last;
+    }
+  }
+  return page.url();
+}
+
 let failures = 0;
 const check = (what, ok, detail = '') => {
   if (ok) console.log(`  ✓ ${what}`);
@@ -42,8 +71,8 @@ async function landsAt(next) {
     route.fulfill({ status: 200, body: 'off-site' }));
   await page.goto(`${WEB}/login?next=${encodeURIComponent(next)}`,
                   { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(600);
-  const url = page.url();
+
+  const url = await settledUrl(page);
   await context.close();
   return url;
 }
