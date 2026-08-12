@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/services/app_identity.dart';
 import '../../../../core/services/error_reporter.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/token_model.dart';
@@ -250,13 +251,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // read it out, and the full exception goes to the error reporter the
       // club's admins can already see.
       final code = _googleErrorCode(e);
+
+      // Code 10 is Google saying it does not recognise this build. Every
+      // static check said it should — so the remaining question is whether
+      // the phone is presenting the certificate we believe it is. Ask the
+      // phone, and put the answer where somebody can read it out.
+      final sha1 = await AppIdentity.signingSha1();
+      final package = await AppIdentity.packageName();
       ErrorReporter.instance.report(
-          'google sign-in failed: code=${e.code} message=${e.message}',
+          'google sign-in failed: code=${e.code} message=${e.message} '
+          'package=$package sha1=$sha1',
           null,
           context: 'auth/google');
       throw AuthFailure(
-          "Google sign-in isn't available on this build ($code) — "
-          "please use your phone number");
+          "Google sign-in isn't available on this build ($code)"
+          "${sha1 != null ? "\nThis build: $package\n$sha1" : ""}"
+          "\nPlease use your phone number.");
     } catch (e) {
       throw const ServerFailure();
     }
