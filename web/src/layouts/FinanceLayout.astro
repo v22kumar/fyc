@@ -1,0 +1,115 @@
+---
+/**
+ * A page for doing one job, not for browsing.
+ *
+ * The site's BaseLayout carries a marketing header, a language switcher and a
+ * footer full of links. A treasurer holding a phone with people queueing in
+ * front of them needs none of it — every pixel of chrome is a pixel not spent
+ * on the amount field. So this shell keeps the parts that matter (viewport,
+ * theme, the error reporter that tells us when a member's browser breaks) and
+ * drops the parts that don't.
+ */
+interface Props {
+  title: string;
+  back?: string;
+}
+
+const { title, back } = Astro.props;
+const API_BASE = import.meta.env.PUBLIC_API_BASE ?? 'https://api.fycconnect.com';
+const DEFAULT_ORG_ID =
+  import.meta.env.PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>{title} · FYC Connect</title>
+    <meta name="theme-color" content="#0F5132" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/fyc_logo.png" />
+
+    <script is:inline define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+      window.FYC_FINANCE_CONFIG = { apiBase: API_BASE, orgId: DEFAULT_ORG_ID };
+    </script>
+    <script is:inline src="/js/finance-client.js"></script>
+  </head>
+
+  <body class="bg-slate-50 text-slate-900 antialiased">
+    <header class="sticky top-0 z-30 bg-[#0F5132] text-white shadow-sm">
+      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+        {back && (
+          <a href={back} aria-label="Back"
+             class="-ml-1 rounded-lg p-1.5 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        )}
+        <img src="/fyc_logo.png" alt="" class="h-7 w-7 rounded-md" />
+        <h1 class="flex-1 truncate text-base font-semibold">{title}</h1>
+        <slot name="header-action" />
+      </div>
+
+      <!--
+        Connection state lives in the header because it changes what the next
+        tap means. A treasurer who does not know they are offline will re-type
+        an entry that was in fact saved.
+      -->
+      <div id="net-banner"
+           class="hidden bg-amber-400 px-4 py-1.5 text-center text-[13px] font-medium text-amber-950">
+        Offline — entries are saved on this phone and will send when signal returns.
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <slot />
+    </main>
+
+    <script is:inline>
+      (function () {
+        var banner = document.getElementById('net-banner');
+        function paint() { banner.classList.toggle('hidden', navigator.onLine); }
+        window.addEventListener('online', paint);
+        window.addEventListener('offline', paint);
+        paint();
+      })();
+    </script>
+
+    <script is:inline define:vars={{ API_BASE, DEFAULT_ORG_ID }}>
+      // Same reporter as the rest of the site: a browser that fails silently
+      // here is a treasurer who thinks the money is recorded.
+      (function () {
+        var sent = {};
+        function report(message, stack) {
+          try {
+            if (!message) return;
+            var key = message + '|' + (stack || '').split('\n')[0];
+            if (sent[key]) return;
+            sent[key] = true;
+            fetch(API_BASE + '/api/v1/diagnostics/errors', {
+              method: 'POST', keepalive: true,
+              headers: { 'Content-Type': 'application/json',
+                         'X-Organization-ID': DEFAULT_ORG_ID },
+              body: JSON.stringify({ errors: [{
+                message: String(message).slice(0, 500),
+                stack: String(stack || '').slice(0, 2000),
+                context: 'web/finance',
+                url: location.pathname
+              }] })
+            }).catch(function () {});
+          } catch (e) {}
+        }
+        window.addEventListener('error', function (e) {
+          report(e.message, e.error && e.error.stack);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason || {};
+          report(r.message || String(r), r.stack);
+        });
+      })();
+    </script>
+  </body>
+</html>

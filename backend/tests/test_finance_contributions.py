@@ -375,3 +375,37 @@ def test_a_reference_left_over_from_the_previous_entry_does_not_stick_to_cash(cl
     real = record(client, campaign, auth(arun), contributor_name="Meena",
                   amount=1000, method="UPI", reference_no="UTR55555")
     assert real.status_code == 201, "the genuine UPI entry must not be blocked"
+
+
+# ── Suggestions ─────────────────────────────────────────────────────────────
+
+def test_the_second_time_ravi_gives_three_letters_finishes_the_job(client, db):
+    org, admin, campaign, arun = _setup(db)
+    record(client, campaign, auth(arun), contributor_name="Ravi Kumar",
+           contributor_phone="9487984964", amount=1000)
+
+    hits = client.get(
+        f"/api/v1/finance/campaigns/{campaign.id}/contributor-suggestions?q=rav",
+        headers=auth(arun)).json()
+    assert len(hits) == 1
+    assert hits[0]["name"] == "Ravi Kumar"
+    # The phone comes back too — that is what makes the second gift count as
+    # the same person rather than a second contributor.
+    assert hits[0]["phone"] == "9487984964"
+
+
+def test_suggestions_do_not_leak_another_treasurers_contributors(client, db):
+    org, admin, campaign, arun = _setup(db)
+    suresh = make_user(db, org, "CLUB_MEMBER", "Suresh")
+    appoint(db, campaign, suresh, by=admin)
+    record(client, campaign, auth(suresh), contributor_name="Meena", amount=1000)
+
+    mine = client.get(
+        f"/api/v1/finance/campaigns/{campaign.id}/contributor-suggestions",
+        headers=auth(arun)).json()
+    assert mine == []
+
+    theirs = client.get(
+        f"/api/v1/finance/campaigns/{campaign.id}/contributor-suggestions",
+        headers=auth(admin)).json()
+    assert [c["name"] for c in theirs] == ["Meena"]

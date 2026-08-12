@@ -162,6 +162,22 @@ jobs:
       - name: Play a game in a browser
         run: ./scripts/e2e/run_web_e2e.sh
 
+      # The club's money, through the real pages, as two different people:
+      # a club official who sets the collection up, and an ordinary member who
+      # can do nothing until they are appointed. Everything else about finance
+      # is tested against the API — this is the only test that answers whether
+      # somebody holding a phone can actually record a contribution.
+      - name: Record money in a browser
+        run: ./scripts/e2e/run_finance_e2e.sh
+
+      - name: Keep the screenshots when it goes wrong
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finance-e2e-screenshots
+          path: web/e2e-finance-*.png
+          if-no-files-found: ignore
+
   mobile-e2e:
     name: Mobile — real widget tree on a real board
     runs-on: ubuntu-latest

@@ -18,7 +18,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -573,6 +573,58 @@ def list_contributions(
     rows = query.order_by(order).offset(offset).limit(limit).all()
     names = _names_for(db, rows)
     return [contribution_out(c, names) for c in rows]
+
+
+@router.get("/campaigns/{campaign_id}/contributor-suggestions")
+def contributor_suggestions(campaign_id: UUID, q: str = Query("", max_length=60),
+                            limit: int = Query(8, le=20),
+                            db: Session = Depends(get_db),
+                            current_user: User = Depends(get_current_user)):
+    """People who have given to this collection before, for the entry screen.
+
+    The second time Ravi hands over money, typing three letters should finish
+    the job — including his phone number, which is what makes the contributor
+    count treat both gifts as one person instead of two.
+
+    Scoped the same way the contribution list is: a treasurer gets the people
+    *they* have collected from, not the club's contributor list. Members come
+    from the roster separately, so a first-time giver who is in the app is
+    still one search away.
+    """
+    campaign, access = _campaign_and_access(db, campaign_id, current_user)
+    _require(access.can_record or access.can_view_all,
+             "You are not part of this collection.")
+
+    query = db.query(
+        Contribution.contributor_key,
+        Contribution.contributor_name,
+        Contribution.contributor_phone,
+        Contribution.contributor_user_id,
+        func.max(Contribution.created_at).label("last_seen"),
+    ).filter(
+        Contribution.campaign_id == campaign_id,
+        Contribution.status.notin_(("CANCELLED", "REJECTED")),
+    )
+    if access.scope_is_own:
+        query = query.filter(Contribution.recorded_by_user_id == current_user.id)
+    if q.strip():
+        like = f"%{q.strip()}%"
+        query = query.filter(or_(Contribution.contributor_name.ilike(like),
+                                 Contribution.contributor_phone.ilike(like)))
+
+    rows = (query.group_by(Contribution.contributor_key,
+                           Contribution.contributor_name,
+                           Contribution.contributor_phone,
+                           Contribution.contributor_user_id)
+                 .order_by(func.max(Contribution.created_at).desc())
+                 .limit(limit).all())
+
+    return [{
+        "contributor_key": key,
+        "name": name,
+        "phone": phone,
+        "user_id": str(uid) if uid else None,
+    } for key, name, phone, uid, _ in rows]
 
 
 @router.get("/contributions/{contribution_id}", response_model=ContributionOut)
