@@ -1040,6 +1040,8 @@ def auth_channels_check(db: Session = Depends(get_db)):
     unauthenticated for the same reason a health check is: the moment you need
     it most is the moment nobody can sign in.
     """
+    from app.services import google_browser_auth
+
     google_ids = [
         cid for cid in (settings.GOOGLE_CLIENT_ID, settings.GOOGLE_WEB_CLIENT_ID)
         if cid
@@ -1071,6 +1073,20 @@ def auth_channels_check(db: Session = Depends(get_db)):
             # anything was set deliberately.
             "configured_client_ids": len(google_ids),
             "accepts_first_party_defaults": True,
+            # The road that does not depend on how the APK was signed. The
+            # native plugin matches on (package name, signing certificate), and
+            # Play re-signs uploaded bundles with its own key — so a build can
+            # be refused with DEVELOPER_ERROR while every other check passes.
+            # When this is true the app falls back to browser OAuth instead of
+            # telling the member to use their phone number.
+            "browser_fallback": {
+                "available": google_browser_auth.is_configured(),
+                "missing": google_browser_auth.missing_configuration(),
+                # Must match an authorised redirect URI on the web client,
+                # character for character. That mismatch is the one mistake
+                # here that is invisible until somebody tries to sign in.
+                "redirect_uri": google_browser_auth.redirect_uri(),
+            },
         },
         "environment": settings.ENVIRONMENT,
         "allowed_origins": settings.allowed_origins_list,

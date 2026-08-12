@@ -3,6 +3,7 @@ from app.models.tenant import Organization
 from app.models.user import User, UserProfile, MembershipCard, VolunteerMetadata
 from app.models.audit import AuditLog
 from app.models.otp import PendingOtp
+from app.models.browser_login import PendingBrowserLogin
 from app.models.geography import GeographicNode, GeoLevel
 from app.models.blood_donor import BloodDonor
 from app.models.blood_request import BloodRequest, BloodPledge
@@ -51,6 +52,7 @@ __all__ = [
     "VolunteerMetadata",
     "AuditLog",
     "PendingOtp",
+    "PendingBrowserLogin",
     "GeographicNode",
     "GeoLevel",
     "BloodDonor",
