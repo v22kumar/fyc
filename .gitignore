@@ -56,3 +56,6 @@ Thumbs.db
 
 # End-to-end screenshots, written by the browser tests.
 e2e-*.png
+
+# Throwaway screenshot/debug scripts alongside the real browser tests.
+web/e2e/_*.mjs

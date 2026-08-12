@@ -6,6 +6,7 @@ const navLinks = [
   { href: '/about',        ta: 'எங்களை பற்றி',      en: 'About',         ml: 'ഞങ്ങളെ കുറിച്ച്', hi: 'हमारे बारे में', protected: false, icon: 'ℹ️' },
   { href: '/blood-donors', ta: 'இரத்த தானம்',       en: 'Blood Donors',  ml: 'രക്തദാനം',  hi: 'रक्तदान',   protected: true,  icon: '🩸' },
   { href: '/events',       ta: 'நிகழ்வுகள்',         en: 'Events',        ml: 'ഇവന്റുകൾ', hi: 'कार्यक्रम', protected: true,  icon: '📅' },
+  { href: '/finance',      ta: 'வசூல்',              en: 'Collection',    ml: 'പിരിവ്',    hi: 'संग्रह',    protected: true,  icon: '🧾' },
   { href: '/sports',       ta: 'விளையாட்டு',          en: 'Sports',        ml: 'കായികം',   hi: 'खेल',       protected: true,  icon: '⚽' },
   { href: '/chess',        ta: 'நேரலை சதுரங்கம்',     en: 'Live Chess',    ml: 'ചെസ്സ്',    hi: 'शतरंज',     protected: false, icon: '♟️' },
   { href: '/submit-issue', ta: 'பிரச்னை தெரிவிக்க', en: 'Report Issue',  ml: 'പരാതി',     hi: 'शिकायत',    protected: true,  icon: '🚧' },
@@ -76,8 +77,6 @@ const apkUrl = `${API_BASE}/api/v1/app/download`;
                data-ta="முகப்பு" data-en="Home" data-ml="ഹോം" data-hi="होम">Home</a>
             <a href="/complete-profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                data-ta="என் சுயவிவரம்" data-en="My Profile" data-ml="പ്രൊഫൈൽ" data-hi="प्रोफ़ाइल">My Profile</a>
-            <a href="/finance" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-               data-ta="வசூல்" data-en="Collection" data-ml="പിരിവ്" data-hi="संग्रह">Collection</a>
             <button onclick="signOut()"
               class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold border-t border-gray-100 mt-1"
               data-ta="வெளியேறு" data-en="Sign out" data-ml="സൈൻ ഔട്ട്" data-hi="साइन आउट">Sign out</button>
@@ -124,8 +123,6 @@ const apkUrl = `${API_BASE}/api/v1/app/download`;
                data-ta="முகப்பு" data-en="Home" data-ml="ഹോം" data-hi="होम">Home</a>
             <a href="/complete-profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                data-ta="என் சுயவிவரம்" data-en="My Profile" data-ml="പ്രൊഫൈൽ" data-hi="प्रोफ़ाइल">My Profile</a>
-            <a href="/finance" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-               data-ta="வசூல்" data-en="Collection" data-ml="പിരിവ്" data-hi="संग्रह">Collection</a>
             <button onclick="signOut()"
               class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold border-t border-gray-100 mt-1"
               data-ta="வெளியேறு" data-en="Sign out" data-ml="സൈൻ ഔട്ട്" data-hi="साइन आउट">Sign out</button>
