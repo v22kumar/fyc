@@ -189,7 +189,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) throw const AuthFailure("Google login isn't configured yet — use your phone number");
+      if (idToken == null) {
+        // Google accepted the account and refused to vouch for it. That means
+        // it does not recognise this build: it matches on the PAIR (package
+        // name, signing certificate), and ours was registered against the
+        // project's original package name rather than the one it ships as.
+        //
+        // "Not configured yet" was the wrong word for it — nothing is missing,
+        // something is mismatched, and only somebody with the Firebase console
+        // can put it right. tool/check_google_signin.py now catches this at
+        // build time; this is what a member sees if one slips through.
+        throw const AuthFailure(
+            "Google sign-in isn't available on this build — "
+            "please use your phone number");
+      }
 
       final response = await _client.dio.post(
         ApiConstants.googleSignIn,
@@ -205,10 +218,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw const AuthFailure(
             'Network error. Please check your connection and try again.');
       }
-      // sign_in_failed with a "10" (DEVELOPER_ERROR) means the SHA-1 / client
-      // config doesn't match — surface the actionable "use phone" hint.
+      // sign_in_failed with a "10" (DEVELOPER_ERROR) is Google saying this
+      // package-and-certificate pair is not registered in the project. Same
+      // cause as the null idToken above, arriving as an exception instead.
       throw const AuthFailure(
-          "Google login isn't configured yet — use your phone number");
+          "Google sign-in isn't available on this build — "
+          "please use your phone number");
     } catch (e) {
       throw const ServerFailure();
     }
