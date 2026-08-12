@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "986299606001-oh67pthinjmt9b16r0ohqr9jphf41kdl.apps.googleusercontent.com",
+          "client_id": "986299606001-v5t1h58ml61efmqupsfhc2u092n5mohd.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.fyc_connect",
-            "certificate_hash": "bbda573dcd4a7ee3ed3e882ea9abb1d449c72d7b"
+            "certificate_hash": "23e21a60161a7bb7d5b20b64c9677ba59722a741"
           }
         },
         {
@@ -64,6 +64,14 @@
           "android_info": {
             "package_name": "com.fycconnect.app",
             "certificate_hash": "bbda573dcd4a7ee3ed3e882ea9abb1d449c72d7b"
+          }
+        },
+        {
+          "client_id": "986299606001-ktgouotlp0lgugkouthmh1bjcppf29ph.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fycconnect.app",
+            "certificate_hash": "23e21a60161a7bb7d5b20b64c9677ba59722a741"
           }
         },
         {
