@@ -42,3 +42,19 @@ type or index-name problem that only Postgres has.
 Integer paise, never a float and never `Numeric`. SQLite has no decimal type,
 so the arithmetic that passes in CI is not the arithmetic production performs.
 See `docs/design/the-clubs-money.md`.
+
+## Toolchains are pinned
+
+CI pins the Flutter version, not the channel, in every workflow that installs
+it — tests, the web build, and the release build alike. `channel: stable` is a
+moving target: the golden tests once passed at 18:26 and failed at 23:12 on a
+commit that touched no mobile code, because a new stable landed in between and
+text antialiasing shifted by a third of a percent.
+
+That matters twice over. A gate that goes red on its own is a gate people learn
+to merge past, and an unpinned release build means the APK a member installs was
+built on whichever SDK happened to be stable that morning.
+
+Taking a new Flutter is a deliberate change: bump the pin, run
+`flutter test --tags golden --update-goldens`, and look at the pictures before
+accepting them.
