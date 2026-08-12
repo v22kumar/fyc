@@ -27,6 +27,16 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
       A club official adds you as a treasurer for a collection. Once they do,
       it appears here.
     </p>
+    <!--
+      Two different dead ends used to look identical. "No collection assigned"
+      is a fact a treasurer can do nothing about; "we could not reach the
+      server" is a blip they can retry — and a member who saw the second one
+      was offered only "sign in as someone else", which signs them out of a
+      working session to fix a problem signing out cannot fix.
+    -->
+    <button id="empty-retry" class="mt-6 hidden w-full max-w-xs rounded-xl bg-[#0F5132] px-4 py-3 text-sm font-semibold text-white">
+      Try again
+    </button>
     <button id="empty-signout" class="mt-6 text-sm font-medium text-[#0F5132] underline">
       Sign in as someone else
     </button>
@@ -273,8 +283,18 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     $('loading').classList.add('hidden');
     $('empty').classList.remove('hidden');
     $('empty').querySelector('h2').textContent = "Couldn't load your collections";
-    $('empty').querySelector('p').textContent = err.message;
+    // err.message is the server's own sentence when the server answered at
+    // all. When it did not, the browser's word for it is "Failed to fetch",
+    // which names nothing a treasurer can act on — and the cause is usually
+    // the API restarting under them, which fixes itself in seconds.
+    $('empty').querySelector('p').textContent = err.isApiError
+      ? err.message
+      : "Couldn't reach the server. This usually clears in a few seconds — "
+        + "check your signal and try again.";
+    $('empty-retry').classList.remove('hidden');
   });
+
+  $('empty-retry').addEventListener('click', function () { location.reload(); });
 
   function select(id) {
     state.campaign = state.campaigns.find(function (c) { return c.id === id; });

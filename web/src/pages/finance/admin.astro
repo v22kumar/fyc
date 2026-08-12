@@ -14,6 +14,9 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     <p class="mx-auto mt-1.5 max-w-xs text-sm text-slate-500">
       Your collection page has everything you need to record contributions.
     </p>
+    <button id="denied-retry" class="mx-auto mt-6 hidden w-full max-w-xs rounded-xl bg-[#0F5132] px-4 py-3 text-sm font-semibold text-white">
+      Try again
+    </button>
     <a href="/finance" class="mt-6 inline-block text-sm font-medium text-[#0F5132] underline">
       Go to my collection
     </a>
@@ -299,8 +302,16 @@ import FinanceLayout from '../../layouts/FinanceLayout.astro';
     $('loading').classList.add('hidden');
     $('denied').classList.remove('hidden');
     $('denied').querySelector('h2').textContent = "Couldn't load the dashboard";
-    $('denied').querySelector('p').textContent = err.message;
+    // "This page is for club officials" is a rule; a dead network is not. Only
+    // the first is worth sending somebody away over.
+    $('denied').querySelector('p').textContent = err.isApiError
+      ? err.message
+      : "Couldn't reach the server. This usually clears in a few seconds — "
+        + "check your signal and try again.";
+    $('denied-retry').classList.remove('hidden');
   });
+
+  $('denied-retry').addEventListener('click', function () { location.reload(); });
 
   function select(id) {
     state.campaign = state.campaigns.find(function (c) { return c.id === id; });
