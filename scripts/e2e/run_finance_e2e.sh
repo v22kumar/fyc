@@ -69,3 +69,7 @@ curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null || {
 echo "→ driving Chromium"
 export E2E_WEB_BASE="http://127.0.0.1:$WEB_PORT"
 cd "$ROOT/web" && node e2e/finance_page.test.mjs "$CFG"
+
+# The way back. The finance pages depend on ?next returning the member to the
+# page they were sent from, which makes that parameter worth its own test.
+node e2e/login_next_test.mjs

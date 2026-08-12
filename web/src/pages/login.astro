@@ -24,11 +24,23 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
     }
   </script>
 
-  <!-- Redirect if already logged in -->
+  <!--
+    Where ?next may send somebody.
+
+    A login page that redirects wherever a link tells it to is a phishing tool:
+    the victim sees fycconnect.com, signs in for real, and lands somewhere else
+    entirely — having just been taught that this link is safe. Only same-site
+    paths are honoured. `//evil.com` is a protocol-relative URL, which is why
+    the second character is checked too.
+  -->
   <script is:inline>
+    function fycSafeNext() {
+      var raw = new URLSearchParams(location.search).get('next') || '/';
+      return (raw.charAt(0) === '/' && raw.charAt(1) !== '/' && raw.charAt(1) !== '\\')
+        ? raw : '/';
+    }
     if (localStorage.getItem('fyc_token')) {
-      var next = new URLSearchParams(location.search).get('next') || '/';
-      location.replace(next);
+      location.replace(fycSafeNext());
     }
   </script>
 
@@ -267,8 +279,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
     }
     showSuccess('✅ Signed in successfully!');
     setTimeout(() => {
-      const next = new URLSearchParams(location.search).get('next') || '/';
-      location.href = next;
+      location.href = fycSafeNext();
     }, 700);
   }
 
