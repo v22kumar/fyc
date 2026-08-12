@@ -387,7 +387,19 @@ async function main() {
     await page.click('#edit-campaign');
     await page.waitForSelector('#sheet.flex', { timeout: 5000 });
     await page.fill('#f-target', '100000');
+
+    /* Wait for the reload, not for a selector.
+     *
+     * Saving ends in location.reload(). `#summary-card` is *already* visible
+     * at this point, so waiting for it matches the old DOM immediately and the
+     * next assertion races the navigation — which is exactly how this failed
+     * once and passed the next run. The create-a-collection save above is safe
+     * from the same trap only because the card is hidden until it succeeds.
+     */
+    const reloaded = page.waitForEvent('load');
     await page.click('#sheet-save');
+    await reloaded;
+
     await page.waitForSelector('#summary-card:not(.hidden)', { timeout: 20000 });
     await page.waitForFunction(
       () => !document.getElementById('target-row').classList.contains('hidden'), null,

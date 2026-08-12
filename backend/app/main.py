@@ -192,6 +192,41 @@ def _seed_database():
         except Exception as _we:
             logger.warning("[work] sample seeding skipped: %s", _we)
 
+        # The club's membership form, as members. Eleven rows, so it runs
+        # inline rather than on a thread like the donor import — and it is
+        # idempotent, so every boot is a no-op once they are in.
+        try:
+            import sys as _sys
+            _sys.path.insert(0, ".")
+            from seeds.import_club_members import (ensure_treasurers,
+                                                   import_members)
+            _org_for_members = db.query(Organization).first()
+            if _org_for_members is not None:
+                _members = import_members(db, _org_for_members)
+                if _members["created"] or _members["updated"]:
+                    logger.info("[members] %s created, %s topped up",
+                                _members["created"], _members["updated"])
+                # Answers that cannot be true are dropped, not guessed at.
+                # Named here so somebody can go and ask them.
+                if _members["no_birthday"]:
+                    logger.warning("[members] no usable date of birth: %s",
+                                   ", ".join(_members["no_birthday"]))
+                if _members["no_blood_group"]:
+                    logger.warning("[members] no usable blood group: %s",
+                                   ", ".join(_members["no_blood_group"]))
+
+                # An appointment is per campaign, so this can only act on a
+                # collection that already exists.
+                _treasurers = ensure_treasurers(db, _org_for_members)
+                if _treasurers["appointed"]:
+                    logger.info("[members] appointed as treasurer: %s",
+                                ", ".join(_treasurers["appointed"]))
+                elif not _treasurers["campaigns"]:
+                    logger.info("[members] no active collection yet — treasurers "
+                                "will be appointed when one exists")
+        except Exception as _me:
+            logger.warning("[members] club member import skipped: %s", _me)
+
         # Seed blood donors from CSV if fewer than expected (seeder is idempotent)
         from sqlalchemy import text
         donor_count = db.execute(text("SELECT COUNT(*) FROM blood_donors")).scalar() or 0

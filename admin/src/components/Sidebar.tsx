@@ -2,8 +2,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearAuth } from '@/lib/auth';
-import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, Megaphone, LogOut, Settings } from 'lucide-react';
+import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, Megaphone, LogOut, Settings, IndianRupee, ExternalLink } from 'lucide-react';
+import { WEB_BASE } from '@/lib/api';
 
+// `external` sends the official to the member site rather than to a page in
+// this portal. The finance dashboard is built once, on the web app, because a
+// second implementation of a money screen is a second set of totals to keep
+// honest — and the treasurers using it are on that site already.
 const NAV = [
   { href: '/dashboard',         label: 'Home',              icon: Home },
   { href: '/dashboard/issues',  label: 'Triage',            icon: LifeBuoy },
@@ -14,6 +19,8 @@ const NAV = [
   { href: '/dashboard/directory',  label: 'Public Directory',  icon: BookOpen },
   { href: '/dashboard/sports',     label: 'Tournaments',       icon: Trophy },
   { href: '/dashboard/blood',      label: 'Blood Donation',    icon: Droplet },
+  { href: `${WEB_BASE}/finance/admin`, label: 'Event Finance', icon: IndianRupee,
+    external: true },
   { href: '/dashboard/settings',   label: 'Platform Settings', icon: Settings },
 ];
 
@@ -41,18 +48,29 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+        {NAV.map(({ href, label, icon: Icon, external }) => {
+          const active = !external
+            && (pathname === href || (href !== '/dashboard' && pathname.startsWith(href)));
+          const className = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            active
+              ? 'bg-primary-600 text-white shadow-inner'
+              : 'text-primary-100 hover:bg-white/10 hover:text-white'
+          }`;
+
+          // An off-site destination is marked as one. A sidebar entry that
+          // silently leaves the portal is a way to lose somebody.
+          if (external) {
+            return (
+              <a key={href} href={href} className={className}>
+                <Icon className="w-5 h-5 opacity-70" />
+                <span className="flex-1">{label}</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-50" aria-hidden="true" />
+              </a>
+            );
+          }
+
           return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                active
-                  ? 'bg-primary-600 text-white shadow-inner'
-                  : 'text-primary-100 hover:bg-white/10 hover:text-white'
-              }`}
-            >
+            <Link key={href} href={href} className={className}>
               <Icon className={`w-5 h-5 ${active ? 'opacity-100' : 'opacity-70'}`} />
               {label}
             </Link>
