@@ -27,6 +27,13 @@ import 'package:fyc_connect/features/work/presentation/widgets/listing_card.dart
 ///
 ///     flutter test --tags golden                       # check
 ///     flutter test --tags golden --update-goldens      # accept a change
+///
+/// These are exact-pixel comparisons, so they are only meaningful against a
+/// fixed Flutter. CI pins one (see .github/workflows/ci-tests.yml); these
+/// images were produced on 3.44.8. A different engine renders the same text a
+/// fraction of a percent differently and every golden fails at once — which
+/// is the signature of a version bump, not of a bug. Bump the pin and the
+/// images together, and look at what changed before accepting it.
 void main() {
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({});
