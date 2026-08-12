@@ -41,6 +41,37 @@ def normalise(fingerprint: str) -> str:
     return fingerprint.replace(":", "").replace(" ", "").strip().lower()
 
 
+def stranded(registered: dict[str, list[str]], package: str) -> None:
+    """Say loudly when a fingerprint is sitting on a package nobody ships.
+
+    This check only ever compared the *CI* signing key, so it could not see the
+    failure that actually happened twice: a fingerprint added, correctly, to the
+    wrong app in the Firebase project.
+
+    `com.example.fyc_connect` is the package Flutter creates a project with. It
+    is still in this project, it is the first entry in the file, and it is a
+    decoy — twice now a fingerprint has landed on it and the person adding it
+    had no way to tell. Google matches on the pair, so a certificate registered
+    against a package this app does not ship as does nothing at all.
+
+    A warning, not a failure: those entries break no build, and the key that
+    matters here — the Play app-signing key — never reaches CI to be checked
+    against. The point is to make the decoy visible at the moment somebody is
+    looking at this output.
+    """
+    for other, digests in registered.items():
+        if other == package or not digests:
+            continue
+        print(f"::warning::{len(digests)} fingerprint(s) are registered against "
+              f"'{other}', which this app does not ship as:")
+        for digest in digests:
+            print(f"    {digest}")
+        print(f"  Google matches on the pair (package, certificate), so these do "
+              f"nothing for '{package}'.")
+        print(f"  If one of them is the Play app-signing key, every Play install "
+              f"still fails with code 10 until it is added to '{package}'.")
+
+
 def main() -> int:
     if len(sys.argv) < 2 or not sys.argv[1].strip():
         print("[google-signin] no signing fingerprint given — skipping check")
@@ -57,6 +88,8 @@ def main() -> int:
             digest = oauth.get("android_info", {}).get("certificate_hash")
             if digest:
                 registered.setdefault(name, []).append(normalise(digest))
+
+    stranded(registered, package)
 
     if signing in registered.get(package, []):
         print(f"[google-signin] ✓ {package} is registered with this key")

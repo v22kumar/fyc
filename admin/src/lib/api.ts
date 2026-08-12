@@ -4,6 +4,9 @@ import { getToken } from './auth';
 // the deployed admin call localhost. For local dev set NEXT_PUBLIC_API_BASE=http://localhost:8000.
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://api.fycconnect.com';
 export const ORG_ID = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID ?? '8f8b80b7-4b71-4770-b183-5c5f49e49a1d';
+// The member-facing site. Some things live there and should not be built twice
+// — the finance dashboard is one implementation, and this portal links to it.
+export const WEB_BASE = process.env.NEXT_PUBLIC_WEB_BASE ?? 'https://fycconnect.com';
 
 function headers(extra?: Record<string, string>): HeadersInit {
   const token = getToken();
