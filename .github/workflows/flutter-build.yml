@@ -58,6 +58,37 @@ jobs:
             "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" > key.properties
           echo "Release signing configured ✓"
 
+      # ── 3c. Google Sign-In will actually work with this key ──────────────────
+      # Google matches on the PAIR (package name, signing certificate). Both
+      # halves looked present while neither pair matched: the release key was
+      # registered against com.example.fyc_connect, the default package the
+      # project was created with and long since renamed, while the app ships as
+      # com.fycconnect.app. Sign-in returned a null idToken and the app could
+      # only say "Google login isn't configured yet" — which sounds like a
+      # missing setting and is a mismatched fingerprint.
+      #
+      # Nothing in the build noticed, because nothing was looking.
+      - name: Check Google Sign-In fingerprint
+        working-directory: mobile
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::notice::No keystore — skipping Google Sign-In check"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > /tmp/gs-check.jks
+          SHA1=$(keytool -list -v -keystore /tmp/gs-check.jks -alias fyc \
+            -storepass "$KEY_STORE_PASSWORD" 2>/dev/null \
+            | grep -m1 "SHA1:" | awk '{print $2}')
+          rm -f /tmp/gs-check.jks
+          # A warning, not a failure: a broken Google button must not stop the
+          # club shipping an APK whose phone sign-in works. It is loud, it is in
+          # the summary, and it says exactly what to click.
+          python3 tool/check_google_signin.py "$SHA1" || \
+            echo "::warning::Google Sign-In is misconfigured for this build — see above"
+
       # ── 3b. Print release key SHA-1 (needed for Firebase/Google Sign-In) ───────
       - name: Print release key SHA-1 fingerprint
         working-directory: mobile/android
