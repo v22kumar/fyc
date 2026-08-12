@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/dio_error_mapper.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/services/error_reporter.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/token_model.dart';
 import '../models/user_model.dart';
@@ -167,6 +168,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// The number Google Play services actually reported, if it named one.
+  ///
+  /// It arrives buried in a message like "PlatformException(sign_in_failed,
+  /// com.google.android.gms.common.api.ApiException: 10: , null, null)" — and
+  /// that 10 is the entire diagnosis.
+  static String _googleErrorCode(PlatformException e) {
+    final match = RegExp(r'ApiException:\s*(\d+)').firstMatch(e.message ?? '');
+    if (match != null) return 'code ${match.group(1)}';
+    return e.code;
+  }
+
   @override
   Future<GoogleAuthResult> signInWithGoogle({required String organizationId}) async {
     // serverClientId MUST be this Firebase project's *Web* OAuth client, or
@@ -199,8 +211,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         // something is mismatched, and only somebody with the Firebase console
         // can put it right. tool/check_google_signin.py now catches this at
         // build time; this is what a member sees if one slips through.
+        // "no-token" rather than a bare failure: Google accepted the
+        // account and declined to vouch for it, which is a different fault
+        // from the sign-in call throwing, and they are fixed in different
+        // places. Without the distinction both arrive as one sentence and the
+        // next person guesses.
+        ErrorReporter.instance.report(
+            'google sign-in: account returned, idToken null '
+            '(serverClientId=${ApiConstants.googleServerClientId.split("-").first})',
+            null,
+            context: 'auth/google');
         throw const AuthFailure(
-            "Google sign-in isn't available on this build — "
+            "Google sign-in isn't available on this build (no-token) — "
             "please use your phone number");
       }
 
@@ -218,11 +240,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw const AuthFailure(
             'Network error. Please check your connection and try again.');
       }
-      // sign_in_failed with a "10" (DEVELOPER_ERROR) is Google saying this
-      // package-and-certificate pair is not registered in the project. Same
-      // cause as the null idToken above, arriving as an exception instead.
-      throw const AuthFailure(
-          "Google sign-in isn't available on this build — "
+      // Google's own code is the diagnosis, and throwing it away is why this
+      // took three wrong guesses. 10 is DEVELOPER_ERROR — the package and
+      // certificate pair is not registered. 7 is a network fault. 12501 is the
+      // member closing the sheet. They are three unrelated problems that were
+      // all reported as "isn't configured".
+      //
+      // The code rides along in the message so somebody holding the phone can
+      // read it out, and the full exception goes to the error reporter the
+      // club's admins can already see.
+      final code = _googleErrorCode(e);
+      ErrorReporter.instance.report(
+          'google sign-in failed: code=${e.code} message=${e.message}',
+          null,
+          context: 'auth/google');
+      throw AuthFailure(
+          "Google sign-in isn't available on this build ($code) — "
           "please use your phone number");
     } catch (e) {
       throw const ServerFailure();
