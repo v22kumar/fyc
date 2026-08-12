@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from app.routers import auth
 from app.routers import organizations, geography, blood_donors, issues, events, membership
 from app.routers import issues_workflow
+from app.routers import finance as finance_router
 from app.routers import civic as civic_router
 from app.routers import complaint_box as complaint_box_router
 from app.routers import work as work_router
@@ -479,6 +480,7 @@ async def lifespan(app: FastAPI):
         # unique index fail, log and continue rather than blocking startup.
         try:
             from sqlalchemy import text as _idx_text
+            from app.models.finance import REFERENCE_UNIQUE_INDEX_DDL
             _idem_indexes = [
                 'CREATE UNIQUE INDEX IF NOT EXISTS uq_post_idempotency '
                 'ON posts (organization_id, author_id, idempotency_key) '
@@ -486,6 +488,14 @@ async def lifespan(app: FastAPI):
                 'CREATE UNIQUE INDEX IF NOT EXISTS uq_comment_idempotency '
                 'ON comments (organization_id, author_id, entity_id, idempotency_key) '
                 'WHERE idempotency_key IS NOT NULL',
+                # A transaction reference is unique in the real world, so two
+                # of them in one collection is always an error. The router
+                # checks first and returns a sentence naming the existing row;
+                # this is the backstop that a check-then-insert cannot be,
+                # because two concurrent requests both pass the check. Withdrawn
+                # rows leave the index, so a reference typed in error and
+                # cancelled does not block the correct entry replacing it.
+                REFERENCE_UNIQUE_INDEX_DDL,
             ]
             with engine.begin() as conn:
                 for _ddl in _idem_indexes:
@@ -1006,6 +1016,7 @@ app.include_router(diagnostics_router.router, prefix="/api/v1")
 
 from app.routers import profile_prompts as profile_prompts_router
 app.include_router(profile_prompts_router.router, prefix="/api/v1")
+app.include_router(finance_router.router, prefix="/api/v1")
 
 # Serve uploaded files (swap for S3 CDN URL in production)
 from pathlib import Path as FilePath
