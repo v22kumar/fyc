@@ -292,6 +292,11 @@ def _seed_database():
             # and the events list both read them on every request.
             ("events", "event_kind", "ALTER TABLE events ADD COLUMN event_kind VARCHAR(30)"),
             ("events", "venue", "ALTER TABLE events ADD COLUMN venue VARCHAR(200)"),
+            # Verification is per channel. A NULL here is not a smaller truth
+            # than a date — it is the difference between a number somebody
+            # typed and a number somebody answered.
+            ("users", "phone_verified_at", "ALTER TABLE users ADD COLUMN phone_verified_at TIMESTAMP"),
+            ("users", "email_verified_at", "ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMP"),
             ("user_profiles", "celebrate_publicly", "ALTER TABLE user_profiles ADD COLUMN celebrate_publicly BOOLEAN"),
         ]:
             try:
