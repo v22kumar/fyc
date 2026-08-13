@@ -7,6 +7,7 @@ import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/services/error_reporter.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -65,8 +66,7 @@ class _SignInSheetState extends State<_SignInSheet> {
     super.dispose();
   }
 
-  bool _validPhone() =>
-      _phone.text.trim().replaceAll(RegExp(r'\D'), '').length == 10;
+  bool _validPhone() => _phone.text.trim().replaceAll(RegExp(r'\D'), '').length == 10;
 
   void _signInWithGoogle() {
     if (!_validPhone()) {
@@ -152,9 +152,6 @@ class _SignInSheetState extends State<_SignInSheet> {
             _step = _Step.name;
           });
         } else if (state is AuthGoogleNeedsPhone) {
-          // This state remains temporarily until the backend implements the
-          // Google-authenticated phone-claim flow. Do not silently treat it as
-          // successful authentication because there is no authenticated token.
           setState(() {
             _busy = false;
             _name.text = state.fullName;
@@ -183,8 +180,7 @@ class _SignInSheetState extends State<_SignInSheet> {
             color: context.cSurface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: EdgeInsets.fromLTRB(
-              DSSpacing.lg, DSSpacing.md, DSSpacing.lg, DSSpacing.lg),
+          padding: EdgeInsets.fromLTRB(DSSpacing.lg, DSSpacing.md, DSSpacing.lg, DSSpacing.lg),
           child: SafeArea(
             top: false,
             child: Column(
@@ -206,10 +202,7 @@ class _SignInSheetState extends State<_SignInSheet> {
                 SizedBox(height: DSSpacing.xs),
                 Text(
                   _subtitle(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: context.cTextSecondary),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.cTextSecondary),
                 ),
                 SizedBox(height: DSSpacing.lg),
                 ..._fields(),
@@ -219,44 +212,30 @@ class _SignInSheetState extends State<_SignInSheet> {
                 ],
                 SizedBox(height: DSSpacing.lg),
                 FilledButton(
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
+                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                   onPressed: _busy ? null : _primaryAction,
                   child: _busy
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : Text(_primaryLabel()),
                 ),
                 if (_step == _Step.phone && _googleFailed) ...[
                   SizedBox(height: DSSpacing.xs),
-                  OutlinedButton(
-                    onPressed: _busy ? null : _sendOtpFallback,
-                    child: Text(trId('use_phone_otp_instead')),
-                  ),
+                  OutlinedButton(onPressed: _busy ? null : _sendOtpFallback, child: Text(trId('use_phone_otp_instead'))),
                 ],
                 if (_step == _Step.phone && _inBrowser) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    trId('google_finish_in_browser'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13),
-                  ),
+                  Text(trId('google_finish_in_browser'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 13)),
                   TextButton(
                     onPressed: () {
                       setState(() {
                         _busy = false;
                         _inBrowser = false;
                       });
-                      context
-                          .read<AuthBloc>()
-                          .add(const AuthGoogleSignInCancelled());
+                      context.read<AuthBloc>().add(const AuthGoogleSignInCancelled());
                     },
                     child: Text(trId('cancel')),
                   ),
