@@ -1056,25 +1056,3 @@ class _StandingsRow extends StatelessWidget {
     return (v >= 0 ? '+' : '') + v.toStringAsFixed(2);
   }
 }
-
-class _EmptyDetail extends StatelessWidget {
-  final String lang;
-  const _EmptyDetail({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🏟️', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          Text(
-            trId('no_details_available_yet'),
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}

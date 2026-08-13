@@ -27,7 +27,11 @@ from app.models.otp import PendingOtp
 from app.services.account_claims import (mark_phone_verified, owner_of_phone,
                                           release_claims)
 from app.services import google_browser_auth
-from app.schemas.auth import OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister, UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse, _build_user_out
+from app.schemas.auth import (
+    OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister,
+    UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse,
+    PhoneClaimRequest, PhoneClaimResponse, PhoneClaimVerifyRequest, _build_user_out,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -1128,3 +1132,142 @@ def register_with_password(request: Request, payload: PasswordSignup,
     return Token(access_token=access_token, refresh_token=refresh_token,
                  token_type="bearer",
                  user=_build_user_out(user, profile))
+
+
+@router.post("/google/claim-phone", response_model=PhoneClaimResponse)
+@router.post("/phone/claim", response_model=PhoneClaimResponse)
+@limiter.limit("10/minute")
+def claim_phone(
+    request: Request,
+    payload: PhoneClaimRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PhoneClaimResponse:
+    """Attach a typed phone as an unverified claim to the current authenticated user.
+
+    The phone is a claim, not ownership: if another verified user or password user
+    already owns the number, return 200 with conflict=True and claimed=False without
+    breaking or terminating the user's Google session.
+    """
+    phone = payload.phone_number.strip()
+    if len(phone) == 10 and phone.isdigit():
+        phone = f"+91{phone}"
+    elif not phone.startswith("+"):
+        phone = f"+{phone}"
+
+    if len(phone) < 10:
+        raise HTTPException(status_code=400, detail="Enter a valid phone number")
+
+    if current_user.phone_number == phone:
+        return PhoneClaimResponse(
+            claimed=True,
+            phone_number=phone,
+            phone_verified=current_user.phone_verified_at is not None,
+        )
+
+    if current_user.phone_number and current_user.phone_number != phone:
+        return PhoneClaimResponse(
+            claimed=False,
+            phone_number=current_user.phone_number,
+            phone_verified=current_user.phone_verified_at is not None,
+            reason="Your account already has a phone number.",
+        )
+
+    existing = db.query(User).filter(
+        User.organization_id == current_user.organization_id,
+        User.phone_number == phone,
+        User.id != current_user.id,
+    ).first()
+
+    if existing is not None and (existing.phone_verified_at is not None or existing.password_hash):
+        return PhoneClaimResponse(
+            claimed=False,
+            conflict=True,
+            reason="That phone number is already attached to another account.",
+        )
+    elif existing is not None:
+        existing.phone_number = None
+        db.flush()
+
+    current_user.phone_number = phone
+    current_user.phone_verified_at = None
+    db.commit()
+    db.refresh(current_user)
+
+    otp_sent = False
+    otp_channel = None
+    verification_id = None
+    try:
+        verification_id = f"v_{uuid.uuid4().hex[:12]}"
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_TTL_MINUTES)
+        if settings.TWILIO_VERIFY_SID and send_verify_otp(phone):
+            _otp_put(db, verification_id, phone, None, current_user.organization_id, expires_at)
+            otp_sent = True
+            otp_channel = "sms"
+        else:
+            otp_code = _generate_otp()
+            _otp_put(db, verification_id, phone, otp_code, current_user.organization_id, expires_at)
+            results = deliver_otp(phone, otp_code, email=current_user.email)
+            channel = next((name for name, ok in results.items() if ok), None)
+            if channel:
+                otp_sent = True
+                otp_channel = channel
+            else:
+                _otp_drop(db, verification_id)
+                verification_id = None
+    except Exception:
+        db.rollback()
+
+    return PhoneClaimResponse(
+        claimed=True,
+        phone_number=phone,
+        phone_verified=False,
+        otp_sent=otp_sent,
+        otp_channel=otp_channel,
+        otp_verification_id=verification_id,
+    )
+
+
+@router.post("/google/claim-phone/verify", response_model=PhoneClaimResponse)
+@router.post("/phone/verify", response_model=PhoneClaimResponse)
+@limiter.limit("20/minute")
+def verify_claim_phone(
+    request: Request,
+    payload: PhoneClaimVerifyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PhoneClaimResponse:
+    """Prove the claimed phone number with an OTP code."""
+    stored = _otp_get(db, payload.verification_id)
+    if not stored or stored.phone_number != current_user.phone_number or stored.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired phone verification")
+
+    if datetime.now(timezone.utc) > _as_utc(stored.expires_at):
+        _otp_drop(db, payload.verification_id)
+        raise HTTPException(status_code=400, detail="Phone verification has expired. Request a new code.")
+
+    def _wrong():
+        stored.attempts += 1
+        if stored.attempts >= OTP_MAX_ATTEMPTS:
+            _otp_drop(db, payload.verification_id)
+            raise HTTPException(status_code=400, detail="Too many wrong codes. Please request a new one.")
+        db.commit()
+        raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+    if stored.code_hash is None:
+        if not check_verify_otp(stored.phone_number, payload.otp_code):
+            _wrong()
+    elif not hmac.compare_digest(_hash_code(payload.otp_code), stored.code_hash):
+        _wrong()
+
+    _otp_drop(db, payload.verification_id)
+    mark_phone_verified(db, current_user)
+    db.commit()
+    db.refresh(current_user)
+
+    return PhoneClaimResponse(
+        claimed=True,
+        phone_number=current_user.phone_number,
+        phone_verified=True,
+    )
+

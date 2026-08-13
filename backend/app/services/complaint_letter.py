@@ -65,7 +65,7 @@ def _calls_paragraph(calls: list[CallRecord]) -> str:
         return ""
     lines = []
     for c in calls:
-        when = c.on.strftime("%-d %B %Y") if hasattr(c.on, "strftime") else str(c.on)
+        when = f"{c.on.day} {c.on.strftime('%B %Y')}" if hasattr(c.on, "day") and hasattr(c.on, "strftime") else str(c.on)
         if c.outcome == "PROMISED":
             lines.append(f"I spoke to the {c.office} on {when}, who said it would "
                          "be attended to.")

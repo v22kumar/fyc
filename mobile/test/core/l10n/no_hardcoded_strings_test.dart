@@ -37,9 +37,10 @@ void main() {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
       // The registry itself is where the literals belong. The design-system
       // gallery is a developer surface, not a member-facing screen.
-      if (entity.path.contains('l10n/registry') ||
-          entity.path.contains('design_system/design_system_gallery') ||
-          entity.path.contains('dev_screenshot_harness')) {
+      final normalizedPath = entity.path.replaceAll(r'\', '/');
+      if (normalizedPath.contains('l10n/registry') ||
+          normalizedPath.contains('design_system/design_system_gallery') ||
+          normalizedPath.contains('dev_screenshot_harness')) {
         continue;
       }
 

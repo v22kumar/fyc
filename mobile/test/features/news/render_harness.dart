@@ -32,8 +32,6 @@ Future<void> _shoot(WidgetTester t, String name) async {
 
 DateTime _ago(Duration d) => DateTime.now().subtract(d);
 
-const _kanyakumari = <NewsItemModel>[];
-
 class _Stub implements NewsDataSource {
   List<NewsItemModel> _items() => [
         NewsItemModel(

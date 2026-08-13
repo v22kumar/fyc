@@ -161,6 +161,26 @@ class GoogleLoginRequest(BaseModel):
     id_token: str
 
 
+class PhoneClaimRequest(BaseModel):
+    phone_number: str
+
+
+class PhoneClaimResponse(BaseModel):
+    claimed: bool
+    phone_number: Optional[str] = None
+    phone_verified: bool = False
+    conflict: bool = False
+    otp_sent: bool = False
+    otp_channel: Optional[str] = None
+    otp_verification_id: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class PhoneClaimVerifyRequest(BaseModel):
+    verification_id: str
+    otp_code: str
+
+
 def _build_user_out(user, profile=None):
     """Build UserOut from User + optional UserProfile."""
     # A profile is "complete" only when we have the full mandatory set: name,
