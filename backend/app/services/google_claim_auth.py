@@ -1,6 +1,7 @@
 """Immediate Google authentication plus collision-safe phone claims."""
 from __future__ import annotations
 
+import hmac
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -20,6 +21,11 @@ from app.schemas.auth import Token, _build_user_out
 
 class PhoneClaimRequest(BaseModel):
     phone_number: str = Field(min_length=10, max_length=20)
+
+
+class PhoneClaimVerifyRequest(BaseModel):
+    verification_id: str
+    otp_code: str = Field(min_length=6, max_length=6)
 
 
 class PhoneClaimResponse(BaseModel):
@@ -144,11 +150,46 @@ def claim_phone(payload: PhoneClaimRequest, current_user: User = Depends(get_cur
         return PhoneClaimResponse(claimed=False, conflict=True, reason="That phone number is already attached to another account.")
 
     current_user.phone_number = phone
-    # Google proves the account, not the phone. Keep phone_verified_at NULL.
     db.commit()
     db.refresh(current_user)
     otp_sent, otp_channel, verification_id = _send_claim_otp(db, current_user, phone)
     return PhoneClaimResponse(claimed=True, phone_number=phone, phone_verified=False, otp_sent=otp_sent, otp_channel=otp_channel, otp_verification_id=verification_id)
+
+
+@limiter.limit("20/minute")
+def verify_claim_phone(payload: PhoneClaimVerifyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
+    """Verify a phone claim while already authenticated as the Google account."""
+    from app.core.config import settings
+    from app.models.otp import PendingOtp
+    from app.services.otp_sender import check_verify_otp
+    from app.routers import auth
+    
+    row = db.get(PendingOtp, payload.verification_id)
+    if row is None or row.phone_number != current_user.phone_number or row.organization_id != current_user.organization_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired phone verification")
+    expires = row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=timezone.utc)
+    if expires < datetime.now(timezone.utc):
+        db.delete(row)
+        db.commit()
+        raise HTTPException(status_code=400, detail="Phone verification has expired. Request a new code.")
+
+    valid = False
+    if row.code_hash is None:
+        valid = check_verify_otp(row.phone_number, payload.otp_code)
+    else:
+        valid = hmac.compare_digest(auth._hash_code(payload.otp_code), row.code_hash)
+    if not valid:
+        row.attempts += 1
+        if row.attempts >= 5:
+            db.delete(row)
+        db.commit()
+        raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+    db.delete(row)
+    from app.services.account_claims import mark_phone_verified
+    mark_phone_verified(db, current_user)
+    db.commit()
+    return PhoneClaimResponse(claimed=True, phone_number=current_user.phone_number, phone_verified=True)
 
 
 def install(auth_router) -> None:
@@ -172,7 +213,10 @@ def install(auth_router) -> None:
             temporary_hash = False
             if row is not None:
                 claimant = db.query(User).filter(User.organization_id == row.organization_id, User.phone_number == row.phone_number).first()
-                if claimant is not None and claimant.phone_verified_at is None and not claimant.password_hash:
+                if claimant is not None and claimant.phone_verified_at is None and claimant.google_sub:
+                    # An unverified Google-only claim must never be used as the
+                    # account selected by a phone-only verifier. Release it and
+                    # let the verifier continue through registration.
                     claimant.password_hash = "__google_claim_unverified__"
                     db.flush()
                     temporary_hash = True
@@ -190,3 +234,5 @@ def install(auth_router) -> None:
 
     if not any(getattr(route, "path", None) == "/auth/google/claim-phone" for route in auth_router.router.routes):
         auth_router.router.add_api_route("/google/claim-phone", claim_phone, methods=["POST"], response_model=PhoneClaimResponse, tags=["Authentication"])
+    if not any(getattr(route, "path", None) == "/auth/google/claim-phone/verify" for route in auth_router.router.routes):
+        auth_router.router.add_api_route("/google/claim-phone/verify", verify_claim_phone, methods=["POST"], response_model=PhoneClaimResponse, tags=["Authentication"])
