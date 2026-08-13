@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.dependencies.utils import get_dependant
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -134,7 +134,7 @@ def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional
 
 
 @limiter.limit("10/minute")
-def claim_phone(payload: PhoneClaimRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
+def claim_phone(request: Request, payload: PhoneClaimRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
     """Attach a typed number as an unverified claim and start OTP proof."""
     phone = _normalise_phone(payload.phone_number)
     if len(phone) < 10:
@@ -157,13 +157,12 @@ def claim_phone(payload: PhoneClaimRequest, current_user: User = Depends(get_cur
 
 
 @limiter.limit("20/minute")
-def verify_claim_phone(payload: PhoneClaimVerifyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
+def verify_claim_phone(request: Request, payload: PhoneClaimVerifyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
     """Verify a phone claim while already authenticated as the Google account."""
-    from app.core.config import settings
     from app.models.otp import PendingOtp
     from app.services.otp_sender import check_verify_otp
     from app.routers import auth
-    
+
     row = db.get(PendingOtp, payload.verification_id)
     if row is None or row.phone_number != current_user.phone_number or row.organization_id != current_user.organization_id:
         raise HTTPException(status_code=400, detail="Invalid or expired phone verification")
@@ -173,11 +172,7 @@ def verify_claim_phone(payload: PhoneClaimVerifyRequest, current_user: User = De
         db.commit()
         raise HTTPException(status_code=400, detail="Phone verification has expired. Request a new code.")
 
-    valid = False
-    if row.code_hash is None:
-        valid = check_verify_otp(row.phone_number, payload.otp_code)
-    else:
-        valid = hmac.compare_digest(auth._hash_code(payload.otp_code), row.code_hash)
+    valid = check_verify_otp(row.phone_number, payload.otp_code) if row.code_hash is None else hmac.compare_digest(auth._hash_code(payload.otp_code), row.code_hash)
     if not valid:
         row.attempts += 1
         if row.attempts >= 5:
@@ -214,9 +209,6 @@ def install(auth_router) -> None:
             if row is not None:
                 claimant = db.query(User).filter(User.organization_id == row.organization_id, User.phone_number == row.phone_number).first()
                 if claimant is not None and claimant.phone_verified_at is None and claimant.google_sub:
-                    # An unverified Google-only claim must never be used as the
-                    # account selected by a phone-only verifier. Release it and
-                    # let the verifier continue through registration.
                     claimant.password_hash = "__google_claim_unverified__"
                     db.flush()
                     temporary_hash = True
