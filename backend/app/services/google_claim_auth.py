@@ -16,14 +16,17 @@ from app.core.rate_limit import limiter
 from app.core.security import create_access_token, create_refresh_token
 from app.dependencies import get_current_user
 from app.models.user import User, UserProfile
-from app.schemas.auth import Token, _build_user_out
+from app.schemas.auth import OTPVerify, Token, _build_user_out
+
 
 class PhoneClaimRequest(BaseModel):
     phone_number: str = Field(min_length=10, max_length=20)
 
+
 class PhoneClaimVerifyRequest(BaseModel):
     verification_id: str
     otp_code: str = Field(min_length=6, max_length=6)
+
 
 class PhoneClaimResponse(BaseModel):
     claimed: bool
@@ -35,18 +38,21 @@ class PhoneClaimResponse(BaseModel):
     otp_channel: Optional[str] = None
     otp_verification_id: Optional[str] = None
 
+
 def _normalise_phone(phone: str) -> str:
     digits = "".join(ch for ch in phone if ch.isdigit())
     if len(digits) == 10:
         return f"+91{digits}"
     return f"+{digits}"
 
+
 def _issue_token(db: Session, user: User) -> Token:
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
     return Token(access_token=create_access_token(subject=user.id, role=user.role, organization_id=str(user.organization_id)), refresh_token=create_refresh_token(user.id, user.token_version), token_type="bearer", user=_build_user_out(user, profile))
 
+
 def session_for_google_identity(db: Session, organization_id, idinfo: dict):
-    """Authenticate Google and create a session immediately."""
+    """Authenticate Google, but send brand-new members through registration."""
     email = (idinfo.get("email") or "").strip().lower()
     google_sub = idinfo.get("sub")
     name = (idinfo.get("name") or idinfo.get("given_name") or "FYC Member").strip()
@@ -58,8 +64,10 @@ def session_for_google_identity(db: Session, organization_id, idinfo: dict):
     is_super_admin = email == "vrn2252@gmail.com"
     if user is not None and getattr(user, "is_blocked", False):
         raise HTTPException(status_code=403, detail="Your account has been blocked by an administrator.")
+    if user is None and not is_super_admin:
+        return {"needs_registration": True, "email": email, "full_name": name}
     if user is None:
-        user = User(organization_id=organization_id, email=email, google_sub=google_sub, role="SUPER_ADMIN" if is_super_admin else "PUBLIC_CITIZEN", is_verified=True, preferred_language="en" if is_super_admin else "ta")
+        user = User(organization_id=organization_id, email=email, google_sub=google_sub, role="SUPER_ADMIN", is_verified=True, preferred_language="en")
         db.add(user)
         db.flush()
         db.add(UserProfile(user_id=user.id, full_name_en=name, full_name_ta=name, last_login_at=datetime.now(timezone.utc)))
@@ -73,6 +81,7 @@ def session_for_google_identity(db: Session, organization_id, idinfo: dict):
     db.commit()
     db.refresh(user)
     return _issue_token(db, user)
+
 
 def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional[str], Optional[str]]:
     from app.core.config import settings
@@ -105,6 +114,7 @@ def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional
         db.rollback()
     return False, None, None
 
+
 @limiter.limit("10/minute")
 def claim_phone(request: Request, payload: PhoneClaimRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
     phone = _normalise_phone(payload.phone_number)
@@ -122,6 +132,7 @@ def claim_phone(request: Request, payload: PhoneClaimRequest, current_user: User
     db.refresh(current_user)
     otp_sent, otp_channel, verification_id = _send_claim_otp(db, current_user, phone)
     return PhoneClaimResponse(claimed=True, phone_number=phone, phone_verified=False, otp_sent=otp_sent, otp_channel=otp_channel, otp_verification_id=verification_id)
+
 
 @limiter.limit("20/minute")
 def verify_claim_phone(request: Request, payload: PhoneClaimVerifyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PhoneClaimResponse:
@@ -149,6 +160,7 @@ def verify_claim_phone(request: Request, payload: PhoneClaimVerifyRequest, curre
     db.commit()
     return PhoneClaimResponse(claimed=True, phone_number=current_user.phone_number, phone_verified=True)
 
+
 def install(auth_router) -> None:
     """Patch Google authentication while preserving FastAPI's dependency binding."""
     from app.core.config import settings
@@ -164,7 +176,7 @@ def install(auth_router) -> None:
         auth_router._graduate_from_directory = _graduate_and_verify
     original_verify = getattr(auth_router, "verify_otp", None)
     if original_verify is not None and not getattr(original_verify, "_google_claim_wrapper", False):
-        def _verify_otp_claim_safe(request: Request, payload, db: Session):
+        def _verify_otp_claim_safe(request: Request, payload: OTPVerify, db: Session):
             row = auth_router._otp_get(db, payload.verification_id)
             claimant = None
             temporary_hash = False
