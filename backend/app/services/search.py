@@ -39,6 +39,7 @@ from uuid import UUID
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.core.people import real_people
 from app.services.search_destinations import DESTINATIONS
 
 logger = logging.getLogger(__name__)
@@ -276,7 +277,7 @@ def _search_people(db: Session, query: str, tenant_id: UUID) -> list[Hit]:
         .join(UserProfile.user)
         .filter(
             User.organization_id == tenant_id,
-            or_(User.source.is_(None), User.source != "F2S_IMPORT"),
+            real_people(User),
             or_(UserProfile.full_name_en.ilike(like),
                 UserProfile.full_name_ta.ilike(like)),
         )

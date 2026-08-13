@@ -127,6 +127,22 @@ export const api = {
   deleteEvent: (id: string) =>
     request<{ message: string }>(`/api/v1/events/${id}`, { method: 'DELETE' }),
 
+  // Club membership requests — somebody asking to be recognised as a member.
+  // The endpoints existed from the day the model was written; nothing in this
+  // portal ever called them, so every request ever made sat unanswered.
+  listClubRequests: () =>
+    request<import('@/types').ClubRequest[]>('/api/v1/club-requests'),
+  approveClubRequest: (id: string) =>
+    request<import('@/types').ClubRequest>(`/api/v1/club-requests/${id}/approve`, {
+      method: 'POST',
+    }),
+  rejectClubRequest: (id: string) =>
+    request<import('@/types').ClubRequest>(`/api/v1/club-requests/${id}/reject`, {
+      method: 'POST',
+    }),
+  listDuplicateMembers: () =>
+    request<import('@/types').DuplicateGroup[]>('/api/v1/club-requests/duplicates'),
+
   // Members
   listMembers: (role?: string) =>
     request<import('@/types').Member[]>(

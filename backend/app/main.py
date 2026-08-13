@@ -556,6 +556,31 @@ async def lifespan(app: FastAPI):
         except Exception as _ide:
             logger.warning(f"[idempotency-index] block failed: {_ide}")
 
+        # Tag simulation bots already in the database.
+        #
+        # They were created before there was anything to mark them with, so
+        # they sit in `users` looking exactly like members — which is how they
+        # ended up in the club's own list, offered as people to challenge. New
+        # ones carry source=SIMULATED_BOT; these are the ones already here,
+        # recognised by the address the simulation gives them. Best-effort and
+        # idempotent: once tagged, this matches nothing.
+        try:
+            from app.models.user import User as _BotUser
+            with SessionLocal() as _s:
+                _tagged = (
+                    _s.query(_BotUser)
+                    .filter(
+                        _BotUser.email.like("xplatbot%@fyc.local"),
+                        _BotUser.source.is_(None),
+                    )
+                    .update({"source": "SIMULATED_BOT"}, synchronize_session=False)
+                )
+                if _tagged:
+                    _s.commit()
+                    logger.info(f"[bots] tagged {_tagged} simulation account(s)")
+        except Exception as _bte:
+            logger.warning(f"[bots] tagging skipped: {_bte}")
+
         # Backfill short public share codes for events + tournaments created
         # before the feature existed, then enforce uniqueness. The column itself
         # is added by the schema-reconcile above; here we fill NULLs and add the
