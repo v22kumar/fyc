@@ -6,7 +6,8 @@ is never stolen or used to choose the account.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException
@@ -14,9 +15,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.core.security import create_access_token, create_refresh_token
 from app.dependencies import get_current_user
-from app.models.tenant import Organization
 from app.models.user import User, UserProfile
 from app.schemas.auth import Token, _build_user_out
 
@@ -31,6 +32,9 @@ class PhoneClaimResponse(BaseModel):
     phone_verified: bool = False
     conflict: bool = False
     reason: Optional[str] = None
+    otp_sent: bool = False
+    otp_channel: Optional[str] = None
+    otp_verification_id: Optional[str] = None
 
 
 def _normalise_phone(phone: str) -> str:
@@ -57,11 +61,7 @@ def _issue_token(db: Session, user: User) -> Token:
 
 
 def session_for_google_identity(db: Session, organization_id, idinfo: dict):
-    """Authenticate Google and create a session immediately.
-
-    A new Google identity gets a real PUBLIC_CITIZEN account now. No phone is
-    required for the account to exist. Phone ownership is a separate proof step.
-    """
+    """Authenticate Google and create a session immediately."""
     email = (idinfo.get("email") or "").strip().lower()
     google_sub = idinfo.get("sub")
     name = (idinfo.get("name") or idinfo.get("given_name") or "FYC Member").strip()
@@ -113,17 +113,63 @@ def session_for_google_identity(db: Session, organization_id, idinfo: dict):
     return _issue_token(db, user)
 
 
+def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional[str], Optional[str]]:
+    """Try the existing OTP delivery ladder without blocking Google login."""
+    from app.core.config import settings
+    from app.models.otp import PendingOtp
+    from app.services.otp_sender import deliver_otp as _deliver_otp
+    from app.services.otp_sender import send_verify_otp
+    from app.routers import auth
+
+    verification_id = f"v_{uuid.uuid4().hex[:12]}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    if settings.TWILIO_VERIFY_SID:
+        try:
+            if send_verify_otp(phone):
+                db.add(PendingOtp(
+                    verification_id=verification_id,
+                    phone_number=phone,
+                    organization_id=user.organization_id,
+                    code_hash=None,
+                    expires_at=expires_at,
+                    attempts=0,
+                ))
+                db.commit()
+                return True, "sms", verification_id
+        except Exception:
+            db.rollback()
+
+    try:
+        code = auth._generate_otp()
+        db.add(PendingOtp(
+            verification_id=verification_id,
+            phone_number=phone,
+            organization_id=user.organization_id,
+            code_hash=auth._hash_code(code),
+            expires_at=expires_at,
+            attempts=0,
+        ))
+        db.commit()
+        results = _deliver_otp(phone, code)
+        channel = next((name for name, ok in results.items() if ok), None)
+        if channel:
+            return True, channel, verification_id
+        db.delete(db.get(PendingOtp, verification_id))
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    return False, None, None
+
+
+@limiter.limit("10/minute")
 def claim_phone(
     payload: PhoneClaimRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PhoneClaimResponse:
-    """Attach a typed number only when it is not already attached elsewhere.
-
-    This endpoint deliberately does NOT set phone_verified_at. Only /otp/verify
-    can establish ownership. If the number belongs to somebody else, Google
-    authentication still succeeds and the claim is simply declined.
-    """
+    """Attach a typed number as an unverified claim and start OTP proof."""
     phone = _normalise_phone(payload.phone_number)
     if len(phone) < 10:
         raise HTTPException(status_code=400, detail="Enter a valid phone number")
@@ -149,8 +195,6 @@ def claim_phone(
         User.id != current_user.id,
     ).first()
     if existing is not None:
-        # Proof wins later through the existing OTP flow; Google never overrides
-        # an existing phone relationship, verified or otherwise.
         return PhoneClaimResponse(
             claimed=False,
             conflict=True,
@@ -158,10 +202,19 @@ def claim_phone(
         )
 
     current_user.phone_number = phone
-    # Intentionally leave phone_verified_at NULL. Google did not prove the phone.
+    # Google proves the account, not the phone. Keep phone_verified_at NULL.
     db.commit()
     db.refresh(current_user)
-    return PhoneClaimResponse(claimed=True, phone_number=phone, phone_verified=False)
+
+    otp_sent, otp_channel, verification_id = _send_claim_otp(db, current_user, phone)
+    return PhoneClaimResponse(
+        claimed=True,
+        phone_number=phone,
+        phone_verified=False,
+        otp_sent=otp_sent,
+        otp_channel=otp_channel,
+        otp_verification_id=verification_id,
+    )
 
 
 def install(auth_router) -> None:
