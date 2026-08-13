@@ -14,7 +14,7 @@ private network, so it is never trusted and the header is never read.
 The result: every member in the club shared one bucket. `@limiter.limit("5/minute")`
 on OTP send was a *club-wide* five per minute. On tournament day, with a hundred
 people signing in at once, the sixth person each minute would be told to slow
- down for something five strangers did.
+down for something five strangers did.
 
 ## Why not just trust the proxy header
 
@@ -59,23 +59,6 @@ def client_ip(request: Request) -> str:
     return get_remote_address(request)
 
 
-class _DisabledLimiter:
-    """A real no-op limiter for tests.
-
-    slowapi's decorator wrapper is useful in production, but even when the
-    limiter is disabled it can still alter FastAPI's signature introspection on
-    some routes. That turns perfectly valid JSON body parameters into required
-    query parameters and produces 422s before the endpoint is called.
-
-    Tests do not need rate limiting; the OTP attempt counter and dedicated
-    throttle tests cover the security behaviour. Returning the original
-    function keeps FastAPI's request/payload/db dependency inspection exact.
-    """
-
-    def limit(self, *_args, **_kwargs):
-        return lambda fn: fn
-
-
 # Shared by every router. slowapi keys each limit by (key, endpoint), so one
 # instance does not merge unrelated limits — it just means the address is
 # resolved the same way everywhere, which was the actual problem.
@@ -85,7 +68,4 @@ class _DisabledLimiter:
 # that ever changes, this is the line that needs a Valkey URI — otherwise each
 # instance would enforce the limit separately and the real limit would multiply
 # by the instance count.
-limiter = _DisabledLimiter() if settings.TESTING else Limiter(
-    key_func=client_ip,
-    enabled=True,
-)
+limiter = Limiter(key_func=client_ip, enabled=not settings.TESTING)
