@@ -87,7 +87,7 @@ class AuthGoogleSignInRequested extends AuthEvent {
 
   const AuthGoogleSignInRequested({
     required this.organizationId,
-    required this.phoneNumber,
+    this.phoneNumber = '',
   });
 
   @override
