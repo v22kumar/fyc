@@ -176,7 +176,7 @@ def install(auth_router) -> None:
         auth_router._graduate_from_directory = _graduate_and_verify
     original_verify = getattr(auth_router, "verify_otp", None)
     if original_verify is not None and not getattr(original_verify, "_google_claim_wrapper", False):
-        def _verify_otp_claim_safe(request: Request, payload: OTPVerify, db: Session):
+        def _verify_otp_claim_safe(request: Request, payload: OTPVerify, db: Session = Depends(get_db)):
             row = auth_router._otp_get(db, payload.verification_id)
             claimant = None
             temporary_hash = False
