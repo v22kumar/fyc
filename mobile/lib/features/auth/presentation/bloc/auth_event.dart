@@ -40,12 +40,9 @@ class AuthRegisterRequested extends AuthEvent {
   final String organizationId;
   final String phoneNumber;
   final String registrationToken;
-  /// Everything below the name is optional now, and none of it is asked at the
-  /// door. Date of birth, gender, blood group and role arrive later as profile
-  /// prompts — see `features/profile/data/question_scheduler.dart`.
   final String? email;
-  final String? dateOfBirth; // ISO yyyy-MM-dd
-  final String? gender; // MALE / FEMALE / OTHER
+  final String? dateOfBirth;
+  final String? gender;
   final String? bloodGroup;
   final String role;
   final String fullNameTa;
@@ -67,25 +64,40 @@ class AuthRegisterRequested extends AuthEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [organizationId, phoneNumber, registrationToken, email, dateOfBirth, gender, bloodGroup, role, fullNameTa, fullNameEn, preferredLanguage];
+  List<Object?> get props => [
+        organizationId,
+        phoneNumber,
+        registrationToken,
+        email,
+        dateOfBirth,
+        gender,
+        bloodGroup,
+        role,
+        fullNameTa,
+        fullNameEn,
+        preferredLanguage,
+      ];
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {
   final String organizationId;
+  /// The number typed before Google authentication. This is only a claim; it
+  /// must never be used to identify the account or create the session.
+  final String phoneNumber;
 
-  const AuthGoogleSignInRequested({required this.organizationId});
+  const AuthGoogleSignInRequested({
+    required this.organizationId,
+    required this.phoneNumber,
+  });
 
   @override
-  List<Object?> get props => [organizationId];
+  List<Object?> get props => [organizationId, phoneNumber];
 }
 
-/// The member gave up on the browser sign-in and wants the screen back.
 class AuthGoogleSignInCancelled extends AuthEvent {
   const AuthGoogleSignInCancelled();
 }
 
-/// Internal: the sign-in has opened the phone's browser.
 class AuthGoogleBrowserOpened extends AuthEvent {
   const AuthGoogleBrowserOpened();
 }
@@ -94,8 +106,6 @@ class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
 
-/// Raised when the session marker turns out not to be backed by a token.
-/// Fired by the auth check itself, never by the UI.
 class AuthSessionInvalid extends AuthEvent {
   const AuthSessionInvalid();
 }
