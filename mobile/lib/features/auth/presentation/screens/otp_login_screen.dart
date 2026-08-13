@@ -321,7 +321,8 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
             // ── Form card ─────────────────────────────────────────────
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
-                final isLoading = state is AuthLoading;
+                final inBrowser = state is AuthGoogleInBrowser;
+                final isLoading = state is AuthLoading || inBrowser;
                 return SafeArea(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -636,6 +637,27 @@ class _OtpLoginScreenState extends State<OtpLoginScreen>
                                       const Expanded(child: Divider()),
                                     ]),
                                     const SizedBox(height: 12),
+                                    // While the browser holds the sign-in there
+                                    // is nothing to wait for on this screen —
+                                    // Google may never come back at all — so the
+                                    // button becomes the way out rather than a
+                                    // disabled spinner.
+                                    if (inBrowser) ...[
+                                      Text(
+                                        trId('google_finish_in_browser'),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      TextButton(
+                                        onPressed: () => context
+                                            .read<AuthBloc>()
+                                            .add(const AuthGoogleSignInCancelled()),
+                                        child: Text(trId('cancel')),
+                                      ),
+                                    ],
                                     OutlinedButton.icon(
                                       onPressed: isLoading
                                           ? null

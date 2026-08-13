@@ -80,6 +80,16 @@ class AuthGoogleSignInRequested extends AuthEvent {
   List<Object?> get props => [organizationId];
 }
 
+/// The member gave up on the browser sign-in and wants the screen back.
+class AuthGoogleSignInCancelled extends AuthEvent {
+  const AuthGoogleSignInCancelled();
+}
+
+/// Internal: the sign-in has opened the phone's browser.
+class AuthGoogleBrowserOpened extends AuthEvent {
+  const AuthGoogleBrowserOpened();
+}
+
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }

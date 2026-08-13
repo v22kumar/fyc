@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, timezone
 from starlette.concurrency import run_in_threadpool
 
 from app.core.database import SessionLocal
-from app.models.chess import ChessGame, ChessMove
+from app.models.chess import ChessChallenge, ChessGame, ChessMove
 from app.services.chess_ws_manager import ws_manager
 
 logger = logging.getLogger(__name__)
@@ -139,11 +139,34 @@ def _reap_once() -> dict:
                 except Exception as e:  # noqa: BLE001
                     logger.warning(f"[chess-reaper] auto-resolve failed for {t.id}: {e}")
 
+    # ── 4. Challenges nobody answered ─────────────────────────────────────
+    #
+    # The lists already refuse to show these, so this changes nothing a member
+    # can see. It stops the table growing without bound, and it means the row's
+    # status tells the truth if anybody ever reads it — "pending" for a game
+    # invitation sent last month is a lie that a query filter alone would leave
+    # sitting in the database.
+    challenges_expired = 0
+    with SessionLocal() as db:
+        from app.routers.chess import _live_challenge_cutoff  # lazy: router↔service cycle
+
+        challenges_expired = (
+            db.query(ChessChallenge)
+            .filter(
+                ChessChallenge.status == "pending",
+                ChessChallenge.created_at < _live_challenge_cutoff(),
+            )
+            .update({"status": "expired"}, synchronize_session=False)
+        )
+        if challenges_expired:
+            db.commit()
+
     evicted = ws_manager.sweep(max_idle_seconds=SESSION_IDLE_SECONDS)
     return {
         "timed_out": timed_out,
         "abandoned": abandoned,
         "tournaments_checked": advanced,
+        "challenges_expired": challenges_expired,
         "sessions_evicted": evicted,
     }
 

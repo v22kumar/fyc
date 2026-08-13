@@ -146,11 +146,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  void cancelGoogleBrowserSignIn() => _remote.cancelBrowserSignIn();
+
+  @override
   Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
+    void Function()? onBrowserOpened,
   }) async {
     try {
-      final result = await _remote.signInWithGoogle(organizationId: organizationId);
+      final result = await _remote.signInWithGoogle(
+          organizationId: organizationId, onBrowserOpened: onBrowserOpened);
       if (result.needsRegistration) {
         return Right(GoogleAuthNeedsProfile(
           email: result.email ?? '',

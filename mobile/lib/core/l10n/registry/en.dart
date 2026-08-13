@@ -101,6 +101,7 @@ const Map<String, String> kEn = {
   'call': 'Call',
   'call_2': 'Call',
   'cancel': 'Cancel',
+  'google_finish_in_browser': 'Finish signing in with Google in your browser, then come back here.',
   'cancel_2': 'Cancel',
   'captured_automatically': 'Captured Automatically',
   'captured_automatically_2': 'Captured Automatically',

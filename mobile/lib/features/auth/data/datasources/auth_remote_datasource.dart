@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -18,7 +20,16 @@ abstract class AuthRemoteDataSource {
     required String phoneNumber,
   });
 
-  Future<GoogleAuthResult> signInWithGoogle({required String organizationId});
+  /// [onBrowserOpened] fires when the sign-in leaves the app for the phone's
+  /// browser. Nothing about that road is visible from inside the app, so the
+  /// UI cannot say "finish in your browser" unless it is told.
+  Future<GoogleAuthResult> signInWithGoogle({
+    required String organizationId,
+    void Function()? onBrowserOpened,
+  });
+
+  /// Abandon a browser sign-in that is still being waited on.
+  void cancelBrowserSignIn();
 
   Future<void> signOutGoogle();
 
@@ -182,7 +193,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<GoogleAuthResult> signInWithGoogle({required String organizationId}) async {
+  Future<GoogleAuthResult> signInWithGoogle({
+    required String organizationId,
+    void Function()? onBrowserOpened,
+  }) async {
     // serverClientId MUST be this Firebase project's *Web* OAuth client, or
     // Google returns a null idToken ("couldn't get id token"). See
     // ApiConstants.googleServerClientId for the value and rationale.
@@ -223,7 +237,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             '(serverClientId=${ApiConstants.googleServerClientId.split("-").first})',
             null,
             context: 'auth/google');
-        final viaBrowser = await _signInWithGoogleInBrowser(organizationId);
+        final viaBrowser =
+            await _signInWithGoogleInBrowser(organizationId, onBrowserOpened);
         if (viaBrowser != null) return viaBrowser;
         throw const AuthFailure(
             "Google sign-in isn't available on this build (no-token) — "
@@ -270,7 +285,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // does not involve the build. Ordinary web OAuth in the browser has no
       // certificate in it, so it works on exactly the copies this failure is
       // about — and the member gets what they asked for instead of an excuse.
-      final viaBrowser = await _signInWithGoogleInBrowser(organizationId);
+      final viaBrowser =
+            await _signInWithGoogleInBrowser(organizationId, onBrowserOpened);
       if (viaBrowser != null) return viaBrowser;
 
       throw AuthFailure(
@@ -317,8 +333,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   /// Returns the finished sign-in, or null if this road is not open — in which
   /// case the caller falls back to telling the member what went wrong.
+  /// Completed when the member gives up on the browser road.
+  ///
+  /// Google refuses some requests *before* redirecting anywhere — a
+  /// redirect_uri_mismatch never reaches our callback — so neither the server
+  /// nor the app is ever told the attempt died. Polling to the timeout is the
+  /// only thing left, and three silent minutes is indistinguishable from a
+  /// frozen button. The member gets to end it instead.
+  Completer<void>? _browserGaveUp;
+
+  @override
+  void cancelBrowserSignIn() {
+    if (_browserGaveUp != null && !_browserGaveUp!.isCompleted) {
+      _browserGaveUp!.complete();
+    }
+  }
+
   Future<GoogleAuthResult?> _signInWithGoogleInBrowser(
-      String organizationId) async {
+      String organizationId, [void Function()? onBrowserOpened]) async {
     final String sessionId;
     final String url;
     try {
@@ -342,10 +374,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (_) {
       return null;
     }
+    _browserGaveUp = Completer<void>();
+    onBrowserOpened?.call();
 
     final deadline = DateTime.now().add(browserSignInTimeout);
     while (DateTime.now().isBefore(deadline)) {
+      if (_browserGaveUp?.isCompleted ?? false) return null;
       await pollDelay(const Duration(seconds: 2));
+      if (_browserGaveUp?.isCompleted ?? false) return null;
       final Map<String, dynamic> body;
       try {
         final r = await _client.dio.get(

@@ -176,7 +176,14 @@ class OnlineGamePage extends StatelessWidget {
           const CircularProgressIndicator(color: _kGreen),
           const SizedBox(height: 16),
           Text(
-            trId('waiting_for_opponent'),
+            // Two strings, because one of them takes a name and the other is
+            // for when we have not been told one. Passing an empty name into
+            // the first leaves "waiting for" trailing off mid-sentence, and
+            // passing nothing at all printed the literal {name} on screen.
+            state.opponentName.isEmpty
+                ? trId('you_re_ready_waiting_for_your_opponent')
+                : trId('waiting_for_opponent', {'name': state.opponentName}),
+            textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),

@@ -78,6 +78,9 @@ class _SignInSheetState extends State<_SignInSheet> {
   String? _channel;
   String? _registrationToken;
   bool _busy = false;
+  // The sign-in has left for the browser. Different from _busy: there is
+  // nothing here to wait for, and Google may never come back.
+  bool _inBrowser = false;
   String? _error;
 
   String get _org => sl<LocalStorage>().getOrgId() ?? ApiConstants.defaultOrgId;
@@ -145,7 +148,9 @@ class _SignInSheetState extends State<_SignInSheet> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthOtpSent) {
+        if (state is AuthGoogleInBrowser) {
+          setState(() => _inBrowser = true);
+        } else if (state is AuthOtpSent) {
           setState(() {
             _busy = false;
             _verificationId = state.verificationId;
@@ -186,6 +191,7 @@ class _SignInSheetState extends State<_SignInSheet> {
           );
           setState(() {
             _busy = false;
+            _inBrowser = false;
             _error = state.message;
           });
         }
@@ -263,6 +269,26 @@ class _SignInSheetState extends State<_SignInSheet> {
                     icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
                     label: Text(trId('use_my_google_details')),
                   ),
+                  if (_inBrowser) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      trId('google_finish_in_browser'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _busy = false;
+                          _inBrowser = false;
+                        });
+                        context
+                            .read<AuthBloc>()
+                            .add(const AuthGoogleSignInCancelled());
+                      },
+                      child: Text(trId('cancel')),
+                    ),
+                  ],
                 ],
               ],
             ),

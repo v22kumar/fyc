@@ -57,6 +57,7 @@ const Map<String, String> kHi = {
   'call': 'कॉल करें',
   'call_2': 'कॉल करें',
   'cancel': 'रद्द करें',
+  'google_finish_in_browser': 'ब्राउज़र में Google साइन-इन पूरा करें, फिर यहाँ लौटें।',
   'cancel_2': 'रद्द',
   'captured_automatically': 'स्वतः कैप्चर',
   'captured_automatically_2': 'स्वतः प्राप्त',

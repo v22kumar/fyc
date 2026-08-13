@@ -600,9 +600,13 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: 'challenge',
+          // ?tab=inbox — where a challenge notification points, so the tap
+          // lands on the invitation rather than beside it.
           builder: (context, state) => ChallengePage(
               repo: sl<ChessRepository>(),
-              authToken: () => sl<LocalStorage>().getToken()),
+              authToken: () => sl<LocalStorage>().getToken(),
+              initialTab:
+                  state.uri.queryParameters['tab'] == 'inbox' ? 1 : 0),
         ),
         GoRoute(
           path: 'online/:gameId',

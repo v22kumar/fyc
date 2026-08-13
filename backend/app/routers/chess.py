@@ -668,6 +668,23 @@ def chess_members(
 
 # ── Challenges ─────────────────────────────────────────────────────────────────
 
+# How long an unanswered challenge stays on screen.
+#
+# A challenge had no expiry at all, so every one ever sent that nobody answered
+# stayed "Waiting for … to accept…" forever. Six of them stacked over the board
+# on the first evening of real use, several addressed to bots that will never
+# accept anything. This is a live invitation to play *now*: after ten minutes
+# the person has walked away, and showing it is a lie about who is waiting.
+#
+# Deliberately expressed as a cutoff on the query rather than only as a sweep,
+# so a stale challenge stops being offered the moment it is stale — whether or
+# not the reaper has run since.
+CHALLENGE_TTL_SECONDS = 10 * 60
+
+
+def _live_challenge_cutoff() -> datetime:
+    return datetime.now(timezone.utc) - timedelta(seconds=CHALLENGE_TTL_SECONDS)
+
 @router.post("/challenges", response_model=ChallengeOut, status_code=201)
 @limiter.limit("20/minute")
 def create_challenge(
@@ -715,7 +732,10 @@ def create_challenge(
         body_en=f"{challenger_name} challenged you to a game.",
         title_ta="♟️ சதுரங்க அழைப்பு",
         body_ta=f"{challenger_name} உங்களை விளையாட அழைத்துள்ளார்.",
-        data={"type": "chess_challenge", "route": "/chess/challenge"},
+        # The invitation lives on the Inbox tab. Routing to the page's default
+        # tab dropped the member on the list of people they could challenge —
+        # everything except the one thing the notification was about.
+        data={"type": "chess_challenge", "route": "/chess/challenge?tab=inbox"},
     )
     return _challenge_out(db, c)
 
@@ -732,6 +752,7 @@ def incoming_challenges(
             ChessChallenge.challenged_id == current_user.id,
             ChessChallenge.status == "pending",
             ChessChallenge.organization_id == tenant_id,
+            ChessChallenge.created_at >= _live_challenge_cutoff(),
         )
         .order_by(ChessChallenge.created_at.desc())
         .all()
@@ -751,6 +772,7 @@ def outgoing_challenges(
             ChessChallenge.challenger_id == current_user.id,
             ChessChallenge.status == "pending",
             ChessChallenge.organization_id == tenant_id,
+            ChessChallenge.created_at >= _live_challenge_cutoff(),
         )
         .order_by(ChessChallenge.created_at.desc())
         .all()
@@ -772,6 +794,19 @@ def accept_challenge(
     ).first()
     if not c:
         raise HTTPException(status_code=404, detail="Challenge not found or already handled")
+    # The lists stop offering a stale challenge; accepting one by other means —
+    # a notification opened an hour later, a screen left sitting — would create
+    # a game against somebody who left long ago and start their clock.
+    created = c.created_at
+    if created is not None and created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    if created is not None and created < _live_challenge_cutoff():
+        c.status = "expired"
+        db.commit()
+        raise HTTPException(
+            status_code=410,
+            detail="That challenge has expired. Send them a new one.",
+        )
 
     # Randomly assign colors (challenger is white, challenged is black — simple rule)
     game = ChessGame(
@@ -1113,7 +1148,15 @@ async def game_websocket(
             start_msg["clock"] = clock
         await session.broadcast(start_msg)
     else:
-        await session.send_to(uid, {"type": "waiting", "color": session.get_color(uid)})
+        # Name the opponent. The client's waiting string takes a {name}, and
+        # with nothing to put in it the member was shown the placeholder
+        # itself: "You're ready — waiting for {name}".
+        _my_color = session.get_color(uid)
+        await session.send_to(uid, {
+            "type": "waiting",
+            "color": _my_color,
+            "opponent_name": black_name if _my_color == "white" else white_name,
+        })
 
     # ── Message loop ──────────────────────────────────────────────────────────
     # Per-connection flood guard: legitimate play is a few messages/sec, so >30

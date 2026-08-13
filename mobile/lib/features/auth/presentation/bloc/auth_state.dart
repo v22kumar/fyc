@@ -15,6 +15,18 @@ class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
+/// Google sign-in has left the app for the phone's browser.
+///
+/// This is a different thing from AuthLoading and has to look different. The
+/// browser road can take minutes — the member is choosing an account, finding a
+/// password, reading an error — and when Google refuses the request outright it
+/// never redirects back, so no signal ever arrives to end the wait. A spinner
+/// with no words is indistinguishable from a frozen button, and that is exactly
+/// what it was mistaken for. So: say where they are, and offer a way out.
+class AuthGoogleInBrowser extends AuthState {
+  const AuthGoogleInBrowser();
+}
+
 /// OTP was sent — next step is verification
 class AuthOtpSent extends AuthState {
   final String verificationId;

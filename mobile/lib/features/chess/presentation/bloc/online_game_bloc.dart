@@ -134,7 +134,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameState> {
         // 'waiting' also carries the authoritative colour — adopt it.
         final wc = msg['color'] as String?;
         if (wc == 'white' || wc == 'black') _myColor = wc!;
-        emit(OnlineGameWaiting(myColor: _myColor));
+        emit(OnlineGameWaiting(
+          myColor: _myColor,
+          opponentName: (msg['opponent_name'] as String?) ?? '',
+        ));
 
       case 'game_start':
       case 'state':
