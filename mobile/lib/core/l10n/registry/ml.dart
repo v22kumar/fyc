@@ -57,6 +57,7 @@ const Map<String, String> kMl = {
   'call': 'വിളിക്കുക',
   'call_2': 'വിളിക്കുക',
   'cancel': 'റദ്ദാക്കുക',
+  'google_finish_in_browser': 'ബ്രൗസറിൽ Google സൈൻ-ഇൻ പൂർത്തിയാക്കി ഇവിടേക്ക് മടങ്ങുക.',
   'cancel_2': 'റദ്ദാക്കുക',
   'captured_automatically': 'സ്വയമേവ പകർത്തി',
   'captured_automatically_2': 'സ്വയമേവ ലഭിച്ചു',

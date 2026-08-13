@@ -57,6 +57,7 @@ const Map<String, String> kTa = {
   'call': 'அழைக்க',
   'call_2': 'அழை',
   'cancel': 'ரத்து',
+  'google_finish_in_browser': 'உலாவியில் Google உள்நுழைவை முடித்துவிட்டு இங்கு திரும்பி வாருங்கள்.',
   'cancel_2': 'ரத்து',
   'captured_automatically': 'தானாகப் பதிவாகும்',
   'captured_automatically_2': 'தானாகப் பெறப்பட்டது',

@@ -37,6 +37,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifyOtpRequested>(_onVerifyOtp);
     on<AuthRegisterRequested>(_onRegister);
     on<AuthGoogleSignInRequested>(_onGoogleSignIn);
+    on<AuthGoogleBrowserOpened>((_, emit) => emit(const AuthGoogleInBrowser()));
+    on<AuthGoogleSignInCancelled>(_onGoogleSignInCancelled);
     on<AuthLogoutRequested>(_onLogout);
   }
 
@@ -223,14 +225,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   String? _pendingEmail;
   String? _pendingFullName;
 
+  /// Which attempt is current.
+  ///
+  /// A cancelled sign-in is still a Future in flight — the poll loop unwinds,
+  /// the native plugin may still answer — and its result must not be allowed to
+  /// land on a screen the member has already taken back. Counting attempts is
+  /// enough: anything stamped with an older number is ignored.
+  int _googleAttempt = 0;
+
+  Future<void> _onGoogleSignInCancelled(
+    AuthGoogleSignInCancelled event,
+    Emitter<AuthState> emit,
+  ) async {
+    _googleAttempt++;
+    _repository.cancelGoogleBrowserSignIn();
+    emit(const AuthUnauthenticated());
+  }
+
   Future<void> _onGoogleSignIn(
     AuthGoogleSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final attempt = ++_googleAttempt;
     emit(const AuthLoading());
     final result = await _repository.signInWithGoogle(
       organizationId: event.organizationId,
+      onBrowserOpened: () {
+        if (!isClosed && attempt == _googleAttempt) {
+          add(const AuthGoogleBrowserOpened());
+        }
+      },
     );
+    // Cancelled while this was in flight: the member is looking at the login
+    // screen again, and an answer to a question they withdrew would either sign
+    // them in unasked or throw an error at them out of nowhere.
+    if (attempt != _googleAttempt) return;
     result.fold(
       (f) => emit(AuthFailureState(f.message)),
       (outcome) {

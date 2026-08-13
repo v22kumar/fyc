@@ -50,9 +50,15 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// [onBrowserOpened] fires if the sign-in has to leave the app for the
+  /// phone's browser, so the screen can say so rather than spin in silence.
   Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
+    void Function()? onBrowserOpened,
   });
+
+  /// Give up on a browser sign-in still being waited on.
+  void cancelGoogleBrowserSignIn();
 
   Future<Either<Failure, UserEntity>> getMe();
 
