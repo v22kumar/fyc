@@ -63,7 +63,9 @@ def test_challenge_notifies_the_opponent(client, db):
     assert len(notes) == 1, "the opponent must be notified of an incoming challenge"
     note = notes[0]
     assert note.data.get("type") == "chess_challenge"
-    assert note.data.get("route") == "/chess/challenge"
+    # The tab is part of the contract, not decoration: without it the tap opens
+    # the list of people you could challenge, beside the invitation itself.
+    assert note.data.get("route") == "/chess/challenge?tab=inbox"
     assert "Alice" in note.body_en
 
     # And the notification is for Bob, never echoed back to the challenger.
@@ -139,3 +141,124 @@ def test_active_game_gives_challenger_a_reliable_join_signal(client, db):
     # And so can the accepter (Bob).
     b = client.get("/api/v1/chess/games/active", headers=_h(org.id, bob_tok))
     assert b.json() is not None and b.json()["id"] == game_id
+
+
+def _age_challenge(db, minutes):
+    """Push every pending challenge back in time, the way an evening does."""
+    from datetime import datetime, timedelta, timezone
+    from app.models.chess import ChessChallenge
+    when = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    for c in db.query(ChessChallenge).filter(ChessChallenge.status == "pending").all():
+        c.created_at = when
+    db.commit()
+
+
+def test_a_challenge_nobody_answered_stops_being_offered(client, db):
+    """"Waiting for … to accept…" for a person who left an hour ago.
+
+    Challenges had no expiry, so every unanswered one stayed pending forever.
+    Six stacked over the board on the first evening of real use — several
+    addressed to bots, which never accept anything. A live invitation to play
+    *now* has to stop claiming somebody is waiting.
+    """
+    org = _make_org(db)
+    alice = _make_user(db, org.id, "9100000021", name="Alice")
+    bob = _make_user(db, org.id, "9100000022", name="Bob")
+    alice_tok = _login(client, org.id, "9100000021")
+    bob_tok = _login(client, org.id, "9100000022")
+
+    r = client.post("/api/v1/chess/challenges",
+                    json={"challenged_id": str(bob.id), "time_control": "untimed"},
+                    headers=_h(org.id, alice_tok))
+    assert r.status_code == 201, r.text
+
+    # Fresh: both sides see it.
+    assert len(client.get("/api/v1/chess/challenges/outgoing",
+                          headers=_h(org.id, alice_tok)).json()) == 1
+    assert len(client.get("/api/v1/chess/challenges/incoming",
+                          headers=_h(org.id, bob_tok)).json()) == 1
+
+    _age_challenge(db, minutes=30)
+
+    assert client.get("/api/v1/chess/challenges/outgoing",
+                      headers=_h(org.id, alice_tok)).json() == [], \
+        "the challenger was told somebody was still deciding"
+    assert client.get("/api/v1/chess/challenges/incoming",
+                      headers=_h(org.id, bob_tok)).json() == [], \
+        "an invitation from an hour ago is not an invitation"
+
+
+def test_accepting_a_stale_challenge_is_refused_rather_than_starting_a_game(client, db):
+    """A notification opened late must not seat somebody at an empty board.
+
+    Hiding the row is not enough on its own: the accept endpoint is reachable
+    from a stale screen or an old notification, and accepting created a real
+    game — with a clock — against a player who had long gone.
+    """
+    org = _make_org(db)
+    alice = _make_user(db, org.id, "9100000031", name="Alice")
+    bob = _make_user(db, org.id, "9100000032", name="Bob")
+    alice_tok = _login(client, org.id, "9100000031")
+    bob_tok = _login(client, org.id, "9100000032")
+
+    r = client.post("/api/v1/chess/challenges",
+                    json={"challenged_id": str(bob.id), "time_control": "blitz_5_0"},
+                    headers=_h(org.id, alice_tok))
+    challenge_id = r.json()["id"]
+
+    _age_challenge(db, minutes=30)
+
+    r = client.post(f"/api/v1/chess/challenges/{challenge_id}/accept",
+                    headers=_h(org.id, bob_tok))
+    assert r.status_code == 410, r.text
+    assert "expired" in r.json()["detail"].lower()
+
+    # And it is retired, not left pending to be tried again.
+    from app.models.chess import ChessChallenge
+    db.expire_all()
+    assert db.query(ChessChallenge).filter(
+        ChessChallenge.id == uuid.UUID(challenge_id)).first().status == "expired"
+
+
+def test_a_fresh_challenge_is_still_acceptable(client, db):
+    """The guard above must not make the ordinary case unplayable."""
+    org = _make_org(db)
+    alice = _make_user(db, org.id, "9100000041", name="Alice")
+    bob = _make_user(db, org.id, "9100000042", name="Bob")
+    alice_tok = _login(client, org.id, "9100000041")
+    bob_tok = _login(client, org.id, "9100000042")
+
+    r = client.post("/api/v1/chess/challenges",
+                    json={"challenged_id": str(bob.id), "time_control": "untimed"},
+                    headers=_h(org.id, alice_tok))
+    challenge_id = r.json()["id"]
+
+    r = client.post(f"/api/v1/chess/challenges/{challenge_id}/accept",
+                    headers=_h(org.id, bob_tok))
+    assert r.status_code == 200, r.text
+    assert r.json()["game_id"]
+
+
+def test_the_challenge_notification_points_at_the_inbox(client, db):
+    """Tapping it landed on the tab beside the invitation.
+
+    The push carries a route the app follows literally. '/chess/challenge'
+    opens the page on its first tab — the list of people you *could* play —
+    which is everything except the invitation the notification was about.
+    """
+    org = _make_org(db)
+    alice = _make_user(db, org.id, "9100000051", name="Alice")
+    bob = _make_user(db, org.id, "9100000052", name="Bob")
+    alice_tok = _login(client, org.id, "9100000051")
+
+    client.post("/api/v1/chess/challenges",
+                json={"challenged_id": str(bob.id), "time_control": "untimed"},
+                headers=_h(org.id, alice_tok))
+
+    note = (db.query(Notification)
+              .filter(Notification.user_id == bob.id)
+              .order_by(Notification.created_at.desc())
+              .first())
+    assert note is not None
+    assert "tab=inbox" in str(note.data), \
+        f"the tap must land on the invitation, not beside it: {note.data}"

@@ -20,9 +20,14 @@ class OnlineGameConnecting extends OnlineGameState {
 
 class OnlineGameWaiting extends OnlineGameState {
   final String myColor;
-  const OnlineGameWaiting({required this.myColor});
+
+  /// Who we are waiting for, when the server knows. Empty until it does — the
+  /// screen says "your opponent" rather than printing a hole.
+  final String opponentName;
+
+  const OnlineGameWaiting({required this.myColor, this.opponentName = ''});
   @override
-  List<Object?> get props => [myColor];
+  List<Object?> get props => [myColor, opponentName];
 }
 
 class OnlineGameInProgress extends OnlineGameState {

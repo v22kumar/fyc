@@ -9,9 +9,19 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ChallengePage extends StatefulWidget {
   const ChallengePage(
-      {super.key, required this.repo, required this.authToken});
+      {super.key,
+      required this.repo,
+      required this.authToken,
+      this.initialTab = 0});
 
   final ChessRepository repo;
+
+  /// Which tab to open on: 0 = Challenge, 1 = Inbox.
+  ///
+  /// A challenge notification is *about* an invitation sitting in the Inbox, so
+  /// opening the page on its default tab showed the member everything except
+  /// the thing they had just tapped.
+  final int initialTab;
 
   /// The stored token for opening the board, injected by the router.
   final Future<String?> Function() authToken;
@@ -53,7 +63,7 @@ class _ChallengePageState extends State<ChallengePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
     _reload();
     _startPolling();
     
