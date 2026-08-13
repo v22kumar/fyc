@@ -45,14 +45,6 @@ from app.models.chess_tournament import ChessTournament, ChessTournamentEntry, C
 from app.models.weekly_games import WeeklyGame, WeeklyGamePlayer
 from app.models.ai_content import AIContent
 
-# Importing models happens immediately after main.py imports the auth router.
-# Install the Google auth patch here so the existing /auth/google and browser
-# callback functions resolve the new session_for_google_identity implementation
-# before FastAPI builds the application routes.
-from app.routers import auth as _auth_router
-from app.services.google_claim_auth import install as _install_google_claim_auth
-_install_google_claim_auth(_auth_router)
-
 __all__ = [
     "Base", "Organization", "User", "UserProfile", "MembershipCard", "VolunteerMetadata",
     "AuditLog", "PendingOtp", "PendingBrowserLogin", "FinanceCampaign", "FinanceCampaignAssignment",
