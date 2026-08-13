@@ -47,12 +47,10 @@ abstract class AuthRepository {
     required String password,
   });
 
-  /// The phone is carried as an untrusted claim. It must never be used by the
-  /// client to select an account. The server may attach it to the Google-
-  /// identified account as unverified, then OTP verification proves ownership.
+  /// [onBrowserOpened] fires if the sign-in has to leave the app for the
+  /// phone's browser, so the screen can say so rather than spin in silence.
   Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
-    required String phoneNumber,
     void Function()? onBrowserOpened,
   });
 
