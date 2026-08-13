@@ -620,3 +620,25 @@ def test_the_app_can_say_where_a_half_finished_sign_in_is_kept(client):
 
     # Nothing here may carry a secret, a number or a code.
     assert "url" not in str(store).lower()
+
+
+def test_the_health_page_names_which_google_client_the_browser_road_uses(client):
+    """A redirect_uri_mismatch has two causes that read identically.
+
+    The club has two legitimate web clients — the website's and the mobile
+    app's Firebase project. A callback URI registered on one says nothing about
+    the other, so "the URI is missing" and "the URI is on the wrong client"
+    produce the same error page. Reporting the redirect URI alone left guessing
+    and redeploying as the only way to tell them apart, twice.
+
+    Client ids are not secrets; they ship inside the APK. The secret must never
+    appear here, and that is what the second half of this test holds down.
+    """
+    fallback = client.get("/api/health/auth").json()["google_sign_in"]["browser_fallback"]
+
+    assert "client_id" in fallback, \
+        "the answer to 'which client?' belongs in the response, not in somebody's memory"
+
+    body = str(client.get("/api/health/auth").json())
+    assert "GOCSPX" not in body, "a client secret must never be reported"
+    assert "client_secret" not in body

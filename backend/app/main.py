@@ -1147,6 +1147,21 @@ def auth_channels_check(db: Session = Depends(get_db)):
                 # character for character. That mismatch is the one mistake
                 # here that is invisible until somebody tries to sign in.
                 "redirect_uri": google_browser_auth.redirect_uri(),
+                # Which web client the two above belong to.
+                #
+                # The club has two legitimate web clients — the website's and
+                # the mobile app's Firebase project — and a redirect URI
+                # registered on one of them says nothing about the other. With
+                # only `redirect_uri` reported, a redirect_uri_mismatch looks
+                # identical whether the URI is missing or whether it is present
+                # on the wrong client, and the only way to tell was to guess and
+                # redeploy. It cost two rounds of exactly that.
+                #
+                # OAuth client ids are not secrets — they ship inside the APK
+                # and google-services.json — so naming this one here is safe,
+                # and it turns "which client is the server actually using?" into
+                # something readable from a phone.
+                "client_id": settings.GOOGLE_WEB_CLIENT_ID or None,
             },
         },
         "environment": settings.ENVIRONMENT,
