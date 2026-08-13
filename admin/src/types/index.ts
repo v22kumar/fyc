@@ -203,3 +203,30 @@ export interface CommunityStats {
   total_trees_planted: number;
   total_issues_solved: number;
 }
+
+/** Somebody asking to be recognised as a club member. */
+export interface ClubRequest {
+  id: string;
+  user_id: string;
+  full_name_en: string;
+  full_name_ta: string;
+  phone_number: string | null;
+  requested_at: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+}
+
+export interface DuplicateAccount {
+  user_id: string;
+  full_name_en: string;
+  phone_number: string | null;
+  email: string | null;
+  role: string;
+  created_at: string | null;
+  is_verified: boolean;
+}
+
+/** One person, appearing in the roster more than once. */
+export interface DuplicateGroup {
+  key: string;
+  accounts: DuplicateAccount[];
+}

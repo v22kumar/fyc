@@ -290,6 +290,9 @@ def ensure_bots(db, org, n):
                 phone_number=f"+91{BOT_PHONE_BASE + i}",
                 password_hash=get_password_hash(uuid.uuid4().hex),
                 role="USER", is_verified=True, preferred_language="en",
+                # Marked, so the club's own lists can leave them out. Unmarked,
+                # these turned up as people to challenge and to appoint.
+                source="SIMULATED_BOT",
             )
             db.add(u)
             db.flush()

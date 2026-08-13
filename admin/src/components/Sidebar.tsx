@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearAuth } from '@/lib/auth';
-import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, Megaphone, LogOut, Settings, IndianRupee, ExternalLink } from 'lucide-react';
+import { Home, LifeBuoy, Calendar, Users, IdCard, BookOpen, Trophy, Droplet, Megaphone, LogOut, Settings, IndianRupee, ExternalLink, UserPlus } from 'lucide-react';
 import { WEB_BASE } from '@/lib/api';
 
 // `external` sends the official to the member site rather than to a page in
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/dashboard/issues',  label: 'Triage',            icon: LifeBuoy },
   { href: '/dashboard/complaints', label: 'Complaint Routing', icon: Megaphone },
   { href: '/dashboard/events',  label: 'Community Events',  icon: Calendar },
+  { href: '/dashboard/club-requests', label: 'Club Requests',   icon: UserPlus },
   { href: '/dashboard/members',    label: 'Member Directory',  icon: Users },
   { href: '/dashboard/membership', label: 'Membership Cards',  icon: IdCard },
   { href: '/dashboard/directory',  label: 'Public Directory',  icon: BookOpen },

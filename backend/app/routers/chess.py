@@ -12,6 +12,7 @@ from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db, SessionLocal
+from app.core.people import real_people
 from app.core.security import decode_token
 from app.dependencies import get_current_user
 from app.middleware.tenant import require_tenant_id
@@ -636,7 +637,7 @@ def chess_members(
         .filter(
             User.organization_id == tenant_id,
             User.id != current_user.id,
-            (User.source.is_(None)) | (User.source != "F2S_IMPORT"),
+            real_people(User),
         )
         .limit(200)
         .all()
