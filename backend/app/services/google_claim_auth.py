@@ -117,7 +117,7 @@ def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional
     """Try the existing OTP delivery ladder without blocking Google login."""
     from app.core.config import settings
     from app.models.otp import PendingOtp
-    from app.services.otp_sender import deliver_otp as _deliver_otp
+    from app.services.otp_sender import send_otp as _deliver_otp
     from app.services.otp_sender import send_verify_otp
     from app.routers import auth
 
@@ -155,8 +155,10 @@ def _send_claim_otp(db: Session, user: User, phone: str) -> tuple[bool, Optional
         channel = next((name for name, ok in results.items() if ok), None)
         if channel:
             return True, channel, verification_id
-        db.delete(db.get(PendingOtp, verification_id))
-        db.commit()
+        row = db.get(PendingOtp, verification_id)
+        if row is not None:
+            db.delete(row)
+            db.commit()
     except Exception:
         db.rollback()
 
@@ -220,6 +222,19 @@ def claim_phone(
 def install(auth_router) -> None:
     """Patch the existing Google flow without duplicating the auth router."""
     auth_router.session_for_google_identity = session_for_google_identity
+
+    # Existing /auth/otp/verify calls this hook after a successful code. The
+    # original hook handles directory graduation; this wrapper additionally
+    # records phone ownership, which is the missing half of a deferred claim.
+    original_graduate = getattr(auth_router, "_graduate_from_directory", None)
+    if original_graduate is not None and not getattr(original_graduate, "_google_claim_wrapper", False):
+        def _graduate_and_verify(db, user):
+            original_graduate(db, user)
+            from app.services.account_claims import mark_phone_verified
+            mark_phone_verified(db, user)
+        _graduate_and_verify._google_claim_wrapper = True
+        auth_router._graduate_from_directory = _graduate_and_verify
+
     if not any(
         getattr(route, "path", None) == "/auth/google/claim-phone"
         for route in auth_router.router.routes
