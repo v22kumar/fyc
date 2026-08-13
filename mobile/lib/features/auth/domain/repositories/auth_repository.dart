@@ -3,9 +3,6 @@ import '../../../../core/error/failures.dart';
 import '../entities/user_entity.dart';
 import '../entities/otp_challenge.dart';
 
-/// Result of a Google sign-in: either the member is logged in, or they're a
-/// new account that must complete registration (phone + DOB) with their
-/// Google name/email pre-filled.
 sealed class GoogleAuthOutcome {}
 
 class GoogleAuthSuccess extends GoogleAuthOutcome {
@@ -50,23 +47,18 @@ abstract class AuthRepository {
     required String password,
   });
 
-  /// [onBrowserOpened] fires if the sign-in has to leave the app for the
-  /// phone's browser, so the screen can say so rather than spin in silence.
+  /// Google authenticates the account. [phoneNumber] is only a phone claim.
+  /// OTP delivery/verification must never be required to return a session.
   Future<Either<Failure, GoogleAuthOutcome>> signInWithGoogle({
     required String organizationId,
+    required String phoneNumber,
     void Function()? onBrowserOpened,
   });
 
-  /// Give up on a browser sign-in still being waited on.
   void cancelGoogleBrowserSignIn();
 
   Future<Either<Failure, UserEntity>> getMe();
-
   Future<void> logout();
-
-  /// Best-effort: push registration must never block login.
   Future<void> registerFcmToken(String token);
-
-  /// The one-time profile completion patch.
   Future<void> updateMyProfile(Map<String, dynamic> body);
 }
