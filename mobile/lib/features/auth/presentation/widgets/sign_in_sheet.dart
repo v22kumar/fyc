@@ -7,7 +7,6 @@ import '../../../../core/design_system/tokens.dart';
 import '../../../../core/l10n/tr.dart';
 import '../../../../core/services/error_reporter.dart';
 import '../../../../core/storage/local_storage.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../service_locator.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -52,10 +51,10 @@ class _SignInSheetState extends State<_SignInSheet> {
   String? _registrationToken;
   bool _busy = false;
   bool _inBrowser = false;
+  bool _googleFailed = false;
   String? _error;
 
   String get _org => sl<LocalStorage>().getOrgId() ?? ApiConstants.defaultOrgId;
-
   String get _e164 => '+91${_phone.text.trim().replaceAll(RegExp(r'\D'), '')}';
 
   @override
@@ -66,14 +65,36 @@ class _SignInSheetState extends State<_SignInSheet> {
     super.dispose();
   }
 
-  void _sendCode() {
-    if (_phone.text.trim().replaceAll(RegExp(r'\D'), '').length != 10) {
+  bool _validPhone() =>
+      _phone.text.trim().replaceAll(RegExp(r'\D'), '').length == 10;
+
+  void _signInWithGoogle() {
+    if (!_validPhone()) {
+      setState(() => _error = trId('enter_a_valid_phone_number'));
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _error = null;
+      _inBrowser = false;
+      _googleFailed = false;
+    });
+    context.read<AuthBloc>().add(AuthGoogleSignInRequested(
+          organizationId: _org,
+          phoneNumber: _e164,
+        ));
+  }
+
+  void _sendOtpFallback() {
+    if (!_validPhone()) {
       setState(() => _error = trId('enter_a_valid_phone_number'));
       return;
     }
     setState(() {
       _busy = true;
       _error = null;
+      _googleFailed = false;
     });
     context.read<AuthBloc>().add(
           AuthSendOtpRequested(organizationId: _org, phoneNumber: _e164),
@@ -111,24 +132,6 @@ class _SignInSheetState extends State<_SignInSheet> {
         ));
   }
 
-  void _signInWithGoogle() {
-    final digits = _phone.text.trim().replaceAll(RegExp(r'\D'), '');
-    if (digits.length != 10) {
-      setState(() => _error = trId('enter_a_valid_phone_number'));
-      return;
-    }
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _busy = true;
-      _error = null;
-      _inBrowser = false;
-    });
-    context.read<AuthBloc>().add(AuthGoogleSignInRequested(
-          organizationId: _org,
-          phoneNumber: _e164,
-        ));
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -149,6 +152,9 @@ class _SignInSheetState extends State<_SignInSheet> {
             _step = _Step.name;
           });
         } else if (state is AuthGoogleNeedsPhone) {
+          // This state remains temporarily until the backend implements the
+          // Google-authenticated phone-claim flow. Do not silently treat it as
+          // successful authentication because there is no authenticated token.
           setState(() {
             _busy = false;
             _name.text = state.fullName;
@@ -166,6 +172,7 @@ class _SignInSheetState extends State<_SignInSheet> {
             _busy = false;
             _inBrowser = false;
             _error = state.message;
+            _googleFailed = _step == _Step.phone;
           });
         }
       },
@@ -213,41 +220,46 @@ class _SignInSheetState extends State<_SignInSheet> {
                 SizedBox(height: DSSpacing.lg),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                   onPressed: _busy ? null : _primaryAction,
                   child: _busy
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(_primaryLabel()),
                 ),
-                if (_step == _Step.phone) ...[
+                if (_step == _Step.phone && _googleFailed) ...[
                   SizedBox(height: DSSpacing.xs),
-                  TextButton.icon(
-                    onPressed: _busy ? null : _signInWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
-                    label: Text(trId('sign_in_with_google')),
+                  OutlinedButton(
+                    onPressed: _busy ? null : _sendOtpFallback,
+                    child: Text(trId('use_phone_otp_instead')),
                   ),
-                  if (_inBrowser) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      trId('google_finish_in_browser'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _busy = false;
-                          _inBrowser = false;
-                        });
-                        context.read<AuthBloc>().add(const AuthGoogleSignInCancelled());
-                      },
-                      child: Text(trId('cancel')),
-                    ),
-                  ],
+                ],
+                if (_step == _Step.phone && _inBrowser) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    trId('google_finish_in_browser'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _busy = false;
+                        _inBrowser = false;
+                      });
+                      context
+                          .read<AuthBloc>()
+                          .add(const AuthGoogleSignInCancelled());
+                    },
+                    child: Text(trId('cancel')),
+                  ),
                 ],
               ],
             ),
