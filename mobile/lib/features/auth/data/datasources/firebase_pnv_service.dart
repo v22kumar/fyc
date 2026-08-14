@@ -61,7 +61,10 @@ class FirebasePnvService {
         ApiConstants.firebaseVerifyPhone,
         data: {'id_token': idToken},
       );
-      return response.data as Map<String, dynamic>?;
+      if (response.data is Map) {
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      return null;
     } catch (e) {
       debugPrint('[FirebasePnv] Backend verification failed: $e');
       rethrow;

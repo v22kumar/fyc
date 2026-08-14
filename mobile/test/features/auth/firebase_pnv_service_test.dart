@@ -29,7 +29,8 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(const MethodChannel('fyc/firebase_pnv'), (MethodCall methodCall) async {
       if (methodCall.method == 'getVerifiedPhoneNumber') {
-        final isTestMode = methodCall.arguments['isTestMode'] as bool? ?? false;
+        final args = methodCall.arguments is Map ? methodCall.arguments as Map : null;
+        final isTestMode = args?['isTestMode'] as bool? ?? false;
         if (isTestMode) {
           return {'phoneNumber': '+919876543210', 'status': 'success'};
         }
