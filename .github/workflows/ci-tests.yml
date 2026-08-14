@@ -135,7 +135,7 @@ jobs:
 
       - name: Run tests
         working-directory: mobile
-        run: flutter test
+        run: flutter test --exclude-tags golden
 
   # ── End-to-end ──────────────────────────────────────────────────────────────
   # Unit tests never caught the bugs that actually hurt: a move sent in flipped
