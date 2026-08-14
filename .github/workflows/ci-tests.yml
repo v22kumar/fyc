@@ -64,11 +64,10 @@ jobs:
       # that goes red without anybody changing anything is a gate people learn
       # to ignore. To take a new Flutter: bump this, run
       # `flutter test --tags golden --update-goldens`, and look at the pictures.
-      - name: Set up Flutter (pinned)
+      - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.44.8'   # see mobile/test/features/work/work_golden_test.dart
           cache: true
 
       - name: Install dependencies
@@ -99,11 +98,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Flutter (pinned)
+      - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.44.8'   # see mobile/test/features/work/work_golden_test.dart
           cache: true
 
       - name: Install dependencies
@@ -215,7 +213,6 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.44.8'   # see mobile/test/features/work/work_golden_test.dart
           cache: true
 
       - name: Install backend dependencies

@@ -29,11 +29,10 @@ jobs:
         run: echo "FYC_BUILD_NUM=$((200000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
 
       # ── 2. Flutter SDK ───────────────────────────────────────────────────────
-      - name: Set up Flutter (pinned)
+      - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.44.8'   # see mobile/test/features/work/work_golden_test.dart
           cache: true
 
       # ── 3. Release signing ───────────────────────────────────────────────────
