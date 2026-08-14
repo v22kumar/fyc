@@ -41,10 +41,10 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
 
     test_token = "AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A"
     if id_token.strip() == test_token:
-        # Dev test token bypass
+        # Dev test token bypass for new user testing
         return {
-            "uid": "test-uid-123",
-            "phone_number": "+919487984964",
+            "uid": "test-uid-456",
+            "phone_number": "+919488751943",
             "iss": "https://securetoken.google.com/test",
         }
 
