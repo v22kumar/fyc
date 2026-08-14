@@ -40,6 +40,9 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="Missing Firebase ID token")
 
     try:
+        from app.services.notification_service import _init_firebase
+        _init_firebase()
+
         # If Firebase Admin is initialized, verify cryptographically with the SDK
         if firebase_admin._apps:
             decoded = firebase_auth.verify_id_token(id_token.strip())

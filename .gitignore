@@ -12,6 +12,12 @@ env/
 *.db
 *.sqlite
 
+# Credentials and Keys
+*serviceAccountKey*.json
+*firebase*credentials*.json
+service_account*.json
+*.pem
+
 # IDEs
 .vscode/
 .idea/
