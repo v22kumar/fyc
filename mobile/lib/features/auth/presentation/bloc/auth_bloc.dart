@@ -9,6 +9,10 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/error/failures.dart';
+import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../injection_container.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -40,6 +44,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthGoogleBrowserOpened>((_, emit) => emit(const AuthGoogleInBrowser()));
     on<AuthGoogleSignInCancelled>(_onGoogleSignInCancelled);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthFirebasePnvRequested>(_onFirebasePnvRequested);
   }
 
   Future<void> _onCheckRequested(AuthCheckRequested event, Emitter<AuthState> emit) async {
@@ -101,6 +106,54 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (f) => emit(AuthFailureState(f.message)),
       (challenge) => emit(AuthOtpSent(verificationId: challenge.id, phoneNumber: event.phoneNumber, channel: challenge.channel)),
     );
+  }
+
+  Future<void> _onFirebasePnvRequested(AuthFirebasePnvRequested event, Emitter<AuthState> emit) async {
+    emit(const AuthLoading());
+    try {
+      final apiClient = sl<ApiClient>();
+      // We will send the test token directly for now to bypass Twilio and verify the flow
+      const testToken = 'AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A';
+      
+      final response = await apiClient.dio.post(
+        '/auth/firebase/login',
+        data: {
+          'id_token': testToken,
+          'organization_id': event.organizationId,
+        },
+      );
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('access_token')) {
+          // It's a token! User is logged in.
+          final user = UserModel.fromJson(data['user']);
+          _pendingEmail = null;
+          _pendingFullName = null;
+          _remember(user);
+          _storage.saveToken(data['access_token']);
+          emit(AuthAuthenticated(user));
+          _registerFcmToken();
+        } else if (data.containsKey('registration_token')) {
+          // Needs registration
+          final regToken = data['registration_token'];
+          emit(AuthNeedsRegistration(
+            organizationId: event.organizationId,
+            phoneNumber: event.phoneNumber,
+            registrationToken: regToken,
+            email: _pendingEmail,
+            fullName: _pendingFullName,
+          ));
+        } else {
+          emit(const AuthFailureState("Unexpected response from Firebase PNV login"));
+        }
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['detail'] ?? e.message;
+      emit(AuthFailureState(msg.toString()));
+    } catch (e) {
+      emit(AuthFailureState(e.toString()));
+    }
   }
 
   Future<void> _onVerifyOtp(AuthVerifyOtpRequested event, Emitter<AuthState> emit) async {

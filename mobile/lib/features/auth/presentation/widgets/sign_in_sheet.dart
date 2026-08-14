@@ -53,6 +53,7 @@ class _SignInSheetState extends State<_SignInSheet> {
   bool _busy = false;
   bool _inBrowser = false;
   bool _googleFailed = false;
+  bool _googlePending = false;
   String? _error;
 
   String get _org => sl<LocalStorage>().getOrgId() ?? ApiConstants.defaultOrgId;
@@ -97,7 +98,7 @@ class _SignInSheetState extends State<_SignInSheet> {
       _googleFailed = false;
     });
     context.read<AuthBloc>().add(
-          AuthSendOtpRequested(organizationId: _org, phoneNumber: _e164),
+          AuthFirebasePnvRequested(organizationId: _org, phoneNumber: _e164),
         );
   }
 
@@ -156,7 +157,11 @@ class _SignInSheetState extends State<_SignInSheet> {
             _busy = false;
             _name.text = state.fullName;
             _step = _Step.phone;
+            _googlePending = true;
           });
+          if (_validPhone()) {
+            _sendOtpFallback();
+          }
         } else if (state is AuthAuthenticated) {
           Navigator.of(context).pop(true);
         } else if (state is AuthFailureState) {
@@ -265,13 +270,13 @@ class _SignInSheetState extends State<_SignInSheet> {
       };
 
   String _primaryLabel() => switch (_step) {
-        _Step.phone => trId('sign_in'),
+        _Step.phone => _googlePending ? trId('send_otp') : trId('sign_in'),
         _Step.code => trId('verify'),
         _Step.name => trId('done'),
       };
 
   void _primaryAction() => switch (_step) {
-        _Step.phone => _signInWithGoogle(),
+        _Step.phone => _googlePending ? _sendOtpFallback() : _signInWithGoogle(),
         _Step.code => _verify(),
         _Step.name => _finish(),
       };

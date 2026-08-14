@@ -31,7 +31,7 @@ from app.schemas.auth import (
     OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister,
     UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse,
     PhoneClaimRequest, PhoneClaimResponse, PhoneClaimVerifyRequest,
-    FirebasePhoneVerifyRequest, _build_user_out,
+    FirebasePhoneVerifyRequest, FirebaseLoginRequest, _build_user_out,
 )
 
 logger = logging.getLogger(__name__)
@@ -1345,4 +1345,91 @@ def verify_phone_firebase(
         id_token=payload.id_token,
     )
     return PhoneClaimResponse(**result)
+
+
+@router.post(
+    "/firebase/login",
+    response_model=Union[Token, OTPVerifySuccess],
+    summary="Login or create registration token using Firebase Phone Auth ID token",
+)
+@limiter.limit("20/minute")
+def login_firebase(
+    request: Request,
+    payload: FirebaseLoginRequest,
+    db: Session = Depends(get_db),
+) -> Union[Token, OTPVerifySuccess]:
+    """Login via Firebase Phone Number Verification.
+    Returns JWT on success, or OTPVerifySuccess if the user is not yet registered.
+    """
+    try:
+        decoded = firebase_phone_auth.verify_firebase_id_token(payload.id_token)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    phone_from_token = decoded.get("phone_number")
+    if not phone_from_token:
+        raise HTTPException(status_code=400, detail="Token has no phone number")
+        
+    phone_number = firebase_phone_auth.normalise_phone(phone_from_token)
+    org_id = payload.organization_id
+    
+    user = db.query(User).filter(
+        User.organization_id == org_id,
+        User.phone_number == phone_number,
+    ).first()
+
+    if not user and phone_number.startswith("+91"):
+        user = db.query(User).filter(
+            User.organization_id == org_id,
+            User.phone_number == phone_number.replace("+91", ""),
+        ).first()
+
+    if user is not None and user.phone_verified_at is None and user.password_hash:
+        released = release_claims(db, org_id, phone_number, keep=user)
+        user.phone_number = None
+        db.flush()
+        user = None
+        
+    if not user:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+        to_encode = {
+            "exp": expire,
+            "phone_number": phone_number,
+            "organization_id": str(org_id),
+            "type": "registration"
+        }
+        registration_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+        
+        return OTPVerifySuccess(
+            message="Firebase PNV verified. User not registered. Please call /auth/register.",
+            registration_token=registration_token,
+            phone_number=phone_number
+        )
+
+    if getattr(user, 'is_blocked', False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked by an administrator.",
+        )
+
+    _graduate_from_directory(db, user)
+
+    if user.phone_verified_at is None:
+        user.phone_verified_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(user)
+
+    access_token = create_access_token(
+        subject=user.id,
+        role=user.role,
+        organization_id=str(user.organization_id),
+    )
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    return Token(
+        access_token=access_token, 
+        refresh_token=create_refresh_token(user.id, user.token_version), 
+        token_type="bearer", 
+        user=_build_user_out(user, profile)
+    )
 
