@@ -186,6 +186,11 @@ class FirebasePhoneVerifyRequest(BaseModel):
     id_token: str = Field(..., description="Firebase Auth ID Token from phone sign-in")
 
 
+class FirebaseLoginRequest(BaseModel):
+    id_token: str = Field(..., description="Firebase Auth ID Token from phone sign-in")
+    organization_id: UUID = Field(..., description="Organization ID for the sign in attempt")
+
+
 def _build_user_out(user, profile=None):
     """Build UserOut from User + optional UserProfile."""
     # A profile is "complete" only when we have the full mandatory set: name,

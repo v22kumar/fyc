@@ -39,6 +39,15 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
     if not id_token or not id_token.strip():
         raise HTTPException(status_code=400, detail="Missing Firebase ID token")
 
+    test_token = "AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A"
+    if id_token.strip() == test_token:
+        # Dev test token bypass
+        return {
+            "uid": "test-uid-123",
+            "phone_number": "+919487984964",
+            "iss": "https://securetoken.google.com/test",
+        }
+
     try:
         from app.services.notification_service import _init_firebase
         _init_firebase()

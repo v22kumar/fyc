@@ -16,6 +16,13 @@ class AuthSendOtpRequested extends AuthEvent {
   @override List<Object?> get props => [organizationId, phoneNumber];
 }
 
+class AuthFirebasePnvRequested extends AuthEvent {
+  final String organizationId;
+  final String phoneNumber;
+  const AuthFirebasePnvRequested({required this.organizationId, required this.phoneNumber});
+  @override List<Object?> get props => [organizationId, phoneNumber];
+}
+
 class AuthVerifyOtpRequested extends AuthEvent {
   final String verificationId;
   final String otpCode;
