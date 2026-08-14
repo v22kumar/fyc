@@ -26,11 +26,12 @@ from app.models.club_request import ClubMemberRequest
 from app.models.otp import PendingOtp
 from app.services.account_claims import (mark_phone_verified, owner_of_phone,
                                           release_claims)
-from app.services import google_browser_auth
+from app.services import google_browser_auth, firebase_phone_auth
 from app.schemas.auth import (
     OTPRequest, OTPResponse, OTPVerify, OTPVerifySuccess, Token, UserRegister,
     UserOut, AdminLogin, GoogleLoginRequest, RefreshRequest, AccessTokenResponse,
-    PhoneClaimRequest, PhoneClaimResponse, PhoneClaimVerifyRequest, _build_user_out,
+    PhoneClaimRequest, PhoneClaimResponse, PhoneClaimVerifyRequest,
+    FirebasePhoneVerifyRequest, _build_user_out,
 )
 
 logger = logging.getLogger(__name__)
@@ -1270,4 +1271,29 @@ def verify_claim_phone(
         phone_number=current_user.phone_number,
         phone_verified=True,
     )
+
+
+@router.post(
+    "/firebase/verify-phone",
+    response_model=PhoneClaimResponse,
+    summary="Verify phone number cryptographically using Firebase Phone Auth ID token",
+)
+@limiter.limit("20/minute")
+def verify_phone_firebase(
+    request: Request,
+    payload: FirebasePhoneVerifyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Verify and link a phone number proved by Firebase Phone Number Verification.
+
+    Bypasses SMS OTP gateway tables entirely; uses Google's cryptographic token
+    to establish phone proof.
+    """
+    result = firebase_phone_auth.claim_and_verify_firebase_phone(
+        db=db,
+        current_user=current_user,
+        id_token=payload.id_token,
+    )
+    return PhoneClaimResponse(**result)
 
