@@ -16,6 +16,7 @@ env/
 *serviceAccountKey*.json
 *firebase*credentials*.json
 service_account*.json
+service-account*.json
 *.pem
 
 # IDEs

@@ -1333,7 +1333,7 @@ def verify_phone_firebase(
     payload: FirebasePhoneVerifyRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> PhoneClaimResponse:
     """Verify and link a phone number proved by Firebase Phone Number Verification.
 
     Bypasses SMS OTP gateway tables entirely; uses Google's cryptographic token

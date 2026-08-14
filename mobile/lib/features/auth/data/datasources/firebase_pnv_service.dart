@@ -12,9 +12,12 @@ class FirebasePnvService {
 
   final ApiClient _apiClient;
 
-  // Active testing token from Firebase Console
-  static const String defaultTestToken =
-      'AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A';
+  // Active testing token from Firebase Console or environment override
+  static const String defaultTestToken = String.fromEnvironment(
+    'FIREBASE_PNV_TEST_TOKEN',
+    defaultValue:
+        'AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A',
+  );
 
   FirebasePnvService(this._apiClient);
 
