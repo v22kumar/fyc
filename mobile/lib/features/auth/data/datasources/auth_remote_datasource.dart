@@ -217,23 +217,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) {
-        // Google accepted the account and refused to vouch for it. That means
-        // it does not recognise this build: it matches on the PAIR (package
-        // name, signing certificate), and ours was registered against the
-        // project's original package name rather than the one it ships as.
-        //
-        // "Not configured yet" was the wrong word for it — nothing is missing,
-        // something is mismatched, and only somebody with the Firebase console
-        // can put it right. tool/check_google_signin.py now catches this at
-        // build time; this is what a member sees if one slips through.
-        // "no-token" rather than a bare failure: Google accepted the
-        // account and declined to vouch for it, which is a different fault
-        // from the sign-in call throwing, and they are fixed in different
-        // places. Without the distinction both arrive as one sentence and the
-        // next person guesses.
+      final accessToken = auth.accessToken;
+
+      if (idToken == null && accessToken == null) {
+        // Both tokens null — Google accepted the account but couldn't mint any
+        // token on this Play Services version. Fall back to browser OAuth.
         ErrorReporter.instance.report(
-            'google sign-in: account returned, idToken null '
+            'google sign-in: account returned, both idToken and accessToken are null '
             '(serverClientId=${ApiConstants.googleServerClientId.split("-").first})',
             null,
             context: 'auth/google');
@@ -245,9 +235,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             "please use your phone number");
       }
 
+      final payload = <String, dynamic>{
+        'organization_id': organizationId,
+        if (idToken != null && idToken.isNotEmpty) 'id_token': idToken,
+        if (accessToken != null && accessToken.isNotEmpty) 'access_token': accessToken,
+      };
+
       final response = await _client.dio.post(
         ApiConstants.googleSignIn,
-        data: {'organization_id': organizationId, 'id_token': idToken},
+        data: payload,
       );
       return GoogleAuthResult.fromJson(response.data as Map<String, dynamic>);
     } on AuthFailure {

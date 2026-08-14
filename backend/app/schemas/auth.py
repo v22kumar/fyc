@@ -158,7 +158,8 @@ class AdminLogin(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     organization_id: UUID
-    id_token: str
+    id_token: Optional[str] = None
+    access_token: Optional[str] = None
 
 
 class PhoneClaimRequest(BaseModel):

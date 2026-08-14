@@ -577,12 +577,31 @@ def login_google(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     through registration to supply the now-mandatory phone number and date of
     birth (name/email pre-filled from Google). Their account links to this
     Google identity on the next sign-in, matched by email.
+
+    Supports both ID Token (modern devices like Pixel 6a) and Access Token
+    (older devices like Oppo A3s / Android 8.1 with older Play Services).
     """
     org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    idinfo = _verify_google_id_token(payload.id_token)
+    idinfo = None
+    if payload.id_token:
+        try:
+            idinfo = _verify_google_id_token(payload.id_token)
+        except HTTPException as e:
+            if payload.access_token:
+                idinfo = _verify_google_access_token(payload.access_token)
+            else:
+                raise e
+    elif payload.access_token:
+        idinfo = _verify_google_access_token(payload.access_token)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either id_token or access_token must be provided",
+        )
+
     return session_for_google_identity(db, payload.organization_id, idinfo)
 
 
@@ -630,6 +649,36 @@ def _verify_google_id_token(token: str) -> dict:
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid Google token: {e}")
     return idinfo
+
+
+def _verify_google_access_token(access_token: str) -> dict:
+    """Verify a Google OAuth2 access token via Google userinfo API.
+
+    This fallback path ensures wide Android compatibility for older devices
+    (e.g., Oppo A3s, Android 8.1 Oreo, older Google Play Services) where
+    OpenID Connect idToken generation may be unavailable or unminted.
+    """
+    import urllib.request
+    import json
+    url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "User-Agent": "FYC-Connect-Backend",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if not data.get("email"):
+                raise ValueError("Google account returned no email")
+            return data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid Google access token: {e}",
+        )
 
 
 def session_for_google_identity(db: Session, organization_id, idinfo: dict):

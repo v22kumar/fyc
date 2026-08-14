@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:fyc_connect/core/network/api_client.dart';
@@ -26,7 +25,7 @@ class FirebasePnvService {
     bool isTestMode = true,
     String testToken = defaultTestToken,
   }) async {
-    final isAndroid = !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || (!kIsWeb && Platform.isAndroid));
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     if (!isAndroid) {
       debugPrint('[FirebasePnv] PNV is only supported natively on Android currently.');
       return null;
