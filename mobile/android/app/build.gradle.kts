@@ -79,4 +79,7 @@ flutter {
 dependencies {
     // Backports java.time etc. for flutter_local_notifications on minSdk < 26.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+
+    // Firebase platform BOM
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
 }

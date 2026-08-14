@@ -68,6 +68,7 @@ class ApiConstants {
   static const String register = '/api/v1/auth/register';
   static const String loginPassword = '/api/v1/auth/login/password';
   static const String googleSignIn = '/api/v1/auth/google';
+  static const String firebaseVerifyPhone = '/api/v1/auth/firebase/verify-phone';
 
   // Google sign-in that runs in the browser instead of the native plugin.
   // The native one authenticates with the pair (package name, signing

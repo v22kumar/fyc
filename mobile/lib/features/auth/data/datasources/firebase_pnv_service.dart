@@ -26,7 +26,8 @@ class FirebasePnvService {
     bool isTestMode = true,
     String testToken = defaultTestToken,
   }) async {
-    if (!kIsWeb && !Platform.isAndroid) {
+    final isAndroid = !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || (!kIsWeb && Platform.isAndroid));
+    if (!isAndroid) {
       debugPrint('[FirebasePnv] PNV is only supported natively on Android currently.');
       return null;
     }
@@ -57,8 +58,8 @@ class FirebasePnvService {
     required String idToken,
   }) async {
     try {
-      final response = await _apiClient.post(
-        '${ApiConstants.auth}/firebase/verify-phone',
+      final response = await _apiClient.dio.post(
+        ApiConstants.firebaseVerifyPhone,
         data: {'id_token': idToken},
       );
       return response.data as Map<String, dynamic>?;
