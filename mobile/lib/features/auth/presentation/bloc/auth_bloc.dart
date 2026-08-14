@@ -12,7 +12,7 @@ import '../../../../core/error/failures.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../../injection_container.dart';
+import '../../../../service_locator.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
