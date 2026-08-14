@@ -68,7 +68,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
       (user) {
         _remember(user);
-        _remember(user);
         emit(AuthAuthenticated(user));
       },
     );

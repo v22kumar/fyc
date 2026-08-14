@@ -158,7 +158,8 @@ class AdminLogin(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     organization_id: UUID
-    id_token: str
+    id_token: Optional[str] = None
+    access_token: Optional[str] = None
 
 
 class PhoneClaimRequest(BaseModel):
@@ -179,6 +180,10 @@ class PhoneClaimResponse(BaseModel):
 class PhoneClaimVerifyRequest(BaseModel):
     verification_id: str
     otp_code: str
+
+
+class FirebasePhoneVerifyRequest(BaseModel):
+    id_token: str = Field(..., description="Firebase Auth ID Token from phone sign-in")
 
 
 def _build_user_out(user, profile=None):

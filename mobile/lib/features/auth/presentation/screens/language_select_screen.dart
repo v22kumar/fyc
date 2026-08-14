@@ -3,6 +3,7 @@ import '../../../../core/l10n/tr.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/design_system/patterns/kolam_background.dart';
@@ -71,7 +72,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
   Future<void> _proceed() async {
     await sl<LocalStorage>().saveLang(_selectedLang);
     localeNotifier.value = Locale(_selectedLang);
-    if (mounted) context.go('/login');
+    if (mounted) context.go(ApiConstants.useAppShellV2 ? '/app' : '/home');
   }
 
   @override

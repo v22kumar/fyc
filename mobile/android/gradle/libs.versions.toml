@@ -1,0 +1,7 @@
+[versions]
+firebaseBom = "33.9.0"
+
+[libraries]
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-ai-logic = { module = "com.google.firebase:firebase-ai" }
+firebase-pnv = { module = "com.google.firebase:firebase-pnv" }

@@ -421,6 +421,28 @@ def test_google_existing_user_logs_in(client, db, monkeypatch):
     assert body.get("needs_registration") is not True
 
 
+def test_google_access_token_fallback_for_legacy_devices(client, db, monkeypatch):
+    """Older Android devices (Oppo A3s, etc.) where idToken is unminted can authenticate via access_token."""
+    import app.routers.auth as auth_router
+    org = _reg_org(db)
+
+    reg = client.post("/api/v1/auth/register", json=_reg_payload(org.id, email="oppo_user@gmail.com"))
+    assert reg.status_code == 200, reg.text
+
+    monkeypatch.setattr(
+        auth_router, "_verify_google_access_token",
+        lambda token: {"email": "oppo_user@gmail.com", "sub": "g-sub-oppo", "name": "Oppo User"},
+    )
+    r = client.post(
+        "/api/v1/auth/google",
+        json={"organization_id": str(org.id), "access_token": "ya29.valid_access_token"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert "access_token" in body
+    assert body.get("needs_registration") is not True
+
+
 def _send_otp_direct(db, org_id, phone, email=None):
     """Call the handler past its rate-limit decorator.
 
