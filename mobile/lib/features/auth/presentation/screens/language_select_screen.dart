@@ -71,7 +71,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
   Future<void> _proceed() async {
     await sl<LocalStorage>().saveLang(_selectedLang);
     localeNotifier.value = Locale(_selectedLang);
-    if (mounted) context.go('/login');
+    if (mounted) context.go(ApiConstants.useAppShellV2 ? '/app' : '/home');
   }
 
   @override

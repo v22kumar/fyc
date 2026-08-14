@@ -102,11 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
 
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthUnauthenticated) context.go('/login');
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: context.cBackground,
         extendBody: true,
         body: RefreshIndicator(
@@ -163,8 +159,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -211,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: () {
                           Navigator.pop(ctx);
                           context.read<AuthBloc>().add(const AuthLogoutRequested());
-                          context.go('/login');
+                          context.go('/app');
                         },
                         child: Text(trId('logout'), style: TextStyle(color: AppColors.danger)),
                       ),
