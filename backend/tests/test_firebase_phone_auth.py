@@ -39,6 +39,42 @@ def _user_with_token(client, db, org, phone=None, email=None, is_verified=True):
     return u, token
 
 
+def test_dev_test_token_is_refused_in_production(monkeypatch):
+    """The committed dev token must never mint a phone proof in production.
+
+    /auth/firebase/login takes no authentication and turns whatever this
+    returns into a session, so an ungated bypass is an account takeover for
+    anyone who can read the (public) source.
+    """
+    from fastapi import HTTPException
+    from app.core.config import settings
+    from app.services import firebase_phone_auth
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+
+    with pytest.raises(HTTPException) as excinfo:
+        firebase_phone_auth.verify_firebase_id_token(
+            firebase_phone_auth._DEV_TEST_TOKEN
+        )
+
+    # It must fall through to real verification and fail there — never return
+    # a decoded payload carrying the test phone number.
+    assert excinfo.value.status_code in (401, 503)
+
+
+def test_dev_test_token_still_works_outside_production(monkeypatch):
+    """Dev and staging keep the affordance, exactly like OTP_BYPASS_CODE."""
+    from app.core.config import settings
+    from app.services import firebase_phone_auth
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "development")
+
+    decoded = firebase_phone_auth.verify_firebase_id_token(
+        firebase_phone_auth._DEV_TEST_TOKEN
+    )
+    assert decoded["phone_number"] == "+919488751943"
+
+
 def test_firebase_verify_phone_success(client, db, monkeypatch):
     """Proving phone via valid Firebase token sets phone and marks verified."""
     from app.services import firebase_phone_auth
