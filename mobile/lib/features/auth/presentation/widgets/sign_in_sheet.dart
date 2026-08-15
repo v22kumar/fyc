@@ -97,8 +97,14 @@ class _SignInSheetState extends State<_SignInSheet> {
       _error = null;
       _googleFailed = false;
     });
+    // Real OTP, not the Firebase PNV path. The shipped PNV path posted a fixed
+    // test token to /auth/firebase/login: it is a stub on Android (no native
+    // verification is wired) and the backend now refuses that token in prod, so
+    // it can never sign a real member in. AuthSendOtpRequested runs the working
+    // Twilio SMS->WhatsApp ladder (/auth/otp/send), and this sheet already
+    // handles the AuthOtpSent -> code -> verify -> register steps below.
     context.read<AuthBloc>().add(
-          AuthFirebasePnvRequested(organizationId: _org, phoneNumber: _e164),
+          AuthSendOtpRequested(organizationId: _org, phoneNumber: _e164),
         );
   }
 
