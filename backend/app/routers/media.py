@@ -24,6 +24,26 @@ except ImportError:
 
 router = APIRouter(prefix="/media", tags=["Media"])
 
+# What happened to the most recent upload attempt, kept for /api/health/media.
+#
+# The health page reports what the *configuration* says — and configuration
+# cannot tell "credentials set" from "credentials valid". Rotate the Cloudinary
+# secret in the dashboard without updating Fly and every field on that page
+# stays green while every real upload fails. The only witness is the traffic
+# itself, so the last attempt's outcome is kept and reported: class name and a
+# truncated message, never a value.
+_last_upload: dict | None = None
+
+
+def _remember_upload(ok: bool, error: Exception | None = None) -> None:
+    global _last_upload
+    from datetime import datetime, timezone
+    _last_upload = {
+        "ok": ok,
+        "at": datetime.now(timezone.utc).isoformat(),
+        "error": f"{type(error).__name__}: {str(error)[:200]}" if error else None,
+    }
+
 UPLOAD_DIR = Path("uploads")
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/quicktime"}
 MAX_SIZE_MB = 20
@@ -86,6 +106,10 @@ def storage_status() -> dict:
             and not settings.CLOUDINARY_CLOUD_NAME else "separate_secrets"
         ) if all(settings.cloudinary) else None,
         "environment": settings.ENVIRONMENT,
+        # Evidence from real traffic, because configuration cannot prove that
+        # credentials are *valid* — only that they are present. None until the
+        # first upload after boot.
+        "last_upload": _last_upload,
     }
 
 
@@ -149,13 +173,32 @@ async def upload_file(
         # The Cloudinary upload is a blocking, multi-second HTTP call — run it in
         # a worker thread so it never stalls the event loop (and every other
         # request/live-score stream) for the duration of the CDN round-trip.
-        result = await run_in_threadpool(
-            cloudinary.uploader.upload,
-            io.BytesIO(content),
-            folder=f"fyc/{org_id}",
-            public_id=uuid.uuid4().hex,
-            resource_type="auto",
-        )
+        try:
+            result = await run_in_threadpool(
+                cloudinary.uploader.upload,
+                io.BytesIO(content),
+                folder=f"fyc/{org_id}",
+                public_id=uuid.uuid4().hex,
+                resource_type="auto",
+            )
+        except Exception as e:
+            # This is the failure members actually hit: credentials rotated in
+            # the dashboard but not on Fly, an expired key, Cloudinary briefly
+            # down. It used to escape as a bare 500 with nothing anybody could
+            # act on. It must NOT fall back to container disk in production —
+            # that stores the photo somewhere a deploy erases, which is the
+            # same loss with a delay — so it fails honestly, in words the
+            # person holding the phone can relay.
+            _remember_upload(False, e)
+            logger.error("[media] photo storage refused an upload: %s org=%s",
+                         e, org_id)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The club's photo storage refused the upload. Try again "
+                       "in a moment — if it keeps failing, an admin should "
+                       "check /api/health/media.",
+            )
+        _remember_upload(True)
 
         secure_url: str = result["secure_url"]
         filename: str = result.get("original_filename", public_id)
@@ -184,6 +227,7 @@ async def upload_file(
         dest.write_bytes(content)
 
     await run_in_threadpool(_write_local)  # offload blocking disk I/O
+    _remember_upload(True)
 
     return {"url": f"/uploads/{org_id}/{filename}", "filename": filename}
 
