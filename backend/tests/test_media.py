@@ -137,3 +137,71 @@ def test_upload_url_path_returned(client, db):
     data = res.json()
     # URL should start with /uploads/
     assert data["url"].startswith("/uploads/")
+
+
+# ---------------------------------------------------------------------------
+# When photo storage itself says no
+# ---------------------------------------------------------------------------
+
+def test_a_cloudinary_failure_is_a_sentence_not_a_500(client, db, monkeypatch):
+    """Rotate the Cloudinary secret in the dashboard but not on Fly, and every
+    field on /api/health/media stays green while every real upload dies.
+
+    This is the failure members actually hit on the issue screen. It used to
+    escape as a bare 500 — nothing the person holding the phone could act on,
+    nothing on the health page to connect it to. It must also NOT fall back to
+    container disk in production: that stores the photo somewhere a deploy
+    erases, which is the same loss with a delay.
+    """
+    from app.routers import media
+
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919555777001")
+    token = _login(client, org.id, "+919555777001")
+
+    monkeypatch.setattr(media, "_cloudinary_configured", lambda: True)
+    monkeypatch.setattr(media, "_configure_cloudinary", lambda: None)
+
+    def _refused(*a, **k):
+        raise RuntimeError("401 Unauthorized - invalid signature")
+    monkeypatch.setattr(media.cloudinary.uploader, "upload", _refused)
+
+    r = client.post(
+        "/api/v1/media/upload",
+        files={"file": ("p.jpg", _fake_jpeg(), "image/jpeg")},
+        headers={"Authorization": f"Bearer {token}",
+                 "X-Organization-ID": str(org.id)},
+    )
+
+    assert r.status_code == 503, r.text
+    assert "photo storage" in r.json()["detail"].lower()
+    # And nothing was quietly written to disk instead.
+    assert "uploads" not in r.text
+
+    # The health page now carries the evidence — an admin reading it from a
+    # phone sees the refusal, not a page of green configuration.
+    last = media.storage_status()["last_upload"]
+    assert last is not None and last["ok"] is False
+    assert "401" in last["error"]
+
+
+def test_a_working_upload_leaves_a_green_mark(client, db):
+    """The other half: after a success the health page says so, so 'is it
+    actually working' is answerable without asking a member to test it."""
+    from app.routers import media
+
+    org = _make_org(db)
+    _make_executive(db, org.id, "+919555777002")
+    token = _login(client, org.id, "+919555777002")
+
+    r = client.post(
+        "/api/v1/media/upload",
+        files={"file": ("p.jpg", _fake_jpeg(), "image/jpeg")},
+        headers={"Authorization": f"Bearer {token}",
+                 "X-Organization-ID": str(org.id)},
+    )
+    assert r.status_code == 200, r.text
+
+    last = media.storage_status()["last_upload"]
+    assert last is not None and last["ok"] is True
+    assert last["error"] is None
