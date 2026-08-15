@@ -24,6 +24,31 @@ const langOptions = [
 const apkUrl = `${API_BASE}/api/v1/app/download`;
 ---
 
+<!-- Tournament-day banner: the lichess arena is the club's backup venue if
+     the app or the local network misbehaves at 4 PM. The URL is public on
+     purpose; the ENTRY CODE is not here and must never be — it travels only
+     in the club WhatsApp group, and it is the whole gate. The banner removes
+     itself after the day ends, so nobody has to remember to. -->
+<div id="chess-arena-banner" class="bg-[#D4AF37] text-[#1a1508] text-center text-[13px] font-bold px-4 py-2">
+  <a href="https://lichess.org/tournament/OdYWG93h" target="_blank" rel="noopener"
+     class="underline underline-offset-2 hover:opacity-80"
+     data-ta="♟️ இன்று மாலை 4 மணி — FYC சதுரங்கப் போட்டி — லிச்செஸ் அரங்கில் சேர →"
+     data-en="♟️ FYC Chess Tournament today 4 PM — join the lichess arena →"
+     data-ml="♟️ FYC Chess Tournament today 4 PM — join the lichess arena →"
+     data-hi="♟️ FYC Chess Tournament today 4 PM — join the lichess arena →">
+    ♟️ இன்று மாலை 4 மணி — FYC சதுரங்கப் போட்டி — லிச்செஸ் அரங்கில் சேர →
+  </a>
+</div>
+<script is:inline>
+  // Self-expiring: after tournament day (IST) the banner is gone without a
+  // deploy. A stale "today 4 PM" banner is worse than none.
+  (function () {
+    if (Date.now() > new Date('2026-08-15T23:59:00+05:30').getTime()) {
+      var b = document.getElementById('chess-arena-banner');
+      if (b) b.remove();
+    }
+  })();
+</script>
 <header class="sticky top-0 z-50 bg-[#0F5132]/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-[#0c3f27]/20">
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6">
     <div class="flex items-center justify-between h-[68px]">
