@@ -15,10 +15,13 @@ from firebase_admin import auth as firebase_auth
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.user import User
 from app.services.account_claims import mark_phone_verified
 
 logger = logging.getLogger(__name__)
+
+_DEV_TEST_TOKEN = "AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A"
 
 
 def normalise_phone(phone: str) -> str:
@@ -39,9 +42,15 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
     if not id_token or not id_token.strip():
         raise HTTPException(status_code=400, detail="Missing Firebase ID token")
 
-    test_token = "AVweKohajldemHxif0W11cIpdIm8RIbljpFaXD_Oc7vymmQHAZBjW01CWcxLuV9K0YbZ74MCDa58c84Dcq438WCsjWVu-RM_UWHY_i-YJ3ID1GbAvZ6onBkY_N8h-ZXdieHfZBGI4fbeM6gK6yoi0l8G0A"
-    if id_token.strip() == test_token:
-        # Dev test token bypass for new user testing
+    # A fixed token that stands in for a real Firebase proof, so phone sign-in
+    # can be exercised on a developer machine with no Firebase project attached.
+    #
+    # This MUST never answer in production. The string is committed to a public
+    # repository, and /auth/firebase/login takes no authentication: an
+    # ungated bypass hands anyone who reads the source a signed session for the
+    # number below. It is gated the same way OTP_BYPASS_CODE is — dev and
+    # staging keep the affordance, production refuses it.
+    if not settings.is_production and id_token.strip() == _DEV_TEST_TOKEN:
         return {
             "uid": "test-uid-456",
             "phone_number": "+919488751943",
