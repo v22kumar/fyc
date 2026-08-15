@@ -377,9 +377,14 @@ def test_register_rejects_duplicate_email_in_org(client, db):
     assert "Email already registered" in dup.json()["detail"]
 
 
-def test_google_new_user_needs_registration(client, db, monkeypatch):
-    """A brand-new Google account is routed into registration (to collect the
-    mandatory phone + DOB) instead of being silently created."""
+def test_google_new_user_gets_a_session(client, db, monkeypatch):
+    """A brand-new Google account is signed straight in as an ordinary member.
+
+    Google proves the identity and that creates the session; the phone stays an
+    unverified claim collected later under the grace period, never a gate on
+    getting in (docs/design/one-button-sign-in.md). This is what lets a
+    participant with a Google account log in when SMS/OTP delivery is degraded.
+    """
     import app.routers.auth as auth_router
     org = _reg_org(db)
 
@@ -392,12 +397,17 @@ def test_google_new_user_needs_registration(client, db, monkeypatch):
                     json={"organization_id": str(org.id), "id_token": "fake"})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body.get("needs_registration") is True
-    assert body["email"] == "newbie@gmail.com"
-    assert body["full_name"] == "New Bie"
-    # No token issued, no account created yet.
-    assert "access_token" not in body
-    assert db.query(User).filter(User.email == "newbie@gmail.com").first() is None
+    # A real session, not a registration detour.
+    assert body.get("needs_registration") is not True
+    assert "access_token" in body
+
+    created = db.query(User).filter(User.email == "newbie@gmail.com").first()
+    assert created is not None
+    # Ordinary member, and the phone is untouched and unverified — the security
+    # invariant that only OTP proof may attach/verify a number is preserved.
+    assert created.role == "PUBLIC_CITIZEN"
+    assert created.phone_number is None
+    assert created.phone_verified_at is None
 
 
 def test_google_existing_user_logs_in(client, db, monkeypatch):
