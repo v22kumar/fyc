@@ -186,7 +186,7 @@ def test_the_handle_is_spent_once_and_then_worthless(client, db, configured, mon
     assert second["status"] == "expired"
 
 
-def test_a_brand_new_google_account_is_sent_to_registration_not_half_created(
+def test_a_brand_new_google_account_is_signed_in_on_this_road_too(
         client, db, configured, monkeypatch):
     org = _org(db)
     sid = client.post("/api/v1/auth/google/browser/start",
@@ -197,11 +197,14 @@ def test_a_brand_new_google_account_is_sent_to_registration_not_half_created(
 
     body = client.get(f"/api/v1/auth/google/browser/result?session_id={sid}").json()
     assert body["status"] == "ready"
-    # Same rule as the native road: collect the phone number and date of birth
-    # before an account exists, rather than creating an empty one.
-    assert body["result"]["needs_registration"] is True
-    assert body["result"]["email"] == "stranger@example.com"
-    assert db.query(User).filter(User.email == "stranger@example.com").first() is None
+    # Same rule as the native road: Google proves who they are and that creates
+    # the session. An ordinary member is created with the phone left unverified.
+    assert body["result"].get("needs_registration") is not True
+    assert "access_token" in body["result"]
+    created = db.query(User).filter(User.email == "stranger@example.com").first()
+    assert created is not None
+    assert created.role == "PUBLIC_CITIZEN"
+    assert created.phone_number is None
 
 
 def test_a_blocked_member_is_still_blocked_on_this_road(client, db, configured, monkeypatch):

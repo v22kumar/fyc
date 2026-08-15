@@ -717,23 +717,20 @@ def session_for_google_identity(db: Session, organization_id, idinfo: dict):
             detail="Your account has been blocked by an administrator.",
         )
 
-    # New member (and not the owner bootstrap account): route them into
-    # registration to collect the mandatory phone + date of birth rather than
-    # creating an incomplete account. Name/email are pre-filled from Google.
-    if not user and not is_super_admin:
-        return {
-            "needs_registration": True,
-            "email": email,
-            "full_name": name or given_name or "",
-        }
-
-    # Owner bootstrap only — auto-create so the super admin is never locked out.
+    # New member: Google proves who they are, and that is what creates the
+    # session. The phone is only ever an unverified claim, collected later under
+    # the grace period, never a gate on getting in — docs/design/one-button-sign-in.md
+    # ("A failure to verify is not a failure to sign in"). Auto-create an ordinary
+    # member (PUBLIC_CITIZEN, exactly what registration produces) so a participant
+    # with a Google account is never stranded behind phone/OTP delivery — e.g. an
+    # SMS provider that only reaches pre-verified numbers. Name/email come from
+    # Google; phone_number and phone_verified_at stay null (unverified).
     if not user:
         user = User(
             organization_id=organization_id,
             email=email,
             google_sub=google_sub,
-            role="SUPER_ADMIN",
+            role="SUPER_ADMIN" if is_super_admin else "PUBLIC_CITIZEN",
             is_verified=True,
             preferred_language="en",
         )
@@ -742,8 +739,8 @@ def session_for_google_identity(db: Session, organization_id, idinfo: dict):
 
         profile = UserProfile(
             user_id=user.id,
-            full_name_en=name or given_name or "FYC User",
-            full_name_ta=name or given_name or "FYC பயனர்",
+            full_name_en=name or given_name or "FYC Member",
+            full_name_ta=name or given_name or "FYC உறுப்பினர்",
             last_login_at=datetime.now(timezone.utc),
         )
         db.add(profile)
